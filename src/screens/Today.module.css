@@ -1,0 +1,116 @@
+.screen { display: flex; flex-direction: column; }
+
+.hero {
+  padding: 28px 24px 8px;
+}
+.date {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink3);
+  letter-spacing: 0.08em;
+  margin-bottom: 16px;
+}
+.bigNum {
+  font-family: var(--font-serif);
+  font-size: 80px;
+  color: var(--ink);
+  line-height: 0.88;
+  letter-spacing: -0.03em;
+  margin-bottom: 4px;
+}
+.bigLabel {
+  font-size: 11px;
+  color: var(--ink3);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+}
+
+.statsRow {
+  display: flex;
+  border-top: 0.5px solid var(--border);
+  border-bottom: 0.5px solid var(--border);
+}
+.stat {
+  flex: 1;
+  padding: 12px 16px;
+  border-right: 0.5px solid var(--border);
+}
+.stat:last-child { border-right: none; }
+.statVal {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--ink);
+  margin-bottom: 2px;
+  font-weight: 500;
+}
+.statLabel {
+  font-size: 9px;
+  color: var(--ink3);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.list { padding: 8px 20px; }
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 0.5px solid var(--border);
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.item:last-child { border-bottom: none; }
+.item:active { opacity: 0.7; }
+.itemDone { opacity: 0.6; }
+
+.check {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border2);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, border-color 0.2s;
+}
+.checkDone { }
+.tick {
+  width: 7px;
+  height: 4px;
+  border-left: 1.5px solid #fff;
+  border-bottom: 1.5px solid #fff;
+  transform: rotate(-45deg) translateY(-1px);
+}
+
+.itemBody { flex: 1; min-width: 0; }
+.itemNeed {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+  font-family: var(--font-mono);
+}
+.itemAction {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.itemActionDone {
+  color: var(--ink3);
+  text-decoration: line-through;
+  font-weight: 400;
+}
+
+.itemPip {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
