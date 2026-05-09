@@ -1,0 +1,232 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Intro */
+.introWrap {
+  flex: 1;
+  padding: 80px 28px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0;
+}
+.word {
+  font-family: var(--font-serif);
+  font-size: 64px;
+  color: var(--ink);
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+  margin-bottom: 6px;
+}
+.phonetic {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink3);
+  letter-spacing: 0.06em;
+  margin-bottom: 28px;
+}
+.introDef {
+  font-size: 15px;
+  color: var(--ink2);
+  line-height: 1.7;
+  font-weight: 300;
+  margin-bottom: 32px;
+}
+.introDef strong { color: var(--ink); font-weight: 500; }
+
+/* Progress bar */
+.progressBar {
+  height: 2px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+.progressFill {
+  height: 100%;
+  background: var(--ink);
+  transition: width 0.4s ease;
+}
+
+/* Questions */
+.qWrap {
+  flex: 1;
+  padding: 32px 24px 24px;
+  overflow-y: auto;
+}
+.qNum {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink3);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.qText {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  color: var(--ink);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  margin-bottom: 8px;
+}
+.qSub {
+  font-size: 13px;
+  color: var(--ink3);
+  line-height: 1.55;
+  font-weight: 300;
+  margin-bottom: 24px;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1.5px solid var(--border);
+  background: var(--bg2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.option:hover { border-color: var(--ink3); }
+.optionSelected {
+  border-color: var(--ink);
+  background: var(--ink);
+}
+.optionSelected .optLabel { color: #F0EDE6; }
+.optionSelected .optSub { color: #6A6860; }
+
+.optCheck {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border2);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.optCheckSelected {
+  background: #F0EDE6;
+  border-color: #F0EDE6;
+}
+.optCheckInner {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ink);
+}
+.optBody { flex: 1; }
+.optLabel {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  margin-bottom: 2px;
+}
+.optSub {
+  font-size: 12px;
+  color: var(--ink3);
+  line-height: 1.4;
+}
+
+.qFooter {
+  padding: 16px 24px 32px;
+  flex-shrink: 0;
+}
+
+/* Details */
+.inputGroup {
+  margin-bottom: 20px;
+}
+.inputLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink3);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 8px;
+}
+.input {
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  background: var(--bg);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.input:focus { border-color: var(--ink); }
+.input::placeholder { color: var(--ink3); }
+.inputHint {
+  font-size: 12px;
+  color: var(--ink3);
+  margin-top: 6px;
+  font-style: italic;
+}
+
+.error {
+  font-size: 13px;
+  color: var(--surv);
+  margin-top: 8px;
+}
+
+/* Reveal */
+.revealHeader {
+  padding: 28px 24px 16px;
+}
+.revealCanvas {
+  padding: 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+.revealRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.revealPip {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.revealName {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  flex: 1;
+}
+.revealPills {
+  display: flex;
+  gap: 4px;
+}
+.pill {
+  font-size: 9px;
+  padding: 4px 8px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  color: var(--ink3);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.12s;
+  font-family: var(--font-sans);
+}
+.pill:hover { background: var(--bg3); color: var(--ink); }
+.pillActive { font-weight: 500; }
