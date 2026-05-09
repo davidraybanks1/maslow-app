@@ -13,23 +13,15 @@ export default function Canvas({ canvas, onChangeMode, readonly = false }) {
     return currentSum + gaps + diff <= baselineColumnHeight(colNeeds)
   }
 
-  function handlePlus(needId) {
-    const curIdx = LAYER_ORDER.indexOf(canvas[needId])
-    if (curIdx >= LAYER_ORDER.length - 1) return
-    const newMode = LAYER_ORDER[curIdx + 1]
-    onChangeMode && onChangeMode(needId, newMode, canAccommodate(needId, newMode))
-  }
-
-  function handleMinus(needId) {
-    const curIdx = LAYER_ORDER.indexOf(canvas[needId])
-    if (curIdx <= 0) return
-    const newMode = LAYER_ORDER[curIdx - 1]
-    onChangeMode && onChangeMode(needId, newMode, true)
+  function handlePill(needId, newMode) {
+    if (newMode === canvas[needId]) return
+    const isUpgrade = LAYER_ORDER.indexOf(newMode) > LAYER_ORDER.indexOf(canvas[needId])
+    const canFit = !isUpgrade || canAccommodate(needId, newMode)
+    onChangeMode && onChangeMode(needId, newMode, canFit)
   }
 
   return (
     <div className={styles.wrap}>
-      {/* Progress */}
       <div className={styles.progress}>
         <span className={styles.progressLabel}>canvas composed</span>
         <div className={styles.progressTrack}>
@@ -49,7 +41,6 @@ export default function Canvas({ canvas, onChangeMode, readonly = false }) {
         </span>
       </div>
 
-      {/* Grid */}
       <div className={styles.grid}>
         {CANVAS_COLUMNS.map((colIds, ci) => {
           const canvasH = baselineColumnHeight(colIds)
@@ -59,7 +50,6 @@ export default function Canvas({ canvas, onChangeMode, readonly = false }) {
 
           return (
             <div key={ci} className={styles.col}>
-              {/* Anxiety block */}
               {anxietyH > 4 && (
                 <div className={styles.anxietyBlock} style={{ height: anxietyH }}>
                   {ci === 0 && anxietyH > 60 && (
@@ -71,12 +61,10 @@ export default function Canvas({ canvas, onChangeMode, readonly = false }) {
                 </div>
               )}
 
-              {/* Need tiles */}
               {colIds.map(id => {
                 const mode = canvas[id]
                 const lyr = LAYERS[mode]
                 const h = LAYER_HEIGHTS[mode]
-                const curIdx = LAYER_ORDER.indexOf(mode)
 
                 return (
                   <div
@@ -84,26 +72,28 @@ export default function Canvas({ canvas, onChangeMode, readonly = false }) {
                     className={styles.tile}
                     style={{ height: h, borderColor: lyr.border }}
                   >
-                    <div className={styles.tileTop}>
-                      <div className={styles.tilePipLabel}>
-                        <div className={styles.tilePip} style={{ background: lyr.pip }} />
-                        <span className={styles.tileMode} style={{ color: lyr.text }}>{mode}</span>
+                    {!readonly && (
+                      <div className={styles.tilePills}>
+                        {LAYER_ORDER.map(l => {
+                          const isActive = mode === l
+                          const lyrL = LAYERS[l]
+                          return (
+                            <button
+                              key={l}
+                              className={`${styles.pill} ${isActive ? styles.pillActive : ''}`}
+                              style={isActive ? {
+                                borderColor: lyrL.border,
+                                color: lyrL.text,
+                                background: lyrL.bg,
+                              } : {}}
+                              onClick={() => handlePill(id, l)}
+                            >
+                              {l.slice(0, 3)}
+                            </button>
+                          )
+                        })}
                       </div>
-                      {!readonly && (
-                        <div className={styles.tileBtns} style={{ color: lyr.border }}>
-                          <button
-                            className={styles.tileBtn}
-                            onClick={() => handleMinus(id)}
-                            disabled={curIdx === 0}
-                          >−</button>
-                          <button
-                            className={styles.tileBtn}
-                            onClick={() => handlePlus(id)}
-                            disabled={curIdx === LAYER_ORDER.length - 1}
-                          >+</button>
-                        </div>
-                      )}
-                    </div>
+                    )}
                     <div
                       className={styles.tileName}
                       style={{
@@ -111,7 +101,6 @@ export default function Canvas({ canvas, onChangeMode, readonly = false }) {
                         fontSize: h >= 320 ? 22 : h >= 240 ? 18 : h >= 160 ? 14 : 11,
                       }}
                     >
-                      {/* Need name from constants */}
                       {id.charAt(0).toUpperCase() + id.slice(1)}
                     </div>
                   </div>
