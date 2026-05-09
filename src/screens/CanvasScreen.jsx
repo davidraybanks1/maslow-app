@@ -30,7 +30,7 @@ export default function CanvasScreen({ state, updateCanvas }) {
           <div className={styles.sub}>
             {tradeState
               ? 'tap a need to drop it a mode and make room'
-              : 'tap + or − to change a need\'s mode'}
+              : 'tap ▾ on any need to change its mode'}
           </div>
         </div>
       </div>
@@ -42,7 +42,6 @@ export default function CanvasScreen({ state, updateCanvas }) {
         />
       </div>
 
-      {/* Trade mode overlay */}
       {tradeState && (
         <div className={styles.tradeOverlay}>
           <div className={styles.tradeCard}>
@@ -73,23 +72,6 @@ export default function CanvasScreen({ state, updateCanvas }) {
           </div>
         </div>
       )}
-
-      {/* Legend */}
-      <div className={styles.legend}>
-        {['play','appreciation','nourishment','survival'].map(m => {
-          const lyr = LAYERS[m]
-          return (
-            <div key={m} className={styles.legendItem}>
-              <div className={styles.legendPip} style={{ background: lyr.pip, border: m === 'appreciation' ? `1px solid ${lyr.border}` : 'none' }} />
-              <span>{m}</span>
-            </div>
-          )
-        })}
-        <div className={styles.legendItem}>
-          <div className={styles.legendPip} style={{ background: '#2C2820' }} />
-          <span>anxiety</span>
-        </div>
-      </div>
     </div>
   )
 }
