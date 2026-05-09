@@ -2,10 +2,32 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  overflow: hidden;
   width: 100%;
 }
 
+/* Legend */
+.legend {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink3);
+  letter-spacing: 0.06em;
+}
+.legendPip {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Progress */
 .progress {
   display: flex;
   align-items: center;
@@ -40,23 +62,18 @@
   transition: color 0.3s;
 }
 
+/* Grid */
 .grid {
   display: grid;
-  grid-template-columns: 2fr 1.5fr 1.5fr;
+  grid-template-columns: repeat(12, 1fr);
   gap: 6px;
   border: 1.5px solid var(--ink);
   border-radius: 18px;
   padding: 6px;
-  overflow: hidden;
   width: 100%;
 }
 
-.col {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
+/* Anxiety */
 .anxietyBlock {
   background: #2C2820;
   border-radius: 14px;
@@ -84,43 +101,44 @@
   line-height: 1.25;
 }
 
+/* Tile */
 .tile {
+  position: relative;
   border: 1.5px solid;
   border-radius: 14px;
-  padding: 10px 10px 10px 12px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   background: transparent;
   flex-shrink: 0;
+  overflow: visible;
   transition: border-color 0.3s, height 0.5s cubic-bezier(0.4,0,0.2,1);
-  overflow: hidden;
 }
 
-.tilePills {
+.tileTop {
   display: flex;
-  gap: 3px;
-  flex-wrap: wrap;
-  opacity: 0;
-  transition: opacity 0.2s;
+  align-items: center;
+  justify-content: space-between;
 }
-.tile:hover .tilePills { opacity: 1; }
-
-.pill {
+.tilePipLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tilePip {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.tileMode {
+  font-family: var(--font-mono);
   font-size: 8px;
-  padding: 3px 7px;
-  border-radius: 20px;
-  border: 1px solid var(--border);
-  color: var(--ink3);
-  background: transparent;
-  cursor: pointer;
-  transition: all 0.12s;
-  font-family: var(--font-sans);
-  white-space: nowrap;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.8;
 }
-.pill:hover { background: var(--bg3); color: var(--ink); border-color: var(--ink3); }
-.pillActive { font-weight: 500; }
-
 .tileName {
   font-family: var(--font-serif);
   line-height: 1.1;
@@ -129,5 +147,59 @@
   overflow: hidden;
   text-overflow: ellipsis;
   transition: color 0.3s, font-size 0.3s;
-  margin-top: auto;
+}
+
+/* Dropdown */
+.dropdownWrap {
+  position: relative;
+}
+.dropdownTrigger {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 4px;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+  line-height: 1;
+}
+.dropdownTrigger:hover { opacity: 1; }
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  z-index: 50;
+  min-width: 140px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: var(--font-sans);
+  color: var(--ink2);
+  transition: background 0.1s;
+  border-bottom: 1px solid var(--border);
+}
+.dropdownItem:last-child { border-bottom: none; }
+.dropdownItem:hover { background: var(--bg2); }
+.dropdownItemActive { background: var(--bg2); }
+.dropdownPip {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dropdownCheck {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--ink3);
 }
