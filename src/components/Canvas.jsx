@@ -105,7 +105,10 @@ export default function Canvas({ canvas, onChangeMode, readonly = false }) {
         )}
 
         {/* Need tiles */}
-        {NEEDS.map(n => {
+{[...NEEDS].sort((a, b) => {
+          const order = { play: 0, appreciation: 1, nourishment: 2, survival: 3 }
+          return order[canvas[a.id]] - order[canvas[b.id]]
+        }).map(n => {      
           const mode = canvas[n.id]
           const lyr = LAYERS[mode]
           const layout = MODE_LAYOUT[mode]
