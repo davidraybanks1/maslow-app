@@ -1,0 +1,44 @@
+.screen { display: flex; flex-direction: column; }
+
+.header { padding: 24px 24px 16px; }
+.week { font-family: var(--font-mono); font-size: 10px; color: var(--ink3); letter-spacing: 0.08em; margin-bottom: 6px; }
+.title { font-family: var(--font-serif); font-size: 28px; color: var(--ink); letter-spacing: -0.01em; margin-bottom: 6px; }
+.sub { font-family: var(--font-mono); font-size: 11px; color: var(--ink3); letter-spacing: 0.04em; }
+
+.progress { padding: 0 24px 8px; }
+.progressTrack { height: 2px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.progressFill { height: 100%; background: var(--ink); border-radius: 2px; transition: width 0.4s ease; }
+
+.list { display: flex; flex-direction: column; }
+.item { border-bottom: 1px solid var(--border); }
+.item:first-child { border-top: 1px solid var(--border); }
+
+.row { display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; cursor: pointer; gap: 12px; transition: background 0.1s; }
+.row:hover { background: var(--bg2); }
+
+.rowLeft { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.pip { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.rowBody { min-width: 0; }
+.needName { font-size: 14px; font-weight: 500; color: var(--ink); margin-bottom: 1px; }
+.modeLabel { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+.rowRight { display: flex; align-items: center; gap: 8px; flex-shrink: 0; max-width: 50%; }
+.currentAction { font-family: var(--font-mono); font-size: 10px; color: var(--ink3); letter-spacing: 0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
+.setPrompt { font-family: var(--font-mono); font-size: 10px; color: var(--border2); letter-spacing: 0.06em; }
+.savedBadge { font-family: var(--font-mono); font-size: 10px; color: #1B3627; letter-spacing: 0.06em; }
+.chevron { font-size: 16px; color: var(--ink3); transition: transform 0.2s; flex-shrink: 0; }
+.chevronOpen { transform: rotate(90deg); }
+
+.panel { padding: 0 24px 16px; background: var(--bg2); border-top: 1px solid var(--border); }
+.panelLabel { font-family: var(--font-mono); font-size: 9px; color: var(--ink3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; padding-top: 14px; }
+.presets { display: flex; flex-direction: column; gap: 6px; }
+.preset { padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); font-size: 13px; color: var(--ink2); background: var(--bg); cursor: pointer; transition: all 0.12s; line-height: 1.4; }
+.preset:hover { border-color: var(--ink3); color: var(--ink); }
+.presetActive { font-weight: 500; }
+
+.customRow { display: flex; gap: 8px; }
+.customInput { flex: 1; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); font-family: var(--font-sans); font-size: 13px; color: var(--ink); outline: none; transition: border-color 0.15s; }
+.customInput:focus { border-color: var(--ink); }
+.customInput::placeholder { color: var(--ink3); }
+.saveBtn { padding: 10px 16px; border-radius: 10px; background: var(--ink); color: var(--bg); font-family: var(--font-sans); font-size: 13px; font-weight: 500; border: none; cursor: pointer; transition: opacity 0.15s; white-space: nowrap; }
+.saveBtn:hover { opacity: 0.85; }
