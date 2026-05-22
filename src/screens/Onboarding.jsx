@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { NEEDS, LAYERS, LAYER_ORDER } from '../lib/constants'
+import { sendMagicLink } from '../lib/store'
 import styles from './Onboarding.module.css'
 
 const QUESTIONS = [
@@ -110,6 +111,7 @@ export default function Onboarding({ completeOnboarding }) {
   const [email, setEmail] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [sendingLink, setSendingLink] = useState(false)
 
   function handleSingleSelect(qId, value) {
     setAnswers(prev => ({ ...prev, [qId]: value }))
@@ -139,6 +141,17 @@ export default function Onboarding({ completeOnboarding }) {
     setCanvas(prev => ({ ...prev, [needId]: mode }))
   }
 
+  async function handleSendMagicLink() {
+    setSendingLink(true)
+    const { error: e } = await sendMagicLink(email)
+    if (!e) {
+      setError('MAGIC_SENT')
+    } else {
+      setError('Something went wrong sending the link. Please try again.')
+    }
+    setSendingLink(false)
+  }
+
   async function handleFinish() {
     if (!name.trim() || !email.trim()) {
       setError('Please enter your name and email.')
@@ -162,8 +175,9 @@ export default function Onboarding({ completeOnboarding }) {
       completeOnboarding(canvas, { name: name.trim(), email: email.trim(), userId: data.id, ...answers })
       navigate('/today')
     } catch (err) {
-      if (err.code === '23505') {
-        setError('That email is already registered. Try signing in instead.')
+      const msg = err?.message || ''
+      if (err.code === '23505' || msg.includes('duplicate') || msg.includes('unique')) {
+        setError('DUPLICATE_EMAIL')
       } else {
         setError('Something went wrong. Please try again.')
       }
@@ -175,6 +189,7 @@ export default function Onboarding({ completeOnboarding }) {
   const answer = answers[q?.id]
   const canNext = q?.multi ? (answer?.length > 0) : !!answer
 
+  // ── Intro ──────────────────────────────────────────────────
   if (step === 'intro') {
     return (
       <div className={styles.screen}>
@@ -194,6 +209,7 @@ export default function Onboarding({ completeOnboarding }) {
     )
   }
 
+  // ── Questions ──────────────────────────────────────────────
   if (step === 'questions') {
     return (
       <div className={styles.screen}>
@@ -239,6 +255,7 @@ export default function Onboarding({ completeOnboarding }) {
     )
   }
 
+  // ── Details ────────────────────────────────────────────────
   if (step === 'details') {
     return (
       <div className={styles.screen}>
@@ -278,6 +295,7 @@ export default function Onboarding({ completeOnboarding }) {
     )
   }
 
+  // ── Reveal ────────────────────────────────────────────────
   if (step === 'reveal') {
     return (
       <div className={styles.screen}>
@@ -286,6 +304,7 @@ export default function Onboarding({ completeOnboarding }) {
           <div className={styles.qText}>Here's your ground, {name}.</div>
           <div className={styles.qSub}>Built from your answers. Adjust anything that doesn't feel right.</div>
         </div>
+
         <div className={styles.revealCanvas}>
           {NEEDS.map(n => {
             const mode = canvas[n.id]
@@ -310,9 +329,35 @@ export default function Onboarding({ completeOnboarding }) {
             )
           })}
         </div>
-        {error && <div className={styles.error} style={{ padding: '0 20px' }}>{error}</div>}
+
+        {/* Error states */}
+        {error === 'DUPLICATE_EMAIL' && (
+          <div style={{ padding: '0 20px', marginBottom: 8 }}>
+            <div className={styles.error} style={{ marginBottom: 12 }}>
+              That email is already registered.
+            </div>
+            <button
+              className="btn-ghost"
+              onClick={handleSendMagicLink}
+              disabled={sendingLink}
+            >
+              {sendingLink ? 'Sending...' : 'Send me a sign-in link →'}
+            </button>
+          </div>
+        )}
+        {error === 'MAGIC_SENT' && (
+          <div style={{ padding: '0 20px', marginBottom: 8 }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#1B3A2D', letterSpacing: '0.04em', lineHeight: 1.6 }}>
+              ✓ Check your email — we sent a sign-in link to {email}
+            </div>
+          </div>
+        )}
+        {error && error !== 'DUPLICATE_EMAIL' && error !== 'MAGIC_SENT' && (
+          <div className={styles.error} style={{ padding: '0 20px' }}>{error}</div>
+        )}
+
         <div className={styles.qFooter}>
-          <button className="btn-primary" onClick={handleFinish} disabled={saving}>
+          <button className="btn-primary" onClick={handleFinish} disabled={saving || error === 'MAGIC_SENT'}>
             {saving ? 'Saving...' : 'This is my canvas →'}
           </button>
           <button className="btn-ghost" style={{ marginTop: 8 }} onClick={() => setStep('details')}>

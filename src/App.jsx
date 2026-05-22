@@ -46,7 +46,25 @@ function Protected({ children, onboarded }) {
 }
 
 export default function App() {
-  const { state, updateCanvas, checkIn, setIntention, completeOnboarding } = useAppState()
+  const { state, authLoading, updateCanvas, checkIn, setIntention, completeOnboarding } = useAppState()
+
+  if (authLoading) {
+    return (
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100vh',
+        fontFamily: 'var(--font-mono)',
+        fontSize: 11,
+        color: 'var(--ink3)',
+        letterSpacing: '0.1em',
+        textTransform: 'uppercase',
+      }}>
+        loading...
+      </div>
+    )
+  }
 
   return (
     <BrowserRouter>
