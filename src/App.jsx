@@ -4,6 +4,9 @@ import Onboarding from './screens/Onboarding'
 import Today from './screens/Today'
 import CanvasScreen from './screens/CanvasScreen'
 import Intentions from './screens/Intentions'
+import Log from './screens/Log'
+import Summary from './screens/Summary'
+import Gallery from './screens/Gallery'
 import styles from './App.module.css'
 
 function BottomNav() {
@@ -25,20 +28,15 @@ function BottomNav() {
         <div className={styles.navDot} />
         <span className={styles.navLabel}>log</span>
       </NavLink>
+      <NavLink to="/summary" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`}>
+        <div className={styles.navDot} />
+        <span className={styles.navLabel}>summary</span>
+      </NavLink>
       <NavLink to="/gallery" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`}>
         <div className={styles.navDot} />
         <span className={styles.navLabel}>gallery</span>
       </NavLink>
     </nav>
-  )
-}
-
-function ComingSoon({ name }) {
-  return (
-    <div style={{ padding: '60px 24px', textAlign: 'center' }}>
-      <div style={{ fontFamily: 'var(--font-serif)', fontSize: 28, color: 'var(--ink)', marginBottom: 10 }}>{name}</div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink3)', letterSpacing: '0.1em' }}>COMING SOON</div>
-    </div>
   )
 }
 
@@ -60,8 +58,9 @@ export default function App() {
             <Route path="/today" element={<Protected onboarded={state.onboarded}><Today state={state} checkIn={checkIn} /></Protected>} />
             <Route path="/canvas" element={<Protected onboarded={state.onboarded}><CanvasScreen state={state} updateCanvas={updateCanvas} /></Protected>} />
             <Route path="/intentions" element={<Protected onboarded={state.onboarded}><Intentions state={state} setIntention={setIntention} /></Protected>} />
-            <Route path="/log" element={<Protected onboarded={state.onboarded}><ComingSoon name="Feeling Log" /></Protected>} />
-            <Route path="/gallery" element={<Protected onboarded={state.onboarded}><ComingSoon name="Gallery" /></Protected>} />
+            <Route path="/log" element={<Protected onboarded={state.onboarded}><Log state={state} /></Protected>} />
+            <Route path="/summary" element={<Protected onboarded={state.onboarded}><Summary state={state} /></Protected>} />
+            <Route path="/gallery" element={<Protected onboarded={state.onboarded}><Gallery state={state} /></Protected>} />
           </Routes>
         </div>
         {state.onboarded && <BottomNav />}

@@ -1,0 +1,15 @@
+.screen { display: flex; flex-direction: column; padding-bottom: 100px; }
+.header { padding: 24px 24px 20px; border-bottom: 1px solid var(--border); }
+.title { font-family: var(--font-serif); font-size: 28px; color: var(--ink); letter-spacing: -0.01em; margin-bottom: 4px; }
+.sub { font-family: var(--font-mono); font-size: 11px; color: var(--ink3); letter-spacing: 0.04em; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px; }
+.card { border: 1px solid var(--border); border-radius: 12px; padding: 14px; background: var(--bg); }
+.cardCurrent { border-color: var(--ink); }
+.cardHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.cardWeek { font-family: var(--font-mono); font-size: 10px; color: var(--ink3); letter-spacing: 0.04em; }
+.cardRate { font-family: var(--font-serif); font-size: 14px; letter-spacing: -0.01em; }
+.cardCurrentBadge { font-family: var(--font-mono); font-size: 9px; color: var(--ink); letter-spacing: 0.1em; text-transform: uppercase; border: 1px solid var(--ink); padding: 2px 5px; border-radius: 3px; }
+.miniCanvas { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; }
+.miniTile { aspect-ratio: 1; border: 1px solid; border-radius: 3px; display: flex; align-items: center; justify-content: center; }
+.miniPip { width: 5px; height: 5px; border-radius: 50%; }
+.cardEmpty { font-family: var(--font-mono); font-size: 9px; color: var(--ink3); letter-spacing: 0.06em; text-align: center; margin-top: 8px; }
