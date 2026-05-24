@@ -11,11 +11,11 @@ const QUESTIONS = [
     text: 'Where are you in life right now?',
     sub: 'This shapes what a realistic canvas looks like for you.',
     options: [
-      { value: 'building', label: 'Building', sub: 'Career, finances, establishing myself' },
-      { value: 'family', label: 'Raising a family', sub: 'Parenting, partnership, home life' },
-      { value: 'transition', label: 'In transition', sub: 'Career change, move, big life shift' },
-      { value: 'established', label: 'Established', sub: 'Stable, exploring what\'s next' },
-      { value: 'recovery', label: 'Recovering', sub: 'From burnout, loss, or health' },
+      { value: 'building',    label: 'Building',          sub: 'Career, finances, establishing myself' },
+      { value: 'family',      label: 'Raising a family',  sub: 'Parenting, partnership, home life' },
+      { value: 'transition',  label: 'In transition',     sub: 'Career change, move, big life shift' },
+      { value: 'established', label: 'Established',       sub: 'Stable, exploring what\'s next' },
+      { value: 'recovery',    label: 'Recovering',        sub: 'From burnout, loss, or health' },
     ],
   },
   {
@@ -24,14 +24,14 @@ const QUESTIONS = [
     sub: 'Be honest. These become your starting focus areas.',
     multi: true,
     options: [
-      { value: 'body', label: 'My body feels neglected' },
-      { value: 'finances', label: 'My finances feel unstable' },
+      { value: 'body',         label: 'My body feels neglected' },
+      { value: 'finances',     label: 'My finances feel unstable' },
       { value: 'disconnected', label: 'I feel disconnected from people' },
-      { value: 'meaning', label: 'I can\'t seem to find meaning' },
-      { value: 'home', label: 'My home feels chaotic' },
-      { value: 'exhausted', label: 'I\'m exhausted all the time' },
-      { value: 'anxious', label: 'I\'m anxious more days than not' },
-      { value: 'love', label: 'I\'ve lost touch with what I love' },
+      { value: 'meaning',      label: 'I can\'t seem to find meaning' },
+      { value: 'home',         label: 'My home feels chaotic' },
+      { value: 'exhausted',    label: 'I\'m exhausted all the time' },
+      { value: 'anxious',      label: 'I\'m anxious more days than not' },
+      { value: 'love',         label: 'I\'ve lost touch with what I love' },
     ],
   },
   {
@@ -40,14 +40,14 @@ const QUESTIONS = [
     sub: 'Not what you think you should value — what actually pulls at you.',
     multi: true,
     options: [
-      { value: 'health', label: 'My physical health and vitality' },
+      { value: 'health',     label: 'My physical health and vitality' },
       { value: 'connection', label: 'Deep connection with people I love' },
-      { value: 'creative', label: 'Creative work and purpose' },
-      { value: 'security', label: 'Financial security' },
-      { value: 'rest', label: 'Rest and recovery' },
-      { value: 'selfaware', label: 'Being present and self-aware' },
-      { value: 'beauty', label: 'Beauty, art, and inspiration' },
-      { value: 'home', label: 'My home and environment' },
+      { value: 'creative',   label: 'Creative work and purpose' },
+      { value: 'security',   label: 'Financial security' },
+      { value: 'rest',       label: 'Rest and recovery' },
+      { value: 'selfaware',  label: 'Being present and self-aware' },
+      { value: 'beauty',     label: 'Beauty, art, and inspiration' },
+      { value: 'home',       label: 'My home and environment' },
     ],
   },
   {
@@ -55,11 +55,11 @@ const QUESTIONS = [
     text: 'When do you feel most like yourself?',
     sub: 'The moments where life feels right.',
     options: [
-      { value: 'moving', label: 'When my body is moving', sub: 'Exercise, physical effort, being outside' },
-      { value: 'creating', label: 'When I\'m making something', sub: 'Creative work, building, expressing' },
-      { value: 'connecting', label: 'When I\'m deeply connected', sub: 'Real conversations, close relationships' },
-      { value: 'quiet', label: 'When things are quiet and clear', sub: 'Stillness, reflection, being alone' },
-      { value: 'flowing', label: 'When I\'m in flow', sub: 'Fully absorbed, time disappearing' },
+      { value: 'moving',     label: 'When my body is moving',       sub: 'Exercise, physical effort, being outside' },
+      { value: 'creating',   label: 'When I\'m making something',   sub: 'Creative work, building, expressing' },
+      { value: 'connecting', label: 'When I\'m deeply connected',   sub: 'Real conversations, close relationships' },
+      { value: 'quiet',      label: 'When things are quiet and clear', sub: 'Stillness, reflection, being alone' },
+      { value: 'flowing',    label: 'When I\'m in flow',            sub: 'Fully absorbed, time disappearing' },
     ],
   },
   {
@@ -67,37 +67,58 @@ const QUESTIONS = [
     text: 'How long have you been feeling this way?',
     sub: 'This helps calibrate how much retraining your nervous system needs.',
     options: [
-      { value: 'weeks', label: 'A few weeks', sub: 'Recent shift — we\'ll calibrate gently' },
-      { value: 'months', label: 'Several months', sub: 'Building pattern — your ground needs real work' },
-      { value: 'years', label: 'Years', sub: 'Long-term — your nervous system needs consistent retraining' },
+      { value: 'weeks',  label: 'A few weeks',           sub: 'Recent shift — we\'ll calibrate gently' },
+      { value: 'months', label: 'Several months',        sub: 'Building pattern — your ground needs real work' },
+      { value: 'years',  label: 'Years',                 sub: 'Long-term — your nervous system needs consistent retraining' },
       { value: 'always', label: 'It\'s always been this way', sub: 'Deeply rooted — we start from the foundation' },
     ],
   },
 ]
 
+// Build a canvas that respects the 1/2/3/4 constraint
 function buildCanvas(answers) {
-  const canvas = Object.fromEntries(NEEDS.map(n => [n.id, 'nourishment']))
-  if (answers.values?.includes('health')) canvas.movement = 'play'
-  if (answers.values?.includes('connection')) canvas.community = 'play'
-  if (answers.values?.includes('creative')) canvas.purpose = 'play'
-  if (answers.values?.includes('selfaware')) canvas.reflection = 'play'
-  if (answers.values?.includes('rest')) canvas.rest = 'play'
-  if (answers.values?.includes('beauty')) canvas.beauty = 'appreciation'
-  if (answers.values?.includes('security')) canvas.security = 'appreciation'
-  if (answers.values?.includes('home')) canvas.dwelling = 'appreciation'
-  if (answers.hardest?.includes('body')) canvas.movement = canvas.movement === 'play' ? 'play' : 'appreciation'
-  if (answers.hardest?.includes('exhausted')) canvas.rest = 'play'
-  if (answers.hardest?.includes('anxious')) { canvas.reflection = 'play'; canvas.rest = 'play' }
-  if (answers.hardest?.includes('disconnected')) canvas.community = canvas.community === 'play' ? 'play' : 'appreciation'
-  if (answers.hardest?.includes('finances')) canvas.security = 'appreciation'
-  if (answers.hardest?.includes('meaning')) canvas.purpose = canvas.purpose === 'play' ? 'play' : 'appreciation'
-  if (answers.lifeStage === 'recovery') { canvas.rest = 'play'; canvas.reflection = 'play' }
-  if (answers.lifeStage === 'family') canvas.community = canvas.community === 'play' ? 'play' : 'appreciation'
-  if (answers.lifeStage === 'building') canvas.security = canvas.security === 'play' ? 'play' : 'appreciation'
-  if (answers.mostSelf === 'moving') canvas.movement = 'play'
-  if (answers.mostSelf === 'creating') canvas.purpose = 'play'
-  if (answers.mostSelf === 'connecting') canvas.community = 'play'
-  if (answers.mostSelf === 'quiet') canvas.reflection = 'play'
+  // Score each need — higher = more important to user
+  const scores = Object.fromEntries(NEEDS.map(n => [n.id, 0]))
+
+  if (answers.values?.includes('health'))     scores.movement   += 3
+  if (answers.values?.includes('connection')) scores.community  += 3
+  if (answers.values?.includes('creative'))   scores.purpose    += 3
+  if (answers.values?.includes('selfaware'))  scores.reflection += 3
+  if (answers.values?.includes('rest'))       scores.rest       += 3
+  if (answers.values?.includes('beauty'))     scores.beauty     += 2
+  if (answers.values?.includes('security'))   scores.security   += 2
+  if (answers.values?.includes('home'))       scores.dwelling   += 2
+
+  if (answers.hardest?.includes('body'))         scores.movement   += 2
+  if (answers.hardest?.includes('exhausted'))    scores.rest       += 3
+  if (answers.hardest?.includes('anxious'))      { scores.reflection += 2; scores.rest += 2 }
+  if (answers.hardest?.includes('disconnected')) scores.community  += 2
+  if (answers.hardest?.includes('finances'))     scores.security   += 2
+  if (answers.hardest?.includes('meaning'))      scores.purpose    += 2
+  if (answers.hardest?.includes('home'))         scores.dwelling   += 1
+
+  if (answers.lifeStage === 'recovery')    { scores.rest += 2; scores.reflection += 2 }
+  if (answers.lifeStage === 'family')      scores.community += 2
+  if (answers.lifeStage === 'building')    scores.security  += 2
+
+  if (answers.mostSelf === 'moving')     scores.movement   += 3
+  if (answers.mostSelf === 'creating')   scores.purpose    += 3
+  if (answers.mostSelf === 'connecting') scores.community  += 3
+  if (answers.mostSelf === 'quiet')      scores.reflection += 3
+  if (answers.mostSelf === 'flowing')    scores.purpose    += 2
+
+  // Sort needs by score descending
+  const sorted = [...NEEDS].sort((a, b) => scores[b.id] - scores[a.id])
+
+  // Assign modes based on rank: 1 play, 2 appreciation, 3 nourishment, 4 survival
+  const canvas = {}
+  sorted.forEach((n, i) => {
+    if (i === 0)      canvas[n.id] = 'play'
+    else if (i <= 2)  canvas[n.id] = 'appreciation'
+    else if (i <= 5)  canvas[n.id] = 'nourishment'
+    else              canvas[n.id] = 'survival'
+  })
+
   return canvas
 }
 
@@ -107,6 +128,7 @@ export default function Onboarding({ completeOnboarding }) {
   const [qIndex, setQIndex] = useState(0)
   const [answers, setAnswers] = useState({})
   const [canvas, setCanvas] = useState(null)
+  const [selected, setSelected] = useState(null)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [saving, setSaving] = useState(false)
@@ -137,24 +159,41 @@ export default function Onboarding({ completeOnboarding }) {
     }
   }
 
-  function updateCanvasMode(needId, mode) {
-    setCanvas(prev => ({ ...prev, [needId]: mode }))
+  // Canvas reveal — tap to assign
+  function handleChip(needId) {
+    setSelected(selected === needId ? null : needId)
+  }
+
+  function handleSlot(mode) {
+    if (!selected) return
+    const lyr = LAYERS[mode]
+    const currentInMode = NEEDS.filter(n => canvas[n.id] === mode)
+    if (currentInMode.length >= lyr.slots) return
+    setCanvas(prev => ({ ...prev, [selected]: mode }))
+    setSelected(null)
+  }
+
+  function handleRemove(needId) {
+    setCanvas(prev => ({ ...prev, [needId]: null }))
+    setSelected(null)
   }
 
   async function handleSendMagicLink() {
     setSendingLink(true)
     const { error: e } = await sendMagicLink(email)
-    if (!e) {
-      setError('MAGIC_SENT')
-    } else {
-      setError('Something went wrong sending the link. Please try again.')
-    }
+    setError(!e ? 'MAGIC_SENT' : 'Something went wrong sending the link. Please try again.')
     setSendingLink(false)
   }
 
   async function handleFinish() {
     if (!name.trim() || !email.trim()) {
       setError('Please enter your name and email.')
+      return
+    }
+    // Check all needs assigned
+    const unassigned = NEEDS.filter(n => !canvas[n.id])
+    if (unassigned.length > 0) {
+      setError('Please assign all needs before continuing.')
       return
     }
     setSaving(true)
@@ -297,50 +336,88 @@ export default function Onboarding({ completeOnboarding }) {
 
   // ── Reveal ────────────────────────────────────────────────
   if (step === 'reveal') {
+    const unassigned = NEEDS.filter(n => !canvas[n.id])
+    const allAssigned = unassigned.length === 0
+
     return (
       <div className={styles.screen}>
         <div className={styles.revealHeader}>
           <div className={styles.qNum}>Your starting canvas</div>
           <div className={styles.qText}>Here's your ground, {name}.</div>
-          <div className={styles.qSub}>Built from your answers. Adjust anything that doesn't feel right.</div>
+          <div className={styles.qSub}>
+            {selected
+              ? `Tap a slot to assign ${NEEDS.find(n => n.id === selected)?.name}`
+              : 'Tap a need below, then tap a slot to assign it.'}
+          </div>
         </div>
 
+        {/* Mode slots */}
         <div className={styles.revealCanvas}>
-          {NEEDS.map(n => {
-            const mode = canvas[n.id]
+          {LAYER_ORDER.map(mode => {
             const lyr = LAYERS[mode]
+            const assigned = NEEDS.filter(n => canvas[n.id] === mode)
+            const sw = lyr.slots === 1 ? '100%' : lyr.slots === 2 ? 'calc(50% - 3px)' : 'calc(33.3% - 4px)'
             return (
-              <div key={n.id} className={styles.revealRow}>
-                <div className={styles.revealPip} style={{ background: lyr.pip }} />
-                <div className={styles.revealName}>{n.name}</div>
-                <div className={styles.revealPills}>
-                  {LAYER_ORDER.map(l => (
-                    <button
-                      key={l}
-                      className={`${styles.pill} ${mode === l ? styles.pillActive : ''}`}
-                      style={mode === l ? { borderColor: LAYERS[l].border, color: LAYERS[l].text, background: LAYERS[l].bg } : {}}
-                      onClick={() => updateCanvasMode(n.id, l)}
-                    >
-                      {l.slice(0, 3)}
-                    </button>
-                  ))}
+              <div key={mode} className={styles.modeSection}>
+                <div className={styles.modeSectionHead}>
+                  <div className={styles.modeSectionLabel}>
+                    <div className={styles.modePip} style={{ background: lyr.pip }} />
+                    {mode}
+                  </div>
+                  <div className={styles.modeSectionCount}>{assigned.length}/{lyr.slots}</div>
+                </div>
+                <div className={styles.slotsRow}>
+                  {Array.from({ length: lyr.slots }).map((_, i) => {
+                    const need = assigned[i]
+                    const canAccept = selected && assigned.length < lyr.slots
+                    if (need) {
+                      return (
+                        <div key={i} className={styles.slotFilled} style={{ width: sw }} onClick={() => handleRemove(need.id)}>
+                          <span className={styles.slotName}>{need.name}</span>
+                          <span className={styles.slotX}>×</span>
+                        </div>
+                      )
+                    }
+                    return (
+                      <div
+                        key={i}
+                        className={`${styles.slotEmpty} ${canAccept ? styles.slotHighlight : ''}`}
+                        style={{ width: sw }}
+                        onClick={() => handleSlot(mode)}
+                      >
+                        {canAccept ? 'tap to assign' : ''}
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             )
           })}
+
+          {/* Parking lot */}
+          <div className={styles.lotDivider} />
+          <div className={styles.lotLabel}>unassigned</div>
+          <div className={styles.chips}>
+            {unassigned.map(n => (
+              <div
+                key={n.id}
+                className={`${styles.chip} ${selected === n.id ? styles.chipSelected : ''}`}
+                onClick={() => handleChip(n.id)}
+              >
+                {n.name}
+              </div>
+            ))}
+            {allAssigned && (
+              <div className={styles.allAssigned}>all needs assigned ✓</div>
+            )}
+          </div>
         </div>
 
         {/* Error states */}
         {error === 'DUPLICATE_EMAIL' && (
           <div style={{ padding: '0 20px', marginBottom: 8 }}>
-            <div className={styles.error} style={{ marginBottom: 12 }}>
-              That email is already registered.
-            </div>
-            <button
-              className="btn-ghost"
-              onClick={handleSendMagicLink}
-              disabled={sendingLink}
-            >
+            <div className={styles.error} style={{ marginBottom: 12 }}>That email is already registered.</div>
+            <button className="btn-ghost" onClick={handleSendMagicLink} disabled={sendingLink}>
               {sendingLink ? 'Sending...' : 'Send me a sign-in link →'}
             </button>
           </div>
@@ -357,12 +434,10 @@ export default function Onboarding({ completeOnboarding }) {
         )}
 
         <div className={styles.qFooter}>
-          <button className="btn-primary" onClick={handleFinish} disabled={saving || error === 'MAGIC_SENT'}>
-            {saving ? 'Saving...' : 'This is my canvas →'}
+          <button className="btn-primary" onClick={handleFinish} disabled={saving || !allAssigned || error === 'MAGIC_SENT'}>
+            {saving ? 'Saving...' : allAssigned ? 'This is my canvas →' : `${unassigned.length} needs unassigned`}
           </button>
-          <button className="btn-ghost" style={{ marginTop: 8 }} onClick={() => setStep('details')}>
-            Back
-          </button>
+          <button className="btn-ghost" style={{ marginTop: 8 }} onClick={() => setStep('details')}>Back</button>
         </div>
       </div>
     )
