@@ -57,32 +57,30 @@ async function restoreFromSupabase(userId) {
 
 export function useAppState() {
   const [state, setState] = useState(initialState)
-  const [authLoading, setAuthLoading] = useState(true)
+  const [authLoading, setAuthLoading] = useState(false)
 
   useEffect(() => {
-  async function checkSession() {
-  try {
-    const { data: { session } } = await Promise.race([
-      supabase.auth.getSession(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
-    ])
-    if (session?.user) {
-      const restored = await restoreFromSupabase(session.user.id)
-      if (restored) { setState(restored); saveState(restored) }
+    async function checkSession() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.user) {
+          const restored = await restoreFromSupabase(session.user.id)
+          if (restored) { setState(restored); saveState(restored) }
+        }
+      } catch (e) {
+        console.error('checkSession error', e)
+      }
     }
-  } catch (e) {
-    console.error('auth timeout or error', e)
-  }
-  setAuthLoading(false)
-}
-    }
+
     checkSession()
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
         const restored = await restoreFromSupabase(session.user.id)
         if (restored) { setState(restored); saveState(restored) }
       }
     })
+
     return () => subscription.unsubscribe()
   }, [])
 
