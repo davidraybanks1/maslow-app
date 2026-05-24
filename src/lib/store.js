@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { defaultCanvas } from './constants'
 import { supabase } from './supabase'
 
-const STORAGE_KEY = 'maslow_state_v2'
+const STORAGE_KEY = 'maslow_state'
 
 function loadState() {
   try {
