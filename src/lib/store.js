@@ -3,6 +3,7 @@ import { defaultCanvas } from './constants'
 import { supabase } from './supabase'
 
 const STORAGE_KEY = 'maslow_state'
+const STATE_VERSION = 2
 
 function loadState() {
   try {
@@ -16,10 +17,43 @@ function saveState(state) {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)) } catch {}
 }
 
+function migrateState(saved) {
+  try {
+    const version = saved._version || 1
+
+    if (version < 2) {
+      // v1 → v2: replace intentions/feelings/weeklyNotes with practices
+      // Reset checkins — old format used needId, new uses needId_index
+      saved.practices = {}
+      saved.checkins = {}
+      delete saved.intentions
+      delete saved.feelings
+      delete saved.weeklyNotes
+      delete saved.streak
+      saved._version = 2
+    }
+
+    return saved
+  } catch (e) {
+    console.error('migrateState error', e)
+    // If migration fails return a fresh state but keep onboarded/canvas/profile
+    return {
+      _version: STATE_VERSION,
+      onboarded: saved.onboarded || false,
+      userId: saved.userId || null,
+      canvas: saved.canvas || defaultCanvas(),
+      practices: {},
+      checkins: {},
+      profile: saved.profile || { name: '' },
+    }
+  }
+}
+
 export function initialState() {
   const saved = loadState()
-  if (saved) return saved
+  if (saved) return migrateState(saved)
   return {
+    _version: STATE_VERSION,
     onboarded: false,
     userId: null,
     canvas: defaultCanvas(),
@@ -42,6 +76,7 @@ async function restoreFromSupabase(userId) {
       checkinsMap[row.date_key].push(row.need_id)
     }
     return {
+      _version: STATE_VERSION,
       onboarded: user.onboarded,
       userId: user.id,
       canvas: user.canvas || defaultCanvas(),
