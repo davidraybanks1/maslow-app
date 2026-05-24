@@ -60,13 +60,21 @@ export function useAppState() {
   const [authLoading, setAuthLoading] = useState(true)
 
   useEffect(() => {
-    async function checkSession() {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session?.user) {
-        const restored = await restoreFromSupabase(session.user.id)
-        if (restored) { setState(restored); saveState(restored) }
-      }
-      setAuthLoading(false)
+  async function checkSession() {
+  try {
+    const { data: { session } } = await Promise.race([
+      supabase.auth.getSession(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+    ])
+    if (session?.user) {
+      const restored = await restoreFromSupabase(session.user.id)
+      if (restored) { setState(restored); saveState(restored) }
+    }
+  } catch (e) {
+    console.error('auth timeout or error', e)
+  }
+  setAuthLoading(false)
+}
     }
     checkSession()
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
