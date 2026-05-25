@@ -75,9 +75,7 @@ const QUESTIONS = [
   },
 ]
 
-// Build a canvas that respects the 1/2/3/4 constraint
 function buildCanvas(answers) {
-  // Score each need — higher = more important to user
   const scores = Object.fromEntries(NEEDS.map(n => [n.id, 0]))
 
   if (answers.values?.includes('health'))     scores.movement   += 3
@@ -107,10 +105,8 @@ function buildCanvas(answers) {
   if (answers.mostSelf === 'quiet')      scores.reflection += 3
   if (answers.mostSelf === 'flowing')    scores.purpose    += 2
 
-  // Sort needs by score descending
   const sorted = [...NEEDS].sort((a, b) => scores[b.id] - scores[a.id])
 
-  // Assign modes based on rank: 1 play, 2 appreciation, 3 nourishment, 4 survival
   const canvas = {}
   sorted.forEach((n, i) => {
     if (i === 0)      canvas[n.id] = 'play'
@@ -131,6 +127,8 @@ export default function Onboarding({ completeOnboarding }) {
   const [selected, setSelected] = useState(null)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
+  const [timezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [sendingLink, setSendingLink] = useState(false)
@@ -159,7 +157,6 @@ export default function Onboarding({ completeOnboarding }) {
     }
   }
 
-  // Canvas reveal — tap to assign
   function handleChip(needId) {
     setSelected(selected === needId ? null : needId)
   }
@@ -190,7 +187,6 @@ export default function Onboarding({ completeOnboarding }) {
       setError('Please enter your name and email.')
       return
     }
-    // Check all needs assigned
     const unassigned = NEEDS.filter(n => !canvas[n.id])
     if (unassigned.length > 0) {
       setError('Please assign all needs before continuing.')
@@ -204,6 +200,8 @@ export default function Onboarding({ completeOnboarding }) {
         .insert({
           name: name.trim(),
           email: email.trim().toLowerCase(),
+          phone: phone.trim() || null,
+          timezone,
           canvas,
           profile: answers,
           onboarded: true,
@@ -261,20 +259,20 @@ export default function Onboarding({ completeOnboarding }) {
           <div className={styles.qSub}>{q.sub}</div>
           <div className={styles.options}>
             {q.options.map(opt => {
-              const selected = q.multi
+              const sel = q.multi
                 ? (answer || []).includes(opt.value)
                 : answer === opt.value
               return (
                 <div
                   key={opt.value}
-                  className={`${styles.option} ${selected ? styles.optionSelected : ''}`}
+                  className={`${styles.option} ${sel ? styles.optionSelected : ''}`}
                   onClick={() => q.multi
                     ? handleMultiSelect(q.id, opt.value)
                     : handleSingleSelect(q.id, opt.value)
                   }
                 >
-                  <div className={`${styles.optCheck} ${selected ? styles.optCheckSelected : ''}`}>
-                    {selected && <div className={styles.optCheckInner} />}
+                  <div className={`${styles.optCheck} ${sel ? styles.optCheckSelected : ''}`}>
+                    {sel && <div className={styles.optCheckInner} />}
                   </div>
                   <div className={styles.optBody}>
                     <div className={styles.optLabel}>{opt.label}</div>
@@ -323,6 +321,17 @@ export default function Onboarding({ completeOnboarding }) {
             />
             <div className={styles.inputHint}>We'll use this for weekly reminders and check-ins.</div>
           </div>
+          <div className={styles.inputGroup}>
+            <label className={styles.inputLabel}>Your phone number <span style={{ fontStyle: 'italic', textTransform: 'none', letterSpacing: 0 }}>(optional)</span></label>
+            <input
+              className={styles.input}
+              type="tel"
+              placeholder="+1 (555) 000-0000"
+              value={phone}
+              onChange={e => setPhone(e.target.value)}
+            />
+            <div className={styles.inputHint}>For morning, midday, and evening check-in reminders via text.</div>
+          </div>
           {error && <div className={styles.error}>{error}</div>}
         </div>
         <div className={styles.qFooter}>
@@ -351,7 +360,6 @@ export default function Onboarding({ completeOnboarding }) {
           </div>
         </div>
 
-        {/* Mode slots */}
         <div className={styles.revealCanvas}>
           {LAYER_ORDER.map(mode => {
             const lyr = LAYERS[mode]
@@ -394,7 +402,6 @@ export default function Onboarding({ completeOnboarding }) {
             )
           })}
 
-          {/* Parking lot */}
           <div className={styles.lotDivider} />
           <div className={styles.lotLabel}>unassigned</div>
           <div className={styles.chips}>
@@ -413,7 +420,6 @@ export default function Onboarding({ completeOnboarding }) {
           </div>
         </div>
 
-        {/* Error states */}
         {error === 'DUPLICATE_EMAIL' && (
           <div style={{ padding: '0 20px', marginBottom: 8 }}>
             <div className={styles.error} style={{ marginBottom: 12 }}>That email is already registered.</div>
