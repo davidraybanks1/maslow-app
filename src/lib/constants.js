@@ -26,8 +26,8 @@ export const LAYERS = {
     slots: 2,
     bubbles: 2,
   },
-  play: {
-    name: 'play',
+  purpose: {
+    name: 'purpose',
     pip: '#1B3A2D',
     border: '#1B3A2D',
     text: '#1B3A2D',
@@ -37,19 +37,19 @@ export const LAYERS = {
   },
 }
 
-export const LAYER_ORDER = ['play', 'appreciation', 'nourishment', 'survival']
+export const LAYER_ORDER = ['purpose', 'appreciation', 'nourishment', 'survival']
 
 export const NEEDS = [
   { id: 'movement',   name: 'Movement',   description: 'Exercise, mobility, physical vitality' },
   { id: 'community',  name: 'Community',  description: 'Friendship, family, belonging' },
   { id: 'reflection', name: 'Reflection', description: 'Journaling, self-awareness, inner life' },
-  { id: 'purpose',    name: 'Purpose',    description: 'Meaning, contribution, creative output' },
   { id: 'nutrition',  name: 'Nutrition',  description: 'Food, hydration, relationship with eating' },
   { id: 'rest',       name: 'Rest',       description: 'Sleep, stillness, nervous system recovery' },
   { id: 'beauty',     name: 'Beauty',     description: 'Art, music, nature, aesthetic experience' },
-  { id: 'security',   name: 'Security',   description: 'Financial stability, safety, structure' },
+  { id: 'money',      name: 'Money',      description: 'Income, spending, relationship with finances' },
   { id: 'dwelling',   name: 'Dwelling',   description: 'Home, environment, cleanliness' },
   { id: 'intimacy',   name: 'Intimacy',   description: 'Romance, deep partnership, vulnerability' },
+  { id: 'play',       name: 'Play',       description: 'Unstructured joy, creativity, exploration' },
 ]
 
 export function defaultCanvas() {
@@ -57,13 +57,13 @@ export function defaultCanvas() {
     movement:   'nourishment',
     community:  'nourishment',
     reflection: 'nourishment',
-    purpose:    'nourishment',
     nutrition:  'nourishment',
     rest:       'nourishment',
     beauty:     'nourishment',
-    security:   'nourishment',
+    money:      'nourishment',
     dwelling:   'nourishment',
     intimacy:   'nourishment',
+    play:       'nourishment',
   }
 }
 
