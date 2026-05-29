@@ -4,6 +4,7 @@ import Onboarding from './screens/Onboarding'
 import Today from './screens/Today'
 import CanvasScreen from './screens/CanvasScreen'
 import Practices from './screens/Practices'
+import Data from './screens/Data'
 import styles from './App.module.css'
 
 function BottomNav() {
@@ -17,6 +18,9 @@ function BottomNav() {
       </NavLink>
       <NavLink to="/practices" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`}>
         <div className={styles.navDot} /><span className={styles.navLabel}>practices</span>
+      </NavLink>
+      <NavLink to="/data" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`}>
+        <div className={styles.navDot} /><span className={styles.navLabel}>data</span>
       </NavLink>
     </nav>
   )
@@ -48,6 +52,7 @@ export default function App() {
             <Route path="/today" element={<Protected onboarded={state.onboarded}><Today state={state} checkIn={checkIn} /></Protected>} />
             <Route path="/canvas" element={<Protected onboarded={state.onboarded}><CanvasScreen state={state} updateCanvas={updateCanvas} /></Protected>} />
             <Route path="/practices" element={<Protected onboarded={state.onboarded}><Practices state={state} setPractice={setPractice} /></Protected>} />
+            <Route path="/data" element={<Protected onboarded={state.onboarded}><Data state={state} /></Protected>} />
           </Routes>
         </div>
         {state.onboarded && <BottomNav />}

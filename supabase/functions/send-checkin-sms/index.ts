@@ -10,24 +10,24 @@ const TWILIO_AUTH_TOKEN  = Deno.env.get('TWILIO_AUTH_TOKEN')!
 const TWILIO_PHONE       = Deno.env.get('TWILIO_PHONE_NUMBER')!
 const APP_URL            = 'https://app.mymaslow.com/today'
 
-function getMessage(type: string, name: string, practices: Record<string, string[]>): string {
-  const practiceList = Object.values(practices).flat().filter(Boolean)
-  const count = practiceList.length
-
+function getMessage(type: string, name: string): string {
   if (type === 'morning') {
-    return `Good morning, ${name} 🌱\n\nYou have ${count} practices today. Here's your ground:\n${APP_URL}`
+    return `Good morning, ${name} 🌱\n\nHere's your ground for today:\n${APP_URL}\n\nReply STOP to opt out.`
   }
   if (type === 'midday') {
-    return `Hey ${name} — halfway through the day.\n\nMark off any practices you've completed so far:\n${APP_URL}`
+    return `Hey ${name} — halfway through the day.\n\nMark off any practices you've completed:\n${APP_URL}\n\nReply STOP to opt out.`
   }
   if (type === 'evening') {
-    return `Good evening, ${name} 🌙\n\nHow did today go? Mark off any practices you completed:\n${APP_URL}`
+    return `Good evening, ${name} 🌙\n\nHow did today go? Mark off your completed practices:\n${APP_URL}\n\nReply STOP to opt out.`
   }
   return ''
 }
 
 async function sendSMS(to: string, body: string) {
   const credentials = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)
+  console.log('Sending to:', to)
+  console.log('SID prefix:', TWILIO_ACCOUNT_SID?.slice(0, 6))
+  console.log('Token length:', TWILIO_AUTH_TOKEN?.length)
   const res = await fetch(
     `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
     {
@@ -39,7 +39,9 @@ async function sendSMS(to: string, body: string) {
       body: new URLSearchParams({ To: to, From: TWILIO_PHONE, Body: body }),
     }
   )
-  return res.json()
+  const json = await res.json()
+  console.log('Twilio response:', JSON.stringify(json))
+  return json
 }
 
 Deno.serve(async (req) => {
@@ -47,13 +49,12 @@ Deno.serve(async (req) => {
     const { type } = await req.json()
 
     if (!['morning', 'midday', 'evening'].includes(type)) {
-      return new Response(JSON.stringify({ error: 'Invalid type' }), { status: 400 })
+      return new Response(JSON.stringify({ error: 'Invalid type. Use morning, midday, or evening.' }), { status: 400 })
     }
 
-    // Get all users with a phone number
     const { data: users, error } = await supabase
       .from('users')
-      .select('id, name, phone, timezone, practices')
+      .select('id, name, phone, timezone')
       .not('phone', 'is', null)
 
     if (error) throw error
@@ -62,25 +63,24 @@ Deno.serve(async (req) => {
     const results = []
 
     for (const user of users) {
-      // Check what hour it is in the user's timezone
       const userTime = new Date(now.toLocaleString('en-US', { timeZone: user.timezone || 'America/Los_Angeles' }))
       const hour = userTime.getHours()
-
-      // Only send if it's the right time window (within the hour)
       const targetHour = type === 'morning' ? 8 : type === 'midday' ? 12 : 20
+
       if (hour !== targetHour) continue
 
-      const message = getMessage(type, user.name, user.practices || {})
+      const message = getMessage(type, user.name)
       if (!message) continue
 
       const result = await sendSMS(user.phone, message)
-      results.push({ user: user.id, sid: result.sid, status: result.status })
+      results.push({ user: user.id, sid: result.sid, status: result.status, error: result.message })
     }
 
     return new Response(JSON.stringify({ sent: results.length, results }), {
       headers: { 'Content-Type': 'application/json' },
     })
   } catch (err) {
+    console.error('Function error:', err)
     return new Response(JSON.stringify({ error: err.message }), { status: 500 })
   }
 })
