@@ -10,6 +10,8 @@ const TWILIO_AUTH_TOKEN  = Deno.env.get('TWILIO_AUTH_TOKEN')!
 const TWILIO_PHONE       = Deno.env.get('TWILIO_PHONE_NUMBER')!
 const APP_URL            = 'https://app.mymaslow.com/today'
 
+const VALID_TYPES = ['morning', 'midday', 'evening', 'mood']
+
 function getMessage(type: string, name: string): string {
   if (type === 'morning') {
     return `Good morning, ${name} 🌱\n\nHere's your ground for today:\n${APP_URL}\n\nReply STOP to opt out.`
@@ -46,16 +48,19 @@ async function sendSMS(to: string, body: string) {
 
 Deno.serve(async (req) => {
   try {
-    const secret = Deno.env.get('CRON_SECRET')
-    const authHeader = req.headers.get('Authorization')
-    if (!secret || authHeader !== `Bearer ${secret}`) {
+    const internalSecret = Deno.env.get('INTERNAL_SECRET')
+    const keyHeader = req.headers.get('X-Internal-Key')
+    if (!internalSecret || keyHeader !== internalSecret) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
     }
 
     const { type } = await req.json()
 
-    if (!['morning', 'midday', 'evening'].includes(type)) {
-      return new Response(JSON.stringify({ error: 'Invalid type. Use morning, midday, or evening.' }), { status: 400 })
+    if (!VALID_TYPES.includes(type)) {
+      return new Response(
+        JSON.stringify({ error: `Invalid type. Use: ${VALID_TYPES.join(', ')}.` }),
+        { status: 400 }
+      )
     }
 
     const { data: users, error } = await supabase
@@ -71,12 +76,20 @@ Deno.serve(async (req) => {
     for (const user of users) {
       const userTime = new Date(now.toLocaleString('en-US', { timeZone: user.timezone || 'America/Los_Angeles' }))
       const hour = userTime.getHours()
-      const targetHour = type === 'morning' ? 8 : type === 'midday' ? 12 : 20
 
-      if (hour !== targetHour) continue
+      let shouldSend = false
+      let message = ''
 
-      const message = getMessage(type, user.name)
-      if (!message) continue
+      if (type === 'mood') {
+        shouldSend = [10, 14, 17].includes(hour)
+        message = 'Mood check — how are you feeling? Reply: good, fine, or bad'
+      } else {
+        const targetHour = type === 'morning' ? 8 : type === 'midday' ? 12 : 20
+        shouldSend = hour === targetHour
+        message = getMessage(type, user.name)
+      }
+
+      if (!shouldSend || !message) continue
 
       const result = await sendSMS(user.phone, message)
       results.push({ user: user.id, sid: result.sid, status: result.status, error: result.message })
