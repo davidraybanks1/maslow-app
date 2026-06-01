@@ -67,11 +67,21 @@ export function initialState() {
   }
 }
 
+async function fetchMoods(userId) {
+  const { data } = await supabase
+    .from('moods')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+  return data || []
+}
+
 async function restoreFromSupabase(userId) {
   try {
-    const [{ data: user }, { data: checkins }] = await Promise.all([
+    const [{ data: user }, { data: checkins }, moods] = await Promise.all([
       supabase.from('users').select('*').eq('id', userId).single(),
       supabase.from('checkins').select('*').eq('user_id', userId),
+      fetchMoods(userId),
     ])
     if (!user) return null
     const checkinsMap = {}
@@ -79,17 +89,6 @@ async function restoreFromSupabase(userId) {
       if (!checkinsMap[row.date_key]) checkinsMap[row.date_key] = []
       checkinsMap[row.date_key].push(row.need_id)
     }
-
-    let moods = []
-    try {
-      const { data: moodsData } = await supabase
-        .from('moods')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-      moods = moodsData || []
-    } catch {}
-
     return {
       _version: STATE_VERSION,
       onboarded: user.onboarded,
@@ -188,6 +187,12 @@ export function useAppState() {
     }
   }
 
+  async function loadMoods() {
+    if (!state.userId) return
+    const moods = await fetchMoods(state.userId)
+    setState(prev => ({ ...prev, moods }))
+  }
+
   function completeOnboarding(canvas, profile) {
     const { userId, ...profileData } = profile
     setState(prev => ({
@@ -199,7 +204,7 @@ export function useAppState() {
     }))
   }
 
-  return { state, authLoading, updateCanvas, setPractice, checkIn, completeOnboarding }
+  return { state, authLoading, updateCanvas, setPractice, checkIn, completeOnboarding, loadMoods }
 }
 
 export function todayKey() {
