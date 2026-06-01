@@ -46,6 +46,12 @@ async function sendSMS(to: string, body: string) {
 
 Deno.serve(async (req) => {
   try {
+    const secret = Deno.env.get('CRON_SECRET')
+    const authHeader = req.headers.get('Authorization')
+    if (!secret || authHeader !== `Bearer ${secret}`) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+    }
+
     const { type } = await req.json()
 
     if (!['morning', 'midday', 'evening'].includes(type)) {

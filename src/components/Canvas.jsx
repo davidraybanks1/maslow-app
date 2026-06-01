@@ -4,7 +4,7 @@ import styles from './Canvas.module.css'
 
 // Layout rules per mode
 const MODE_LAYOUT = {
-  play:         { cols: 12, height: 200 },
+  purpose:      { cols: 12, height: 200 },
   appreciation: { cols: 6,  height: 130 },
   nourishment:  { cols: 6,  height: 90  },
   survival:     { cols: 4,  height: 52  },
@@ -14,12 +14,9 @@ const MODE_LAYOUT = {
 // Anxiety = remaining unfilled space
 
 function computeAnxiety(canvas) {
-  // Total filled area in col-row units
-  const totalCols = 12
-  // We'll measure by summing col*height for each need and compare to baseline
   const baselineArea = NEEDS.length * MODE_LAYOUT['nourishment'].cols * MODE_LAYOUT['nourishment'].height
   const usedArea = NEEDS.reduce((s, n) => {
-    const layout = MODE_LAYOUT[canvas[n.id]]
+    const layout = MODE_LAYOUT[canvas[n.id]] || MODE_LAYOUT['nourishment']
     return s + layout.cols * layout.height
   }, 0)
   const pct = Math.min(usedArea / baselineArea, 1)
@@ -105,13 +102,14 @@ export default function Canvas({ canvas, onChangeMode, readonly = false }) {
         )}
 
         {/* Need tiles */}
-{[...NEEDS].sort((a, b) => {
-          const order = { play: 0, appreciation: 1, nourishment: 2, survival: 3 }
-          return order[canvas[a.id]] - order[canvas[b.id]]
-        }).map(n => {      
+        {[...NEEDS].sort((a, b) => {
+          const order = { purpose: 0, appreciation: 1, nourishment: 2, survival: 3 }
+          return (order[canvas[a.id]] ?? 99) - (order[canvas[b.id]] ?? 99)
+        }).map(n => {
           const mode = canvas[n.id]
+          if (!mode || !LAYERS[mode]) return null
           const lyr = LAYERS[mode]
-          const layout = MODE_LAYOUT[mode]
+          const layout = MODE_LAYOUT[mode] || MODE_LAYOUT['nourishment']
           const isOpen = openDropdown === n.id
 
           return (

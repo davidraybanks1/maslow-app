@@ -23,7 +23,7 @@ export default function CanvasScreen({ state, updateCanvas }) {
     setSelected(null)
   }
 
-  const unassigned = NEEDS.filter(n => !state.canvas[n.id] || state.canvas[n.id] === null)
+  const unassigned = NEEDS.filter(n => !state.canvas[n.id])
 
   return (
     <div className={styles.screen}>

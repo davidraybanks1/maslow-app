@@ -74,3 +74,11 @@ export function totalBubbles(canvas) {
 export function todayKey() {
   return new Date().toISOString().slice(0, 10)
 }
+
+export function computeProgress(canvas) {
+  const active = NEEDS.filter(n => {
+    const mode = canvas[n.id]
+    return mode && LAYERS[mode] && LAYERS[mode].bubbles > 0
+  }).length
+  return Math.round((active / NEEDS.length) * 100)
+}

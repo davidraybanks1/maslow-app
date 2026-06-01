@@ -33,6 +33,8 @@ function migrateState(saved) {
       saved._version = 2
     }
 
+    if (!saved.moods) saved.moods = []
+
     return saved
   } catch (e) {
     console.error('migrateState error', e)
@@ -44,6 +46,7 @@ function migrateState(saved) {
       canvas: saved.canvas || defaultCanvas(),
       practices: {},
       checkins: {},
+      moods: [],
       profile: saved.profile || { name: '' },
     }
   }
@@ -59,6 +62,7 @@ export function initialState() {
     canvas: defaultCanvas(),
     practices: {},
     checkins: {},
+    moods: [],
     profile: { name: '' },
   }
 }
@@ -75,6 +79,17 @@ async function restoreFromSupabase(userId) {
       if (!checkinsMap[row.date_key]) checkinsMap[row.date_key] = []
       checkinsMap[row.date_key].push(row.need_id)
     }
+
+    let moods = []
+    try {
+      const { data: moodsData } = await supabase
+        .from('moods')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+      moods = moodsData || []
+    } catch {}
+
     return {
       _version: STATE_VERSION,
       onboarded: user.onboarded,
@@ -82,6 +97,7 @@ async function restoreFromSupabase(userId) {
       canvas: user.canvas || defaultCanvas(),
       practices: user.practices || {},
       checkins: checkinsMap,
+      moods,
       profile: { name: user.name || '' },
     }
   } catch (e) {
@@ -92,7 +108,7 @@ async function restoreFromSupabase(userId) {
 
 export function useAppState() {
   const [state, setState] = useState(initialState)
-  const [authLoading, setAuthLoading] = useState(false)
+  const [authLoading, setAuthLoading] = useState(true)
 
   useEffect(() => {
     async function checkSession() {
@@ -104,6 +120,8 @@ export function useAppState() {
         }
       } catch (e) {
         console.error('checkSession error', e)
+      } finally {
+        setAuthLoading(false)
       }
     }
 
@@ -123,7 +141,12 @@ export function useAppState() {
 
   function updateCanvas(needId, mode) {
     setState(prev => {
-      const newCanvas = { ...prev.canvas, [needId]: mode }
+      const newCanvas = { ...prev.canvas }
+      if (mode == null) {
+        delete newCanvas[needId]
+      } else {
+        newCanvas[needId] = mode
+      }
       if (prev.userId) {
         supabase.from('users').update({ canvas: newCanvas }).eq('id', prev.userId).then()
       }
@@ -144,25 +167,36 @@ export function useAppState() {
   }
 
   function checkIn(needId, practiceIndex, date = todayKey()) {
+    const key = `${needId}_${practiceIndex}`
+    const existing = state.checkins[date] || []
+    const isRemoving = existing.includes(key)
+
     setState(prev => {
-      const key = `${needId}_${practiceIndex}`
-      const existing = prev.checkins[date] || []
-      const updated = existing.includes(key)
-        ? existing.filter(k => k !== key)
-        : [...existing, key]
-      if (prev.userId) {
-        if (!existing.includes(key)) {
-          supabase.from('checkins').insert({ user_id: prev.userId, date_key: date, need_id: key }).then()
-        } else {
-          supabase.from('checkins').delete().eq('user_id', prev.userId).eq('date_key', date).eq('need_id', key).then()
-        }
-      }
+      const prevExisting = prev.checkins[date] || []
+      const updated = prevExisting.includes(key)
+        ? prevExisting.filter(k => k !== key)
+        : [...prevExisting, key]
       return { ...prev, checkins: { ...prev.checkins, [date]: updated } }
     })
+
+    if (state.userId) {
+      if (!isRemoving) {
+        supabase.from('checkins').insert({ user_id: state.userId, date_key: date, need_id: key }).then()
+      } else {
+        supabase.from('checkins').delete().eq('user_id', state.userId).eq('date_key', date).eq('need_id', key).then()
+      }
+    }
   }
 
   function completeOnboarding(canvas, profile) {
-    setState(prev => ({ ...prev, onboarded: true, canvas, profile }))
+    const { userId, ...profileData } = profile
+    setState(prev => ({
+      ...prev,
+      onboarded: true,
+      canvas,
+      profile: profileData,
+      userId: userId || prev.userId,
+    }))
   }
 
   return { state, authLoading, updateCanvas, setPractice, checkIn, completeOnboarding }

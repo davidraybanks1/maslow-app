@@ -2,7 +2,7 @@ import { NEEDS, LAYERS, totalBubbles } from '../lib/constants'
 import { todayKey } from '../lib/store'
 import styles from './Today.module.css'
 
-const LAYER_ORDER = ['purpose', 'appreciation', 'nourishment']
+const LAYER_ORDER = ['purpose', 'appreciation', 'nourishment', 'survival']
 
 export default function Today({ state, checkIn }) {
   const today = todayKey()
