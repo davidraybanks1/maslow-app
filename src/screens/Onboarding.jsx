@@ -5,6 +5,19 @@ import { NEEDS, LAYERS, LAYER_ORDER } from '../lib/constants'
 import { sendMagicLink } from '../lib/store'
 import styles from './Onboarding.module.css'
 
+const SUGGESTIONS = {
+  movement:   ['Morning walk', 'Workout'],
+  community:  ['Call a friend', 'Family dinner'],
+  reflection: ['Journal', '10 min meditation'],
+  nutrition:  ['Cook a meal', 'Mindful eating'],
+  rest:       ['8 hours sleep', 'Afternoon rest'],
+  beauty:     ['Time in nature', 'Listen to music'],
+  money:      ['Review budget', 'No-spend day'],
+  dwelling:   ['Tidy space', 'Declutter one area'],
+  intimacy:   ['Quality time with partner', 'Vulnerable conversation'],
+  play:       ['Creative project', 'Unstructured free time'],
+}
+
 const QUESTIONS = [
   {
     id: 'lifeStage',
@@ -130,6 +143,8 @@ export default function Onboarding({ completeOnboarding }) {
   const [phone, setPhone] = useState('')
   const [timezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone)
   const [smsConsent, setSmsConsent] = useState(false)
+  const [practices, setPractices] = useState({})
+  const [practiceInputs, setPracticeInputs] = useState({})
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [sendingLink, setSendingLink] = useState(false)
@@ -180,6 +195,36 @@ export default function Onboarding({ completeOnboarding }) {
     setSelected(null)
   }
 
+  function startPracticesStep() {
+    const initial = {}
+    NEEDS.forEach(n => {
+      if (canvas[n.id] && canvas[n.id] !== 'survival') {
+        initial[n.id] = [...(SUGGESTIONS[n.id] || [])]
+      }
+    })
+    setPractices(initial)
+    setPracticeInputs({})
+    setStep('practices')
+  }
+
+  function addOBPractice(needId, text) {
+    if (!text.trim()) return
+    setPractices(prev => {
+      const current = prev[needId] || []
+      if (current.length >= 10) return prev
+      return { ...prev, [needId]: [...current, text.trim()] }
+    })
+    setPracticeInputs(prev => ({ ...prev, [needId]: '' }))
+  }
+
+  function removeOBPractice(needId, index) {
+    setPractices(prev => {
+      const next = [...(prev[needId] || [])]
+      next.splice(index, 1)
+      return { ...prev, [needId]: next }
+    })
+  }
+
   async function handleSendMagicLink() {
     setSendingLink(true)
     const { error: e } = await sendMagicLink(email)
@@ -208,13 +253,14 @@ export default function Onboarding({ completeOnboarding }) {
           phone: (phone.trim() && smsConsent) ? phone.trim() : null,
           timezone,
           canvas,
+          practices,
           profile: answers,
           onboarded: true,
         })
         .select()
         .single()
       if (dbError) throw dbError
-      completeOnboarding(canvas, { name: name.trim(), email: email.trim(), userId: data.id, ...answers })
+      completeOnboarding(canvas, practices, { name: name.trim(), email: email.trim(), userId: data.id, ...answers })
       navigate('/today')
     } catch (err) {
       const msg = err?.message || ''
@@ -458,10 +504,72 @@ export default function Onboarding({ completeOnboarding }) {
         )}
 
         <div className={styles.qFooter}>
-          <button className="btn-primary" onClick={handleFinish} disabled={saving || !allAssigned || error === 'MAGIC_SENT'}>
-            {saving ? 'Saving...' : allAssigned ? 'This is my canvas →' : `${unassigned.length} needs unassigned`}
+          <button className="btn-primary" onClick={startPracticesStep} disabled={!allAssigned || error === 'MAGIC_SENT'}>
+            {allAssigned ? 'This is my canvas →' : `${unassigned.length} needs unassigned`}
           </button>
           <button className="btn-ghost" style={{ marginTop: 8 }} onClick={() => setStep('details')}>Back</button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Practices ──────────────────────────────────────────────
+  if (step === 'practices') {
+    const activeNeeds = NEEDS.filter(n => canvas[n.id] && canvas[n.id] !== 'survival')
+    return (
+      <div className={styles.screen}>
+        <div className={styles.qWrap} style={{ flexShrink: 0 }}>
+          <div className={styles.qNum}>Almost done</div>
+          <div className={styles.qText}>Seed your practice pool.</div>
+          <div className={styles.qSub}>We've suggested a few to start. Edit freely — you can change these anytime.</div>
+        </div>
+
+        <div className={styles.practicesScroll}>
+          {activeNeeds.map(n => {
+            const lyr = LAYERS[canvas[n.id]]
+            const pool = practices[n.id] || []
+            return (
+              <div key={n.id} className={styles.practiceNeedGroup}>
+                <div className={styles.practiceNeedHeader}>
+                  <div className={styles.modePip} style={{ background: lyr.pip }} />
+                  <span className={styles.practiceNeedName}>{n.name}</span>
+                  <span className={styles.practiceCount}>{pool.length}/10</span>
+                </div>
+                {pool.length === 0 && (
+                  <div className={styles.practiceEmpty}>No practices yet.</div>
+                )}
+                {pool.map((p, i) => (
+                  <div key={i} className={styles.practiceItem}>
+                    <span className={styles.practiceItemText}>{p}</span>
+                    <button className={styles.practiceDeleteBtn} onClick={() => removeOBPractice(n.id, i)}>×</button>
+                  </div>
+                ))}
+                {pool.length < 10 && (
+                  <div className={styles.practiceAddRow}>
+                    <input
+                      className={styles.practiceAddInput}
+                      placeholder="Add a practice…"
+                      value={practiceInputs[n.id] || ''}
+                      onChange={e => setPracticeInputs(prev => ({ ...prev, [n.id]: e.target.value }))}
+                      onKeyDown={e => e.key === 'Enter' && addOBPractice(n.id, practiceInputs[n.id] || '')}
+                    />
+                    <button
+                      className={styles.practiceAddBtn}
+                      onClick={() => addOBPractice(n.id, practiceInputs[n.id] || '')}
+                      disabled={!(practiceInputs[n.id] || '').trim()}
+                    >+</button>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+
+        <div className={styles.qFooter}>
+          <button className="btn-primary" onClick={handleFinish} disabled={saving}>
+            {saving ? 'Saving...' : 'Finish →'}
+          </button>
+          <button className="btn-ghost" style={{ marginTop: 8 }} onClick={() => setStep('reveal')}>Back</button>
         </div>
       </div>
     )

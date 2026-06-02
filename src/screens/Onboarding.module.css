@@ -231,3 +231,24 @@
   color: var(--ink);
   text-decoration: underline;
 }
+
+.practicesScroll { flex: 1; overflow-y: auto; padding: 0 24px; }
+.practicesScroll::-webkit-scrollbar { display: none; }
+.practiceNeedGroup { padding: 16px 0; border-bottom: 0.5px solid var(--border); }
+.practiceNeedGroup:last-child { border-bottom: none; }
+.practiceNeedHeader { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.practiceNeedName { font-family: var(--font-serif); font-size: 15px; color: var(--ink); }
+.practiceCount { font-family: var(--font-mono); font-size: 10px; color: var(--ink3); margin-left: auto; }
+.practiceItem { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 0.5px solid var(--border); }
+.practiceItem:last-of-type { border-bottom: none; }
+.practiceItemText { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink2); }
+.practiceDeleteBtn { background: none; border: none; color: var(--ink3); font-size: 18px; line-height: 1; cursor: pointer; padding: 0 4px; }
+.practiceDeleteBtn:hover { color: var(--ink); }
+.practiceEmpty { font-family: var(--font-mono); font-size: 11px; color: var(--ink4); padding: 4px 0 8px; }
+.practiceAddRow { display: flex; gap: 8px; margin-top: 10px; }
+.practiceAddInput { flex: 1; padding: 8px 12px; border-radius: 6px; border: 0.5px solid var(--border); background: var(--bg); font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink); outline: none; }
+.practiceAddInput:focus { border-color: var(--ink2); }
+.practiceAddInput::placeholder { color: var(--ink4); }
+.practiceAddBtn { padding: 8px 14px; border-radius: 6px; border: 0.5px solid var(--border2); background: var(--bg); font-family: var(--font-mono); font-size: 14px; color: var(--ink); cursor: pointer; }
+.practiceAddBtn:hover:not(:disabled) { background: var(--bg2); }
+.practiceAddBtn:disabled { opacity: 0.35; cursor: not-allowed; }

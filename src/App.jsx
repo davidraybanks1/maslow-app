@@ -32,7 +32,7 @@ function Protected({ children, onboarded }) {
 }
 
 export default function App() {
-  const { state, authLoading, updateCanvas, setPractice, checkIn, completeOnboarding } = useAppState()
+  const { state, authLoading, updateCanvas, addPractice, removePractice, checkIn, completeOnboarding } = useAppState()
 
   if (authLoading) {
     return (
@@ -51,7 +51,7 @@ export default function App() {
             <Route path="/onboarding" element={state.onboarded ? <Navigate to="/today" replace /> : <Onboarding completeOnboarding={completeOnboarding} />} />
             <Route path="/today" element={<Protected onboarded={state.onboarded}><Today state={state} checkIn={checkIn} /></Protected>} />
             <Route path="/canvas" element={<Protected onboarded={state.onboarded}><CanvasScreen state={state} updateCanvas={updateCanvas} /></Protected>} />
-            <Route path="/practices" element={<Protected onboarded={state.onboarded}><Practices state={state} setPractice={setPractice} /></Protected>} />
+            <Route path="/practices" element={<Protected onboarded={state.onboarded}><Practices state={state} addPractice={addPractice} removePractice={removePractice} /></Protected>} />
             <Route path="/data" element={<Protected onboarded={state.onboarded}><Data state={state} /></Protected>} />
           </Routes>
         </div>

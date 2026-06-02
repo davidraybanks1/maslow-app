@@ -41,6 +41,7 @@ export default function Today({ state, checkIn }) {
           const modeNeeds = NEEDS.filter(n => state.canvas[n.id] === mode)
           if (!modeNeeds.length) return null
           const lyr = LAYERS[mode]
+          if (lyr.bubbles === 0) return null
           return (
             <div key={mode} className={styles.modeGroup}>
               <div className={styles.modeLabel}>
@@ -48,32 +49,64 @@ export default function Today({ state, checkIn }) {
                 {mode}
               </div>
               {modeNeeds.map(n => {
-                const practices = state.practices[n.id] || []
-                return Array.from({ length: lyr.bubbles }).map((_, i) => {
-                  const key = `${n.id}_${i}`
-                  const isDone = checked.includes(key)
-                  const practice = practices[i]
-                  return (
-                    <div
-                      key={key}
-                      className={`${styles.bubbleRow} ${isDone ? styles.bubbleRowDone : ''}`}
-                      onClick={() => checkIn(n.id, i)}
-                    >
+                const pool = state.practices[n.id] || []
+                // Practices checked off for this need today
+                const prefix = `${n.id}_`
+                const checkedKeys = checked.filter(k => k.startsWith(prefix))
+                const checkedTexts = checkedKeys.map(k => k.slice(prefix.length))
+                const remainingSlots = lyr.bubbles - checkedKeys.length
+                const availableChips = pool.filter(p => !checkedTexts.includes(p))
+
+                return (
+                  <div key={n.id}>
+                    {/* One row per already-checked practice */}
+                    {checkedTexts.map(practiceText => (
                       <div
-                        className={`${styles.bubble} ${isDone ? styles.bubbleDone : ''}`}
-                        style={isDone ? { background: lyr.pip, borderColor: lyr.pip } : {}}
+                        key={practiceText}
+                        className={`${styles.bubbleRow} ${styles.bubbleRowDone}`}
+                        onClick={() => checkIn(n.id, practiceText)}
                       >
-                        {isDone && <span className={styles.check}>✓</span>}
-                      </div>
-                      <div className={styles.bubbleInfo}>
-                        <div className={styles.bubbleNeed}>{n.name}</div>
-                        <div className={styles.bubblePractice}>
-                          {practice || <span className={styles.noPractice}>no practice set</span>}
+                        <div
+                          className={`${styles.bubble} ${styles.bubbleDone}`}
+                          style={{ background: lyr.pip, borderColor: lyr.pip }}
+                        >
+                          <span className={styles.check}>✓</span>
+                        </div>
+                        <div className={styles.bubbleInfo}>
+                          <div className={styles.bubbleNeed}>{n.name}</div>
+                          <div className={styles.bubblePractice}>{practiceText}</div>
                         </div>
                       </div>
-                    </div>
-                  )
-                })
+                    ))}
+
+                    {/* One unchecked row showing the chip pool, if slots remain */}
+                    {remainingSlots > 0 && (
+                      <div className={styles.bubbleRow}>
+                        <div className={styles.bubble} />
+                        <div className={styles.bubbleInfo}>
+                          <div className={styles.bubbleNeed}>{n.name}</div>
+                          {pool.length === 0 ? (
+                            <div className={styles.noPractice}>No practices set — add some in Practices</div>
+                          ) : availableChips.length === 0 ? (
+                            <div className={styles.noPractice}>All pool practices done</div>
+                          ) : (
+                            <div className={styles.chipRow}>
+                              {availableChips.map(p => (
+                                <button
+                                  key={p}
+                                  className={styles.practiceChip}
+                                  onClick={e => { e.stopPropagation(); checkIn(n.id, p) }}
+                                >
+                                  {p}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
               })}
             </div>
           )

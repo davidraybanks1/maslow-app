@@ -14,9 +14,21 @@
 .needName { font-family: var(--font-serif); font-size: 15px; font-weight: 400; color: var(--ink); letter-spacing: -0.01em; }
 .needTag { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink3); margin-left: auto; }
 
-.inputs { display: flex; flex-direction: column; gap: 6px; padding-bottom: 16px; }
-.inputRow { position: relative; }
-.input { width: 100%; padding: 10px 12px; border-radius: 6px; border: 0.5px solid var(--border); background: var(--bg); font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink); outline: none; transition: border-color 0.15s; }
-.input:focus { border-color: var(--ink2); }
-.input::placeholder { color: var(--ink4); }
-.savedMark { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-family: var(--font-mono); font-size: 11px; color: #1B3A2D; }
+.pool { display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; }
+.poolItem { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; border-bottom: 0.5px solid var(--border); }
+.poolItem:last-child { border-bottom: none; }
+.poolText { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink2); }
+.deleteBtn { background: none; border: none; color: var(--ink3); font-size: 18px; line-height: 1; cursor: pointer; padding: 0 4px; flex-shrink: 0; }
+.deleteBtn:hover { color: var(--ink); }
+
+.empty { font-family: var(--font-mono); font-size: 11px; color: var(--ink4); padding: 4px 0 8px; }
+
+.addRow { display: flex; gap: 8px; padding-bottom: 16px; }
+.addInput { flex: 1; padding: 9px 12px; border-radius: 6px; border: 0.5px solid var(--border); background: var(--bg); font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink); outline: none; transition: border-color 0.15s; }
+.addInput:focus { border-color: var(--ink2); }
+.addInput::placeholder { color: var(--ink4); }
+.addBtn { padding: 9px 16px; border-radius: 6px; border: 0.5px solid var(--border2); background: var(--bg); font-family: var(--font-mono); font-size: 11px; color: var(--ink); cursor: pointer; white-space: nowrap; transition: background 0.1s; }
+.addBtn:hover:not(:disabled) { background: var(--bg2); }
+.addBtn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.maxNote { font-family: var(--font-mono); font-size: 10px; color: var(--ink4); padding-bottom: 16px; }

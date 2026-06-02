@@ -153,11 +153,12 @@ export function useAppState() {
     })
   }
 
-  function setPractice(needId, index, text) {
+  function addPractice(needId, text) {
+    if (!text.trim()) return
     setState(prev => {
-      const needPractices = [...(prev.practices[needId] || [])]
-      needPractices[index] = text
-      const newPractices = { ...prev.practices, [needId]: needPractices }
+      const current = prev.practices[needId] || []
+      if (current.length >= 10) return prev
+      const newPractices = { ...prev.practices, [needId]: [...current, text.trim()] }
       if (prev.userId) {
         supabase.from('users').update({ practices: newPractices }).eq('id', prev.userId).then()
       }
@@ -165,8 +166,20 @@ export function useAppState() {
     })
   }
 
-  function checkIn(needId, practiceIndex, date = todayKey()) {
-    const key = `${needId}_${practiceIndex}`
+  function removePractice(needId, index) {
+    setState(prev => {
+      const current = [...(prev.practices[needId] || [])]
+      current.splice(index, 1)
+      const newPractices = { ...prev.practices, [needId]: current }
+      if (prev.userId) {
+        supabase.from('users').update({ practices: newPractices }).eq('id', prev.userId).then()
+      }
+      return { ...prev, practices: newPractices }
+    })
+  }
+
+  function checkIn(needId, practiceText, date = todayKey()) {
+    const key = `${needId}_${practiceText}`
     const existing = state.checkins[date] || []
     const isRemoving = existing.includes(key)
 
@@ -193,18 +206,19 @@ export function useAppState() {
     setState(prev => ({ ...prev, moods }))
   }
 
-  function completeOnboarding(canvas, profile) {
+  function completeOnboarding(canvas, practices, profile) {
     const { userId, ...profileData } = profile
     setState(prev => ({
       ...prev,
       onboarded: true,
       canvas,
+      practices,
       profile: profileData,
       userId: userId || prev.userId,
     }))
   }
 
-  return { state, authLoading, updateCanvas, setPractice, checkIn, completeOnboarding, loadMoods }
+  return { state, authLoading, updateCanvas, addPractice, removePractice, checkIn, completeOnboarding, loadMoods }
 }
 
 export function todayKey() {

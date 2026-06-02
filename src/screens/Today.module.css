@@ -33,3 +33,6 @@
 .bubbleNeed { font-family: var(--font-serif); font-size: 15px; font-weight: 400; color: var(--ink); letter-spacing: -0.005em; }
 .bubblePractice { font-family: var(--font-mono); font-size: 10px; font-weight: 200; color: var(--ink3); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .noPractice { color: var(--ink4); }
+.chipRow { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
+.practiceChip { padding: 3px 10px; border-radius: 20px; border: 0.5px solid var(--border2); font-family: var(--font-mono); font-size: 10px; font-weight: 200; color: var(--ink2); background: var(--bg); cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent; transition: background 0.1s; }
+.practiceChip:active { background: var(--bg2); }
