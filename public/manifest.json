@@ -1,0 +1,17 @@
+{
+  "name": "Maslow",
+  "short_name": "Maslow",
+  "description": "practice becoming yourself",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#1A1A1A",
+  "icons": [
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
