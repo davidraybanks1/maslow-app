@@ -129,6 +129,7 @@ export default function Onboarding({ completeOnboarding }) {
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [timezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone)
+  const [smsConsent, setSmsConsent] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [sendingLink, setSendingLink] = useState(false)
@@ -204,7 +205,7 @@ export default function Onboarding({ completeOnboarding }) {
         .insert({
           name: name.trim(),
           email: email.trim().toLowerCase(),
-          phone: phone.trim() || null,
+          phone: (phone.trim() && smsConsent) ? phone.trim() : null,
           timezone,
           canvas,
           profile: answers,
@@ -336,10 +337,23 @@ export default function Onboarding({ completeOnboarding }) {
             />
             <div className={styles.inputHint}>For morning, midday, and evening check-in reminders via text.</div>
           </div>
+          <div className={styles.consentGroup}>
+            <label className={styles.consentLabel}>
+              <input
+                type="checkbox"
+                checked={smsConsent}
+                onChange={e => setSmsConsent(e.target.checked)}
+                className={styles.consentCheck}
+              />
+              <span className={styles.consentText}>
+                I agree to receive up to 6 SMS messages per day from Maslow including check-in reminders and mood prompts. Message and data rates may apply. Reply STOP to opt out. <a href="/privacy" target="_blank">Privacy Policy</a>
+              </span>
+            </label>
+          </div>
           {error && <div className={styles.error}>{error}</div>}
         </div>
         <div className={styles.qFooter}>
-          <button className="btn-primary" onClick={() => setStep('reveal')} disabled={!name.trim() || !email.trim()}>
+          <button className="btn-primary" onClick={() => setStep('reveal')} disabled={!name.trim() || !email.trim() || (phone.trim() && !smsConsent)}>
             See my canvas →
           </button>
         </div>

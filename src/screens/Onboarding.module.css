@@ -204,3 +204,30 @@
 .chip { padding: 6px 12px; border-radius: 20px; border: 0.5px solid var(--border2); font-family: var(--font-serif); font-size: 13px; color: var(--ink); cursor: pointer; }
 .chipSelected { background: var(--ink); color: #fff; border-color: var(--ink); }
 .allAssigned { font-family: var(--font-mono); font-size: 11px; color: var(--ink3); }
+.consentGroup {
+  margin-top: 8px;
+}
+.consentLabel {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+}
+.consentCheck {
+  margin-top: 2px;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--ink);
+}
+.consentText {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink3);
+  line-height: 1.6;
+  font-weight: 200;
+}
+.consentText a {
+  color: var(--ink);
+  text-decoration: underline;
+}
