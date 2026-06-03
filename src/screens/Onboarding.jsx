@@ -34,7 +34,7 @@ const QUESTIONS = [
   {
     id: 'hardest',
     text: 'What\'s making life feel hard right now?',
-    sub: 'Be honest. These become your starting focus areas.',
+    sub: 'Select all that apply. These become your starting focus areas.',
     multi: true,
     options: [
       { value: 'body',         label: 'My body feels neglected' },
@@ -304,7 +304,7 @@ export default function Onboarding({ completeOnboarding }) {
           <div style={{ fontFamily:"'DM Mono', monospace", fontSize:11, color:'#9A9A9A', letterSpacing:'0.1em', textTransform:'uppercase' }}>practice becoming yourself</div>
         </div>
         <div style={{ fontFamily:"'DM Mono', monospace", fontSize:13, color:'#5E5E5E', lineHeight:1.7, textAlign:'center' }}>
-          Anxiety fills the space your unmet needs leave behind. Meet your needs. Crowd it out.
+          Anxiety fills the space your unmet needs. Meet your needs. Crowd it out.
         </div>
         <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
           <button className="btn-primary" onClick={() => setStep('questions')}>Build my canvas →</button>
@@ -438,12 +438,11 @@ export default function Onboarding({ completeOnboarding }) {
       <div className={styles.screen}>
         <div className={styles.revealHeader}>
           <div className={styles.qNum}>Your starting canvas</div>
-          <div className={styles.qText}>Here's your ground, {name}.</div>
+          <div className={styles.qText}>Here's a proposed canvas with needs aligned to modes.</div>
           <div className={styles.qSub}>
-            {selected
-              ? `Tap a slot to assign ${NEEDS.find(n => n.id === selected)?.name}`
-              : 'Tap a need below, then tap a slot to assign it.'}
+            If it doesn't feel right, move things around. Click on a need to unassign it, and then click on it again to put it somewhere else.
           </div>
+          <a href="https://www.mymaslow.com/need" target="_blank" style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--ink3)", letterSpacing: "0.06em" }}>Learn more about the 10 needs →</a>
         </div>
 
         <div className={styles.revealCanvas}>
@@ -542,8 +541,8 @@ export default function Onboarding({ completeOnboarding }) {
       <div className={styles.screen}>
         <div className={styles.qWrap} style={{ flexShrink: 0 }}>
           <div className={styles.qNum}>Almost done</div>
-          <div className={styles.qText}>Seed your practice pool.</div>
-          <div className={styles.qSub}>We've suggested a few to start. Edit freely — you can change these anytime.</div>
+          <div className={styles.qText}>Create your pool of practices.</div>
+          <div className={styles.qSub}>You don't have to meet your needs the same way every day. Create a pool of practices that align with your needs. You'll check off the ones you do each day and can monitor your trends to see which ones work the best.</div>
         </div>
 
         <div className={styles.practicesScroll}>

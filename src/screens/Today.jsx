@@ -4,6 +4,12 @@ import styles from './Today.module.css'
 
 const LAYER_ORDER = ['purpose', 'appreciation', 'nourishment', 'survival']
 
+const PRACTICE_HINT = {
+  purpose:      '3 practices',
+  appreciation: '2 practices each',
+  nourishment:  '1 practice each',
+}
+
 export default function Today({ state, checkIn }) {
   const today = todayKey()
   const checked = state.checkins[today] || []
@@ -47,6 +53,11 @@ export default function Today({ state, checkIn }) {
               <div className={styles.modeLabel}>
                 <div className={styles.modePip} style={{ background: lyr.pip }} />
                 {mode}
+                {PRACTICE_HINT[mode] && (
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink3)', marginLeft: 6 }}>
+                    {PRACTICE_HINT[mode]}
+                  </span>
+                )}
               </div>
               {modeNeeds.map(n => {
                 const pool = state.practices[n.id] || []
