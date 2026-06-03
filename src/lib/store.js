@@ -78,9 +78,13 @@ async function fetchMoods(userId) {
 
 async function restoreFromSupabase(userId, email) {
   try {
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    const cutoff = thirtyDaysAgo.toISOString().slice(0, 10)
+
     const [{ data: user }, { data: checkins }, moods] = await Promise.all([
       supabase.from('users').select('*').eq('email', email).single(),
-      supabase.from('checkins').select('*').eq('user_id', userId),
+      supabase.from('checkins').select('*').eq('user_id', userId).gte('date_key', cutoff),
       fetchMoods(userId),
     ])
     if (!user) return null
