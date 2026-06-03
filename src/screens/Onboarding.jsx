@@ -297,7 +297,7 @@ export default function Onboarding({ completeOnboarding }) {
   // ── Intro ──────────────────────────────────────────────────
   if (step === 'intro') {
     return (
-      <div style={{ display:'flex', flexDirection:'column', justifyContent:'space-between', height:'100%', padding:'80px 32px 48px', background:'#fff' }}>
+      <div className={styles.screen} style={{ padding: '80px 32px 48px', justifyContent: 'space-between' }}>
         <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:14 }}>
           <Logo />
           <div style={{ fontFamily:"'Instrument Serif', serif", fontSize:36, fontStyle:'italic', color:'#1A1A1A', letterSpacing:'-0.01em' }}>maslow.</div>
