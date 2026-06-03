@@ -131,6 +131,23 @@ function buildCanvas(answers) {
   return canvas
 }
 
+function Logo() {
+  return (
+    <svg width="72" height="72" viewBox="0 0 72 72" fill="none">
+      <circle cx="36" cy="14" r="4" fill="#E8B81F"/>
+      <circle cx="29" cy="28" r="4" fill="#1A1A1A"/>
+      <circle cx="43" cy="28" r="4" fill="#1A1A1A"/>
+      <circle cx="22" cy="42" r="4" fill="#1A1A1A"/>
+      <circle cx="36" cy="42" r="4" fill="#1A1A1A"/>
+      <circle cx="50" cy="42" r="4" fill="#1A1A1A"/>
+      <circle cx="15" cy="56" r="4" fill="#1A1A1A"/>
+      <circle cx="29" cy="56" r="4" fill="#1A1A1A"/>
+      <circle cx="43" cy="56" r="4" fill="#1A1A1A"/>
+      <circle cx="57" cy="56" r="4" fill="#1A1A1A"/>
+    </svg>
+  )
+}
+
 export default function Onboarding({ completeOnboarding }) {
   const navigate = useNavigate()
   const [step, setStep] = useState('intro')
@@ -280,17 +297,22 @@ export default function Onboarding({ completeOnboarding }) {
   // ── Intro ──────────────────────────────────────────────────
   if (step === 'intro') {
     return (
-      <div className={styles.screen}>
-        <div className={styles.introWrap}>
-          <div className={styles.word}>maslow.</div>
-          <div className={styles.phonetic}>/ ˈmæz.loʊ / · your needs, intentionally met</div>
-          <div className={styles.introDef}>
-            <p>Anxiety fills the space your unmet needs leave behind. The louder it gets, the more essential parts of yourself are being ignored.</p>
-            <p style={{ marginTop: 14 }}>Maslow helps you fill that space first — by building intentional habits around the needs that actually fuel you.</p>
-            <p style={{ marginTop: 14 }}><strong>Don't manage anxiety. Crowd it out.</strong></p>
-          </div>
-          <button className="btn-primary" onClick={() => setStep('questions')}>
-            Build my canvas →
+      <div style={{ display:'flex', flexDirection:'column', justifyContent:'space-between', height:'100%', padding:'80px 32px 48px', background:'#fff' }}>
+        <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:14 }}>
+          <Logo />
+          <div style={{ fontFamily:"'Instrument Serif', serif", fontSize:36, fontStyle:'italic', color:'#1A1A1A', letterSpacing:'-0.01em' }}>maslow.</div>
+          <div style={{ fontFamily:"'DM Mono', monospace", fontSize:11, color:'#9A9A9A', letterSpacing:'0.1em', textTransform:'uppercase' }}>practice becoming yourself</div>
+        </div>
+        <div style={{ fontFamily:"'DM Mono', monospace", fontSize:13, color:'#5E5E5E', lineHeight:1.7, textAlign:'center' }}>
+          Anxiety fills the space your unmet needs leave behind. Meet your needs. Crowd it out.
+        </div>
+        <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+          <button className="btn-primary" onClick={() => setStep('questions')}>Build my canvas →</button>
+          <button
+            onClick={() => navigate('/signin')}
+            style={{ width:'100%', padding:'16px', borderRadius:12, background:'transparent', color:'#1A1A1A', border:'1px solid #D8D8D8', fontFamily:"'DM Mono', monospace", fontSize:14, cursor:'pointer', letterSpacing:'0.02em' }}
+          >
+            Sign in →
           </button>
         </div>
       </div>

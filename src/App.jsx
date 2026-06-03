@@ -5,6 +5,7 @@ import Today from './screens/Today'
 import CanvasScreen from './screens/CanvasScreen'
 import Practices from './screens/Practices'
 import Data from './screens/Data'
+import SignIn from './screens/SignIn'
 import styles from './App.module.css'
 
 function BottomNav() {
@@ -53,6 +54,7 @@ export default function App() {
             <Route path="/canvas" element={<Protected onboarded={state.onboarded}><CanvasScreen state={state} updateCanvas={updateCanvas} /></Protected>} />
             <Route path="/practices" element={<Protected onboarded={state.onboarded}><Practices state={state} addPractice={addPractice} removePractice={removePractice} /></Protected>} />
             <Route path="/data" element={<Protected onboarded={state.onboarded}><Data state={state} /></Protected>} />
+            <Route path="/signin" element={<SignIn />} />
           </Routes>
         </div>
         {state.onboarded && <BottomNav />}
