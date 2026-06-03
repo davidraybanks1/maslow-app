@@ -76,10 +76,10 @@ async function fetchMoods(userId) {
   return data || []
 }
 
-async function restoreFromSupabase(userId) {
+async function restoreFromSupabase(userId, email) {
   try {
     const [{ data: user }, { data: checkins }, moods] = await Promise.all([
-      supabase.from('users').select('*').eq('id', userId).single(),
+      supabase.from('users').select('*').eq('email', email).single(),
       supabase.from('checkins').select('*').eq('user_id', userId),
       fetchMoods(userId),
     ])
@@ -105,7 +105,7 @@ async function restoreFromSupabase(userId) {
   }
 }
 
-export function useAppState() {
+export function useAppState(onSignIn) {
   const [state, setState] = useState(initialState)
   const [authLoading, setAuthLoading] = useState(true)
 
@@ -114,7 +114,7 @@ export function useAppState() {
       try {
         const { data: { session } } = await supabase.auth.getSession()
         if (session?.user) {
-          const restored = await restoreFromSupabase(session.user.id)
+          const restored = await restoreFromSupabase(session.user.id, session.user.email)
           if (restored) { setState(restored); saveState(restored) }
         }
       } catch (e) {
@@ -128,8 +128,8 @@ export function useAppState() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
-        const restored = await restoreFromSupabase(session.user.id)
-        if (restored) { setState(restored); saveState(restored) }
+        const restored = await restoreFromSupabase(session.user.id, session.user.email)
+        if (restored) { setState(restored); saveState(restored); onSignIn?.() }
       }
     })
 

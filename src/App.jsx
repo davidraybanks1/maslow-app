@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, NavLink, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, NavLink, Navigate, useNavigate } from 'react-router-dom'
 import { useAppState } from './lib/store'
 import Onboarding from './screens/Onboarding'
 import Today from './screens/Today'
@@ -32,8 +32,11 @@ function Protected({ children, onboarded }) {
   return children
 }
 
-export default function App() {
-  const { state, authLoading, updateCanvas, addPractice, removePractice, checkIn, completeOnboarding } = useAppState()
+function AppInner() {
+  const navigate = useNavigate()
+  const { state, authLoading, updateCanvas, addPractice, removePractice, checkIn, completeOnboarding } = useAppState(
+    () => navigate('/today')
+  )
 
   if (authLoading) {
     return (
@@ -44,21 +47,27 @@ export default function App() {
   }
 
   return (
-    <BrowserRouter>
-      <div className={styles.shell}>
-        <div className={styles.content}>
-          <Routes>
-            <Route path="/" element={state.onboarded ? <Navigate to="/today" replace /> : <Navigate to="/onboarding" replace />} />
-            <Route path="/onboarding" element={state.onboarded ? <Navigate to="/today" replace /> : <Onboarding completeOnboarding={completeOnboarding} />} />
-            <Route path="/today" element={<Protected onboarded={state.onboarded}><Today state={state} checkIn={checkIn} /></Protected>} />
-            <Route path="/canvas" element={<Protected onboarded={state.onboarded}><CanvasScreen state={state} updateCanvas={updateCanvas} /></Protected>} />
-            <Route path="/practices" element={<Protected onboarded={state.onboarded}><Practices state={state} addPractice={addPractice} removePractice={removePractice} /></Protected>} />
-            <Route path="/data" element={<Protected onboarded={state.onboarded}><Data state={state} /></Protected>} />
-            <Route path="/signin" element={<SignIn />} />
-          </Routes>
-        </div>
-        {state.onboarded && <BottomNav />}
+    <div className={styles.shell}>
+      <div className={styles.content}>
+        <Routes>
+          <Route path="/" element={state.onboarded ? <Navigate to="/today" replace /> : <Navigate to="/onboarding" replace />} />
+          <Route path="/onboarding" element={state.onboarded ? <Navigate to="/today" replace /> : <Onboarding completeOnboarding={completeOnboarding} />} />
+          <Route path="/today" element={<Protected onboarded={state.onboarded}><Today state={state} checkIn={checkIn} /></Protected>} />
+          <Route path="/canvas" element={<Protected onboarded={state.onboarded}><CanvasScreen state={state} updateCanvas={updateCanvas} /></Protected>} />
+          <Route path="/practices" element={<Protected onboarded={state.onboarded}><Practices state={state} addPractice={addPractice} removePractice={removePractice} /></Protected>} />
+          <Route path="/data" element={<Protected onboarded={state.onboarded}><Data state={state} /></Protected>} />
+          <Route path="/signin" element={<SignIn />} />
+        </Routes>
       </div>
+      {state.onboarded && <BottomNav />}
+    </div>
+  )
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppInner />
     </BrowserRouter>
   )
 }
