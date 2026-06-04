@@ -10,43 +10,66 @@ const PRACTICE_HINT = {
   nourishment:  '1 practice each',
 }
 
-export default function Today({ state, checkIn, onOpenMenu }) {
+function MaslowMark() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 72 72" fill="none">
+      <circle cx="36" cy="14" r="4" fill="#E8B81F"/>
+      <circle cx="29" cy="28" r="4" fill="#1A1A1A"/>
+      <circle cx="43" cy="28" r="4" fill="#1A1A1A"/>
+      <circle cx="22" cy="42" r="4" fill="#1A1A1A"/>
+      <circle cx="36" cy="42" r="4" fill="#1A1A1A"/>
+      <circle cx="50" cy="42" r="4" fill="#1A1A1A"/>
+      <circle cx="15" cy="56" r="4" fill="#1A1A1A"/>
+      <circle cx="29" cy="56" r="4" fill="#1A1A1A"/>
+      <circle cx="43" cy="56" r="4" fill="#1A1A1A"/>
+      <circle cx="57" cy="56" r="4" fill="#1A1A1A"/>
+    </svg>
+  )
+}
+
+export default function Today({ state, checkIn, onMenuOpen }) {
   const today = todayKey()
   const checked = state.checkins[today] || []
   const total = totalBubbles(state.canvas)
   const done = checked.length
-
-  const date = new Date().toLocaleDateString('en-US', {
-    weekday: 'long', month: 'long', day: 'numeric'
-  })
+  const pct = total ? Math.round(done / total * 100) : 0
 
   return (
     <div className={styles.screen}>
-      <div className={styles.header}>
-        <div className={styles.headerTop}>
-          <div className={styles.date}>{date}</div>
-          <button className={styles.menuBtn} onClick={onOpenMenu} aria-label="Open menu">
-            <span /><span /><span />
-          </button>
+
+      {/* ── Top bar: logo + hamburger ── */}
+      <div className={styles.topBar}>
+        <div className={styles.logoMark}>
+          <MaslowMark />
+          <span className={styles.wordmark}>maslow.</span>
         </div>
+        <button className={styles.menuBtn} onClick={onMenuOpen} aria-label="Open menu">
+          <span /><span /><span />
+        </button>
+      </div>
+
+      {/* ── Greeting ── */}
+      <div className={styles.header}>
         <div className={styles.greeting}>
           good {hour()}, <em>{state.profile?.name || 'friend'}.</em>
         </div>
       </div>
 
-      <div className={styles.progressRow}>
-        <div className={styles.progLeft}>
-          <span className={styles.progNum}>{done}</span>
-          <span className={styles.progTotal}>/{total}</span>
-        </div>
-        <div className={styles.progRight}>
-          <span className={styles.progPct}>{total ? Math.round(done / total * 100) : 0}%</span>
-          <div className={styles.progTrack}>
-            <div className={styles.progFill} style={{ width: `${total ? Math.round(done / total * 100) : 0}%` }} />
+      {/* ── Progress ── */}
+      <div className={styles.progressSection}>
+        <div className={styles.progressScore}>
+          <div className={styles.progLeft}>
+            <span className={styles.progNum}>{done}</span>
+            <span className={styles.progTotal}>/{total}</span>
           </div>
+          <span className={styles.progPct}>{pct}%</span>
+        </div>
+        <div className={styles.progTrack}>
+          <div className={styles.progFill} style={{ width: `${pct}%` }} />
         </div>
       </div>
 
+      {/* ── Practice list ── */}
       <div className={styles.list}>
         {LAYER_ORDER.map(mode => {
           const modeNeeds = NEEDS.filter(n => state.canvas[n.id] === mode)
@@ -66,7 +89,6 @@ export default function Today({ state, checkIn, onOpenMenu }) {
               </div>
               {modeNeeds.map(n => {
                 const pool = state.practices[n.id] || []
-                // Practices checked off for this need today
                 const prefix = `${n.id}_`
                 const checkedKeys = checked.filter(k => k.startsWith(prefix))
                 const checkedTexts = checkedKeys.map(k => k.slice(prefix.length))
@@ -75,7 +97,6 @@ export default function Today({ state, checkIn, onOpenMenu }) {
 
                 return (
                   <div key={n.id}>
-                    {/* One row per already-checked practice */}
                     {checkedTexts.map(practiceText => (
                       <div
                         key={practiceText}
@@ -95,7 +116,6 @@ export default function Today({ state, checkIn, onOpenMenu }) {
                       </div>
                     ))}
 
-                    {/* One unchecked row showing the chip pool, if slots remain */}
                     {remainingSlots > 0 && (
                       <div className={styles.bubbleRow}>
                         <div className={styles.bubble} />
