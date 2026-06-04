@@ -8,28 +8,15 @@ const supabase = createClient(
 const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID')!
 const TWILIO_AUTH_TOKEN  = Deno.env.get('TWILIO_AUTH_TOKEN')!
 const TWILIO_PHONE       = Deno.env.get('TWILIO_PHONE_NUMBER')!
-const APP_URL            = 'https://app.mymaslow.com/today'
 
-const VALID_TYPES = ['morning', 'midday', 'evening', 'mood']
-
-function getMessage(type: string, name: string): string {
-  if (type === 'morning') {
-    return `Good morning, ${name} 🌱\n\nHere's your ground for today:\n${APP_URL}\n\nReply STOP to opt out.`
-  }
-  if (type === 'midday') {
-    return `Hey ${name} — halfway through the day.\n\nMark off any practices you've completed:\n${APP_URL}\n\nReply STOP to opt out.`
-  }
-  if (type === 'evening') {
-    return `Good evening, ${name} 🌙\n\nHow did today go? Mark off your completed practices:\n${APP_URL}\n\nReply STOP to opt out.`
-  }
-  return ''
+const MESSAGES: Record<string, string> = {
+  morning: "Your needs don't take a day off. Neither should you. Check in with yourself → https://app.mymaslow.com",
+  midday:  "Halfway through. Anxiety fills the space your unmet needs leave behind. How's the space looking? → https://app.mymaslow.com",
+  evening: "The day is almost done. Meeting your needs isn't about perfection — it's about showing up. How did you show up today? → https://app.mymaslow.com",
 }
 
 async function sendSMS(to: string, body: string) {
   const credentials = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)
-  console.log('Sending to:', to)
-  console.log('SID prefix:', TWILIO_ACCOUNT_SID?.slice(0, 6))
-  console.log('Token length:', TWILIO_AUTH_TOKEN?.length)
   const res = await fetch(
     `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
     {
@@ -54,43 +41,26 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
     }
 
-    const { type } = await req.json()
+    const { prompt_time } = await req.json()
 
-    if (!VALID_TYPES.includes(type)) {
+    if (!MESSAGES[prompt_time]) {
       return new Response(
-        JSON.stringify({ error: `Invalid type. Use: ${VALID_TYPES.join(', ')}.` }),
+        JSON.stringify({ error: 'Invalid prompt_time. Use: morning, midday, or evening.' }),
         { status: 400 }
       )
     }
 
+    const message = MESSAGES[prompt_time]
+
     const { data: users, error } = await supabase
       .from('users')
-      .select('id, name, phone, timezone')
+      .select('id, phone')
       .not('phone', 'is', null)
 
     if (error) throw error
 
-    const now = new Date()
     const results = []
-
     for (const user of users) {
-      const userTime = new Date(now.toLocaleString('en-US', { timeZone: user.timezone || 'America/Los_Angeles' }))
-      const hour = userTime.getHours()
-
-      let shouldSend = false
-      let message = ''
-
-      if (type === 'mood') {
-        shouldSend = [10, 14, 17].includes(hour)
-        message = 'Mood check — how are you feeling? Reply: good, fine, or bad'
-      } else {
-        const targetHour = type === 'morning' ? 8 : type === 'midday' ? 12 : 20
-        shouldSend = hour === targetHour
-        message = getMessage(type, user.name)
-      }
-
-      if (!shouldSend || !message) continue
-
       const result = await sendSMS(user.phone, message)
       results.push({ user: user.id, sid: result.sid, status: result.status, error: result.message })
     }
