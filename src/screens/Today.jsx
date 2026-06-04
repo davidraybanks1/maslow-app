@@ -7,11 +7,6 @@ const LAYER_ORDER = ['purpose', 'appreciation', 'nourishment', 'survival']
 const MOOD_PERIODS = ['morning', 'midday', 'evening']
 const MOODS = ['good', 'fine', 'bad']
 
-const PRACTICE_HINT = {
-  purpose:      '3 practices',
-  appreciation: '2 practices each',
-  nourishment:  '1 practice each',
-}
 
 export default function Today({ state, checkIn, logMood }) {
   const today = todayKey()
@@ -110,69 +105,59 @@ export default function Today({ state, checkIn, logMood }) {
           if (!modeNeeds.length) return null
           const lyr = LAYERS[mode]
           if (lyr.bubbles === 0) return null
+
+          const modeTotalBubbles = lyr.bubbles * modeNeeds.length
+          const modeFilledCount = modeNeeds.reduce((sum, n) => {
+            const prefix = `${n.id}_`
+            return sum + checked.filter(k => k.startsWith(prefix)).length
+          }, 0)
+
           return (
             <div key={mode} className={styles.modeGroup}>
               <div className={styles.modeLabel}>
                 <div className={styles.modePip} style={{ background: lyr.pip }} />
-                {mode}
-                {PRACTICE_HINT[mode] && (
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink3)', marginLeft: 6 }}>
-                    {PRACTICE_HINT[mode]}
-                  </span>
-                )}
+                <span>{mode}</span>
+                <div style={{ display: 'flex', gap: 5, alignItems: 'center', marginLeft: 'auto' }}>
+                  {Array.from({ length: modeTotalBubbles }).map((_, i) => (
+                    <div
+                      key={i}
+                      className={i < modeFilledCount ? styles.bubbleDot : `${styles.bubbleDot} ${styles.bubbleDotEmpty}`}
+                      style={i < modeFilledCount
+                        ? { background: lyr.pip }
+                        : { border: `1.5px solid ${lyr.pip}` }
+                      }
+                    />
+                  ))}
+                </div>
               </div>
+
               {modeNeeds.map(n => {
                 const pool = state.practices[n.id] || []
                 const prefix = `${n.id}_`
-                const checkedKeys = checked.filter(k => k.startsWith(prefix))
-                const checkedTexts = checkedKeys.map(k => k.slice(prefix.length))
-                const remainingSlots = lyr.bubbles - checkedKeys.length
-                const availableChips = pool.filter(p => !checkedTexts.includes(p))
+                const checkedTexts = checked.filter(k => k.startsWith(prefix)).map(k => k.slice(prefix.length))
 
                 return (
-                  <div key={n.id}>
-                    {checkedTexts.map(practiceText => (
-                      <div
-                        key={practiceText}
-                        className={`${styles.bubbleRow} ${styles.bubbleRowDone}`}
-                        onClick={() => checkIn(n.id, practiceText)}
-                      >
-                        <div
-                          className={`${styles.bubble} ${styles.bubbleDone}`}
-                          style={{ background: lyr.pip, borderColor: lyr.pip }}
-                        >
-                          <span className={styles.check}>✓</span>
-                        </div>
-                        <div className={styles.bubbleInfo}>
-                          <div className={styles.bubbleNeed}>{n.name}</div>
-                          <div className={styles.bubblePractice}>{practiceText}</div>
-                        </div>
+                  <div key={n.id} className={styles.needSection}>
+                    <div className={styles.needLabel}>{n.name}</div>
+                    {pool.length === 0 ? (
+                      <div className={styles.noPractice} style={{ paddingLeft: 15 }}>
+                        No practices set — add some in Practices
                       </div>
-                    ))}
-
-                    {remainingSlots > 0 && (
-                      <div className={styles.bubbleRow}>
-                        <div className={styles.bubble} />
-                        <div className={styles.bubbleInfo}>
-                          <div className={styles.bubbleNeed}>{n.name}</div>
-                          {pool.length === 0 ? (
-                            <div className={styles.noPractice}>No practices set — add some in Practices</div>
-                          ) : availableChips.length === 0 ? (
-                            <div className={styles.noPractice}>All pool practices done</div>
-                          ) : (
-                            <div className={styles.chipRow}>
-                              {availableChips.map(p => (
-                                <button
-                                  key={p}
-                                  className={styles.practiceChip}
-                                  onClick={e => { e.stopPropagation(); checkIn(n.id, p) }}
-                                >
-                                  {p}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
+                    ) : (
+                      <div className={styles.chipRow}>
+                        {pool.map(p => {
+                          const isDone = checkedTexts.includes(p)
+                          return (
+                            <button
+                              key={p}
+                              className={isDone ? styles.practiceChipDone : styles.practiceChip}
+                              style={isDone ? { background: lyr.pip } : {}}
+                              onClick={() => checkIn(n.id, p)}
+                            >
+                              {p}
+                            </button>
+                          )
+                        })}
                       </div>
                     )}
                   </div>
