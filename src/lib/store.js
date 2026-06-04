@@ -117,13 +117,13 @@ export function useAppState(onSignIn) {
     async function checkSession() {
       try {
         const { data: { session } } = await supabase.auth.getSession()
+        setAuthLoading(false)
         if (session?.user) {
           const restored = await restoreFromSupabase(session.user.id, session.user.email)
           if (restored) { setState(restored); saveState(restored) }
         }
       } catch (e) {
         console.error('checkSession error', e)
-      } finally {
         setAuthLoading(false)
       }
     }
