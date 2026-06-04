@@ -8,6 +8,7 @@ import Practices from './screens/Practices'
 import Data from './screens/Data'
 import SignIn from './screens/SignIn'
 import ComingSoon from './screens/ComingSoon'
+import UpdatePassword from './screens/UpdatePassword'
 import HamburgerMenu from './components/HamburgerMenu'
 import AppHeader from './components/AppHeader'
 import styles from './App.module.css'
@@ -48,7 +49,7 @@ function AppInner() {
           <Route path="/practices" element={<Protected onboarded={state.onboarded}><Practices state={state} addPractice={addPractice} removePractice={removePractice} /></Protected>} />
           <Route path="/data" element={<Protected onboarded={state.onboarded}><Data state={state} /></Protected>} />
           <Route path="/signin" element={<SignIn />} />
-          <Route path="/password" element={<Protected onboarded={state.onboarded}><ComingSoon title="Update password" /></Protected>} />
+          <Route path="/password" element={<Protected onboarded={state.onboarded}><UpdatePassword /></Protected>} />
           <Route path="/notifications" element={<Protected onboarded={state.onboarded}><ComingSoon title="Notifications" /></Protected>} />
         </Routes>
       </div>
