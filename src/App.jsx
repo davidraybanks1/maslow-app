@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, NavLink, Navigate, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { useAppState } from './lib/store'
 import Onboarding from './screens/Onboarding'
 import Today from './screens/Today'
@@ -6,26 +7,9 @@ import CanvasScreen from './screens/CanvasScreen'
 import Practices from './screens/Practices'
 import Data from './screens/Data'
 import SignIn from './screens/SignIn'
+import ComingSoon from './screens/ComingSoon'
+import HamburgerMenu from './components/HamburgerMenu'
 import styles from './App.module.css'
-
-function BottomNav() {
-  return (
-    <nav className={styles.bottomNav}>
-      <NavLink to="/today" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`}>
-        <div className={styles.navDot} /><span className={styles.navLabel}>today</span>
-      </NavLink>
-      <NavLink to="/canvas" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`}>
-        <div className={styles.navDot} /><span className={styles.navLabel}>canvas</span>
-      </NavLink>
-      <NavLink to="/practices" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`}>
-        <div className={styles.navDot} /><span className={styles.navLabel}>practices</span>
-      </NavLink>
-      <NavLink to="/data" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`}>
-        <div className={styles.navDot} /><span className={styles.navLabel}>data</span>
-      </NavLink>
-    </nav>
-  )
-}
 
 function Protected({ children, onboarded }) {
   if (!onboarded) return <Navigate to="/onboarding" replace />
@@ -34,6 +18,7 @@ function Protected({ children, onboarded }) {
 
 function AppInner() {
   const navigate = useNavigate()
+  const [menuOpen, setMenuOpen] = useState(false)
   const { state, authLoading, updateCanvas, addPractice, removePractice, checkIn, completeOnboarding } = useAppState(
     () => navigate('/today')
   )
@@ -52,14 +37,16 @@ function AppInner() {
         <Routes>
           <Route path="/" element={state.onboarded ? <Navigate to="/today" replace /> : <Navigate to="/onboarding" replace />} />
           <Route path="/onboarding" element={state.onboarded ? <Navigate to="/today" replace /> : <Onboarding completeOnboarding={completeOnboarding} />} />
-          <Route path="/today" element={<Protected onboarded={state.onboarded}><Today state={state} checkIn={checkIn} /></Protected>} />
+          <Route path="/today" element={<Protected onboarded={state.onboarded}><Today state={state} checkIn={checkIn} onOpenMenu={() => setMenuOpen(true)} /></Protected>} />
           <Route path="/canvas" element={<Protected onboarded={state.onboarded}><CanvasScreen state={state} updateCanvas={updateCanvas} /></Protected>} />
           <Route path="/practices" element={<Protected onboarded={state.onboarded}><Practices state={state} addPractice={addPractice} removePractice={removePractice} /></Protected>} />
           <Route path="/data" element={<Protected onboarded={state.onboarded}><Data state={state} /></Protected>} />
           <Route path="/signin" element={<SignIn />} />
+          <Route path="/password" element={<Protected onboarded={state.onboarded}><ComingSoon title="Update password" /></Protected>} />
+          <Route path="/notifications" element={<Protected onboarded={state.onboarded}><ComingSoon title="Notifications" /></Protected>} />
         </Routes>
       </div>
-      {state.onboarded && <BottomNav />}
+      {menuOpen && <HamburgerMenu onClose={() => setMenuOpen(false)} />}
     </div>
   )
 }

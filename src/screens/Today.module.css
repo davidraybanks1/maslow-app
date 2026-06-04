@@ -1,7 +1,10 @@
 .screen { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
 
 .header { padding: 28px 24px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-.date { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; color: var(--ink3); margin-bottom: 4px; }
+.headerTop { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.date { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; color: var(--ink3); }
+.menuBtn { background: none; border: none; cursor: pointer; padding: 4px; display: flex; flex-direction: column; gap: 4px; -webkit-tap-highlight-color: transparent; }
+.menuBtn span { display: block; width: 18px; height: 1.5px; background: var(--ink2); border-radius: 2px; }
 .greeting { font-family: var(--font-serif); font-size: 26px; font-weight: 400; letter-spacing: -0.01em; color: var(--ink); }
 .greeting em { font-style: italic; }
 

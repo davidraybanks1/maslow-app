@@ -10,7 +10,7 @@ const PRACTICE_HINT = {
   nourishment:  '1 practice each',
 }
 
-export default function Today({ state, checkIn }) {
+export default function Today({ state, checkIn, onOpenMenu }) {
   const today = todayKey()
   const checked = state.checkins[today] || []
   const total = totalBubbles(state.canvas)
@@ -23,7 +23,12 @@ export default function Today({ state, checkIn }) {
   return (
     <div className={styles.screen}>
       <div className={styles.header}>
-        <div className={styles.date}>{date}</div>
+        <div className={styles.headerTop}>
+          <div className={styles.date}>{date}</div>
+          <button className={styles.menuBtn} onClick={onOpenMenu} aria-label="Open menu">
+            <span /><span /><span />
+          </button>
+        </div>
         <div className={styles.greeting}>
           good {hour()}, <em>{state.profile?.name || 'friend'}.</em>
         </div>

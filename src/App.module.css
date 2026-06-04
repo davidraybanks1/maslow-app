@@ -9,49 +9,5 @@
 
 .content {
   flex: 1;
-  padding-bottom: 80px;
   overflow-y: auto;
 }
-
-.bottomNav {
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 480px;
-  background: var(--bg);
-  border-top: 1px solid var(--border);
-  display: flex;
-  padding: 8px 0 env(safe-area-inset-bottom, 16px);
-  z-index: 50;
-}
-
-.navItem {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 0;
-  cursor: pointer;
-  text-decoration: none;
-  color: inherit;
-}
-
-.navLabel {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  color: var(--ink3);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.navActive .navLabel { color: var(--ink); }
-
-.navDot {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: transparent;
-}
-.navActive .navDot { background: var(--ink); }
