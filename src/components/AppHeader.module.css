@@ -15,9 +15,10 @@
 }
 
 .wordmark {
-  font-family: 'Instrument Serif', serif;
+  font-family: 'DM Mono', monospace;
   font-size: 20px;
-  font-style: italic;
+  font-style: normal;
+  font-weight: 200;
   color: #ffffff;
   letter-spacing: -0.01em;
 }
