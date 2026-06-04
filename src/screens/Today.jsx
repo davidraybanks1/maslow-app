@@ -10,24 +10,7 @@ const PRACTICE_HINT = {
   nourishment:  '1 practice each',
 }
 
-function MaslowMark() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 72 72" fill="none">
-      <circle cx="36" cy="14" r="4" fill="#E8B81F"/>
-      <circle cx="29" cy="28" r="4" fill="#1A1A1A"/>
-      <circle cx="43" cy="28" r="4" fill="#1A1A1A"/>
-      <circle cx="22" cy="42" r="4" fill="#1A1A1A"/>
-      <circle cx="36" cy="42" r="4" fill="#1A1A1A"/>
-      <circle cx="50" cy="42" r="4" fill="#1A1A1A"/>
-      <circle cx="15" cy="56" r="4" fill="#1A1A1A"/>
-      <circle cx="29" cy="56" r="4" fill="#1A1A1A"/>
-      <circle cx="43" cy="56" r="4" fill="#1A1A1A"/>
-      <circle cx="57" cy="56" r="4" fill="#1A1A1A"/>
-    </svg>
-  )
-}
-
-export default function Today({ state, checkIn, onMenuOpen }) {
+export default function Today({ state, checkIn }) {
   const today = todayKey()
   const checked = state.checkins[today] || []
   const total = totalBubbles(state.canvas)
@@ -36,17 +19,6 @@ export default function Today({ state, checkIn, onMenuOpen }) {
 
   return (
     <div className={styles.screen}>
-
-      {/* ── Top bar: logo + hamburger ── */}
-      <div className={styles.topBar}>
-        <div className={styles.logoMark}>
-          <MaslowMark />
-          <span className={styles.wordmark}>maslow.</span>
-        </div>
-        <button className={styles.menuBtn} onClick={onMenuOpen} aria-label="Open menu">
-          <span /><span /><span />
-        </button>
-      </div>
 
       {/* ── Greeting ── */}
       <div className={styles.header}>
