@@ -54,20 +54,6 @@ export default function Today({ state, checkIn, logMood }) {
         </div>
       </div>
 
-      {/* ── Progress ── */}
-      <div className={styles.progressSection}>
-        <div className={styles.progressScore}>
-          <div className={styles.progLeft}>
-            <span className={styles.progNum}>{done}</span>
-            <span className={styles.progTotal}>/{total}</span>
-          </div>
-          <span className={styles.progPct}>{pct}%</span>
-        </div>
-        <div className={styles.progTrack}>
-          <div className={styles.progFill} style={{ width: `${pct}%` }} />
-        </div>
-      </div>
-
       {/* ── Scrollable body ── */}
       <div className={styles.list}>
 
@@ -108,8 +94,12 @@ export default function Today({ state, checkIn, logMood }) {
           ))}
         </div>
 
+        {/* ── Progress bar ── */}
+        <div className={styles.progTrack}>
+          <div className={styles.progFill} style={{ width: `${pct}%` }} />
+        </div>
+
         {/* ── Practices section ── */}
-        <div className={styles.sectionDivider} />
         <div className={styles.sectionHeader}>
           <span>practices</span>
           <span style={{ color: 'var(--ink3)', fontWeight: 200 }}>{done}/{total}</span>
