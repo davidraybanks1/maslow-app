@@ -21,7 +21,7 @@ function Protected({ children, onboarded }) {
 function AppInner() {
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
-  const { state, authLoading, updateCanvas, addPractice, removePractice, checkIn, completeOnboarding } = useAppState(
+  const { state, authLoading, updateCanvas, addPractice, removePractice, checkIn, logMood, completeOnboarding } = useAppState(
     () => navigate('/today')
   )
 
@@ -44,7 +44,7 @@ function AppInner() {
         <Routes>
           <Route path="/" element={state.onboarded ? <Navigate to="/today" replace /> : <Navigate to="/onboarding" replace />} />
           <Route path="/onboarding" element={state.onboarded ? <Navigate to="/today" replace /> : <Onboarding completeOnboarding={completeOnboarding} />} />
-          <Route path="/today" element={<Protected onboarded={state.onboarded}><Today state={state} checkIn={checkIn} /></Protected>} />
+          <Route path="/today" element={<Protected onboarded={state.onboarded}><Today state={state} checkIn={checkIn} logMood={logMood} /></Protected>} />
           <Route path="/canvas" element={<Protected onboarded={state.onboarded}><CanvasScreen state={state} updateCanvas={updateCanvas} /></Protected>} />
           <Route path="/practices" element={<Protected onboarded={state.onboarded}><Practices state={state} addPractice={addPractice} removePractice={removePractice} /></Protected>} />
           <Route path="/data" element={<Protected onboarded={state.onboarded}><Data state={state} /></Protected>} />

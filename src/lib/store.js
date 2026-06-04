@@ -205,6 +205,20 @@ export function useAppState(onSignIn) {
     }
   }
 
+  async function logMood(userId, promptTime, mood, note, date) {
+    setState(prev => {
+      const filtered = (prev.moods || []).filter(
+        m => !(m.date_key === date && m.prompt_time === promptTime)
+      )
+      return { ...prev, moods: [{ user_id: userId, date_key: date, prompt_time: promptTime, mood, note: note || null }, ...filtered] }
+    })
+    const { error } = await supabase
+      .from('moods')
+      .upsert({ user_id: userId, date_key: date, prompt_time: promptTime, mood, note: note || null },
+        { onConflict: 'user_id,date_key,prompt_time' })
+    return { error }
+  }
+
   async function loadMoods() {
     if (!state.userId) return
     const moods = await fetchMoods(state.userId)
@@ -223,7 +237,7 @@ export function useAppState(onSignIn) {
     }))
   }
 
-  return { state, authLoading, updateCanvas, addPractice, removePractice, checkIn, completeOnboarding, loadMoods }
+  return { state, authLoading, updateCanvas, addPractice, removePractice, checkIn, logMood, completeOnboarding, loadMoods }
 }
 
 export function todayKey() {

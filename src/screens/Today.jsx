@@ -1,8 +1,11 @@
+import { useState } from 'react'
 import { NEEDS, LAYERS, totalBubbles } from '../lib/constants'
 import { todayKey } from '../lib/store'
 import styles from './Today.module.css'
 
 const LAYER_ORDER = ['purpose', 'appreciation', 'nourishment', 'survival']
+const MOOD_PERIODS = ['morning', 'midday', 'evening']
+const MOODS = ['good', 'fine', 'bad']
 
 const PRACTICE_HINT = {
   purpose:      '3 practices',
@@ -10,12 +13,36 @@ const PRACTICE_HINT = {
   nourishment:  '1 practice each',
 }
 
-export default function Today({ state, checkIn }) {
+export default function Today({ state, checkIn, logMood }) {
   const today = todayKey()
   const checked = state.checkins[today] || []
   const total = totalBubbles(state.canvas)
   const done = checked.length
   const pct = total ? Math.round(done / total * 100) : 0
+
+  const todayMoods = (state.moods || []).filter(m => m.date_key === today)
+
+  const [moodSelections, setMoodSelections] = useState(() => {
+    const init = {}
+    todayMoods.forEach(m => { init[m.prompt_time] = m.mood })
+    return init
+  })
+
+  const [moodNotes, setMoodNotes] = useState(() => {
+    const init = {}
+    todayMoods.forEach(m => { init[m.prompt_time] = m.note || '' })
+    return init
+  })
+
+  function handleMoodSelect(promptTime, mood) {
+    setMoodSelections(prev => ({ ...prev, [promptTime]: mood }))
+    if (logMood) logMood(state.userId, promptTime, mood, moodNotes[promptTime] || null, today)
+  }
+
+  function handleNoteBlur(promptTime) {
+    if (!moodSelections[promptTime] || !logMood) return
+    logMood(state.userId, promptTime, moodSelections[promptTime], moodNotes[promptTime] || null, today)
+  }
 
   return (
     <div className={styles.screen}>
@@ -41,8 +68,53 @@ export default function Today({ state, checkIn }) {
         </div>
       </div>
 
-      {/* ── Practice list ── */}
+      {/* ── Scrollable body ── */}
       <div className={styles.list}>
+
+        {/* ── Mood section ── */}
+        <div className={styles.sectionDivider} />
+        <div className={styles.sectionHeader}>
+          <span>mood</span>
+          <span style={{ color: 'var(--ink3)', fontWeight: 200 }}>today</span>
+        </div>
+        <div className={styles.moodSection}>
+          {MOOD_PERIODS.map((period, idx) => (
+            <div key={period}>
+              {idx > 0 && <div className={styles.moodDivider} />}
+              <div className={styles.moodRow}>
+                <div className={styles.moodRowTop}>
+                  <span className={styles.moodLabel}>{period}</span>
+                  <div className={styles.moodBtns}>
+                    {MOODS.map(mood => (
+                      <button
+                        key={mood}
+                        className={`${styles.moodBtn} ${moodSelections[period] === mood ? styles.moodBtnSelected : ''}`}
+                        onClick={() => handleMoodSelect(period, mood)}
+                      >
+                        {mood}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <input
+                  className={styles.moodNote}
+                  placeholder="add a note…"
+                  value={moodNotes[period] || ''}
+                  onChange={e => setMoodNotes(prev => ({ ...prev, [period]: e.target.value }))}
+                  onBlur={() => handleNoteBlur(period)}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ── Practices section ── */}
+        <div className={styles.sectionDivider} />
+        <div className={styles.sectionHeader}>
+          <span>practices</span>
+          <span style={{ color: 'var(--ink3)', fontWeight: 200 }}>{done}/{total}</span>
+        </div>
+
         {LAYER_ORDER.map(mode => {
           const modeNeeds = NEEDS.filter(n => state.canvas[n.id] === mode)
           if (!modeNeeds.length) return null

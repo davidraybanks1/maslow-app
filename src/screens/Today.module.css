@@ -38,3 +38,18 @@
 .chipRow { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
 .practiceChip { padding: 3px 10px; border-radius: 20px; border: 0.5px solid var(--border2); font-family: var(--font-mono); font-size: 10px; font-weight: 200; color: var(--ink2); background: var(--bg); cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent; transition: background 0.1s; }
 .practiceChip:active { background: var(--bg2); }
+
+/* ── Mood & section headers ── */
+.sectionDivider { height: 0.5px; background: var(--border); margin: 0; }
+.sectionHeader { display: flex; justify-content: space-between; align-items: baseline; padding: 14px 24px 0; font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink); }
+
+.moodSection { padding: 12px 24px 16px; display: flex; flex-direction: column; gap: 12px; }
+.moodRow { display: flex; flex-direction: column; gap: 6px; }
+.moodRowTop { display: flex; align-items: center; justify-content: space-between; }
+.moodLabel { font-size: 10px; color: var(--ink3); letter-spacing: 0.08em; font-family: var(--font-mono); }
+.moodBtns { display: flex; gap: 5px; }
+.moodBtn { padding: 4px 11px; border-radius: 20px; border: 0.5px solid var(--border2); background: transparent; color: var(--ink3); font-family: var(--font-mono); font-size: 10px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.moodBtnSelected { background: var(--ink); color: #fff; border-color: var(--ink); }
+.moodNote { width: 100%; box-sizing: border-box; padding: 7px 12px; border-radius: 8px; border: 0.5px solid var(--border); background: var(--bg2); font-family: var(--font-mono); font-size: 11px; font-weight: 200; color: var(--ink); outline: none; }
+.moodNote::placeholder { color: var(--ink4); }
+.moodDivider { height: 0.5px; background: var(--border); }
