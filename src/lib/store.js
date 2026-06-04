@@ -78,16 +78,17 @@ async function fetchMoods(userId) {
 
 async function restoreFromSupabase(userId, email) {
   try {
+    const { data: user } = await supabase.from('users').select('*').eq('email', email).single()
+    if (!user) return null
+
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
     const cutoff = thirtyDaysAgo.toISOString().slice(0, 10)
 
-    const [{ data: user }, { data: checkins }, moods] = await Promise.all([
-      supabase.from('users').select('*').eq('email', email).single(),
-      supabase.from('checkins').select('*').eq('user_id', userId).gte('date_key', cutoff),
-      fetchMoods(userId),
+    const [{ data: checkins }, moods] = await Promise.all([
+      supabase.from('checkins').select('*').eq('user_id', user.id).gte('date_key', cutoff),
+      fetchMoods(user.id),
     ])
-    if (!user) return null
     const checkinsMap = {}
     for (const row of (checkins || [])) {
       if (!checkinsMap[row.date_key]) checkinsMap[row.date_key] = []
