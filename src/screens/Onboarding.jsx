@@ -405,6 +405,9 @@ export default function Onboarding({ completeOnboarding }) {
             />
             <div className={styles.inputHint}>For morning, midday, and evening check-in reminders via text.</div>
           </div>
+          <div className={styles.consentText} style={{ marginTop: 10 }}>
+            By entering your phone number, you agree to receive SMS messages from Maslow, including daily practice reminders and mood check-ins. Message frequency varies. Message &amp; data rates may apply. Reply STOP at any time to opt out. <a href="https://mymaslow.com/privacy" target="_blank" rel="noreferrer">View our Privacy Policy.</a>
+          </div>
           <div className={styles.consentGroup}>
             <label className={styles.consentLabel}>
               <input
@@ -413,9 +416,7 @@ export default function Onboarding({ completeOnboarding }) {
                 onChange={e => setSmsConsent(e.target.checked)}
                 className={styles.consentCheck}
               />
-              <span className={styles.consentText}>
-                I agree to receive up to 6 SMS messages per day from Maslow including check-in reminders and mood prompts. Message and data rates may apply. Reply STOP to opt out. <a href="/privacy" target="_blank">Privacy Policy</a>
-              </span>
+              <span className={styles.consentText}>I agree to receive SMS messages from Maslow.</span>
             </label>
           </div>
           {error && <div className={styles.error}>{error}</div>}
