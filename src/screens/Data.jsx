@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { NEEDS, LAYERS } from '../lib/constants'
 import { todayKey } from '../lib/store'
 import styles from './Data.module.css'

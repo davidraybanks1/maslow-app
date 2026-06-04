@@ -136,6 +136,10 @@ export function useAppState(onSignIn) {
         const restored = await restoreFromSupabase(session.user.id, session.user.email)
         if (restored) { setState(restored); saveState(restored); onSignIn?.() }
       }
+      if (event === 'SIGNED_OUT') {
+        localStorage.removeItem('maslow_state')
+        setState(initialState())
+      }
     })
 
     return () => subscription.unsubscribe()
@@ -206,6 +210,7 @@ export function useAppState(onSignIn) {
   }
 
   async function logMood(userId, promptTime, mood, note, date) {
+    if (!userId) return { error: 'Not authenticated' }
     setState(prev => {
       const filtered = (prev.moods || []).filter(
         m => !(m.date_key === date && m.prompt_time === promptTime)
