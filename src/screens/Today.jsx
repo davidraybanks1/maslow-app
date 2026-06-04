@@ -100,7 +100,7 @@ export default function Today({ state, checkIn, logMood }) {
           <span style={{ color: 'var(--ink3)', fontWeight: 200 }}>{done}/{total}</span>
         </div>
 
-        {LAYER_ORDER.map(mode => {
+        {LAYER_ORDER.filter(m => LAYERS[m].bubbles > 0).map(mode => {
           const modeNeeds = NEEDS.filter(n => state.canvas[n.id] === mode)
           if (!modeNeeds.length) return null
           const lyr = LAYERS[mode]
@@ -166,6 +166,31 @@ export default function Today({ state, checkIn, logMood }) {
             </div>
           )
         })}
+
+        {/* ── Survival section ── */}
+        {(() => {
+          const survivalNeeds = NEEDS.filter(n => state.canvas[n.id] === 'survival')
+          if (!survivalNeeds.length) return null
+          return (
+            <>
+              <div className={styles.sectionDivider} />
+              <div className={styles.survivalSection}>
+                <div className={styles.modeLabel} style={{ color: '#D93B1C', marginBottom: 10 }}>
+                  <div className={styles.modePip} style={{ background: '#D93B1C' }} />
+                  <span>survival</span>
+                </div>
+                <div className={styles.survivalNeeds}>
+                  {survivalNeeds.map(n => (
+                    <div key={n.id} className={styles.survivalNeed}>
+                      <span className={styles.survivalX}>✕</span>
+                      <span className={styles.survivalName}>{n.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )
+        })()}
       </div>
     </div>
   )

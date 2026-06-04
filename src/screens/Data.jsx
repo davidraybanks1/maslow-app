@@ -127,10 +127,18 @@ function MoodChart({ days, checkins, moods, canvas }) {
   )
 }
 
+const MODE_ORDER = ['purpose', 'appreciation', 'nourishment', 'survival']
+
 function CanvasCompletion({ days, checkins, canvas }) {
+  const sortedNeeds = [...NEEDS].sort((a, b) => {
+    const ai = MODE_ORDER.indexOf(canvas[a.id] || 'survival')
+    const bi = MODE_ORDER.indexOf(canvas[b.id] || 'survival')
+    return ai - bi
+  })
+
   return (
     <div className={styles.canvasCompletion}>
-      {NEEDS.map(need => {
+      {sortedNeeds.map(need => {
         const mode = canvas[need.id]
         const lyr = LAYERS[mode]
         if (!lyr || lyr.bubbles === 0) {
