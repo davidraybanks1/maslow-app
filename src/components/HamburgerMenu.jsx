@@ -25,8 +25,9 @@ export default function HamburgerMenu({ onClose }) {
 
   async function handleSignOut() {
     await supabase.auth.signOut()
+    localStorage.removeItem('maslow_state')
     onClose()
-    navigate('/onboarding')
+    navigate('/signin')
   }
 
   return (
