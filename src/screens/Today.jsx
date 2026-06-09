@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { NEEDS, LAYERS, totalBubbles } from '../lib/constants'
-import { todayKey } from '../lib/store'
+import { todayKey, loadJournalEntry, saveJournalEntry } from '../lib/store'
 import styles from './Today.module.css'
 
 const LAYER_ORDER = ['purpose', 'appreciation', 'nourishment', 'survival']
@@ -16,6 +16,25 @@ export default function Today({ state, checkIn, logMood }) {
   const pct = total ? Math.round(done / total * 100) : 0
 
   const todayMoods = (state.moods || []).filter(m => m.date_key === today)
+
+  const [journalEntry, setJournalEntry] = useState('')
+  const debounceRef = useRef(null)
+
+  useEffect(() => {
+    if (!state.userId) return
+    loadJournalEntry(state.userId, today).then(entry => {
+      setJournalEntry(entry)
+    })
+  }, [state.userId, today])
+
+  function handleJournalChange(e) {
+    const val = e.target.value
+    setJournalEntry(val)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      if (state.userId) saveJournalEntry(state.userId, today, val)
+    }, 1500)
+  }
 
   const [moodSelections, setMoodSelections] = useState(() => {
     const init = {}
@@ -191,6 +210,21 @@ export default function Today({ state, checkIn, logMood }) {
             </>
           )
         })()}
+
+        {/* ── Journal ── */}
+        <div className={styles.journalSection}>
+          <div className={styles.sectionHeader}>
+            <span className={styles.sectionLabel}>Journal</span>
+            <span className={styles.sectionMeta}>today</span>
+          </div>
+          <textarea
+            className={styles.journalInput}
+            placeholder="Add your voice over of the day"
+            value={journalEntry}
+            onChange={handleJournalChange}
+            rows={5}
+          />
+        </div>
       </div>
     </div>
   )

@@ -274,3 +274,19 @@ export async function signInWithPassword(email, password) {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password })
   return { data, error }
 }
+
+export async function loadJournalEntry(userId, dateKey) {
+  const { data } = await supabase
+    .from('journal')
+    .select('entry')
+    .eq('user_id', userId)
+    .eq('date_key', dateKey)
+    .single()
+  return data?.entry || ''
+}
+
+export async function saveJournalEntry(userId, dateKey, entry) {
+  await supabase
+    .from('journal')
+    .upsert({ user_id: userId, date_key: dateKey, entry }, { onConflict: 'user_id,date_key' })
+}

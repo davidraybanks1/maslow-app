@@ -50,3 +50,32 @@
 .survivalNeed { display: flex; align-items: center; gap: 4px; }
 .survivalX { font-size: 10px; color: #D93B1C; font-weight: 500; }
 .survivalName { font-family: 'Instrument Serif', serif; font-size: 13px; color: var(--ink3); }
+
+/* ── Journal ── */
+.journalSection {
+  padding: 0 24px 48px;
+}
+
+.journalInput {
+  width: 100%;
+  padding: 14px 16px;
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 200;
+  color: var(--ink);
+  line-height: 1.7;
+  resize: none;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.journalInput:focus {
+  border-color: var(--ink2);
+}
+
+.journalInput::placeholder {
+  color: var(--ink4);
+}
