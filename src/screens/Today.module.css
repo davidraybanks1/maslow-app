@@ -38,6 +38,18 @@
   margin-bottom: 10px;
 }
 
+.cardJournal {
+  background: #B8C3B1;
+  border: 0.5px solid #A8B8B0;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+
+.cardJournal .sectionLabel {
+  color: #2C4A42;
+}
+
 /* ── Progress bar ── */
 .progressRow {
   display: flex;
@@ -100,7 +112,7 @@
   align-items: baseline;
   margin-bottom: 12px;
 }
-.sectionLabel { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.14em; text-transform: lowercase; color: var(--ink); }
+.sectionLabel { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; text-transform: lowercase; color: var(--ink); }
 
 .moodSection { padding: 12px 24px 16px; display: flex; flex-direction: column; gap: 12px; }
 .moodRow { display: flex; flex-direction: column; gap: 6px; }
@@ -133,24 +145,18 @@
 
 .journalInput {
   width: 100%;
-  padding: 14px 16px;
-  border: 0.5px solid var(--border);
-  border-radius: 12px;
-  background: var(--bg);
+  padding: 8px 0;
+  border: none;
+  background: transparent;
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 200;
-  color: var(--ink);
+  color: #2C4A42;
   line-height: 1.7;
   resize: none;
   outline: none;
-  transition: border-color 0.15s;
-}
-
-.journalInput:focus {
-  border-color: var(--ink2);
 }
 
 .journalInput::placeholder {
-  color: var(--ink4);
+  color: #6A8A80;
 }

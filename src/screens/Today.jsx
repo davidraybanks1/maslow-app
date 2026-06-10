@@ -112,7 +112,7 @@ export default function Today({ state, checkIn, logMood }) {
         </div>
 
         {/* ── Journal card ── */}
-        <div className={styles.cardAlt}>
+        <div className={styles.cardJournal}>
           <div className={styles.journalSection}>
             <div className={styles.sectionHeader}>
               <span className={styles.sectionLabel}>thoughts</span>
