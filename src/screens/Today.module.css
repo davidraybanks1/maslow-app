@@ -1,16 +1,41 @@
-.screen { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+.screen {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg2);
+  min-height: 100vh;
+  padding: 0 16px 32px;
+}
 
 /* ── Greeting ── */
-.header { padding: 16px 24px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.header {
+  padding: 20px 0 16px;
+}
 .greeting { font-family: var(--font-serif); font-size: 26px; font-weight: 400; letter-spacing: -0.01em; color: var(--ink); }
 .greeting em { font-style: italic; }
+
+/* ── Cards ── */
+.card {
+  background: var(--bg);
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+
+.cardAlt {
+  background: var(--bg2);
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
 
 /* ── Progress bar ── */
 .progTrack { width: 100%; height: 3px; background: var(--border); overflow: hidden; flex-shrink: 0; }
 .progFill { height: 100%; background: #E8B81F; transition: width 0.4s ease; }
 
 /* ── List ── */
-.list { flex: 1; overflow-y: auto; padding-bottom: 32px; }
+.list { flex: 1; overflow-y: auto; }
 .list::-webkit-scrollbar { display: none; }
 
 .modeGroup { padding: 18px 24px 4px; }
@@ -31,7 +56,12 @@
 
 /* ── Mood & section headers ── */
 .sectionDivider { height: 0.5px; background: var(--border); margin: 0; }
-.sectionHeader { display: flex; justify-content: space-between; align-items: baseline; padding: 14px 24px 0; font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink); }
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 12px;
+}
 
 .moodSection { padding: 12px 24px 16px; display: flex; flex-direction: column; gap: 12px; }
 .moodRow { display: flex; flex-direction: column; gap: 6px; }
