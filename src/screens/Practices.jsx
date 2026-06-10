@@ -18,8 +18,8 @@ export default function Practices({ state, addPractice, removePractice }) {
     <div className={styles.screen}>
       <div className={styles.header}>
         <div className={styles.eyebrow}>your practices</div>
-        <div className={styles.title}>build your pool</div>
-        <div className={styles.sub}>Each day you pick from your pool. Up to 10 per need.</div>
+        <div className={styles.title}>build your library</div>
+        <div className={styles.sub}>Each day you pick from your library. Up to 10 per need.</div>
       </div>
       <div className={styles.list}>
         {LAYER_ORDER.filter(m => LAYERS[m].bubbles > 0).map(mode => {
