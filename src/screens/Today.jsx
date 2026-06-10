@@ -19,17 +19,28 @@ export default function Today({ state, checkIn, logMood }) {
 
   const [journalEntry, setJournalEntry] = useState('')
   const debounceRef = useRef(null)
+  const journalRef = useRef(null)
 
   useEffect(() => {
     if (!state.userId) return
     loadJournalEntry(state.userId, today).then(entry => {
       setJournalEntry(entry)
+      setTimeout(() => {
+        if (journalRef.current && entry) {
+          journalRef.current.style.height = 'auto'
+          journalRef.current.style.height = journalRef.current.scrollHeight + 'px'
+        }
+      }, 50)
     })
   }, [state.userId, today])
 
   function handleJournalChange(e) {
     const val = e.target.value
     setJournalEntry(val)
+    if (journalRef.current) {
+      journalRef.current.style.height = 'auto'
+      journalRef.current.style.height = journalRef.current.scrollHeight + 'px'
+    }
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
       if (state.userId) saveJournalEntry(state.userId, today, val)
@@ -74,6 +85,15 @@ export default function Today({ state, checkIn, logMood }) {
       {/* ── Scrollable body ── */}
       <div className={styles.list}>
 
+        {/* ── Progress bar ── */}
+        <div className={styles.progressRow}>
+          <span className={styles.progressCount}>{done} of {total}</span>
+          <div className={styles.progTrack}>
+            <div className={styles.progFill} style={{ width: `${pct}%` }} />
+          </div>
+          <span className={styles.progressPct}>{pct}%</span>
+        </div>
+
         {/* ── Mood card ── */}
         <div className={styles.card}>
           <div className={styles.sectionHeader}>
@@ -112,12 +132,13 @@ export default function Today({ state, checkIn, logMood }) {
         </div>
 
         {/* ── Journal card ── */}
-        <div className={styles.cardJournal}>
+        <div className={styles.card}>
           <div className={styles.journalSection}>
             <div className={styles.sectionHeader}>
               <span className={styles.sectionLabel}>thoughts</span>
             </div>
             <textarea
+              ref={journalRef}
               className={styles.journalInput}
               placeholder="Add your voice over of the day"
               value={journalEntry}
@@ -125,15 +146,6 @@ export default function Today({ state, checkIn, logMood }) {
               rows={5}
             />
           </div>
-        </div>
-
-        {/* ── Progress bar ── */}
-        <div className={styles.progressRow}>
-          <span className={styles.progressCount}>{done} of {total}</span>
-          <div className={styles.progTrack}>
-            <div className={styles.progFill} style={{ width: `${pct}%` }} />
-          </div>
-          <span className={styles.progressPct}>{pct}%</span>
         </div>
 
         {/* ── Practices card ── */}
