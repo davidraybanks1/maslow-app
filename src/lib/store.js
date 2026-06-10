@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { defaultCanvas } from './constants'
 import { supabase } from './supabase'
 
@@ -113,6 +113,9 @@ async function restoreFromSupabase(userId, email) {
 export function useAppState(onSignIn) {
   const [state, setState] = useState(initialState)
   const [authLoading, setAuthLoading] = useState(true)
+  const checkinsRef = useRef(state.checkins)
+
+  useEffect(() => { checkinsRef.current = state.checkins }, [state.checkins])
 
   useEffect(() => {
     async function checkSession() {
@@ -189,16 +192,13 @@ export function useAppState(onSignIn) {
 
   function checkIn(needId, practiceText, date = todayKey()) {
     const key = `${needId}_${practiceText}`
-    const existing = state.checkins[date] || []
+    const existing = checkinsRef.current[date] || []
     const isRemoving = existing.includes(key)
+    const updated = isRemoving ? existing.filter(k => k !== key) : [...existing, key]
+    const newCheckins = { ...checkinsRef.current, [date]: updated }
+    checkinsRef.current = newCheckins
 
-    setState(prev => {
-      const prevExisting = prev.checkins[date] || []
-      const updated = prevExisting.includes(key)
-        ? prevExisting.filter(k => k !== key)
-        : [...prevExisting, key]
-      return { ...prev, checkins: { ...prev.checkins, [date]: updated } }
-    })
+    setState(prev => ({ ...prev, checkins: newCheckins }))
 
     if (state.userId) {
       if (!isRemoving) {
