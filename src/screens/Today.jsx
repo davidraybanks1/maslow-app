@@ -133,19 +133,17 @@ export default function Today({ state, checkIn, logMood }) {
 
         {/* ── Journal card ── */}
         <div className={styles.card}>
-          <div className={styles.journalSection}>
-            <div className={styles.sectionHeader}>
-              <span className={styles.sectionLabel}>thoughts</span>
-            </div>
-            <textarea
-              ref={journalRef}
-              className={styles.journalInput}
-              placeholder="Add your voice over of the day"
-              value={journalEntry}
-              onChange={handleJournalChange}
-              rows={5}
-            />
+          <div className={styles.sectionHeader}>
+            <span className={styles.sectionLabel}>thoughts</span>
           </div>
+          <textarea
+            ref={journalRef}
+            className={styles.journalInput}
+            placeholder="Add your voice over of the day"
+            value={journalEntry}
+            onChange={handleJournalChange}
+            rows={5}
+          />
         </div>
 
         {/* ── Practices card ── */}
@@ -227,6 +225,13 @@ export default function Today({ state, checkIn, logMood }) {
             return (
               <>
                 <div className={styles.sectionDivider} />
+                <div className={styles.modeGroup}>
+                  <div className={styles.modeLabel}>
+                    <div className={styles.modePip} style={{ background: '#D93B1C' }} />
+                    <span style={{ color: '#D93B1C' }}>survival</span>
+                  </div>
+                  <span className={styles.modeHint}>no effort needed today</span>
+                </div>
                 <div className={styles.survivalRow}>
                   {survivalNeeds.map(n => (
                     <div key={n.id} className={styles.survivalNeed}>
