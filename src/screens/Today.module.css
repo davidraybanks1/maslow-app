@@ -14,7 +14,7 @@
 .greeting em { font-style: italic; }
 .dateLabel {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 12px;
   color: var(--ink3);
   letter-spacing: 0.06em;
   margin-top: 4px;
@@ -39,15 +39,11 @@
 }
 
 .cardJournal {
-  background: #B8C3B1;
-  border: 0.5px solid #A8B8B0;
+  background: var(--bg);
+  border: 0.5px solid var(--border);
   border-radius: 12px;
   padding: 14px 16px;
   margin-bottom: 10px;
-}
-
-.cardJournal .sectionLabel {
-  color: #2C4A42;
 }
 
 /* ── Progress bar ── */
@@ -59,7 +55,7 @@
 }
 .progressCount {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 12px;
   color: var(--ink3);
   min-width: 48px;
 }
@@ -78,7 +74,7 @@
 }
 .progressPct {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 12px;
   color: var(--ink3);
   min-width: 32px;
   text-align: right;
@@ -94,15 +90,15 @@
 .modeDivider { height: 0.5px; background: var(--border); margin: 4px 0 16px; }
 
 .needSection { margin-bottom: 16px; }
-.needLabel { font-family: 'Instrument Serif', serif; font-size: 13px; color: var(--ink3); margin-bottom: 6px; padding-left: 15px; }
-.noPractice { font-family: var(--font-mono); font-size: 10px; font-weight: 200; color: var(--ink4); margin-top: 1px; }
+.needLabel { font-family: 'Instrument Serif', serif; font-size: 15px; color: var(--ink3); margin-bottom: 6px; padding-left: 15px; }
+.noPractice { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink4); margin-top: 1px; }
 .bubbleDot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
 .bubbleDotEmpty { background: transparent; }
 
 .chipRow { display: flex; flex-wrap: wrap; gap: 5px; padding-left: 15px; }
-.practiceChip { padding: 3px 10px; border-radius: 20px; border: 0.5px solid var(--border2); font-family: var(--font-mono); font-size: 10px; font-weight: 200; color: var(--ink2); background: var(--bg); cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent; transition: background 0.1s; }
+.practiceChip { padding: 4px 10px; border-radius: 20px; border: 0.5px solid var(--border2); font-family: var(--font-mono); font-size: 11px; font-weight: 200; color: var(--ink2); background: var(--bg); cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent; transition: background 0.1s; }
 .practiceChip:active { background: var(--bg2); }
-.practiceChipDone { padding: 3px 10px; border-radius: 20px; border: none; font-family: var(--font-mono); font-size: 10px; font-weight: 200; color: #fff; cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
+.practiceChipDone { padding: 4px 10px; border-radius: 20px; border: none; font-family: var(--font-mono); font-size: 11px; font-weight: 200; color: #fff; cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
 
 /* ── Mood & section headers ── */
 .sectionDivider { height: 0.5px; background: var(--border); margin: 0; }
@@ -112,16 +108,16 @@
   align-items: baseline;
   margin-bottom: 12px;
 }
-.sectionLabel { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; text-transform: lowercase; color: var(--ink); }
+.sectionLabel { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.1em; text-transform: lowercase; color: var(--ink); }
 
 .moodSection { padding: 12px 24px 16px; display: flex; flex-direction: column; gap: 12px; }
 .moodRow { display: flex; flex-direction: column; gap: 6px; }
 .moodRowTop { display: flex; align-items: center; justify-content: space-between; }
-.moodLabel { font-size: 10px; color: var(--ink3); letter-spacing: 0.08em; font-family: var(--font-mono); }
+.moodLabel { font-size: 12px; color: var(--ink3); letter-spacing: 0.08em; font-family: var(--font-mono); }
 .moodBtns { display: flex; gap: 5px; }
-.moodBtn { padding: 4px 11px; border-radius: 20px; border: 0.5px solid var(--border2); background: transparent; color: var(--ink3); font-family: var(--font-mono); font-size: 10px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.moodBtn { padding: 4px 12px; border-radius: 20px; border: 0.5px solid var(--border2); background: transparent; color: var(--ink3); font-family: var(--font-mono); font-size: 11px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .moodBtnSelected { background: var(--ink); color: #fff; border-color: var(--ink); }
-.moodNote { width: 100%; box-sizing: border-box; padding: 7px 12px; border-radius: 8px; border: 0.5px solid var(--border); background: var(--bg2); font-family: var(--font-mono); font-size: 11px; font-weight: 200; color: var(--ink); outline: none; }
+.moodNote { width: 100%; box-sizing: border-box; padding: 7px 12px; border-radius: 8px; border: 0.5px solid var(--border); background: var(--bg2); font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink); outline: none; }
 .moodNote::placeholder { color: var(--ink4); }
 .moodDivider { height: 0.5px; background: var(--border); }
 
@@ -135,7 +131,7 @@
   padding: 12px 0 4px;
 }
 .survivalNeed { display: flex; align-items: center; gap: 4px; }
-.survivalX { font-size: 10px; color: #D93B1C; font-weight: 500; }
+.survivalX { font-size: 12px; color: #D93B1C; font-weight: 500; }
 .survivalName { font-family: 'Instrument Serif', serif; font-size: 13px; color: var(--ink3); }
 
 /* ── Journal ── */
@@ -145,18 +141,25 @@
 
 .journalInput {
   width: 100%;
-  padding: 8px 0;
-  border: none;
-  background: transparent;
+  padding: 14px 16px;
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg2);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 200;
-  color: #2C4A42;
+  color: var(--ink);
   line-height: 1.7;
   resize: none;
   outline: none;
+  transition: border-color 0.15s;
+  min-height: 120px;
+}
+
+.journalInput:focus {
+  border-color: var(--ink2);
 }
 
 .journalInput::placeholder {
-  color: #6A8A80;
+  color: var(--ink4);
 }
