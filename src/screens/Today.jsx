@@ -66,6 +66,9 @@ export default function Today({ state, checkIn, logMood }) {
         <div className={styles.greeting}>
           good {hour()}, <em>{state.profile?.name || 'friend'}.</em>
         </div>
+        <div className={styles.dateLabel}>
+          {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+        </div>
       </div>
 
       {/* ── Scrollable body ── */}
@@ -74,8 +77,7 @@ export default function Today({ state, checkIn, logMood }) {
         {/* ── Mood card ── */}
         <div className={styles.card}>
           <div className={styles.sectionHeader}>
-            <span>mood</span>
-            <span style={{ color: 'var(--ink3)', fontWeight: 200 }}>today</span>
+            <span className={styles.sectionLabel}>mood</span>
           </div>
           <div className={styles.moodSection}>
             {MOOD_PERIODS.map((period, idx) => (
@@ -113,8 +115,7 @@ export default function Today({ state, checkIn, logMood }) {
         <div className={styles.cardAlt}>
           <div className={styles.journalSection}>
             <div className={styles.sectionHeader}>
-              <span className={styles.sectionLabel}>Journal</span>
-              <span className={styles.sectionMeta}>today</span>
+              <span className={styles.sectionLabel}>thoughts</span>
             </div>
             <textarea
               className={styles.journalInput}
@@ -127,17 +128,18 @@ export default function Today({ state, checkIn, logMood }) {
         </div>
 
         {/* ── Progress bar ── */}
-        <div style={{ padding: '4px 0 10px' }}>
+        <div className={styles.progressRow}>
+          <span className={styles.progressCount}>{done} of {total}</span>
           <div className={styles.progTrack}>
             <div className={styles.progFill} style={{ width: `${pct}%` }} />
           </div>
+          <span className={styles.progressPct}>{pct}%</span>
         </div>
 
         {/* ── Practices card ── */}
         <div className={styles.card}>
           <div className={styles.sectionHeader}>
-            <span>practices</span>
-            <span style={{ color: 'var(--ink3)', fontWeight: 200 }}>{done}/{total}</span>
+            <span className={styles.sectionLabel}>practices</span>
           </div>
 
           {LAYER_ORDER.filter(m => LAYERS[m].bubbles > 0).map(mode => {
@@ -206,20 +208,14 @@ export default function Today({ state, checkIn, logMood }) {
               </div>
             )
           })}
-        </div>
 
-        {/* ── Survival card ── */}
-        {(() => {
-          const survivalNeeds = NEEDS.filter(n => state.canvas[n.id] === 'survival')
-          if (!survivalNeeds.length) return null
-          return (
-            <div className={styles.cardAlt}>
-              <div className={styles.survivalSection}>
-                <div className={styles.modeLabel} style={{ color: '#D93B1C', marginBottom: 10 }}>
-                  <div className={styles.modePip} style={{ background: '#D93B1C' }} />
-                  <span>survival</span>
-                </div>
-                <div className={styles.survivalNeeds}>
+          {(() => {
+            const survivalNeeds = NEEDS.filter(n => state.canvas[n.id] === 'survival')
+            if (!survivalNeeds.length) return null
+            return (
+              <>
+                <div className={styles.sectionDivider} />
+                <div className={styles.survivalRow}>
                   {survivalNeeds.map(n => (
                     <div key={n.id} className={styles.survivalNeed}>
                       <span className={styles.survivalX}>✕</span>
@@ -227,10 +223,10 @@ export default function Today({ state, checkIn, logMood }) {
                     </div>
                   ))}
                 </div>
-              </div>
-            </div>
-          )
-        })()}
+              </>
+            )
+          })()}
+        </div>
       </div>
     </div>
   )
