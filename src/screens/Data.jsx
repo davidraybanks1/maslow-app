@@ -1,284 +1,13 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { NEEDS, LAYERS } from '../lib/constants'
 import { loadJournalEntry } from '../lib/store'
 import { createDataStats } from '../lib/dataStats'
 import styles from './Data.module.css'
 
-const MOOD_SCORE = { good: 3, fine: 2, bad: 1 }
-const MOOD_LABEL = { 3: 'good', 2: 'fine', 1: 'bad' }
 const MOOD_COLOR = { good: '#1B3A2D', fine: '#E8B81F', bad: '#D93B1C' }
-
-function getLast7Days() {
-  return Array.from({ length: 7 }).map((_, i) => {
-    const d = new Date()
-    d.setDate(d.getDate() - (6 - i))
-    return d.toISOString().slice(0, 10)
-  })
-}
-
-function getLast30Days() {
-  return Array.from({ length: 30 }).map((_, i) => {
-    const d = new Date()
-    d.setDate(d.getDate() - (29 - i))
-    return d.toISOString().slice(0, 10)
-  })
-}
-
-function formatDateShort(dateKey) {
-  const d = new Date(dateKey + 'T12:00:00')
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
-
-function MoodChart({ days, checkins, moods, canvas }) {
-  const data = days.map(day => {
-    const dayMoods = moods.filter(m => m.date_key === day)
-    const avgMood = dayMoods.length
-      ? dayMoods.reduce((s, m) => s + MOOD_SCORE[m.mood], 0) / dayMoods.length
-      : null
-
-    const dayCheckins = checkins[day] || []
-    const totalBubbles = NEEDS.reduce((s, n) => {
-      const mode = canvas[n.id]
-      return s + (LAYERS[mode]?.bubbles || 0)
-    }, 0)
-    const completionPct = totalBubbles > 0 ? dayCheckins.length / totalBubbles : 0
-
-    return { day, avgMood, completionPct }
-  })
-
-  const W = 100
-  const H = 80
-  const padL = 4
-  const padR = 4
-  const padT = 8
-  const padB = 8
-  const chartW = W - padL - padR
-  const chartH = H - padT - padB
-  const n = data.length
-  const stepX = n > 1 ? chartW / (n - 1) : chartW
-
-  const moodPoints = data
-    .map((d, i) => d.avgMood !== null ? { x: padL + i * stepX, y: padT + chartH - ((d.avgMood - 1) / 2) * chartH } : null)
-    .filter(Boolean)
-
-  const practicePoints = data.map((d, i) => ({
-    x: padL + i * stepX,
-    y: padT + chartH - d.completionPct * chartH
-  }))
-
-  const moodPath = moodPoints.length > 1
-    ? moodPoints.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')
-    : ''
-
-  const practicePath = practicePoints.length > 1
-    ? practicePoints.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')
-    : ''
-
-  return (
-    <div className={styles.chartWrap}>
-      <svg viewBox={`0 0 ${W} ${H}`} className={styles.chartSvg} preserveAspectRatio="none">
-        {/* Grid lines */}
-        {[0, 0.5, 1].map(v => (
-          <line
-            key={v}
-            x1={padL} y1={padT + chartH - v * chartH}
-            x2={W - padR} y2={padT + chartH - v * chartH}
-            stroke="#E8E8E8" strokeWidth="0.5"
-          />
-        ))}
-
-        {/* Practice line */}
-        {practicePath && (
-          <path d={practicePath} fill="none" stroke="#E8B81F" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.6" />
-        )}
-
-        {/* Mood line */}
-        {moodPath && (
-          <path d={moodPath} fill="none" stroke="#1B3A2D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        )}
-
-        {/* Mood dots */}
-        {moodPoints.map((p, i) => (
-          <circle key={i} cx={p.x} cy={p.y} r="2" fill="#1B3A2D" />
-        ))}
-      </svg>
-
-      {/* X axis labels */}
-      <div className={styles.chartXAxis}>
-        {days.length <= 7
-          ? days.map(d => <span key={d} className={styles.chartXLabel}>{formatDateShort(d)}</span>)
-          : [days[0], days[6], days[13], days[20], days[29]].map(d => (
-              <span key={d} className={styles.chartXLabel}>{formatDateShort(d)}</span>
-            ))
-        }
-      </div>
-
-      {/* Legend */}
-      <div className={styles.chartLegend}>
-        <div className={styles.legendItem}>
-          <div className={styles.legendLine} style={{ background: '#1B3A2D' }} />
-          <span>mood</span>
-        </div>
-        <div className={styles.legendItem}>
-          <div className={styles.legendLine} style={{ background: '#E8B81F', opacity: 0.6 }} />
-          <span>practices</span>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-const MODE_ORDER = ['purpose', 'appreciation', 'nourishment', 'survival']
-
-function getDailyData(days, checkins, moods, canvas) {
-  return days.map(day => {
-    const dayMoods = moods.filter(m => m.date_key === day)
-    const avgMood = dayMoods.length
-      ? dayMoods.reduce((s, m) => s + MOOD_SCORE[m.mood], 0) / dayMoods.length
-      : null
-    const dayCheckins = checkins[day] || []
-    const totalBubbles = NEEDS.reduce((s, n) => {
-      const mode = canvas[n.id]
-      return s + (LAYERS[mode]?.bubbles || 0)
-    }, 0)
-    const completionPct = totalBubbles > 0 ? dayCheckins.length / totalBubbles : 0
-    return { day, avgMood, completionPct, checkinCount: dayCheckins.length, totalBubbles }
-  })
-}
-
-function NeedsBreakdown({ days, checkins, canvas }) {
-  const sortedNeeds = [...NEEDS].sort((a, b) => {
-    const ai = MODE_ORDER.indexOf(canvas[a.id] || 'survival')
-    const bi = MODE_ORDER.indexOf(canvas[b.id] || 'survival')
-    return ai - bi
-  })
-
-  return (
-    <div className={styles.needsBreakdown}>
-      {sortedNeeds.map(need => {
-        const mode = canvas[need.id]
-        const lyr = LAYERS[mode]
-        if (!lyr || lyr.bubbles === 0) {
-          return (
-            <div key={need.id} className={styles.breakdownRow}>
-              <div className={styles.breakdownPip} style={{ background: '#D93B1C' }} />
-              <div className={styles.breakdownNeed}>{need.name}</div>
-              <div className={styles.breakdownBarWrap} />
-              <div className={styles.breakdownPct} style={{ color: 'var(--ink4)' }}>survival</div>
-            </div>
-          )
-        }
-        const possible = days.length * lyr.bubbles
-        const actual = days.reduce((total, day) => {
-          const dayCheckins = checkins[day] || []
-          return total + dayCheckins.filter(k => k.startsWith(`${need.id}_`)).length
-        }, 0)
-        const pct = possible > 0 ? Math.round((actual / possible) * 100) : 0
-        return (
-          <div key={need.id} className={styles.breakdownRow}>
-            <div className={styles.breakdownPip} style={{ background: lyr.pip }} />
-            <div className={styles.breakdownNeed}>{need.name}</div>
-            <div className={styles.breakdownBarWrap}>
-              <div className={styles.breakdownBar} style={{ width: `${pct}%`, background: lyr.pip }} />
-            </div>
-            <div className={styles.breakdownPct} style={{ color: pct > 0 ? lyr.pip : 'var(--ink4)' }}>{pct}%</div>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-function PracticesChart({ data }) {
-  const W = 100, H = 60, padL = 2, padR = 2, padT = 6, padB = 6
-  const chartW = W - padL - padR, chartH = H - padT - padB
-  const n = data.length
-  const stepX = n > 1 ? chartW / (n - 1) : chartW
-  const barW = Math.max(0.8, chartW / n - 0.6)
-
-  const points = data.map((d, i) => ({
-    x: padL + i * stepX,
-    y: padT + chartH - d.completionPct * chartH
-  }))
-
-  // Simple moving average for trend line (window of 5)
-  const trendPoints = data.map((d, i) => {
-    const window = data.slice(Math.max(0, i - 2), i + 3)
-    const avg = window.reduce((s, w) => s + w.completionPct, 0) / window.length
-    return { x: padL + i * stepX, y: padT + chartH - avg * chartH }
-  })
-
-  const trendPath = trendPoints.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')
-
-  const avgPct = Math.round(data.reduce((s, d) => s + d.completionPct, 0) / data.length * 100)
-
-  return (
-    <div className={styles.chartWrap}>
-      <div className={styles.chartTitle}>daily completion</div>
-      <div className={styles.chartSubtitle}>last {data.length} days · avg {avgPct}%</div>
-      <svg viewBox={`0 0 ${W} ${H}`} className={styles.chartSvg} preserveAspectRatio="none">
-        {[0, 0.5, 1].map(v => (
-          <line key={v} x1={padL} y1={padT + chartH - v * chartH} x2={W - padR} y2={padT + chartH - v * chartH} stroke="#E8E8E8" strokeWidth="0.5" />
-        ))}
-        {points.map((p, i) => (
-          <rect key={i} x={p.x - barW/2} y={p.y} width={barW} height={padT + chartH - p.y} fill="#E8B81F" opacity="0.25" />
-        ))}
-        <path d={trendPath} fill="none" stroke="#1A1A1A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-      <div className={styles.chartXAxis}>
-        <span className={styles.chartXLabel}>{formatDateShort(data[0].day)}</span>
-        <span className={styles.chartXLabel}>{formatDateShort(data[data.length-1].day)}</span>
-      </div>
-      <div className={styles.chartLegend}>
-        <div className={styles.legendItem}><div className={styles.legendSwatch} style={{ background: '#E8B81F', opacity: 0.25 }} /><span>daily %</span></div>
-        <div className={styles.legendItem}><div className={styles.legendLine} style={{ background: '#1A1A1A' }} /><span>trend</span></div>
-      </div>
-    </div>
-  )
-}
-
-function MoodTrendChart({ data }) {
-  const W = 100, H = 60, padL = 8, padR = 2, padT = 6, padB = 6
-  const chartW = W - padL - padR, chartH = H - padT - padB
-  const n = data.length
-  const stepX = n > 1 ? chartW / (n - 1) : chartW
-
-  const moodData = data.filter(d => d.avgMood !== null)
-  const points = moodData.map(d => {
-    const i = data.indexOf(d)
-    return { x: padL + i * stepX, y: padT + chartH - ((d.avgMood - 1) / 2) * chartH }
-  })
-
-  const trendPath = points.length > 1
-    ? points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')
-    : ''
-
-  const avgMood = moodData.length
-    ? moodData.reduce((s, d) => s + d.avgMood, 0) / moodData.length
-    : null
-  const avgLabel = avgMood === null ? '—' : avgMood >= 2.5 ? 'good' : avgMood >= 1.5 ? 'fine' : 'bad'
-
-  return (
-    <div className={styles.chartWrap}>
-      <div className={styles.chartTitle}>mood trend</div>
-      <div className={styles.chartSubtitle}>last {data.length} days · avg {avgLabel}</div>
-      <svg viewBox={`0 0 ${W} ${H}`} className={styles.chartSvg} preserveAspectRatio="none">
-        {[0, 0.5, 1].map(v => (
-          <line key={v} x1={padL} y1={padT + chartH - v * chartH} x2={W - padR} y2={padT + chartH - v * chartH} stroke="#E8E8E8" strokeWidth="0.5" />
-        ))}
-        <text x="0" y={padT + chartH - 0 * chartH + 1.5} fontFamily="monospace" fontSize="3.5" fill="#A8A8A8">bad</text>
-        <text x="0" y={padT + chartH - 0.5 * chartH + 1.5} fontFamily="monospace" fontSize="3.5" fill="#A8A8A8">fine</text>
-        <text x="0" y={padT + chartH - 1 * chartH + 1.5} fontFamily="monospace" fontSize="3.5" fill="#A8A8A8">good</text>
-        {trendPath && <path d={trendPath} fill="none" stroke="#1B3A2D" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" />}
-        {points.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r="1.2" fill="#1B3A2D" />)}
-      </svg>
-      <div className={styles.chartXAxis}>
-        <span className={styles.chartXLabel}>{formatDateShort(data[0].day)}</span>
-        <span className={styles.chartXLabel}>{formatDateShort(data[data.length-1].day)}</span>
-      </div>
-    </div>
-  )
-}
+const MOOD_PERIODS = ['morning', 'midday', 'evening']
+const WEEKDAY_LETTERS = ['m', 't', 'w', 't', 'f', 's', 's']
 
 function LogCalendar({ checkins, canvas, moods, journalCache, onSelectDay, currentMonth, setCurrentMonth }) {
   const year = currentMonth.getFullYear()
@@ -514,18 +243,217 @@ function PatternCard({ stats }) {
   )
 }
 
+function renderTimeOfDaySummary(text) {
+  if (text === 'your days tend to get better as they go.') {
+    return <>your days tend to <em className={styles.summaryEm}>get better as they go</em>.</>
+  }
+  return <>your days <em className={styles.summaryEm}>start strong and fade</em>.</>
+}
+
+function renderWeekdaySummary(text) {
+  const match = text.match(/^(.*) (run harder than the rest of your week\.)$/)
+  if (!match) return text
+  return <><em className={styles.summaryEm}>{match[1]}</em> {match[2]}</>
+}
+
+function MoodByTimeCard({ moodByPeriod, summary }) {
+  return (
+    <div className={styles.card}>
+      <div className={styles.eyebrow}>by time of day</div>
+      {MOOD_PERIODS.map(period => {
+        const p = moodByPeriod[period]
+        return (
+          <div key={period} className={styles.moodTimeRow}>
+            <div className={styles.moodTimeLabel}>{period}</div>
+            <div className={styles.moodStackedBar}>
+              <div style={{ flex: p.goodShare, background: '#1B3A2D' }} />
+              <div style={{ flex: p.fineShare, background: '#B8C3B1' }} />
+              <div style={{ flex: p.badShare, background: '#D93B1C' }} />
+            </div>
+            <div className={styles.moodTimePct}>{Math.round(p.goodShare * 100)}% good</div>
+          </div>
+        )
+      })}
+      {summary && <div className={styles.summaryLine}>{renderTimeOfDaySummary(summary)}</div>}
+    </div>
+  )
+}
+
+function MoodByWeekdayCard({ moodByWeekday, summary }) {
+  return (
+    <div className={styles.card}>
+      <div className={styles.eyebrow}>by day of week</div>
+      <div className={styles.weekdayMoodGrid}>
+        {moodByWeekday.map((d, i) => (
+          <div key={i} className={styles.weekdayMoodCol}>
+            <div className={styles.weekdayMoodBar}>
+              <div style={{ flex: d.goodShare, background: '#1B3A2D' }} />
+              <div style={{ flex: d.fineShare, background: '#B8C3B1' }} />
+              <div style={{ flex: d.badShare, background: '#D93B1C' }} />
+            </div>
+            <div className={styles.weekdayMoodLabel}>{WEEKDAY_LETTERS[i]}</div>
+          </div>
+        ))}
+      </div>
+      {summary && <div className={styles.summaryLine}>{renderWeekdaySummary(summary)}</div>}
+    </div>
+  )
+}
+
+function linkSentence({ need, daypart, direction, ratio }) {
+  const name = <em className={styles.linkNeedName}>{need.name.toLowerCase()}</em>
+  const ratioLabel = `${ratio.toFixed(1)}×`
+  if (direction === 'met' && daypart === 'evening') {
+    return <>on days you complete {name}, you log good in the evening {ratioLabel} more often.</>
+  }
+  if (direction === 'met' && daypart === 'morning') {
+    return <>on days you complete {name}, your next morning runs good {ratioLabel} more often.</>
+  }
+  if (direction === 'unmet' && daypart === 'evening') {
+    return <>when {name} goes unmet, your evening runs bad {ratioLabel} more often.</>
+  }
+  return <>when {name} goes unmet, your next morning runs bad {ratioLabel} more often.</>
+}
+
+function NeedMoodLinksCard({ links }) {
+  return (
+    <div className={styles.patternCard}>
+      <div className={styles.eyebrow}>needs → mood</div>
+      {links.map((link, i) => (
+        <div key={i} className={`${styles.linkRow} ${i > 0 ? styles.linkRowDivider : ''}`}>
+          {linkSentence(link)}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function MoodTab({ stats, range }) {
+  const moodByPeriod = stats.getMoodByPeriod(range)
+  const moodByWeekday = stats.getMoodByWeekday()
+  const needMoodLinks = stats.getNeedMoodLinks()
+
+  const hasTime = !!moodByPeriod
+  const hasWeekday = !!moodByWeekday
+  const hasLinks = needMoodLinks.length > 0
+
+  if (!hasTime && !hasWeekday && !hasLinks) {
+    return <div className={styles.dataEmpty}>patterns appear after about a week of check-ins</div>
+  }
+
+  return (
+    <>
+      <div className={styles.moodLegend}>
+        <div className={styles.moodLegendItem}><div className={styles.moodLegendDot} style={{ background: '#1B3A2D' }} />good</div>
+        <div className={styles.moodLegendItem}><div className={styles.moodLegendDot} style={{ background: '#B8C3B1' }} />fine</div>
+        <div className={styles.moodLegendItem}><div className={styles.moodLegendDot} style={{ background: '#D93B1C' }} />bad</div>
+      </div>
+      {hasTime && <MoodByTimeCard moodByPeriod={moodByPeriod} summary={stats.getTimeOfDaySummary(moodByPeriod)} />}
+      {hasWeekday && <MoodByWeekdayCard moodByWeekday={moodByWeekday} summary={stats.getWeekdaySummary(moodByWeekday)} />}
+      {hasLinks && <NeedMoodLinksCard links={needMoodLinks} />}
+      <div className={styles.dataFooter}>more patterns appear as check-ins accumulate</div>
+    </>
+  )
+}
+
+function formatLastDone(days) {
+  if (days === null) return 'never'
+  if (days === 0) return 'today'
+  return `${days}d ago`
+}
+
+function PracticesTable({ practiceStats }) {
+  if (practiceStats.length === 0) return null
+  const sorted = [...practiceStats].sort((a, b) => a.completionPct - b.completionPct)
+
+  return (
+    <div className={styles.card}>
+      <div className={styles.eyebrow}>by practice</div>
+      <div className={styles.needsTable}>
+        <div className={`${styles.practicesRow} ${styles.needsHeaderRow}`}>
+          <div className={styles.needsPipCol} />
+          <div className={styles.needsNameCol} />
+          <div className={styles.needsPctCol}>30d</div>
+          <div className={styles.practicesLastCol}>last</div>
+        </div>
+        {sorted.map((p, i) => (
+          <div key={i} className={styles.practicesRow}>
+            <div className={styles.needsPipCol}>
+              <div className={styles.needsPip} style={{ background: LAYERS[p.mode].pip }} />
+            </div>
+            <div className={styles.needsNameCol}>{p.text}</div>
+            <div className={styles.needsPctCol}>{p.completionPct}%</div>
+            <div className={styles.practicesLastCol}>{formatLastDone(p.daysSinceLast)}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function WeeklyRhythmCard({ completionByWeekday }) {
+  if (!completionByWeekday) return null
+  return (
+    <div className={styles.card}>
+      <div className={styles.eyebrow}>weekly rhythm</div>
+      <div className={styles.rhythmGrid}>
+        {completionByWeekday.map((d, i) => (
+          <div key={i} className={styles.rhythmCol}>
+            <div className={styles.rhythmTrack}>
+              <div className={styles.rhythmFill} style={{ height: `${d.pct}%` }} />
+            </div>
+            <div className={styles.rhythmLabel}>{WEEKDAY_LETTERS[i]}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function StaleFlagsCard({ practiceStats, navigate }) {
+  const stale = practiceStats
+    .map(p => ({ ...p, staleDays: p.daysSinceLast === null ? 30 : p.daysSinceLast }))
+    .filter(p => p.staleDays >= 14)
+    .sort((a, b) => b.staleDays - a.staleDays)
+
+  if (stale.length === 0) return null
+
+  return (
+    <div className={styles.staleCard}>
+      <div className={styles.eyebrow}>needs attention</div>
+      {stale.map((p, i) => (
+        <div key={i} className={styles.staleRow}>
+          <em className={styles.staleName}>{p.text}</em> — not done in {p.staleDays} days
+        </div>
+      ))}
+      <button className={styles.staleLink} onClick={() => navigate('/practices')}>review in library →</button>
+    </div>
+  )
+}
+
+function PracticesTab({ stats, navigate }) {
+  const practiceStats = stats.getPracticeStats()
+  const completionByWeekday = stats.getCompletionByWeekday()
+
+  return (
+    <>
+      <PracticesTable practiceStats={practiceStats} />
+      <WeeklyRhythmCard completionByWeekday={completionByWeekday} />
+      <StaleFlagsCard practiceStats={practiceStats} navigate={navigate} />
+    </>
+  )
+}
+
 export default function Data({ state }) {
+  const navigate = useNavigate()
   const [view, setView] = useState('overview')
   const [range, setRange] = useState(7)
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedDay, setSelectedDay] = useState(null)
   const [journalEntry, setJournalEntry] = useState('')
 
-  const days = range === 7 ? getLast7Days() : getLast30Days()
   const moods = state.moods || []
-  const filteredMoods = moods.filter(m => days.includes(m.date_key))
-  const dailyData = getDailyData(days, state.checkins, filteredMoods, state.canvas)
-  const stats = createDataStats({ canvas: state.canvas, checkins: state.checkins, moods })
+  const stats = createDataStats({ canvas: state.canvas, checkins: state.checkins, moods, practices: state.practices })
 
   useEffect(() => {
     if (selectedDay && state.userId) {
@@ -563,15 +491,13 @@ export default function Data({ state }) {
 
       {view === 'practices' && (
         <div className={styles.section}>
-          <PracticesChart data={dailyData} />
-          <div className={styles.sectionLabel} style={{ marginTop: 24 }}>needs breakdown</div>
-          <NeedsBreakdown days={days} checkins={state.checkins} canvas={state.canvas} />
+          <PracticesTab stats={stats} navigate={navigate} />
         </div>
       )}
 
       {view === 'mood' && (
         <div className={styles.section}>
-          <MoodTrendChart data={dailyData} />
+          <MoodTab stats={stats} range={range} />
         </div>
       )}
 
