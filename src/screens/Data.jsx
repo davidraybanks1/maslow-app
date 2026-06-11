@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { NEEDS, LAYERS } from '../lib/constants'
-import { todayKey, loadJournalEntry } from '../lib/store'
+import { loadJournalEntry } from '../lib/store'
+import { createDataStats } from '../lib/dataStats'
 import styles from './Data.module.css'
 
 const MOOD_SCORE = { good: 3, fine: 2, bad: 1 }
@@ -396,6 +397,123 @@ function DayDetailModal({ dateKey, checkins, moods, canvas, journalEntry, onClos
   )
 }
 
+function StatCards({ stats, range }) {
+  const { pct, delta, done, total } = stats.getCompletion(range)
+  const streak = stats.getStreak()
+  const { mode, prior, direction } = stats.getMoodMode(range)
+
+  return (
+    <div className={styles.statGrid}>
+      <div className={styles.statCard}>
+        <div className={styles.statLabel}>streak</div>
+        <div className={styles.statValue}>{streak} <span className={styles.statUnit}>days</span></div>
+      </div>
+      <div className={styles.statCard}>
+        <div className={styles.statLabel}>completion</div>
+        <div className={styles.statValue}>{pct}% <span className={styles.statDelta}>{delta >= 0 ? '+' : ''}{delta}</span></div>
+      </div>
+      <div className={styles.statCard}>
+        <div className={styles.statLabel}>mood</div>
+        <div className={styles.statValue}>{mode || '—'}</div>
+        {direction && (
+          <div className={styles.statSub}>{direction === 'up' ? '↑' : '↓'} {prior}</div>
+        )}
+      </div>
+      <div className={styles.statCard}>
+        <div className={styles.statLabel}>practices done</div>
+        <div className={styles.statValue}>{done} <span className={styles.statUnit}>of {total}</span></div>
+      </div>
+    </div>
+  )
+}
+
+function Sparkline({ data, color }) {
+  const W = 60, H = 20
+  const n = data.length
+  const stepX = n > 1 ? W / (n - 1) : W
+  const points = data.map((v, i) => `${(i * stepX).toFixed(1)},${(H - (v / 100) * H).toFixed(1)}`).join(' ')
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className={styles.sparkline} preserveAspectRatio="none">
+      <polyline points={points} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function NeedsTable({ stats, canvas, range }) {
+  const needStats = [...stats.getNeedStats(range)].sort((a, b) => b.pct - a.pct)
+  const survivalNeeds = NEEDS.filter(n => canvas[n.id] === 'survival')
+
+  return (
+    <div className={styles.card}>
+      <div className={styles.eyebrow}>by need</div>
+      <div className={styles.needsTable}>
+        <div className={`${styles.needsRow} ${styles.needsHeaderRow}`}>
+          <div className={styles.needsPipCol} />
+          <div className={styles.needsNameCol} />
+          <div className={`${styles.needsPctCol} ${styles.activeCol}`}>{range}d</div>
+          <div className={styles.needsPctCol}>30d</div>
+          <div className={styles.needsSparkCol} />
+        </div>
+        {needStats.map(({ need, mode, pct, referencePct, sparkline }) => (
+          <div key={need.id} className={styles.needsRow}>
+            <div className={styles.needsPipCol}>
+              <div className={styles.needsPip} style={{ background: LAYERS[mode].pip }} />
+            </div>
+            <div className={styles.needsNameCol}>{need.name}</div>
+            <div className={`${styles.needsPctCol} ${styles.activeCol}`}>{pct}%</div>
+            <div className={styles.needsPctCol}>{referencePct}%</div>
+            <div className={styles.needsSparkCol}>
+              <Sparkline data={sparkline} color={LAYERS[mode].pip} />
+            </div>
+          </div>
+        ))}
+        {survivalNeeds.length > 0 && (
+          <div className={styles.needsRow}>
+            <div className={styles.needsPipCol}>
+              <span className={styles.survivalX}>✕</span>
+            </div>
+            <div className={styles.needsNameCol}>{survivalNeeds.map(n => n.name).join(', ')}</div>
+            <div className={styles.needsSurvivalNote}>survival — no tracking</div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function ModeBars({ stats, range }) {
+  const modeStats = stats.getModeStats(range)
+  return (
+    <div className={styles.card}>
+      <div className={styles.eyebrow}>by mode</div>
+      <div className={styles.modeBars}>
+        {modeStats.map(({ mode, pct }) => (
+          <div key={mode} className={styles.modeBarRow}>
+            <div className={styles.modeBarName}>{mode}</div>
+            <div className={styles.modeBarTrack}>
+              {pct !== null && <div className={styles.modeBarFill} style={{ width: `${pct}%`, background: LAYERS[mode].pip }} />}
+            </div>
+            <div className={styles.modeBarPct}>{pct === null ? '—' : `${pct}%`}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function PatternCard({ stats }) {
+  const ratio = stats.getPattern()
+  if (ratio === null) return null
+  return (
+    <div className={styles.patternCard}>
+      <div className={styles.eyebrow}>pattern</div>
+      <div className={styles.patternBody}>
+        on days you complete 80%+ of your practices, you log <em className={styles.patternGood}>good</em> {ratio.toFixed(1)}× more often than on days below 50%.
+      </div>
+    </div>
+  )
+}
+
 export default function Data({ state }) {
   const [view, setView] = useState('overview')
   const [range, setRange] = useState(7)
@@ -407,6 +525,7 @@ export default function Data({ state }) {
   const moods = state.moods || []
   const filteredMoods = moods.filter(m => days.includes(m.date_key))
   const dailyData = getDailyData(days, state.checkins, filteredMoods, state.canvas)
+  const stats = createDataStats({ canvas: state.canvas, checkins: state.checkins, moods })
 
   useEffect(() => {
     if (selectedDay && state.userId) {
@@ -435,9 +554,10 @@ export default function Data({ state }) {
 
       {view === 'overview' && (
         <div className={styles.section}>
-          <MoodChart days={days} checkins={state.checkins} moods={filteredMoods} canvas={state.canvas} />
-          <div className={styles.sectionLabel} style={{ marginTop: 24 }}>needs breakdown</div>
-          <NeedsBreakdown days={days} checkins={state.checkins} canvas={state.canvas} />
+          <StatCards stats={stats} range={range} />
+          <NeedsTable stats={stats} canvas={state.canvas} range={range} />
+          <ModeBars stats={stats} range={range} />
+          <PatternCard stats={stats} />
         </div>
       )}
 
