@@ -448,29 +448,128 @@
   padding: 60px 0;
 }
 
-/* Practices table */
-.practicesRow {
-  display: grid;
-  grid-template-columns: 20px 1fr 40px 64px;
-  gap: 8px;
-  border-bottom: 1px solid rgba(26, 26, 24, 0.07);
+/* Going well card */
+.goingWellCard {
+  background: var(--bg);
+  border: 0.5px solid var(--border);
+  border-left: 3px solid #1B3A2D;
+  border-radius: 0;
+  padding: 14px 16px;
+  margin-bottom: 10px;
 }
-.practicesRow:last-child { border-bottom: none; }
 
-.practicesLastCol {
+.goingWellRow {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 200;
+  color: var(--ink2);
+  line-height: 1.6;
+  padding: 8px 0;
+}
+.goingWellRow:first-child { padding-top: 0; }
+.goingWellRow:last-child { padding-bottom: 0; }
+.goingWellRowDivider { border-top: 1px solid rgba(26, 26, 24, 0.07); }
+
+.goingWellName {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 15px;
+  color: var(--ink);
+}
+
+/* By-need accordion */
+.needGroup { border-bottom: 1px solid rgba(26, 26, 24, 0.07); }
+.needGroup:last-child { border-bottom: none; }
+
+.needRow {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  padding: 8px 0;
+  gap: 8px;
+  padding: 10px 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.needRow .needsPip { flex-shrink: 0; }
+
+.needRowName {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  color: var(--ink);
+  text-transform: lowercase;
+  flex: 1;
+}
+
+.needRowCount {
   font-family: var(--font-mono);
   font-size: 11px;
   color: var(--ink3);
+  flex-shrink: 0;
 }
 
-.needsHeaderRow .practicesLastCol {
-  font-size: 9px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.needRowPct {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink2);
+  flex-shrink: 0;
+  min-width: 32px;
+  text-align: right;
+}
+
+.needRowChevron {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink3);
+  flex-shrink: 0;
+  display: inline-block;
+  transition: transform 0.15s ease;
+}
+.needRowChevronOpen { transform: rotate(180deg); }
+
+.needBody {
+  padding: 0 0 8px 16px;
+  border-top: 1px solid rgba(26, 26, 24, 0.07);
+}
+
+.needBodyEmpty {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink4);
+  padding: 8px 0 8px 16px;
+  border-top: 1px solid rgba(26, 26, 24, 0.07);
+}
+
+.practiceSubRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+}
+.practiceSubRow + .practiceSubRow { border-top: 1px solid rgba(26, 26, 24, 0.07); }
+
+.practiceSubName {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 200;
+  color: var(--ink2);
+  flex: 1;
+}
+
+.practiceSubPct {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink2);
+  flex-shrink: 0;
+  min-width: 32px;
+  text-align: right;
+}
+
+.practiceSubLast {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink3);
+  flex-shrink: 0;
+  min-width: 50px;
+  text-align: right;
 }
 
 /* Weekly rhythm */

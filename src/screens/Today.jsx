@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { NEEDS, LAYERS, totalBubbles } from '../lib/constants'
 import { todayKey, loadJournalEntry, saveJournalEntry } from '../lib/store'
+import { createDataStats } from '../lib/dataStats'
 import styles from './Today.module.css'
 
 const LAYER_ORDER = ['purpose', 'appreciation', 'nourishment', 'survival']
 const MOOD_PERIODS = ['morning', 'midday', 'evening']
 const MOODS = ['good', 'fine', 'bad']
+const MOOD_SELECTED_CLASS = { good: 'moodBtnGood', fine: 'moodBtnFine', bad: 'moodBtnBad' }
 
 
 export default function Today({ state, checkIn, logMood }) {
@@ -16,6 +18,10 @@ export default function Today({ state, checkIn, logMood }) {
   const pct = total ? Math.round(done / total * 100) : 0
 
   const todayMoods = (state.moods || []).filter(m => m.date_key === today)
+
+  const stats = createDataStats({ canvas: state.canvas, checkins: state.checkins, moods: state.moods, practices: state.practices })
+  const streak = stats.getStreak()
+  const dateLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).toLowerCase()
 
   const [journalEntry, setJournalEntry] = useState('')
   const debounceRef = useRef(null)
@@ -74,11 +80,11 @@ export default function Today({ state, checkIn, logMood }) {
 
       {/* ── Greeting ── */}
       <div className={styles.header}>
-        <div className={styles.greeting}>
-          good {hour()}, <em>{state.profile?.name || 'friend'}.</em>
-        </div>
-        <div className={styles.dateLabel}>
-          {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+        <div className={styles.eyebrow}>today</div>
+        <div className={styles.greeting}>good {hour()}.</div>
+        <div className={styles.subRow}>
+          <span className={styles.dateLabel}>{dateLabel}</span>
+          {streak > 1 && <span className={styles.streak}>{streak} days</span>}
         </div>
       </div>
 
@@ -110,7 +116,7 @@ export default function Today({ state, checkIn, logMood }) {
                       {MOODS.map(mood => (
                         <button
                           key={mood}
-                          className={`${styles.moodBtn} ${moodSelections[period] === mood ? styles.moodBtnSelected : ''}`}
+                          className={`${styles.moodBtn} ${moodSelections[period] === mood ? styles[MOOD_SELECTED_CLASS[mood]] : ''}`}
                           onClick={() => handleMoodSelect(period, mood)}
                         >
                           {mood}
@@ -118,13 +124,15 @@ export default function Today({ state, checkIn, logMood }) {
                       ))}
                     </div>
                   </div>
-                  <input
-                    className={styles.moodNote}
-                    placeholder="add a note…"
-                    value={moodNotes[period] || ''}
-                    onChange={e => setMoodNotes(prev => ({ ...prev, [period]: e.target.value }))}
-                    onBlur={() => handleNoteBlur(period)}
-                  />
+                  {(moodSelections[period] || moodNotes[period]) && (
+                    <input
+                      className={styles.moodNote}
+                      placeholder="add a note…"
+                      value={moodNotes[period] || ''}
+                      onChange={e => setMoodNotes(prev => ({ ...prev, [period]: e.target.value }))}
+                      onBlur={() => handleNoteBlur(period)}
+                    />
+                  )}
                 </div>
               </div>
             ))}
@@ -139,7 +147,7 @@ export default function Today({ state, checkIn, logMood }) {
           <textarea
             ref={journalRef}
             className={styles.journalInput}
-            placeholder="Add your voice over of the day"
+            placeholder="add your voiceover for the day…"
             value={journalEntry}
             onChange={handleJournalChange}
             rows={5}

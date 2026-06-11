@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { NEEDS, LAYERS } from '../lib/constants'
 import { loadJournalEntry } from '../lib/store'
-import { createDataStats } from '../lib/dataStats'
+import { createDataStats, formatLastDone } from '../lib/dataStats'
 import styles from './Data.module.css'
 
 const MOOD_COLOR = { good: '#1B3A2D', fine: '#E8B81F', bad: '#D93B1C' }
@@ -356,36 +356,71 @@ function MoodTab({ stats, range }) {
   )
 }
 
-function formatLastDone(days) {
-  if (days === null) return 'never'
-  if (days === 0) return 'today'
-  return `${days}d ago`
+function GoingWellCard({ goingWell }) {
+  if (!goingWell) return null
+  return (
+    <div className={styles.goingWellCard}>
+      <div className={styles.eyebrow}>going well</div>
+      {goingWell.map((p, i) => (
+        <div key={i} className={`${styles.goingWellRow} ${i > 0 ? styles.goingWellRowDivider : ''}`}>
+          <em className={styles.goingWellName}>{p.text}</em> — {p.completionPct}%, done {formatLastDone(p.daysSinceLast)}
+        </div>
+      ))}
+    </div>
+  )
 }
 
-function PracticesTable({ practiceStats }) {
-  if (practiceStats.length === 0) return null
-  const sorted = [...practiceStats].sort((a, b) => a.completionPct - b.completionPct)
+const NEED_ACCORDION_MODES = ['purpose', 'appreciation', 'nourishment']
+
+function NeedPracticesAccordion({ needStats, practiceStats }) {
+  const [openNeeds, setOpenNeeds] = useState({})
+
+  const practicesByNeed = {}
+  for (const p of practiceStats) {
+    if (!practicesByNeed[p.need.id]) practicesByNeed[p.need.id] = []
+    practicesByNeed[p.need.id].push(p)
+  }
+
+  const orderedNeeds = NEED_ACCORDION_MODES.flatMap(mode => needStats.filter(n => n.mode === mode))
+
+  function toggle(needId) {
+    setOpenNeeds(prev => ({ ...prev, [needId]: !prev[needId] }))
+  }
 
   return (
     <div className={styles.card}>
-      <div className={styles.eyebrow}>by practice</div>
+      <div className={styles.eyebrow}>by need</div>
       <div className={styles.needsTable}>
-        <div className={`${styles.practicesRow} ${styles.needsHeaderRow}`}>
-          <div className={styles.needsPipCol} />
-          <div className={styles.needsNameCol} />
-          <div className={styles.needsPctCol}>30d</div>
-          <div className={styles.practicesLastCol}>last</div>
-        </div>
-        {sorted.map((p, i) => (
-          <div key={i} className={styles.practicesRow}>
-            <div className={styles.needsPipCol}>
-              <div className={styles.needsPip} style={{ background: LAYERS[p.mode].pip }} />
+        {orderedNeeds.map(({ need, mode, pct }) => {
+          const pool = (practicesByNeed[need.id] || []).slice().sort((a, b) => a.completionPct - b.completionPct)
+          const isOpen = !!openNeeds[need.id]
+          return (
+            <div key={need.id} className={styles.needGroup}>
+              <div className={styles.needRow} onClick={() => toggle(need.id)}>
+                <div className={styles.needsPip} style={{ background: LAYERS[mode].pip }} />
+                <div className={styles.needRowName}>{need.name}</div>
+                <div className={styles.needRowCount}>{pool.length} practice{pool.length === 1 ? '' : 's'}</div>
+                <div className={styles.needRowPct}>{pct}%</div>
+                <div className={`${styles.needRowChevron} ${isOpen ? styles.needRowChevronOpen : ''}`}>⌄</div>
+              </div>
+              {isOpen && (
+                pool.length === 0 ? (
+                  <div className={styles.needBodyEmpty}>no practices yet</div>
+                ) : (
+                  <div className={styles.needBody}>
+                    {pool.map((p, i) => (
+                      <div key={i} className={styles.practiceSubRow}>
+                        <span className={styles.practiceSubName}>{p.text}</span>
+                        <span className={styles.practiceSubPct}>{p.completionPct}%</span>
+                        <span className={styles.practiceSubLast}>{formatLastDone(p.daysSinceLast)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )
+              )}
             </div>
-            <div className={styles.needsNameCol}>{p.text}</div>
-            <div className={styles.needsPctCol}>{p.completionPct}%</div>
-            <div className={styles.practicesLastCol}>{formatLastDone(p.daysSinceLast)}</div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
@@ -434,12 +469,15 @@ function StaleFlagsCard({ practiceStats, navigate }) {
 function PracticesTab({ stats, navigate }) {
   const practiceStats = stats.getPracticeStats()
   const completionByWeekday = stats.getCompletionByWeekday()
+  const goingWell = stats.getGoingWell()
+  const needStats = stats.getNeedStats(30)
 
   return (
     <>
-      <PracticesTable practiceStats={practiceStats} />
-      <WeeklyRhythmCard completionByWeekday={completionByWeekday} />
       <StaleFlagsCard practiceStats={practiceStats} navigate={navigate} />
+      <GoingWellCard goingWell={goingWell} />
+      <NeedPracticesAccordion needStats={needStats} practiceStats={practiceStats} />
+      <WeeklyRhythmCard completionByWeekday={completionByWeekday} />
     </>
   )
 }

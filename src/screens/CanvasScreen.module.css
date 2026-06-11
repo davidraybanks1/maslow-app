@@ -1,9 +1,12 @@
 .screen { display: flex; flex-direction: column; min-height: 100%; background: var(--bg2); }
 
 .header { padding: 20px 16px 16px; }
-.eyebrow { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink3); margin-bottom: 6px; }
+.eyebrowRow { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.eyebrow { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink3); margin-bottom: 0; }
+.editToggle { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink3); background: none; border: none; cursor: pointer; padding: 0; -webkit-tap-highlight-color: transparent; }
+.editToggle:hover { color: var(--ink); }
 .title { font-family: var(--font-serif); font-size: 26px; font-weight: 400; letter-spacing: -0.01em; color: var(--ink); }
-.sub { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink3); margin-top: 6px; min-height: 18px; transition: all 0.2s; }
+.sub { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink3); margin-top: 6px; min-height: 18px; transition: all 0.2s; text-transform: lowercase; }
 
 .scroll { flex: 1; overflow-y: auto; padding: 0 16px 32px; }
 .scroll::-webkit-scrollbar { display: none; }
@@ -15,17 +18,20 @@
 .modeCount { font-family: var(--font-mono); font-size: 10px; color: var(--ink3); }
 
 .slots { display: flex; gap: 6px; flex-wrap: wrap; }
-.slotFilled { border-radius: 8px; border: 0.5px solid var(--border); background: var(--bg2); display: flex; align-items: center; justify-content: space-between; padding: 0 12px; min-height: 44px; cursor: pointer; transition: background 0.15s; }
+.slotFilled { border-radius: 8px; border: 0.5px solid var(--border); background: var(--bg2); display: flex; align-items: center; gap: 8px; padding: 0 12px; min-height: 44px; cursor: pointer; transition: background 0.15s, border-color 0.15s; }
 .slotFilled:hover { background: var(--border); }
-.slotName { font-family: var(--font-serif); font-size: 14px; color: var(--ink); }
-.slotX { font-family: var(--font-mono); font-size: 14px; color: var(--ink3); }
+.statePip { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; border: 1.5px solid transparent; box-sizing: border-box; }
+.slotName { font-family: var(--font-serif); font-size: 14px; color: var(--ink); flex: 1; text-transform: lowercase; }
+.slotX { font-family: var(--font-mono); font-size: 14px; color: var(--ink3); flex-shrink: 0; }
+.slotSelected, .slotSelected:hover { background: #1A1A1A; border-color: #1A1A1A; }
+.slotSelected .slotName, .slotSelected .slotX { color: #F5F3ED; }
 .slotEmpty { border-radius: 8px; border: 1px dashed var(--border2); display: flex; align-items: center; justify-content: center; min-height: 44px; cursor: pointer; font-family: var(--font-mono); font-size: 10px; color: var(--ink4); letter-spacing: 0.04em; transition: all 0.15s; }
 .slotHighlight { border-color: var(--ink); color: var(--ink2); }
 
 .lotDivider { height: 0.5px; background: var(--border); margin: 4px 0 14px; }
 .lotLabel { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink3); margin-bottom: 10px; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip { padding: 7px 14px; border-radius: 20px; border: 0.5px solid var(--border2); font-family: var(--font-serif); font-size: 14px; color: var(--ink); cursor: pointer; transition: all 0.15s; background: var(--bg); }
+.chip { padding: 7px 14px; border-radius: 20px; border: 0.5px solid var(--border2); font-family: var(--font-serif); font-size: 14px; color: var(--ink); cursor: pointer; transition: all 0.15s; background: var(--bg); text-transform: lowercase; }
 .chip:hover { background: var(--bg2); }
-.chipSelected { background: var(--ink); color: #fff; border-color: var(--ink); }
+.chipSelected { background: #1A1A1A; color: #F5F3ED; border-color: #1A1A1A; }
 .allAssigned { font-family: var(--font-mono); font-size: 12px; color: var(--ink3); }

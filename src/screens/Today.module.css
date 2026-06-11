@@ -10,15 +10,32 @@
 .header {
   padding: 20px 0 16px;
 }
-.greeting { font-family: var(--font-serif); font-size: 26px; font-weight: 400; letter-spacing: -0.01em; color: var(--ink); }
-.greeting em { font-style: italic; }
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: 6px;
+}
+.greeting { font-family: var(--font-serif); font-size: 34px; font-weight: 400; letter-spacing: -0.01em; line-height: 1.1; color: var(--ink); }
+.subRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: 8px;
+}
 .dateLabel {
   font-family: var(--font-mono);
   font-size: 12px;
   color: var(--ink3);
   letter-spacing: 0.06em;
-  margin-top: 4px;
-  margin-bottom: 16px;
+}
+.streak {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 15px;
+  color: var(--ink);
 }
 
 /* ── Cards ── */
@@ -91,7 +108,7 @@
 .modeHint { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink4); margin-top: 1px; }
 
 .needSection { margin-bottom: 16px; }
-.needLabel { font-family: 'Instrument Serif', serif; font-size: 15px; color: var(--ink3); margin-bottom: 6px; padding-left: 15px; }
+.needLabel { font-family: 'Instrument Serif', serif; font-size: 15px; color: var(--ink3); margin-bottom: 6px; padding-left: 15px; text-transform: lowercase; }
 .noPractice { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink4); margin-top: 1px; }
 .bubbleDot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
 .bubbleDotEmpty { background: transparent; }
@@ -117,10 +134,12 @@
 .moodLabel { font-size: 12px; color: var(--ink3); letter-spacing: 0.08em; font-family: var(--font-mono); }
 .moodBtns { display: flex; gap: 5px; }
 .moodBtn { padding: 4px 12px; border-radius: 20px; border: 0.5px solid var(--border2); background: transparent; color: var(--ink3); font-family: var(--font-mono); font-size: 11px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.moodBtnSelected { background: var(--ink); color: #fff; border-color: var(--ink); }
+.moodBtnGood { background: #1B3A2D; color: #fff; border-color: #1B3A2D; }
+.moodBtnFine { background: #B8C3B1; color: var(--ink); border-color: #B8C3B1; }
+.moodBtnBad { background: #D93B1C; color: #fff; border-color: #D93B1C; }
 .moodNote { width: 100%; box-sizing: border-box; padding: 7px 12px; border-radius: 8px; border: 0.5px solid var(--border); background: var(--bg2); font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink); outline: none; }
 .moodNote::placeholder { color: var(--ink4); }
-.moodDivider { height: 0.5px; background: var(--border); }
+.moodDivider { height: 1px; background: rgba(26, 26, 24, 0.07); }
 
 /* ── Survival section ── */
 .survivalSection { padding: 14px 24px 24px; }
@@ -133,7 +152,7 @@
 }
 .survivalNeed { display: flex; align-items: center; gap: 4px; }
 .survivalX { font-size: 12px; color: #D93B1C; font-weight: 500; }
-.survivalName { font-family: 'Instrument Serif', serif; font-size: 13px; color: var(--ink3); }
+.survivalName { font-family: 'Instrument Serif', serif; font-size: 13px; color: var(--ink3); text-transform: lowercase; }
 
 /* ── Journal ── */
 .journalInput {

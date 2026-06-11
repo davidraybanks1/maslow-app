@@ -1,11 +1,17 @@
 import { useState } from 'react'
 import { NEEDS, LAYERS, LAYER_ORDER } from '../lib/constants'
+import { todayKey } from '../lib/store'
+import { createDataStats } from '../lib/dataStats'
 import styles from './CanvasScreen.module.css'
 
 export default function CanvasScreen({ state, updateCanvas }) {
   const [selected, setSelected] = useState(null)
+  const [editMode, setEditMode] = useState(false)
 
-  function handleChip(needId) {
+  const stats = createDataStats({ canvas: state.canvas, checkins: state.checkins, moods: state.moods, practices: state.practices })
+  const today = todayKey()
+
+  function handleSelect(needId) {
     setSelected(selected === needId ? null : needId)
   }
 
@@ -18,20 +24,27 @@ export default function CanvasScreen({ state, updateCanvas }) {
     setSelected(null)
   }
 
-  function handleRemove(needId) {
+  function handleRemove(needId, e) {
+    e.stopPropagation()
     updateCanvas(needId, null)
     setSelected(null)
   }
 
   const unassigned = NEEDS.filter(n => !state.canvas[n.id])
+  const allAssigned = unassigned.length === 0
 
   return (
     <div className={styles.screen}>
       <div className={styles.header}>
-        <div className={styles.eyebrow}>your canvas</div>
-        <div className={styles.title}>assign your needs</div>
+        <div className={styles.eyebrowRow}>
+          <div className={styles.eyebrow}>your canvas</div>
+          <button className={styles.editToggle} onClick={() => setEditMode(e => !e)}>{editMode ? 'done' : 'edit'}</button>
+        </div>
+        <div className={styles.title}>{allAssigned ? 'your canvas' : 'assign your needs'}</div>
         <div className={styles.sub}>
-          {selected ? `Tap a slot to assign ${NEEDS.find(n => n.id === selected)?.name}` : 'Tap a need, then tap a slot.'}
+          {selected
+            ? `tap a slot to assign ${NEEDS.find(n => n.id === selected)?.name}`
+            : allAssigned ? 'tap any need to reassign.' : 'tap a need, then tap a slot.'}
         </div>
       </div>
       <div className={styles.scroll}>
@@ -53,10 +66,24 @@ export default function CanvasScreen({ state, updateCanvas }) {
                   const need = assigned[i]
                   const canAccept = selected && assigned.length < lyr.slots
                   if (need) {
+                    const isMet = stats.isNeedMet(need, today)
                     return (
-                      <div key={i} className={styles.slotFilled} style={{ width: sw }} onClick={() => handleRemove(need.id)}>
+                      <div
+                        key={i}
+                        className={`${styles.slotFilled} ${selected === need.id ? styles.slotSelected : ''}`}
+                        style={{ width: sw }}
+                        onClick={() => handleSelect(need.id)}
+                      >
+                        {mode !== 'survival' && (
+                          <span
+                            className={styles.statePip}
+                            style={isMet ? { background: lyr.pip, borderColor: lyr.pip } : { borderColor: lyr.pip }}
+                          />
+                        )}
                         <span className={styles.slotName}>{need.name}</span>
-                        <span className={styles.slotX}>×</span>
+                        {editMode && (
+                          <span className={styles.slotX} onClick={e => handleRemove(need.id, e)}>×</span>
+                        )}
                       </div>
                     )
                   }
@@ -83,7 +110,7 @@ export default function CanvasScreen({ state, updateCanvas }) {
             <div
               key={n.id}
               className={`${styles.chip} ${selected === n.id ? styles.chipSelected : ''}`}
-              onClick={() => handleChip(n.id)}
+              onClick={() => handleSelect(n.id)}
             >
               {n.name}
             </div>

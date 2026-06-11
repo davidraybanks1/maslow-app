@@ -31,6 +31,14 @@ function weekdayIndex(dateKey) {
 
 const WEEKDAY_NAMES = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
 
+export function formatLastDone(days) {
+  if (days === null) return 'never'
+  if (days === 0) return 'today'
+  return `${days}d ago`
+}
+
+export const GOING_WELL_MIN = 40
+
 function requiredFor(canvas, needId) {
   return LAYERS[canvas[needId]]?.bubbles || 0
 }
@@ -355,6 +363,14 @@ export function createDataStats({ canvas, checkins, moods, practices }) {
     return result
   }
 
+  function getGoingWell() {
+    const candidates = getPracticeStats().filter(p =>
+      p.completionPct >= GOING_WELL_MIN && p.daysSinceLast !== null && p.daysSinceLast <= 7
+    )
+    if (candidates.length === 0) return null
+    return [...candidates].sort((a, b) => b.completionPct - a.completionPct).slice(0, 3)
+  }
+
   function getCompletionByWeekday() {
     const days = dayRange(30, 0)
     const buckets = Array.from({ length: 7 }, () => [])
@@ -387,6 +403,7 @@ export function createDataStats({ canvas, checkins, moods, practices }) {
     getTimeOfDaySummary,
     getWeekdaySummary,
     getPracticeStats,
+    getGoingWell,
     getCompletionByWeekday,
   }
 }
