@@ -4,6 +4,8 @@ import {
   IconLayoutGrid,
   IconList,
   IconChartBar,
+  IconNotes,
+  IconStethoscope,
   IconLock,
   IconBell,
   IconExternalLink,
@@ -17,6 +19,8 @@ const NAV_LINKS = [
   { to: '/canvas',    label: 'Canvas',    Icon: IconLayoutGrid },
   { to: '/practices', label: 'Practices', Icon: IconList },
   { to: '/data',      label: 'Data',      Icon: IconChartBar },
+  { to: '/debriefs',  label: 'Debriefs',  Icon: IconNotes },
+  { to: '/diagnostic', label: 'Revisit diagnostic', Icon: IconStethoscope },
 ]
 
 export default function HamburgerMenu({ onClose }) {

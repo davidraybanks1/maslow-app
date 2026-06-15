@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { useAppState } from './lib/store'
-import Onboarding from './screens/Onboarding'
+import DiagnosticFlow from './screens/Onboarding/DiagnosticFlow'
 import Today from './screens/Today'
 import CanvasScreen from './screens/CanvasScreen'
 import Practices from './screens/Practices'
 import Data from './screens/Data'
+import Debriefs from './screens/Debriefs'
 import SignIn from './screens/SignIn'
 import ComingSoon from './screens/ComingSoon'
 import UpdatePassword from './screens/UpdatePassword'
@@ -43,11 +44,13 @@ function AppInner() {
       <div className={styles.content}>
         <Routes>
           <Route path="/" element={state.onboarded ? <Navigate to="/today" replace /> : <Navigate to="/onboarding" replace />} />
-          <Route path="/onboarding" element={state.onboarded ? <Navigate to="/today" replace /> : <Onboarding completeOnboarding={completeOnboarding} />} />
+          <Route path="/onboarding" element={state.onboarded ? <Navigate to="/today" replace /> : <DiagnosticFlow updateCanvas={updateCanvas} onComplete={() => { completeOnboarding(); navigate('/practices') }} />} />
           <Route path="/today" element={<Protected onboarded={state.onboarded}><Today state={state} checkIn={checkIn} logMood={logMood} /></Protected>} />
           <Route path="/canvas" element={<Protected onboarded={state.onboarded}><CanvasScreen state={state} updateCanvas={updateCanvas} /></Protected>} />
           <Route path="/practices" element={<Protected onboarded={state.onboarded}><Practices state={state} addPractice={addPractice} removePractice={removePractice} /></Protected>} />
           <Route path="/data" element={<Protected onboarded={state.onboarded}><Data state={state} /></Protected>} />
+          <Route path="/debriefs" element={<Protected onboarded={state.onboarded}><Debriefs state={state} /></Protected>} />
+          <Route path="/diagnostic" element={<Protected onboarded={state.onboarded}><DiagnosticFlow updateCanvas={updateCanvas} /></Protected>} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/password" element={<Protected onboarded={state.onboarded}><UpdatePassword /></Protected>} />
           <Route path="/notifications" element={<Protected onboarded={state.onboarded}><ComingSoon title="Notifications" /></Protected>} />

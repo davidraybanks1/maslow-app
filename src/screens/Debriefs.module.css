@@ -1,0 +1,131 @@
+.screen { display: flex; flex-direction: column; min-height: 100vh; background: var(--bg2); }
+
+/* ── Header ── */
+.header { padding: 20px 16px 16px; }
+.eyebrow { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink3); margin-bottom: 6px; }
+.title { font-family: var(--font-serif); font-size: 26px; font-weight: 400; letter-spacing: -0.01em; color: var(--ink); }
+.sub { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink3); margin-top: 6px; }
+
+/* ── List ── */
+.list { flex: 1; overflow-y: auto; padding: 0 16px 32px; }
+.list::-webkit-scrollbar { display: none; }
+
+/* ── New debrief button ── */
+.newBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+  padding: 16px 18px;
+  border: none;
+  border-radius: 12px;
+  background: var(--ink);
+  cursor: pointer;
+  margin-bottom: 10px;
+  -webkit-tap-highlight-color: transparent;
+  text-align: left;
+}
+.newBtnLabel { font-family: var(--font-mono); font-size: 14px; color: var(--bg2); letter-spacing: 0.02em; }
+.newBtnSub { font-family: var(--font-mono); font-size: 11px; font-weight: 200; color: rgba(245,243,237,0.6); }
+
+/* ── Episode history card ── */
+.card { background: var(--bg); border: 0.5px solid var(--border); border-radius: 12px; padding: 4px 16px; margin-bottom: 16px; }
+
+.monthLabel { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink3); padding: 14px 0 8px; }
+
+.episodeRow { padding: 12px 0; border-bottom: 0.5px solid var(--border); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.episodeRow:last-child { border-bottom: none; }
+
+.episodeTop { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.episodeDate { font-family: var(--font-mono); font-size: 11px; color: var(--ink3); }
+.episodeTags { display: flex; gap: 6px; }
+
+.tag { padding: 3px 10px; border-radius: 20px; font-family: var(--font-mono); font-size: 10px; text-transform: lowercase; white-space: nowrap; }
+
+.episodeExcerpt { font-family: var(--font-serif); font-style: italic; font-size: 15px; color: var(--ink2); line-height: 1.4; margin-bottom: 8px; }
+
+.dotsRow { display: flex; gap: 5px; }
+.stepDot { width: 6px; height: 6px; border-radius: 50%; background: var(--border2); }
+
+.empty { font-family: var(--font-mono); font-size: 12px; color: var(--ink4); padding: 14px 0; }
+
+/* ── Customize section ── */
+.sectionLabel { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink3); margin: 4px 0 10px; }
+
+.typeCard { background: var(--bg); border: 0.5px solid var(--border); border-radius: 12px; padding: 4px 16px; margin-bottom: 10px; }
+.typeCardLabel { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink3); padding: 12px 0 4px; }
+
+.typeRow { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
+.typeRow:last-child { border-bottom: none; }
+.typeSwatch { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.typeName { font-family: var(--font-serif); font-size: 15px; color: var(--ink); text-transform: lowercase; }
+.builtinTag { font-family: var(--font-mono); font-size: 10px; color: var(--ink4); margin-left: auto; }
+
+.typeAction { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--ink3); background: none; border: none; cursor: pointer; padding: 0; margin-left: 12px; -webkit-tap-highlight-color: transparent; }
+.typeAction:first-of-type { margin-left: auto; }
+.typeAction:hover { color: var(--ink); }
+
+.swatchRow { display: flex; gap: 8px; padding: 0 0 12px; }
+.swatch { width: 22px; height: 22px; border-radius: 50%; border: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+
+.addRow { display: flex; gap: 8px; padding: 10px 0 12px; }
+.addInput { flex: 1; padding: 8px 12px; border-radius: 8px; border: 0.5px solid var(--border); background: var(--bg2); font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink); outline: none; transition: border-color 0.15s; }
+.addInput:focus { border-color: var(--ink2); }
+.addInput::placeholder { color: var(--ink4); }
+.addBtn { padding: 8px 14px; border-radius: 8px; border: 0.5px solid var(--border2); background: var(--bg); font-family: var(--font-mono); font-size: 11px; color: var(--ink); cursor: pointer; white-space: nowrap; transition: background 0.1s; }
+.addBtn:hover:not(:disabled) { background: var(--bg2); }
+.addBtn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* ── Full-screen overlay ── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg2);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.25s ease-out;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.overlayHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 20px 12px;
+  flex-shrink: 0;
+}
+
+.backBtn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--ink3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.backBtn:hover { color: var(--ink); }
+
+.overlayTags { display: flex; gap: 6px; }
+
+.overlayContent {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 20px 40px;
+}
+.overlayContent::-webkit-scrollbar { display: none; }
+
+/* ── Detail overlay ── */
+.detailDate { font-family: var(--font-mono); font-size: 12px; color: var(--ink3); margin-bottom: 20px; }
+.hairline { height: 0.5px; background: var(--border); margin: 20px 0; }
+.detailSectionLabel { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink3); margin-bottom: 10px; }
+.detailSectionBody { font-family: var(--font-mono); font-size: 13px; font-weight: 200; color: var(--ink); line-height: 1.7; white-space: pre-wrap; }
+.detailSectionEmpty { font-family: var(--font-mono); font-size: 13px; color: var(--ink4); }

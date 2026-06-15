@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { NEEDS, LAYERS, totalBubbles } from '../lib/constants'
-import { todayKey, loadJournalEntry, saveJournalEntry } from '../lib/store'
+import { todayKey, loadJournalEntry, saveJournalEntry, loadDebriefTypes } from '../lib/store'
 import { createDataStats } from '../lib/dataStats'
+import DebriefForm from '../components/DebriefForm'
 import styles from './Today.module.css'
 
 const LAYER_ORDER = ['purpose', 'appreciation', 'nourishment', 'survival']
@@ -53,6 +54,14 @@ export default function Today({ state, checkIn, logMood }) {
     }, 1500)
   }
 
+  const [debriefExpanded, setDebriefExpanded] = useState(false)
+  const [debriefTypes, setDebriefTypes] = useState({ nature: [], environment: [] })
+
+  useEffect(() => {
+    if (!state.userId) return
+    loadDebriefTypes(state.userId).then(setDebriefTypes)
+  }, [state.userId])
+
   const [moodSelections, setMoodSelections] = useState(() => {
     const init = {}
     todayMoods.forEach(m => { init[m.prompt_time] = m.mood })
@@ -65,9 +74,17 @@ export default function Today({ state, checkIn, logMood }) {
     return init
   })
 
-  function handleMoodSelect(promptTime, mood) {
+  async function handleMoodSelect(promptTime, mood) {
     setMoodSelections(prev => ({ ...prev, [promptTime]: mood }))
-    if (logMood) logMood(state.userId, promptTime, mood, moodNotes[promptTime] || null, today)
+    if (!logMood) return
+    const { error } = await logMood(state.userId, promptTime, mood, moodNotes[promptTime] || null, today)
+    if (error) {
+      setMoodSelections(prev => {
+        const next = { ...prev }
+        if (next[promptTime] === mood) delete next[promptTime]
+        return next
+      })
+    }
   }
 
   function handleNoteBlur(promptTime) {
@@ -152,6 +169,18 @@ export default function Today({ state, checkIn, logMood }) {
             onChange={handleJournalChange}
             rows={5}
           />
+
+          <button className={styles.debriefToggle} onClick={() => setDebriefExpanded(e => !e)}>
+            <span className={`${styles.chevron} ${debriefExpanded ? styles.chevronOpen : ''}`}>›</span>
+            <span>anxiety debrief</span>
+          </button>
+
+          {debriefExpanded && (
+            <>
+              <div className={styles.debriefHairline} />
+              <DebriefForm userId={state.userId} debriefTypes={debriefTypes} onSaved={() => setDebriefExpanded(false)} />
+            </>
+          )}
         </div>
 
         {/* ── Practices card ── */}

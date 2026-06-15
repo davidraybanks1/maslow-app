@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { NEEDS, LAYERS } from '../lib/constants'
-import { loadJournalEntry } from '../lib/store'
+import { loadJournalEntry, loadDebriefs } from '../lib/store'
 import { createDataStats, formatLastDone } from '../lib/dataStats'
+import { natureTagStyle, ENVIRONMENT_TAG_STYLE } from '../lib/debriefTypes'
 import styles from './Data.module.css'
 
 const MOOD_COLOR = { good: '#1B3A2D', fine: '#E8B81F', bad: '#D93B1C' }
@@ -466,6 +467,138 @@ function StaleFlagsCard({ practiceStats, navigate }) {
   )
 }
 
+function formatEpisodeDate(dateKey) {
+  return new Date(dateKey + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toLowerCase()
+}
+
+function DonutChart({ data }) {
+  const canvasRef = useRef(null)
+  const total = data.reduce((s, d) => s + d.count, 0)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas || total === 0) return
+    const ctx = canvas.getContext('2d')
+    const size = 100
+    const cx = size / 2
+    const cy = size / 2
+    const outerRadius = size / 2
+    const innerRadius = 22
+
+    ctx.clearRect(0, 0, size, size)
+
+    let angle = -Math.PI / 2
+    for (const d of data) {
+      const sliceAngle = (d.count / total) * Math.PI * 2
+      ctx.beginPath()
+      ctx.moveTo(cx, cy)
+      ctx.arc(cx, cy, outerRadius, angle, angle + sliceAngle)
+      ctx.closePath()
+      ctx.fillStyle = d.color
+      ctx.fill()
+      angle += sliceAngle
+    }
+
+    ctx.globalCompositeOperation = 'destination-out'
+    ctx.beginPath()
+    ctx.arc(cx, cy, innerRadius, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.globalCompositeOperation = 'source-over'
+
+    if (data.length > 1) {
+      ctx.strokeStyle = '#fff'
+      ctx.lineWidth = 2
+      angle = -Math.PI / 2
+      for (const d of data) {
+        const sliceAngle = (d.count / total) * Math.PI * 2
+        ctx.beginPath()
+        ctx.moveTo(cx + innerRadius * Math.cos(angle), cy + innerRadius * Math.sin(angle))
+        ctx.lineTo(cx + outerRadius * Math.cos(angle), cy + outerRadius * Math.sin(angle))
+        ctx.stroke()
+        angle += sliceAngle
+      }
+    }
+  }, [data, total])
+
+  return <canvas ref={canvasRef} width={100} height={100} className={styles.donutCanvas} />
+}
+
+function DistributionRow({ label, data }) {
+  return (
+    <div className={styles.distRow}>
+      <DonutChart data={data} />
+      <div className={styles.distLegend}>
+        <div className={styles.distLabel}>{label}</div>
+        {data.map(d => (
+          <div key={d.name} className={styles.distLegendItem}>
+            <div className={styles.distDot} style={{ background: d.color }} />
+            <span className={styles.distName}>{d.name}</span>
+            <span className={styles.distCount}>{d.count}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function DistributionCard({ byNature, byEnvironment, total }) {
+  if (total < 3) {
+    return (
+      <div className={styles.card}>
+        <div className={styles.dataEmpty}>patterns appear after a few debriefs</div>
+      </div>
+    )
+  }
+  return (
+    <div className={styles.card}>
+      <DistributionRow label="by nature" data={byNature} />
+      <DistributionRow label="by environment" data={byEnvironment} />
+    </div>
+  )
+}
+
+function DebriefPatternCard({ pattern }) {
+  if (!pattern) return null
+  return (
+    <div className={styles.patternCard}>
+      <div className={styles.eyebrow}>pattern</div>
+      <div className={styles.patternBody}>{pattern}</div>
+    </div>
+  )
+}
+
+function RecentEpisodesCard({ episodes }) {
+  if (episodes.length === 0) return null
+  return (
+    <div className={styles.card}>
+      <div className={styles.eyebrow}>recent episodes</div>
+      {episodes.slice(0, 5).map((e, i) => (
+        <div key={i} className={`${styles.episodeRow} ${i > 0 ? styles.episodeRowDivider : ''}`}>
+          <div className={styles.episodeTop}>
+            <span className={styles.episodeDate}>{formatEpisodeDate(e.date)}</span>
+            <div className={styles.episodeTags}>
+              <span className={styles.tag} style={natureTagStyle(e.nature, [])}>{e.nature}</span>
+              <span className={styles.tag} style={ENVIRONMENT_TAG_STYLE}>{e.environment}</span>
+            </div>
+          </div>
+          <div className={styles.episodeExcerpt}>{e.excerpt}</div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function DebriefsTab({ stats, debriefs }) {
+  const { byNature, byEnvironment, pattern, recentEpisodes } = stats.getDebriefStats(debriefs)
+  return (
+    <>
+      <DistributionCard byNature={byNature} byEnvironment={byEnvironment} total={debriefs.length} />
+      <DebriefPatternCard pattern={pattern} />
+      <RecentEpisodesCard episodes={recentEpisodes} />
+    </>
+  )
+}
+
 function PracticesTab({ stats, navigate }) {
   const practiceStats = stats.getPracticeStats()
   const completionByWeekday = stats.getCompletionByWeekday()
@@ -489,6 +622,7 @@ export default function Data({ state }) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedDay, setSelectedDay] = useState(null)
   const [journalEntry, setJournalEntry] = useState('')
+  const [debriefs, setDebriefs] = useState([])
 
   const moods = state.moods || []
   const stats = createDataStats({ canvas: state.canvas, checkins: state.checkins, moods, practices: state.practices })
@@ -499,11 +633,15 @@ export default function Data({ state }) {
     }
   }, [selectedDay, state.userId])
 
+  useEffect(() => {
+    if (state.userId) loadDebriefs(state.userId).then(setDebriefs)
+  }, [state.userId])
+
   return (
     <div className={styles.screen}>
       <div className={styles.header}>
         <div className={styles.title}>data</div>
-        {view !== 'log' && (
+        {view !== 'log' && view !== 'debriefs' && (
           <div className={styles.rangeToggle}>
             <button className={`${styles.rangeBtn} ${range === 7 ? styles.rangeBtnActive : ''}`} onClick={() => setRange(7)}>7d</button>
             <button className={`${styles.rangeBtn} ${range === 30 ? styles.rangeBtnActive : ''}`} onClick={() => setRange(30)}>30d</button>
@@ -516,6 +654,7 @@ export default function Data({ state }) {
         <button className={`${styles.viewBtn} ${view === 'practices' ? styles.viewBtnActive : ''}`} onClick={() => setView('practices')}>Practices</button>
         <button className={`${styles.viewBtn} ${view === 'mood' ? styles.viewBtnActive : ''}`} onClick={() => setView('mood')}>Mood</button>
         <button className={`${styles.viewBtn} ${view === 'log' ? styles.viewBtnActive : ''}`} onClick={() => setView('log')}>Log</button>
+        <button className={`${styles.viewBtn} ${view === 'debriefs' ? styles.viewBtnActive : ''}`} onClick={() => setView('debriefs')}>Debriefs</button>
       </div>
 
       {view === 'overview' && (
@@ -549,6 +688,12 @@ export default function Data({ state }) {
             setCurrentMonth={setCurrentMonth}
             onSelectDay={setSelectedDay}
           />
+        </div>
+      )}
+
+      {view === 'debriefs' && (
+        <div className={styles.section}>
+          <DebriefsTab stats={stats} debriefs={debriefs} />
         </div>
       )}
 

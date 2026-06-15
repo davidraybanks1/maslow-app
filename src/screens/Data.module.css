@@ -609,6 +609,110 @@
   text-transform: lowercase;
 }
 
+/* ── Debriefs tab: distribution donuts ── */
+.distRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0;
+}
+.distRow + .distRow {
+  border-top: 0.5px solid var(--border);
+}
+
+.donutCanvas {
+  flex-shrink: 0;
+  width: 100px;
+  height: 100px;
+}
+
+.distLegend {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.distLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: 2px;
+}
+
+.distLegendItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.distDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.distName {
+  font-family: var(--font-serif);
+  font-size: 13px;
+  color: var(--ink);
+  text-transform: lowercase;
+  flex: 1;
+}
+
+.distCount {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink3);
+}
+
+/* ── Debriefs tab: recent episodes ── */
+.episodeRow {
+  padding: 12px 0;
+}
+.episodeRowDivider {
+  border-top: 0.5px solid var(--border);
+}
+
+.episodeTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.episodeDate {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink3);
+}
+
+.episodeTags {
+  display: flex;
+  gap: 6px;
+}
+
+.tag {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: lowercase;
+  white-space: nowrap;
+}
+
+.episodeExcerpt {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 15px;
+  color: var(--ink2);
+  line-height: 1.4;
+}
+
 /* Stale flags card */
 .staleCard {
   background: var(--bg);

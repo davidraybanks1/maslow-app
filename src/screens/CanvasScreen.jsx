@@ -4,6 +4,8 @@ import { todayKey } from '../lib/store'
 import { createDataStats } from '../lib/dataStats'
 import styles from './CanvasScreen.module.css'
 
+const RESTRICTED_MODES_FOR_REST = ['purpose', 'appreciation']
+
 export default function CanvasScreen({ state, updateCanvas }) {
   const [selected, setSelected] = useState(null)
   const [editMode, setEditMode] = useState(false)
@@ -17,6 +19,7 @@ export default function CanvasScreen({ state, updateCanvas }) {
 
   function handleSlot(mode) {
     if (!selected) return
+    if (selected === 'rest' && RESTRICTED_MODES_FOR_REST.includes(mode)) return
     const lyr = LAYERS[mode]
     const currentInMode = NEEDS.filter(n => state.canvas[n.id] === mode)
     if (currentInMode.length >= lyr.slots) return
@@ -65,6 +68,7 @@ export default function CanvasScreen({ state, updateCanvas }) {
                 {Array.from({ length: lyr.slots }).map((_, i) => {
                   const need = assigned[i]
                   const canAccept = selected && assigned.length < lyr.slots
+                    && !(selected === 'rest' && RESTRICTED_MODES_FOR_REST.includes(mode))
                   if (need) {
                     const isMet = stats.isNeedMet(need, today)
                     return (

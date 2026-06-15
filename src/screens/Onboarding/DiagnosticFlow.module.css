@@ -1,0 +1,74 @@
+.screen { display: flex; flex-direction: column; min-height: 100vh; background: var(--bg2); }
+
+.progressBar { height: 2px; background: var(--border); flex-shrink: 0; }
+.progressFill { height: 100%; background: var(--ink); transition: width 0.4s ease; }
+
+.content { flex: 1; overflow-y: auto; padding: 24px 20px 8px; }
+.content::-webkit-scrollbar { display: none; }
+
+.footer { flex-shrink: 0; padding: 12px 20px 32px; display: flex; flex-direction: column; gap: 10px; }
+
+.backBtn { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; color: var(--ink3); background: none; border: none; cursor: pointer; padding: 0; margin-bottom: 18px; -webkit-tap-highlight-color: transparent; }
+.backBtn:hover { color: var(--ink); }
+
+.eyebrow { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink3); margin-bottom: 10px; }
+
+.headline { font-family: var(--font-serif); font-size: 30px; font-weight: 400; line-height: 1.2; letter-spacing: -0.01em; color: var(--ink); margin-bottom: 16px; }
+
+.bodyText { font-family: var(--font-mono); font-size: 13px; font-weight: 200; color: var(--ink2); line-height: 1.7; margin-bottom: 14px; }
+
+.sub { font-family: var(--font-mono); font-size: 13px; font-weight: 200; color: var(--ink2); line-height: 1.7; margin-bottom: 20px; }
+
+/* Welcome screen */
+.welcomeWrap { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+
+/* Option cards (energy / anxiety type) */
+.options { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+.optionCard { border: 1.5px solid var(--border); border-radius: 14px; background: var(--bg); padding: 16px; cursor: pointer; transition: border-color 0.15s; -webkit-tap-highlight-color: transparent; }
+.optionCard:hover { border-color: var(--border2); }
+.optionCardSelected { border-color: var(--ink); }
+.optionName { font-family: var(--font-serif); font-size: 18px; font-weight: 400; color: var(--ink); text-transform: lowercase; margin-bottom: 6px; }
+.optionDesc { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink2); line-height: 1.6; }
+
+.hint { font-family: var(--font-mono); font-size: 11px; color: var(--ink3); text-align: center; padding-top: 2px; }
+
+/* Insight cards */
+.insightCard { background: var(--bg); border: 0.5px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; }
+.insightCardRed { border-left: 3px solid #D93B1C; }
+.insightCardGreen { border-left: 3px solid #1B3A2D; }
+.insightLabel { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink3); margin-bottom: 8px; }
+.insightHeadline { font-family: var(--font-serif); font-size: 18px; font-weight: 400; color: var(--ink); letter-spacing: -0.01em; margin-bottom: 8px; }
+.insightBody { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink2); line-height: 1.6; margin-bottom: 12px; }
+
+.pillRow { display: flex; flex-wrap: wrap; gap: 6px; }
+.pill { padding: 4px 12px; border-radius: 20px; font-family: var(--font-mono); font-size: 11px; text-transform: lowercase; }
+.pillRed { background: #FFF0EC; color: #D93B1C; }
+.pillGreen { background: #E8EFE9; color: #1B3A2D; }
+
+/* Recommended canvas */
+.canvasSectionLabel { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink3); margin: 20px 0 10px; }
+
+.canvasCard { background: var(--bg); border: 0.5px solid var(--border); border-radius: 12px; padding: 4px 16px; margin-bottom: 10px; }
+.canvasCardLabel { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink3); padding: 10px 0 2px; }
+
+.needRow { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
+.needRow:last-child { border-bottom: none; }
+.needName { font-family: var(--font-serif); font-size: 16px; font-weight: 400; color: var(--ink); text-transform: lowercase; }
+.needRowRight { display: flex; align-items: center; gap: 6px; }
+
+.modePill { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: lowercase; padding: 5px 10px; border-radius: 20px; border: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+
+.removeBtn { background: none; border: none; color: var(--ink3); font-size: 16px; line-height: 1; cursor: pointer; padding: 0 2px; -webkit-tap-highlight-color: transparent; }
+.removeBtn:hover { color: var(--ink); }
+
+.addWrap { padding: 10px 0 10px; }
+.addLabel { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink3); margin-bottom: 8px; }
+.addChips { display: flex; flex-wrap: wrap; gap: 6px; }
+.addChip { padding: 5px 12px; border-radius: 20px; border: 0.5px dashed var(--border2); font-family: var(--font-mono); font-size: 11px; text-transform: lowercase; color: var(--ink3); background: var(--bg); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.addChip:hover { border-color: var(--ink3); color: var(--ink2); }
+
+.instructionNote { font-family: var(--font-mono); font-size: 11px; color: var(--ink3); line-height: 1.6; text-align: center; padding: 6px 4px 0; }
+
+/* Confirmation screen */
+.pullQuote { font-family: var(--font-serif); font-style: italic; font-size: 19px; font-weight: 400; color: var(--ink); line-height: 1.4; padding: 18px 0; border-top: 0.5px solid var(--border); border-bottom: 0.5px solid var(--border); margin: 16px 0; }
+.mutedNote { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink3); line-height: 1.6; }

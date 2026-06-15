@@ -5,6 +5,9 @@ import { supabase } from './supabase'
 const STORAGE_KEY = 'maslow_state'
 const STATE_VERSION = 2
 
+const UNIVERSAL_NEEDS = ['movement', 'nutrition', 'rest']
+const ABOVE_NOURISHMENT_MODES = ['appreciation', 'exploration', 'purpose']
+
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
@@ -15,6 +18,10 @@ function loadState() {
 
 function saveState(state) {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)) } catch {}
+}
+
+function logSupabaseError(fn, error) {
+  console.error(`[${fn}] supabase error`, error)
 }
 
 function migrateState(saved) {
@@ -151,7 +158,15 @@ export function useAppState(onSignIn) {
   useEffect(() => { saveState(state) }, [state])
 
   function updateCanvas(needId, mode) {
+    if (mode == null && UNIVERSAL_NEEDS.includes(needId)) return
+
+    if (needId === 'rest' && ABOVE_NOURISHMENT_MODES.includes(mode)) {
+      console.warn(`updateCanvas: rest cannot be set to "${mode}" — capping at nourishment`)
+      mode = 'nourishment'
+    }
+
     setState(prev => {
+      const previousCanvas = prev.canvas
       const newCanvas = { ...prev.canvas }
       if (mode == null) {
         delete newCanvas[needId]
@@ -159,7 +174,12 @@ export function useAppState(onSignIn) {
         newCanvas[needId] = mode
       }
       if (prev.userId) {
-        supabase.from('users').update({ canvas: newCanvas }).eq('id', prev.userId).then()
+        supabase.from('users').update({ canvas: newCanvas }).eq('id', prev.userId).then(({ error }) => {
+          if (error) {
+            logSupabaseError('updateCanvas', error)
+            setState(p => ({ ...p, canvas: previousCanvas }))
+          }
+        })
       }
       return { ...prev, canvas: newCanvas }
     })
@@ -170,9 +190,15 @@ export function useAppState(onSignIn) {
     setState(prev => {
       const current = prev.practices[needId] || []
       if (current.length >= 10) return prev
+      const previousPractices = prev.practices
       const newPractices = { ...prev.practices, [needId]: [...current, text.trim()] }
       if (prev.userId) {
-        supabase.from('users').update({ practices: newPractices }).eq('id', prev.userId).then()
+        supabase.from('users').update({ practices: newPractices }).eq('id', prev.userId).then(({ error }) => {
+          if (error) {
+            logSupabaseError('addPractice', error)
+            setState(p => ({ ...p, practices: previousPractices }))
+          }
+        })
       }
       return { ...prev, practices: newPractices }
     })
@@ -180,11 +206,17 @@ export function useAppState(onSignIn) {
 
   function removePractice(needId, index) {
     setState(prev => {
+      const previousPractices = prev.practices
       const current = [...(prev.practices[needId] || [])]
       current.splice(index, 1)
       const newPractices = { ...prev.practices, [needId]: current }
       if (prev.userId) {
-        supabase.from('users').update({ practices: newPractices }).eq('id', prev.userId).then()
+        supabase.from('users').update({ practices: newPractices }).eq('id', prev.userId).then(({ error }) => {
+          if (error) {
+            logSupabaseError('removePractice', error)
+            setState(p => ({ ...p, practices: previousPractices }))
+          }
+        })
       }
       return { ...prev, practices: newPractices }
     })
@@ -200,27 +232,65 @@ export function useAppState(onSignIn) {
 
     setState(prev => ({ ...prev, checkins: newCheckins }))
 
+    function revert() {
+      setState(prev => {
+        const current = prev.checkins[date] || []
+        const restored = isRemoving
+          ? (current.includes(key) ? current : [...current, key])
+          : current.filter(k => k !== key)
+        const reverted = { ...prev.checkins, [date]: restored }
+        checkinsRef.current = reverted
+        return { ...prev, checkins: reverted }
+      })
+    }
+
     if (state.userId) {
       if (!isRemoving) {
-        supabase.from('checkins').insert({ user_id: state.userId, date_key: date, need_id: key }).then()
+        supabase.from('checkins').insert({ user_id: state.userId, date_key: date, need_id: key }).then(({ error }) => {
+          if (error) {
+            logSupabaseError('checkIn', error)
+            revert()
+          }
+        })
       } else {
-        supabase.from('checkins').delete().eq('user_id', state.userId).eq('date_key', date).eq('need_id', key).then()
+        supabase.from('checkins').delete().eq('user_id', state.userId).eq('date_key', date).eq('need_id', key).then(({ error }) => {
+          if (error) {
+            logSupabaseError('checkIn', error)
+            revert()
+          }
+        })
       }
     }
   }
 
   async function logMood(userId, promptTime, mood, note, date) {
     if (!userId) return { error: 'Not authenticated' }
+    const previous = (state.moods || []).find(
+      m => m.date_key === date && m.prompt_time === promptTime
+    ) || null
+
     setState(prev => {
       const filtered = (prev.moods || []).filter(
         m => !(m.date_key === date && m.prompt_time === promptTime)
       )
       return { ...prev, moods: [{ user_id: userId, date_key: date, prompt_time: promptTime, mood, note: note || null }, ...filtered] }
     })
+
     const { error } = await supabase
       .from('moods')
       .upsert({ user_id: userId, date_key: date, prompt_time: promptTime, mood, note: note || null },
         { onConflict: 'user_id,date_key,prompt_time' })
+
+    if (error) {
+      logSupabaseError('logMood', error)
+      setState(prev => {
+        const filtered = (prev.moods || []).filter(
+          m => !(m.date_key === date && m.prompt_time === promptTime)
+        )
+        return { ...prev, moods: previous ? [previous, ...filtered] : filtered }
+      })
+    }
+
     return { error }
   }
 
@@ -231,13 +301,13 @@ export function useAppState(onSignIn) {
   }
 
   function completeOnboarding(canvas, practices, profile) {
-    const { userId, ...profileData } = profile
+    const { userId, ...profileData } = profile || {}
     setState(prev => ({
       ...prev,
       onboarded: true,
-      canvas,
-      practices,
-      profile: profileData,
+      canvas: canvas || prev.canvas,
+      practices: practices || prev.practices,
+      profile: profile ? profileData : prev.profile,
       userId: userId || prev.userId,
     }))
   }
@@ -281,12 +351,73 @@ export async function loadJournalEntry(userId, dateKey) {
     .select('entry')
     .eq('user_id', userId)
     .eq('date_key', dateKey)
-    .single()
+    .maybeSingle()
   return data?.entry || ''
 }
 
 export async function saveJournalEntry(userId, dateKey, entry) {
-  await supabase
+  const { error } = await supabase
     .from('journal')
     .upsert({ user_id: userId, date_key: dateKey, entry }, { onConflict: 'user_id,date_key' })
+  if (error) logSupabaseError('saveJournalEntry', error)
+  return { error }
+}
+
+export async function loadDebriefs(userId) {
+  const { data } = await supabase
+    .from('debriefs')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+  return data || []
+}
+
+export async function saveDebrief(userId, { dateKey, nature, environment, entry, stepsCompleted }) {
+  const { data, error } = await supabase
+    .from('debriefs')
+    .insert({
+      user_id: userId,
+      date_key: dateKey,
+      nature,
+      environment,
+      entry,
+      steps_completed: stepsCompleted,
+    })
+    .select()
+    .single()
+  if (error) logSupabaseError('saveDebrief', error)
+  return { data, error }
+}
+
+export async function loadDebriefTypes(userId) {
+  const { data } = await supabase
+    .from('debrief_types')
+    .select('*')
+    .eq('user_id', userId)
+    .order('sort_order', { ascending: true })
+  const result = { nature: [], environment: [] }
+  for (const row of (data || [])) {
+    if (result[row.category]) result[row.category].push(row)
+  }
+  return result
+}
+
+export async function saveDebriefType(userId, { category, name, color }) {
+  const { data, error } = await supabase
+    .from('debrief_types')
+    .upsert({ user_id: userId, category, name, color }, { onConflict: 'user_id,category,name' })
+    .select()
+  if (error) logSupabaseError('saveDebriefType', error)
+  return { data, error }
+}
+
+export async function deleteDebriefType(userId, { category, name }) {
+  const { error } = await supabase
+    .from('debrief_types')
+    .delete()
+    .eq('user_id', userId)
+    .eq('category', category)
+    .eq('name', name)
+  if (error) logSupabaseError('deleteDebriefType', error)
+  return { error }
 }

@@ -2,6 +2,20 @@ import { NEEDS, LAYERS } from './constants'
 
 const MOOD_RANK = { bad: 1, fine: 2, good: 3 }
 
+export const DEBRIEF_NATURE_COLORS = { frenetic: '#D93B1C', overwhelm: '#E8B81F', apathy: '#B8C3B1' }
+export const DEBRIEF_ENVIRONMENT_COLORS = { work: '#1A1A1A', home: '#B8C3B1', social: '#7A8FA6', personal: '#E8B81F' }
+const DEBRIEF_DEFAULT_COLOR = '#999999'
+
+function countByField(items, field, colorMap) {
+  const counts = new Map()
+  for (const item of items) {
+    counts.set(item[field], (counts.get(item[field]) || 0) + 1)
+  }
+  return [...counts.entries()]
+    .map(([name, count]) => ({ name, count, color: colorMap[name] || DEBRIEF_DEFAULT_COLOR }))
+    .sort((a, b) => b.count - a.count)
+}
+
 function dateKeyFor(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
@@ -388,6 +402,44 @@ export function createDataStats({ canvas, checkins, moods, practices }) {
     return result
   }
 
+  function getDebriefStats(debriefs) {
+    const list = debriefs || []
+    const byNature = countByField(list, 'nature', DEBRIEF_NATURE_COLORS)
+    const byEnvironment = countByField(list, 'environment', DEBRIEF_ENVIRONMENT_COLORS)
+
+    let pattern = null
+    if (list.length >= 5 && byNature.length > 0) {
+      const domNature = byNature[0].name
+      const natureEpisodes = list.filter(d => d.nature === domNature)
+
+      if (natureEpisodes.length >= 3) {
+        const domEnvironment = countByField(natureEpisodes, 'environment', DEBRIEF_ENVIRONMENT_COLORS)[0].name
+        const subset = natureEpisodes.filter(d => d.environment === domEnvironment)
+
+        let domNeed = null
+        let domNeedCount = 0
+        for (const need of NEEDS) {
+          if (canvas[need.id] === 'survival') continue
+          const unmetCount = subset.filter(d => isNeedMet(need, d.date_key) === false).length
+          if (unmetCount > domNeedCount) { domNeedCount = unmetCount; domNeed = need }
+        }
+
+        if (domNeed) {
+          pattern = `${domNeedCount} of your ${natureEpisodes.length} ${domNature} episodes happened at ${domEnvironment} on days when ${domNeed.name.toLowerCase()} went unmet.`
+        }
+      }
+    }
+
+    const recentEpisodes = list.slice(0, 10).map(d => ({
+      date: d.date_key,
+      nature: d.nature,
+      environment: d.environment,
+      excerpt: (d.entry || '').slice(0, 80),
+    }))
+
+    return { byNature, byEnvironment, pattern, recentEpisodes }
+  }
+
   return {
     isNeedMet,
     isDayHit,
@@ -405,5 +457,6 @@ export function createDataStats({ canvas, checkins, moods, practices }) {
     getPracticeStats,
     getGoingWell,
     getCompletionByWeekday,
+    getDebriefStats,
   }
 }
