@@ -9,85 +9,121 @@ import styles from './Data.module.css'
 const MOOD_PERIODS = ['morning', 'midday', 'evening']
 const WEEKDAY_LETTERS = ['m', 't', 'w', 't', 'f', 's', 's']
 
+const LC_MODE_COLORS = {
+  purpose: '#1B3A2D',
+  appreciation: '#B8C3B1',
+  nourishment: '#E8B81F',
+  survival: '#D93B1C',
+}
+
 function StatCards({ stats, range }) {
-  const { pct, delta, done, total } = stats.getCompletion(range)
   const streak = stats.getStreak()
   const { mode, prior, direction } = stats.getMoodMode(range)
+  const [openTip, setOpenTip] = useState(null)
+  const wrapRef = useRef(null)
+
+  useEffect(() => {
+    if (!openTip) return
+    function handleOutside(e) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpenTip(null)
+    }
+    document.addEventListener('pointerdown', handleOutside)
+    return () => document.removeEventListener('pointerdown', handleOutside)
+  }, [openTip])
 
   return (
-    <div className={styles.statGrid}>
+    <div ref={wrapRef} className={styles.statGrid}>
       <div className={styles.statCard}>
-        <div className={styles.statLabel}>streak</div>
-        <div className={styles.statValue}>{streak} <span className={styles.statUnit}>days</span></div>
-      </div>
-      <div className={styles.statCard}>
-        <div className={styles.statLabel}>completion</div>
-        <div className={styles.statValue}>{pct}% <span className={styles.statDelta}>{delta >= 0 ? '+' : ''}{delta}</span></div>
-      </div>
-      <div className={styles.statCard}>
-        <div className={styles.statLabel}>mood</div>
-        <div className={styles.statValue}>{mode || '—'}</div>
-        {direction && (
-          <div className={styles.statSub}>{direction === 'up' ? '↑' : '↓'} {prior}</div>
+        <div className={styles.statCardTop}>
+          <div className={styles.statLabel}>STREAK</div>
+          <button className={styles.infoBtn} onClick={() => setOpenTip(o => o === 'streak' ? null : 'streak')}>i</button>
+        </div>
+        {openTip === 'streak' && (
+          <div className={styles.tooltip}>
+            <div className={styles.tooltipArrow} />
+            consecutive days where you completed 50% or more of your non-survival needs. today doesn't break your streak while it's still in progress.
+          </div>
         )}
+        <div className={styles.statValue}>
+          {streak} <span className={styles.statUnit}>days</span>
+        </div>
       </div>
       <div className={styles.statCard}>
-        <div className={styles.statLabel}>practices done</div>
-        <div className={styles.statValue}>{done} <span className={styles.statUnit}>of {total}</span></div>
+        <div className={styles.statCardTop}>
+          <div className={styles.statLabel}>MOOD</div>
+          <button className={styles.infoBtn} onClick={() => setOpenTip(o => o === 'mood' ? null : 'mood')}>i</button>
+        </div>
+        {openTip === 'mood' && (
+          <div className={styles.tooltip}>
+            <div className={styles.tooltipArrow} />
+            the most common mood across all your check-ins in this period. up to 3 check-ins per day — morning, midday, and evening. the arrow shows whether that's higher or lower than the previous period.
+          </div>
+        )}
+        <div className={styles.statValueMood}>{mode || '—'}</div>
+        {direction && <div className={styles.statSub}>{direction === 'up' ? '↑' : '↓'} {prior}</div>}
       </div>
     </div>
   )
 }
 
-function Sparkline({ data, color }) {
-  const W = 60, H = 20
-  const n = data.length
-  const stepX = n > 1 ? W / (n - 1) : W
-  const points = data.map((v, i) => `${(i * stepX).toFixed(1)},${(H - (v / 100) * H).toFixed(1)}`).join(' ')
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} className={styles.sparkline} preserveAspectRatio="none">
-      <polyline points={points} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
-
-function NeedsTable({ stats, canvas, range }) {
-  const needStats = [...stats.getNeedStats(range)].sort((a, b) => b.pct - a.pct)
-  const survivalNeeds = NEEDS.filter(n => canvas[n.id] === 'survival')
+function LiveCanvas({ stats, range }) {
+  const { overallPace, canvasTarget, needRows, survivalNeeds } = stats.getLiveCanvas(range)
 
   return (
     <div className={styles.card}>
-      <div className={styles.eyebrow}>by need</div>
-      <div className={styles.needsTable}>
-        <div className={`${styles.needsRow} ${styles.needsHeaderRow}`}>
-          <div className={styles.needsPipCol} />
-          <div className={styles.needsNameCol} />
-          <div className={`${styles.needsPctCol} ${styles.activeCol}`}>{range}d</div>
-          <div className={styles.needsPctCol}>30d</div>
-          <div className={styles.needsSparkCol} />
+      <div className={styles.lcEyebrow}>LIVE CANVAS — {range}D PACE</div>
+
+      <div className={styles.lcOverallRow}>
+        <div className={styles.lcOverallLabel}>OVERALL</div>
+        <div className={styles.lcOverallPace}>{overallPace}</div>
+      </div>
+      <div className={styles.lcTrackContainer}>
+        <div className={styles.lcOverallTrack}>
+          <div className={styles.lcOverallFill} style={{ width: `${overallPace}%` }} />
         </div>
-        {needStats.map(({ need, mode, pct, referencePct, sparkline }) => (
-          <div key={need.id} className={styles.needsRow}>
-            <div className={styles.needsPipCol}>
-              <div className={styles.needsPip} style={{ background: LAYERS[mode].pip }} />
+        <div className={styles.lcTick} style={{ left: `${canvasTarget}%` }} />
+      </div>
+      <div className={styles.lcTrackTarget}>canvas target {canvasTarget}%</div>
+
+      {needRows.length > 0 && <div className={styles.lcDivider} />}
+
+      {needRows.map(({ needId, name, modeColor, pace, target }) => (
+        <div key={needId} className={styles.lcNeedRow}>
+          <div className={styles.lcPip} style={{ background: modeColor }} />
+          <div className={styles.lcNeedName}>{name}</div>
+          <div className={styles.lcNeedTrackContainer}>
+            <div className={styles.lcNeedTrack}>
+              <div className={styles.lcNeedFill} style={{ width: `${pace}%`, background: modeColor }} />
             </div>
-            <div className={styles.needsNameCol}>{need.name}</div>
-            <div className={`${styles.needsPctCol} ${styles.activeCol}`}>{pct}%</div>
-            <div className={styles.needsPctCol}>{referencePct}%</div>
-            <div className={styles.needsSparkCol}>
-              <Sparkline data={sparkline} color={LAYERS[mode].pip} />
-            </div>
+            <div className={styles.lcNeedTick} style={{ left: `${target}%` }} />
+          </div>
+          <div className={styles.lcNeedPace}>{pace}%</div>
+        </div>
+      ))}
+
+      {survivalNeeds.length > 0 && (
+        <>
+          <div className={styles.lcDivider} />
+          <div className={styles.lcSurvivalRow}>
+            <span className={styles.lcSurvivalX}>✕</span>
+            <span className={styles.lcSurvivalNames}>{survivalNeeds.join(', ')}</span>
+            <span className={styles.lcSurvivalNote}>survival — no tracking</span>
+          </div>
+        </>
+      )}
+
+      <div className={styles.lcDivider} />
+      <div className={styles.lcLegend}>
+        {['purpose', 'appreciation', 'nourishment', 'survival'].map(m => (
+          <div key={m} className={styles.lcLegendItem}>
+            <div className={styles.lcLegendPip} style={{ background: LC_MODE_COLORS[m] }} />
+            <span className={styles.lcLegendLabel}>{m}</span>
           </div>
         ))}
-        {survivalNeeds.length > 0 && (
-          <div className={styles.needsRow}>
-            <div className={styles.needsPipCol}>
-              <span className={styles.survivalX}>✕</span>
-            </div>
-            <div className={styles.needsNameCol}>{survivalNeeds.map(n => n.name).join(', ')}</div>
-            <div className={styles.needsSurvivalNote}>survival — no tracking</div>
-          </div>
-        )}
+        <div className={styles.lcLegendItem}>
+          <div className={styles.lcLegendTick} />
+          <span className={styles.lcLegendLabel}>mode target</span>
+        </div>
       </div>
     </div>
   )
@@ -532,7 +568,7 @@ export default function Data({ state }) {
       {view === 'overview' && (
         <div className={styles.section}>
           <StatCards stats={stats} range={range} />
-          <NeedsTable stats={stats} canvas={state.canvas} range={range} />
+          <LiveCanvas stats={stats} range={range} />
           <ModeBars stats={stats} range={range} />
           <PatternCard stats={stats} />
         </div>

@@ -440,6 +440,42 @@ export function createDataStats({ canvas, checkins, moods, practices }) {
     return { byNature, byEnvironment, pattern, recentEpisodes }
   }
 
+  function getLiveCanvas(rangeDays) {
+    const days = dayRange(rangeDays, 0)
+    const MODE_THRESHOLDS = { purpose: 80, appreciation: 60, nourishment: 50, survival: 20 }
+    const MODE_COLORS = { purpose: '#1B3A2D', appreciation: '#B8C3B1', nourishment: '#E8B81F', survival: '#D93B1C' }
+
+    const activeNeeds = NEEDS.filter(n => canvas[n.id] && canvas[n.id] !== 'survival')
+    const survivalNeeds = NEEDS.filter(n => canvas[n.id] === 'survival').map(n => n.name)
+
+    let totalRequired = 0, totalCompleted = 0
+    const needRows = activeNeeds.map(need => {
+      const required = requiredFor(canvas, need.id)
+      let completed = 0
+      for (const day of days) completed += completedFor(checkins, need.id, day)
+      const maxPossible = required * days.length
+      const pace = maxPossible > 0 ? Math.min(100, Math.round((completed / maxPossible) * 100)) : 0
+      totalRequired += maxPossible
+      totalCompleted += completed
+      const mode = canvas[need.id]
+      return {
+        needId: need.id,
+        name: need.name,
+        mode,
+        modeColor: MODE_COLORS[mode] || '#999',
+        pace,
+        target: MODE_THRESHOLDS[mode] || 50,
+      }
+    }).sort((a, b) => b.pace - a.pace)
+
+    const overallPace = totalRequired > 0 ? Math.min(100, Math.round((totalCompleted / totalRequired) * 100)) : 0
+    const canvasTarget = activeNeeds.length > 0
+      ? Math.round(activeNeeds.reduce((s, n) => s + (MODE_THRESHOLDS[canvas[n.id]] || 50), 0) / activeNeeds.length)
+      : 50
+
+    return { overallPace, canvasTarget, needRows, survivalNeeds }
+  }
+
   return {
     isNeedMet,
     isDayHit,
@@ -458,5 +494,6 @@ export function createDataStats({ canvas, checkins, moods, practices }) {
     getGoingWell,
     getCompletionByWeekday,
     getDebriefStats,
+    getLiveCanvas,
   }
 }
