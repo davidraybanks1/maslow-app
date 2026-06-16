@@ -4,6 +4,7 @@ import {
   IconLayoutGrid,
   IconList,
   IconChartBar,
+  IconCalendar,
   IconNotes,
   IconStethoscope,
   IconLock,
@@ -19,6 +20,7 @@ const NAV_LINKS = [
   { to: '/canvas',    label: 'Canvas',    Icon: IconLayoutGrid },
   { to: '/practices', label: 'Practices', Icon: IconList },
   { to: '/data',      label: 'Data',      Icon: IconChartBar },
+  { to: '/log',       label: 'Log',       Icon: IconCalendar },
   { to: '/debriefs',  label: 'Debriefs',  Icon: IconNotes },
   { to: '/diagnostic', label: 'Revisit diagnostic', Icon: IconStethoscope },
 ]

@@ -6,6 +6,7 @@ import Today from './screens/Today'
 import CanvasScreen from './screens/CanvasScreen'
 import Practices from './screens/Practices'
 import Data from './screens/Data'
+import Log from './screens/Log'
 import Debriefs from './screens/Debriefs'
 import SignIn from './screens/SignIn'
 import ComingSoon from './screens/ComingSoon'
@@ -49,6 +50,7 @@ function AppInner() {
           <Route path="/canvas" element={<Protected onboarded={state.onboarded}><CanvasScreen state={state} updateCanvas={updateCanvas} /></Protected>} />
           <Route path="/practices" element={<Protected onboarded={state.onboarded}><Practices state={state} addPractice={addPractice} removePractice={removePractice} /></Protected>} />
           <Route path="/data" element={<Protected onboarded={state.onboarded}><Data state={state} /></Protected>} />
+          <Route path="/log" element={<Protected onboarded={state.onboarded}><Log state={state} /></Protected>} />
           <Route path="/debriefs" element={<Protected onboarded={state.onboarded}><Debriefs state={state} /></Protected>} />
           <Route path="/diagnostic" element={<Protected onboarded={state.onboarded}><DiagnosticFlow updateCanvas={updateCanvas} /></Protected>} />
           <Route path="/signin" element={<SignIn />} />

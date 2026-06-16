@@ -206,4 +206,7 @@
 .chevron { display: inline-block; font-size: 11px; line-height: 1; transition: transform 0.2s ease; transform: rotate(0deg); }
 .chevronOpen { transform: rotate(90deg); }
 
+.debriefDot { width: 6px; height: 6px; border-radius: 50%; background: #1B3A2D; flex-shrink: 0; }
+.debriefCount { color: var(--ink4); }
+
 .debriefHairline { height: 0.5px; background: var(--border); margin: 14px 0; }

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { NEEDS, LAYERS, totalBubbles } from '../lib/constants'
-import { todayKey, loadJournalEntry, saveJournalEntry, loadDebriefTypes } from '../lib/store'
+import { todayKey, loadJournalEntry, saveJournalEntry, loadDebriefTypes, loadDebriefs } from '../lib/store'
 import { createDataStats } from '../lib/dataStats'
 import DebriefForm from '../components/DebriefForm'
 import styles from './Today.module.css'
@@ -56,10 +56,18 @@ export default function Today({ state, checkIn, logMood }) {
 
   const [debriefExpanded, setDebriefExpanded] = useState(false)
   const [debriefTypes, setDebriefTypes] = useState({ nature: [], environment: [] })
+  const [todayDebriefCount, setTodayDebriefCount] = useState(0)
 
   useEffect(() => {
     if (!state.userId) return
     loadDebriefTypes(state.userId).then(setDebriefTypes)
+  }, [state.userId])
+
+  useEffect(() => {
+    if (!state.userId) return
+    loadDebriefs(state.userId).then(debriefs => {
+      setTodayDebriefCount(debriefs.filter(d => d.date_key === today).length)
+    })
   }, [state.userId])
 
   const [moodSelections, setMoodSelections] = useState(() => {
@@ -172,13 +180,22 @@ export default function Today({ state, checkIn, logMood }) {
 
           <button className={styles.debriefToggle} onClick={() => setDebriefExpanded(e => !e)}>
             <span className={`${styles.chevron} ${debriefExpanded ? styles.chevronOpen : ''}`}>›</span>
+            {todayDebriefCount > 0 && <span className={styles.debriefDot} />}
             <span>anxiety debrief</span>
+            {todayDebriefCount > 0 && <span className={styles.debriefCount}>· {todayDebriefCount}</span>}
           </button>
 
           {debriefExpanded && (
             <>
               <div className={styles.debriefHairline} />
-              <DebriefForm userId={state.userId} debriefTypes={debriefTypes} onSaved={() => setDebriefExpanded(false)} />
+              <DebriefForm
+                userId={state.userId}
+                debriefTypes={debriefTypes}
+                onSaved={() => {
+                  setDebriefExpanded(false)
+                  setTodayDebriefCount(c => c + 1)
+                }}
+              />
             </>
           )}
         </div>
