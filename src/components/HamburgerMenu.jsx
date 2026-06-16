@@ -6,7 +6,6 @@ import {
   IconChartBar,
   IconCalendar,
   IconNotes,
-  IconStethoscope,
   IconLock,
   IconBell,
   IconExternalLink,
@@ -17,12 +16,11 @@ import styles from './HamburgerMenu.module.css'
 
 const NAV_LINKS = [
   { to: '/today',     label: 'Today',     Icon: IconHome },
-  { to: '/canvas',    label: 'Canvas',    Icon: IconLayoutGrid },
   { to: '/practices', label: 'Practices', Icon: IconList },
+  { to: '/debriefs',  label: 'Debriefs',  Icon: IconNotes },
   { to: '/data',      label: 'Data',      Icon: IconChartBar },
   { to: '/log',       label: 'Log',       Icon: IconCalendar },
-  { to: '/debriefs',  label: 'Debriefs',  Icon: IconNotes },
-  { to: '/diagnostic', label: 'Revisit diagnostic', Icon: IconStethoscope },
+  { to: '/canvas',    label: 'Canvas',    Icon: IconLayoutGrid },
 ]
 
 export default function HamburgerMenu({ onClose }) {
