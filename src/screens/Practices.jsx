@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { NEEDS, LAYERS, LAYER_ORDER } from '../lib/constants'
+import { NEEDS, MODES, MODE_ORDER } from '../lib/constants'
 import { createDataStats, formatLastDone } from '../lib/dataStats'
 import styles from './Practices.module.css'
 
@@ -31,10 +31,10 @@ export default function Practices({ state, addPractice, removePractice }) {
         <div className={styles.sub}>Each day you pick from your library. Up to 10 per need.</div>
       </div>
       <div className={styles.list}>
-        {LAYER_ORDER.filter(m => LAYERS[m].bubbles > 0).map(mode => {
+        {MODE_ORDER.map(mode => {
           const modeNeeds = NEEDS.filter(n => state.canvas[n.id] === mode)
           if (!modeNeeds.length) return null
-          const lyr = LAYERS[mode]
+          const modeColor = MODES[mode]?.pip
           return modeNeeds.map(n => {
             const pool = state.practices[n.id] || []
             const atMax = pool.length >= MAX
@@ -42,7 +42,7 @@ export default function Practices({ state, addPractice, removePractice }) {
             return (
               <div key={n.id} className={styles.needGroup}>
                 <div className={styles.needHeader}>
-                  <div className={styles.needPip} style={{ background: lyr.pip }} />
+                  <div className={styles.needPip} style={{ background: modeColor }} />
                   <div className={styles.needName}>{n.name}</div>
                   <div className={styles.needTag}>{pool.length}/{MAX}</div>
                 </div>

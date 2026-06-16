@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { NEEDS, LAYERS } from '../lib/constants'
+import { NEEDS } from '../lib/constants'
 import { loadJournalEntry } from '../lib/store'
 import styles from './Log.module.css'
 
@@ -12,10 +12,8 @@ function LogCalendar({ checkins, canvas, moods, onSelectDay, currentMonth, setCu
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const startWeekday = (firstDay.getDay() + 6) % 7
 
-  const totalBubbles = NEEDS.reduce((s, n) => {
-    const mode = canvas[n.id]
-    return s + (LAYERS[mode]?.bubbles || 0)
-  }, 0)
+  const assignedNeeds = NEEDS.filter(n => canvas[n.id])
+  const totalNeeds = assignedNeeds.length
 
   const cells = []
   for (let i = 0; i < startWeekday; i++) cells.push(null)
@@ -41,7 +39,8 @@ function LogCalendar({ checkins, canvas, moods, onSelectDay, currentMonth, setCu
           if (d === null) return <div key={i} className={styles.calCellEmpty} />
           const key = dateKeyFor(d)
           const dayCheckins = checkins[key] || []
-          const pct = totalBubbles > 0 ? dayCheckins.length / totalBubbles : 0
+          const needsMet = assignedNeeds.filter(n => dayCheckins.some(c => c.startsWith(`${n.id}_`))).length
+          const pct = totalNeeds > 0 ? needsMet / totalNeeds : 0
           const hasData = dayCheckins.length > 0 || (moods || []).some(m => m.date_key === key)
           return (
             <div
@@ -62,11 +61,10 @@ function LogCalendar({ checkins, canvas, moods, onSelectDay, currentMonth, setCu
 function DayDetailModal({ dateKey, checkins, moods, canvas, journalEntry, onClose }) {
   const dayCheckins = checkins[dateKey] || []
   const dayMoods = (moods || []).filter(m => m.date_key === dateKey)
-  const totalBubbles = NEEDS.reduce((s, n) => {
-    const mode = canvas[n.id]
-    return s + (LAYERS[mode]?.bubbles || 0)
-  }, 0)
-  const pct = totalBubbles > 0 ? Math.round(dayCheckins.length / totalBubbles * 100) : 0
+  const assignedNeeds = NEEDS.filter(n => canvas[n.id])
+  const totalNeeds = assignedNeeds.length
+  const needsMet = assignedNeeds.filter(n => dayCheckins.some(c => c.startsWith(`${n.id}_`))).length
+  const pct = totalNeeds > 0 ? Math.round(needsMet / totalNeeds * 100) : 0
   const dateLabel = new Date(dateKey + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
 
   return (
@@ -74,7 +72,7 @@ function DayDetailModal({ dateKey, checkins, moods, canvas, journalEntry, onClos
       <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
         <button className={styles.modalClose} onClick={onClose}>×</button>
         <div className={styles.modalDate}>{dateLabel}</div>
-        <div className={styles.modalScore}>{pct}% · {dayCheckins.length} of {totalBubbles}</div>
+        <div className={styles.modalScore}>{pct}% · {needsMet} of {totalNeeds}</div>
 
         <div className={styles.modalSectionLabel}>mood</div>
         {dayMoods.length === 0 ? (

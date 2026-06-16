@@ -1,12 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
-import { defaultCanvas } from './constants'
 import { supabase } from './supabase'
 
 const STORAGE_KEY = 'maslow_state'
 const STATE_VERSION = 2
 
 const UNIVERSAL_NEEDS = ['movement', 'nutrition', 'rest']
-const ABOVE_NOURISHMENT_MODES = ['appreciation', 'exploration', 'purpose']
+const ABOVE_NOURISHMENT_MODES = ['exploration', 'appreciation']
 
 function loadState() {
   try {
@@ -50,7 +49,7 @@ function migrateState(saved) {
       _version: STATE_VERSION,
       onboarded: saved.onboarded || false,
       userId: saved.userId || null,
-      canvas: saved.canvas || defaultCanvas(),
+      canvas: saved.canvas || {},
       practices: {},
       checkins: {},
       moods: [],
@@ -66,7 +65,7 @@ export function initialState() {
     _version: STATE_VERSION,
     onboarded: false,
     userId: null,
-    canvas: defaultCanvas(),
+    canvas: {},
     practices: {},
     checkins: {},
     moods: [],
@@ -101,11 +100,16 @@ async function restoreFromSupabase(userId, email) {
       if (!checkinsMap[row.date_key]) checkinsMap[row.date_key] = []
       checkinsMap[row.date_key].push(row.need_id)
     }
+    const rawCanvas = user.canvas || {}
+    const canvas = {}
+    for (const [k, v] of Object.entries(rawCanvas)) {
+      canvas[k] = v === 'purpose' ? 'exploration' : v
+    }
     return {
       _version: STATE_VERSION,
       onboarded: user.onboarded,
       userId: user.id,
-      canvas: user.canvas || defaultCanvas(),
+      canvas,
       practices: user.practices || {},
       checkins: checkinsMap,
       moods,

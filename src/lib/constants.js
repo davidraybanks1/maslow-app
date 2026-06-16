@@ -1,84 +1,26 @@
-export const LAYERS = {
-  survival: {
-    name: 'survival',
-    pip: '#D93B1C',
-    border: '#D93B1C',
-    text: '#D93B1C',
-    bg: '#FFF0EC',
-    slots: 4,
-    bubbles: 0,
-  },
-  nourishment: {
-    name: 'nourishment',
-    pip: '#E8B81F',
-    border: '#CC9C00',
-    text: '#8A6A00',
-    bg: '#FFF9E0',
-    slots: 3,
-    bubbles: 1,
-  },
-  appreciation: {
-    name: 'appreciation',
-    pip: '#B8C3B1',
-    border: '#A8B8B0',
-    text: '#4A6860',
-    bg: '#F2F5F3',
-    slots: 2,
-    bubbles: 2,
-  },
-  purpose: {
-    name: 'purpose',
-    pip: '#1B3A2D',
-    border: '#1B3A2D',
-    text: '#1B3A2D',
-    bg: '#E8EFE9',
-    slots: 1,
-    bubbles: 3,
-  },
+export const MODES = {
+  exploration:  { name: 'exploration',  color: '#1B3A2D', pip: '#1B3A2D' },
+  appreciation: { name: 'appreciation', color: '#B8C3B1', pip: '#B8C3B1' },
+  nourishment:  { name: 'nourishment',  color: '#E8B81F', pip: '#E8B81F' },
+  survival:     { name: 'survival',     color: '#D93B1C', pip: '#D93B1C' },
 }
 
-export const LAYER_ORDER = ['purpose', 'appreciation', 'nourishment', 'survival']
+export const MODE_ORDER = ['exploration', 'appreciation', 'nourishment', 'survival']
 
 export const NEEDS = [
-  { id: 'movement',   name: 'Movement',   description: 'Exercise, mobility, physical vitality' },
-  { id: 'community',  name: 'Community',  description: 'Friendship, family, belonging' },
-  { id: 'reflection', name: 'Reflection', description: 'Journaling, self-awareness, inner life' },
-  { id: 'nutrition',  name: 'Nutrition',  description: 'Food, hydration, relationship with eating' },
-  { id: 'rest',       name: 'Rest',       description: 'Sleep, stillness, nervous system recovery' },
-  { id: 'beauty',     name: 'Beauty',     description: 'Art, music, nature, aesthetic experience' },
-  { id: 'money',      name: 'Money',      description: 'Income, spending, relationship with finances' },
-  { id: 'dwelling',   name: 'Dwelling',   description: 'Home, environment, cleanliness' },
-  { id: 'intimacy',   name: 'Intimacy',   description: 'Romance, deep partnership, vulnerability' },
-  { id: 'play',       name: 'Play',       description: 'Unstructured joy, creativity, exploration' },
+  { id: 'movement',    name: 'movement',    ring: 'universal' },
+  { id: 'nutrition',   name: 'nutrition',   ring: 'universal' },
+  { id: 'rest',        name: 'rest',        ring: 'universal' },
+  { id: 'community',   name: 'community',   ring: 'personal' },
+  { id: 'beauty',      name: 'beauty',      ring: 'personal' },
+  { id: 'intimacy',    name: 'intimacy',    ring: 'personal' },
+  { id: 'reflection',  name: 'reflection',  ring: 'personal' },
+  { id: 'play',        name: 'play',        ring: 'personal' },
+  { id: 'money',       name: 'money',       ring: 'personal' },
+  { id: 'dwelling',    name: 'dwelling',    ring: 'personal' },
+  { id: 'information', name: 'information', ring: 'personal' },
+  { id: 'touch',       name: 'touch',       ring: 'personal' },
+  { id: 'thrill',      name: 'thrill',      ring: 'personal' },
 ]
 
-export function defaultCanvas() {
-  return {
-    movement:   'nourishment',
-    community:  'nourishment',
-    reflection: 'nourishment',
-    nutrition:  'nourishment',
-    rest:       'nourishment',
-    beauty:     'nourishment',
-    money:      'nourishment',
-    dwelling:   'nourishment',
-    intimacy:   'nourishment',
-    play:       'nourishment',
-  }
-}
-
-export function totalBubbles(canvas) {
-  return NEEDS.reduce((s, n) => s + (LAYERS[canvas[n.id]]?.bubbles || 0), 0)
-}
-
-export function todayKey() {
-  return new Date().toISOString().slice(0, 10)
-}
-
-export function computeProgress(canvas) {
-  const active = NEEDS.filter(n => {
-    const mode = canvas[n.id]
-    return mode && LAYERS[mode] && LAYERS[mode].bubbles > 0
-  }).length
-  return Math.round((active / NEEDS.length) * 100)
-}
+export const UNIVERSAL_NEEDS = ['movement', 'nutrition', 'rest']

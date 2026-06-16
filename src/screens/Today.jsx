@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
-import { NEEDS, LAYERS, totalBubbles } from '../lib/constants'
+import { NEEDS, MODES, MODE_ORDER } from '../lib/constants'
 import { todayKey, loadJournalEntry, saveJournalEntry, loadDebriefTypes, loadDebriefs } from '../lib/store'
 import { createDataStats } from '../lib/dataStats'
 import DebriefForm from '../components/DebriefForm'
 import styles from './Today.module.css'
 
-const LAYER_ORDER = ['purpose', 'appreciation', 'nourishment', 'survival']
 const MOOD_PERIODS = ['morning', 'midday', 'evening']
 const MOODS = ['good', 'fine', 'bad']
 const MOOD_SELECTED_CLASS = { good: 'moodBtnGood', fine: 'moodBtnFine', bad: 'moodBtnBad' }
@@ -14,8 +13,9 @@ const MOOD_SELECTED_CLASS = { good: 'moodBtnGood', fine: 'moodBtnFine', bad: 'mo
 export default function Today({ state, checkIn, logMood }) {
   const today = todayKey()
   const checked = state.checkins[today] || []
-  const total = totalBubbles(state.canvas)
-  const done = checked.length
+  const assignedNeeds = NEEDS.filter(n => state.canvas[n.id])
+  const total = assignedNeeds.length
+  const done = assignedNeeds.filter(n => checked.some(c => c.startsWith(n.id + '_'))).length
   const pct = total ? Math.round(done / total * 100) : 0
 
   const todayMoods = (state.moods || []).filter(m => m.date_key === today)
@@ -206,35 +206,16 @@ export default function Today({ state, checkIn, logMood }) {
             <span className={styles.sectionLabel}>practices</span>
           </div>
 
-          {LAYER_ORDER.filter(m => LAYERS[m].bubbles > 0).map(mode => {
+          {MODE_ORDER.map(mode => {
             const modeNeeds = NEEDS.filter(n => state.canvas[n.id] === mode)
             if (!modeNeeds.length) return null
-            const lyr = LAYERS[mode]
-            if (lyr.bubbles === 0) return null
-
-            const modeTotalBubbles = lyr.bubbles * modeNeeds.length
-            const modeFilledCount = modeNeeds.reduce((sum, n) => {
-              const prefix = `${n.id}_`
-              return sum + checked.filter(k => k.startsWith(prefix)).length
-            }, 0)
+            const pip = MODES[mode]?.pip
 
             return (
               <div key={mode} className={styles.modeGroup}>
                 <div className={styles.modeLabel}>
-                  <div className={styles.modePip} style={{ background: lyr.pip }} />
+                  <div className={styles.modePip} style={{ background: pip }} />
                   <span>{mode}</span>
-                  <div style={{ display: 'flex', gap: 5, alignItems: 'center', marginLeft: 'auto' }}>
-                    {Array.from({ length: modeTotalBubbles }).map((_, i) => (
-                      <div
-                        key={i}
-                        className={i < modeFilledCount ? styles.bubbleDot : `${styles.bubbleDot} ${styles.bubbleDotEmpty}`}
-                        style={i < modeFilledCount
-                          ? { background: lyr.pip }
-                          : { border: `1.5px solid ${lyr.pip}` }
-                        }
-                      />
-                    ))}
-                  </div>
                 </div>
 
                 {modeNeeds.map(n => {
@@ -257,7 +238,7 @@ export default function Today({ state, checkIn, logMood }) {
                               <button
                                 key={p}
                                 className={isDone ? styles.practiceChipDone : styles.practiceChip}
-                                style={isDone ? { background: lyr.pip } : {}}
+                                style={isDone ? { background: pip } : {}}
                                 onClick={() => checkIn(n.id, p)}
                               >
                                 {p}
@@ -272,31 +253,6 @@ export default function Today({ state, checkIn, logMood }) {
               </div>
             )
           })}
-
-          {(() => {
-            const survivalNeeds = NEEDS.filter(n => state.canvas[n.id] === 'survival')
-            if (!survivalNeeds.length) return null
-            return (
-              <>
-                <div className={styles.sectionDivider} />
-                <div className={styles.modeGroup}>
-                  <div className={styles.modeLabel}>
-                    <div className={styles.modePip} style={{ background: '#D93B1C' }} />
-                    <span style={{ color: '#D93B1C' }}>survival</span>
-                  </div>
-                  <span className={styles.modeHint}>no effort needed today</span>
-                </div>
-                <div className={styles.survivalRow}>
-                  {survivalNeeds.map(n => (
-                    <div key={n.id} className={styles.survivalNeed}>
-                      <span className={styles.survivalX}>✕</span>
-                      <span className={styles.survivalName}>{n.name}</span>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )
-          })()}
         </div>
       </div>
     </div>

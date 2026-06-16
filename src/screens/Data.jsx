@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { NEEDS, LAYERS } from '../lib/constants'
+import { NEEDS, MODES, MODE_ORDER } from '../lib/constants'
 import { loadDebriefs } from '../lib/store'
 import { createDataStats, formatLastDone } from '../lib/dataStats'
 import { natureTagStyle, ENVIRONMENT_TAG_STYLE } from '../lib/debriefTypes'
@@ -10,7 +10,7 @@ const MOOD_PERIODS = ['morning', 'midday', 'evening']
 const WEEKDAY_LETTERS = ['m', 't', 'w', 't', 'f', 's', 's']
 
 const LC_MODE_COLORS = {
-  purpose: '#1B3A2D',
+  exploration: '#1B3A2D',
   appreciation: '#B8C3B1',
   nourishment: '#E8B81F',
   survival: '#D93B1C',
@@ -114,7 +114,7 @@ function LiveCanvas({ stats, range }) {
 
       <div className={styles.lcDivider} />
       <div className={styles.lcLegend}>
-        {['purpose', 'appreciation', 'nourishment', 'survival'].map(m => (
+        {MODE_ORDER.map(m => (
           <div key={m} className={styles.lcLegendItem}>
             <div className={styles.lcLegendPip} style={{ background: LC_MODE_COLORS[m] }} />
             <span className={styles.lcLegendLabel}>{m}</span>
@@ -139,7 +139,7 @@ function ModeBars({ stats, range }) {
           <div key={mode} className={styles.modeBarRow}>
             <div className={styles.modeBarName}>{mode}</div>
             <div className={styles.modeBarTrack}>
-              {pct !== null && <div className={styles.modeBarFill} style={{ width: `${pct}%`, background: LAYERS[mode].pip }} />}
+              {pct !== null && <div className={styles.modeBarFill} style={{ width: `${pct}%`, background: MODES[mode]?.pip }} />}
             </div>
             <div className={styles.modeBarPct}>{pct === null ? '—' : `${pct}%`}</div>
           </div>
@@ -289,7 +289,7 @@ function GoingWellCard({ goingWell }) {
   )
 }
 
-const NEED_ACCORDION_MODES = ['purpose', 'appreciation', 'nourishment']
+const NEED_ACCORDION_MODES = MODE_ORDER
 
 function NeedPracticesAccordion({ needStats, practiceStats }) {
   const [openNeeds, setOpenNeeds] = useState({})
@@ -316,7 +316,7 @@ function NeedPracticesAccordion({ needStats, practiceStats }) {
           return (
             <div key={need.id} className={styles.needGroup}>
               <div className={styles.needRow} onClick={() => toggle(need.id)}>
-                <div className={styles.needsPip} style={{ background: LAYERS[mode].pip }} />
+                <div className={styles.needsPip} style={{ background: MODES[mode]?.pip }} />
                 <div className={styles.needRowName}>{need.name}</div>
                 <div className={styles.needRowCount}>{pool.length} practice{pool.length === 1 ? '' : 's'}</div>
                 <div className={styles.needRowPct}>{pct}%</div>
