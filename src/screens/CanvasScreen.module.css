@@ -1,37 +1,337 @@
-.screen { display: flex; flex-direction: column; min-height: 100%; background: var(--bg2); }
+/* Screen */
+.screen { display: flex; flex-direction: column; min-height: 100vh; background: var(--bg2); }
 
-.header { padding: 20px 16px 16px; }
-.eyebrowRow { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
-.eyebrow { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink3); margin-bottom: 0; }
-.editToggle { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink3); background: none; border: none; cursor: pointer; padding: 0; -webkit-tap-highlight-color: transparent; }
-.editToggle:hover { color: var(--ink); }
-.title { font-family: var(--font-serif); font-size: 26px; font-weight: 400; letter-spacing: -0.01em; color: var(--ink); }
-.sub { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink3); margin-top: 6px; min-height: 18px; transition: all 0.2s; text-transform: lowercase; }
+/* Header */
+.header { padding: 20px 16px 0; }
+.eyebrow { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink3); margin-bottom: 6px; }
+.title { font-family: 'Instrument Serif', serif; font-size: 26px; font-weight: 400; letter-spacing: -0.01em; color: var(--ink); }
+.sub { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink3); margin-top: 6px; }
 
-.scroll { flex: 1; overflow-y: auto; padding: 0 16px 32px; }
+/* Scroll */
+.scroll { flex: 1; overflow-y: auto; padding: 16px 16px 40px; }
 .scroll::-webkit-scrollbar { display: none; }
 
-.modeSection { background: var(--bg); border: 0.5px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; }
-.modeHead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-.modeLabel { display: flex; align-items: center; gap: 7px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink); }
-.pip { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.modeCount { font-family: var(--font-mono); font-size: 10px; color: var(--ink3); }
+/* Save button */
+.saveBtn {
+  width: 100%;
+  padding: 14px;
+  background: #1A1A18;
+  color: #F5F3ED;
+  border: none;
+  border-radius: 12px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  margin-bottom: 8px;
+  -webkit-tap-highlight-color: transparent;
+}
 
-.slots { display: flex; gap: 6px; flex-wrap: wrap; }
-.slotFilled { border-radius: 8px; border: 0.5px solid var(--border); background: var(--bg2); display: flex; align-items: center; gap: 8px; padding: 0 12px; min-height: 44px; cursor: pointer; transition: background 0.15s, border-color 0.15s; }
-.slotFilled:hover { background: var(--border); }
-.statePip { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; border: 1.5px solid transparent; box-sizing: border-box; }
-.slotName { font-family: var(--font-serif); font-size: 14px; color: var(--ink); flex: 1; text-transform: lowercase; }
-.slotX { font-family: var(--font-mono); font-size: 14px; color: var(--ink3); flex-shrink: 0; }
-.slotSelected, .slotSelected:hover { background: #1A1A1A; border-color: #1A1A1A; }
-.slotSelected .slotName, .slotSelected .slotX { color: #F5F3ED; }
-.slotEmpty { border-radius: 8px; border: 1px dashed var(--border2); display: flex; align-items: center; justify-content: center; min-height: 44px; cursor: pointer; font-family: var(--font-mono); font-size: 10px; color: var(--ink4); letter-spacing: 0.04em; transition: all 0.15s; }
-.slotHighlight { border-color: var(--ink); color: var(--ink2); }
+.saveNote {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #993C1D;
+  margin-bottom: 16px;
+  letter-spacing: 0.02em;
+}
 
-.lotDivider { height: 0.5px; background: var(--border); margin: 4px 0 14px; }
-.lotLabel { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink3); margin-bottom: 10px; }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip { padding: 7px 14px; border-radius: 20px; border: 0.5px solid var(--border2); font-family: var(--font-serif); font-size: 14px; color: var(--ink); cursor: pointer; transition: all 0.15s; background: var(--bg); text-transform: lowercase; }
-.chip:hover { background: var(--bg2); }
-.chipSelected { background: #1A1A1A; color: #F5F3ED; border-color: #1A1A1A; }
-.allAssigned { font-family: var(--font-mono); font-size: 12px; color: var(--ink3); }
+/* Mode cards */
+.modeCard {
+  background: var(--bg);
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+
+.modeCardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.modeCardLabel {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.pip {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.modeCount {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink3);
+}
+
+.emptyNote {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 200;
+  color: var(--ink3);
+  line-height: 1.6;
+  margin: 8px 0 10px;
+}
+
+/* Need rows */
+.needRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 0;
+  border-top: 0.5px solid var(--border);
+}
+
+.needName {
+  font-family: 'Instrument Serif', serif;
+  font-size: 17px;
+  color: var(--ink);
+  text-transform: lowercase;
+}
+
+.needRowActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.changeModeBtn {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--ink3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.changeModeBtn:hover { color: var(--ink2); }
+
+.removeBtn {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  line-height: 1;
+  color: var(--ink3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.removeBtn:hover { color: var(--ink); }
+
+.removeError {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #D93B1C;
+  padding: 4px 0 6px;
+  line-height: 1.5;
+}
+
+/* Inline picker (change mode) */
+.inlinePicker {
+  background: var(--bg2);
+  border-radius: 8px;
+  padding: 8px 12px 10px;
+  margin: 4px 0 6px;
+}
+
+.pickerDivider {
+  height: 0.5px;
+  background: var(--border);
+  margin-bottom: 10px;
+}
+
+.pickerPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.modePill {
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.15s;
+}
+.modePill:hover { opacity: 0.75; }
+
+.pickerError {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #D93B1C;
+  margin-top: 8px;
+  line-height: 1.5;
+}
+
+/* Add row */
+.addRow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink3);
+  padding: 10px 0 2px;
+  cursor: pointer;
+  border-top: 0.5px solid var(--border);
+  -webkit-tap-highlight-color: transparent;
+}
+.addRow:hover { color: var(--ink2); }
+
+.addRowDisabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.addRowDisabled:hover { color: var(--ink3); }
+
+/* Pool chip selector inside mode card */
+.addPoolSelector {
+  padding: 8px 0 2px;
+}
+
+.addPoolChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.poolSelChip {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 0.5px dashed var(--border2);
+  font-family: 'Instrument Serif', serif;
+  font-size: 13px;
+  color: var(--ink);
+  background: none;
+  cursor: pointer;
+  text-transform: lowercase;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.15s;
+}
+.poolSelChip:hover { opacity: 0.7; }
+
+/* Unassigned pool */
+.poolSection {
+  margin-top: 8px;
+}
+
+.sectionEyebrow {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: 10px;
+}
+
+.allAssigned {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink3);
+  margin-bottom: 8px;
+}
+
+.poolChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.poolChipGroup {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.poolChip {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 0.5px solid var(--border);
+  background: var(--bg);
+  font-family: 'Instrument Serif', serif;
+  font-size: 14px;
+  color: var(--ink);
+  cursor: pointer;
+  text-transform: lowercase;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.poolChip:hover { background: var(--bg2); }
+.poolChipActive { background: var(--bg2); border-color: var(--ink3); }
+
+.poolChipPicker {
+  background: var(--bg2);
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.poolSub {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 200;
+  color: var(--ink3);
+}
+
+/* Add your own */
+.addOwnSection {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 0.5px solid var(--border);
+  padding-bottom: 8px;
+}
+
+.addOwnRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.addOwnInput {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 0.5px solid var(--border);
+  background: var(--bg);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 200;
+  color: var(--ink);
+  outline: none;
+}
+.addOwnInput::placeholder { color: var(--ink4); }
+.addOwnInput:focus { border-color: var(--ink2); }
+
+.addOwnBtn {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 0.5px solid var(--border);
+  background: var(--bg);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink2);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.addOwnBtn:hover { background: var(--bg2); }
