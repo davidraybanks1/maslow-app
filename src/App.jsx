@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, Component } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { useAppState } from './lib/store'
 import DiagnosticFlow from './screens/Onboarding/DiagnosticFlow'
@@ -14,6 +14,24 @@ import UpdatePassword from './screens/UpdatePassword'
 import HamburgerMenu from './components/HamburgerMenu'
 import AppHeader from './components/AppHeader'
 import styles from './App.module.css'
+
+class AppErrorBoundary extends Component {
+  constructor(props) { super(props); this.state = { error: null } }
+  static getDerivedStateFromError(error) { return { error } }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 16, padding: 24, fontFamily: 'var(--font-mono)', color: 'var(--ink3)', textAlign: 'center' }}>
+          <div style={{ fontSize: 13 }}>something went wrong</div>
+          <button onClick={() => { this.setState({ error: null }); window.location.reload() }} style={{ fontSize: 12, padding: '8px 20px', borderRadius: 8, border: '0.5px solid var(--border)', background: 'none', cursor: 'pointer', color: 'var(--ink)' }}>
+            reload
+          </button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
 
 function Protected({ children, onboarded }) {
   if (!onboarded) return <Navigate to="/onboarding" replace />
@@ -65,7 +83,9 @@ function AppInner() {
 export default function App() {
   return (
     <BrowserRouter>
-      <AppInner />
+      <AppErrorBoundary>
+        <AppInner />
+      </AppErrorBoundary>
     </BrowserRouter>
   )
 }

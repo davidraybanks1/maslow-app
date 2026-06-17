@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { NEEDS, MODES, MODE_ORDER } from '../lib/constants'
+import { NEEDS, MODES, MODE_ORDER, MODE_MAX_BUBBLES, MODE_WEIGHTS } from '../lib/constants'
 import { todayKey, loadJournalEntry, saveJournalEntry, loadDebriefTypes, loadDebriefs } from '../lib/store'
 import { createDataStats } from '../lib/dataStats'
 import DebriefForm from '../components/DebriefForm'
@@ -9,18 +9,31 @@ const MOOD_PERIODS = ['morning', 'midday', 'evening']
 const MOODS = ['good', 'fine', 'bad']
 const MOOD_SELECTED_CLASS = { good: 'moodBtnGood', fine: 'moodBtnFine', bad: 'moodBtnBad' }
 
+function formatScore(v) {
+  return Number.isInteger(v) ? String(v) : `${Math.floor(v)}½`
+}
 
 export default function Today({ state, checkIn, logMood }) {
   const today = todayKey()
   const checked = state.checkins[today] || []
-  const assignedNeeds = NEEDS.filter(n => state.canvas[n.id])
-  const total = assignedNeeds.length
-  const done = assignedNeeds.filter(n => checked.some(c => c.startsWith(n.id + '_'))).length
-  const pct = total ? Math.round(done / total * 100) : 0
+
+  let maxScore = 0
+  let currentScore = 0
+  for (const n of NEEDS) {
+    const mode = state.canvas[n.id]
+    if (!mode) continue
+    const maxBubbles = MODE_MAX_BUBBLES[mode] || 0
+    const weight = MODE_WEIGHTS[mode] || 0
+    maxScore += maxBubbles * weight
+    const prefix = `${n.id}_`
+    const filledBubbles = Math.min(checked.filter(k => k.startsWith(prefix)).length, maxBubbles)
+    currentScore += filledBubbles * weight
+  }
+  const pct = maxScore > 0 ? Math.round(currentScore / maxScore * 100) : 0
+  const progressLabel = `${formatScore(currentScore)} of ${formatScore(maxScore)} practices`
 
   const todayMoods = (state.moods || []).filter(m => m.date_key === today)
-
-  const stats = createDataStats({ canvas: state.canvas, checkins: state.checkins, moods: state.moods, practices: state.practices })
+  const stats = createDataStats({ canvas: state.canvas || {}, checkins: state.checkins || {}, moods: state.moods || [], practices: state.practices || {} })
   const streak = stats.getStreak()
   const dateLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).toLowerCase()
 
@@ -100,6 +113,18 @@ export default function Today({ state, checkIn, logMood }) {
     logMood(state.userId, promptTime, moodSelections[promptTime], moodNotes[promptTime] || null, today)
   }
 
+  function handleChipClick(needId, mode, practiceText) {
+    const maxBubbles = MODE_MAX_BUBBLES[mode]
+    const prefix = `${needId}_`
+    const checkedForNeed = checked.filter(k => k.startsWith(prefix))
+    const isChecked = checkedForNeed.includes(`${needId}_${practiceText}`)
+    if (!isChecked && checkedForNeed.length >= maxBubbles) {
+      const oldestText = checkedForNeed[0].slice(prefix.length)
+      checkIn(needId, oldestText)
+    }
+    checkIn(needId, practiceText)
+  }
+
   return (
     <div className={styles.screen}>
 
@@ -118,7 +143,7 @@ export default function Today({ state, checkIn, logMood }) {
 
         {/* ── Progress bar ── */}
         <div className={styles.progressRow}>
-          <span className={styles.progressCount}>{done} of {total}</span>
+          <span className={styles.progressCount}>{progressLabel}</span>
           <div className={styles.progTrack}>
             <div className={styles.progFill} style={{ width: `${pct}%` }} />
           </div>
@@ -206,40 +231,56 @@ export default function Today({ state, checkIn, logMood }) {
             <span className={styles.sectionLabel}>practices</span>
           </div>
 
-          {MODE_ORDER.map(mode => {
+          {MODE_ORDER.map((mode, modeIdx) => {
             const modeNeeds = NEEDS.filter(n => state.canvas[n.id] === mode)
             if (!modeNeeds.length) return null
             const pip = MODES[mode]?.pip
+            const maxBubbles = MODE_MAX_BUBBLES[mode]
 
             return (
-              <div key={mode} className={styles.modeGroup}>
-                <div className={styles.modeLabel}>
-                  <div className={styles.modePip} style={{ background: pip }} />
-                  <span>{mode}</span>
+              <div key={mode}>
+                {modeIdx > 0 && <div className={styles.modeSeparator} />}
+                <div className={styles.modeHeader}>
+                  <div className={styles.modeHeaderPip} style={{ background: pip }} />
+                  <span className={styles.modeHeaderName}>{mode}</span>
                 </div>
 
-                {modeNeeds.map(n => {
+                {modeNeeds.map((n, needIdx) => {
                   const pool = state.practices[n.id] || []
                   const prefix = `${n.id}_`
-                  const checkedTexts = checked.filter(k => k.startsWith(prefix)).map(k => k.slice(prefix.length))
+                  const checkedForNeed = checked.filter(k => k.startsWith(prefix))
+                  const filledBubbles = Math.min(checkedForNeed.length, maxBubbles)
 
                   return (
-                    <div key={n.id} className={styles.needSection}>
-                      <div className={styles.needLabel}>{n.name}</div>
-                      {pool.length === 0 ? (
-                        <div className={styles.noPractice} style={{ paddingLeft: 15 }}>
-                          No practices set — add some in Practices
+                    <div key={n.id}>
+                      {needIdx > 0 && <div className={styles.needSeparator} />}
+                      <div className={styles.needRow}>
+                        <span className={styles.needName}>{n.name}</span>
+                        <div className={styles.bubbleRow}>
+                          {Array.from({ length: maxBubbles }).map((_, i) => (
+                            <div
+                              key={i}
+                              className={styles.bubble}
+                              style={i < filledBubbles
+                                ? { background: pip, border: `1.5px solid ${pip}` }
+                                : { background: 'transparent', border: `1.5px solid ${pip}` }
+                              }
+                            />
+                          ))}
                         </div>
+                      </div>
+                      {pool.length === 0 ? (
+                        <div className={styles.noPractice}>No practices set — add some in Practices</div>
                       ) : (
                         <div className={styles.chipRow}>
                           {pool.map(p => {
-                            const isDone = checkedTexts.includes(p)
+                            const isDone = checkedForNeed.includes(`${n.id}_${p}`)
                             return (
                               <button
                                 key={p}
                                 className={isDone ? styles.practiceChipDone : styles.practiceChip}
                                 style={isDone ? { background: pip } : {}}
-                                onClick={() => checkIn(n.id, p)}
+                                onClick={() => handleChipClick(n.id, mode, p)}
                               >
                                 {p}
                               </button>

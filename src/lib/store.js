@@ -23,6 +23,19 @@ function logSupabaseError(fn, error) {
   console.error(`[${fn}] supabase error`, error)
 }
 
+const VALID_MODES = new Set(['exploration', 'appreciation', 'nourishment', 'survival'])
+
+function sanitizeCanvas(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {}
+  const out = {}
+  for (const [k, v] of Object.entries(raw)) {
+    if (typeof v !== 'string') continue
+    out[k] = v === 'purpose' ? 'exploration' : VALID_MODES.has(v) ? v : null
+    if (out[k] === null) delete out[k]
+  }
+  return out
+}
+
 function migrateState(saved) {
   try {
     const version = saved._version || 1
@@ -40,16 +53,18 @@ function migrateState(saved) {
     }
 
     if (!saved.moods) saved.moods = []
+    if (!saved.checkins || typeof saved.checkins !== 'object') saved.checkins = {}
+    if (!saved.practices || typeof saved.practices !== 'object') saved.practices = {}
+    saved.canvas = sanitizeCanvas(saved.canvas)
 
     return saved
   } catch (e) {
     console.error('migrateState error', e)
-    // If migration fails return a fresh state but keep onboarded/canvas/profile
     return {
       _version: STATE_VERSION,
       onboarded: saved.onboarded || false,
       userId: saved.userId || null,
-      canvas: saved.canvas || {},
+      canvas: sanitizeCanvas(saved.canvas),
       practices: {},
       checkins: {},
       moods: [],
@@ -100,11 +115,7 @@ async function restoreFromSupabase(userId, email) {
       if (!checkinsMap[row.date_key]) checkinsMap[row.date_key] = []
       checkinsMap[row.date_key].push(row.need_id)
     }
-    const rawCanvas = user.canvas || {}
-    const canvas = {}
-    for (const [k, v] of Object.entries(rawCanvas)) {
-      canvas[k] = v === 'purpose' ? 'exploration' : v
-    }
+    const canvas = sanitizeCanvas(user.canvas)
     return {
       _version: STATE_VERSION,
       onboarded: user.onboarded,
@@ -146,13 +157,17 @@ export function useAppState(onSignIn) {
     checkSession()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
-        const restored = await restoreFromSupabase(session.user.id, session.user.email)
-        if (restored) { setState(restored); saveState(restored); onSignIn?.() }
-      }
-      if (event === 'SIGNED_OUT') {
-        localStorage.removeItem('maslow_state')
-        setState(initialState())
+      try {
+        if (event === 'SIGNED_IN' && session?.user) {
+          const restored = await restoreFromSupabase(session.user.id, session.user.email)
+          if (restored) { setState(restored); saveState(restored); onSignIn?.() }
+        }
+        if (event === 'SIGNED_OUT') {
+          localStorage.removeItem('maslow_state')
+          setState(initialState())
+        }
+      } catch (e) {
+        console.error('onAuthStateChange error', e)
       }
     })
 

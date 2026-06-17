@@ -24,3 +24,6 @@ export const NEEDS = [
 ]
 
 export const UNIVERSAL_NEEDS = ['movement', 'nutrition', 'rest']
+
+export const MODE_MAX_BUBBLES = { exploration: 3, appreciation: 2, nourishment: 1, survival: 1 }
+export const MODE_WEIGHTS     = { exploration: 1, appreciation: 1, nourishment: 1, survival: 0.5 }
