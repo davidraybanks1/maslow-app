@@ -391,7 +391,7 @@ export async function loadDebriefs(userId) {
   return data || []
 }
 
-export async function saveDebrief(userId, { dateKey, nature, environment, entry, stepsCompleted }) {
+export async function saveDebrief(userId, { dateKey, nature, environment, entry, stepsCompleted, type = 'anxiety' }) {
   const { data, error } = await supabase
     .from('debriefs')
     .insert({
@@ -401,6 +401,7 @@ export async function saveDebrief(userId, { dateKey, nature, environment, entry,
       environment,
       entry,
       steps_completed: stepsCompleted,
+      type,
     })
     .select()
     .single()
@@ -414,7 +415,7 @@ export async function loadDebriefTypes(userId) {
     .select('*')
     .eq('user_id', userId)
     .order('sort_order', { ascending: true })
-  const result = { nature: [], environment: [] }
+  const result = { nature: [], environment: [], peak: [] }
   for (const row of (data || [])) {
     if (result[row.category]) result[row.category].push(row)
   }

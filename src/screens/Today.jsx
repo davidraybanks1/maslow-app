@@ -4,6 +4,7 @@ import { NEEDS, MODES, MODE_ORDER, MODE_MAX_BUBBLES, MODE_WEIGHTS } from '../lib
 import { todayKey, loadJournalEntry, saveJournalEntry, loadDebriefTypes, loadDebriefs } from '../lib/store'
 import { createDataStats } from '../lib/dataStats'
 import DebriefForm from '../components/DebriefForm'
+import PeakDebriefForm from '../components/PeakDebriefForm'
 import styles from './Today.module.css'
 
 const MOOD_PERIODS = ['morning', 'midday', 'evening']
@@ -70,8 +71,10 @@ export default function Today({ state, checkIn, logMood }) {
   }
 
   const [debriefExpanded, setDebriefExpanded] = useState(false)
-  const [debriefTypes, setDebriefTypes] = useState({ nature: [], environment: [] })
+  const [peakExpanded, setPeakExpanded] = useState(false)
+  const [debriefTypes, setDebriefTypes] = useState({ nature: [], environment: [], peak: [] })
   const [todayDebriefCount, setTodayDebriefCount] = useState(0)
+  const [todayPeakCount, setTodayPeakCount] = useState(0)
 
   useEffect(() => {
     if (!state.userId) return
@@ -81,7 +84,9 @@ export default function Today({ state, checkIn, logMood }) {
   useEffect(() => {
     if (!state.userId) return
     loadDebriefs(state.userId).then(debriefs => {
-      setTodayDebriefCount(debriefs.filter(d => d.date_key === today).length)
+      const todayDebriefs = debriefs.filter(d => d.date_key === today)
+      setTodayDebriefCount(todayDebriefs.filter(d => !d.type || d.type === 'anxiety').length)
+      setTodayPeakCount(todayDebriefs.filter(d => d.type === 'peak').length)
     })
   }, [state.userId])
 
@@ -191,42 +196,6 @@ export default function Today({ state, checkIn, logMood }) {
           </div>
         </div>
 
-        {/* ── Journal card ── */}
-        <div className={styles.card}>
-          <div className={styles.sectionHeader}>
-            <span className={styles.sectionLabel}>thoughts</span>
-          </div>
-          <textarea
-            ref={journalRef}
-            className={styles.journalInput}
-            placeholder="add your voiceover for the day…"
-            value={journalEntry}
-            onChange={handleJournalChange}
-            rows={5}
-          />
-
-          <button className={styles.debriefToggle} onClick={() => setDebriefExpanded(e => !e)}>
-            <span className={`${styles.chevron} ${debriefExpanded ? styles.chevronOpen : ''}`}>›</span>
-            {todayDebriefCount > 0 && <span className={styles.debriefDot} />}
-            <span>anxiety debrief</span>
-            {todayDebriefCount > 0 && <span className={styles.debriefCount}>· {todayDebriefCount}</span>}
-          </button>
-
-          {debriefExpanded && (
-            <>
-              <div className={styles.debriefHairline} />
-              <DebriefForm
-                userId={state.userId}
-                debriefTypes={debriefTypes}
-                onSaved={() => {
-                  setDebriefExpanded(false)
-                  setTodayDebriefCount(c => c + 1)
-                }}
-              />
-            </>
-          )}
-        </div>
-
         {/* ── Practices card ── */}
         <div className={styles.card}>
           <div className={styles.sectionHeader}>
@@ -297,6 +266,66 @@ export default function Today({ state, checkIn, logMood }) {
             )
           })}
         </div>
+
+        {/* ── Journal card ── */}
+        <div className={styles.cardJournal}>
+          <div className={styles.sectionHeader}>
+            <span className={styles.sectionLabel}>journal</span>
+          </div>
+          <textarea
+            ref={journalRef}
+            className={styles.journalInput}
+            placeholder="add your thoughts for the day…"
+            value={journalEntry}
+            onChange={handleJournalChange}
+            rows={5}
+          />
+
+          {/* Anxiety debrief */}
+          <button className={styles.debriefToggle} onClick={() => setDebriefExpanded(e => !e)}>
+            <span className={`${styles.chevron} ${debriefExpanded ? styles.chevronOpen : ''}`}>›</span>
+            {todayDebriefCount > 0 && <span className={styles.debriefDot} />}
+            <span>anxiety debrief</span>
+            {todayDebriefCount > 0 && <span className={styles.debriefCount}>· {todayDebriefCount}</span>}
+          </button>
+
+          {debriefExpanded && (
+            <>
+              <div className={styles.debriefHairline} />
+              <DebriefForm
+                userId={state.userId}
+                debriefTypes={debriefTypes}
+                onSaved={() => {
+                  setDebriefExpanded(false)
+                  setTodayDebriefCount(c => c + 1)
+                }}
+              />
+            </>
+          )}
+
+          {/* Peak debrief */}
+          <button className={styles.debriefToggle} onClick={() => setPeakExpanded(e => !e)}>
+            <span className={`${styles.chevron} ${peakExpanded ? styles.chevronOpen : ''}`}>›</span>
+            {todayPeakCount > 0 && <span className={styles.debriefDot} />}
+            <span>peak debrief</span>
+            {todayPeakCount > 0 && <span className={styles.debriefCount}>· {todayPeakCount}</span>}
+          </button>
+
+          {peakExpanded && (
+            <>
+              <div className={styles.debriefHairline} />
+              <PeakDebriefForm
+                userId={state.userId}
+                debriefTypes={debriefTypes}
+                onSaved={() => {
+                  setPeakExpanded(false)
+                  setTodayPeakCount(c => c + 1)
+                }}
+              />
+            </>
+          )}
+        </div>
+
       </div>
     </div>
   )
