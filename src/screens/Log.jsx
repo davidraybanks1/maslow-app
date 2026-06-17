@@ -4,133 +4,40 @@ import { loadJournalEntry } from '../lib/store'
 import styles from './Log.module.css'
 
 const MOOD_COLOR = { good: '#1B3A2D', fine: '#E8B81F', bad: '#D93B1C' }
+const MOOD_PERIODS = ['morning', 'midday', 'evening']
 
-function LogCalendar({ checkins, canvas, moods, onSelectDay, currentMonth, setCurrentMonth }) {
-  const year = currentMonth.getFullYear()
-  const month = currentMonth.getMonth()
-  const firstDay = new Date(year, month, 1)
-  const daysInMonth = new Date(year, month + 1, 0).getDate()
-  const startWeekday = (firstDay.getDay() + 6) % 7
-
-  const assignedNeeds = NEEDS.filter(n => canvas[n.id])
-  const totalNeeds = assignedNeeds.length
-
-  const cells = []
-  for (let i = 0; i < startWeekday; i++) cells.push(null)
-  for (let d = 1; d <= daysInMonth; d++) cells.push(d)
-
-  function dateKeyFor(d) {
-    const dt = new Date(year, month, d)
-    return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`
-  }
-
-  return (
-    <div className={styles.calendarWrap}>
-      <div className={styles.calendarHeader}>
-        <button className={styles.calNavBtn} onClick={() => setCurrentMonth(new Date(year, month - 1, 1))}>←</button>
-        <div className={styles.calMonthLabel}>{currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</div>
-        <button className={styles.calNavBtn} onClick={() => setCurrentMonth(new Date(year, month + 1, 1))}>→</button>
-      </div>
-      <div className={styles.calWeekdays}>
-        {['M','T','W','T','F','S','S'].map((d, i) => <div key={i} className={styles.calWeekday}>{d}</div>)}
-      </div>
-      <div className={styles.calGrid}>
-        {cells.map((d, i) => {
-          if (d === null) return <div key={i} className={styles.calCellEmpty} />
-          const key = dateKeyFor(d)
-          const dayCheckins = checkins[key] || []
-          const needsMet = assignedNeeds.filter(n => dayCheckins.some(c => c.startsWith(`${n.id}_`))).length
-          const pct = totalNeeds > 0 ? needsMet / totalNeeds : 0
-          const hasData = dayCheckins.length > 0 || (moods || []).some(m => m.date_key === key)
-          return (
-            <div
-              key={i}
-              className={styles.calCell}
-              style={{ background: hasData ? '#E8B81F' : 'var(--border)', opacity: hasData ? Math.max(0.2, pct) : 0.3 }}
-              onClick={() => onSelectDay(key)}
-            >
-              <span className={styles.calCellNum}>{d}</span>
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-function DayDetailModal({ dateKey, checkins, moods, canvas, journalEntry, onClose }) {
-  const dayCheckins = checkins[dateKey] || []
-  const dayMoods = (moods || []).filter(m => m.date_key === dateKey)
-  const assignedNeeds = NEEDS.filter(n => canvas[n.id])
-  const totalNeeds = assignedNeeds.length
-  const needsMet = assignedNeeds.filter(n => dayCheckins.some(c => c.startsWith(`${n.id}_`))).length
-  const pct = totalNeeds > 0 ? Math.round(needsMet / totalNeeds * 100) : 0
-  const dateLabel = new Date(dateKey + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
-
-  return (
-    <div className={styles.modalOverlay} onClick={onClose}>
-      <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
-        <button className={styles.modalClose} onClick={onClose}>×</button>
-        <div className={styles.modalDate}>{dateLabel}</div>
-        <div className={styles.modalScore}>{pct}% · {needsMet} of {totalNeeds}</div>
-
-        <div className={styles.modalSectionLabel}>mood</div>
-        {dayMoods.length === 0 ? (
-          <div className={styles.modalEmpty}>No mood data for this day.</div>
-        ) : (
-          <div className={styles.modalMoodList}>
-            {dayMoods.map((m, i) => (
-              <div key={i} className={styles.modalMoodRow}>
-                <span className={styles.modalMoodTime}>{m.prompt_time}</span>
-                <span className={styles.modalMoodBadge} style={{ background: MOOD_COLOR[m.mood] }}>{m.mood}</span>
-              </div>
-            ))}
-            {dayMoods.filter(m => m.note).map((m, i) => (
-              <div key={'note'+i} className={styles.modalMoodNote}>{m.note}</div>
-            ))}
-          </div>
-        )}
-
-        <div className={styles.modalSectionLabel}>practices</div>
-        {dayCheckins.length === 0 ? (
-          <div className={styles.modalEmpty}>No practices logged for this day.</div>
-        ) : (
-          <div className={styles.modalPracticeList}>
-            {dayCheckins.map((c, i) => {
-              const [needId, ...rest] = c.split('_')
-              const need = NEEDS.find(n => n.id === needId)
-              return (
-                <div key={i} className={styles.modalPracticeRow}>
-                  <span className={styles.modalPracticeNeed}>{need?.name}</span>
-                  <span className={styles.modalPracticeText}>{rest.join('_')}</span>
-                </div>
-              )
-            })}
-          </div>
-        )}
-
-        <div className={styles.modalSectionLabel}>thoughts</div>
-        {journalEntry ? (
-          <div className={styles.modalJournal}>{journalEntry}</div>
-        ) : (
-          <div className={styles.modalEmpty}>No journal entry for this day.</div>
-        )}
-      </div>
-    </div>
-  )
+function formatDateLabel(dateKey) {
+  const d = new Date(dateKey + 'T12:00:00')
+  const day = d.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
+  const month = d.toLocaleDateString('en-US', { month: 'long' }).toLowerCase()
+  return `${day}, ${month} ${d.getDate()}`
 }
 
 export default function Log({ state }) {
-  const [currentMonth, setCurrentMonth] = useState(new Date())
-  const [selectedDay, setSelectedDay] = useState(null)
-  const [journalEntry, setJournalEntry] = useState('')
+  const [expandedDay, setExpandedDay] = useState(null)
+  const [journalEntries, setJournalEntries] = useState({})
   const moods = state.moods || []
+  const canvas = state.canvas || {}
+  const checkins = state.checkins || {}
+
+  const allDayKeys = [...new Set([
+    ...Object.keys(checkins),
+    ...moods.map(m => m.date_key),
+  ])].sort((a, b) => b.localeCompare(a))
+
+  const assignedNeeds = NEEDS.filter(n => canvas[n.id])
+  const totalNeeds = assignedNeeds.length
 
   useEffect(() => {
-    if (selectedDay && state.userId) {
-      loadJournalEntry(state.userId, selectedDay).then(setJournalEntry)
-    }
-  }, [selectedDay, state.userId])
+    if (!expandedDay || !state.userId || journalEntries[expandedDay] !== undefined) return
+    loadJournalEntry(state.userId, expandedDay).then(entry => {
+      setJournalEntries(prev => ({ ...prev, [expandedDay]: entry || '' }))
+    })
+  }, [expandedDay, state.userId])
+
+  function handleRowClick(dateKey) {
+    setExpandedDay(prev => prev === dateKey ? null : dateKey)
+  }
 
   return (
     <div className={styles.screen}>
@@ -140,25 +47,97 @@ export default function Log({ state }) {
         <div className={styles.sub}>tap any day to see what happened.</div>
       </div>
       <div className={styles.content}>
-        <LogCalendar
-          checkins={state.checkins}
-          canvas={state.canvas}
-          moods={moods}
-          currentMonth={currentMonth}
-          setCurrentMonth={setCurrentMonth}
-          onSelectDay={setSelectedDay}
-        />
+        {allDayKeys.length === 0 ? (
+          <div className={styles.emptyState}>no data yet — start checking in on the today screen.</div>
+        ) : (
+          <div className={styles.card}>
+            {allDayKeys.map((dateKey, idx) => {
+              const dayCheckins = checkins[dateKey] || []
+              const dayMoods = moods.filter(m => m.date_key === dateKey)
+              const needsMet = assignedNeeds.filter(n => dayCheckins.some(c => c.startsWith(`${n.id}_`))).length
+              const isExpanded = expandedDay === dateKey
+              const journal = journalEntries[dateKey]
+
+              const practicesByNeed = {}
+              for (const c of dayCheckins) {
+                const underscore = c.indexOf('_')
+                if (underscore === -1) continue
+                const needId = c.slice(0, underscore)
+                const text = c.slice(underscore + 1)
+                if (!practicesByNeed[needId]) practicesByNeed[needId] = []
+                practicesByNeed[needId].push(text)
+              }
+
+              return (
+                <div key={dateKey}>
+                  {idx > 0 && <div className={styles.rowDivider} />}
+                  <div className={styles.dayRow} onClick={() => handleRowClick(dateKey)}>
+                    <span className={styles.dayLabel}>{formatDateLabel(dateKey)}</span>
+                    {totalNeeds > 0 && (dayCheckins.length > 0 || dayMoods.length > 0) && (
+                      <span className={styles.dayCount}>{needsMet} of {totalNeeds} needs</span>
+                    )}
+                  </div>
+
+                  {isExpanded && (
+                    <div className={styles.dayDetail}>
+
+                      {/* Mood */}
+                      <div className={styles.detailLabel}>mood</div>
+                      {dayMoods.length === 0 ? (
+                        <div className={styles.detailEmpty}>no mood data</div>
+                      ) : (
+                        <div className={styles.moodList}>
+                          {MOOD_PERIODS.map(period => {
+                            const m = dayMoods.find(x => x.prompt_time === period)
+                            if (!m) return null
+                            return (
+                              <div key={period}>
+                                <div className={styles.moodRow}>
+                                  <span className={styles.moodPeriod}>{period}</span>
+                                  <span className={styles.moodBadge} style={{ background: MOOD_COLOR[m.mood] }}>{m.mood}</span>
+                                </div>
+                                {m.note && <div className={styles.moodNote}>{m.note}</div>}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )}
+
+                      {/* Practices */}
+                      <div className={styles.detailLabel} style={{ marginTop: 14 }}>practices</div>
+                      {Object.keys(practicesByNeed).length === 0 ? (
+                        <div className={styles.detailEmpty}>no practices logged</div>
+                      ) : (
+                        <div className={styles.practiceList}>
+                          {NEEDS.filter(n => practicesByNeed[n.id]).map(n => (
+                            <div key={n.id} className={styles.practiceGroup}>
+                              <span className={styles.practiceNeed}>{n.name}</span>
+                              <span className={styles.practiceTexts}>{practicesByNeed[n.id].join(' · ')}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Journal */}
+                      {journal !== undefined && (
+                        <>
+                          <div className={styles.detailLabel} style={{ marginTop: 14 }}>thoughts</div>
+                          {journal ? (
+                            <div className={styles.journalText}>{journal}</div>
+                          ) : (
+                            <div className={styles.detailEmpty}>no journal entry</div>
+                          )}
+                        </>
+                      )}
+
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
-      {selectedDay && (
-        <DayDetailModal
-          dateKey={selectedDay}
-          checkins={state.checkins}
-          moods={moods}
-          canvas={state.canvas}
-          journalEntry={journalEntry}
-          onClose={() => setSelectedDay(null)}
-        />
-      )}
     </div>
   )
 }

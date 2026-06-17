@@ -11,35 +11,139 @@
 .content { flex: 1; overflow-y: auto; padding: 0 16px 32px; }
 .content::-webkit-scrollbar { display: none; }
 
-/* ── Calendar ── */
-.calendarWrap { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
-.calendarHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-.calMonthLabel { font-family: var(--font-serif); font-size: 16px; color: var(--ink); }
-.calNavBtn { font-family: var(--font-mono); font-size: 14px; color: var(--ink3); background: none; border: none; cursor: pointer; padding: 4px 8px; }
-.calNavBtn:hover { color: var(--ink); }
-.calWeekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 6px; }
-.calWeekday { font-family: var(--font-mono); font-size: 9px; color: var(--ink3); text-align: center; }
-.calGrid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-.calCell { aspect-ratio: 1; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.1s; }
-.calCell:hover { transform: scale(1.05); }
-.calCellEmpty { aspect-ratio: 1; }
-.calCellNum { font-family: var(--font-mono); font-size: 10px; color: var(--ink); }
+/* ── Empty state ── */
+.emptyState { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink4); padding: 24px 0; }
 
-/* ── Day detail modal ── */
-.modalOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: flex-end; z-index: 100; }
-.modalContent { background: var(--bg); width: 100%; max-height: 85vh; overflow-y: auto; border-radius: 16px 16px 0 0; padding: 20px; position: relative; }
-.modalClose { position: absolute; top: 16px; right: 16px; font-size: 20px; background: none; border: none; color: var(--ink3); cursor: pointer; line-height: 1; }
-.modalDate { font-family: var(--font-mono); font-size: 11px; color: var(--ink3); margin-bottom: 4px; }
-.modalScore { font-family: var(--font-serif); font-size: 18px; color: var(--ink); margin-bottom: 20px; }
-.modalSectionLabel { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink); margin: 16px 0 8px; }
-.modalEmpty { font-family: var(--font-mono); font-size: 11px; color: var(--ink4); font-weight: 200; }
-.modalMoodList { display: flex; flex-direction: column; gap: 6px; }
-.modalMoodRow { display: flex; justify-content: space-between; align-items: center; }
-.modalMoodTime { font-family: var(--font-mono); font-size: 10px; color: var(--ink3); }
-.modalMoodBadge { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: #fff; padding: 2px 8px; border-radius: 20px; }
-.modalMoodNote { font-family: var(--font-mono); font-size: 11px; font-weight: 200; color: var(--ink2); font-style: italic; margin-top: 6px; }
-.modalPracticeList { display: flex; flex-direction: column; gap: 6px; }
-.modalPracticeRow { display: flex; gap: 8px; align-items: baseline; }
-.modalPracticeNeed { font-family: var(--font-serif); font-size: 13px; color: var(--ink); min-width: 80px; }
-.modalPracticeText { font-family: var(--font-mono); font-size: 11px; font-weight: 200; color: var(--ink2); }
-.modalJournal { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink2); line-height: 1.7; padding: 10px; background: var(--bg2); border-radius: 8px; }
+/* ── Day list card ── */
+.card {
+  background: var(--bg);
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* ── Day row ── */
+.dayRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 16px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dayRow:active { background: var(--bg2); }
+
+.dayLabel {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink);
+}
+
+.dayCount {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 200;
+  color: var(--ink4);
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+.rowDivider {
+  height: 0.5px;
+  background: var(--border);
+  margin: 0 16px;
+}
+
+/* ── Expanded detail ── */
+.dayDetail {
+  background: var(--bg2);
+  padding: 4px 16px 16px;
+  border-top: 0.5px solid var(--border);
+}
+
+.detailLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: 7px;
+  margin-top: 0;
+}
+
+.detailEmpty {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 200;
+  color: var(--ink4);
+}
+
+/* ── Mood ── */
+.moodList { display: flex; flex-direction: column; gap: 5px; }
+
+.moodRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.moodPeriod {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 200;
+  color: var(--ink3);
+}
+
+.moodBadge {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.moodNote {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 200;
+  color: var(--ink3);
+  font-style: italic;
+  margin-top: 2px;
+  margin-bottom: 4px;
+}
+
+/* ── Practices ── */
+.practiceList { display: flex; flex-direction: column; gap: 5px; }
+
+.practiceGroup { display: flex; align-items: baseline; gap: 8px; }
+
+.practiceNeed {
+  font-family: 'Instrument Serif', serif;
+  font-style: italic;
+  font-size: 13px;
+  color: var(--ink);
+  flex-shrink: 0;
+  min-width: 80px;
+}
+
+.practiceTexts {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 200;
+  color: var(--ink2);
+}
+
+/* ── Journal ── */
+.journalText {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 200;
+  color: var(--ink2);
+  line-height: 1.7;
+  padding: 10px 12px;
+  background: var(--bg);
+  border-radius: 8px;
+  border: 0.5px solid var(--border);
+}
