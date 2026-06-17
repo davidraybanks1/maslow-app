@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { NEEDS, MODES, MODE_ORDER, MODE_MAX_BUBBLES, MODE_WEIGHTS } from '../lib/constants'
 import { todayKey, loadJournalEntry, saveJournalEntry, loadDebriefTypes, loadDebriefs } from '../lib/store'
 import { createDataStats } from '../lib/dataStats'
@@ -14,6 +15,7 @@ function formatScore(v) {
 }
 
 export default function Today({ state, checkIn, logMood }) {
+  const navigate = useNavigate()
   const today = todayKey()
   const checked = state.checkins[today] || []
 
@@ -270,7 +272,7 @@ export default function Today({ state, checkIn, logMood }) {
                         </div>
                       </div>
                       {pool.length === 0 ? (
-                        <div className={styles.noPractice}>No practices set — add some in Practices</div>
+                        <div className={styles.noPractice}>No practices set — add some <span className={styles.noPracticeLink} onClick={() => navigate('/practices')}>in Practices</span></div>
                       ) : (
                         <div className={styles.chipRow}>
                           {pool.map(p => {

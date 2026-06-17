@@ -167,6 +167,7 @@
 }
 
 .noPractice { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink4); margin-top: 1px; margin-bottom: 4px; }
+.noPracticeLink { color: var(--ink2); text-decoration: underline; cursor: pointer; }
 
 .chipRow { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 4px; }
 .practiceChip { padding: 4px 10px; border-radius: 20px; border: 0.5px solid var(--border2); font-family: var(--font-mono); font-size: 11px; font-weight: 200; color: var(--ink2); background: var(--bg); cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent; transition: background 0.1s; }
