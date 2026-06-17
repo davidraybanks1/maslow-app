@@ -49,11 +49,11 @@
 
 /* Option cards (energy / anxiety type) */
 .options { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
-.optionCard { border: 1.5px solid var(--border); border-radius: 14px; background: var(--bg); padding: 16px; cursor: pointer; transition: border-color 0.15s; -webkit-tap-highlight-color: transparent; }
+.optionCard { border: 1.5px solid var(--border); border-radius: 14px; background: var(--bg); padding: 16px; cursor: pointer; transition: border-color 0.15s; -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none; }
 .optionCard:hover { border-color: var(--border2); }
 .optionCardSelected { border-color: var(--ink); }
-.optionName { font-family: var(--font-serif); font-size: 18px; font-weight: 400; color: var(--ink); text-transform: lowercase; margin-bottom: 6px; }
-.optionDesc { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink2); line-height: 1.6; }
+.optionName { font-family: var(--font-serif); font-size: 18px; font-weight: 400; color: var(--ink); text-transform: lowercase; margin-bottom: 6px; pointer-events: none; }
+.optionDesc { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink2); line-height: 1.6; pointer-events: none; }
 
 .hint { font-family: var(--font-mono); font-size: 11px; color: var(--ink3); text-align: center; padding-top: 2px; }
 
