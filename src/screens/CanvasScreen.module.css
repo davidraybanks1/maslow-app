@@ -39,7 +39,7 @@
 .modeCard {
   background: var(--bg);
   border: 0.5px solid var(--border);
-  border-radius: 12px;
+  border-radius: 0 12px 12px 0;
   padding: 14px 16px;
   margin-bottom: 10px;
 }
@@ -62,12 +62,6 @@
   color: var(--ink);
 }
 
-.pip {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
 
 .modeCount {
   font-family: var(--font-mono);

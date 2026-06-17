@@ -168,10 +168,9 @@ export default function CanvasScreen({ state, updateCanvas }) {
           const poolEmpty = poolNeeds.length === 0
 
           return (
-            <div key={mode} className={styles.modeCard}>
+            <div key={mode} className={styles.modeCard} style={{ borderLeft: `3px solid ${MODE_COLORS[mode]}` }}>
               <div className={styles.modeCardHead}>
                 <div className={styles.modeCardLabel}>
-                  <div className={styles.pip} style={{ background: MODE_COLORS[mode] }} />
                   <span>{mode}</span>
                 </div>
                 <div className={styles.modeCount}>{needsInMode.length} of {MODE_MAX[mode]}</div>
