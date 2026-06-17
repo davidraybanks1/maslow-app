@@ -32,7 +32,7 @@
 
 .welcomeWordmark {
   font-family: 'DM Mono', monospace;
-  font-size: 20px;
+  font-size: 15px;
   font-weight: 200;
   color: #ffffff;
   letter-spacing: -0.01em;
@@ -152,3 +152,176 @@
 /* Confirmation screen */
 
 .mutedNote { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink3); line-height: 1.6; }
+
+/* ── Screen 0 ── */
+
+.logoHairline { height: 0.5px; background: var(--border); flex-shrink: 0; }
+
+.infoCard {
+  background: var(--bg);
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 20px;
+}
+.infoCardEyebrow {
+  padding: 12px 14px 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink3);
+}
+.infoRow {
+  padding: 10px 14px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 200;
+  color: var(--ink2);
+  line-height: 1.6;
+  border-top: 0.5px solid var(--border);
+}
+.infoTerm {
+  font-family: 'Instrument Serif', serif;
+  font-size: 13px;
+  color: var(--ink);
+}
+
+/* ── Screen 3: Energy map ── */
+
+.legendRow { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
+.legendItem { display: flex; align-items: center; gap: 6px; }
+.legendDot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.legendText { font-family: var(--font-mono); font-size: 11px; color: var(--ink3); }
+
+.twoColGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+.situationCard {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  padding: 12px 10px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 200;
+  color: var(--ink2);
+  line-height: 1.4;
+  transition: border-color 0.1s, background 0.1s, color 0.1s;
+}
+.situationCardGives {
+  border-color: #1B3A2D;
+  background: rgba(27, 58, 45, 0.09);
+  color: #1B3A2D;
+}
+.situationCardDrains {
+  border-color: #D93B1C;
+  background: rgba(217, 59, 28, 0.07);
+  color: #993C1D;
+}
+
+/* ── Screen 4: Season ── */
+
+.gridCard {
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+  padding: 18px 10px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  text-align: center;
+  font-family: 'Instrument Serif', serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--ink);
+  text-transform: lowercase;
+  transition: border-color 0.1s;
+}
+.gridCardSelected { border-color: var(--ink); }
+
+/* ── Screens 5 & 6: Need grid cards ── */
+
+.needGridCard {
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+  padding: 14px 12px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  transition: border-color 0.1s;
+}
+.needGridCardSelected { border-color: var(--ink); }
+.needGridCardWait { border-color: var(--border2); background: var(--bg2); }
+.needGridName {
+  font-family: 'Instrument Serif', serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--ink);
+  text-transform: lowercase;
+  margin-bottom: 3px;
+  pointer-events: none;
+}
+.needGridNameWait { color: var(--ink4); }
+.needGridDesc {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 200;
+  color: var(--ink3);
+  line-height: 1.4;
+  pointer-events: none;
+}
+.gridNote { font-family: var(--font-mono); font-size: 11px; color: var(--ink3); line-height: 1.6; margin-top: 12px; }
+
+/* ── Screen 7: How it works card ── */
+
+.howItWorksCard {
+  background: var(--bg);
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px 4px;
+  margin-bottom: 6px;
+}
+.howItWorksEyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: 2px;
+}
+.howItWorksRow {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 8px 0;
+  border-top: 0.5px solid var(--border);
+}
+.howItWorksPip {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  position: relative;
+  top: 1px;
+}
+.howItWorksName {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--ink);
+  flex-shrink: 0;
+}
+.howItWorksDesc {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 200;
+  color: var(--ink3);
+  line-height: 1.4;
+}
