@@ -380,7 +380,7 @@ function StaleFlagsCard({ practiceStats, navigate }) {
           <em className={styles.staleName}>{p.text}</em> — not done in {p.staleDays} days
         </div>
       ))}
-      <button className={styles.staleLink} onClick={() => navigate('/practices')}>review in library →</button>
+      <div className={styles.staleFooter}>are these practices still important to you? if not, you can remove them <span className={styles.staleFooterLink} onClick={() => navigate('/practices')}>in Practices</span>.</div>
     </div>
   )
 }
