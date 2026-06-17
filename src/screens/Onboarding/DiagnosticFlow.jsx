@@ -135,6 +135,23 @@ function buildRecommendation(energy, anxietyType) {
   return { universal, personal: { ...other, money: 'survival', dwelling: 'survival' } }
 }
 
+function MaslowMark() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 52 52" fill="none">
+      <circle cx="26" cy="10" r="3" fill="#E8B81F"/>
+      <circle cx="21" cy="20" r="3" fill="#ffffff"/>
+      <circle cx="31" cy="20" r="3" fill="#ffffff"/>
+      <circle cx="16" cy="30" r="3" fill="#ffffff"/>
+      <circle cx="26" cy="30" r="3" fill="#ffffff"/>
+      <circle cx="36" cy="30" r="3" fill="#ffffff"/>
+      <circle cx="11" cy="40" r="3" fill="#ffffff"/>
+      <circle cx="21" cy="40" r="3" fill="#ffffff"/>
+      <circle cx="31" cy="40" r="3" fill="#ffffff"/>
+      <circle cx="41" cy="40" r="3" fill="#ffffff"/>
+    </svg>
+  )
+}
+
 function ProgressBar({ pct }) {
   return (
     <div className={styles.progressBar}>
@@ -209,9 +226,12 @@ export default function DiagnosticFlow({ updateCanvas, onComplete }) {
   if (step === 0) {
     return (
       <div className={styles.screen}>
-        <div className={styles.content}>
+        <div className={styles.welcomeHeader}>
+          <MaslowMark />
+          <span className={styles.welcomeWordmark}>maslow.</span>
+        </div>
+        <div className={styles.welcomeBody}>
           <div className={styles.welcomeWrap}>
-            <div className={styles.eyebrow}>MASLOW</div>
             <div className={styles.headline}>meet your needs. become more of yourself.</div>
             <div className={styles.bodyText}>before we build your canvas, we need to understand where your energy is going — and where it could be rebuilt.</div>
             <div className={styles.bodyText}>this takes about 3 minutes. your answers shape a starting canvas. you can always change it.</div>

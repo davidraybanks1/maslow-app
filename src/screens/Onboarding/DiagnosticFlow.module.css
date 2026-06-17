@@ -20,6 +20,31 @@
 .sub { font-family: var(--font-mono); font-size: 13px; font-weight: 200; color: var(--ink2); line-height: 1.7; margin-bottom: 20px; }
 
 /* Welcome screen */
+.welcomeHeader {
+  flex-shrink: 0;
+  background: #1A1A1A;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.welcomeWordmark {
+  font-family: 'DM Mono', monospace;
+  font-size: 20px;
+  font-weight: 200;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+}
+
+.welcomeBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 24px 20px 8px;
+}
+
 .welcomeWrap { flex: 1; display: flex; flex-direction: column; justify-content: center; }
 
 /* Option cards (energy / anxiety type) */
