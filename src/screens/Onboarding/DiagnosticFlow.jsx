@@ -428,7 +428,7 @@ export default function DiagnosticFlow({ updateCanvas, onComplete }) {
         <div className={styles.eyebrow}>YOUR MASLOW</div>
         <div className={styles.headline}>your canvas is ready.</div>
         <div className={styles.bodyText}>each need on your canvas now has a mode — how much space it takes up in your life right now. practices are how you actually meet it day to day: the small, repeatable things you do that add up.</div>
-        <div className={styles.pullQuote}>"your practices are your personal expressions of your needs. not what you should do — what actually works for you."</div>
+        <div className={styles.bodyText}>your practices are your personal expressions of your needs. not what you should do — what actually works for you.</div>
         <div className={styles.mutedNote}>you can always revisit this diagnostic. your needs change. your canvas should too.</div>
       </div>
       <div className={styles.footer}>

@@ -149,5 +149,5 @@
 .instructionNote { font-family: var(--font-mono); font-size: 11px; color: var(--ink3); line-height: 1.6; text-align: center; padding: 6px 4px 0; }
 
 /* Confirmation screen */
-.pullQuote { font-family: var(--font-serif); font-style: italic; font-size: 19px; font-weight: 400; color: var(--ink); line-height: 1.4; padding: 18px 0; border-top: 0.5px solid var(--border); border-bottom: 0.5px solid var(--border); margin: 16px 0; }
+
 .mutedNote { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink3); line-height: 1.6; }
