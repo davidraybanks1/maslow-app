@@ -7,6 +7,7 @@
 .content::-webkit-scrollbar { display: none; }
 
 .footer { flex-shrink: 0; padding: 12px 20px 32px; display: flex; flex-direction: column; gap: 10px; }
+.footerHint { font-family: var(--font-mono); font-size: 11px; font-weight: 200; color: var(--ink3); text-align: center; line-height: 1.6; }
 
 .backBtn { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; color: var(--ink3); background: none; border: none; cursor: pointer; padding: 0; margin-bottom: 18px; -webkit-tap-highlight-color: transparent; }
 .backBtn:hover { color: var(--ink); }

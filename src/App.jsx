@@ -65,7 +65,7 @@ function AppInner() {
           <Route path="/" element={state.onboarded ? <Navigate to="/today" replace /> : <Navigate to="/onboarding" replace />} />
           <Route path="/onboarding" element={state.onboarded ? <Navigate to="/today" replace /> : <DiagnosticFlow updateCanvas={updateCanvas} onComplete={() => { completeOnboarding(); navigate('/practices') }} />} />
           <Route path="/today" element={<Protected onboarded={state.onboarded}><Today state={state} checkIn={checkIn} logMood={logMood} /></Protected>} />
-          <Route path="/practices" element={<Protected onboarded={state.onboarded}><Practices state={state} addPractice={addPractice} removePractice={removePractice} /></Protected>} />
+          <Route path="/practices" element={<Protected onboarded={state.onboarded}><Practices state={state} addPractice={addPractice} removePractice={removePractice} completeOnboarding={completeOnboarding} /></Protected>} />
           <Route path="/debriefs" element={<Protected onboarded={state.onboarded}><Debriefs state={state} /></Protected>} />
           <Route path="/data" element={<Protected onboarded={state.onboarded}><Data state={state} /></Protected>} />
           <Route path="/log" element={<Protected onboarded={state.onboarded}><Log state={state} /></Protected>} />

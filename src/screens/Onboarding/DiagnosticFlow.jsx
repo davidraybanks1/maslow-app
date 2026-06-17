@@ -432,7 +432,8 @@ export default function DiagnosticFlow({ updateCanvas, onComplete }) {
         <div className={styles.mutedNote}>you can always revisit this diagnostic. your needs change. your canvas should too.</div>
       </div>
       <div className={styles.footer}>
-        <button className="btn-primary" onClick={handleFinish}>build my practice library →</button>
+        <div className={styles.footerHint}>for each need on your canvas, add the specific things you'll actually do. one practice is enough to start.</div>
+        <button className="btn-primary" onClick={handleFinish}>add your practices →</button>
       </div>
     </div>
   )

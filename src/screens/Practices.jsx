@@ -1,23 +1,37 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { NEEDS, MODES, MODE_ORDER } from '../lib/constants'
 import { createDataStats, formatLastDone } from '../lib/dataStats'
 import styles from './Practices.module.css'
 
 const MAX = 10
+const OB_FLAG = 'onboardingPracticesDone'
 
-export default function Practices({ state, addPractice, removePractice }) {
+export default function Practices({ state, addPractice, removePractice, completeOnboarding }) {
+  const navigate = useNavigate()
   const [inputs, setInputs] = useState({})
   const [openInputs, setOpenInputs] = useState({})
   const [editMode, setEditMode] = useState(false)
+  const [obDone, setObDone] = useState(() => !!sessionStorage.getItem(OB_FLAG))
 
   const stats = createDataStats({ canvas: state.canvas, checkins: state.checkins, moods: state.moods, practices: state.practices })
   const lastDoneByKey = new Map(stats.getPracticeStats().map(p => [`${p.need.id}_${p.text}`, p.daysSinceLast]))
+
+  const totalPractices = Object.values(state.practices || {}).flat().length
+  const showOnboardingCta = !obDone
 
   function handleAdd(needId) {
     const text = (inputs[needId] || '').trim()
     if (!text) return
     addPractice(needId, text)
     setInputs(prev => ({ ...prev, [needId]: '' }))
+  }
+
+  function handleOnboardingDone() {
+    sessionStorage.setItem(OB_FLAG, '1')
+    setObDone(true)
+    if (!state.onboarded && completeOnboarding) completeOnboarding()
+    navigate('/today')
   }
 
   return (
@@ -30,7 +44,7 @@ export default function Practices({ state, addPractice, removePractice }) {
         <div className={styles.title}>build your library</div>
         <div className={styles.sub}>Each day you pick from your library. Up to 10 per need.</div>
       </div>
-      <div className={styles.list}>
+      <div className={`${styles.list} ${showOnboardingCta ? styles.listWithCta : ''}`}>
         {MODE_ORDER.map(mode => {
           const modeNeeds = NEEDS.filter(n => state.canvas[n.id] === mode)
           if (!modeNeeds.length) return null
@@ -91,6 +105,14 @@ export default function Practices({ state, addPractice, removePractice }) {
           })
         })}
       </div>
+
+      {showOnboardingCta && (
+        <div className={styles.obFooter}>
+          <button className={styles.obBtn} onClick={handleOnboardingDone}>
+            {totalPractices === 0 ? "i'm done adding practices →" : 'start my day →'}
+          </button>
+        </div>
+      )}
     </div>
   )
 }
