@@ -73,8 +73,62 @@
 /* Recommended canvas */
 .canvasSectionLabel { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink3); margin: 20px 0 10px; }
 
-.canvasCard { background: var(--bg); border: 0.5px solid var(--border); border-radius: 12px; padding: 4px 16px; margin-bottom: 10px; }
-.canvasCardLabel { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink3); padding: 10px 0 2px; }
+/* Mode education card */
+.modeEduCard {
+  background: var(--bg2);
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.modeEduRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modeEduPip {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.modeEduText {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 200;
+  color: var(--ink3);
+  line-height: 1.4;
+}
+
+/* Mode cards (recommendation screen) */
+.modeCard {
+  background: var(--bg);
+  border: 0.5px solid var(--border);
+  border-radius: 0 12px 12px 0;
+  padding: 10px 16px 4px;
+  margin-bottom: 10px;
+}
+
+.modeCardHeader {
+  margin-bottom: 6px;
+}
+
+.modeCardName {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.needsList { }
+.needsList .needRow:last-child { border-bottom: none; }
 
 .needRow { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
 .needRow:last-child { border-bottom: none; }

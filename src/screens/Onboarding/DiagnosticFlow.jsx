@@ -31,6 +31,22 @@ const PERSONAL_NEEDS = [
 
 const FILL_ORDER = ['community', 'reflection', 'beauty', 'play', 'information', 'intimacy', 'touch', 'thrill']
 
+const CARD_MODE_ORDER = ['exploration', 'appreciation', 'nourishment', 'survival']
+
+const MODE_COLORS = {
+  exploration:  '#1B3A2D',
+  appreciation: '#B8C3B1',
+  nourishment:  '#E8B81F',
+  survival:     '#D93B1C',
+}
+
+const MODE_EDU = [
+  { mode: 'exploration',  desc: '3 practices per day — your deepest commitment' },
+  { mode: 'appreciation', desc: '2 practices per day — present and intentional' },
+  { mode: 'nourishment',  desc: '1 practice per day — steady and reliable' },
+  { mode: 'survival',     desc: '1 practice per day, half weight — the floor that frees everything else' },
+]
+
 const ENERGY_OPTIONS = [
   {
     id: 'physical',
@@ -203,8 +219,8 @@ export default function DiagnosticFlow({ updateCanvas, onComplete }) {
     })
   }
 
-  function addPersonalNeed(needId) {
-    setRecommendation(prev => ({ ...prev, personal: { ...prev.personal, [needId]: 'nourishment' } }))
+  function addPersonalNeed(needId, mode = 'nourishment') {
+    setRecommendation(prev => ({ ...prev, personal: { ...prev.personal, [needId]: mode } }))
   }
 
   function saveCanvas() {
@@ -337,40 +353,63 @@ export default function DiagnosticFlow({ updateCanvas, onComplete }) {
             </div>
           </div>
 
+          <div className={styles.modeEduCard}>
+            {MODE_EDU.map(({ mode, desc }) => (
+              <div key={mode} className={styles.modeEduRow}>
+                <div className={styles.modeEduPip} style={{ background: MODE_COLORS[mode] }} />
+                <span className={styles.modeEduText}>{mode} — {desc}</span>
+              </div>
+            ))}
+          </div>
+
           <div className={styles.canvasSectionLabel}>RECOMMENDED CANVAS</div>
 
-          <div className={styles.canvasCard}>
-            <div className={styles.canvasCardLabel}>universal needs</div>
-            {UNIVERSAL_NEEDS.map(n => (
-              <div key={n.id} className={styles.needRow}>
-                <div className={styles.needName}>{n.name}</div>
-                <ModePill needId={n.id} mode={recommendation.universal[n.id]} onCycle={() => cycleNeedMode('universal', n.id)} />
-              </div>
-            ))}
-          </div>
+          {CARD_MODE_ORDER.map(mode => {
+            const color = MODE_COLORS[mode]
+            const universalInMode = UNIVERSAL_NEEDS.filter(n => recommendation.universal[n.id] === mode)
+            const personalInMode = PERSONAL_NEEDS.filter(n => recommendation.personal[n.id] === mode)
+            const addableForMode = PERSONAL_NEEDS.filter(n => !(n.id in recommendation.personal))
+            const hasNeeds = universalInMode.length > 0 || personalInMode.length > 0
 
-          <div className={styles.canvasCard}>
-            <div className={styles.canvasCardLabel}>personal needs</div>
-            {PERSONAL_NEEDS.filter(n => n.id in recommendation.personal).map(n => (
-              <div key={n.id} className={styles.needRow}>
-                <div className={styles.needName}>{n.name}</div>
-                <div className={styles.needRowRight}>
-                  <ModePill needId={n.id} mode={recommendation.personal[n.id]} onCycle={() => cycleNeedMode('personal', n.id)} />
-                  <button className={styles.removeBtn} onClick={() => removePersonalNeed(n.id)}>×</button>
+            return (
+              <div key={mode} className={styles.modeCard} style={{ borderLeft: `3px solid ${color}` }}>
+                <div className={styles.modeCardHeader}>
+                  <span className={styles.modeCardName}>{mode}</span>
                 </div>
+
+                {hasNeeds && (
+                  <div className={styles.needsList}>
+                    {universalInMode.map(n => (
+                      <div key={n.id} className={styles.needRow}>
+                        <div className={styles.needName}>{n.name}</div>
+                        <ModePill needId={n.id} mode={recommendation.universal[n.id]} onCycle={() => cycleNeedMode('universal', n.id)} />
+                      </div>
+                    ))}
+                    {personalInMode.map(n => (
+                      <div key={n.id} className={styles.needRow}>
+                        <div className={styles.needName}>{n.name}</div>
+                        <div className={styles.needRowRight}>
+                          <ModePill needId={n.id} mode={recommendation.personal[n.id]} onCycle={() => cycleNeedMode('personal', n.id)} />
+                          <button className={styles.removeBtn} onClick={() => removePersonalNeed(n.id)}>×</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {addableForMode.length > 0 && (
+                  <div className={styles.addWrap}>
+                    <div className={styles.addLabel}>add a need</div>
+                    <div className={styles.addChips}>
+                      {addableForMode.map(n => (
+                        <div key={n.id} className={styles.addChip} onClick={() => addPersonalNeed(n.id, mode)}>+ {n.name}</div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-            ))}
-            {addableNeeds.length > 0 && (
-              <div className={styles.addWrap}>
-                <div className={styles.addLabel}>add a need</div>
-                <div className={styles.addChips}>
-                  {addableNeeds.map(n => (
-                    <div key={n.id} className={styles.addChip} onClick={() => addPersonalNeed(n.id)}>+ {n.name}</div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+            )
+          })}
 
           <div className={styles.instructionNote}>tap any mode to change it. you can also add or remove needs.</div>
         </div>
