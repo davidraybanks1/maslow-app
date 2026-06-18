@@ -331,7 +331,21 @@ export function useAppState(onSignIn) {
     }))
   }
 
-  return { state, authLoading, updateCanvas, addPractice, removePractice, checkIn, logMood, completeOnboarding, loadMoods }
+  function saveProfile({ name, phone, smsEnabled }) {
+    setState(prev => {
+      const newProfile = { ...prev.profile, smsEnabled }
+      if (prev.userId) {
+        supabase
+          .from('users')
+          .update({ name: name || null, phone: phone || null, profile: newProfile })
+          .eq('id', prev.userId)
+          .then(({ error }) => { if (error) logSupabaseError('saveProfile', error) })
+      }
+      return { ...prev, profile: newProfile }
+    })
+  }
+
+  return { state, authLoading, updateCanvas, addPractice, removePractice, checkIn, logMood, completeOnboarding, loadMoods, saveProfile }
 }
 
 export function todayKey() {

@@ -145,7 +145,8 @@ const HOW_IT_WORKS = [
   { mode: 'survival',     color: '#D93B1C', desc: 'the floor that frees everything else — 1 practice, half weight' },
 ]
 
-const PROGRESS = [16, 33, 50, 66, 83, 100]
+// Steps 2–8 each show a progress bar (7 values)
+const PROGRESS = [14, 28, 42, 57, 71, 85, 100]
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -167,7 +168,6 @@ function buildRecommendation({ anxietyLevel, anxietyType, energyGives, energyDra
   }
   const personal = {}
 
-  // Anxiety type base rules
   if (anxietyType === 'frenetic') {
     personal.reflection  = 'exploration'
     personal.information = 'nourishment'
@@ -179,7 +179,6 @@ function buildRecommendation({ anxietyLevel, anxietyType, energyGives, energyDra
     personal.play   = 'appreciation'
   }
 
-  // Anxiety level modifiers
   if (anxietyLevel === 'major') {
     if (!personal.reflection) personal.reflection = 'nourishment'
     for (const id of Object.keys(personal)) {
@@ -191,7 +190,6 @@ function buildRecommendation({ anxietyLevel, anxietyType, energyGives, energyDra
     }
   }
 
-  // Season modifiers
   if (season === 'career building') {
     if (!personal.information) personal.information = 'nourishment'
     if (!personal.reflection)  personal.reflection  = anxietyType === 'frenetic' ? 'appreciation' : 'nourishment'
@@ -212,7 +210,6 @@ function buildRecommendation({ anxietyLevel, anxietyType, energyGives, energyDra
     if (!personal.reflection) personal.reflection = 'nourishment'
   }
 
-  // Energy gives
   if (energyGives.includes('creative output')) {
     if (!personal.beauty || modeRank(personal.beauty) < modeRank('appreciation')) personal.beauty = 'appreciation'
   }
@@ -226,7 +223,6 @@ function buildRecommendation({ anxietyLevel, anxietyType, energyGives, energyDra
     if (!personal.information) personal.information = 'nourishment'
   }
 
-  // Energy drains (caps)
   if (energyDrains.includes('large social gatherings')) {
     if (personal.community && modeRank(personal.community) > modeRank('nourishment')) personal.community = 'nourishment'
   }
@@ -238,21 +234,17 @@ function buildRecommendation({ anxietyLevel, anxietyType, energyGives, energyDra
     if (personal.beauty && modeRank(personal.beauty) > modeRank('nourishment')) personal.beauty = 'nourishment'
   }
 
-  // Defaults
   if (!personal.money)    personal.money    = 'survival'
   if (!personal.dwelling) personal.dwelling = 'survival'
 
-  // Ensure at least one meaningful personal need beyond money/dwelling
   const meaningful = Object.keys(personal).filter(id => id !== 'money' && id !== 'dwelling')
   if (meaningful.length === 0) {
     const fill = FILL_ORDER.find(id => !personal[id])
     if (fill) personal[fill] = anxietyType === 'overwhelm' ? 'nourishment' : 'appreciation'
   }
 
-  // Rest cap
   if (modeRank(universal.rest) > modeRank('nourishment')) universal.rest = 'nourishment'
 
-  // Always matters → exploration override
   if (alwaysNeedId) {
     if (alwaysNeedId === 'rest') {
       universal.rest = 'nourishment'
@@ -263,7 +255,6 @@ function buildRecommendation({ anxietyLevel, anxietyType, energyGives, energyDra
     }
   }
 
-  // Can wait → remove from canvas
   for (const needId of (canWait || [])) {
     if (needId !== alwaysNeedId) delete personal[needId]
   }
@@ -309,9 +300,18 @@ function ModePill({ needId, mode, onCycle }) {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function DiagnosticFlow({ updateCanvas, onComplete }) {
+export default function DiagnosticFlow({ updateCanvas, onComplete, saveProfile }) {
   const navigate = useNavigate()
   const [step, setStep]                     = useState(0)
+
+  // Account setup (screen 1)
+  const [accountName, setAccountName]       = useState('')
+  const [accountEmail, setAccountEmail]     = useState('')
+  const [accountPhone, setAccountPhone]     = useState('')
+  const [smsEnabled, setSmsEnabled]         = useState(false)
+  const [phoneError, setPhoneError]         = useState(false)
+
+  // Diagnostic (screens 2–7)
   const [anxietyLevel, setAnxietyLevel]     = useState(null)
   const [anxietyType, setAnxietyType]       = useState(null)
   const [energyMap, setEnergyMap]           = useState({})
@@ -319,6 +319,15 @@ export default function DiagnosticFlow({ updateCanvas, onComplete }) {
   const [alwaysMatters, setAlwaysMatters]   = useState(null)
   const [canWait, setCanWait]               = useState([])
   const [recommendation, setRecommendation] = useState(null)
+
+  function handleAccountContinue() {
+    if (smsEnabled && !accountPhone.trim()) {
+      setPhoneError(true)
+      return
+    }
+    setPhoneError(false)
+    setStep(2)
+  }
 
   function cycleSituation(s) {
     setEnergyMap(prev => {
@@ -341,7 +350,7 @@ export default function DiagnosticFlow({ updateCanvas, onComplete }) {
     const energyDrains  = Object.entries(energyMap).filter(([, v]) => v === 'drains').map(([k]) => k)
     const rec = buildRecommendation({ anxietyLevel, anxietyType, energyGives, energyDrains, season, alwaysNeedId, canWait })
     setRecommendation(rec)
-    setStep(7)
+    setStep(8)
   }
 
   function cycleNeedMode(section, needId) {
@@ -368,14 +377,20 @@ export default function DiagnosticFlow({ updateCanvas, onComplete }) {
     for (const [needId, mode] of Object.entries(recommendation.personal))  updateCanvas(needId, mode)
   }
 
+  function persistProfile() {
+    if (saveProfile) saveProfile({ name: accountName, email: accountEmail, phone: accountPhone, smsEnabled })
+  }
+
   function handleFinish() {
     saveCanvas()
+    persistProfile()
     if (onComplete) onComplete()
     else navigate('/canvas')
   }
 
   function handleAdjust() {
     saveCanvas()
+    persistProfile()
     navigate('/canvas')
   }
 
@@ -418,13 +433,78 @@ export default function DiagnosticFlow({ updateCanvas, onComplete }) {
     )
   }
 
-  // ── Screen 1: Anxiety level ──────────────────────────────────────────────────
+  // ── Screen 1: Account setup ──────────────────────────────────────────────────
   if (step === 1) {
+    return (
+      <div className={styles.screen}>
+        <div className={styles.content}>
+          <div className={styles.eyebrow}>CREATE YOUR ACCOUNT</div>
+          <div className={styles.headline}>let's start with the basics.</div>
+          <div className={styles.sub}>maslow keeps your data private and tied to your account.</div>
+
+          <div className={styles.accountForm}>
+            <input
+              className={styles.accountInput}
+              type="text"
+              placeholder="your name"
+              value={accountName}
+              onChange={e => setAccountName(e.target.value)}
+              autoComplete="name"
+            />
+            <input
+              className={styles.accountInput}
+              type="email"
+              placeholder="your email"
+              value={accountEmail}
+              onChange={e => setAccountEmail(e.target.value)}
+              autoComplete="email"
+            />
+            <div>
+              <input
+                className={`${styles.accountInput} ${phoneError ? styles.accountInputError : ''}`}
+                type="tel"
+                placeholder="phone number (optional)"
+                value={accountPhone}
+                onChange={e => { setAccountPhone(e.target.value); if (phoneError) setPhoneError(false) }}
+                autoComplete="tel"
+              />
+              {phoneError && <div className={styles.inputErrorNote}>required for reminders</div>}
+            </div>
+          </div>
+
+          <div className={styles.toggleRow}>
+            <div className={styles.toggleLabels}>
+              <div className={styles.toggleLabel}>daily check-in reminders</div>
+              <div className={styles.toggleSub}>a gentle nudge at morning, midday, and evening</div>
+            </div>
+            <div className={styles.toggleSwitch} onClick={() => setSmsEnabled(prev => !prev)}>
+              <div className={`${styles.toggleTrack} ${smsEnabled ? styles.toggleTrackOn : ''}`}>
+                <div className={`${styles.toggleThumb} ${smsEnabled ? styles.toggleThumbOn : ''}`} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.footer}>
+          <button
+            className="btn-primary"
+            onClick={handleAccountContinue}
+            disabled={!accountName.trim() || !accountEmail.trim()}
+          >
+            continue →
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Screen 2: Anxiety level ──────────────────────────────────────────────────
+  if (step === 2) {
     return (
       <div className={styles.screen}>
         <ProgressBar pct={PROGRESS[0]} />
         <div className={styles.content}>
-          <button className={styles.backBtn} onClick={() => setStep(0)}>← back</button>
+          <button className={styles.backBtn} onClick={() => setStep(1)}>← back</button>
           <div className={styles.eyebrow}>ANXIETY</div>
           <div className={styles.headline}>how present is anxiety in your life right now?</div>
           <div className={styles.options}>
@@ -441,19 +521,19 @@ export default function DiagnosticFlow({ updateCanvas, onComplete }) {
           </div>
         </div>
         <div className={styles.footer}>
-          <button className="btn-primary" onClick={() => setStep(2)} disabled={!anxietyLevel}>continue →</button>
+          <button className="btn-primary" onClick={() => setStep(3)} disabled={!anxietyLevel}>continue →</button>
         </div>
       </div>
     )
   }
 
-  // ── Screen 2: Anxiety type ───────────────────────────────────────────────────
-  if (step === 2) {
+  // ── Screen 3: Anxiety type ───────────────────────────────────────────────────
+  if (step === 3) {
     return (
       <div className={styles.screen}>
         <ProgressBar pct={PROGRESS[1]} />
         <div className={styles.content}>
-          <button className={styles.backBtn} onClick={() => setStep(1)}>← back</button>
+          <button className={styles.backBtn} onClick={() => setStep(2)}>← back</button>
           <div className={styles.eyebrow}>ANXIETY TYPE</div>
           <div className={styles.headline}>how does it tend to show up?</div>
           <div className={styles.sub}>one of these is probably more familiar than the others.</div>
@@ -471,19 +551,19 @@ export default function DiagnosticFlow({ updateCanvas, onComplete }) {
           </div>
         </div>
         <div className={styles.footer}>
-          <button className="btn-primary" onClick={() => setStep(3)} disabled={!anxietyType}>continue →</button>
+          <button className="btn-primary" onClick={() => setStep(4)} disabled={!anxietyType}>continue →</button>
         </div>
       </div>
     )
   }
 
-  // ── Screen 3: Energy map ─────────────────────────────────────────────────────
-  if (step === 3) {
+  // ── Screen 4: Energy map ─────────────────────────────────────────────────────
+  if (step === 4) {
     return (
       <div className={styles.screen}>
         <ProgressBar pct={PROGRESS[2]} />
         <div className={styles.content}>
-          <button className={styles.backBtn} onClick={() => setStep(2)}>← back</button>
+          <button className={styles.backBtn} onClick={() => setStep(3)}>← back</button>
           <div className={styles.eyebrow}>ENERGY</div>
           <div className={styles.headline}>what gives and what drains?</div>
           <div className={styles.sub}>tap to mark. tap again to change.</div>
@@ -514,19 +594,19 @@ export default function DiagnosticFlow({ updateCanvas, onComplete }) {
         </div>
         <div className={styles.footer}>
           {!energyMapValid && <div className={styles.hint}>mark at least one of each</div>}
-          <button className="btn-primary" onClick={() => setStep(4)} disabled={!energyMapValid}>continue →</button>
+          <button className="btn-primary" onClick={() => setStep(5)} disabled={!energyMapValid}>continue →</button>
         </div>
       </div>
     )
   }
 
-  // ── Screen 4: Life season ────────────────────────────────────────────────────
-  if (step === 4) {
+  // ── Screen 5: Life season ────────────────────────────────────────────────────
+  if (step === 5) {
     return (
       <div className={styles.screen}>
         <ProgressBar pct={PROGRESS[3]} />
         <div className={styles.content}>
-          <button className={styles.backBtn} onClick={() => setStep(3)}>← back</button>
+          <button className={styles.backBtn} onClick={() => setStep(4)}>← back</button>
           <div className={styles.eyebrow}>SEASON</div>
           <div className={styles.headline}>what season are you in?</div>
           <div className={styles.sub}>pick the one that best describes your life right now.</div>
@@ -543,19 +623,19 @@ export default function DiagnosticFlow({ updateCanvas, onComplete }) {
           </div>
         </div>
         <div className={styles.footer}>
-          <button className="btn-primary" onClick={() => setStep(5)} disabled={!season}>continue →</button>
+          <button className="btn-primary" onClick={() => setStep(6)} disabled={!season}>continue →</button>
         </div>
       </div>
     )
   }
 
-  // ── Screen 5: Always matters ─────────────────────────────────────────────────
-  if (step === 5) {
+  // ── Screen 6: Always matters ─────────────────────────────────────────────────
+  if (step === 6) {
     return (
       <div className={styles.screen}>
         <ProgressBar pct={PROGRESS[4]} />
         <div className={styles.content}>
-          <button className={styles.backBtn} onClick={() => setStep(4)}>← back</button>
+          <button className={styles.backBtn} onClick={() => setStep(5)}>← back</button>
           <div className={styles.eyebrow}>NON-NEGOTIABLE</div>
           <div className={styles.headline}>what always matters, no matter what?</div>
           <div className={styles.sub}>the need that is non-negotiable — the one that, when ignored, everything else suffers. this becomes your exploration mode slot.</div>
@@ -573,19 +653,19 @@ export default function DiagnosticFlow({ updateCanvas, onComplete }) {
           </div>
         </div>
         <div className={styles.footer}>
-          <button className="btn-primary" onClick={() => setStep(6)} disabled={!alwaysMatters}>continue →</button>
+          <button className="btn-primary" onClick={() => setStep(7)} disabled={!alwaysMatters}>continue →</button>
         </div>
       </div>
     )
   }
 
-  // ── Screen 6: Can wait ───────────────────────────────────────────────────────
-  if (step === 6) {
+  // ── Screen 7: Can wait ───────────────────────────────────────────────────────
+  if (step === 7) {
     return (
       <div className={styles.screen}>
         <ProgressBar pct={PROGRESS[5]} />
         <div className={styles.content}>
-          <button className={styles.backBtn} onClick={() => setStep(5)}>← back</button>
+          <button className={styles.backBtn} onClick={() => setStep(6)}>← back</button>
           <div className={styles.eyebrow}>WHAT CAN WAIT</div>
           <div className={styles.headline}>what can take a back seat for now?</div>
           <div className={styles.sub}>not ignored — just not taking up mental space. these won't appear on your canvas.</div>
@@ -613,14 +693,15 @@ export default function DiagnosticFlow({ updateCanvas, onComplete }) {
     )
   }
 
-  // ── Screen 7: Canvas reveal ──────────────────────────────────────────────────
-  if (step === 7 && recommendation) {
+  // ── Screen 8: Canvas reveal ──────────────────────────────────────────────────
+  if (step === 8 && recommendation) {
     const addableNeeds = PERSONAL_NEEDS.filter(n => !(n.id in recommendation.personal))
 
     return (
       <div className={styles.screen}>
+        <ProgressBar pct={PROGRESS[6]} />
         <div className={styles.content}>
-          <button className={styles.backBtn} onClick={() => setStep(6)}>← back</button>
+          <button className={styles.backBtn} onClick={() => setStep(7)}>← back</button>
           <div className={styles.eyebrow}>YOUR CANVAS</div>
           <div className={styles.headline}>here's your starting canvas.</div>
 
