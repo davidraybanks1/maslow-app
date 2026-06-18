@@ -288,6 +288,81 @@
   color: var(--ink3);
 }
 
+/* Mode pill dropdown */
+.modeDropdownWrap { position: relative; display: inline-block; }
+
+.modePillBtn {
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.modeDropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  background: #ffffff;
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  z-index: 20;
+  min-width: 248px;
+  overflow: hidden;
+}
+
+.dropdownHairline { height: 0.5px; background: var(--border); }
+
+.dropdownOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.dropdownOption:hover { background: var(--bg2); }
+
+.dropdownPip { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+.dropdownModeName {
+  font-family: 'Instrument Serif', serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--ink);
+  text-transform: lowercase;
+  flex-shrink: 0;
+}
+
+.dropdownModeDesc {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 200;
+  color: var(--ink3);
+  flex: 1;
+}
+
+.dropdownSelectedDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ink);
+  flex-shrink: 0;
+}
+
+.dropdownError {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #D93B1C;
+  padding: 8px 14px 10px;
+  border-top: 0.5px solid var(--border);
+  line-height: 1.5;
+}
+
 /* Add your own */
 .addOwnSection {
   margin-top: 20px;

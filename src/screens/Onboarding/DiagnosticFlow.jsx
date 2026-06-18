@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { signInNavRef } from '../../lib/store'
@@ -20,6 +20,13 @@ const MODE_COLORS = {
   appreciation: '#B8C3B1',
   nourishment:  '#E8B81F',
   survival:     '#D93B1C',
+}
+
+const MODE_DESCRIPTIONS = {
+  exploration:  'deepest commitment · 3 practices a day',
+  appreciation: 'present and intentional · 2 practices a day',
+  nourishment:  'steady and reliable · 1 practice a day',
+  survival:     'the floor that frees everything else · ½ weight',
 }
 
 const UNIVERSAL_NEEDS = [
@@ -287,12 +294,51 @@ function ProgressBar({ pct }) {
   )
 }
 
-function ModePill({ needId, mode, onCycle }) {
-  const m = MODES[mode]
+function ModeDropdown({ id, currentMode, modes, onSelect, isOpen, onToggle }) {
+  const wrapRef = useRef(null)
+  const m = MODES[currentMode]
+
+  useEffect(() => {
+    if (!isOpen) return
+    function handleOutside(e) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) onToggle(null)
+    }
+    document.addEventListener('mousedown', handleOutside, true)
+    document.addEventListener('touchstart', handleOutside, true)
+    return () => {
+      document.removeEventListener('mousedown', handleOutside, true)
+      document.removeEventListener('touchstart', handleOutside, true)
+    }
+  }, [isOpen, onToggle])
+
   return (
-    <button className={styles.modePill} style={{ background: m.bg, color: m.text }} onClick={onCycle}>
-      {m.name}
-    </button>
+    <div className={styles.modeDropdownWrap} ref={wrapRef}>
+      <button
+        className={styles.modePill}
+        style={{ background: m.bg, color: m.text }}
+        onClick={() => onToggle(isOpen ? null : id)}
+      >
+        {m.name}
+      </button>
+      {isOpen && (
+        <div className={styles.modeDropdown}>
+          {modes.map((opt, i) => (
+            <div key={opt}>
+              {i > 0 && <div className={styles.dropdownHairline} />}
+              <div
+                className={styles.dropdownOption}
+                onClick={() => { onSelect(opt); onToggle(null) }}
+              >
+                <div className={styles.dropdownPip} style={{ background: MODE_COLORS[opt] }} />
+                <span className={styles.dropdownModeName}>{opt}</span>
+                <span className={styles.dropdownModeDesc}>{MODE_DESCRIPTIONS[opt]}</span>
+                {currentMode === opt && <div className={styles.dropdownSelectedDot} />}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -556,6 +602,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
   const [alwaysMatters, setAlwaysMatters]   = useState(null)
   const [canWait, setCanWait]               = useState([])
   const [recommendation, setRecommendation] = useState(null)
+  const [openDropdownId, setOpenDropdownId] = useState(null)
 
   function cycleSituation(s) {
     setEnergyMap(prev => {
@@ -581,10 +628,10 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
     setStep(7)
   }
 
-  function cycleNeedMode(section, needId) {
+  function setNeedMode(section, needId, mode) {
     setRecommendation(prev => ({
       ...prev,
-      [section]: { ...prev[section], [needId]: nextMode(needId, prev[section][needId]) },
+      [section]: { ...prev[section], [needId]: mode },
     }))
   }
 
@@ -882,21 +929,42 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
                 </div>
                 {hasNeeds && (
                   <div className={styles.needsList}>
-                    {universalInMode.map(n => (
-                      <div key={n.id} className={styles.needRow}>
-                        <div className={styles.needName}>{n.name}</div>
-                        <ModePill needId={n.id} mode={recommendation.universal[n.id]} onCycle={() => cycleNeedMode('universal', n.id)} />
-                      </div>
-                    ))}
-                    {personalInMode.map(n => (
-                      <div key={n.id} className={styles.needRow}>
-                        <div className={styles.needName}>{n.name}</div>
-                        <div className={styles.needRowRight}>
-                          <ModePill needId={n.id} mode={recommendation.personal[n.id]} onCycle={() => cycleNeedMode('personal', n.id)} />
-                          <button className={styles.removeBtn} onClick={() => removePersonalNeed(n.id)}>×</button>
+                    {universalInMode.map(n => {
+                      const dropId  = `u-${n.id}`
+                      const uModes  = n.id === 'rest' ? ['nourishment', 'survival'] : MODE_ORDER
+                      return (
+                        <div key={n.id} className={styles.needRow}>
+                          <div className={styles.needName}>{n.name}</div>
+                          <ModeDropdown
+                            id={dropId}
+                            currentMode={recommendation.universal[n.id]}
+                            modes={uModes}
+                            onSelect={m => setNeedMode('universal', n.id, m)}
+                            isOpen={openDropdownId === dropId}
+                            onToggle={setOpenDropdownId}
+                          />
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
+                    {personalInMode.map(n => {
+                      const dropId = `p-${n.id}`
+                      return (
+                        <div key={n.id} className={styles.needRow}>
+                          <div className={styles.needName}>{n.name}</div>
+                          <div className={styles.needRowRight}>
+                            <ModeDropdown
+                              id={dropId}
+                              currentMode={recommendation.personal[n.id]}
+                              modes={MODE_ORDER}
+                              onSelect={m => setNeedMode('personal', n.id, m)}
+                              isOpen={openDropdownId === dropId}
+                              onToggle={setOpenDropdownId}
+                            />
+                            <button className={styles.removeBtn} onClick={() => removePersonalNeed(n.id)}>×</button>
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
                 )}
                 {addableNeeds.length > 0 && (
@@ -913,7 +981,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
             )
           })}
 
-          <div className={styles.instructionNote}>tap any mode to change it. you can also add or remove needs.</div>
+          <div className={styles.instructionNote}>tap a mode pill to change it. you can also add or remove needs.</div>
         </div>
         <div className={styles.footer}>
           <button

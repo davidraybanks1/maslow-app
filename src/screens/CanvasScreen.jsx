@@ -36,6 +36,59 @@ const MODE_PILL_STYLE = {
   survival:     { background: 'rgba(217,59,28,0.08)',  color: '#993C1D' },
 }
 
+const MODE_DESCRIPTIONS = {
+  exploration:  'deepest commitment · 3 practices a day',
+  appreciation: 'present and intentional · 2 practices a day',
+  nourishment:  'steady and reliable · 1 practice a day',
+  survival:     'the floor that frees everything else · ½ weight',
+}
+
+function ModeDropdown({ needId, currentMode, modes, onSelect, isOpen, onToggle, error }) {
+  const wrapRef = useRef(null)
+  const pill    = MODE_PILL_STYLE[currentMode]
+
+  useEffect(() => {
+    if (!isOpen) return
+    function handleOutside(e) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) onToggle(null)
+    }
+    document.addEventListener('mousedown', handleOutside, true)
+    document.addEventListener('touchstart', handleOutside, true)
+    return () => {
+      document.removeEventListener('mousedown', handleOutside, true)
+      document.removeEventListener('touchstart', handleOutside, true)
+    }
+  }, [isOpen, onToggle])
+
+  return (
+    <div className={styles.modeDropdownWrap} ref={wrapRef}>
+      <button
+        className={styles.modePillBtn}
+        style={pill}
+        onClick={() => onToggle(isOpen ? null : needId)}
+      >
+        {currentMode}
+      </button>
+      {isOpen && (
+        <div className={styles.modeDropdown}>
+          {modes.map((m, i) => (
+            <div key={m}>
+              {i > 0 && <div className={styles.dropdownHairline} />}
+              <div className={styles.dropdownOption} onClick={() => onSelect(m)}>
+                <div className={styles.dropdownPip} style={{ background: MODE_COLORS[m] }} />
+                <span className={styles.dropdownModeName}>{m}</span>
+                <span className={styles.dropdownModeDesc}>{MODE_DESCRIPTIONS[m]}</span>
+                {currentMode === m && <div className={styles.dropdownSelectedDot} />}
+              </div>
+            </div>
+          ))}
+          {error && <div className={styles.dropdownError}>{error}</div>}
+        </div>
+      )}
+    </div>
+  )
+}
+
 const VALID_MODES = new Set(MODES)
 
 function initCanvas(stored) {
@@ -52,7 +105,8 @@ export default function CanvasScreen({ state, updateCanvas }) {
   const [customNeeds, setCustomNeeds] = useState([])
   const [customInput, setCustomInput] = useState('')
   const [openPicker, setOpenPicker] = useState(null)
-  // openPicker: { type: 'change', needId } | { type: 'add', mode } | { type: 'pool', needId } | null
+  // openPicker: { type: 'add', mode } | { type: 'pool', needId } | null
+  const [openModeDropdown, setOpenModeDropdown] = useState(null) // needId of open mode pill dropdown
   const [pickerError, setPickerError] = useState(null)
   const [removeError, setRemoveError] = useState(null) // { needId, message }
   const errorTimer = useRef(null)
@@ -94,6 +148,7 @@ export default function CanvasScreen({ state, updateCanvas }) {
   }
 
   function openNewPicker(picker) {
+    setOpenModeDropdown(null)
     closePicker()
     setOpenPicker(picker)
   }
@@ -184,10 +239,9 @@ export default function CanvasScreen({ state, updateCanvas }) {
               )}
 
               {needsInMode.map(need => {
-                const isChangeOpen = openPicker?.type === 'change' && openPicker.needId === need.id
-                const isUniversal = UNIVERSAL_IDS.has(need.id)
-                const pickerModes = MODES.filter(m =>
-                  m !== mode && !(need.id === 'rest' && (m === 'exploration' || m === 'appreciation'))
+                const isUniversal  = UNIVERSAL_IDS.has(need.id)
+                const dropdownModes = MODES.filter(m =>
+                  !(need.id === 'rest' && (m === 'exploration' || m === 'appreciation'))
                 )
 
                 return (
@@ -195,12 +249,19 @@ export default function CanvasScreen({ state, updateCanvas }) {
                     <div className={styles.needRow}>
                       <span className={styles.needName}>{need.name}</span>
                       <div className={styles.needRowActions}>
-                        <button
-                          className={styles.changeModeBtn}
-                          onClick={() => isChangeOpen ? closePicker() : openNewPicker({ type: 'change', needId: need.id })}
-                        >
-                          change mode
-                        </button>
+                        <ModeDropdown
+                          needId={need.id}
+                          currentMode={mode}
+                          modes={dropdownModes}
+                          onSelect={m => { tryAssign(need.id, m) && setOpenModeDropdown(null) }}
+                          isOpen={openModeDropdown === need.id}
+                          onToggle={id => {
+                            if (!id) { setOpenModeDropdown(null); return }
+                            closePicker()
+                            setOpenModeDropdown(id)
+                          }}
+                          error={openModeDropdown === need.id ? pickerError : null}
+                        />
                         {!isUniversal && (
                           <button className={styles.removeBtn} onClick={() => tryRemove(need.id)}>×</button>
                         )}
@@ -208,24 +269,6 @@ export default function CanvasScreen({ state, updateCanvas }) {
                     </div>
                     {removeError?.needId === need.id && (
                       <div className={styles.removeError}>{removeError.message}</div>
-                    )}
-                    {isChangeOpen && (
-                      <div className={styles.inlinePicker}>
-                        <div className={styles.pickerDivider} />
-                        <div className={styles.pickerPills}>
-                          {pickerModes.map(m => (
-                            <button
-                              key={m}
-                              className={styles.modePill}
-                              style={MODE_PILL_STYLE[m]}
-                              onClick={() => { if (tryAssign(need.id, m)) closePicker() }}
-                            >
-                              {m}
-                            </button>
-                          ))}
-                        </div>
-                        {pickerError && <div className={styles.pickerError}>{pickerError}</div>}
-                      </div>
                     )}
                   </div>
                 )
