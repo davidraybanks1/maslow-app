@@ -50,11 +50,11 @@
 
 /* Option cards (energy / anxiety type) */
 .options { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
-.optionCard { border: 1.5px solid var(--border); border-radius: 14px; background: var(--bg); padding: 16px; cursor: pointer; transition: border-color 0.15s; -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none; }
-.optionCard:hover { border-color: var(--border2); }
-.optionCardSelected { border-color: var(--ink); }
-.optionName { font-family: var(--font-serif); font-size: 18px; font-weight: 400; color: var(--ink); text-transform: lowercase; margin-bottom: 6px; pointer-events: none; }
-.optionDesc { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink2); line-height: 1.6; pointer-events: none; }
+.optionCard { position: relative; border: 1.5px solid var(--border); border-radius: 14px; background: var(--bg); padding: 16px; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none; }
+.optionCardSelected { border: 2px solid var(--ink); background: var(--bg3); }
+.optionCardSelected::after { content: ''; position: absolute; top: 12px; right: 12px; width: 10px; height: 10px; border-radius: 50%; background: var(--ink); }
+.optionName { font-family: var(--font-serif); font-size: 18px; font-weight: 400; color: var(--ink); text-transform: lowercase; margin-bottom: 6px; }
+.optionDesc { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink2); line-height: 1.6; }
 
 .hint { font-family: var(--font-mono); font-size: 11px; color: var(--ink3); text-align: center; padding-top: 2px; }
 
@@ -197,6 +197,7 @@
 .twoColGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
 .situationCard {
+  position: relative;
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--bg);
@@ -210,22 +211,24 @@
   font-weight: 200;
   color: var(--ink2);
   line-height: 1.4;
-  transition: border-color 0.1s, background 0.1s, color 0.1s;
 }
 .situationCardGives {
-  border-color: #1B3A2D;
+  border: 2px solid #1B3A2D;
   background: rgba(27, 58, 45, 0.09);
   color: #1B3A2D;
 }
+.situationCardGives::after { content: ''; position: absolute; top: 8px; right: 8px; width: 8px; height: 8px; border-radius: 50%; background: #1B3A2D; }
 .situationCardDrains {
-  border-color: #D93B1C;
+  border: 2px solid #D93B1C;
   background: rgba(217, 59, 28, 0.07);
   color: #993C1D;
 }
+.situationCardDrains::after { content: ''; position: absolute; top: 8px; right: 8px; width: 8px; height: 8px; border-radius: 50%; background: #D93B1C; }
 
 /* ── Screen 4: Season ── */
 
 .gridCard {
+  position: relative;
   border: 1.5px solid var(--border);
   border-radius: 12px;
   background: var(--bg);
@@ -240,13 +243,14 @@
   font-weight: 400;
   color: var(--ink);
   text-transform: lowercase;
-  transition: border-color 0.1s;
 }
-.gridCardSelected { border-color: var(--ink); }
+.gridCardSelected { border: 2px solid var(--ink); background: var(--bg3); }
+.gridCardSelected::after { content: ''; position: absolute; top: 10px; right: 10px; width: 10px; height: 10px; border-radius: 50%; background: var(--ink); }
 
 /* ── Screens 5 & 6: Need grid cards ── */
 
 .needGridCard {
+  position: relative;
   border: 1.5px solid var(--border);
   border-radius: 12px;
   background: var(--bg);
@@ -255,9 +259,9 @@
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   user-select: none;
-  transition: border-color 0.1s;
 }
-.needGridCardSelected { border-color: var(--ink); }
+.needGridCardSelected { border: 2px solid var(--ink); background: var(--bg3); }
+.needGridCardSelected::after { content: ''; position: absolute; top: 12px; right: 12px; width: 10px; height: 10px; border-radius: 50%; background: var(--ink); }
 .needGridCardWait { border-color: var(--border2); background: var(--bg2); }
 .needGridName {
   font-family: 'Instrument Serif', serif;
@@ -266,7 +270,6 @@
   color: var(--ink);
   text-transform: lowercase;
   margin-bottom: 3px;
-  pointer-events: none;
 }
 .needGridNameWait { color: var(--ink4); }
 .needGridDesc {
@@ -275,7 +278,6 @@
   font-weight: 200;
   color: var(--ink3);
   line-height: 1.4;
-  pointer-events: none;
 }
 .gridNote { font-family: var(--font-mono); font-size: 11px; color: var(--ink3); line-height: 1.6; margin-top: 12px; }
 
