@@ -147,6 +147,33 @@ const CAN_WAIT_OPTIONS = [
   { id: 'thrill',      name: 'thrill',      desc: 'intensity and aliveness' },
 ]
 
+const FLEXIBILITY_OPTIONS = [
+  {
+    id: 'low',
+    name: 'very little',
+    desc: 'life is full and margins are thin. too much change at once will create more stress, not less.',
+    tag: 'start with 5–6 practices · no exploration required',
+    tagBg: 'rgba(217,59,28,0.08)',
+    tagColor: '#993C1D',
+  },
+  {
+    id: 'mid',
+    name: 'some',
+    desc: "there's room for intentional change but it has to stay realistic and sustainable.",
+    tag: 'start with 7–8 practices · exploration optional',
+    tagBg: 'rgba(232,184,31,0.12)',
+    tagColor: '#854F0B',
+  },
+  {
+    id: 'high',
+    name: 'quite a bit',
+    desc: 'actively making space for growth and ready to commit to something meaningful.',
+    tag: 'start with 9–10 practices · full canvas',
+    tagBg: 'rgba(27,58,45,0.1)',
+    tagColor: '#1B3A2D',
+  },
+]
+
 const HOW_IT_WORKS = [
   { mode: 'exploration',  color: '#1B3A2D', desc: 'deepest commitment — 3 practices a day' },
   { mode: 'appreciation', color: '#B8C3B1', desc: 'present and intentional — 2 practices a day' },
@@ -169,7 +196,53 @@ function nextMode(needId, mode) {
   return order[(idx + 1) % order.length]
 }
 
-function buildRecommendation({ anxietyLevel, anxietyType, energyGives, energyDrains, season, alwaysNeedId, canWait }) {
+const MODE_WEIGHTS = { exploration: 3, appreciation: 2, nourishment: 1, survival: 0.5 }
+const FLEX_MAX = { low: 6, mid: 8, high: 10 }
+const DROP_ORDER = ['money', 'dwelling', 'thrill', 'touch', 'intimacy', 'play', 'information', 'beauty', 'reflection', 'community']
+
+function practiceWeight(canvasObj) {
+  return Object.values(canvasObj).reduce((sum, mode) => sum + (MODE_WEIGHTS[mode] || 0), 0)
+}
+
+// Round up — half-weight survival needs still count as a full practice slot for display.
+function practiceCount(universal, personal) {
+  return Math.ceil(practiceWeight(universal) + practiceWeight(personal))
+}
+
+function ensureAppreciation(universal, personal, alwaysNeedId) {
+  const hasAppreciation = Object.values(universal).includes('appreciation') || Object.values(personal).includes('appreciation')
+  if (hasAppreciation) return null
+
+  for (const id of FILL_ORDER) {
+    if (id === alwaysNeedId) continue
+    if (personal[id] && modeRank(personal[id]) < modeRank('appreciation')) {
+      personal[id] = 'appreciation'
+      return id
+    }
+  }
+  for (const id of FILL_ORDER) {
+    if (!personal[id]) {
+      personal[id] = 'appreciation'
+      return id
+    }
+  }
+  return null
+}
+
+function capPersonalNeeds(universal, personal, maxTotal, protectedId) {
+  const budget = maxTotal - practiceWeight(universal)
+  let total = practiceWeight(personal)
+  for (const id of DROP_ORDER) {
+    if (total <= budget) break
+    if (id === protectedId) continue
+    if (personal[id]) {
+      total -= MODE_WEIGHTS[personal[id]] || 0
+      delete personal[id]
+    }
+  }
+}
+
+function buildRecommendation({ anxietyLevel, anxietyType, energyGives, energyDrains, season, alwaysNeedId, canWait, flexibility }) {
   const universal = { movement: 'survival', nutrition: 'survival', rest: 'nourishment' }
   const personal  = {}
 
@@ -250,19 +323,39 @@ function buildRecommendation({ anxietyLevel, anxietyType, energyGives, energyDra
 
   if (modeRank(universal.rest) > modeRank('nourishment')) universal.rest = 'nourishment'
 
+  const isUniversalAlways = alwaysNeedId === 'movement' || alwaysNeedId === 'nutrition'
+
   if (alwaysNeedId) {
     if (alwaysNeedId === 'rest') {
       universal.rest = 'nourishment'
-    } else if (alwaysNeedId === 'movement' || alwaysNeedId === 'nutrition') {
-      universal[alwaysNeedId] = 'exploration'
+    } else if (flexibility === 'low') {
+      // low flexibility never assigns exploration — the non-negotiable need lands in appreciation instead.
+      if (isUniversalAlways) universal[alwaysNeedId] = 'appreciation'
+      else personal[alwaysNeedId] = 'appreciation'
     } else {
-      personal[alwaysNeedId] = 'exploration'
+      if (isUniversalAlways) universal[alwaysNeedId] = 'exploration'
+      else personal[alwaysNeedId] = 'exploration'
     }
   }
 
   for (const needId of (canWait || [])) {
     if (needId !== alwaysNeedId) delete personal[needId]
   }
+
+  const maxTotal = FLEX_MAX[flexibility] || FLEX_MAX.high
+
+  // mid: exploration is optional — drop back to appreciation if it would blow the practice budget.
+  if (flexibility === 'mid' && alwaysNeedId && alwaysNeedId !== 'rest' && practiceCount(universal, personal) > maxTotal) {
+    if (isUniversalAlways) universal[alwaysNeedId] = 'appreciation'
+    else personal[alwaysNeedId] = 'appreciation'
+  }
+
+  let protectedId = alwaysNeedId
+  if (flexibility === 'low' || flexibility === 'mid') {
+    protectedId = ensureAppreciation(universal, personal, alwaysNeedId) || alwaysNeedId
+  }
+
+  capPersonalNeeds(universal, personal, maxTotal, protectedId)
 
   return { universal, personal }
 }
@@ -599,6 +692,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
   const [anxietyType, setAnxietyType]       = useState(null)
   const [energyMap, setEnergyMap]           = useState({})
   const [season, setSeason]                 = useState(null)
+  const [flexibility, setFlexibility]       = useState(null)
   const [alwaysMatters, setAlwaysMatters]   = useState(null)
   const [canWait, setCanWait]               = useState([])
   const [recommendation, setRecommendation] = useState(null)
@@ -623,9 +717,9 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
     const alwaysNeedId = ALWAYS_MATTERS_TO_NEED[alwaysMatters] || alwaysMatters
     const energyGives  = Object.entries(energyMap).filter(([, v]) => v === 'gives').map(([k]) => k)
     const energyDrains = Object.entries(energyMap).filter(([, v]) => v === 'drains').map(([k]) => k)
-    const rec = buildRecommendation({ anxietyLevel, anxietyType, energyGives, energyDrains, season, alwaysNeedId, canWait })
+    const rec = buildRecommendation({ anxietyLevel, anxietyType, energyGives, energyDrains, season, alwaysNeedId, canWait, flexibility })
     setRecommendation(rec)
-    setStep(7)
+    setStep(8)
   }
 
   function setNeedMode(section, needId, mode) {
@@ -703,7 +797,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
         <ProgressBar pct={PROGRESS[0]} />
         <div className={styles.content}>
           <button className={styles.backBtn} onClick={() => setStep(0)}>← back</button>
-          <div className={styles.eyebrow}>STEP 1 OF 6 — ANXIETY</div>
+          <div className={styles.eyebrow}>STEP 1 OF 7 — ANXIETY</div>
           <div className={styles.headline}>what's your relationship with anxiety?</div>
           <div className={styles.sub}>be honest — there's no right answer. this shapes how much stabilizing work the canvas needs to do.</div>
           <div className={styles.options}>
@@ -733,7 +827,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
         <ProgressBar pct={PROGRESS[1]} />
         <div className={styles.content}>
           <button className={styles.backBtn} onClick={() => setStep(1)}>← back</button>
-          <div className={styles.eyebrow}>STEP 2 OF 6 — ANXIETY TYPE</div>
+          <div className={styles.eyebrow}>STEP 2 OF 7 — ANXIETY TYPE</div>
           <div className={styles.headline}>how does anxiety tend to show up?</div>
           <div className={styles.sub}>one of these is probably more familiar than the others.</div>
           <div className={styles.options}>
@@ -763,7 +857,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
         <ProgressBar pct={PROGRESS[2]} />
         <div className={styles.content}>
           <button className={styles.backBtn} onClick={() => setStep(2)}>← back</button>
-          <div className={styles.eyebrow}>STEP 3 OF 6 — ENERGY MAP</div>
+          <div className={styles.eyebrow}>STEP 3 OF 7 — ENERGY MAP</div>
           <div className={styles.headline}>what creates energy and what drains it?</div>
           <div className={styles.sub}>tap once for creates, twice for drains, three times to clear.</div>
           <div className={styles.legendRow}>
@@ -806,7 +900,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
         <ProgressBar pct={PROGRESS[3]} />
         <div className={styles.content}>
           <button className={styles.backBtn} onClick={() => setStep(3)}>← back</button>
-          <div className={styles.eyebrow}>STEP 4 OF 6 — YOUR SEASON</div>
+          <div className={styles.eyebrow}>STEP 4 OF 7 — YOUR SEASON</div>
           <div className={styles.headline}>what's the most accurate picture of right now?</div>
           <div className={styles.sub}>seasons change. the canvas should reflect where things actually are, not where they'd ideally be.</div>
           <div className={styles.twoColGrid}>
@@ -828,14 +922,45 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
     )
   }
 
-  // ── Screen 5: Always matters ─────────────────────────────────────────────────
+  // ── Screen 5: Flexibility ────────────────────────────────────────────────────
   if (step === 5) {
     return (
       <div className={styles.screen}>
         <ProgressBar pct={PROGRESS[4]} />
         <div className={styles.content}>
           <button className={styles.backBtn} onClick={() => setStep(4)}>← back</button>
-          <div className={styles.eyebrow}>STEP 5 OF 6 — WHAT ALWAYS MATTERS</div>
+          <div className={styles.eyebrow}>STEP 5 OF 7 — FLEXIBILITY</div>
+          <div className={styles.headline}>how much room do you have to make change right now?</div>
+          <div className={styles.sub}>this determines how many practices to start with. starting too many at once is its own form of overwhelm. becoming more of yourself is a marathon, not a sprint.</div>
+          <div className={styles.options}>
+            {FLEXIBILITY_OPTIONS.map(opt => (
+              <div
+                key={opt.id}
+                className={`${styles.optionCard} ${flexibility === opt.id ? styles.optionCardSelected : ''}`}
+                onClick={() => setFlexibility(opt.id)}
+              >
+                <div className={styles.optionName}>{opt.name}</div>
+                <div className={styles.optionDesc}>{opt.desc}</div>
+                <div className={styles.flexTag} style={{ background: opt.tagBg, color: opt.tagColor }}>{opt.tag}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className={styles.footer}>
+          <button className="btn-primary" onClick={() => setStep(6)} disabled={!flexibility}>continue →</button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Screen 6: Always matters ─────────────────────────────────────────────────
+  if (step === 6) {
+    return (
+      <div className={styles.screen}>
+        <ProgressBar pct={PROGRESS[5]} />
+        <div className={styles.content}>
+          <button className={styles.backBtn} onClick={() => setStep(5)}>← back</button>
+          <div className={styles.eyebrow}>STEP 6 OF 7 — WHAT ALWAYS MATTERS</div>
           <div className={styles.headline}>no matter the season — what's non-negotiable?</div>
           <div className={styles.sub}>this becomes the exploration need. the one thing that gets the deepest daily commitment. choose one.</div>
           <div className={styles.twoColGrid}>
@@ -852,20 +977,20 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
           </div>
         </div>
         <div className={styles.footer}>
-          <button className="btn-primary" onClick={() => setStep(6)} disabled={!alwaysMatters}>continue →</button>
+          <button className="btn-primary" onClick={() => setStep(7)} disabled={!alwaysMatters}>continue →</button>
         </div>
       </div>
     )
   }
 
-  // ── Screen 6: Can wait ───────────────────────────────────────────────────────
-  if (step === 6) {
+  // ── Screen 7: Can wait ───────────────────────────────────────────────────────
+  if (step === 7) {
     return (
       <div className={styles.screen}>
-        <ProgressBar pct={PROGRESS[5]} />
+        <ProgressBar pct={PROGRESS[6]} />
         <div className={styles.content}>
-          <button className={styles.backBtn} onClick={() => setStep(5)}>← back</button>
-          <div className={styles.eyebrow}>STEP 6 OF 6 — WHAT CAN WAIT</div>
+          <button className={styles.backBtn} onClick={() => setStep(6)}>← back</button>
+          <div className={styles.eyebrow}>STEP 7 OF 7 — WHAT CAN WAIT</div>
           <div className={styles.headline}>what's not calling for attention right now?</div>
           <div className={styles.sub}>not ignored — just not taking up mental space. these won't appear on the canvas until the time is right.</div>
           <div className={styles.twoColGrid}>
@@ -892,15 +1017,15 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
     )
   }
 
-  // ── Screen 7: Canvas reveal ──────────────────────────────────────────────────
-  if (step === 7 && recommendation) {
+  // ── Screen 8: Canvas reveal ──────────────────────────────────────────────────
+  if (step === 8 && recommendation) {
     const addableNeeds = PERSONAL_NEEDS.filter(n => !(n.id in recommendation.personal))
 
     return (
       <div className={styles.screen}>
         <ProgressBar pct={PROGRESS[6]} />
         <div className={styles.content}>
-          <button className={styles.backBtn} onClick={() => setStep(6)}>← back</button>
+          <button className={styles.backBtn} onClick={() => setStep(7)}>← back</button>
           <div className={styles.eyebrow}>YOUR CANVAS</div>
           <div className={styles.headline}>here's what we're working with.</div>
           <div className={styles.sub}>needs are placed in modes that determine how much daily energy each one gets. tap any mode to change it.</div>
@@ -987,13 +1112,13 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
         <div className={styles.footer}>
           <button
             className="btn-primary"
-            onClick={() => { saveCanvas(); setDestination('/practices'); setStep(8) }}
+            onClick={() => { saveCanvas(); setDestination('/practices'); setStep(9) }}
           >
             this feels right →
           </button>
           <button
             className="btn-ghost"
-            onClick={() => { saveCanvas(); setDestination('/canvas'); setStep(8) }}
+            onClick={() => { saveCanvas(); setDestination('/canvas'); setStep(9) }}
           >
             i want to adjust this
           </button>
@@ -1002,8 +1127,8 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
     )
   }
 
-  // ── Screen 8: Account ────────────────────────────────────────────────────────
-  if (step === 8) {
+  // ── Screen 9: Account ────────────────────────────────────────────────────────
+  if (step === 9) {
     return (
       <OnboardingAccount
         destination={destination}

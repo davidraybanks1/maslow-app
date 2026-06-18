@@ -74,6 +74,38 @@ function dayCompletionPct(canvas, checkins, dateKey) {
   return totalRequired > 0 ? (totalCompleted / totalRequired) * 100 : 0
 }
 
+function hasCheckinData(checkins, dateKey) {
+  return Array.isArray(checkins[dateKey]) && checkins[dateKey].length > 0
+}
+
+function isStreakDay(canvas, checkins, dateKey) {
+  const eligible = NEEDS.filter(n => canvas[n.id] && canvas[n.id] !== 'survival')
+  if (eligible.length === 0) return false
+  const met = eligible.filter(n => completedFor(checkins, n.id, dateKey) > 0).length
+  return met / eligible.length >= 0.5
+}
+
+// 'grow' — 14/14 days hit the streak threshold; 'simplify' — fewer than 2 consecutive
+// streak days in the last week; null — neither, or under 14 days of check-in history.
+export function getCanvasGuidance(checkins, canvas) {
+  const last14 = dayRange(14, 0)
+  const daysWithData = last14.filter(d => hasCheckinData(checkins, d)).length
+  if (daysWithData < 14) return null
+
+  if (last14.every(d => isStreakDay(canvas, checkins, d))) return 'grow'
+
+  const last7 = dayRange(7, 0)
+  let consecutive = 0
+  let maxConsecutive = 0
+  for (const d of last7) {
+    consecutive = isStreakDay(canvas, checkins, d) ? consecutive + 1 : 0
+    maxConsecutive = Math.max(maxConsecutive, consecutive)
+  }
+  if (maxConsecutive < 2) return 'simplify'
+
+  return null
+}
+
 export function createDataStats({ canvas, checkins, moods, practices }) {
   function isNeedMet(need, dateKey) {
     const required = requiredFor(canvas, need.id)

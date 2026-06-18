@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { NEEDS, MODES, MODE_ORDER, MODE_MAX_BUBBLES, MODE_WEIGHTS } from '../lib/constants'
 import { todayKey, loadJournalEntry, saveJournalEntry, loadDebriefTypes, loadDebriefs } from '../lib/store'
-import { createDataStats } from '../lib/dataStats'
+import { createDataStats, getCanvasGuidance } from '../lib/dataStats'
 import DebriefForm from '../components/DebriefForm'
 import PeakDebriefForm from '../components/PeakDebriefForm'
 import styles from './Today.module.css'
@@ -13,6 +13,49 @@ const MOOD_SELECTED_CLASS = { good: 'moodBtnGood', fine: 'moodBtnFine', bad: 'mo
 
 function formatScore(v) {
   return Number.isInteger(v) ? String(v) : `${Math.floor(v)}½`
+}
+
+function dateKeyForOffset(daysAgo) {
+  const d = new Date()
+  d.setDate(d.getDate() - daysAgo)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+function isGuidanceDismissed(type) {
+  for (let i = 0; i < 7; i++) {
+    if (localStorage.getItem(`guidanceDismissed_${type}_${dateKeyForOffset(i)}`)) return true
+  }
+  return false
+}
+
+function GuidanceCard({ type, onDismiss }) {
+  const navigate = useNavigate()
+
+  if (type === 'grow') {
+    return (
+      <div className={styles.guidanceCardGrow}>
+        <div className={styles.guidanceEyebrowGrow}>14-DAY STREAK</div>
+        <div className={styles.guidanceHeadline}>you've built the muscle. ready to try something new?</div>
+        <div className={styles.guidanceBody}>two weeks of consistent practice means your canvas is working. this is a good moment to add a need or raise a need to a higher mode — one small step, not an overhaul.</div>
+        <div className={styles.guidanceActions}>
+          <button className={styles.guidanceCtaGrow} onClick={() => navigate('/canvas')}>update my canvas →</button>
+          <button className={styles.guidanceSecondary} onClick={onDismiss}>not yet</button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className={styles.guidanceCardSimplify}>
+      <div className={styles.guidanceEyebrowSimplify}>CANVAS CHECK-IN</div>
+      <div className={styles.guidanceHeadline}>the best athletes know when to pull back.</div>
+      <div className={styles.guidanceBody}>a tighter canvas is a stronger one. consider removing a need or moving one to a lower mode — not as a failure, but as a deliberate choice to build real consistency before adding more.</div>
+      <div className={styles.guidanceActions}>
+        <button className={styles.guidanceCtaSimplify} onClick={() => navigate('/canvas')}>adjust my canvas →</button>
+        <button className={styles.guidanceSecondary} onClick={onDismiss}>keep as is</button>
+      </div>
+    </div>
+  )
 }
 
 export default function Today({ state, checkIn, logMood }) {
@@ -39,6 +82,16 @@ export default function Today({ state, checkIn, logMood }) {
   const stats = createDataStats({ canvas: state.canvas || {}, checkins: state.checkins || {}, moods: state.moods || [], practices: state.practices || {} })
   const streak = stats.getStreak()
   const dateLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).toLowerCase()
+
+  const [guidanceDismissedNow, setGuidanceDismissedNow] = useState(false)
+  const onboardedToday = state.onboardedAt === today
+  const guidanceType = onboardedToday ? null : getCanvasGuidance(state.checkins || {}, state.canvas || {})
+  const showGuidance = !!guidanceType && !guidanceDismissedNow && !isGuidanceDismissed(guidanceType)
+
+  function handleDismissGuidance() {
+    localStorage.setItem(`guidanceDismissed_${guidanceType}_${today}`, '1')
+    setGuidanceDismissedNow(true)
+  }
 
   const [journalEntry, setJournalEntry] = useState('')
   const debounceRef = useRef(null)
@@ -156,6 +209,8 @@ export default function Today({ state, checkIn, logMood }) {
           </div>
           <span className={styles.progressPct}>{pct}%</span>
         </div>
+
+        {showGuidance && <GuidanceCard type={guidanceType} onDismiss={handleDismissGuidance} />}
 
         {/* ── Mood card ── */}
         <div className={styles.card}>

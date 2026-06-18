@@ -334,6 +334,7 @@ export function useAppState(onSignIn) {
     setState(prev => ({
       ...prev,
       onboarded: true,
+      onboardedAt: todayKey(),
       canvas: canvas || prev.canvas,
       practices: practices || prev.practices,
       profile: profile ? profileData : prev.profile,

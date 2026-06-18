@@ -55,6 +55,7 @@
 .optionCardSelected::after { content: ''; position: absolute; top: 12px; right: 12px; width: 10px; height: 10px; border-radius: 50%; background: var(--ink); }
 .optionName { font-family: var(--font-serif); font-size: 18px; font-weight: 400; color: var(--ink); text-transform: lowercase; margin-bottom: 6px; }
 .optionDesc { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink2); line-height: 1.6; }
+.flexTag { display: inline-block; margin-top: 10px; padding: 4px 10px; border-radius: 20px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.02em; }
 
 .hint { font-family: var(--font-mono); font-size: 11px; color: var(--ink3); text-align: center; padding-top: 2px; }
 

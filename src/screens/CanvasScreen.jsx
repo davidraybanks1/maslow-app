@@ -119,7 +119,8 @@ export default function CanvasScreen({ state, updateCanvas }) {
 
   const allNeeds = [...BUILT_IN_NEEDS, ...customNeeds]
   const explorationCount = allNeeds.filter(n => canvas[n.id] === 'exploration').length
-  const canSave = explorationCount === 1
+  const appreciationCount = allNeeds.filter(n => canvas[n.id] === 'appreciation').length
+  const canSave = explorationCount >= 1 || appreciationCount >= 1
 
   function inMode(mode) {
     return allNeeds.filter(n => canvas[n.id] === mode)
@@ -214,7 +215,7 @@ export default function CanvasScreen({ state, updateCanvas }) {
           save canvas
         </button>
         {!canSave && (
-          <div className={styles.saveNote}>add a need to exploration mode to save your canvas.</div>
+          <div className={styles.saveNote}>add at least one appreciation or exploration need to save your canvas.</div>
         )}
 
         {MODES.map(mode => {
