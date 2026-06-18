@@ -675,10 +675,10 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
               <em>become more of yourself.</em>
             </div>
             <div className={styles.bodyText}>
-              maslow identifies your needs, determines to what degree each should be met right now, and builds a daily practice library that reflects them.
+              maslow identifies your needs, determines to what degree each one should be met, and surfaces the daily practices that express them.
             </div>
             <div className={styles.bodyText}>
-              answer six short questions — thoughtfully. your answers shape a canvas built for where you actually are.
+              to get started, give thoughtful, honest answers to the following questions and maslow will propose a canvas tailored to you.
             </div>
             <div className={styles.infoCard}>
               <div className={styles.infoCardEyebrow}>WHAT YOU GET</div>
@@ -703,8 +703,9 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
         <ProgressBar pct={PROGRESS[0]} />
         <div className={styles.content}>
           <button className={styles.backBtn} onClick={() => setStep(0)}>← back</button>
-          <div className={styles.eyebrow}>ANXIETY</div>
-          <div className={styles.headline}>how present is anxiety in your life right now?</div>
+          <div className={styles.eyebrow}>STEP 1 OF 6 — ANXIETY</div>
+          <div className={styles.headline}>what's your relationship with anxiety?</div>
+          <div className={styles.sub}>be honest — there's no right answer. this shapes how much stabilizing work the canvas needs to do.</div>
           <div className={styles.options}>
             {ANXIETY_LEVEL_OPTIONS.map(opt => (
               <div
@@ -732,8 +733,8 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
         <ProgressBar pct={PROGRESS[1]} />
         <div className={styles.content}>
           <button className={styles.backBtn} onClick={() => setStep(1)}>← back</button>
-          <div className={styles.eyebrow}>ANXIETY TYPE</div>
-          <div className={styles.headline}>how does it tend to show up?</div>
+          <div className={styles.eyebrow}>STEP 2 OF 6 — ANXIETY TYPE</div>
+          <div className={styles.headline}>how does anxiety tend to show up?</div>
           <div className={styles.sub}>one of these is probably more familiar than the others.</div>
           <div className={styles.options}>
             {ANXIETY_TYPE_OPTIONS.map(opt => (
@@ -762,7 +763,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
         <ProgressBar pct={PROGRESS[2]} />
         <div className={styles.content}>
           <button className={styles.backBtn} onClick={() => setStep(2)}>← back</button>
-          <div className={styles.eyebrow}>ENERGY</div>
+          <div className={styles.eyebrow}>STEP 3 OF 6 — ENERGY MAP</div>
           <div className={styles.headline}>what creates energy and what drains it?</div>
           <div className={styles.sub}>tap once for creates, twice for drains, three times to clear.</div>
           <div className={styles.legendRow}>
@@ -805,9 +806,9 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
         <ProgressBar pct={PROGRESS[3]} />
         <div className={styles.content}>
           <button className={styles.backBtn} onClick={() => setStep(3)}>← back</button>
-          <div className={styles.eyebrow}>SEASON</div>
-          <div className={styles.headline}>what season are you in?</div>
-          <div className={styles.sub}>pick the one that best describes your life right now.</div>
+          <div className={styles.eyebrow}>STEP 4 OF 6 — YOUR SEASON</div>
+          <div className={styles.headline}>what's the most accurate picture of right now?</div>
+          <div className={styles.sub}>seasons change. the canvas should reflect where things actually are, not where they'd ideally be.</div>
           <div className={styles.twoColGrid}>
             {SEASON_OPTIONS.map(s => (
               <div
@@ -834,9 +835,9 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
         <ProgressBar pct={PROGRESS[4]} />
         <div className={styles.content}>
           <button className={styles.backBtn} onClick={() => setStep(4)}>← back</button>
-          <div className={styles.eyebrow}>NON-NEGOTIABLE</div>
-          <div className={styles.headline}>what always matters, no matter what?</div>
-          <div className={styles.sub}>the need that is non-negotiable — the one that, when ignored, everything else suffers. this becomes your exploration mode slot.</div>
+          <div className={styles.eyebrow}>STEP 5 OF 6 — WHAT ALWAYS MATTERS</div>
+          <div className={styles.headline}>no matter the season — what's non-negotiable?</div>
+          <div className={styles.sub}>this becomes the exploration need. the one thing that gets the deepest daily commitment. choose one.</div>
           <div className={styles.twoColGrid}>
             {ALWAYS_MATTERS_OPTIONS.map(opt => (
               <div
@@ -864,9 +865,9 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
         <ProgressBar pct={PROGRESS[5]} />
         <div className={styles.content}>
           <button className={styles.backBtn} onClick={() => setStep(5)}>← back</button>
-          <div className={styles.eyebrow}>WHAT CAN WAIT</div>
-          <div className={styles.headline}>what can take a back seat for now?</div>
-          <div className={styles.sub}>not ignored — just not taking up mental space. these won't appear on your canvas.</div>
+          <div className={styles.eyebrow}>STEP 6 OF 6 — WHAT CAN WAIT</div>
+          <div className={styles.headline}>what's not calling for attention right now?</div>
+          <div className={styles.sub}>not ignored — just not taking up mental space. these won't appear on the canvas until the time is right.</div>
           <div className={styles.twoColGrid}>
             {CAN_WAIT_OPTIONS.map(opt => {
               const selected = canWait.includes(opt.id)
@@ -882,7 +883,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
               )
             })}
           </div>
-          <div className={styles.gridNote}>none is a valid answer if everything feels relevant.</div>
+          <div className={styles.gridNote}>select as many or as few as feels right. nothing selected means everything stays in the mix.</div>
         </div>
         <div className={styles.footer}>
           <button className="btn-primary" onClick={goToCanvas}>build my canvas →</button>
@@ -901,7 +902,8 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
         <div className={styles.content}>
           <button className={styles.backBtn} onClick={() => setStep(6)}>← back</button>
           <div className={styles.eyebrow}>YOUR CANVAS</div>
-          <div className={styles.headline}>here's your starting canvas.</div>
+          <div className={styles.headline}>here's what we're working with.</div>
+          <div className={styles.sub}>needs are placed in modes that determine how much daily energy each one gets. tap any mode to change it.</div>
 
           <div className={styles.howItWorksCard}>
             <div className={styles.howItWorksEyebrow}>HOW THE CANVAS WORKS</div>
@@ -981,7 +983,6 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
             )
           })}
 
-          <div className={styles.instructionNote}>tap a mode pill to change it. you can also add or remove needs.</div>
         </div>
         <div className={styles.footer}>
           <button
