@@ -128,14 +128,14 @@ const ALWAYS_MATTERS_TO_NEED = {
 }
 
 const CAN_WAIT_OPTIONS = [
-  { id: 'money',       name: 'money' },
-  { id: 'dwelling',    name: 'dwelling' },
-  { id: 'touch',       name: 'touch' },
-  { id: 'information', name: 'information' },
-  { id: 'play',        name: 'play' },
-  { id: 'community',   name: 'community' },
-  { id: 'beauty',      name: 'beauty' },
-  { id: 'thrill',      name: 'thrill' },
+  { id: 'money',       name: 'money',       desc: 'financial stability' },
+  { id: 'dwelling',    name: 'dwelling',    desc: 'home environment' },
+  { id: 'touch',       name: 'touch',       desc: 'physical affection and contact' },
+  { id: 'information', name: 'information', desc: 'staying oriented in the world' },
+  { id: 'play',        name: 'play',        desc: 'purposeless joy' },
+  { id: 'community',   name: 'community',   desc: 'belonging and group connection' },
+  { id: 'beauty',      name: 'beauty',      desc: 'contact with what moves you' },
+  { id: 'thrill',      name: 'thrill',      desc: 'intensity and aliveness' },
 ]
 
 const HOW_IT_WORKS = [
@@ -599,6 +599,7 @@ export default function DiagnosticFlow({ updateCanvas, onComplete }) {
                   onClick={() => toggleCanWait(opt.id)}
                 >
                   <div className={`${styles.needGridName} ${selected ? styles.needGridNameWait : ''}`}>{opt.name}</div>
+                  <div className={styles.needGridDesc}>{opt.desc}</div>
                 </div>
               )
             })}
