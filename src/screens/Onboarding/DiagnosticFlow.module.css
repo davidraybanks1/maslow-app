@@ -281,9 +281,35 @@
 }
 .gridNote { font-family: var(--font-mono); font-size: 11px; color: var(--ink3); line-height: 1.6; margin-top: 12px; }
 
-/* ── Screen 1: Account setup ── */
+/* ── Account screen (step 8) ── */
 
-.accountForm { display: flex; flex-direction: column; gap: 12px; margin-top: 4px; margin-bottom: 20px; }
+.formError { font-family: var(--font-mono); font-size: 11px; color: #D93B1C; margin-top: 10px; line-height: 1.5; }
+
+.authToggle { font-family: var(--font-mono); font-size: 11px; font-weight: 200; color: var(--ink3); text-align: center; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.authToggle:hover { color: var(--ink2); }
+
+.skipLink { font-family: var(--font-mono); font-size: 11px; font-weight: 200; color: var(--ink4); text-align: center; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.skipLink:hover { color: var(--ink3); }
+
+.authSecondarySection { margin-top: 20px; }
+.authHairline { height: 0.5px; background: var(--border); }
+.authSecondaryLink {
+  display: block;
+  padding: 13px 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 200;
+  color: var(--ink2);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.authSecondaryLink:hover { color: var(--ink); }
+.authSecondaryConfirm { color: #1B3A2D; cursor: default; }
+.authSecondaryConfirm:hover { color: #1B3A2D; }
+
+/* ── Account form ── */
+
+.accountForm { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; margin-bottom: 20px; }
 
 .accountInput {
   border: 0.5px solid var(--border);

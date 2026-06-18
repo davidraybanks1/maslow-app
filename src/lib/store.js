@@ -23,6 +23,10 @@ function logSupabaseError(fn, error) {
   console.error(`[${fn}] supabase error`, error)
 }
 
+// Set skip=true before supabase.auth.signUp() during onboarding to prevent
+// the SIGNED_IN handler from navigating away from the post-signup destination.
+export const signInNavRef = { skip: false }
+
 const VALID_MODES = new Set(['exploration', 'appreciation', 'nourishment', 'survival'])
 
 function sanitizeCanvas(raw) {
@@ -160,7 +164,13 @@ export function useAppState(onSignIn) {
       try {
         if (event === 'SIGNED_IN' && session?.user) {
           const restored = await restoreFromSupabase(session.user.id, session.user.email)
-          if (restored) { setState(restored); saveState(restored); onSignIn?.() }
+          if (restored) {
+            setState(restored)
+            saveState(restored)
+            const shouldSkip = signInNavRef.skip
+            signInNavRef.skip = false
+            if (!shouldSkip) onSignIn?.()
+          }
         }
         if (event === 'SIGNED_OUT') {
           localStorage.removeItem('maslow_state')

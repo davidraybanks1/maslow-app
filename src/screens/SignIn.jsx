@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { sendMagicLink, signInWithPassword, signUpWithPassword } from '../lib/store'
+import { supabase } from '../lib/supabase'
 import styles from './SignIn.module.css'
 
 function Logo() {
@@ -22,61 +22,51 @@ function Logo() {
 
 export default function SignIn() {
   const navigate = useNavigate()
-  const [mode, setMode] = useState('magic')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [sent, setSent] = useState(false)
-  const [message, setMessage] = useState('')
-  const [error, setError] = useState('')
-
-  function switchMode(m) {
-    setMode(m)
-    setError('')
-    setMessage('')
-    setSent(false)
-  }
-
-  async function handleMagicLink(e) {
-    e.preventDefault()
-    if (!email.trim()) return
-    setLoading(true)
-    setError('')
-    const { error: err } = await sendMagicLink(email.trim().toLowerCase())
-    setLoading(false)
-    if (err) {
-      setError('Something went wrong. Please try again.')
-    } else {
-      setSent(true)
-    }
-  }
+  const [email, setEmail]           = useState('')
+  const [password, setPassword]     = useState('')
+  const [loading, setLoading]       = useState(false)
+  const [error, setError]           = useState(null)
+  const [magicSent, setMagicSent]   = useState(false)
+  const [resetSent, setResetSent]   = useState(false)
 
   async function handleSignIn(e) {
     e.preventDefault()
-    if (!email.trim() || !password) return
     setLoading(true)
-    setError('')
-    const { error: err } = await signInWithPassword(email.trim().toLowerCase(), password)
+    setError(null)
+
+    const { error: err } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password,
+    })
+
     setLoading(false)
-    if (err) {
-      setError(err.message || 'Invalid email or password.')
-    }
-    // on success, onAuthStateChange fires and navigates to /today
+    if (err) setError(err.message)
+    // on success, onAuthStateChange in store fires and navigates to /today
   }
 
-  async function handleCreateAccount(e) {
-    e.preventDefault()
-    if (!email.trim() || !password) return
-    setLoading(true)
-    setError('')
-    const { error: err } = await signUpWithPassword(email.trim().toLowerCase(), password)
-    setLoading(false)
-    if (err) {
-      setError(err.message || 'Could not create account. Please try again.')
-    } else {
-      setMessage('Account created — check your email to confirm.')
-    }
+  async function handleMagicLink() {
+    if (!email.trim()) { setError('enter your email first'); return }
+    setError(null)
+    const { error: err } = await supabase.auth.signInWithOtp({
+      email: email.trim().toLowerCase(),
+      options: { emailRedirectTo: 'https://app.mymaslow.com' },
+    })
+    if (err) setError(err.message)
+    else setMagicSent(true)
   }
+
+  async function handleForgotPassword() {
+    if (!email.trim()) { setError('enter your email first'); return }
+    setError(null)
+    const { error: err } = await supabase.auth.resetPasswordForEmail(
+      email.trim().toLowerCase(),
+      { redirectTo: 'https://app.mymaslow.com/password' }
+    )
+    if (err) setError(err.message)
+    else setResetSent(true)
+  }
+
+  const canSubmit = email.trim() && password.length > 0
 
   return (
     <div className={styles.screen}>
@@ -86,84 +76,51 @@ export default function SignIn() {
       </div>
 
       <div className={styles.body}>
-        <div className={styles.heading}>welcome back.</div>
+        <div className={styles.heading}>sign in.</div>
 
-        <div className={styles.toggle}>
-          <button
-            className={styles.toggleBtn}
-            data-active={mode === 'magic'}
-            onClick={() => switchMode('magic')}
-          >
-            Magic link
+        <form className={styles.form} onSubmit={handleSignIn}>
+          <input
+            className={styles.input}
+            type="email"
+            placeholder="your email"
+            value={email}
+            onChange={e => { setEmail(e.target.value); setError(null) }}
+            autoComplete="email"
+            autoFocus
+          />
+          <input
+            className={styles.input}
+            type="password"
+            placeholder="your password"
+            value={password}
+            onChange={e => { setPassword(e.target.value); setError(null) }}
+            autoComplete="current-password"
+          />
+
+          {error && <div className={styles.error}>{error}</div>}
+
+          <button className="btn-primary" type="submit" disabled={loading || !canSubmit}>
+            {loading ? 'signing in…' : 'sign in →'}
           </button>
-          <button
-            className={styles.toggleBtn}
-            data-active={mode === 'password'}
-            onClick={() => switchMode('password')}
+        </form>
+
+        <div className={styles.secondary}>
+          <div className={styles.hairline} />
+          <div
+            className={`${styles.secondaryLink} ${magicSent ? styles.secondaryConfirm : ''}`}
+            onClick={!magicSent ? handleMagicLink : undefined}
           >
-            Password
-          </button>
+            {magicSent ? '✓ check your email for a sign-in link' : 'send a magic link instead'}
+          </div>
+          <div className={styles.hairline} />
+          <div
+            className={`${styles.secondaryLink} ${resetSent ? styles.secondaryConfirm : ''}`}
+            onClick={!resetSent ? handleForgotPassword : undefined}
+          >
+            {resetSent ? '✓ check your email to reset your password' : 'forgot password?'}
+          </div>
+          <div className={styles.hairline} />
         </div>
-
-        {mode === 'magic' ? (
-          sent ? (
-            <div className={styles.success}>
-              Check your email — we sent a sign-in link to {email}
-            </div>
-          ) : (
-            <form className={styles.form} onSubmit={handleMagicLink}>
-              <input
-                className={styles.input}
-                type="email"
-                placeholder="your@email.com"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                autoFocus
-                required
-              />
-              {error && <div className={styles.error}>{error}</div>}
-              <button className="btn-primary" type="submit" disabled={loading || !email.trim()}>
-                {loading ? 'Sending…' : 'Send sign-in link →'}
-              </button>
-            </form>
-          )
-        ) : (
-          message ? (
-            <div className={styles.success}>{message}</div>
-          ) : (
-            <form className={styles.form} onSubmit={handleSignIn}>
-              <input
-                className={styles.input}
-                type="email"
-                placeholder="your@email.com"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                autoFocus
-                required
-              />
-              <input
-                className={styles.input}
-                type="password"
-                placeholder="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-              />
-              {error && <div className={styles.error}>{error}</div>}
-              <button className="btn-primary" type="submit" disabled={loading || !email.trim() || !password}>
-                {loading ? 'Signing in…' : 'Sign in →'}
-              </button>
-              <button
-                type="button"
-                className={styles.ghost}
-                disabled={loading || !email.trim() || !password}
-                onClick={handleCreateAccount}
-              >
-                Create account →
-              </button>
-            </form>
-          )
-        )}
       </div>
 
       <button className={styles.back} onClick={() => navigate('/onboarding')}>

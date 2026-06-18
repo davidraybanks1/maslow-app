@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { supabase } from '../../lib/supabase'
+import { signInNavRef } from '../../lib/store'
 import styles from './DiagnosticFlow.module.css'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -145,7 +147,7 @@ const HOW_IT_WORKS = [
   { mode: 'survival',     color: '#D93B1C', desc: 'the floor that frees everything else — 1 practice, half weight' },
 ]
 
-// Steps 2–8 each show a progress bar (7 values)
+// Steps 1–7 show a progress bar; PROGRESS[step - 1]
 const PROGRESS = [14, 28, 42, 57, 71, 85, 100]
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -161,12 +163,8 @@ function nextMode(needId, mode) {
 }
 
 function buildRecommendation({ anxietyLevel, anxietyType, energyGives, energyDrains, season, alwaysNeedId, canWait }) {
-  const universal = {
-    movement:  'survival',
-    nutrition: 'survival',
-    rest:      'nourishment',
-  }
-  const personal = {}
+  const universal = { movement: 'survival', nutrition: 'survival', rest: 'nourishment' }
+  const personal  = {}
 
   if (anxietyType === 'frenetic') {
     personal.reflection  = 'exploration'
@@ -298,20 +296,259 @@ function ModePill({ needId, mode, onCycle }) {
   )
 }
 
+// ─── Account screen (final step) ─────────────────────────────────────────────
+
+function OnboardingAccount({ destination, recommendation, updateCanvas, onDone }) {
+  const [mode, setMode]             = useState('create')
+
+  // Create form
+  const [name, setName]             = useState('')
+  const [email, setEmail]           = useState('')
+  const [password, setPassword]     = useState('')
+  const [phone, setPhone]           = useState('')
+  const [smsEnabled, setSmsEnabled] = useState(false)
+
+  // Sign-in form
+  const [siEmail, setSiEmail]       = useState('')
+  const [siPassword, setSiPassword] = useState('')
+  const [magicSent, setMagicSent]   = useState(false)
+  const [resetSent, setResetSent]   = useState(false)
+
+  const [loading, setLoading]       = useState(false)
+  const [error, setError]           = useState(null)
+
+  async function handleSignUp() {
+    setLoading(true)
+    setError(null)
+    signInNavRef.skip = true
+
+    const { data, error: authErr } = await supabase.auth.signUp({
+      email: email.trim().toLowerCase(),
+      password,
+    })
+
+    if (authErr) {
+      signInNavRef.skip = false
+      setError(authErr.message)
+      setLoading(false)
+      return
+    }
+
+    const userId = data.user?.id
+    if (userId && recommendation) {
+      const canvasObj = { ...recommendation.universal, ...recommendation.personal }
+      await supabase.from('users').upsert({
+        id: userId,
+        email: email.trim().toLowerCase(),
+        name: name.trim() || null,
+        phone: phone.trim() || null,
+        canvas: canvasObj,
+        onboarded: true,
+        profile: { smsEnabled: smsEnabled && !!phone.trim() },
+      }, { onConflict: 'id' })
+
+      for (const [needId, m] of Object.entries(canvasObj)) {
+        updateCanvas(needId, m)
+      }
+    }
+
+    setLoading(false)
+    onDone(destination)
+  }
+
+  async function handleSignIn() {
+    setLoading(true)
+    setError(null)
+
+    const { error: authErr } = await supabase.auth.signInWithPassword({
+      email: siEmail.trim().toLowerCase(),
+      password: siPassword,
+    })
+
+    if (authErr) {
+      setError(authErr.message)
+      setLoading(false)
+      return
+    }
+
+    setLoading(false)
+    // onAuthStateChange in store restores state and navigates to /today
+  }
+
+  async function handleMagicLink() {
+    if (!siEmail.trim()) { setError('enter your email first'); return }
+    setError(null)
+    const { error: err } = await supabase.auth.signInWithOtp({
+      email: siEmail.trim().toLowerCase(),
+      options: { emailRedirectTo: 'https://app.mymaslow.com' },
+    })
+    if (err) setError(err.message)
+    else setMagicSent(true)
+  }
+
+  async function handleForgotPassword() {
+    if (!siEmail.trim()) { setError('enter your email first'); return }
+    setError(null)
+    const { error: err } = await supabase.auth.resetPasswordForEmail(
+      siEmail.trim().toLowerCase(),
+      { redirectTo: 'https://app.mymaslow.com/password' }
+    )
+    if (err) setError(err.message)
+    else setResetSent(true)
+  }
+
+  if (mode === 'create') {
+    const canSubmit = name.trim() && email.trim() && password.length >= 8
+
+    return (
+      <div className={styles.screen}>
+        <div className={styles.content}>
+          <div className={styles.eyebrow}>SAVE YOUR CANVAS</div>
+          <div className={styles.headline}>create your account.</div>
+          <div className={styles.sub}>your canvas, practices, and data are tied to your account. takes 30 seconds.</div>
+
+          <div className={styles.accountForm}>
+            <input
+              className={styles.accountInput}
+              type="text"
+              placeholder="your name"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              autoComplete="name"
+            />
+            <input
+              className={styles.accountInput}
+              type="email"
+              placeholder="your email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              autoComplete="email"
+            />
+            <input
+              className={styles.accountInput}
+              type="password"
+              placeholder="create a password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              autoComplete="new-password"
+            />
+            <div>
+              <input
+                className={styles.accountInput}
+                type="tel"
+                placeholder="phone number (optional)"
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
+                autoComplete="tel"
+              />
+              {smsEnabled && !phone.trim() && (
+                <div className={styles.inputErrorNote}>add a phone number to enable reminders</div>
+              )}
+            </div>
+          </div>
+
+          <div className={styles.toggleRow}>
+            <div className={styles.toggleLabels}>
+              <div className={styles.toggleLabel}>daily check-in reminders</div>
+              <div className={styles.toggleSub}>a gentle nudge three times a day</div>
+            </div>
+            <div className={styles.toggleSwitch} onClick={() => setSmsEnabled(p => !p)}>
+              <div className={`${styles.toggleTrack} ${smsEnabled ? styles.toggleTrackOn : ''}`}>
+                <div className={`${styles.toggleThumb} ${smsEnabled ? styles.toggleThumbOn : ''}`} />
+              </div>
+            </div>
+          </div>
+
+          {error && <div className={styles.formError}>{error}</div>}
+        </div>
+
+        <div className={styles.footer}>
+          <button className="btn-primary" onClick={handleSignUp} disabled={!canSubmit || loading}>
+            {loading ? 'creating account…' : 'create account →'}
+          </button>
+          <div className={styles.authToggle} onClick={() => { setMode('signin'); setError(null) }}>
+            already have an account? sign in
+          </div>
+          <div className={styles.skipLink} onClick={() => onDone(destination)}>
+            skip for now — i'll save my account later
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Sign-in mode ──
+  const canSignIn = siEmail.trim() && siPassword.length > 0
+
+  return (
+    <div className={styles.screen}>
+      <div className={styles.content}>
+        <div className={styles.eyebrow}>WELCOME BACK</div>
+        <div className={styles.headline}>sign in.</div>
+        <div className={styles.sub}>your canvas and data are waiting.</div>
+
+        <div className={styles.accountForm}>
+          <input
+            className={styles.accountInput}
+            type="email"
+            placeholder="your email"
+            value={siEmail}
+            onChange={e => { setSiEmail(e.target.value); setError(null) }}
+            autoComplete="email"
+          />
+          <input
+            className={styles.accountInput}
+            type="password"
+            placeholder="your password"
+            value={siPassword}
+            onChange={e => { setSiPassword(e.target.value); setError(null) }}
+            autoComplete="current-password"
+          />
+        </div>
+
+        {error && <div className={styles.formError}>{error}</div>}
+
+        <div className={styles.authSecondarySection}>
+          <div className={styles.authHairline} />
+          <div
+            className={`${styles.authSecondaryLink} ${magicSent ? styles.authSecondaryConfirm : ''}`}
+            onClick={!magicSent ? handleMagicLink : undefined}
+          >
+            {magicSent ? '✓ check your email for a sign-in link' : 'send a magic link instead'}
+          </div>
+          <div className={styles.authHairline} />
+          <div
+            className={`${styles.authSecondaryLink} ${resetSent ? styles.authSecondaryConfirm : ''}`}
+            onClick={!resetSent ? handleForgotPassword : undefined}
+          >
+            {resetSent ? '✓ check your email to reset your password' : 'forgot password?'}
+          </div>
+          <div className={styles.authHairline} />
+        </div>
+      </div>
+
+      <div className={styles.footer}>
+        <button className="btn-primary" onClick={handleSignIn} disabled={!canSignIn || loading}>
+          {loading ? 'signing in…' : 'sign in →'}
+        </button>
+        <div className={styles.authToggle} onClick={() => { setMode('create'); setError(null) }}>
+          don't have an account? create one
+        </div>
+        <div className={styles.skipLink} onClick={() => onDone(destination)}>
+          skip for now — i'll save my account later
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function DiagnosticFlow({ updateCanvas, onComplete, saveProfile }) {
+export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
   const navigate = useNavigate()
   const [step, setStep]                     = useState(0)
+  const [destination, setDestination]       = useState('/practices')
 
-  // Account setup (screen 1)
-  const [accountName, setAccountName]       = useState('')
-  const [accountEmail, setAccountEmail]     = useState('')
-  const [accountPhone, setAccountPhone]     = useState('')
-  const [smsEnabled, setSmsEnabled]         = useState(false)
-  const [phoneError, setPhoneError]         = useState(false)
-
-  // Diagnostic (screens 2–7)
   const [anxietyLevel, setAnxietyLevel]     = useState(null)
   const [anxietyType, setAnxietyType]       = useState(null)
   const [energyMap, setEnergyMap]           = useState({})
@@ -319,15 +556,6 @@ export default function DiagnosticFlow({ updateCanvas, onComplete, saveProfile }
   const [alwaysMatters, setAlwaysMatters]   = useState(null)
   const [canWait, setCanWait]               = useState([])
   const [recommendation, setRecommendation] = useState(null)
-
-  function handleAccountContinue() {
-    if (smsEnabled && !accountPhone.trim()) {
-      setPhoneError(true)
-      return
-    }
-    setPhoneError(false)
-    setStep(2)
-  }
 
   function cycleSituation(s) {
     setEnergyMap(prev => {
@@ -345,12 +573,12 @@ export default function DiagnosticFlow({ updateCanvas, onComplete, saveProfile }
   }
 
   function goToCanvas() {
-    const alwaysNeedId  = ALWAYS_MATTERS_TO_NEED[alwaysMatters] || alwaysMatters
-    const energyGives   = Object.entries(energyMap).filter(([, v]) => v === 'gives').map(([k]) => k)
-    const energyDrains  = Object.entries(energyMap).filter(([, v]) => v === 'drains').map(([k]) => k)
+    const alwaysNeedId = ALWAYS_MATTERS_TO_NEED[alwaysMatters] || alwaysMatters
+    const energyGives  = Object.entries(energyMap).filter(([, v]) => v === 'gives').map(([k]) => k)
+    const energyDrains = Object.entries(energyMap).filter(([, v]) => v === 'drains').map(([k]) => k)
     const rec = buildRecommendation({ anxietyLevel, anxietyType, energyGives, energyDrains, season, alwaysNeedId, canWait })
     setRecommendation(rec)
-    setStep(8)
+    setStep(7)
   }
 
   function cycleNeedMode(section, needId) {
@@ -377,21 +605,9 @@ export default function DiagnosticFlow({ updateCanvas, onComplete, saveProfile }
     for (const [needId, mode] of Object.entries(recommendation.personal))  updateCanvas(needId, mode)
   }
 
-  function persistProfile() {
-    if (saveProfile) saveProfile({ name: accountName, email: accountEmail, phone: accountPhone, smsEnabled })
-  }
-
-  function handleFinish() {
-    saveCanvas()
-    persistProfile()
-    if (onComplete) onComplete()
-    else navigate('/canvas')
-  }
-
-  function handleAdjust() {
-    saveCanvas()
-    persistProfile()
-    navigate('/canvas')
+  function handleAccountDone(dest) {
+    if (completeOnboarding) completeOnboarding()
+    navigate(dest)
   }
 
   const energyMapValid = Object.values(energyMap).includes('gives') && Object.values(energyMap).includes('drains')
@@ -433,78 +649,13 @@ export default function DiagnosticFlow({ updateCanvas, onComplete, saveProfile }
     )
   }
 
-  // ── Screen 1: Account setup ──────────────────────────────────────────────────
+  // ── Screen 1: Anxiety level ──────────────────────────────────────────────────
   if (step === 1) {
-    return (
-      <div className={styles.screen}>
-        <div className={styles.content}>
-          <div className={styles.eyebrow}>CREATE YOUR ACCOUNT</div>
-          <div className={styles.headline}>let's start with the basics.</div>
-          <div className={styles.sub}>maslow keeps your data private and tied to your account.</div>
-
-          <div className={styles.accountForm}>
-            <input
-              className={styles.accountInput}
-              type="text"
-              placeholder="your name"
-              value={accountName}
-              onChange={e => setAccountName(e.target.value)}
-              autoComplete="name"
-            />
-            <input
-              className={styles.accountInput}
-              type="email"
-              placeholder="your email"
-              value={accountEmail}
-              onChange={e => setAccountEmail(e.target.value)}
-              autoComplete="email"
-            />
-            <div>
-              <input
-                className={`${styles.accountInput} ${phoneError ? styles.accountInputError : ''}`}
-                type="tel"
-                placeholder="phone number (optional)"
-                value={accountPhone}
-                onChange={e => { setAccountPhone(e.target.value); if (phoneError) setPhoneError(false) }}
-                autoComplete="tel"
-              />
-              {phoneError && <div className={styles.inputErrorNote}>required for reminders</div>}
-            </div>
-          </div>
-
-          <div className={styles.toggleRow}>
-            <div className={styles.toggleLabels}>
-              <div className={styles.toggleLabel}>daily check-in reminders</div>
-              <div className={styles.toggleSub}>a gentle nudge at morning, midday, and evening</div>
-            </div>
-            <div className={styles.toggleSwitch} onClick={() => setSmsEnabled(prev => !prev)}>
-              <div className={`${styles.toggleTrack} ${smsEnabled ? styles.toggleTrackOn : ''}`}>
-                <div className={`${styles.toggleThumb} ${smsEnabled ? styles.toggleThumbOn : ''}`} />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className={styles.footer}>
-          <button
-            className="btn-primary"
-            onClick={handleAccountContinue}
-            disabled={!accountName.trim() || !accountEmail.trim()}
-          >
-            continue →
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  // ── Screen 2: Anxiety level ──────────────────────────────────────────────────
-  if (step === 2) {
     return (
       <div className={styles.screen}>
         <ProgressBar pct={PROGRESS[0]} />
         <div className={styles.content}>
-          <button className={styles.backBtn} onClick={() => setStep(1)}>← back</button>
+          <button className={styles.backBtn} onClick={() => setStep(0)}>← back</button>
           <div className={styles.eyebrow}>ANXIETY</div>
           <div className={styles.headline}>how present is anxiety in your life right now?</div>
           <div className={styles.options}>
@@ -521,19 +672,19 @@ export default function DiagnosticFlow({ updateCanvas, onComplete, saveProfile }
           </div>
         </div>
         <div className={styles.footer}>
-          <button className="btn-primary" onClick={() => setStep(3)} disabled={!anxietyLevel}>continue →</button>
+          <button className="btn-primary" onClick={() => setStep(2)} disabled={!anxietyLevel}>continue →</button>
         </div>
       </div>
     )
   }
 
-  // ── Screen 3: Anxiety type ───────────────────────────────────────────────────
-  if (step === 3) {
+  // ── Screen 2: Anxiety type ───────────────────────────────────────────────────
+  if (step === 2) {
     return (
       <div className={styles.screen}>
         <ProgressBar pct={PROGRESS[1]} />
         <div className={styles.content}>
-          <button className={styles.backBtn} onClick={() => setStep(2)}>← back</button>
+          <button className={styles.backBtn} onClick={() => setStep(1)}>← back</button>
           <div className={styles.eyebrow}>ANXIETY TYPE</div>
           <div className={styles.headline}>how does it tend to show up?</div>
           <div className={styles.sub}>one of these is probably more familiar than the others.</div>
@@ -551,19 +702,19 @@ export default function DiagnosticFlow({ updateCanvas, onComplete, saveProfile }
           </div>
         </div>
         <div className={styles.footer}>
-          <button className="btn-primary" onClick={() => setStep(4)} disabled={!anxietyType}>continue →</button>
+          <button className="btn-primary" onClick={() => setStep(3)} disabled={!anxietyType}>continue →</button>
         </div>
       </div>
     )
   }
 
-  // ── Screen 4: Energy map ─────────────────────────────────────────────────────
-  if (step === 4) {
+  // ── Screen 3: Energy map ─────────────────────────────────────────────────────
+  if (step === 3) {
     return (
       <div className={styles.screen}>
         <ProgressBar pct={PROGRESS[2]} />
         <div className={styles.content}>
-          <button className={styles.backBtn} onClick={() => setStep(3)}>← back</button>
+          <button className={styles.backBtn} onClick={() => setStep(2)}>← back</button>
           <div className={styles.eyebrow}>ENERGY</div>
           <div className={styles.headline}>what gives and what drains?</div>
           <div className={styles.sub}>tap to mark. tap again to change.</div>
@@ -594,19 +745,19 @@ export default function DiagnosticFlow({ updateCanvas, onComplete, saveProfile }
         </div>
         <div className={styles.footer}>
           {!energyMapValid && <div className={styles.hint}>mark at least one of each</div>}
-          <button className="btn-primary" onClick={() => setStep(5)} disabled={!energyMapValid}>continue →</button>
+          <button className="btn-primary" onClick={() => setStep(4)} disabled={!energyMapValid}>continue →</button>
         </div>
       </div>
     )
   }
 
-  // ── Screen 5: Life season ────────────────────────────────────────────────────
-  if (step === 5) {
+  // ── Screen 4: Life season ────────────────────────────────────────────────────
+  if (step === 4) {
     return (
       <div className={styles.screen}>
         <ProgressBar pct={PROGRESS[3]} />
         <div className={styles.content}>
-          <button className={styles.backBtn} onClick={() => setStep(4)}>← back</button>
+          <button className={styles.backBtn} onClick={() => setStep(3)}>← back</button>
           <div className={styles.eyebrow}>SEASON</div>
           <div className={styles.headline}>what season are you in?</div>
           <div className={styles.sub}>pick the one that best describes your life right now.</div>
@@ -623,19 +774,19 @@ export default function DiagnosticFlow({ updateCanvas, onComplete, saveProfile }
           </div>
         </div>
         <div className={styles.footer}>
-          <button className="btn-primary" onClick={() => setStep(6)} disabled={!season}>continue →</button>
+          <button className="btn-primary" onClick={() => setStep(5)} disabled={!season}>continue →</button>
         </div>
       </div>
     )
   }
 
-  // ── Screen 6: Always matters ─────────────────────────────────────────────────
-  if (step === 6) {
+  // ── Screen 5: Always matters ─────────────────────────────────────────────────
+  if (step === 5) {
     return (
       <div className={styles.screen}>
         <ProgressBar pct={PROGRESS[4]} />
         <div className={styles.content}>
-          <button className={styles.backBtn} onClick={() => setStep(5)}>← back</button>
+          <button className={styles.backBtn} onClick={() => setStep(4)}>← back</button>
           <div className={styles.eyebrow}>NON-NEGOTIABLE</div>
           <div className={styles.headline}>what always matters, no matter what?</div>
           <div className={styles.sub}>the need that is non-negotiable — the one that, when ignored, everything else suffers. this becomes your exploration mode slot.</div>
@@ -653,19 +804,19 @@ export default function DiagnosticFlow({ updateCanvas, onComplete, saveProfile }
           </div>
         </div>
         <div className={styles.footer}>
-          <button className="btn-primary" onClick={() => setStep(7)} disabled={!alwaysMatters}>continue →</button>
+          <button className="btn-primary" onClick={() => setStep(6)} disabled={!alwaysMatters}>continue →</button>
         </div>
       </div>
     )
   }
 
-  // ── Screen 7: Can wait ───────────────────────────────────────────────────────
-  if (step === 7) {
+  // ── Screen 6: Can wait ───────────────────────────────────────────────────────
+  if (step === 6) {
     return (
       <div className={styles.screen}>
         <ProgressBar pct={PROGRESS[5]} />
         <div className={styles.content}>
-          <button className={styles.backBtn} onClick={() => setStep(6)}>← back</button>
+          <button className={styles.backBtn} onClick={() => setStep(5)}>← back</button>
           <div className={styles.eyebrow}>WHAT CAN WAIT</div>
           <div className={styles.headline}>what can take a back seat for now?</div>
           <div className={styles.sub}>not ignored — just not taking up mental space. these won't appear on your canvas.</div>
@@ -693,15 +844,15 @@ export default function DiagnosticFlow({ updateCanvas, onComplete, saveProfile }
     )
   }
 
-  // ── Screen 8: Canvas reveal ──────────────────────────────────────────────────
-  if (step === 8 && recommendation) {
+  // ── Screen 7: Canvas reveal ──────────────────────────────────────────────────
+  if (step === 7 && recommendation) {
     const addableNeeds = PERSONAL_NEEDS.filter(n => !(n.id in recommendation.personal))
 
     return (
       <div className={styles.screen}>
         <ProgressBar pct={PROGRESS[6]} />
         <div className={styles.content}>
-          <button className={styles.backBtn} onClick={() => setStep(7)}>← back</button>
+          <button className={styles.backBtn} onClick={() => setStep(6)}>← back</button>
           <div className={styles.eyebrow}>YOUR CANVAS</div>
           <div className={styles.headline}>here's your starting canvas.</div>
 
@@ -719,7 +870,7 @@ export default function DiagnosticFlow({ updateCanvas, onComplete, saveProfile }
           <div className={styles.canvasSectionLabel}>RECOMMENDED CANVAS</div>
 
           {CARD_MODE_ORDER.map(mode => {
-            const color          = MODE_COLORS[mode]
+            const color           = MODE_COLORS[mode]
             const universalInMode = UNIVERSAL_NEEDS.filter(n => recommendation.universal[n.id] === mode)
             const personalInMode  = PERSONAL_NEEDS.filter(n => recommendation.personal[n.id] === mode)
             const hasNeeds = universalInMode.length > 0 || personalInMode.length > 0
@@ -765,10 +916,32 @@ export default function DiagnosticFlow({ updateCanvas, onComplete, saveProfile }
           <div className={styles.instructionNote}>tap any mode to change it. you can also add or remove needs.</div>
         </div>
         <div className={styles.footer}>
-          <button className="btn-primary" onClick={handleFinish}>this feels right →</button>
-          <button className="btn-ghost" onClick={handleAdjust}>i want to adjust this</button>
+          <button
+            className="btn-primary"
+            onClick={() => { saveCanvas(); setDestination('/practices'); setStep(8) }}
+          >
+            this feels right →
+          </button>
+          <button
+            className="btn-ghost"
+            onClick={() => { saveCanvas(); setDestination('/canvas'); setStep(8) }}
+          >
+            i want to adjust this
+          </button>
         </div>
       </div>
+    )
+  }
+
+  // ── Screen 8: Account ────────────────────────────────────────────────────────
+  if (step === 8) {
+    return (
+      <OnboardingAccount
+        destination={destination}
+        recommendation={recommendation}
+        updateCanvas={updateCanvas}
+        onDone={handleAccountDone}
+      />
     )
   }
 
