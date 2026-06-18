@@ -716,12 +716,12 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
         <div className={styles.content}>
           <button className={styles.backBtn} onClick={() => setStep(2)}>← back</button>
           <div className={styles.eyebrow}>ENERGY</div>
-          <div className={styles.headline}>what gives and what drains?</div>
-          <div className={styles.sub}>tap to mark. tap again to change.</div>
+          <div className={styles.headline}>what creates energy and what drains it?</div>
+          <div className={styles.sub}>tap once for creates, twice for drains, three times to clear.</div>
           <div className={styles.legendRow}>
             <div className={styles.legendItem}>
               <div className={styles.legendDot} style={{ background: '#1B3A2D' }} />
-              <span className={styles.legendText}>gives energy</span>
+              <span className={styles.legendText}>creates energy</span>
             </div>
             <div className={styles.legendItem}>
               <div className={styles.legendDot} style={{ background: '#D93B1C' }} />
