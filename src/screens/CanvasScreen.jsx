@@ -109,12 +109,16 @@ export default function CanvasScreen({ state, updateCanvas }) {
   const [openModeDropdown, setOpenModeDropdown] = useState(null) // needId of open mode pill dropdown
   const [pickerError, setPickerError] = useState(null)
   const [removeError, setRemoveError] = useState(null) // { needId, message }
+  const [saveStatus, setSaveStatus] = useState('idle') // 'idle' | 'saving' | 'saved' | 'error'
   const errorTimer = useRef(null)
   const removeTimer = useRef(null)
+  const saveStatusTimer = useRef(null)
+  const scrollRef = useRef(null)
 
   useEffect(() => () => {
     if (errorTimer.current) clearTimeout(errorTimer.current)
     if (removeTimer.current) clearTimeout(removeTimer.current)
+    if (saveStatusTimer.current) clearTimeout(saveStatusTimer.current)
   }, [])
 
   const allNeeds = [...BUILT_IN_NEEDS, ...customNeeds]
@@ -179,10 +183,19 @@ export default function CanvasScreen({ state, updateCanvas }) {
     closePicker()
   }
 
-  function handleSave() {
-    if (!canSave) return
-    for (const need of allNeeds) {
-      updateCanvas(need.id, canvas[need.id])
+  async function handleSave() {
+    if (!canSave || saveStatus === 'saving') return
+    setSaveStatus('saving')
+    try {
+      await Promise.all(allNeeds.map(need => updateCanvas(need.id, canvas[need.id])))
+      setSaveStatus('saved')
+      scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+      if (saveStatusTimer.current) clearTimeout(saveStatusTimer.current)
+      saveStatusTimer.current = setTimeout(() => setSaveStatus('idle'), 2000)
+    } catch (err) {
+      setSaveStatus('error')
+      if (saveStatusTimer.current) clearTimeout(saveStatusTimer.current)
+      saveStatusTimer.current = setTimeout(() => setSaveStatus('idle'), 3000)
     }
   }
 
@@ -206,13 +219,21 @@ export default function CanvasScreen({ state, updateCanvas }) {
         <div className={styles.sub}>assign each need a mode. one exploration, up to two appreciation, four nourishment, four survival.</div>
       </div>
 
-      <div className={styles.scroll}>
+      <div className={styles.scroll} ref={scrollRef}>
         <button
           className={styles.saveBtn}
           onClick={handleSave}
-          style={!canSave ? { opacity: 0.35, pointerEvents: 'none' } : {}}
+          disabled={saveStatus === 'saving'}
+          style={
+            !canSave ? { opacity: 0.35, pointerEvents: 'none' } :
+            saveStatus === 'error' ? { color: '#D93B1C', border: '0.5px solid #D93B1C' } :
+            {}
+          }
         >
-          save canvas
+          {saveStatus === 'saving' ? 'saving…'
+            : saveStatus === 'saved' ? 'canvas saved ✓'
+            : saveStatus === 'error' ? 'something went wrong — try again'
+            : 'save canvas'}
         </button>
         {!canSave && (
           <div className={styles.saveNote}>add at least one appreciation or exploration need to save your canvas.</div>

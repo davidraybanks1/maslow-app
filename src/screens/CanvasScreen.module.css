@@ -27,6 +27,8 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+.saveBtn:active { opacity: 0.75; transform: scale(0.98); }
+
 .saveNote {
   font-family: var(--font-mono);
   font-size: 11px;

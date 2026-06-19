@@ -187,30 +187,37 @@ export function useAppState(onSignIn) {
   useEffect(() => { saveState(state) }, [state])
 
   function updateCanvas(needId, mode) {
-    if (mode == null && UNIVERSAL_NEEDS.includes(needId)) return
+    if (mode == null && UNIVERSAL_NEEDS.includes(needId)) return Promise.resolve()
 
     if (needId === 'rest' && ABOVE_NOURISHMENT_MODES.includes(mode)) {
       console.warn(`updateCanvas: rest cannot be set to "${mode}" — capping at nourishment`)
       mode = 'nourishment'
     }
 
-    setState(prev => {
-      const previousCanvas = prev.canvas
-      const newCanvas = { ...prev.canvas }
-      if (mode == null) {
-        delete newCanvas[needId]
-      } else {
-        newCanvas[needId] = mode
-      }
-      if (prev.userId) {
-        supabase.from('users').update({ canvas: newCanvas }).eq('id', prev.userId).then(({ error }) => {
-          if (error) {
-            logSupabaseError('updateCanvas', error)
-            setState(p => ({ ...p, canvas: previousCanvas }))
-          }
-        })
-      }
-      return { ...prev, canvas: newCanvas }
+    return new Promise((resolve, reject) => {
+      setState(prev => {
+        const previousCanvas = prev.canvas
+        const newCanvas = { ...prev.canvas }
+        if (mode == null) {
+          delete newCanvas[needId]
+        } else {
+          newCanvas[needId] = mode
+        }
+        if (prev.userId) {
+          supabase.from('users').update({ canvas: newCanvas }).eq('id', prev.userId).then(({ error }) => {
+            if (error) {
+              logSupabaseError('updateCanvas', error)
+              setState(p => ({ ...p, canvas: previousCanvas }))
+              reject(error)
+            } else {
+              resolve()
+            }
+          })
+        } else {
+          resolve()
+        }
+        return { ...prev, canvas: newCanvas }
+      })
     })
   }
 
