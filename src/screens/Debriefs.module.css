@@ -29,6 +29,22 @@
 .newBtnLabel { font-family: var(--font-mono); font-size: 14px; color: var(--bg2); letter-spacing: 0.02em; }
 .newBtnSub { font-family: var(--font-mono); font-size: 11px; font-weight: 200; color: rgba(245,243,237,0.6); }
 
+/* ── Filter row ── */
+.filterRow { display: flex; gap: 6px; margin-bottom: 12px; }
+.filterPill {
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 0.5px solid var(--border);
+  background: transparent;
+  color: var(--ink2);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: lowercase;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.filterPillActive { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
 /* ── Episode history card ── */
 .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: 12px; padding: 4px 16px; margin-bottom: 16px; }
 
@@ -77,6 +93,34 @@
 .addBtn:hover:not(:disabled) { background: var(--bg2); }
 .addBtn:disabled { opacity: 0.35; cursor: not-allowed; }
 
+.envNote { font-family: var(--font-mono); font-size: 11px; font-weight: 200; color: var(--ink4); line-height: 1.5; margin: -4px 0 10px; }
+
+/* ── New debrief: choose type ── */
+.chooseTitle { font-family: var(--font-serif); font-size: 22px; font-weight: 400; color: var(--ink); letter-spacing: -0.01em; margin-bottom: 16px; }
+
+.chooseCardAnxiety {
+  border: 0.5px solid var(--border);
+  border-left: 3px solid #D93B1C;
+  background: rgba(217,59,28,0.05);
+  border-radius: 0 12px 12px 0;
+  padding: 18px 16px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.chooseCardPeak {
+  border: 0.5px solid var(--border);
+  border-left: 3px solid #1B3A2D;
+  background: rgba(27,58,45,0.05);
+  border-radius: 0 12px 12px 0;
+  padding: 18px 16px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.chooseCardLabel { font-family: 'Instrument Serif', serif; font-size: 18px; font-weight: 400; color: var(--ink); text-transform: lowercase; margin-bottom: 6px; }
+.chooseCardDesc { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink2); line-height: 1.5; }
+
 /* ── Full-screen overlay ── */
 .overlay {
   position: fixed;
@@ -124,7 +168,9 @@
 .overlayContent::-webkit-scrollbar { display: none; }
 
 /* ── Detail overlay ── */
-.detailDate { font-family: var(--font-mono); font-size: 12px; color: var(--ink3); margin-bottom: 20px; }
+.detailDateRow { display: flex; align-items: baseline; gap: 8px; margin-bottom: 20px; }
+.detailDate { font-family: var(--font-mono); font-size: 12px; color: var(--ink3); }
+.detailTypeLabel { font-family: var(--font-mono); font-size: 10px; color: var(--ink4); text-transform: lowercase; }
 .hairline { height: 0.5px; background: var(--border); margin: 20px 0; }
 .detailSectionLabel { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink3); margin-bottom: 10px; }
 .detailSectionBody { font-family: var(--font-mono); font-size: 13px; font-weight: 200; color: var(--ink); line-height: 1.7; white-space: pre-wrap; }

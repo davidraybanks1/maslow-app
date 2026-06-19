@@ -3,6 +3,7 @@ import { NEEDS, MODES, MODE_ORDER } from './constants'
 const MOOD_RANK = { bad: 1, fine: 2, good: 3 }
 
 export const DEBRIEF_NATURE_COLORS = { frenetic: '#D93B1C', overwhelm: '#E8B81F', apathy: '#B8C3B1' }
+export const DEBRIEF_PEAK_COLORS = { confident: '#1B3A2D', creative: '#E8B81F', curious: '#B8C3B1' }
 export const DEBRIEF_ENVIRONMENT_COLORS = { work: '#1A1A1A', home: '#B8C3B1', social: '#7A8FA6', personal: '#E8B81F' }
 const DEBRIEF_DEFAULT_COLOR = '#999999'
 
@@ -434,40 +435,51 @@ export function createDataStats({ canvas, checkins, moods, practices }) {
 
   function getDebriefStats(debriefs) {
     const list = debriefs || []
-    const byNature = countByField(list, 'nature', DEBRIEF_NATURE_COLORS)
+    const anxietyDebriefs = list.filter(d => d.type === 'anxiety' || !d.type)
+    const peakDebriefs = list.filter(d => d.type === 'peak')
+
+    const byNatureAnxiety = countByField(anxietyDebriefs, 'nature', DEBRIEF_NATURE_COLORS)
+    const byTypePeak = countByField(peakDebriefs, 'nature', DEBRIEF_PEAK_COLORS)
     const byEnvironment = countByField(list, 'environment', DEBRIEF_ENVIRONMENT_COLORS)
 
-    let pattern = null
-    if (list.length >= 5 && byNature.length > 0) {
-      const domNature = byNature[0].name
-      const natureEpisodes = list.filter(d => d.nature === domNature)
+    function findPattern(episodes, metValue, sentence) {
+      if (episodes.length < 3) return null
+      const byType = countByField(episodes, 'nature', {})
+      if (byType.length === 0) return null
+      const domType = byType[0].name
+      const typeEpisodes = episodes.filter(d => d.nature === domType)
+      if (typeEpisodes.length < 3) return null
+      const domEnvironment = countByField(typeEpisodes, 'environment', {})[0].name
+      const subset = typeEpisodes.filter(d => d.environment === domEnvironment)
 
-      if (natureEpisodes.length >= 3) {
-        const domEnvironment = countByField(natureEpisodes, 'environment', DEBRIEF_ENVIRONMENT_COLORS)[0].name
-        const subset = natureEpisodes.filter(d => d.environment === domEnvironment)
-
-        let domNeed = null
-        let domNeedCount = 0
-        for (const need of NEEDS) {
-          if (!canvas[need.id]) continue
-          const unmetCount = subset.filter(d => isNeedMet(need, d.date_key) === false).length
-          if (unmetCount > domNeedCount) { domNeedCount = unmetCount; domNeed = need }
-        }
-
-        if (domNeed) {
-          pattern = `${domNeedCount} of your ${natureEpisodes.length} ${domNature} episodes happened at ${domEnvironment} on days when ${domNeed.name.toLowerCase()} went unmet.`
-        }
+      let domNeed = null
+      let domNeedCount = 0
+      for (const need of NEEDS) {
+        if (!canvas[need.id]) continue
+        const count = subset.filter(d => isNeedMet(need, d.date_key) === metValue).length
+        if (count > domNeedCount) { domNeedCount = count; domNeed = need }
       }
+      if (!domNeed) return null
+      return sentence({ domType, domEnvironment, domNeed, count: typeEpisodes.length, matchCount: domNeedCount })
     }
+
+    const patternAnxiety = findPattern(anxietyDebriefs, false, ({ domType, domEnvironment, domNeed, count, matchCount }) =>
+      `${matchCount} of your ${count} ${domType} episodes happened at ${domEnvironment} on days when ${domNeed.name.toLowerCase()} went unmet.`
+    )
+
+    const patternPeak = findPattern(peakDebriefs, true, ({ domEnvironment, domNeed }) =>
+      `most peak moments happen when ${domEnvironment} on days when ${domNeed.name.toLowerCase()} was completed.`
+    )
 
     const recentEpisodes = list.slice(0, 10).map(d => ({
       date: d.date_key,
+      type: d.type || 'anxiety',
       nature: d.nature,
       environment: d.environment,
       excerpt: (d.entry || '').slice(0, 80),
     }))
 
-    return { byNature, byEnvironment, pattern, recentEpisodes }
+    return { byNatureAnxiety, byTypePeak, byEnvironment, patternAnxiety, patternPeak, recentEpisodes }
   }
 
   function getLiveCanvas(rangeDays) {
