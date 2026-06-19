@@ -54,7 +54,7 @@ const ANXIETY_LEVEL_OPTIONS = [
   {
     id: 'major',
     name: 'a major part of my life',
-    desc: 'present most days, shaping how thinking, working, and relating to people happens. it runs in the background constantly.',
+    desc: 'shaping how I think, work, and relate to people. it runs in the background constantly.',
   },
   {
     id: 'comes-and-goes',
@@ -455,10 +455,12 @@ function OnboardingAccount({ destination, recommendation, updateCanvas, onDone }
 
   const [loading, setLoading]       = useState(false)
   const [error, setError]           = useState(null)
+  const [duplicateAccount, setDuplicateAccount] = useState(false)
 
   async function handleSignUp() {
     setLoading(true)
     setError(null)
+    setDuplicateAccount(false)
     signInNavRef.skip = true
 
     const { data, error: authErr } = await supabase.auth.signUp({
@@ -468,7 +470,13 @@ function OnboardingAccount({ destination, recommendation, updateCanvas, onDone }
 
     if (authErr) {
       signInNavRef.skip = false
-      setError(authErr.message)
+      const msg = (authErr.message || '').toLowerCase()
+      const isDuplicate = authErr.code === 'user_already_exists' || msg.includes('already registered') || msg.includes('already exists')
+      if (isDuplicate) {
+        setDuplicateAccount(true)
+      } else {
+        setError(authErr.message)
+      }
       setLoading(false)
       return
     }
@@ -560,7 +568,7 @@ function OnboardingAccount({ destination, recommendation, updateCanvas, onDone }
               type="email"
               placeholder="your email"
               value={email}
-              onChange={e => setEmail(e.target.value)}
+              onChange={e => { setEmail(e.target.value); setError(null); setDuplicateAccount(false) }}
               autoComplete="email"
             />
             <input
@@ -605,8 +613,13 @@ function OnboardingAccount({ destination, recommendation, updateCanvas, onDone }
           <button className="btn-primary" onClick={handleSignUp} disabled={!canSubmit || loading}>
             {loading ? 'creating account…' : 'create account →'}
           </button>
-          <div className={styles.authToggle} onClick={() => { setMode('signin'); setError(null) }}>
-            already have an account? sign in
+          {duplicateAccount && (
+            <div className={styles.duplicateNote}>
+              looks like you already have an account. <span className={styles.duplicateLink} onClick={() => { setMode('signin'); setError(null); setDuplicateAccount(false) }}>sign in instead →</span>
+            </div>
+          )}
+          <div className={styles.signInPrompt}>
+            already have an account? <span className={styles.signInLink} onClick={() => { setMode('signin'); setError(null); setDuplicateAccount(false) }}>sign in →</span>
           </div>
           <div className={styles.skipLink} onClick={() => onDone(destination)}>
             skip for now — i'll save my account later
@@ -776,7 +789,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
             </div>
             <div className={styles.infoCard}>
               <div className={styles.infoCardEyebrow}>WHAT YOU GET</div>
-              <div className={styles.infoRow}><span className={styles.infoTerm}>a canvas</span> — your needs, each with a mode that sets the daily expectation</div>
+              <div className={styles.infoRow} style={{ background: 'rgba(232,184,31,0.12)' }}><span className={styles.infoTerm}>a canvas</span> — your needs, each with a mode that sets the daily expectation</div>
               <div className={styles.infoRow}><span className={styles.infoTerm}>a practice library</span> — the specific things you do each day to meet each need</div>
               <div className={styles.infoRow}><span className={styles.infoTerm}>data</span> — patterns that show what's working and what's costing you.</div>
             </div>
@@ -799,7 +812,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
           <button className={styles.backBtn} onClick={() => setStep(0)}>← back</button>
           <div className={styles.eyebrow}>STEP 1 OF 7 — ANXIETY</div>
           <div className={styles.headline}>what's your relationship with anxiety?</div>
-          <div className={styles.sub}>be honest — there's no right answer. this shapes how much stabilizing work the canvas needs to do.</div>
+          <div className={styles.sub}>be honest — there's no right answer.</div>
           <div className={styles.options}>
             {ANXIETY_LEVEL_OPTIONS.map(opt => (
               <div
@@ -901,7 +914,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
         <div className={styles.content}>
           <button className={styles.backBtn} onClick={() => setStep(3)}>← back</button>
           <div className={styles.eyebrow}>STEP 4 OF 7 — YOUR SEASON</div>
-          <div className={styles.headline}>what's the most accurate picture of right now?</div>
+          <div className={styles.headline}>what does life look like right now?</div>
           <div className={styles.sub}>seasons change. the canvas should reflect where things actually are, not where they'd ideally be.</div>
           <div className={styles.twoColGrid}>
             {SEASON_OPTIONS.map(s => (
@@ -991,7 +1004,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
         <div className={styles.content}>
           <button className={styles.backBtn} onClick={() => setStep(6)}>← back</button>
           <div className={styles.eyebrow}>STEP 7 OF 7 — WHAT CAN WAIT</div>
-          <div className={styles.headline}>what's not calling for attention right now?</div>
+          <div className={styles.headline}>what doesn't need attention right now?</div>
           <div className={styles.sub}>not ignored — just not taking up mental space. these won't appear on the canvas until the time is right.</div>
           <div className={styles.twoColGrid}>
             {CAN_WAIT_OPTIONS.map(opt => {
@@ -1028,7 +1041,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
           <button className={styles.backBtn} onClick={() => setStep(7)}>← back</button>
           <div className={styles.eyebrow}>YOUR CANVAS</div>
           <div className={styles.headline}>here's what we're working with.</div>
-          <div className={styles.sub}>needs are placed in modes that determine how much daily energy each one gets. tap any mode to change it.</div>
+          <div className={styles.sub}>this is your canvas. it recommends needs you should focus on and the mode in which you should approach them. this is just a starting point — change anything that doesn't feel right. tap a mode to change it.</div>
 
           <div className={styles.howItWorksCard}>
             <div className={styles.howItWorksEyebrow}>HOW THE CANVAS WORKS</div>

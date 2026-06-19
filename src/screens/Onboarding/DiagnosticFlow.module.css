@@ -263,7 +263,8 @@
 }
 .needGridCardSelected { border: 2px solid var(--ink); background: var(--bg3); }
 .needGridCardSelected::after { content: ''; position: absolute; top: 12px; right: 12px; width: 10px; height: 10px; border-radius: 50%; background: var(--ink); }
-.needGridCardWait { border-color: var(--border2); background: var(--bg2); }
+.needGridCardWait { border: 2px solid var(--ink); background: var(--bg3); }
+.needGridCardWait::after { content: ''; position: absolute; top: 12px; right: 12px; width: 10px; height: 10px; border-radius: 50%; background: var(--ink); }
 .needGridName {
   font-family: 'Instrument Serif', serif;
   font-size: 14px;
@@ -288,6 +289,14 @@
 
 .authToggle { font-family: var(--font-mono); font-size: 11px; font-weight: 200; color: var(--ink3); text-align: center; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .authToggle:hover { color: var(--ink2); }
+
+.signInPrompt { font-family: var(--font-mono); font-size: 11px; font-weight: 200; color: var(--ink3); text-align: center; }
+.signInLink { color: var(--ink); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.signInLink:hover { opacity: 0.7; }
+
+.duplicateNote { font-family: var(--font-mono); font-size: 11px; font-weight: 200; color: var(--ink2); text-align: center; line-height: 1.6; }
+.duplicateLink { color: var(--ink); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.duplicateLink:hover { opacity: 0.7; }
 
 .skipLink { font-family: var(--font-mono); font-size: 11px; font-weight: 200; color: var(--ink4); text-align: center; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .skipLink:hover { color: var(--ink3); }
