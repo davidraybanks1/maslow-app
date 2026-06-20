@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { NEEDS, MODE_MAX_BUBBLES } from '../lib/constants'
-import { weekKey, loadJournalEntry, loadDebriefs, loadDebriefTypes, saveNoteToSelf, saveWeeklyReview } from '../lib/store'
+import { weekKey, loadJournalEntry, loadDebriefs, loadDebriefTypes, saveNoteToSelf, saveWeeklyReview, loadWeeklyReviews, loadUserCreatedAt } from '../lib/store'
 import { createDataStats } from '../lib/dataStats'
 import { natureTagStyle, peakTagStyle, ENVIRONMENT_TAG_STYLE } from '../lib/debriefTypes'
 import LiveCanvasCard from '../components/LiveCanvasCard'
@@ -59,6 +59,44 @@ function todayWeekdayMonday() {
 function formatCardDate(dateKey) {
   const d = new Date(dateKey + 'T12:00:00')
   return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toLowerCase()
+}
+
+function formatHistoryDate(dateKey) {
+  const d = new Date(dateKey + 'T12:00:00')
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toLowerCase()
+}
+
+// Monday-indexed (0=Mon..6=Sun) review day -> the matching JS Date.getDay() value (0=Sun..6=Sat)
+function reviewDayToJsDay(reviewDay) {
+  return (reviewDay + 1) % 7
+}
+
+function firstScheduledDateOnOrAfter(startDate, reviewDay) {
+  const targetJsDay = reviewDayToJsDay(reviewDay)
+  const d = new Date(startDate)
+  d.setHours(12, 0, 0, 0)
+  while (d.getDay() !== targetJsDay) d.setDate(d.getDate() + 1)
+  return d
+}
+
+// Builds one row per scheduled review week from account creation through today, filling in
+// any week with no saved weekly_reviews row as a missed (×) entry.
+function buildReviewHistory(createdAt, reviewDay, realReviews) {
+  if (!createdAt) return realReviews
+  const realByWeek = new Map(realReviews.map(r => [r.week_starting, r]))
+
+  const today = new Date()
+  today.setHours(12, 0, 0, 0)
+  let cursor = firstScheduledDateOnOrAfter(createdAt, reviewDay)
+
+  const rows = []
+  while (cursor <= today) {
+    const ws = weekKey(cursor)
+    rows.push(realByWeek.get(ws) || { week_starting: ws, weekly_mood: null, steps_completed: 0 })
+    cursor = new Date(cursor)
+    cursor.setDate(cursor.getDate() + 7)
+  }
+  return rows.sort((a, b) => b.week_starting.localeCompare(a.week_starting))
 }
 
 function formatReviewTime(time) {
@@ -379,7 +417,16 @@ export default function Log({ state, setNoteToSelf }) {
   const [noteDraft, setNoteDraft] = useState('')
   const [finishing, setFinishing] = useState(false)
 
+  const [reviewHistory, setReviewHistory] = useState([])
+
   const stats = createDataStats({ canvas: state.canvas || {}, checkins: state.checkins || {}, moods: state.moods || [], practices: state.practices || {} })
+
+  useEffect(() => {
+    if (!state.userId) return
+    Promise.all([loadWeeklyReviews(state.userId), loadUserCreatedAt(state.userId)]).then(([realReviews, createdAt]) => {
+      setReviewHistory(buildReviewHistory(createdAt, state.reviewDay ?? 0, realReviews))
+    })
+  }, [state.userId, state.reviewDay])
 
   async function startReview() {
     setWeeklyMood(null)
@@ -438,6 +485,8 @@ export default function Log({ state, setNoteToSelf }) {
         weeklyMood,
         stepsCompleted: stepsCompletedCount + 1,
       })
+      const [realReviews, createdAt] = await Promise.all([loadWeeklyReviews(state.userId), loadUserCreatedAt(state.userId)])
+      setReviewHistory(buildReviewHistory(createdAt, state.reviewDay ?? 0, realReviews))
     }
     setFinishing(false)
     setReviewStep(null)
@@ -588,7 +637,7 @@ export default function Log({ state, setNoteToSelf }) {
   return (
     <div className={styles.screen}>
       <div className={styles.header}>
-        <div className={styles.title}>log.</div>
+        <div className={styles.title}>weekly review.</div>
         <div className={styles.sub}>your weekly review and daily log.</div>
       </div>
       <div className={styles.content}>
@@ -616,6 +665,30 @@ export default function Log({ state, setNoteToSelf }) {
         </div>
 
         {showFullLog && <FullLogAccordion state={state} />}
+
+        <div className={styles.reviewHistoryLabel}>REVIEW HISTORY</div>
+        {reviewHistory.length === 0 ? (
+          <div className={styles.reviewHistoryEmpty}>no reviews yet — complete your first weekly review above.</div>
+        ) : (
+          <div className={styles.reviewHistoryList}>
+            {reviewHistory.map((r, i) => (
+              <div key={r.week_starting}>
+                {i > 0 && <div className={styles.reviewHistoryDivider} />}
+                <div className={styles.reviewHistoryRow}>
+                  <span className={styles.reviewHistoryLeft}>
+                    <span className={styles.reviewHistoryPrefix}>review:</span>
+                    <span className={styles.reviewHistoryDate}>{formatHistoryDate(r.week_starting)}</span>
+                  </span>
+                  {r.steps_completed > 0 ? (
+                    <span className={styles.reviewHistoryDone}>✓</span>
+                  ) : (
+                    <span className={styles.reviewHistoryMissed}>×</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

@@ -185,6 +185,52 @@
 }
 .viewFullLogToggle:hover { color: var(--ink2); }
 
+/* ── Review history ── */
+.reviewHistoryLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin: 8px 0 10px;
+}
+.reviewHistoryEmpty {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 200;
+  color: var(--ink4);
+  padding-bottom: 8px;
+}
+.reviewHistoryList {
+  background: var(--bg);
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  padding: 0 16px;
+}
+.reviewHistoryDivider { height: 0.5px; background: var(--border); }
+.reviewHistoryRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 0;
+}
+.reviewHistoryLeft { display: flex; align-items: baseline; gap: 6px; }
+.reviewHistoryPrefix {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink3);
+  flex-shrink: 0;
+}
+.reviewHistoryDate {
+  font-family: 'Instrument Serif', serif;
+  font-size: 14px;
+  color: var(--ink);
+  text-transform: lowercase;
+}
+.reviewHistoryDone { color: #1B3A2D; font-size: 15px; flex-shrink: 0; }
+.reviewHistoryMissed { color: #D93B1C; font-size: 15px; flex-shrink: 0; }
+
 /* ── Guided review shell ── */
 .reviewProgressBar { height: 2px; background: var(--border); flex-shrink: 0; }
 .reviewProgressFill { height: 100%; background: var(--ink); transition: width 0.4s ease; }

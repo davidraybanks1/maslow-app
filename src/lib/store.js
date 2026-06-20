@@ -489,14 +489,24 @@ export async function saveNoteToSelf(userId, note) {
   return { data, error }
 }
 
-export async function loadWeeklyReviews(userId, limit = 4) {
-  const { data } = await supabase
+export async function loadWeeklyReviews(userId, limit) {
+  let query = supabase
     .from('weekly_reviews')
     .select('*')
     .eq('user_id', userId)
     .order('week_starting', { ascending: false })
-    .limit(limit)
+  if (limit) query = query.limit(limit)
+  const { data } = await query
   return data || []
+}
+
+export async function loadUserCreatedAt(userId) {
+  const { data } = await supabase
+    .from('users')
+    .select('created_at')
+    .eq('id', userId)
+    .single()
+  return data?.created_at || null
 }
 
 export async function saveWeeklyReview(userId, { weekStarting, weeklyMood, stepsCompleted }) {
