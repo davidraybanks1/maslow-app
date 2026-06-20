@@ -16,11 +16,11 @@ import styles from './HamburgerMenu.module.css'
 
 const NAV_LINKS = [
   { to: '/today',     label: 'Today',     Icon: IconHome },
+  { to: '/canvas',    label: 'Canvas',    Icon: IconLayoutGrid },
   { to: '/practices', label: 'Practices', Icon: IconList },
-  { to: '/debriefs',  label: 'Debriefs',  Icon: IconNotes },
   { to: '/data',      label: 'Data',      Icon: IconChartBar },
   { to: '/log',       label: 'Log',       Icon: IconCalendar },
-  { to: '/canvas',    label: 'Canvas',    Icon: IconLayoutGrid },
+  { to: '/debriefs',  label: 'Debriefs',  Icon: IconNotes },
 ]
 
 export default function HamburgerMenu({ onClose }) {
