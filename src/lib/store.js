@@ -61,6 +61,8 @@ function migrateState(saved) {
     if (!saved.practices || typeof saved.practices !== 'object') saved.practices = {}
     if (saved.noteToSelf === undefined) saved.noteToSelf = null
     if (saved.showNoteToSelf === undefined) saved.showNoteToSelf = true
+    if (saved.reviewDay === undefined) saved.reviewDay = 0
+    if (saved.reviewTime === undefined) saved.reviewTime = '10:00'
     saved.canvas = sanitizeCanvas(saved.canvas)
 
     return saved
@@ -93,6 +95,8 @@ export function initialState() {
     profile: { name: '' },
     noteToSelf: null,
     showNoteToSelf: true,
+    reviewDay: 0,
+    reviewTime: '10:00',
   }
 }
 
@@ -135,6 +139,8 @@ async function restoreFromSupabase(userId, email) {
       profile: { name: user.name || '' },
       noteToSelf: user.note_to_self || null,
       showNoteToSelf: user.show_note_to_self !== false,
+      reviewDay: user.review_day ?? 0,
+      reviewTime: user.review_time || '10:00',
     }
   } catch (e) {
     console.error('restoreFromSupabase error', e)
@@ -370,6 +376,17 @@ export function useAppState(onSignIn) {
     })
   }
 
+  function updateReviewSchedule(day, time) {
+    setState(prev => {
+      if (prev.userId) {
+        supabase.from('users').update({ review_day: day, review_time: time }).eq('id', prev.userId).then(({ error }) => {
+          if (error) logSupabaseError('updateReviewSchedule', error)
+        })
+      }
+      return { ...prev, reviewDay: day, reviewTime: time }
+    })
+  }
+
   function saveProfile({ name, phone, smsEnabled }) {
     setState(prev => {
       const newProfile = { ...prev.profile, smsEnabled }
@@ -384,7 +401,7 @@ export function useAppState(onSignIn) {
     })
   }
 
-  return { state, authLoading, updateCanvas, addPractice, removePractice, checkIn, logMood, completeOnboarding, loadMoods, saveProfile, setNoteToSelf, updateShowNoteToSelf }
+  return { state, authLoading, updateCanvas, addPractice, removePractice, checkIn, logMood, completeOnboarding, loadMoods, saveProfile, setNoteToSelf, updateShowNoteToSelf, updateReviewSchedule }
 }
 
 export function todayKey() {
@@ -469,6 +486,29 @@ export async function saveNoteToSelf(userId, note) {
     .select()
     .single()
   if (error) logSupabaseError('saveNoteToSelf', error)
+  return { data, error }
+}
+
+export async function loadWeeklyReviews(userId, limit = 4) {
+  const { data } = await supabase
+    .from('weekly_reviews')
+    .select('*')
+    .eq('user_id', userId)
+    .order('week_starting', { ascending: false })
+    .limit(limit)
+  return data || []
+}
+
+export async function saveWeeklyReview(userId, { weekStarting, weeklyMood, stepsCompleted }) {
+  const { data, error } = await supabase
+    .from('weekly_reviews')
+    .upsert(
+      { user_id: userId, week_starting: weekStarting, weekly_mood: weeklyMood, steps_completed: stepsCompleted },
+      { onConflict: 'user_id,week_starting' }
+    )
+    .select()
+    .single()
+  if (error) logSupabaseError('saveWeeklyReview', error)
   return { data, error }
 }
 

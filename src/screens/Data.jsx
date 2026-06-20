@@ -5,17 +5,11 @@ import { loadDebriefs } from '../lib/store'
 import { createDataStats, formatLastDone } from '../lib/dataStats'
 import { natureTagStyle, peakTagStyle, ENVIRONMENT_TAG_STYLE } from '../lib/debriefTypes'
 import { AnxietyEpisodesCard, PeakMomentsCard } from '../components/DebriefStatsCards'
+import LiveCanvasCard from '../components/LiveCanvasCard'
 import styles from './Data.module.css'
 
 const MOOD_PERIODS = ['morning', 'midday', 'evening']
 const WEEKDAY_LETTERS = ['m', 't', 'w', 't', 'f', 's', 's']
-
-const LC_MODE_COLORS = {
-  exploration: '#1B3A2D',
-  appreciation: '#B8C3B1',
-  nourishment: '#E8B81F',
-  survival: '#D93B1C',
-}
 
 function StatCards({ stats, range }) {
   const streak = stats.getStreak()
@@ -62,69 +56,6 @@ function StatCards({ stats, range }) {
         )}
         <div className={styles.statValueMood}>{mode || '—'}</div>
         {direction && <div className={styles.statSub}>{direction === 'up' ? '↑' : '↓'} {prior}</div>}
-      </div>
-    </div>
-  )
-}
-
-function LiveCanvas({ stats, range }) {
-  const { overallPace, canvasTarget, needRows, survivalNeeds } = stats.getLiveCanvas(range)
-
-  return (
-    <div className={styles.card}>
-      <div className={styles.lcEyebrow}>LIVE CANVAS — {range}D PACE</div>
-
-      <div className={styles.lcOverallRow}>
-        <div className={styles.lcOverallLabel}>OVERALL</div>
-        <div className={styles.lcOverallPace}>{overallPace}</div>
-      </div>
-      <div className={styles.lcTrackContainer}>
-        <div className={styles.lcOverallTrack}>
-          <div className={styles.lcOverallFill} style={{ width: `${overallPace}%` }} />
-        </div>
-        <div className={styles.lcTick} style={{ left: `${canvasTarget}%` }} />
-      </div>
-      <div className={styles.lcTrackTarget}>canvas target {canvasTarget}%</div>
-
-      {needRows.length > 0 && <div className={styles.lcDivider} />}
-
-      {needRows.map(({ needId, name, modeColor, pace, target }) => (
-        <div key={needId} className={styles.lcNeedRow}>
-          <div className={styles.lcPip} style={{ background: modeColor }} />
-          <div className={styles.lcNeedName}>{name}</div>
-          <div className={styles.lcNeedTrackContainer}>
-            <div className={styles.lcNeedTrack}>
-              <div className={styles.lcNeedFill} style={{ width: `${pace}%`, background: modeColor }} />
-            </div>
-            <div className={styles.lcNeedTick} style={{ left: `${target}%` }} />
-          </div>
-          <div className={styles.lcNeedPace}>{pace}%</div>
-        </div>
-      ))}
-
-      {survivalNeeds.length > 0 && (
-        <>
-          <div className={styles.lcDivider} />
-          <div className={styles.lcSurvivalRow}>
-            <span className={styles.lcSurvivalX}>✕</span>
-            <span className={styles.lcSurvivalNames}>{survivalNeeds.join(', ')}</span>
-            <span className={styles.lcSurvivalNote}>survival — no tracking</span>
-          </div>
-        </>
-      )}
-
-      <div className={styles.lcDivider} />
-      <div className={styles.lcLegend}>
-        {MODE_ORDER.map(m => (
-          <div key={m} className={styles.lcLegendItem}>
-            <div className={styles.lcLegendPip} style={{ background: LC_MODE_COLORS[m] }} />
-            <span className={styles.lcLegendLabel}>{m}</span>
-          </div>
-        ))}
-        <div className={styles.lcLegendItem}>
-          <div className={styles.lcLegendTick} />
-          <span className={styles.lcLegendLabel}>mode target</span>
-        </div>
       </div>
     </div>
   )
@@ -475,7 +406,7 @@ export default function Data({ state }) {
       {view === 'overview' && (
         <div className={styles.section}>
           <StatCards stats={stats} range={range} />
-          <LiveCanvas stats={stats} range={range} />
+          <LiveCanvasCard stats={stats} range={range} />
           <ModeBars stats={stats} range={range} />
           <PatternCard stats={stats} />
         </div>
