@@ -12,6 +12,7 @@ const MOOD_PILL = {
   fine: { bg: '#B8C3B1', label: 'fine' },
   bad: { bg: '#D93B1C', label: 'hard' },
 }
+const MOOD_PERIODS = ['morning', 'midday', 'evening']
 
 const ANXIETY_SECTION_LABELS = ['1. NAME IT', '2. FEEL IT', '3. EXAMINE IT', '4. RECLAIM IT']
 const PEAK_SECTION_LABELS = ['1. NAME IT', '2. FEEL IT', '3. EXAMINE IT', '4. ANCHOR IT']
@@ -149,11 +150,12 @@ function ReviewStepShell({ pct, eyebrow, headline, sub, onBack, onContinue, onSk
   )
 }
 
-function DayCardExpandedContent({ canvas, checkins, dateKey, journal, debriefs, debriefTypes }) {
+function DayCardExpandedContent({ canvas, checkins, dateKey, moods, journal, debriefs, debriefTypes }) {
   const byNeed = practicesByNeedForDay(checkins, dateKey)
   const needsWithPractices = NEEDS.filter(n => byNeed[n.id])
   const hasPractices = needsWithPractices.length > 0
   const hasJournal = !!journal
+  const dayMoods = moods.filter(m => m.date_key === dateKey)
 
   return (
     <>
@@ -172,9 +174,31 @@ function DayCardExpandedContent({ canvas, checkins, dateKey, journal, debriefs, 
         </>
       )}
 
+      {hasPractices && <div className={styles.expandHairline} />}
+      <div className={styles.detailLabel}>mood</div>
+      <div className={styles.moodPeriodList}>
+        {MOOD_PERIODS.map((period, i) => {
+          const m = dayMoods.find(x => x.prompt_time === period)
+          return (
+            <div key={period}>
+              {i > 0 && <div className={styles.moodPeriodDivider} />}
+              <div className={styles.moodPeriodRow}>
+                <span className={styles.moodPeriodLabel}>{period}</span>
+                {m ? (
+                  <span className={styles.moodPeriodPill} style={{ background: MOOD_PILL[m.mood].bg }}>{m.mood}</span>
+                ) : (
+                  <span className={styles.moodPeriodEmpty}>—</span>
+                )}
+              </div>
+              {m?.note && <div className={styles.moodPeriodNote}>{m.note}</div>}
+            </div>
+          )
+        })}
+      </div>
+
       {hasJournal && (
         <>
-          {hasPractices && <div className={styles.expandHairline} />}
+          <div className={styles.expandHairline} />
           <div className={styles.detailLabel}>journal</div>
           <div className={styles.journalEntryText}>{journal}</div>
         </>
@@ -182,7 +206,7 @@ function DayCardExpandedContent({ canvas, checkins, dateKey, journal, debriefs, 
 
       {debriefs.length > 0 && (
         <>
-          {(hasPractices || hasJournal) && <div className={styles.expandHairline} />}
+          <div className={styles.expandHairline} />
           <div className={styles.detailLabel}>debriefs</div>
           <div className={styles.debriefStack}>
             {debriefs.map((d, i) => {
@@ -265,6 +289,7 @@ function DayCard({ dateKey, canvas, checkins, moods, journal, debriefs, debriefT
               canvas={canvas}
               checkins={checkins}
               dateKey={dateKey}
+              moods={moods}
               journal={journal}
               debriefs={debriefs}
               debriefTypes={debriefTypes}

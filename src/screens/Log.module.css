@@ -59,6 +59,43 @@
   line-height: 1.7;
 }
 
+.moodPeriodList { display: flex; flex-direction: column; }
+.moodPeriodDivider { height: 0.5px; background: var(--border); margin: 8px 0; }
+.moodPeriodRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.moodPeriodLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink3);
+  text-transform: lowercase;
+}
+.moodPeriodPill {
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #fff;
+  flex-shrink: 0;
+}
+.moodPeriodEmpty {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink4);
+  flex-shrink: 0;
+}
+.moodPeriodNote {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink);
+  opacity: 0.6;
+  text-align: right;
+  margin-top: 3px;
+}
+
 .debriefStack { display: flex; flex-direction: column; }
 .debriefBlock { margin-top: 10px; padding-top: 10px; border-top: 0.5px solid var(--border); }
 .debriefTagsRow { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
