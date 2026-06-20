@@ -1,13 +1,12 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { NEEDS, MODE_MAX_BUBBLES } from '../lib/constants'
 import { weekKey, loadJournalEntry, loadDebriefs, loadDebriefTypes, saveNoteToSelf, saveWeeklyReview } from '../lib/store'
 import { createDataStats } from '../lib/dataStats'
+import { natureTagStyle, peakTagStyle, ENVIRONMENT_TAG_STYLE } from '../lib/debriefTypes'
 import LiveCanvasCard from '../components/LiveCanvasCard'
 import styles from './Log.module.css'
 
-const MOOD_COLOR = { good: '#1B3A2D', fine: '#E8B81F', bad: '#D93B1C' }
-const MOOD_PERIODS = ['morning', 'midday', 'evening']
 const MOOD_PILL = {
   good: { bg: '#1B3A2D', label: 'good' },
   fine: { bg: '#B8C3B1', label: 'fine' },
@@ -36,6 +35,8 @@ const NOTE_LIBRARY = [
   "don't play it safe.",
 ]
 
+const EMPTY_DEBRIEF_TYPES = { nature: [], environment: [], peak: [] }
+
 function dateKeyFor(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
@@ -52,13 +53,6 @@ function lastWeekDayKeys() {
 
 function todayWeekdayMonday() {
   return (new Date().getDay() + 6) % 7
-}
-
-function formatDateLabel(dateKey) {
-  const d = new Date(dateKey + 'T12:00:00')
-  const day = d.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
-  const month = d.toLocaleDateString('en-US', { month: 'long' }).toLowerCase()
-  return `${day}, ${month} ${d.getDate()}`
 }
 
 function formatCardDate(dateKey) {
@@ -109,6 +103,20 @@ function dayPracticeCount(canvas, checkins, dateKey) {
   return { total, max }
 }
 
+function practicesByNeedForDay(checkins, dateKey) {
+  const dayCheckins = checkins[dateKey] || []
+  const byNeed = {}
+  for (const c of dayCheckins) {
+    const underscore = c.indexOf('_')
+    if (underscore === -1) continue
+    const needId = c.slice(0, underscore)
+    const text = c.slice(underscore + 1)
+    if (!byNeed[needId]) byNeed[needId] = []
+    byNeed[needId].push(text)
+  }
+  return byNeed
+}
+
 function computeInsight(stats, allDebriefs) {
   const { patternAnxiety, patternPeak } = stats.getDebriefStats(allDebriefs)
   if (patternAnxiety) return patternAnxiety
@@ -141,28 +149,165 @@ function ReviewStepShell({ pct, eyebrow, headline, sub, onBack, onContinue, onSk
   )
 }
 
+function DayCardExpandedContent({ canvas, checkins, dateKey, journal, debriefs, debriefTypes }) {
+  const byNeed = practicesByNeedForDay(checkins, dateKey)
+  const needsWithPractices = NEEDS.filter(n => byNeed[n.id])
+  const hasPractices = needsWithPractices.length > 0
+  const hasJournal = !!journal
+
+  return (
+    <>
+      {hasPractices && (
+        <>
+          <div className={styles.detailLabel}>practices</div>
+          <div className={styles.practicesList}>
+            {needsWithPractices.map((n, i) => (
+              <div key={n.id}>
+                {i > 0 && <div className={styles.practiceDivider} />}
+                <div className={styles.practiceNeedName}>{n.name}</div>
+                <div className={styles.practiceNamesText}>{byNeed[n.id].join(' · ')}</div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {hasJournal && (
+        <>
+          {hasPractices && <div className={styles.expandHairline} />}
+          <div className={styles.detailLabel}>journal</div>
+          <div className={styles.journalEntryText}>{journal}</div>
+        </>
+      )}
+
+      {debriefs.length > 0 && (
+        <>
+          {(hasPractices || hasJournal) && <div className={styles.expandHairline} />}
+          <div className={styles.detailLabel}>debriefs</div>
+          <div className={styles.debriefStack}>
+            {debriefs.map((d, i) => {
+              const isPeak = d.type === 'peak'
+              const sections = splitEntry(d.entry)
+              const labels = isPeak ? PEAK_SECTION_LABELS : ANXIETY_SECTION_LABELS
+              return (
+                <div key={d.id} className={i > 0 ? styles.debriefBlock : ''}>
+                  <div className={styles.debriefTagsRow}>
+                    <span className={styles.debriefSmallTag} style={isPeak ? peakTagStyle(d.nature, debriefTypes.peak) : natureTagStyle(d.nature, debriefTypes.nature)}>{d.nature}</span>
+                    <span className={styles.debriefSmallTag} style={ENVIRONMENT_TAG_STYLE}>{d.environment}</span>
+                  </div>
+                  {labels.map((label, li) => (
+                    <div key={label} className={styles.debriefStepRow}>
+                      <div className={styles.debriefStepLabel}>{label}</div>
+                      <div className={styles.debriefStepBody}>{sections[li] || '—'}</div>
+                    </div>
+                  ))}
+                </div>
+              )
+            })}
+          </div>
+        </>
+      )}
+    </>
+  )
+}
+
+function DayCard({ dateKey, canvas, checkins, moods, journal, debriefs, debriefTypes, isExpanded, onToggle, loading }) {
+  const { total, max } = dayPracticeCount(canvas, checkins, dateKey)
+  const mood = dominantMoodForDay(moods, dateKey)
+  const anxietyCount = debriefs.filter(d => d.type !== 'peak').length
+  const peakCount = debriefs.filter(d => d.type === 'peak').length
+  const isEmpty = total === 0 && !journal && debriefs.length === 0
+
+  if (isEmpty) {
+    return (
+      <div className={styles.dayCard} onClick={onToggle}>
+        <div className={styles.dayCardTop}>
+          <span className={styles.dayCardDate}>{formatCardDate(dateKey)}</span>
+        </div>
+        <div className={styles.dayCardEmptyNote}>nothing logged</div>
+      </div>
+    )
+  }
+
+  const pct = max > 0 ? Math.round((total / max) * 100) : 0
+  const excerpt = journal ? (journal.length > 80 ? `${journal.slice(0, 80)}…` : journal) : null
+
+  return (
+    <div className={styles.dayCard} onClick={onToggle}>
+      <div className={styles.dayCardTop}>
+        <span className={styles.dayCardDate}>{formatCardDate(dateKey)}</span>
+        <span className={styles.dayCardCount}>{total} of {max} practices</span>
+      </div>
+      <div className={styles.dayCardBarTrack}>
+        <div className={styles.dayCardBarFill} style={{ width: `${pct}%` }} />
+      </div>
+      {mood && (
+        <span className={styles.dayCardMoodPill} style={{ background: MOOD_PILL[mood].bg }}>{MOOD_PILL[mood].label}</span>
+      )}
+      {excerpt && <div className={styles.dayCardExcerpt}>{excerpt}</div>}
+      {(anxietyCount > 0 || peakCount > 0) && (
+        <div className={styles.dayCardTags}>
+          {anxietyCount > 0 && (
+            <span className={styles.dayCardTagAnxiety}>{anxietyCount > 1 ? `${anxietyCount} anxiety debriefs` : 'anxiety debrief'}</span>
+          )}
+          {peakCount > 0 && (
+            <span className={styles.dayCardTagPeak}>{peakCount > 1 ? `${peakCount} peak moments` : 'peak moment'}</span>
+          )}
+        </div>
+      )}
+
+      {isExpanded && (
+        <div className={styles.dayCardExpand} onClick={e => e.stopPropagation()}>
+          {loading ? (
+            <div className={styles.detailEmpty}>loading…</div>
+          ) : (
+            <DayCardExpandedContent
+              canvas={canvas}
+              checkins={checkins}
+              dateKey={dateKey}
+              journal={journal}
+              debriefs={debriefs}
+              debriefTypes={debriefTypes}
+            />
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function FullLogAccordion({ state }) {
   const [expandedDay, setExpandedDay] = useState(null)
-  const [journalEntries, setJournalEntries] = useState({})
+  const [journalCache, setJournalCache] = useState({})
+  const [loadingDay, setLoadingDay] = useState(null)
+  const [allDebriefs, setAllDebriefs] = useState([])
+  const [debriefTypes, setDebriefTypes] = useState(EMPTY_DEBRIEF_TYPES)
+
   const moods = state.moods || []
   const canvas = state.canvas || {}
   const checkins = state.checkins || {}
+
+  useEffect(() => {
+    if (!state.userId) return
+    Promise.all([loadDebriefs(state.userId), loadDebriefTypes(state.userId)]).then(([debriefs, types]) => {
+      setAllDebriefs(debriefs)
+      setDebriefTypes(types)
+    })
+  }, [state.userId])
 
   const allDayKeys = [...new Set([
     ...Object.keys(checkins),
     ...moods.map(m => m.date_key),
   ])].sort((a, b) => b.localeCompare(a))
 
-  const assignedNeeds = NEEDS.filter(n => canvas[n.id])
-  const totalNeeds = assignedNeeds.length
-
-  function handleRowClick(dateKey) {
+  async function handleToggle(dateKey) {
     if (expandedDay === dateKey) { setExpandedDay(null); return }
     setExpandedDay(dateKey)
-    if (state.userId && journalEntries[dateKey] === undefined) {
-      loadJournalEntry(state.userId, dateKey).then(entry => {
-        setJournalEntries(prev => ({ ...prev, [dateKey]: entry || '' }))
-      })
+    if (state.userId && journalCache[dateKey] === undefined) {
+      setLoadingDay(dateKey)
+      const entry = await loadJournalEntry(state.userId, dateKey)
+      setJournalCache(prev => ({ ...prev, [dateKey]: entry || '' }))
+      setLoadingDay(null)
     }
   }
 
@@ -171,86 +316,22 @@ function FullLogAccordion({ state }) {
   }
 
   return (
-    <div className={styles.card}>
-      {allDayKeys.map((dateKey, idx) => {
-        const dayCheckins = checkins[dateKey] || []
-        const dayMoods = moods.filter(m => m.date_key === dateKey)
-        const needsMet = assignedNeeds.filter(n => dayCheckins.some(c => c.startsWith(`${n.id}_`))).length
-        const isExpanded = expandedDay === dateKey
-        const journal = journalEntries[dateKey]
-
-        const practicesByNeed = {}
-        for (const c of dayCheckins) {
-          const underscore = c.indexOf('_')
-          if (underscore === -1) continue
-          const needId = c.slice(0, underscore)
-          const text = c.slice(underscore + 1)
-          if (!practicesByNeed[needId]) practicesByNeed[needId] = []
-          practicesByNeed[needId].push(text)
-        }
-
-        return (
-          <div key={dateKey}>
-            {idx > 0 && <div className={styles.rowDivider} />}
-            <div className={styles.dayRow} onClick={() => handleRowClick(dateKey)}>
-              <span className={styles.dayLabel}>{formatDateLabel(dateKey)}</span>
-              {totalNeeds > 0 && (dayCheckins.length > 0 || dayMoods.length > 0) && (
-                <span className={styles.dayCount}>{needsMet} of {totalNeeds} needs</span>
-              )}
-            </div>
-
-            {isExpanded && (
-              <div className={styles.dayDetail}>
-                <div className={styles.detailLabel}>mood</div>
-                {dayMoods.length === 0 ? (
-                  <div className={styles.detailEmpty}>no mood data</div>
-                ) : (
-                  <div className={styles.moodList}>
-                    {MOOD_PERIODS.map(period => {
-                      const m = dayMoods.find(x => x.prompt_time === period)
-                      if (!m) return null
-                      return (
-                        <div key={period}>
-                          <div className={styles.moodRow}>
-                            <span className={styles.moodPeriod}>{period}</span>
-                            <span className={styles.moodBadge} style={{ background: MOOD_COLOR[m.mood] }}>{m.mood}</span>
-                          </div>
-                          {m.note && <div className={styles.moodNote}>{m.note}</div>}
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-
-                <div className={styles.detailLabel} style={{ marginTop: 14 }}>practices</div>
-                {Object.keys(practicesByNeed).length === 0 ? (
-                  <div className={styles.detailEmpty}>no practices logged</div>
-                ) : (
-                  <div className={styles.practiceList}>
-                    {NEEDS.filter(n => practicesByNeed[n.id]).map(n => (
-                      <div key={n.id} className={styles.practiceGroup}>
-                        <span className={styles.practiceNeed}>{n.name}</span>
-                        <span className={styles.practiceTexts}>{practicesByNeed[n.id].join(' · ')}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {journal !== undefined && (
-                  <>
-                    <div className={styles.detailLabel} style={{ marginTop: 14 }}>thoughts</div>
-                    {journal ? (
-                      <div className={styles.journalText}>{journal}</div>
-                    ) : (
-                      <div className={styles.detailEmpty}>no journal entry</div>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-        )
-      })}
+    <div className={styles.dayCardList}>
+      {allDayKeys.map(dateKey => (
+        <DayCard
+          key={dateKey}
+          dateKey={dateKey}
+          canvas={canvas}
+          checkins={checkins}
+          moods={moods}
+          journal={journalCache[dateKey]}
+          debriefs={allDebriefs.filter(d => d.date_key === dateKey)}
+          debriefTypes={debriefTypes}
+          isExpanded={expandedDay === dateKey}
+          onToggle={() => handleToggle(dateKey)}
+          loading={loadingDay === dateKey}
+        />
+      ))}
     </div>
   )
 }
@@ -265,6 +346,7 @@ export default function Log({ state, setNoteToSelf }) {
 
   const [weekJournals, setWeekJournals] = useState({})
   const [weekDebriefs, setWeekDebriefs] = useState([])
+  const [reviewDebriefTypes, setReviewDebriefTypes] = useState(EMPTY_DEBRIEF_TYPES)
   const [insightText, setInsightText] = useState(null)
 
   const [weeklyMood, setWeeklyMood] = useState(null)
@@ -293,6 +375,7 @@ export default function Log({ state, setNoteToSelf }) {
     days.forEach((d, i) => { journalMap[d] = entries[i] })
     setWeekJournals(journalMap)
     setWeekDebriefs(allDebriefs.filter(d => days.includes(d.date_key)))
+    setReviewDebriefTypes(types)
     setInsightText(computeInsight(stats, allDebriefs))
   }
 
@@ -355,65 +438,21 @@ export default function Log({ state, setNoteToSelf }) {
         onSkip={() => handleSkip(1)}
       >
         <div className={styles.dayCardList}>
-          {days.map(dateKey => {
-            const { total, max } = dayPracticeCount(canvas, checkins, dateKey)
-            const mood = dominantMoodForDay(moods, dateKey)
-            const journal = weekJournals[dateKey]
-            const dayDebriefs = weekDebriefs.filter(d => d.date_key === dateKey)
-            const hasAnxiety = dayDebriefs.some(d => d.type !== 'peak')
-            const hasPeak = dayDebriefs.some(d => d.type === 'peak')
-            const isExpanded = expandedReviewDay === dateKey
-            const pct = max > 0 ? Math.round((total / max) * 100) : 0
-
-            return (
-              <div key={dateKey} className={styles.dayCard} onClick={() => setExpandedReviewDay(isExpanded ? null : dateKey)}>
-                <div className={styles.dayCardTop}>
-                  <span className={styles.dayCardDate}>{formatCardDate(dateKey)}</span>
-                  <span className={styles.dayCardCount}>{total} of {max} practices</span>
-                </div>
-                <div className={styles.dayCardBarTrack}>
-                  <div className={styles.dayCardBarFill} style={{ width: `${pct}%` }} />
-                </div>
-                {mood && (
-                  <span className={styles.dayCardMoodPill} style={{ background: MOOD_PILL[mood].bg }}>{MOOD_PILL[mood].label}</span>
-                )}
-                {journal && <div className={styles.dayCardExcerpt}>{journal.slice(0, 80)}</div>}
-                {(hasAnxiety || hasPeak) && (
-                  <div className={styles.dayCardTags}>
-                    {hasAnxiety && <span className={styles.dayCardTagAnxiety}>anxiety debrief</span>}
-                    {hasPeak && <span className={styles.dayCardTagPeak}>peak debrief</span>}
-                  </div>
-                )}
-
-                {isExpanded && (
-                  <div className={styles.dayCardExpand} onClick={e => e.stopPropagation()}>
-                    <div className={styles.detailLabel}>journal</div>
-                    {journal ? (
-                      <div className={styles.journalText}>{journal}</div>
-                    ) : (
-                      <div className={styles.detailEmpty}>no journal entry</div>
-                    )}
-                    {dayDebriefs.map(d => {
-                      const isPeak = d.type === 'peak'
-                      const sections = splitEntry(d.entry)
-                      const labels = isPeak ? PEAK_SECTION_LABELS : ANXIETY_SECTION_LABELS
-                      return (
-                        <div key={d.id}>
-                          <div className={styles.detailLabel} style={{ marginTop: 14 }}>{isPeak ? 'peak debrief' : 'anxiety debrief'}</div>
-                          {labels.map((label, li) => (
-                            <div key={label} className={styles.debriefStepRow}>
-                              <div className={styles.debriefStepLabel}>{label}</div>
-                              <div className={styles.debriefStepBody}>{sections[li] || '—'}</div>
-                            </div>
-                          ))}
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-            )
-          })}
+          {days.map(dateKey => (
+            <DayCard
+              key={dateKey}
+              dateKey={dateKey}
+              canvas={canvas}
+              checkins={checkins}
+              moods={moods}
+              journal={weekJournals[dateKey]}
+              debriefs={weekDebriefs.filter(d => d.date_key === dateKey)}
+              debriefTypes={reviewDebriefTypes}
+              isExpanded={expandedReviewDay === dateKey}
+              onToggle={() => setExpandedReviewDay(expandedReviewDay === dateKey ? null : dateKey)}
+              loading={false}
+            />
+          ))}
         </div>
       </ReviewStepShell>
     )

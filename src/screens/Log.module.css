@@ -14,54 +14,7 @@
 /* ── Empty state ── */
 .emptyState { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink4); padding: 24px 0; }
 
-/* ── Day list card ── */
-.card {
-  background: var(--bg);
-  border: 0.5px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-/* ── Day row ── */
-.dayRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 13px 16px;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.dayRow:active { background: var(--bg2); }
-
-.dayLabel {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--ink);
-}
-
-.dayCount {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 200;
-  color: var(--ink4);
-  flex-shrink: 0;
-  margin-left: 12px;
-}
-
-.rowDivider {
-  height: 0.5px;
-  background: var(--border);
-  margin: 0 16px;
-}
-
-/* ── Expanded detail ── */
-.dayDetail {
-  background: var(--bg2);
-  padding: 4px 16px 16px;
-  border-top: 0.5px solid var(--border);
-}
-
+/* ── Shared day-card expanded content (review step 1 + full log accordion) ── */
 .detailLabel {
   font-family: var(--font-mono);
   font-size: 10px;
@@ -79,73 +32,43 @@
   color: var(--ink4);
 }
 
-/* ── Mood ── */
-.moodList { display: flex; flex-direction: column; gap: 5px; }
+.expandHairline { height: 0.5px; background: var(--border); margin: 12px 0; }
 
-.moodRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.moodPeriod {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 200;
-  color: var(--ink3);
-}
-
-.moodBadge {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 0.08em;
-  color: #fff;
-  padding: 2px 8px;
-  border-radius: 20px;
-}
-
-.moodNote {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 200;
-  color: var(--ink3);
-  font-style: italic;
-  margin-top: 2px;
-  margin-bottom: 4px;
-}
-
-/* ── Practices ── */
-.practiceList { display: flex; flex-direction: column; gap: 5px; }
-
-.practiceGroup { display: flex; align-items: baseline; gap: 8px; }
-
-.practiceNeed {
+.practicesList { display: flex; flex-direction: column; }
+.practiceDivider { height: 0.5px; background: var(--border); margin: 10px 0; }
+.practiceNeedName {
   font-family: 'Instrument Serif', serif;
-  font-style: italic;
   font-size: 13px;
   color: var(--ink);
-  flex-shrink: 0;
-  min-width: 80px;
+  text-transform: lowercase;
+  margin-bottom: 2px;
 }
-
-.practiceTexts {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 200;
-  color: var(--ink2);
-}
-
-/* ── Journal ── */
-.journalText {
+.practiceNamesText {
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 200;
   color: var(--ink2);
+  line-height: 1.5;
+}
+
+.journalEntryText {
+  font-family: 'Instrument Serif', serif;
+  font-style: italic;
+  font-size: 14px;
+  color: var(--ink);
   line-height: 1.7;
-  padding: 10px 12px;
-  background: var(--bg);
-  border-radius: 8px;
-  border: 0.5px solid var(--border);
+}
+
+.debriefStack { display: flex; flex-direction: column; }
+.debriefBlock { margin-top: 10px; padding-top: 10px; border-top: 0.5px solid var(--border); }
+.debriefTagsRow { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.debriefSmallTag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: lowercase;
+  white-space: nowrap;
 }
 
 /* ── Default state: review schedule ── */
@@ -359,28 +282,36 @@
 .dayCardExcerpt {
   font-family: 'Instrument Serif', serif;
   font-style: italic;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--ink);
   opacity: 0.6;
   line-height: 1.4;
   margin-bottom: 6px;
 }
-.dayCardTags { display: flex; gap: 6px; }
+.dayCardTags { display: flex; flex-wrap: wrap; gap: 5px; }
 .dayCardTagAnxiety {
-  padding: 2px 9px;
-  border-radius: 20px;
+  padding: 2px 8px;
+  border-radius: 999px;
   font-family: var(--font-mono);
   font-size: 10px;
-  background: rgba(217,59,28,0.1);
+  background: rgba(217,59,28,0.08);
   color: #993C1D;
+  white-space: nowrap;
 }
 .dayCardTagPeak {
-  padding: 2px 9px;
-  border-radius: 20px;
+  padding: 2px 8px;
+  border-radius: 999px;
   font-family: var(--font-mono);
   font-size: 10px;
-  background: rgba(27,58,45,0.1);
+  background: rgba(27,58,45,0.08);
   color: #1B3A2D;
+  white-space: nowrap;
+}
+.dayCardEmptyNote {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 200;
+  color: var(--ink4);
 }
 .dayCardExpand {
   margin-top: 12px;
@@ -392,7 +323,8 @@
 .debriefStepRow { padding: 6px 0; }
 .debriefStepLabel {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 10px;
+  font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink3);
