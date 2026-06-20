@@ -110,16 +110,31 @@ export default function CanvasScreen({ state, updateCanvas }) {
   const [pickerError, setPickerError] = useState(null)
   const [removeError, setRemoveError] = useState(null) // { needId, message }
   const [saveStatus, setSaveStatus] = useState('idle') // 'idle' | 'saving' | 'saved' | 'error'
+  const [titleTipOpen, setTitleTipOpen] = useState(false)
   const errorTimer = useRef(null)
   const removeTimer = useRef(null)
   const saveStatusTimer = useRef(null)
   const scrollRef = useRef(null)
+  const titleTipRef = useRef(null)
 
   useEffect(() => () => {
     if (errorTimer.current) clearTimeout(errorTimer.current)
     if (removeTimer.current) clearTimeout(removeTimer.current)
     if (saveStatusTimer.current) clearTimeout(saveStatusTimer.current)
   }, [])
+
+  useEffect(() => {
+    if (!titleTipOpen) return
+    function handleOutside(e) {
+      if (titleTipRef.current && !titleTipRef.current.contains(e.target)) setTitleTipOpen(false)
+    }
+    document.addEventListener('mousedown', handleOutside, true)
+    document.addEventListener('touchstart', handleOutside, true)
+    return () => {
+      document.removeEventListener('mousedown', handleOutside, true)
+      document.removeEventListener('touchstart', handleOutside, true)
+    }
+  }, [titleTipOpen])
 
   const allNeeds = [...BUILT_IN_NEEDS, ...customNeeds]
   const explorationCount = allNeeds.filter(n => canvas[n.id] === 'exploration').length
@@ -214,9 +229,17 @@ export default function CanvasScreen({ state, updateCanvas }) {
   return (
     <div className={styles.screen}>
       <div className={styles.header}>
-        <div className={styles.eyebrow}>YOUR CANVAS</div>
-        <div className={styles.title}>your canvas</div>
-        <div className={styles.sub}>assign each need a mode. one exploration, up to two appreciation, four nourishment, four survival.</div>
+        <div className={styles.titleRow} ref={titleTipRef}>
+          <div className={styles.title}>your canvas</div>
+          <button className={styles.titleInfoBtn} onClick={() => setTitleTipOpen(o => !o)}>i</button>
+          {titleTipOpen && (
+            <div className={styles.titleTooltip}>
+              <div className={styles.titleTooltipArrow} />
+              your canvas tailors your needs to where you are in life right now. each need is assigned a mode that sets how many practices you commit to daily — exploration gets the deepest commitment, survival keeps the floor stable. your canvas powers your today screen and your data.
+            </div>
+          )}
+        </div>
+        <div className={styles.sub}>add, remove, or move needs between modes to determine the number of practices you commit to each day.</div>
       </div>
 
       <div className={styles.scroll} ref={scrollRef}>
