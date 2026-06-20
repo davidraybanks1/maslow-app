@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { NEEDS, MODES, MODE_ORDER, MODE_MAX_BUBBLES, MODE_WEIGHTS } from '../lib/constants'
-import { todayKey, loadJournalEntry, saveJournalEntry, loadDebriefTypes, loadDebriefs } from '../lib/store'
+import { todayKey, loadJournalEntry, saveJournalEntry, loadDebriefTypes, loadDebriefs, loadNoteToSelf, saveNoteToSelf } from '../lib/store'
 import { createDataStats, getCanvasGuidance } from '../lib/dataStats'
 import DebriefForm from '../components/DebriefForm'
 import PeakDebriefForm from '../components/PeakDebriefForm'
@@ -10,6 +10,19 @@ import styles from './Today.module.css'
 const MOOD_PERIODS = ['morning', 'midday', 'evening']
 const MOODS = ['good', 'fine', 'bad']
 const MOOD_SELECTED_CLASS = { good: 'moodBtnGood', fine: 'moodBtnFine', bad: 'moodBtnBad' }
+
+const NOTE_MAX_LENGTH = 120
+const NOTE_LIBRARY = [
+  'everything can be appreciated. most things can be enjoyed. everything else can be learned from.',
+  'take up space.',
+  'anxiety is just a misfired neurotransmission that was given room to grow.',
+  'everything you want is on the other side of discomfort.',
+  "don't play it safe.",
+]
+
+function formatNoteDate(dateKey) {
+  return new Date(dateKey + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toLowerCase()
+}
 
 function formatScore(v) {
   return Number.isInteger(v) ? String(v) : `${Math.floor(v)}½`
@@ -58,7 +71,7 @@ function GuidanceCard({ type, onDismiss }) {
   )
 }
 
-export default function Today({ state, checkIn, logMood }) {
+export default function Today({ state, checkIn, logMood, setNoteToSelf }) {
   const navigate = useNavigate()
   const today = todayKey()
   const checked = state.checkins[today] || []
@@ -91,6 +104,32 @@ export default function Today({ state, checkIn, logMood }) {
   function handleDismissGuidance() {
     localStorage.setItem(`guidanceDismissed_${guidanceType}_${today}`, '1')
     setGuidanceDismissedNow(true)
+  }
+
+  const [noteEditorOpen, setNoteEditorOpen] = useState(false)
+  const [noteDraft, setNoteDraft] = useState('')
+  const [noteHistory, setNoteHistory] = useState([])
+  const [noteSaveStatus, setNoteSaveStatus] = useState('idle') // 'idle' | 'saving' | 'saved'
+
+  function openNoteEditor() {
+    setNoteDraft(state.noteToSelf || '')
+    setNoteEditorOpen(true)
+    if (state.userId) {
+      loadNoteToSelf(state.userId).then(({ history }) => setNoteHistory(history))
+    }
+  }
+
+  async function handleSaveNote() {
+    setNoteSaveStatus('saving')
+    if (state.userId) {
+      await saveNoteToSelf(state.userId, noteDraft)
+    }
+    setNoteToSelf?.(noteDraft)
+    setNoteSaveStatus('saved')
+    setTimeout(() => {
+      setNoteSaveStatus('idle')
+      setNoteEditorOpen(false)
+    }, 1000)
   }
 
   const [journalEntry, setJournalEntry] = useState('')
@@ -200,6 +239,17 @@ export default function Today({ state, checkIn, logMood }) {
 
       {/* ── Scrollable body ── */}
       <div className={styles.list}>
+
+        {state.showNoteToSelf && state.noteToSelf && (
+          <>
+            <div className={styles.noteRow}>
+              <span className={styles.noteLabel}>note to self:</span>
+              <span className={styles.noteText}>{state.noteToSelf}</span>
+              <button className={styles.notePencilBtn} onClick={openNoteEditor}>✎</button>
+            </div>
+            <div className={styles.noteHairline} />
+          </>
+        )}
 
         {/* ── Progress bar ── */}
         <div className={styles.progressRow}>
@@ -382,6 +432,55 @@ export default function Today({ state, checkIn, logMood }) {
         </div>
 
       </div>
+
+      {noteEditorOpen && (
+        <div className={styles.noteOverlay}>
+          <div className={styles.noteOverlayHeader}>
+            <div className={styles.noteOverlayTitle}>note to self</div>
+            <button className={styles.noteOverlayClose} onClick={() => setNoteEditorOpen(false)}>×</button>
+          </div>
+          <div className={styles.noteOverlayContent}>
+            <div className={styles.noteSectionLabel}>WRITE YOUR OWN</div>
+            <textarea
+              className={styles.noteTextarea}
+              value={noteDraft}
+              onChange={e => setNoteDraft(e.target.value.slice(0, NOTE_MAX_LENGTH))}
+              maxLength={NOTE_MAX_LENGTH}
+              placeholder="what does your future self need to remember this week?"
+              rows={3}
+            />
+            <div className={styles.noteCharCount}>{NOTE_MAX_LENGTH - noteDraft.length} characters remaining</div>
+
+            <div className={styles.noteSectionLabel}>FROM THE LIBRARY</div>
+            <div className={styles.noteLibraryList}>
+              {NOTE_LIBRARY.map((text, i) => (
+                <div key={i} className={styles.noteCard} onClick={() => setNoteDraft(text)}>
+                  {text}
+                </div>
+              ))}
+            </div>
+
+            {noteHistory.length > 0 && (
+              <>
+                <div className={styles.noteSectionLabel}>FROM YOUR HISTORY</div>
+                <div className={styles.noteLibraryList}>
+                  {noteHistory.map((h, i) => (
+                    <div key={i} className={styles.noteHistoryCard} onClick={() => setNoteDraft(h.text)}>
+                      <span className={styles.noteHistoryText}>{h.text}</span>
+                      <span className={styles.noteHistoryDate}>{formatNoteDate(h.date)}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+          <div className={styles.noteOverlayFooter}>
+            <button className={styles.noteSaveBtn} onClick={handleSaveNote} disabled={noteSaveStatus === 'saving'}>
+              {noteSaveStatus === 'saved' ? 'saved ✓' : 'save note →'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

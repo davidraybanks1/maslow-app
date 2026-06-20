@@ -59,6 +59,8 @@ function migrateState(saved) {
     if (!saved.moods) saved.moods = []
     if (!saved.checkins || typeof saved.checkins !== 'object') saved.checkins = {}
     if (!saved.practices || typeof saved.practices !== 'object') saved.practices = {}
+    if (saved.noteToSelf === undefined) saved.noteToSelf = null
+    if (saved.showNoteToSelf === undefined) saved.showNoteToSelf = true
     saved.canvas = sanitizeCanvas(saved.canvas)
 
     return saved
@@ -89,6 +91,8 @@ export function initialState() {
     checkins: {},
     moods: [],
     profile: { name: '' },
+    noteToSelf: null,
+    showNoteToSelf: true,
   }
 }
 
@@ -129,6 +133,8 @@ async function restoreFromSupabase(userId, email) {
       checkins: checkinsMap,
       moods,
       profile: { name: user.name || '' },
+      noteToSelf: user.note_to_self || null,
+      showNoteToSelf: user.show_note_to_self !== false,
     }
   } catch (e) {
     console.error('restoreFromSupabase error', e)
@@ -349,6 +355,21 @@ export function useAppState(onSignIn) {
     }))
   }
 
+  function setNoteToSelf(note) {
+    setState(prev => ({ ...prev, noteToSelf: note }))
+  }
+
+  function updateShowNoteToSelf(value) {
+    setState(prev => {
+      if (prev.userId) {
+        supabase.from('users').update({ show_note_to_self: value }).eq('id', prev.userId).then(({ error }) => {
+          if (error) logSupabaseError('updateShowNoteToSelf', error)
+        })
+      }
+      return { ...prev, showNoteToSelf: value }
+    })
+  }
+
   function saveProfile({ name, phone, smsEnabled }) {
     setState(prev => {
       const newProfile = { ...prev.profile, smsEnabled }
@@ -363,7 +384,7 @@ export function useAppState(onSignIn) {
     })
   }
 
-  return { state, authLoading, updateCanvas, addPractice, removePractice, checkIn, logMood, completeOnboarding, loadMoods, saveProfile }
+  return { state, authLoading, updateCanvas, addPractice, removePractice, checkIn, logMood, completeOnboarding, loadMoods, saveProfile, setNoteToSelf, updateShowNoteToSelf }
 }
 
 export function todayKey() {
@@ -412,6 +433,43 @@ export async function saveJournalEntry(userId, dateKey, entry) {
     .upsert({ user_id: userId, date_key: dateKey, entry }, { onConflict: 'user_id,date_key' })
   if (error) logSupabaseError('saveJournalEntry', error)
   return { error }
+}
+
+export async function loadNoteToSelf(userId) {
+  const { data } = await supabase
+    .from('users')
+    .select('note_to_self, show_note_to_self, note_history')
+    .eq('id', userId)
+    .single()
+  return {
+    note: data?.note_to_self || null,
+    showNote: data?.show_note_to_self !== false,
+    history: Array.isArray(data?.note_history) ? data.note_history : [],
+  }
+}
+
+export async function saveNoteToSelf(userId, note) {
+  const { data: existing } = await supabase
+    .from('users')
+    .select('note_history')
+    .eq('id', userId)
+    .single()
+
+  const history = Array.isArray(existing?.note_history) ? existing.note_history : []
+  const newHistory = [{ text: note, date: todayKey() }, ...history].slice(0, 10)
+
+  const { data, error } = await supabase
+    .from('users')
+    .update({
+      note_to_self: note,
+      note_to_self_updated_at: new Date().toISOString(),
+      note_history: newHistory,
+    })
+    .eq('id', userId)
+    .select()
+    .single()
+  if (error) logSupabaseError('saveNoteToSelf', error)
+  return { data, error }
 }
 
 export async function loadDebriefs(userId) {

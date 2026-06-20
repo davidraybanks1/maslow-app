@@ -8,6 +8,7 @@ import {
   IconNotes,
   IconLock,
   IconBell,
+  IconSettings,
   IconExternalLink,
   IconLogout,
 } from '@tabler/icons-react'
@@ -63,6 +64,10 @@ export default function HamburgerMenu({ onClose }) {
           <Link to="/notifications" onClick={onClose} className={styles.secondaryItem}>
             <span>Notifications</span>
             <IconBell size={15} strokeWidth={1.5} />
+          </Link>
+          <Link to="/settings" onClick={onClose} className={styles.secondaryItem}>
+            <span>Settings</span>
+            <IconSettings size={15} strokeWidth={1.5} />
           </Link>
           <a
             href="https://mymaslow.com/privacy"

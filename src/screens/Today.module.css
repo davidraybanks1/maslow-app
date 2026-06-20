@@ -97,6 +97,178 @@
   text-align: right;
 }
 
+/* ── Note to self ── */
+.noteRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+}
+.noteLabel {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink3);
+  flex-shrink: 0;
+}
+.noteText {
+  font-family: 'Instrument Serif', serif;
+  font-style: italic;
+  font-size: 15px;
+  color: var(--ink);
+  line-height: 1.4;
+  flex: 1;
+  text-align: center;
+}
+.notePencilBtn {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.notePencilBtn:hover { color: var(--ink); }
+.noteHairline { height: 0.5px; background: var(--border); margin-bottom: 10px; }
+
+/* ── Note editor overlay ── */
+.noteOverlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg2);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  animation: noteSlideUp 0.25s ease-out;
+}
+@keyframes noteSlideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.noteOverlayHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 20px 12px;
+  flex-shrink: 0;
+}
+.noteOverlayTitle {
+  font-family: 'Instrument Serif', serif;
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.noteOverlayClose {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  line-height: 1;
+  color: var(--ink3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.noteOverlayClose:hover { color: var(--ink); }
+.noteOverlayContent { flex: 1; overflow-y: auto; padding: 4px 20px 20px; }
+.noteOverlayContent::-webkit-scrollbar { display: none; }
+
+.noteSectionLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin: 20px 0 10px;
+}
+.noteSectionLabel:first-child { margin-top: 0; }
+
+.noteTextarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  font-family: 'Instrument Serif', serif;
+  font-style: italic;
+  font-size: 15px;
+  color: var(--ink);
+  background: var(--bg);
+  outline: none;
+  resize: none;
+}
+.noteTextarea::placeholder { color: var(--ink4); font-style: italic; }
+.noteCharCount {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink3);
+  text-align: right;
+  margin-top: 4px;
+}
+
+.noteLibraryList { display: flex; flex-direction: column; gap: 8px; }
+.noteCard {
+  background: var(--bg);
+  border: 0.5px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-family: 'Instrument Serif', serif;
+  font-style: italic;
+  font-size: 13px;
+  color: var(--ink2);
+  line-height: 1.4;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.noteCard:hover { background: var(--bg2); }
+
+.noteHistoryCard {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--bg);
+  border: 0.5px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.noteHistoryCard:hover { background: var(--bg2); }
+.noteHistoryText {
+  font-family: 'Instrument Serif', serif;
+  font-style: italic;
+  font-size: 13px;
+  color: var(--ink2);
+  line-height: 1.4;
+  flex: 1;
+}
+.noteHistoryDate {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink3);
+  flex-shrink: 0;
+}
+
+.noteOverlayFooter { flex-shrink: 0; padding: 12px 20px 32px; }
+.noteSaveBtn {
+  width: 100%;
+  padding: 14px;
+  background: #1A1A18;
+  color: #F5F3ED;
+  border: none;
+  border-radius: 12px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.noteSaveBtn:disabled { opacity: 0.6; cursor: default; }
+
 /* ── Guidance card ── */
 .guidanceCardGrow {
   border-left: 3px solid #1B3A2D;
