@@ -38,10 +38,9 @@ export default function Practices({ state, addPractice, removePractice, complete
     <div className={styles.screen}>
       <div className={styles.header}>
         <div className={styles.eyebrowRow}>
-          <div className={styles.eyebrow}>PRACTICES</div>
           <button className={styles.editToggle} onClick={() => setEditMode(e => !e)}>{editMode ? 'done' : 'edit'}</button>
         </div>
-        <div className={styles.title}>practice library</div>
+        <div className={styles.title}>your practices.</div>
         <div className={styles.sub}>add or remove practices available for each need.</div>
       </div>
       <div className={`${styles.list} ${showOnboardingCta ? styles.listWithCta : ''}`}>

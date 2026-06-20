@@ -184,9 +184,8 @@ export default function Debriefs({ state }) {
   return (
     <div className={styles.screen}>
       <div className={styles.header}>
-        <div className={styles.eyebrow}>YOUR DEBRIEFS</div>
-        <div className={styles.title}>debriefs</div>
-        <div className={styles.sub}>a record of your anxiety episodes and peak moments.</div>
+        <div className={styles.title}>your debriefs.</div>
+        <div className={styles.sub}>revisit your debriefs or modify the attributes you associate with them.</div>
       </div>
 
       <div className={styles.list}>
