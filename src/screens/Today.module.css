@@ -100,7 +100,7 @@
 /* ── Note to self ── */
 .noteRow {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   padding: 10px 0;
 }
@@ -117,7 +117,7 @@
   color: var(--ink);
   line-height: 1.4;
   flex: 1;
-  text-align: center;
+  text-align: left;
 }
 .notePencilBtn {
   font-family: var(--font-mono);

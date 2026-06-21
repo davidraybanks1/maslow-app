@@ -233,7 +233,7 @@ export default function Today({ state, checkIn, logMood, setNoteToSelf }) {
         <div className={styles.greeting}>good {hour()}.</div>
         <div className={styles.subRow}>
           <span className={styles.dateLabel}>{dateLabel}</span>
-          {streak > 1 && <span className={styles.streak}>{streak} days</span>}
+          {streak >= 1 && <span className={styles.streak}>{streak} day{streak === 1 ? '' : 's'} streak</span>}
         </div>
       </div>
 
