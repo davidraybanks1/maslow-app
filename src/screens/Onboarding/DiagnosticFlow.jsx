@@ -463,7 +463,7 @@ function OnboardingAccount({ destination, recommendation, updateCanvas, onDone }
     setDuplicateAccount(false)
     signInNavRef.skip = true
 
-    const { data, error: authErr } = await supabase.auth.signUp({
+    const { error: authErr } = await supabase.auth.signUp({
       email: email.trim().toLowerCase(),
       password,
     })
@@ -481,7 +481,8 @@ function OnboardingAccount({ destination, recommendation, updateCanvas, onDone }
       return
     }
 
-    const userId = data.user?.id
+    const { data: { user } } = await supabase.auth.getUser()
+    const userId = user?.id
     if (userId && recommendation) {
       const canvasObj = { ...recommendation.universal, ...recommendation.personal }
       await supabase.from('users').upsert({

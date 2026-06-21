@@ -114,6 +114,11 @@ async function restoreFromSupabase(userId, email) {
     const { data: user } = await supabase.from('users').select('*').eq('email', email).single()
     if (!user) return null
 
+    // Rows created before users.id was set to auth.uid() may still carry a mismatched id.
+    if (user.id !== userId) {
+      console.warn('restoreFromSupabase: users.id does not match auth.uid() — likely a pre-migration row', { usersId: user.id, authUid: userId })
+    }
+
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
     const cutoff = thirtyDaysAgo.toISOString().slice(0, 10)
