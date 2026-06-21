@@ -100,7 +100,7 @@
 .chooseCardAnxiety {
   border: 0.5px solid var(--border);
   border-left: 3px solid #D93B1C;
-  background: rgba(217,59,28,0.05);
+  background: rgba(217,59,28,0.06);
   border-radius: 0 12px 12px 0;
   padding: 18px 16px;
   margin-bottom: 12px;
@@ -110,7 +110,7 @@
 .chooseCardPeak {
   border: 0.5px solid var(--border);
   border-left: 3px solid #1B3A2D;
-  background: rgba(27,58,45,0.05);
+  background: rgba(27,58,45,0.06);
   border-radius: 0 12px 12px 0;
   padding: 18px 16px;
   margin-bottom: 12px;
