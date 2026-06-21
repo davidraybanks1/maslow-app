@@ -12,7 +12,6 @@ import SignIn from './screens/SignIn'
 import ComingSoon from './screens/ComingSoon'
 import UpdatePassword from './screens/UpdatePassword'
 import Settings from './screens/Settings'
-import WeeklyReviewSettings from './screens/WeeklyReviewSettings'
 import HamburgerMenu from './components/HamburgerMenu'
 import AppHeader from './components/AppHeader'
 import styles from './App.module.css'
@@ -75,8 +74,7 @@ function AppInner() {
           <Route path="/signin" element={<SignIn />} />
           <Route path="/password" element={<Protected onboarded={state.onboarded}><UpdatePassword /></Protected>} />
           <Route path="/notifications" element={<Protected onboarded={state.onboarded}><ComingSoon title="Notifications" /></Protected>} />
-          <Route path="/settings" element={<Protected onboarded={state.onboarded}><Settings state={state} updateShowNoteToSelf={updateShowNoteToSelf} /></Protected>} />
-          <Route path="/review-settings" element={<Protected onboarded={state.onboarded}><WeeklyReviewSettings state={state} updateReviewSchedule={updateReviewSchedule} /></Protected>} />
+          <Route path="/settings" element={<Protected onboarded={state.onboarded}><Settings state={state} updateShowNoteToSelf={updateShowNoteToSelf} updateReviewSchedule={updateReviewSchedule} /></Protected>} />
         </Routes>
       </div>
       {menuOpen && <HamburgerMenu onClose={() => setMenuOpen(false)} />}
