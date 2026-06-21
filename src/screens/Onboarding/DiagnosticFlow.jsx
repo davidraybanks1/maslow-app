@@ -788,8 +788,8 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
               to get started, give thoughtful, honest answers to the following questions and maslow will propose a canvas tailored to you.
             </div>
             <div className={styles.infoCard}>
-              <div className={styles.infoCardEyebrow}>WHAT YOU GET</div>
-              <div className={styles.infoRow} style={{ background: 'rgba(232,184,31,0.12)' }}><span className={styles.infoTerm}>a canvas</span> — your needs, each with a mode that sets the daily expectation</div>
+              <div className={styles.infoCardEyebrow} style={{ background: 'rgba(232,184,31,0.15)' }}>WHAT YOU GET</div>
+              <div className={styles.infoRow}><span className={styles.infoTerm}>a canvas</span> — your needs, each with a mode that sets the daily expectation</div>
               <div className={styles.infoRow}><span className={styles.infoTerm}>a practice library</span> — the specific things you do each day to meet each need</div>
               <div className={styles.infoRow}><span className={styles.infoTerm}>data</span> — patterns that show what's working and what's costing you.</div>
             </div>
