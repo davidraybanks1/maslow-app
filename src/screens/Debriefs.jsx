@@ -8,6 +8,7 @@ import {
   CUSTOM_TYPE_SWATCHES,
   natureTagStyle,
   peakTagStyle,
+  parseDebriefEntry,
 } from '../lib/debriefTypes'
 import { createDataStats } from '../lib/dataStats'
 import { AnxietyEpisodesCard, PeakMomentsCard } from '../components/DebriefStatsCards'
@@ -41,17 +42,9 @@ function groupByMonth(debriefs) {
   return groups
 }
 
-function splitEntry(entry) {
-  const parts = (entry || '').split(/\n\s*\n/).map(p => p.trim()).filter(Boolean)
-  const sections = ['', '', '', '']
-  for (let i = 0; i < Math.min(parts.length, 3); i++) sections[i] = parts[i]
-  if (parts.length > 3) sections[3] = parts.slice(3).join('\n\n')
-  return sections
-}
-
 function DetailOverlay({ debrief, debriefTypes, onClose }) {
-  const sections = splitEntry(debrief.entry)
   const isPeak = debrief.type === 'peak'
+  const { sections, isLegacy } = parseDebriefEntry(debrief.entry, isPeak)
   const tagStyle = isPeak ? peakTagStyle(debrief.nature, debriefTypes.peak) : natureTagStyle(debrief.nature, debriefTypes.nature)
   const sectionLabels = isPeak ? PEAK_SECTION_LABELS : ANXIETY_SECTION_LABELS
   return (
@@ -75,6 +68,7 @@ function DetailOverlay({ debrief, debriefTypes, onClose }) {
             {sections[i]
               ? <div className={styles.detailSectionBody}>{sections[i]}</div>
               : <div className={styles.detailSectionEmpty}>—</div>}
+            {isLegacy && i === 0 && <div className={styles.legacyNote}>— recorded before structured fields</div>}
           </div>
         ))}
       </div>

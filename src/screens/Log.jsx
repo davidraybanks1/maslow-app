@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { NEEDS, MODE_MAX_BUBBLES } from '../lib/constants'
 import { weekKey, loadJournalEntry, loadDebriefs, loadDebriefTypes, saveNoteToSelf, saveWeeklyReview, loadWeeklyReviews, loadUserCreatedAt } from '../lib/store'
 import { createDataStats } from '../lib/dataStats'
-import { natureTagStyle, peakTagStyle, ENVIRONMENT_TAG_STYLE } from '../lib/debriefTypes'
+import { natureTagStyle, peakTagStyle, ENVIRONMENT_TAG_STYLE, parseDebriefEntry } from '../lib/debriefTypes'
 import LiveCanvasCard from '../components/LiveCanvasCard'
 import styles from './Log.module.css'
 
@@ -105,14 +105,6 @@ function formatReviewTime(time) {
   const ampm = h >= 12 ? 'pm' : 'am'
   h = h % 12 || 12
   return `${h}:${m}${ampm}`
-}
-
-function splitEntry(entry) {
-  const parts = (entry || '').split(/\n\s*\n/).map(p => p.trim()).filter(Boolean)
-  const sections = ['', '', '', '']
-  for (let i = 0; i < Math.min(parts.length, 3); i++) sections[i] = parts[i]
-  if (parts.length > 3) sections[3] = parts.slice(3).join('\n\n')
-  return sections
 }
 
 function dominantMoodForDay(moods, dateKey) {
@@ -249,7 +241,7 @@ function DayCardExpandedContent({ canvas, checkins, dateKey, moods, journal, deb
           <div className={styles.debriefStack}>
             {debriefs.map((d, i) => {
               const isPeak = d.type === 'peak'
-              const sections = splitEntry(d.entry)
+              const { sections, isLegacy } = parseDebriefEntry(d.entry, isPeak)
               const labels = isPeak ? PEAK_SECTION_LABELS : ANXIETY_SECTION_LABELS
               return (
                 <div key={d.id} className={i > 0 ? styles.debriefBlock : ''}>
@@ -261,6 +253,7 @@ function DayCardExpandedContent({ canvas, checkins, dateKey, moods, journal, deb
                     <div key={label} className={styles.debriefStepRow}>
                       <div className={styles.debriefStepLabel}>{label}</div>
                       <div className={styles.debriefStepBody}>{sections[li] || '—'}</div>
+                      {isLegacy && li === 0 && <div className={styles.legacyNote}>— recorded before structured fields</div>}
                     </div>
                   ))}
                 </div>

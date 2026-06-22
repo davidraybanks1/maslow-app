@@ -1,4 +1,5 @@
 import { NEEDS, MODES, MODE_ORDER } from './constants'
+import { parseDebriefEntry } from './debriefTypes'
 
 const MOOD_RANK = { bad: 1, fine: 2, good: 3 }
 
@@ -471,13 +472,18 @@ export function createDataStats({ canvas, checkins, moods, practices }) {
       `most peak moments happen when ${domEnvironment} on days when ${domNeed.name.toLowerCase()} was completed.`
     )
 
-    const recentEpisodes = list.slice(0, 10).map(d => ({
-      date: d.date_key,
-      type: d.type || 'anxiety',
-      nature: d.nature,
-      environment: d.environment,
-      excerpt: (d.entry || '').slice(0, 80),
-    }))
+    const recentEpisodes = list.slice(0, 10).map(d => {
+      const isPeak = d.type === 'peak'
+      const { sections, isLegacy } = parseDebriefEntry(d.entry, isPeak)
+      const excerptSource = isLegacy ? (d.entry || '') : sections[0]
+      return {
+        date: d.date_key,
+        type: d.type || 'anxiety',
+        nature: d.nature,
+        environment: d.environment,
+        excerpt: excerptSource.slice(0, 80),
+      }
+    })
 
     return { byNatureAnxiety, byTypePeak, byEnvironment, patternAnxiety, patternPeak, recentEpisodes }
   }

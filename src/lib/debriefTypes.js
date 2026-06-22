@@ -44,3 +44,23 @@ export function peakTagStyle(name, customPeakTypes) {
   if (custom) return { background: custom.color, color: '#fff' }
   return { background: '#9A9690', color: '#fff' }
 }
+
+// Debrief entries are stored as a JSON string of the four step fields. Older rows predate
+// the structured format and are plain text — those fall back into the first section.
+export function parseDebriefEntry(entry, isPeak) {
+  try {
+    const parsed = JSON.parse(entry)
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return {
+        isLegacy: false,
+        sections: [
+          parsed.name_it || '',
+          parsed.feel_it || '',
+          parsed.examine_it || '',
+          isPeak ? (parsed.anchor_it || '') : (parsed.reclaim_it || ''),
+        ],
+      }
+    }
+  } catch {}
+  return { isLegacy: true, sections: [entry || '', '', '', ''] }
+}
