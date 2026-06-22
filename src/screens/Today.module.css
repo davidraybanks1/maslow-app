@@ -445,6 +445,19 @@
 }
 .sectionLabel { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.1em; text-transform: lowercase; color: var(--ink); }
 
+.journalTimestampBtn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.journalTimestampBtn:hover { color: var(--ink2); }
+.journalTimestampBtn:active { color: var(--ink2); }
+
 .moodSection { padding: 12px 24px 16px; display: flex; flex-direction: column; gap: 12px; }
 .moodRow { display: flex; flex-direction: column; gap: 6px; }
 .moodRowTop { display: flex; align-items: center; justify-content: space-between; }

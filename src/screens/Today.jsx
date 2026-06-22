@@ -162,6 +162,23 @@ export default function Today({ state, checkIn, logMood, setNoteToSelf }) {
     }, 1500)
   }
 
+  function handleInsertTimestamp() {
+    const now = new Date()
+    const h = now.getHours() % 12 || 12
+    const m = String(now.getMinutes()).padStart(2, '0')
+    const ampm = now.getHours() < 12 ? 'am' : 'pm'
+    const stamp = '[' + h + ':' + m + ampm + ']'
+    const insertion = journalEntry.length === 0 ? `${stamp} ` : `\n\n${stamp} `
+    const newValue = journalEntry + insertion
+    handleJournalChange({ target: { value: newValue } })
+    setTimeout(() => {
+      if (journalRef.current) {
+        journalRef.current.focus()
+        journalRef.current.selectionStart = journalRef.current.selectionEnd = newValue.length
+      }
+    }, 0)
+  }
+
   const [debriefExpanded, setDebriefExpanded] = useState(false)
   const [peakExpanded, setPeakExpanded] = useState(false)
   const [debriefTypes, setDebriefTypes] = useState({ nature: [], environment: [], peak: [] })
@@ -376,6 +393,7 @@ export default function Today({ state, checkIn, logMood, setNoteToSelf }) {
         <div className={styles.cardJournal}>
           <div className={styles.sectionHeader}>
             <span className={styles.sectionLabel}>journal</span>
+            <button className={styles.journalTimestampBtn} onClick={handleInsertTimestamp}>⏱</button>
           </div>
           <textarea
             ref={journalRef}
