@@ -114,6 +114,7 @@ export default function Today({ state, checkIn, logMood }) {
   const [composerText, setComposerText] = useState('')
   const [composerImageUrl, setComposerImageUrl] = useState(null)
   const [composerUploading, setComposerUploading] = useState(false)
+  const [composerError, setComposerError] = useState(null)
   const fileInputRef = useRef(null)
 
   function loadDeck() {
@@ -143,12 +144,14 @@ export default function Today({ state, checkIn, logMood }) {
     setComposer({})
     setComposerText('')
     setComposerImageUrl(null)
+    setComposerError(null)
   }
 
   function openComposerForEdit(card) {
     setComposer(card)
     setComposerText(card.text || '')
     setComposerImageUrl(card.image_url || null)
+    setComposerError(null)
   }
 
   async function handleComposerImageSelect(e) {
@@ -162,17 +165,45 @@ export default function Today({ state, checkIn, logMood }) {
   }
 
   async function handleComposerSave() {
-    if (!state.userId || !composerText.trim()) return
-    if (composer?.id) {
-      await updateNoteDeckCard(composer.id, { text: composerText.trim(), imageUrl: composerImageUrl })
-    } else {
-      await addNoteDeckCard(state.userId, { text: composerText.trim(), imageUrl: composerImageUrl })
+    const text = composerText.trim()
+    if (!text) return
+    setComposerError(null)
+
+    if (!state.userId) {
+      // Guest mode: persist in component state only (no Supabase account available).
+      if (composer?.id) {
+        setNoteDeck(prev => prev.map(c =>
+          c.id === composer.id ? { ...c, text, image_url: composerImageUrl } : c
+        ))
+      } else {
+        const card = { id: `local-${Date.now()}`, user_id: null, text, image_url: composerImageUrl, position: noteDeck.length }
+        setNoteDeck(prev => [...prev, card])
+      }
+      setComposer(null)
+      return
     }
-    setComposer(null)
-    loadDeck()
+
+    try {
+      let error
+      if (composer?.id) {
+        ;({ error } = await updateNoteDeckCard(composer.id, { text, imageUrl: composerImageUrl }))
+      } else {
+        ;({ error } = await addNoteDeckCard(state.userId, { text, imageUrl: composerImageUrl }))
+      }
+      if (error) throw error
+      setComposer(null)
+      loadDeck()
+    } catch (err) {
+      console.error('handleComposerSave:', err)
+      setComposerError(err?.message || 'failed to save — please try again')
+    }
   }
 
   async function handleDeleteCard(id) {
+    if (!state.userId || String(id).startsWith('local-')) {
+      setNoteDeck(prev => prev.filter(c => c.id !== id))
+      return
+    }
     await deleteNoteDeckCard(id)
     loadDeck()
   }
@@ -617,6 +648,7 @@ export default function Today({ state, checkIn, logMood }) {
           </div>
           {composer && (
             <div className={styles.noteOverlayFooter}>
+              {composerError && <div className={styles.composerError}>{composerError}</div>}
               <button className={styles.noteSaveBtn} onClick={handleComposerSave} disabled={!composerText.trim()}>
                 save note →
               </button>

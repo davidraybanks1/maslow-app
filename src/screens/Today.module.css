@@ -380,6 +380,13 @@
 .composerAddImageBtn:hover { background: var(--bg2); }
 .composerAddImageBtn:disabled { opacity: 0.5; cursor: default; }
 
+.composerError {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #D93B1C;
+  margin-bottom: 10px;
+}
+
 .noteOverlayFooter { flex-shrink: 0; padding: 12px 20px 32px; }
 .noteSaveBtn {
   width: 100%;
