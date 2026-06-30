@@ -59,6 +59,7 @@
   background: #E8E4F0;
   border-radius: 12px;
   padding: 14px 16px;
+  margin-bottom: 10px;
 }
 
 /* ── Progress bar ── */
@@ -95,7 +96,7 @@
   text-align: right;
 }
 
-/* ── Reflective section (note to self + journal) ── */
+/* ── Lavender wrapper (note to self deck) ── */
 .reflectiveSection {
   background: #E8E4F0;
   border-radius: 16px;
