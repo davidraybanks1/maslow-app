@@ -42,7 +42,7 @@ function Protected({ children, onboarded }) {
 function AppInner() {
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
-  const { state, authLoading, updateCanvas, addPractice, removePractice, checkIn, logMood, completeOnboarding, setNoteToSelf, updateShowNoteToSelf, updateReviewSchedule } = useAppState(
+  const { state, authLoading, updateCanvas, addPractice, removePractice, checkIn, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule } = useAppState(
     () => navigate('/today')
   )
 
@@ -65,11 +65,11 @@ function AppInner() {
         <Routes>
           <Route path="/" element={state.onboarded ? <Navigate to="/today" replace /> : <Navigate to="/onboarding" replace />} />
           <Route path="/onboarding" element={state.onboarded ? <Navigate to="/today" replace /> : <DiagnosticFlow updateCanvas={updateCanvas} completeOnboarding={completeOnboarding} />} />
-          <Route path="/today" element={<Protected onboarded={state.onboarded}><Today state={state} checkIn={checkIn} logMood={logMood} setNoteToSelf={setNoteToSelf} /></Protected>} />
+          <Route path="/today" element={<Protected onboarded={state.onboarded}><Today state={state} checkIn={checkIn} logMood={logMood} /></Protected>} />
           <Route path="/practices" element={<Protected onboarded={state.onboarded}><Practices state={state} addPractice={addPractice} removePractice={removePractice} completeOnboarding={completeOnboarding} /></Protected>} />
           <Route path="/debriefs" element={<Protected onboarded={state.onboarded}><Debriefs state={state} /></Protected>} />
           <Route path="/data" element={<Protected onboarded={state.onboarded}><Data state={state} /></Protected>} />
-          <Route path="/log" element={<Protected onboarded={state.onboarded}><Log state={state} setNoteToSelf={setNoteToSelf} /></Protected>} />
+          <Route path="/log" element={<Protected onboarded={state.onboarded}><Log state={state} /></Protected>} />
           <Route path="/canvas" element={<Protected onboarded={state.onboarded}><CanvasScreen state={state} updateCanvas={updateCanvas} /></Protected>} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/password" element={<Protected onboarded={state.onboarded}><UpdatePassword /></Protected>} />

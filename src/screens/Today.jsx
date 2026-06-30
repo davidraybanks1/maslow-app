@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { NEEDS, MODES, MODE_ORDER, MODE_MAX_BUBBLES, MODE_WEIGHTS } from '../lib/constants'
-import { todayKey, loadJournalEntry, saveJournalEntry, loadDebriefTypes, loadDebriefs, loadNoteToSelf, saveNoteToSelf } from '../lib/store'
+import { todayKey, loadJournalEntry, saveJournalEntry, loadDebriefTypes, loadDebriefs, loadNoteDeck, addNoteDeckCard, updateNoteDeckCard, deleteNoteDeckCard, uploadNoteImage } from '../lib/store'
 import { createDataStats, getCanvasGuidance } from '../lib/dataStats'
 import DebriefForm from '../components/DebriefForm'
 import PeakDebriefForm from '../components/PeakDebriefForm'
@@ -19,10 +19,6 @@ const NOTE_LIBRARY = [
   'everything you want is on the other side of discomfort.',
   "don't play it safe.",
 ]
-
-function formatNoteDate(dateKey) {
-  return new Date(dateKey + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toLowerCase()
-}
 
 function formatScore(v) {
   return Number.isInteger(v) ? String(v) : `${Math.floor(v)}½`
@@ -71,7 +67,7 @@ function GuidanceCard({ type, onDismiss }) {
   )
 }
 
-export default function Today({ state, checkIn, logMood, setNoteToSelf }) {
+export default function Today({ state, checkIn, logMood }) {
   const navigate = useNavigate()
   const today = todayKey()
   const checked = state.checkins[today] || []
@@ -106,30 +102,79 @@ export default function Today({ state, checkIn, logMood, setNoteToSelf }) {
     setGuidanceDismissedNow(true)
   }
 
-  const [noteEditorOpen, setNoteEditorOpen] = useState(false)
-  const [noteDraft, setNoteDraft] = useState('')
-  const [noteHistory, setNoteHistory] = useState([])
-  const [noteSaveStatus, setNoteSaveStatus] = useState('idle') // 'idle' | 'saving' | 'saved'
+  const [noteDeck, setNoteDeck] = useState([])
+  const [activeCardIndex, setActiveCardIndex] = useState(0)
+  const [deckHeight, setDeckHeight] = useState(undefined)
+  const deckWrapperRef = useRef(null)
+  const cardRefs = useRef([])
 
-  function openNoteEditor() {
-    setNoteDraft(state.noteToSelf || '')
-    setNoteEditorOpen(true)
-    if (state.userId) {
-      loadNoteToSelf(state.userId).then(({ history }) => setNoteHistory(history))
-    }
+  const [lightboxImage, setLightboxImage] = useState(null)
+  const [manageDeckOpen, setManageDeckOpen] = useState(false)
+  const [composer, setComposer] = useState(null) // null = list view; {} = new card; {id,text,image_url} = editing
+  const [composerText, setComposerText] = useState('')
+  const [composerImageUrl, setComposerImageUrl] = useState(null)
+  const [composerUploading, setComposerUploading] = useState(false)
+  const fileInputRef = useRef(null)
+
+  function loadDeck() {
+    if (!state.userId) return
+    loadNoteDeck(state.userId).then(setNoteDeck)
   }
 
-  async function handleSaveNote() {
-    setNoteSaveStatus('saving')
-    if (state.userId) {
-      await saveNoteToSelf(state.userId, noteDraft)
+  useEffect(() => { loadDeck() }, [state.userId])
+
+  useEffect(() => {
+    const heights = cardRefs.current.filter(Boolean).map(el => el.offsetHeight)
+    if (heights.length) setDeckHeight(Math.max(...heights))
+  }, [noteDeck])
+
+  function handleDeckScroll() {
+    const wrapper = deckWrapperRef.current
+    if (!wrapper || wrapper.clientWidth === 0) return
+    setActiveCardIndex(Math.round(wrapper.scrollLeft / wrapper.clientWidth))
+  }
+
+  function openManageDeck() {
+    setManageDeckOpen(true)
+    setComposer(null)
+  }
+
+  function openComposerForNew() {
+    setComposer({})
+    setComposerText('')
+    setComposerImageUrl(null)
+  }
+
+  function openComposerForEdit(card) {
+    setComposer(card)
+    setComposerText(card.text || '')
+    setComposerImageUrl(card.image_url || null)
+  }
+
+  async function handleComposerImageSelect(e) {
+    const file = e.target.files?.[0]
+    if (!file || !state.userId) return
+    setComposerUploading(true)
+    const { url } = await uploadNoteImage(state.userId, file)
+    if (url) setComposerImageUrl(url)
+    setComposerUploading(false)
+    e.target.value = ''
+  }
+
+  async function handleComposerSave() {
+    if (!state.userId || !composerText.trim()) return
+    if (composer?.id) {
+      await updateNoteDeckCard(composer.id, { text: composerText.trim(), imageUrl: composerImageUrl })
+    } else {
+      await addNoteDeckCard(state.userId, { text: composerText.trim(), imageUrl: composerImageUrl })
     }
-    setNoteToSelf?.(noteDraft)
-    setNoteSaveStatus('saved')
-    setTimeout(() => {
-      setNoteSaveStatus('idle')
-      setNoteEditorOpen(false)
-    }, 1000)
+    setComposer(null)
+    loadDeck()
+  }
+
+  async function handleDeleteCard(id) {
+    await deleteNoteDeckCard(id)
+    loadDeck()
   }
 
   const [journalEntry, setJournalEntry] = useState('')
@@ -257,14 +302,47 @@ export default function Today({ state, checkIn, logMood, setNoteToSelf }) {
       {/* ── Scrollable body ── */}
       <div className={styles.list}>
 
-        {state.showNoteToSelf && state.noteToSelf && (
+        {state.showNoteToSelf && (
           <>
-            <div className={styles.noteRow}>
-              <span className={styles.noteLabel}>note to self:</span>
-              <span className={styles.noteText}>{state.noteToSelf}</span>
-              <button className={styles.notePencilBtn} onClick={openNoteEditor}>✎</button>
+            <div className={styles.noteDeckHeader}>
+              {noteDeck.length > 0 && (
+                <div className={styles.noteDeckDots}>
+                  {noteDeck.map((_, i) => (
+                    <span key={i} className={`${styles.noteDeckDot} ${i === activeCardIndex ? styles.noteDeckDotActive : ''}`} />
+                  ))}
+                </div>
+              )}
+              <button className={styles.notePencilBtn} onClick={openManageDeck}>✎</button>
             </div>
-            <div className={styles.noteHairline} />
+
+            {noteDeck.length > 0 && (
+              <>
+                <div
+                  className={styles.noteDeckWrapper}
+                  style={deckHeight ? { height: deckHeight } : undefined}
+                  ref={deckWrapperRef}
+                  onScroll={handleDeckScroll}
+                >
+                  {noteDeck.map((card, i) => (
+                    <div key={card.id} className={styles.noteDeckCard} ref={el => { cardRefs.current[i] = el }}>
+                      <div className={styles.noteDeckTextRow}>
+                        <span className={styles.noteLabel}>note to self:</span>
+                        <span className={styles.noteText}>{card.text}</span>
+                      </div>
+                      {card.image_url && (
+                        <img
+                          src={card.image_url}
+                          alt=""
+                          className={styles.noteThumbnail}
+                          onClick={() => setLightboxImage(card.image_url)}
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <div className={styles.noteHairline} />
+              </>
+            )}
           </>
         )}
 
@@ -451,52 +529,106 @@ export default function Today({ state, checkIn, logMood, setNoteToSelf }) {
 
       </div>
 
-      {noteEditorOpen && (
+      {manageDeckOpen && (
         <div className={styles.noteOverlay}>
           <div className={styles.noteOverlayHeader}>
-            <div className={styles.noteOverlayTitle}>note to self</div>
-            <button className={styles.noteOverlayClose} onClick={() => setNoteEditorOpen(false)}>×</button>
+            <div className={styles.noteOverlayTitle}>{composer ? (composer.id ? 'edit note' : 'new note') : 'manage deck'}</div>
+            <button
+              className={styles.noteOverlayClose}
+              onClick={() => { if (composer) setComposer(null); else setManageDeckOpen(false) }}
+            >
+              ×
+            </button>
           </div>
           <div className={styles.noteOverlayContent}>
-            <div className={styles.noteSectionLabel}>WRITE YOUR OWN</div>
-            <textarea
-              className={styles.noteTextarea}
-              value={noteDraft}
-              onChange={e => setNoteDraft(e.target.value.slice(0, NOTE_MAX_LENGTH))}
-              maxLength={NOTE_MAX_LENGTH}
-              placeholder="what does your future self need to remember this week?"
-              rows={3}
-            />
-            <div className={styles.noteCharCount}>{NOTE_MAX_LENGTH - noteDraft.length} characters remaining</div>
-
-            <div className={styles.noteSectionLabel}>FROM THE LIBRARY</div>
-            <div className={styles.noteLibraryList}>
-              {NOTE_LIBRARY.map((text, i) => (
-                <div key={i} className={styles.noteCard} onClick={() => setNoteDraft(text)}>
-                  {text}
-                </div>
-              ))}
-            </div>
-
-            {noteHistory.length > 0 && (
+            {composer ? (
               <>
-                <div className={styles.noteSectionLabel}>FROM YOUR HISTORY</div>
+                <div className={styles.noteSectionLabel}>WRITE YOUR OWN</div>
+                <textarea
+                  className={styles.noteTextarea}
+                  value={composerText}
+                  onChange={e => setComposerText(e.target.value.slice(0, NOTE_MAX_LENGTH))}
+                  maxLength={NOTE_MAX_LENGTH}
+                  placeholder="what does your future self need to remember?"
+                  rows={3}
+                />
+                <div className={styles.noteCharCount}>{NOTE_MAX_LENGTH - composerText.length} characters remaining</div>
+
+                <div className={styles.noteSectionLabel}>IMAGE</div>
+                {composerImageUrl ? (
+                  <div className={styles.composerImageRow}>
+                    <img
+                      src={composerImageUrl}
+                      alt=""
+                      className={styles.noteThumbnail}
+                      onClick={() => setLightboxImage(composerImageUrl)}
+                    />
+                    <button className={styles.composerImageRemove} onClick={() => setComposerImageUrl(null)}>remove image</button>
+                  </div>
+                ) : (
+                  <button
+                    className={styles.composerAddImageBtn}
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={composerUploading}
+                  >
+                    {composerUploading ? 'uploading…' : '+ add image'}
+                  </button>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={handleComposerImageSelect}
+                />
+
+                <div className={styles.noteSectionLabel}>OR CHOOSE FROM THE LIBRARY</div>
                 <div className={styles.noteLibraryList}>
-                  {noteHistory.map((h, i) => (
-                    <div key={i} className={styles.noteHistoryCard} onClick={() => setNoteDraft(h.text)}>
-                      <span className={styles.noteHistoryText}>{h.text}</span>
-                      <span className={styles.noteHistoryDate}>{formatNoteDate(h.date)}</span>
+                  {NOTE_LIBRARY.map((text, i) => (
+                    <div key={i} className={styles.noteCard} onClick={() => setComposerText(text)}>
+                      {text}
                     </div>
                   ))}
                 </div>
               </>
+            ) : (
+              <>
+                <button className={styles.addDeckCardBtn} onClick={openComposerForNew}>+ add note</button>
+                {noteDeck.length > 0 && (
+                  <div className={styles.noteLibraryList}>
+                    {noteDeck.map(card => (
+                      <div key={card.id} className={styles.deckListRow}>
+                        {card.image_url && (
+                          <img
+                            src={card.image_url}
+                            alt=""
+                            className={styles.noteThumbnail}
+                            onClick={e => { e.stopPropagation(); setLightboxImage(card.image_url) }}
+                          />
+                        )}
+                        <span className={styles.deckListText} onClick={() => openComposerForEdit(card)}>{card.text}</span>
+                        <button className={styles.deckListDelete} onClick={() => handleDeleteCard(card.id)}>×</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
-          <div className={styles.noteOverlayFooter}>
-            <button className={styles.noteSaveBtn} onClick={handleSaveNote} disabled={noteSaveStatus === 'saving'}>
-              {noteSaveStatus === 'saved' ? 'saved ✓' : 'save note →'}
-            </button>
-          </div>
+          {composer && (
+            <div className={styles.noteOverlayFooter}>
+              <button className={styles.noteSaveBtn} onClick={handleComposerSave} disabled={!composerText.trim()}>
+                save note →
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {lightboxImage && (
+        <div className={styles.lightboxOverlay} onClick={() => setLightboxImage(null)}>
+          <button className={styles.lightboxClose} onClick={() => setLightboxImage(null)}>×</button>
+          <img src={lightboxImage} alt="" className={styles.lightboxImage} onClick={e => e.stopPropagation()} />
         </div>
       )}
     </div>

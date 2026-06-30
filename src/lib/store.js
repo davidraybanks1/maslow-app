@@ -59,7 +59,6 @@ function migrateState(saved) {
     if (!saved.moods) saved.moods = []
     if (!saved.checkins || typeof saved.checkins !== 'object') saved.checkins = {}
     if (!saved.practices || typeof saved.practices !== 'object') saved.practices = {}
-    if (saved.noteToSelf === undefined) saved.noteToSelf = null
     if (saved.showNoteToSelf === undefined) saved.showNoteToSelf = true
     if (saved.reviewDay === undefined) saved.reviewDay = 0
     if (saved.reviewTime === undefined) saved.reviewTime = '10:00'
@@ -93,7 +92,6 @@ export function initialState() {
     checkins: {},
     moods: [],
     profile: { name: '' },
-    noteToSelf: null,
     showNoteToSelf: true,
     reviewDay: 0,
     reviewTime: '10:00',
@@ -142,7 +140,6 @@ async function restoreFromSupabase(userId, email) {
       checkins: checkinsMap,
       moods,
       profile: { name: user.name || '' },
-      noteToSelf: user.note_to_self || null,
       showNoteToSelf: user.show_note_to_self !== false,
       reviewDay: user.review_day ?? 0,
       reviewTime: user.review_time || '10:00',
@@ -366,10 +363,6 @@ export function useAppState(onSignIn) {
     }))
   }
 
-  function setNoteToSelf(note) {
-    setState(prev => ({ ...prev, noteToSelf: note }))
-  }
-
   function updateShowNoteToSelf(value) {
     setState(prev => {
       if (prev.userId) {
@@ -406,7 +399,7 @@ export function useAppState(onSignIn) {
     })
   }
 
-  return { state, authLoading, updateCanvas, addPractice, removePractice, checkIn, logMood, completeOnboarding, loadMoods, saveProfile, setNoteToSelf, updateShowNoteToSelf, updateReviewSchedule }
+  return { state, authLoading, updateCanvas, addPractice, removePractice, checkIn, logMood, completeOnboarding, loadMoods, saveProfile, updateShowNoteToSelf, updateReviewSchedule }
 }
 
 export function todayKey() {
@@ -457,41 +450,71 @@ export async function saveJournalEntry(userId, dateKey, entry) {
   return { error }
 }
 
-export async function loadNoteToSelf(userId) {
+// Loads every note_deck card for a user, ordered for the swipe deck. If the user has no
+// deck cards yet but has a legacy single note_to_self value, lazily migrates it into the
+// deck (position 0) so existing notes aren't lost by the move to the deck model.
+export async function loadNoteDeck(userId) {
   const { data } = await supabase
-    .from('users')
-    .select('note_to_self, show_note_to_self, note_history')
-    .eq('id', userId)
-    .single()
-  return {
-    note: data?.note_to_self || null,
-    showNote: data?.show_note_to_self !== false,
-    history: Array.isArray(data?.note_history) ? data.note_history : [],
-  }
+    .from('note_deck')
+    .select('*')
+    .eq('user_id', userId)
+    .order('position', { ascending: true })
+
+  if (data && data.length > 0) return data
+
+  const { data: user } = await supabase.from('users').select('note_to_self').eq('id', userId).single()
+  if (!user?.note_to_self) return []
+
+  const { data: inserted, error } = await supabase
+    .from('note_deck')
+    .insert({ user_id: userId, text: user.note_to_self, position: 0 })
+    .select()
+  if (error) { logSupabaseError('loadNoteDeck (legacy migration)', error); return [] }
+  return inserted || []
 }
 
-export async function saveNoteToSelf(userId, note) {
+export async function addNoteDeckCard(userId, { text, imageUrl }) {
   const { data: existing } = await supabase
-    .from('users')
-    .select('note_history')
-    .eq('id', userId)
-    .single()
-
-  const history = Array.isArray(existing?.note_history) ? existing.note_history : []
-  const newHistory = [{ text: note, date: todayKey() }, ...history].slice(0, 10)
+    .from('note_deck')
+    .select('position')
+    .eq('user_id', userId)
+    .order('position', { ascending: false })
+    .limit(1)
+  const nextPosition = existing && existing[0] ? existing[0].position + 1 : 0
 
   const { data, error } = await supabase
-    .from('users')
-    .update({
-      note_to_self: note,
-      note_to_self_updated_at: new Date().toISOString(),
-      note_history: newHistory,
-    })
-    .eq('id', userId)
+    .from('note_deck')
+    .insert({ user_id: userId, text, image_url: imageUrl || null, position: nextPosition })
     .select()
     .single()
-  if (error) logSupabaseError('saveNoteToSelf', error)
+  if (error) logSupabaseError('addNoteDeckCard', error)
   return { data, error }
+}
+
+export async function updateNoteDeckCard(id, { text, imageUrl }) {
+  const { data, error } = await supabase
+    .from('note_deck')
+    .update({ text, image_url: imageUrl || null })
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) logSupabaseError('updateNoteDeckCard', error)
+  return { data, error }
+}
+
+export async function deleteNoteDeckCard(id) {
+  const { error } = await supabase.from('note_deck').delete().eq('id', id)
+  if (error) logSupabaseError('deleteNoteDeckCard', error)
+  return { error }
+}
+
+export async function uploadNoteImage(userId, file) {
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
+  const path = `${userId}/${Date.now()}.${ext}`
+  const { error } = await supabase.storage.from('note-images').upload(path, file)
+  if (error) { logSupabaseError('uploadNoteImage', error); return { url: null, error } }
+  const { data } = supabase.storage.from('note-images').getPublicUrl(path)
+  return { url: data.publicUrl, error: null }
 }
 
 export async function loadWeeklyReviews(userId, limit) {

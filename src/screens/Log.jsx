@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { NEEDS, MODE_MAX_BUBBLES } from '../lib/constants'
-import { weekKey, loadJournalEntry, loadDebriefs, loadDebriefTypes, saveNoteToSelf, saveWeeklyReview, loadWeeklyReviews, loadUserCreatedAt } from '../lib/store'
+import { weekKey, loadJournalEntry, loadDebriefs, loadDebriefTypes, addNoteDeckCard, saveWeeklyReview, loadWeeklyReviews, loadUserCreatedAt } from '../lib/store'
 import { createDataStats } from '../lib/dataStats'
 import { natureTagStyle, peakTagStyle, ENVIRONMENT_TAG_STYLE, parseDebriefEntry } from '../lib/debriefTypes'
 import LiveCanvasCard from '../components/LiveCanvasCard'
@@ -392,7 +392,7 @@ function FullLogAccordion({ state }) {
   )
 }
 
-export default function Log({ state, setNoteToSelf }) {
+export default function Log({ state }) {
   const navigate = useNavigate()
 
   const [showFullLog, setShowFullLog] = useState(false)
@@ -423,7 +423,7 @@ export default function Log({ state, setNoteToSelf }) {
 
   async function startReview() {
     setWeeklyMood(null)
-    setNoteDraft(state.noteToSelf || '')
+    setNoteDraft('')
     setStepsCompletedCount(0)
     setExpandedReviewDay(null)
     setInsightText(null)
@@ -469,9 +469,8 @@ export default function Log({ state, setNoteToSelf }) {
     setFinishing(true)
     const trimmed = noteDraft.trim()
     if (state.userId) {
-      if (trimmed && trimmed !== (state.noteToSelf || '')) {
-        await saveNoteToSelf(state.userId, trimmed)
-        setNoteToSelf?.(trimmed)
+      if (trimmed) {
+        await addNoteDeckCard(state.userId, { text: trimmed })
       }
       await saveWeeklyReview(state.userId, {
         weekStarting: weekKey(),

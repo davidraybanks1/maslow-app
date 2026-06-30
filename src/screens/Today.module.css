@@ -97,13 +97,47 @@
   text-align: right;
 }
 
-/* ── Note to self ── */
-.noteRow {
+/* ── Note to self deck ── */
+.noteDeckHeader {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: flex-end;
   gap: 8px;
-  padding: 10px 0;
+  padding: 10px 0 4px;
 }
+.noteDeckDots { display: flex; gap: 5px; margin-right: auto; }
+.noteDeckDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--border2);
+}
+.noteDeckDotActive { background: var(--ink3); }
+
+.noteDeckWrapper {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.noteDeckWrapper::-webkit-scrollbar { display: none; }
+
+.noteDeckCard {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  height: auto;
+}
+
+.noteDeckTextRow {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 .noteLabel {
   font-family: var(--font-mono);
   font-size: 11px;
@@ -128,6 +162,48 @@
   cursor: pointer;
   padding: 0;
   flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.noteThumbnail {
+  display: block;
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  object-fit: cover;
+  margin-top: 8px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Lightbox ── */
+.lightboxOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.lightboxImage {
+  max-width: 90vw;
+  max-height: 80vh;
+  border-radius: 8px;
+  object-fit: contain;
+}
+.lightboxClose {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  font-family: var(--font-mono);
+  font-size: 22px;
+  line-height: 1;
+  color: #fff;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
   -webkit-tap-highlight-color: transparent;
 }
 .notePencilBtn:hover { color: var(--ink); }
@@ -225,33 +301,84 @@
 }
 .noteCard:hover { background: var(--bg2); }
 
-.noteHistoryCard {
+.addDeckCardBtn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 0.5px dashed var(--border2);
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink2);
+  cursor: pointer;
+  margin-bottom: 14px;
+  -webkit-tap-highlight-color: transparent;
+}
+.addDeckCardBtn:hover { background: var(--bg2); }
+
+.deckListRow {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
+  align-items: center;
   gap: 10px;
   background: var(--bg);
   border: 0.5px solid var(--border);
   border-radius: 10px;
-  padding: 12px 14px;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
+  padding: 10px 12px;
 }
-.noteHistoryCard:hover { background: var(--bg2); }
-.noteHistoryText {
+.deckListText {
+  flex: 1;
   font-family: 'Instrument Serif', serif;
   font-style: italic;
   font-size: 13px;
   color: var(--ink2);
   line-height: 1.4;
-  flex: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
-.noteHistoryDate {
+.deckListDelete {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 16px;
+  line-height: 1;
   color: var(--ink3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 2px;
   flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
 }
+.deckListDelete:hover { color: #D93B1C; }
+
+.composerImageRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.composerImageRemove {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.composerImageRemove:hover { color: var(--ink2); }
+.composerAddImageBtn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 0.5px solid var(--border2);
+  background: var(--bg);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink2);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.composerAddImageBtn:hover { background: var(--bg2); }
+.composerAddImageBtn:disabled { opacity: 0.5; cursor: default; }
 
 .noteOverlayFooter { flex-shrink: 0; padding: 12px 20px 32px; }
 .noteSaveBtn {
