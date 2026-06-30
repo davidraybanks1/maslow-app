@@ -118,7 +118,7 @@ export default function Today({ state, checkIn, logMood }) {
   const fileInputRef = useRef(null)
 
   function loadDeck() {
-    if (!state.userId) return
+    if (!state.userId) { console.error('[loadDeck] called without userId — session may be invalid'); return }
     loadNoteDeck(state.userId).then(setNoteDeck)
   }
 
@@ -156,7 +156,8 @@ export default function Today({ state, checkIn, logMood }) {
 
   async function handleComposerImageSelect(e) {
     const file = e.target.files?.[0]
-    if (!file || !state.userId) return
+    if (!file) return
+    if (!state.userId) { console.error('[handleComposerImageSelect] called without userId — session may be invalid'); navigate('/signin'); return }
     setComposerUploading(true)
     const { url } = await uploadNoteImage(state.userId, file)
     if (url) setComposerImageUrl(url)
@@ -167,21 +168,8 @@ export default function Today({ state, checkIn, logMood }) {
   async function handleComposerSave() {
     const text = composerText.trim()
     if (!text) return
+    if (!state.userId) { console.error('[handleComposerSave] called without userId — session may be invalid'); navigate('/signin'); return }
     setComposerError(null)
-
-    if (!state.userId) {
-      // Guest mode: persist in component state only (no Supabase account available).
-      if (composer?.id) {
-        setNoteDeck(prev => prev.map(c =>
-          c.id === composer.id ? { ...c, text, image_url: composerImageUrl } : c
-        ))
-      } else {
-        const card = { id: `local-${Date.now()}`, user_id: null, text, image_url: composerImageUrl, position: noteDeck.length }
-        setNoteDeck(prev => [...prev, card])
-      }
-      setComposer(null)
-      return
-    }
 
     try {
       let error
@@ -200,10 +188,7 @@ export default function Today({ state, checkIn, logMood }) {
   }
 
   async function handleDeleteCard(id) {
-    if (!state.userId || String(id).startsWith('local-')) {
-      setNoteDeck(prev => prev.filter(c => c.id !== id))
-      return
-    }
+    if (!state.userId) { console.error('[handleDeleteCard] called without userId — session may be invalid'); navigate('/signin'); return }
     await deleteNoteDeckCard(id)
     loadDeck()
   }
@@ -213,7 +198,7 @@ export default function Today({ state, checkIn, logMood }) {
   const journalRef = useRef(null)
 
   useEffect(() => {
-    if (!state.userId) return
+    if (!state.userId) { console.error('[loadJournalEntry] called without userId — session may be invalid'); return }
     loadJournalEntry(state.userId, today).then(entry => {
       setJournalEntry(entry)
       setTimeout(() => {
@@ -234,7 +219,7 @@ export default function Today({ state, checkIn, logMood }) {
     }
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
-      if (state.userId) saveJournalEntry(state.userId, today, val)
+      saveJournalEntry(state.userId, today, val)
     }, 1500)
   }
 
@@ -262,12 +247,12 @@ export default function Today({ state, checkIn, logMood }) {
   const [todayPeakCount, setTodayPeakCount] = useState(0)
 
   useEffect(() => {
-    if (!state.userId) return
+    if (!state.userId) { console.error('[loadDebriefTypes] called without userId — session may be invalid'); return }
     loadDebriefTypes(state.userId).then(setDebriefTypes)
   }, [state.userId])
 
   useEffect(() => {
-    if (!state.userId) return
+    if (!state.userId) { console.error('[loadDebriefs] called without userId — session may be invalid'); return }
     loadDebriefs(state.userId).then(debriefs => {
       const todayDebriefs = debriefs.filter(d => d.date_key === today)
       setTodayDebriefCount(todayDebriefs.filter(d => !d.type || d.type === 'anxiety').length)

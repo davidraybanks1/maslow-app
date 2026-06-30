@@ -344,7 +344,7 @@ function FullLogAccordion({ state }) {
   const checkins = state.checkins || {}
 
   useEffect(() => {
-    if (!state.userId) return
+    if (!state.userId) { console.error('[FullLogAccordion] called without userId — session may be invalid'); return }
     Promise.all([loadDebriefs(state.userId), loadDebriefTypes(state.userId)]).then(([debriefs, types]) => {
       setAllDebriefs(debriefs)
       setDebriefTypes(types)
@@ -359,7 +359,7 @@ function FullLogAccordion({ state }) {
   async function handleToggle(dateKey) {
     if (expandedDay === dateKey) { setExpandedDay(null); return }
     setExpandedDay(dateKey)
-    if (state.userId && journalCache[dateKey] === undefined) {
+    if (journalCache[dateKey] === undefined) {
       setLoadingDay(dateKey)
       const entry = await loadJournalEntry(state.userId, dateKey)
       setJournalCache(prev => ({ ...prev, [dateKey]: entry || '' }))
@@ -415,7 +415,7 @@ export default function Log({ state }) {
   const stats = createDataStats({ canvas: state.canvas || {}, checkins: state.checkins || {}, moods: state.moods || [], practices: state.practices || {} })
 
   useEffect(() => {
-    if (!state.userId) return
+    if (!state.userId) { console.error('[reviewHistory] called without userId — session may be invalid'); return }
     Promise.all([loadWeeklyReviews(state.userId), loadUserCreatedAt(state.userId)]).then(([realReviews, createdAt]) => {
       setReviewHistory(buildReviewHistory(createdAt, state.reviewDay ?? 0, realReviews))
     })
@@ -429,7 +429,7 @@ export default function Log({ state }) {
     setInsightText(null)
     setReviewStep(1)
 
-    if (!state.userId) return
+    if (!state.userId) { console.error('[startReview] called without userId — session may be invalid'); setReviewStep(null); return }
     const days = lastWeekDayKeys()
     const [entries, allDebriefs, types] = await Promise.all([
       Promise.all(days.map(d => loadJournalEntry(state.userId, d))),
@@ -467,19 +467,18 @@ export default function Log({ state }) {
 
   async function handleFinishReview() {
     setFinishing(true)
+    if (!state.userId) { console.error('[handleFinishReview] called without userId — session may be invalid'); setFinishing(false); return }
     const trimmed = noteDraft.trim()
-    if (state.userId) {
-      if (trimmed) {
-        await addNoteDeckCard(state.userId, { text: trimmed })
-      }
-      await saveWeeklyReview(state.userId, {
-        weekStarting: weekKey(),
-        weeklyMood,
-        stepsCompleted: stepsCompletedCount + 1,
-      })
-      const [realReviews, createdAt] = await Promise.all([loadWeeklyReviews(state.userId), loadUserCreatedAt(state.userId)])
-      setReviewHistory(buildReviewHistory(createdAt, state.reviewDay ?? 0, realReviews))
+    if (trimmed) {
+      await addNoteDeckCard(state.userId, { text: trimmed })
     }
+    await saveWeeklyReview(state.userId, {
+      weekStarting: weekKey(),
+      weeklyMood,
+      stepsCompleted: stepsCompletedCount + 1,
+    })
+    const [realReviews, createdAt] = await Promise.all([loadWeeklyReviews(state.userId), loadUserCreatedAt(state.userId)])
+    setReviewHistory(buildReviewHistory(createdAt, state.reviewDay ?? 0, realReviews))
     setFinishing(false)
     setReviewStep(null)
     setJustFinished(true)

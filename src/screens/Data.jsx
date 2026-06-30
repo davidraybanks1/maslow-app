@@ -381,7 +381,8 @@ export default function Data({ state }) {
   const stats = createDataStats({ canvas: state.canvas, checkins: state.checkins, moods, practices: state.practices })
 
   useEffect(() => {
-    if (state.userId) loadDebriefs(state.userId).then(setDebriefs)
+    if (!state.userId) { console.error('[Data] loadDebriefs called without userId — session may be invalid'); return }
+    loadDebriefs(state.userId).then(setDebriefs)
   }, [state.userId])
 
   return (

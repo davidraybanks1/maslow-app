@@ -128,7 +128,8 @@ export default function Debriefs({ state }) {
   const [addInputs, setAddInputs] = useState({ nature: '', environment: '', peak: '' })
 
   useEffect(() => {
-    if (state.userId) refresh()
+    if (!state.userId) { console.error('[Debriefs] refresh called without userId — session may be invalid'); return }
+    refresh()
   }, [state.userId])
 
   async function refresh() {
