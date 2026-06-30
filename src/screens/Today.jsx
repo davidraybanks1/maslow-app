@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { NEEDS, MODES, MODE_ORDER, MODE_MAX_BUBBLES, MODE_WEIGHTS } from '../lib/constants'
 import { todayKey, loadJournalEntry, saveJournalEntry, loadDebriefTypes, loadDebriefs, loadNoteDeck, addNoteDeckCard, updateNoteDeckCard, deleteNoteDeckCard, uploadNoteImage } from '../lib/store'
@@ -124,7 +124,7 @@ export default function Today({ state, checkIn, logMood }) {
 
   useEffect(() => { loadDeck() }, [state.userId])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const heights = cardRefs.current.filter(Boolean).map(el => el.offsetHeight)
     if (heights.length) setDeckHeight(Math.max(...heights))
   }, [noteDeck])
@@ -319,19 +319,8 @@ export default function Today({ state, checkIn, logMood }) {
       <div className={styles.list}>
 
         {state.showNoteToSelf && (
-          <>
-            <div className={styles.noteDeckHeader}>
-              {noteDeck.length > 0 && (
-                <div className={styles.noteDeckDots}>
-                  {noteDeck.map((_, i) => (
-                    <span key={i} className={`${styles.noteDeckDot} ${i === activeCardIndex ? styles.noteDeckDotActive : ''}`} />
-                  ))}
-                </div>
-              )}
-              <button className={styles.notePencilBtn} onClick={openManageDeck}>✎</button>
-            </div>
-
-            {noteDeck.length > 0 && (
+          <div className={styles.noteDeckSection}>
+            {noteDeck.length > 0 ? (
               <>
                 <div
                   className={styles.noteDeckWrapper}
@@ -341,25 +330,46 @@ export default function Today({ state, checkIn, logMood }) {
                 >
                   {noteDeck.map((card, i) => (
                     <div key={card.id} className={styles.noteDeckCard} ref={el => { cardRefs.current[i] = el }}>
-                      <div className={styles.noteDeckTextRow}>
-                        <span className={styles.noteLabel}>note to self:</span>
+                      <div className={styles.noteDeckEyebrow}>NOTE TO SELF</div>
+                      <div className={styles.noteDeckBody}>
                         <span className={styles.noteText}>{card.text}</span>
+                        {card.image_url && (
+                          <img
+                            src={card.image_url}
+                            alt=""
+                            className={styles.noteThumbnail}
+                            onClick={() => setLightboxImage(card.image_url)}
+                          />
+                        )}
                       </div>
-                      {card.image_url && (
-                        <img
-                          src={card.image_url}
-                          alt=""
-                          className={styles.noteThumbnail}
-                          onClick={() => setLightboxImage(card.image_url)}
-                        />
-                      )}
+                      <div className={styles.noteDeckFooter}>
+                        <div className={styles.noteDeckDots}>
+                          {noteDeck.map((_, j) => (
+                            <span key={j} className={`${styles.noteDeckDot} ${j === activeCardIndex ? styles.noteDeckDotActive : ''}`} />
+                          ))}
+                        </div>
+                        <button className={styles.notePencilBtn} onClick={openManageDeck}>manage ✎</button>
+                      </div>
                     </div>
                   ))}
                 </div>
-                <div className={styles.noteHairline} />
+                {noteDeck.length > 1 && (
+                  <div className={styles.noteDeckSwipeHint}>← →</div>
+                )}
               </>
+            ) : (
+              <div className={styles.noteDeckCard}>
+                <div className={styles.noteDeckEyebrow}>NOTE TO SELF</div>
+                <div className={styles.noteDeckBody}>
+                  <span className={styles.noteEmpty}>no notes yet</span>
+                </div>
+                <div className={styles.noteDeckFooter}>
+                  <span />
+                  <button className={styles.notePencilBtn} onClick={openManageDeck}>manage ✎</button>
+                </div>
+              </div>
             )}
-          </>
+          </div>
         )}
 
         {/* ── Progress bar ── */}

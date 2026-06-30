@@ -98,21 +98,7 @@
 }
 
 /* ── Note to self deck ── */
-.noteDeckHeader {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 10px 0 4px;
-}
-.noteDeckDots { display: flex; gap: 5px; margin-right: auto; }
-.noteDeckDot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--border2);
-}
-.noteDeckDotActive { background: var(--ink3); }
+.noteDeckSection { margin-bottom: 10px; }
 
 .noteDeckWrapper {
   display: flex;
@@ -127,35 +113,75 @@
   flex: 0 0 100%;
   scroll-snap-align: start;
   box-sizing: border-box;
-  padding: 12px 14px;
-  height: auto;
-}
-
-.noteDeckTextRow {
+  background: var(--bg);
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  padding: 13px 14px;
   display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 6px;
+  flex-direction: column;
 }
 
-.noteLabel {
+.noteDeckEyebrow {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
   color: var(--ink3);
-  flex-shrink: 0;
+  margin-bottom: 10px;
 }
+
+.noteDeckBody {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+}
+
 .noteText {
   font-family: var(--font-mono);
   font-style: italic;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--ink);
-  line-height: 1.4;
+  line-height: 1.6;
   flex: 1;
-  text-align: left;
 }
-.notePencilBtn {
+
+.noteEmpty {
   font-family: var(--font-mono);
   font-size: 13px;
+  color: var(--ink4);
+  flex: 1;
+}
+
+.noteThumbnail {
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.noteDeckFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.noteDeckDots { display: flex; gap: 4px; }
+.noteDeckDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--border2);
+}
+.noteDeckDotActive { background: var(--ink); }
+
+.notePencilBtn {
+  font-family: var(--font-mono);
+  font-size: 10px;
   color: var(--ink3);
   background: none;
   border: none;
@@ -164,16 +190,14 @@
   flex-shrink: 0;
   -webkit-tap-highlight-color: transparent;
 }
+.notePencilBtn:hover { color: var(--ink2); }
 
-.noteThumbnail {
-  display: block;
-  width: 48px;
-  height: 48px;
-  border-radius: 6px;
-  object-fit: cover;
-  margin-top: 8px;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
+.noteDeckSwipeHint {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink3);
+  text-align: center;
+  margin-top: 6px;
 }
 
 /* ── Lightbox ── */
@@ -206,9 +230,6 @@
   padding: 4px;
   -webkit-tap-highlight-color: transparent;
 }
-.notePencilBtn:hover { color: var(--ink); }
-.noteHairline { height: 0.5px; background: var(--border); margin-bottom: 10px; }
-
 /* ── Note editor overlay ── */
 .noteOverlay {
   position: fixed;
