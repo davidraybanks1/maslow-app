@@ -501,7 +501,7 @@ function OnboardingAccount({ destination, recommendation, updateCanvas, onDone }
     }
 
     setLoading(false)
-    onDone(destination)
+    onDone(destination, userId)
   }
 
   async function handleSignIn() {
@@ -553,7 +553,7 @@ function OnboardingAccount({ destination, recommendation, updateCanvas, onDone }
         <div className={styles.content}>
           <div className={styles.eyebrow}>SAVE YOUR CANVAS</div>
           <div className={styles.headline}>create your account.</div>
-          <div className={styles.sub}>your canvas, practices, and data are tied to your account. takes 30 seconds.</div>
+          <div className={styles.sub}>your canvas, practices, and data are tied to your account.</div>
 
           <div className={styles.accountForm}>
             <input
@@ -622,9 +622,6 @@ function OnboardingAccount({ destination, recommendation, updateCanvas, onDone }
           <div className={styles.signInPrompt}>
             already have an account? <span className={styles.signInLink} onClick={() => { setMode('signin'); setError(null); setDuplicateAccount(false) }}>sign in →</span>
           </div>
-          <div className={styles.skipLink} onClick={() => onDone(destination)}>
-            skip for now — i'll save my account later
-          </div>
         </div>
       </div>
     )
@@ -686,9 +683,6 @@ function OnboardingAccount({ destination, recommendation, updateCanvas, onDone }
         </button>
         <div className={styles.authToggle} onClick={() => { setMode('create'); setError(null) }}>
           don't have an account? create one
-        </div>
-        <div className={styles.skipLink} onClick={() => onDone(destination)}>
-          skip for now — i'll save my account later
         </div>
       </div>
     </div>
@@ -760,8 +754,8 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
     for (const [needId, mode] of Object.entries(recommendation.personal))  updateCanvas(needId, mode)
   }
 
-  function handleAccountDone(dest) {
-    if (completeOnboarding) completeOnboarding()
+  function handleAccountDone(dest, userId) {
+    if (completeOnboarding) completeOnboarding(null, null, userId ? { userId } : undefined)
     navigate(dest)
   }
 

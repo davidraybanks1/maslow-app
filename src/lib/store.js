@@ -358,7 +358,8 @@ export function useAppState(onSignIn) {
       onboardedAt: todayKey(),
       canvas: canvas || prev.canvas,
       practices: practices || prev.practices,
-      profile: profile ? profileData : prev.profile,
+      // Only update profile if caller actually passed profile fields beyond userId.
+      profile: Object.keys(profileData).length > 0 ? profileData : prev.profile,
       userId: userId || prev.userId,
     }))
   }
