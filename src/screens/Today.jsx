@@ -318,60 +318,6 @@ export default function Today({ state, checkIn, logMood }) {
       {/* ── Scrollable body ── */}
       <div className={styles.list}>
 
-        {state.showNoteToSelf && (
-          <div className={styles.noteDeckSection}>
-            {noteDeck.length > 0 ? (
-              <>
-                <div
-                  className={styles.noteDeckWrapper}
-                  style={deckHeight ? { height: deckHeight } : undefined}
-                  ref={deckWrapperRef}
-                  onScroll={handleDeckScroll}
-                >
-                  {noteDeck.map((card, i) => (
-                    <div key={card.id} className={styles.noteDeckCard} ref={el => { cardRefs.current[i] = el }}>
-                      <div className={styles.noteDeckEyebrow}>NOTE TO SELF</div>
-                      <div className={styles.noteDeckBody}>
-                        <span className={styles.noteText}>{card.text}</span>
-                        {card.image_url && (
-                          <img
-                            src={card.image_url}
-                            alt=""
-                            className={styles.noteThumbnail}
-                            onClick={() => setLightboxImage(card.image_url)}
-                          />
-                        )}
-                      </div>
-                      <div className={styles.noteDeckFooter}>
-                        <div className={styles.noteDeckDots}>
-                          {noteDeck.map((_, j) => (
-                            <span key={j} className={`${styles.noteDeckDot} ${j === activeCardIndex ? styles.noteDeckDotActive : ''}`} />
-                          ))}
-                        </div>
-                        <button className={styles.notePencilBtn} onClick={openManageDeck}>manage ✎</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                {noteDeck.length > 1 && (
-                  <div className={styles.noteDeckSwipeHint}>← →</div>
-                )}
-              </>
-            ) : (
-              <div className={styles.noteDeckCard}>
-                <div className={styles.noteDeckEyebrow}>NOTE TO SELF</div>
-                <div className={styles.noteDeckBody}>
-                  <span className={styles.noteEmpty}>no notes yet</span>
-                </div>
-                <div className={styles.noteDeckFooter}>
-                  <span />
-                  <button className={styles.notePencilBtn} onClick={openManageDeck}>manage ✎</button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
         {/* ── Progress bar ── */}
         <div className={styles.progressRow}>
           <span className={styles.progressCount}>{progressLabel}</span>
@@ -493,65 +439,124 @@ export default function Today({ state, checkIn, logMood }) {
           })}
         </div>
 
-        {/* ── Journal card ── */}
-        <div className={styles.cardJournal}>
-          <div className={styles.sectionHeader}>
-            <span className={styles.sectionLabel}>journal</span>
-            <button className={styles.journalTimestampBtn} onClick={handleInsertTimestamp}>⏱</button>
+        {/* ── Reflective section: note to self + journal ── */}
+        <div className={styles.reflectiveSection}>
+
+          {state.showNoteToSelf && (
+            <div className={styles.noteDeckSection}>
+              {noteDeck.length > 0 ? (
+                <>
+                  <div
+                    className={styles.noteDeckWrapper}
+                    style={deckHeight ? { height: deckHeight } : undefined}
+                    ref={deckWrapperRef}
+                    onScroll={handleDeckScroll}
+                  >
+                    {noteDeck.map((card, i) => (
+                      <div key={card.id} className={styles.noteDeckCard} ref={el => { cardRefs.current[i] = el }}>
+                        <div className={styles.noteDeckEyebrow}>NOTE TO SELF</div>
+                        <div className={styles.noteDeckBody}>
+                          <span className={styles.noteText}>{card.text}</span>
+                          {card.image_url && (
+                            <img
+                              src={card.image_url}
+                              alt=""
+                              className={styles.noteThumbnail}
+                              onClick={() => setLightboxImage(card.image_url)}
+                            />
+                          )}
+                        </div>
+                        <div className={styles.noteDeckFooter}>
+                          <div className={styles.noteDeckDots}>
+                            {noteDeck.map((_, j) => (
+                              <span key={j} className={`${styles.noteDeckDot} ${j === activeCardIndex ? styles.noteDeckDotActive : ''}`} />
+                            ))}
+                          </div>
+                          <button className={styles.notePencilBtn} onClick={openManageDeck}>manage ✎</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {noteDeck.length > 1 && (
+                    <div className={styles.noteDeckSwipeHint}>← →</div>
+                  )}
+                </>
+              ) : (
+                <div className={styles.noteDeckCard}>
+                  <div className={styles.noteDeckEyebrow}>NOTE TO SELF</div>
+                  <div className={styles.noteDeckBody}>
+                    <span className={styles.noteEmpty}>no notes yet</span>
+                  </div>
+                  <div className={styles.noteDeckFooter}>
+                    <span />
+                    <button className={styles.notePencilBtn} onClick={openManageDeck}>manage ✎</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── Journal card ── */}
+          <div className={styles.cardJournal}>
+            <div className={styles.sectionHeader}>
+              <span className={styles.sectionLabel}>journal</span>
+              <button className={styles.journalTimestampBtn} onClick={handleInsertTimestamp}>⏱</button>
+            </div>
+            <textarea
+              ref={journalRef}
+              className={styles.journalInput}
+              placeholder="add your thoughts for the day…"
+              value={journalEntry}
+              onChange={handleJournalChange}
+              rows={5}
+            />
+
+            {/* Anxiety debrief */}
+            <button className={styles.debriefToggle} onClick={() => setDebriefExpanded(e => !e)}>
+              <span className={`${styles.chevron} ${debriefExpanded ? styles.chevronOpen : ''}`}>›</span>
+              {todayDebriefCount > 0 && <span className={styles.debriefDot} />}
+              <span>anxiety debrief</span>
+              {todayDebriefCount > 0 && <span className={styles.debriefCount}>· {todayDebriefCount}</span>}
+            </button>
+
+            {debriefExpanded && (
+              <>
+                <div className={styles.debriefHairline} />
+                <DebriefForm
+                  userId={state.userId}
+                  debriefTypes={debriefTypes}
+                  onSaved={() => {
+                    setDebriefExpanded(false)
+                    setTodayDebriefCount(c => c + 1)
+                  }}
+                />
+              </>
+            )}
+
+            {/* Peak debrief */}
+            <button className={styles.debriefToggle} onClick={() => setPeakExpanded(e => !e)}>
+              <span className={`${styles.chevron} ${peakExpanded ? styles.chevronOpen : ''}`}>›</span>
+              {todayPeakCount > 0 && <span className={styles.debriefDot} />}
+              <span>peak debrief</span>
+              {todayPeakCount > 0 && <span className={styles.debriefCount}>· {todayPeakCount}</span>}
+            </button>
+
+            {peakExpanded && (
+              <>
+                <div className={styles.debriefHairline} />
+                <PeakDebriefForm
+                  userId={state.userId}
+                  debriefTypes={debriefTypes}
+                  onSaved={() => {
+                    setPeakExpanded(false)
+                    setTodayPeakCount(c => c + 1)
+                  }}
+                />
+              </>
+            )}
           </div>
-          <textarea
-            ref={journalRef}
-            className={styles.journalInput}
-            placeholder="add your thoughts for the day…"
-            value={journalEntry}
-            onChange={handleJournalChange}
-            rows={5}
-          />
 
-          {/* Anxiety debrief */}
-          <button className={styles.debriefToggle} onClick={() => setDebriefExpanded(e => !e)}>
-            <span className={`${styles.chevron} ${debriefExpanded ? styles.chevronOpen : ''}`}>›</span>
-            {todayDebriefCount > 0 && <span className={styles.debriefDot} />}
-            <span>anxiety debrief</span>
-            {todayDebriefCount > 0 && <span className={styles.debriefCount}>· {todayDebriefCount}</span>}
-          </button>
-
-          {debriefExpanded && (
-            <>
-              <div className={styles.debriefHairline} />
-              <DebriefForm
-                userId={state.userId}
-                debriefTypes={debriefTypes}
-                onSaved={() => {
-                  setDebriefExpanded(false)
-                  setTodayDebriefCount(c => c + 1)
-                }}
-              />
-            </>
-          )}
-
-          {/* Peak debrief */}
-          <button className={styles.debriefToggle} onClick={() => setPeakExpanded(e => !e)}>
-            <span className={`${styles.chevron} ${peakExpanded ? styles.chevronOpen : ''}`}>›</span>
-            {todayPeakCount > 0 && <span className={styles.debriefDot} />}
-            <span>peak debrief</span>
-            {todayPeakCount > 0 && <span className={styles.debriefCount}>· {todayPeakCount}</span>}
-          </button>
-
-          {peakExpanded && (
-            <>
-              <div className={styles.debriefHairline} />
-              <PeakDebriefForm
-                userId={state.userId}
-                debriefTypes={debriefTypes}
-                onSaved={() => {
-                  setPeakExpanded(false)
-                  setTodayPeakCount(c => c + 1)
-                }}
-              />
-            </>
-          )}
-        </div>
+        </div>{/* end reflectiveSection */}
 
       </div>
 

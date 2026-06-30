@@ -56,11 +56,9 @@
 }
 
 .cardJournal {
-  background: #F9EDD5;
-  border: 0.5px solid rgba(26, 26, 26, 0.12);
+  background: #E8E4F0;
   border-radius: 12px;
   padding: 14px 16px;
-  margin-bottom: 10px;
 }
 
 /* ── Progress bar ── */
@@ -97,6 +95,14 @@
   text-align: right;
 }
 
+/* ── Reflective section (note to self + journal) ── */
+.reflectiveSection {
+  background: #E8E4F0;
+  border-radius: 16px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
 /* ── Note to self deck ── */
 .noteDeckSection { margin-bottom: 10px; }
 
@@ -113,8 +119,8 @@
   flex: 0 0 100%;
   scroll-snap-align: start;
   box-sizing: border-box;
-  background: var(--bg);
-  border: 0.5px solid var(--border);
+  background: #E8E4F0;
+  border: 0.5px solid rgba(26,26,26,0.08);
   border-radius: 12px;
   padding: 13px 14px;
   display: flex;
