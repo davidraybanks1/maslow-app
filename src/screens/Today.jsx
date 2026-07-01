@@ -412,9 +412,6 @@ export default function Today({ state, checkIn, logMood }) {
                       </div>
                     ))}
                   </div>
-                  {noteDeck.length > 1 && (
-                    <div className={styles.noteDeckSwipeHint}>← →</div>
-                  )}
                 </>
               ) : (
                 <div className={styles.noteDeckCard}>

@@ -173,13 +173,6 @@
 }
 .notePencilBtn:hover { color: var(--ink2); }
 
-.noteDeckSwipeHint {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--ink3);
-  text-align: center;
-  margin-top: 6px;
-}
 
 /* ── Lightbox ── */
 .lightboxOverlay {
