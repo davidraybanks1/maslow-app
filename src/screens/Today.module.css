@@ -29,12 +29,6 @@
   letter-spacing: 0.06em;
 }
 .greeting { font-family: var(--font-serif); font-size: 34px; font-weight: 400; letter-spacing: -0.01em; line-height: 1.1; color: var(--ink); }
-.streak {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: 15px;
-  color: var(--ink);
-}
 .headerRight {
   display: flex;
   flex-direction: column;

@@ -364,7 +364,6 @@ export default function Today({ state, checkIn, logMood }) {
           <div className={styles.headerLeft}>
             <div className={styles.dateLabel}>{dateLabel}</div>
             <div className={styles.greeting}>good {hour()}.</div>
-            {streak >= 1 && <span className={styles.streak}>{streak} day{streak === 1 ? '' : 's'} streak</span>}
           </div>
           <div className={styles.headerRight}>
             <canvas ref={pieRef} width={44} height={44} className={styles.pieCanvas} />
