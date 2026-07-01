@@ -84,8 +84,7 @@ export default function Today({ state, checkIn, logMood }) {
     const filledBubbles = Math.min(checked.filter(k => k.startsWith(prefix)).length, maxBubbles)
     currentScore += filledBubbles * weight
   }
-  const pct = maxScore > 0 ? Math.round(currentScore / maxScore * 100) : 0
-  const progressLabel = `${formatScore(currentScore)} of ${formatScore(maxScore)} practices`
+  const piePct = maxScore > 0 ? currentScore / maxScore : 0
 
   const todayMoods = (state.moods || []).filter(m => m.date_key === today)
   const stats = createDataStats({ canvas: state.canvas || {}, checkins: state.checkins || {}, moods: state.moods || [], practices: state.practices || {} })
@@ -107,6 +106,7 @@ export default function Today({ state, checkIn, logMood }) {
   const [deckHeight, setDeckHeight] = useState(undefined)
   const deckWrapperRef = useRef(null)
   const cardRefs = useRef([])
+  const pieRef = useRef(null)
 
   const [lightboxImage, setLightboxImage] = useState(null)
   const [manageDeckOpen, setManageDeckOpen] = useState(false)
@@ -124,6 +124,41 @@ export default function Today({ state, checkIn, logMood }) {
 
   // Sync local deck state whenever restoreFromSupabase pushes a fresh noteDeck
   useEffect(() => { setNoteDeck(state.noteDeck || []) }, [state.noteDeck])
+
+  useEffect(() => {
+    const canvas = pieRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    const dpr = window.devicePixelRatio || 1
+    const size = 44
+    canvas.width = size * dpr
+    canvas.height = size * dpr
+    canvas.style.width = `${size}px`
+    canvas.style.height = `${size}px`
+    ctx.scale(dpr, dpr)
+    const cx = size / 2
+    const cy = size / 2
+    const r = size / 2 - 1
+    const innerR = r * 0.55
+    const bg2 = getComputedStyle(document.documentElement).getPropertyValue('--bg2').trim() || '#F5F3ED'
+    ctx.clearRect(0, 0, size, size)
+    ctx.beginPath()
+    ctx.arc(cx, cy, r, 0, Math.PI * 2)
+    ctx.fillStyle = 'rgba(26,26,26,0.08)'
+    ctx.fill()
+    if (piePct > 0) {
+      ctx.beginPath()
+      ctx.moveTo(cx, cy)
+      ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + piePct * 2 * Math.PI)
+      ctx.closePath()
+      ctx.fillStyle = piePct >= 1 ? '#1B3A2D' : '#1A1A1A'
+      ctx.fill()
+    }
+    ctx.beginPath()
+    ctx.arc(cx, cy, innerR, 0, Math.PI * 2)
+    ctx.fillStyle = bg2
+    ctx.fill()
+  }, [currentScore, maxScore])
 
   useLayoutEffect(() => {
     const heights = cardRefs.current.filter(Boolean).map(el => el.offsetHeight)
@@ -325,11 +360,16 @@ export default function Today({ state, checkIn, logMood }) {
 
       {/* ── Greeting ── */}
       <div className={styles.header}>
-        <div className={styles.eyebrow}>today</div>
-        <div className={styles.greeting}>good {hour()}.</div>
-        <div className={styles.subRow}>
-          <span className={styles.dateLabel}>{dateLabel}</span>
-          {streak >= 1 && <span className={styles.streak}>{streak} day{streak === 1 ? '' : 's'} streak</span>}
+        <div className={styles.headerRow}>
+          <div className={styles.headerLeft}>
+            <div className={styles.dateLabel}>{dateLabel}</div>
+            <div className={styles.greeting}>good {hour()}.</div>
+            {streak >= 1 && <span className={styles.streak}>{streak} day{streak === 1 ? '' : 's'} streak</span>}
+          </div>
+          <div className={styles.headerRight}>
+            <canvas ref={pieRef} width={44} height={44} className={styles.pieCanvas} />
+            <div className={styles.pieLabel}>{formatScore(currentScore)} of {formatScore(maxScore)}</div>
+          </div>
         </div>
       </div>
 
@@ -392,15 +432,6 @@ export default function Today({ state, checkIn, logMood }) {
             </div>
           </div>
         )}
-
-        {/* ── Progress bar ── */}
-        <div className={styles.progressRow}>
-          <span className={styles.progressCount}>{progressLabel}</span>
-          <div className={styles.progTrack}>
-            <div className={styles.progFill} style={{ width: `${pct}%` }} />
-          </div>
-          <span className={styles.progressPct}>{pct}%</span>
-        </div>
 
         {showGuidance && <GuidanceCard type={guidanceType} onDismiss={handleDismissGuidance} />}
 

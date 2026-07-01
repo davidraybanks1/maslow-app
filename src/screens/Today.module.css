@@ -10,32 +10,45 @@
 .header {
   padding: 20px 0 16px;
 }
-.eyebrow {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--ink3);
-  margin-bottom: 6px;
-}
-.greeting { font-family: var(--font-serif); font-size: 34px; font-weight: 400; letter-spacing: -0.01em; line-height: 1.1; color: var(--ink); }
-.subRow {
+.headerRow {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-top: 8px;
+  align-items: center;
+  gap: 12px;
+}
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
 }
 .dateLabel {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 11px;
   color: var(--ink3);
   letter-spacing: 0.06em;
 }
+.greeting { font-family: var(--font-serif); font-size: 34px; font-weight: 400; letter-spacing: -0.01em; line-height: 1.1; color: var(--ink); }
 .streak {
   font-family: var(--font-serif);
   font-style: italic;
   font-size: 15px;
   color: var(--ink);
+}
+.headerRight {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.pieCanvas { display: block; }
+.pieLabel {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink3);
+  text-align: center;
+  white-space: nowrap;
 }
 
 /* ── Cards ── */
@@ -62,39 +75,6 @@
   margin-bottom: 10px;
 }
 
-/* ── Progress bar ── */
-.progressRow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 4px 0 10px;
-}
-.progressCount {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--ink3);
-  white-space: nowrap;
-}
-.progTrack {
-  flex: 1;
-  height: 3px;
-  background: var(--border);
-  border-radius: 2px;
-  overflow: hidden;
-}
-.progFill {
-  height: 100%;
-  background: #E8B81F;
-  border-radius: 2px;
-  transition: width 0.8s ease;
-}
-.progressPct {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--ink3);
-  min-width: 32px;
-  text-align: right;
-}
 
 /* ── Lavender wrapper (note to self deck) ── */
 .reflectiveSection {
