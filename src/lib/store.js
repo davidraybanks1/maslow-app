@@ -59,6 +59,7 @@ function migrateState(saved) {
     if (!saved.moods) saved.moods = []
     if (!saved.checkins || typeof saved.checkins !== 'object') saved.checkins = {}
     if (!saved.practices || typeof saved.practices !== 'object') saved.practices = {}
+    if (!saved.noteDeck) saved.noteDeck = []
     if (saved.showNoteToSelf === undefined) saved.showNoteToSelf = true
     if (saved.reviewDay === undefined) saved.reviewDay = 0
     if (saved.reviewTime === undefined) saved.reviewTime = '10:00'
@@ -91,6 +92,7 @@ export function initialState() {
     practices: {},
     checkins: {},
     moods: [],
+    noteDeck: [],
     profile: { name: '' },
     showNoteToSelf: true,
     reviewDay: 0,
@@ -119,11 +121,12 @@ async function restoreFromSupabase(userId, email) {
 
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-    const cutoff = thirtyDaysAgo.toISOString().slice(0, 10)
+    const cutoff = thirtyDaysAgo.toLocaleDateString('en-CA')
 
-    const [{ data: checkins }, moods] = await Promise.all([
+    const [{ data: checkins }, moods, noteDeck] = await Promise.all([
       supabase.from('checkins').select('*').eq('user_id', user.id).gte('date_key', cutoff),
       fetchMoods(user.id),
+      loadNoteDeck(user.id),
     ])
     const checkinsMap = {}
     for (const row of (checkins || [])) {
@@ -139,6 +142,7 @@ async function restoreFromSupabase(userId, email) {
       practices: user.practices || {},
       checkins: checkinsMap,
       moods,
+      noteDeck: noteDeck || [],
       profile: { name: user.name || '' },
       showNoteToSelf: user.show_note_to_self !== false,
       reviewDay: user.review_day ?? 0,
@@ -412,7 +416,7 @@ export function weekKey(date = new Date()) {
   const d = new Date(date)
   d.setHours(0, 0, 0, 0)
   d.setDate(d.getDate() - d.getDay())
-  return d.toISOString().slice(0, 10)
+  return d.toLocaleDateString('en-CA')
 }
 
 export async function sendMagicLink(email) {

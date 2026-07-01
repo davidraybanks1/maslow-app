@@ -102,7 +102,7 @@ export default function Today({ state, checkIn, logMood }) {
     setGuidanceDismissedNow(true)
   }
 
-  const [noteDeck, setNoteDeck] = useState([])
+  const [noteDeck, setNoteDeck] = useState(() => state.noteDeck || [])
   const [activeCardIndex, setActiveCardIndex] = useState(0)
   const [deckHeight, setDeckHeight] = useState(undefined)
   const deckWrapperRef = useRef(null)
@@ -122,7 +122,8 @@ export default function Today({ state, checkIn, logMood }) {
     loadNoteDeck(state.userId).then(setNoteDeck)
   }
 
-  useEffect(() => { loadDeck() }, [state.userId])
+  // Sync local deck state whenever restoreFromSupabase pushes a fresh noteDeck
+  useEffect(() => { setNoteDeck(state.noteDeck || []) }, [state.noteDeck])
 
   useLayoutEffect(() => {
     const heights = cardRefs.current.filter(Boolean).map(el => el.offsetHeight)
@@ -271,6 +272,23 @@ export default function Today({ state, checkIn, logMood }) {
     todayMoods.forEach(m => { init[m.prompt_time] = m.note || '' })
     return init
   })
+
+  // Sync mood selections and notes from the server after restoreFromSupabase loads.
+  // Only fills empty slots — never overwrites live user input.
+  useEffect(() => {
+    const todayMoodsNow = (state.moods || []).filter(m => m.date_key === today)
+    if (!todayMoodsNow.length) return
+    setMoodSelections(prev => {
+      const next = { ...prev }
+      todayMoodsNow.forEach(m => { if (!next[m.prompt_time]) next[m.prompt_time] = m.mood })
+      return next
+    })
+    setMoodNotes(prev => {
+      const next = { ...prev }
+      todayMoodsNow.forEach(m => { if (!next[m.prompt_time] && m.note) next[m.prompt_time] = m.note })
+      return next
+    })
+  }, [state.moods])
 
   async function handleMoodSelect(promptTime, mood) {
     setMoodSelections(prev => ({ ...prev, [promptTime]: mood }))
