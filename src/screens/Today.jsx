@@ -37,6 +37,9 @@ const MOOD_PERIODS = ['morning', 'midday', 'evening']
 const MOODS = ['good', 'fine', 'bad']
 const MOOD_SELECTED_CLASS = { good: 'moodBtnGood', fine: 'moodBtnFine', bad: 'moodBtnBad' }
 
+const JOURNAL_DRAFT_PREFIX = 'journal-draft-'
+function journalDraftKey(dateKey) { return `${JOURNAL_DRAFT_PREFIX}${dateKey}` }
+
 const NOTE_MAX_LENGTH = 120
 const NOTE_LIBRARY = [
   'everything can be appreciated. most things can be enjoyed. everything else can be learned from.',
@@ -276,12 +279,33 @@ export default function Today({ state, checkIn, logMood }) {
   const debounceRef = useRef(null)
   const journalRef = useRef(null)
   const journalUserIdRef = useRef(state.userId)
+  const journalTextRef = useRef('')   // always holds latest text for event listeners
+  const journalDateRef = useRef(today)
   useEffect(() => { journalUserIdRef.current = state.userId }, [state.userId])
+  useEffect(() => { journalDateRef.current = today }, [today])
 
   useEffect(() => {
     if (!state.userId) { console.error('[loadJournalEntry] called without userId — session may be invalid'); return }
-    loadJournalEntry(state.userId, today).then(entry => {
+
+    // Clean up draft keys from previous days on every load
+    try {
+      for (const key of Object.keys(localStorage)) {
+        if (key.startsWith(JOURNAL_DRAFT_PREFIX) && key !== journalDraftKey(today)) {
+          localStorage.removeItem(key)
+        }
+      }
+    } catch {}
+
+    loadJournalEntry(state.userId, today).then(serverEntry => {
+      const localDraft = (() => { try { return localStorage.getItem(journalDraftKey(today)) || '' } catch { return '' } })()
+      // Prefer local draft when it has more content than Supabase (unsaved keystrokes survived an exit)
+      const entry = localDraft.length > (serverEntry || '').length ? localDraft : (serverEntry || '')
       setJournalEntry(entry)
+      journalTextRef.current = entry
+      if (localDraft.length > (serverEntry || '').length) {
+        // Flush recovered draft to Supabase now so it isn't lost again
+        saveJournalEntry(state.userId, today, localDraft)
+      }
       setTimeout(() => {
         if (journalRef.current && entry) {
           journalRef.current.style.height = 'auto'
@@ -291,9 +315,25 @@ export default function Today({ state, checkIn, logMood }) {
     })
   }, [state.userId, today])
 
+  // Flush the pending debounce when the page is hidden (PWA backgrounded / tab switched / closed).
+  // visibilitychange is the only event that fires reliably on mobile; beforeunload/pagehide do not.
+  useEffect(() => {
+    function handleVisibilityChange() {
+      if (document.visibilityState !== 'hidden') return
+      if (debounceRef.current) { clearTimeout(debounceRef.current); debounceRef.current = null }
+      const uid = journalUserIdRef.current
+      if (uid) saveJournalEntry(uid, journalDateRef.current, journalTextRef.current)
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, []) // empty — reads only from refs
+
   function handleJournalChange(e) {
     const val = e.target.value
     setJournalEntry(val)
+    journalTextRef.current = val
+    // Synchronous local backup — survives any exit before the debounce fires
+    try { localStorage.setItem(journalDraftKey(today), val) } catch {}
     if (journalRef.current) {
       journalRef.current.style.height = 'auto'
       journalRef.current.style.height = journalRef.current.scrollHeight + 'px'
