@@ -158,8 +158,10 @@ export function useAppState(onSignIn) {
   const [state, setState] = useState(initialState)
   const [authLoading, setAuthLoading] = useState(true)
   const checkinsRef = useRef(state.checkins)
+  const userIdRef = useRef(state.userId)
 
   useEffect(() => { checkinsRef.current = state.checkins }, [state.checkins])
+  useEffect(() => { userIdRef.current = state.userId }, [state.userId])
 
   useEffect(() => {
     async function checkSession() {
@@ -181,13 +183,23 @@ export function useAppState(onSignIn) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       try {
         if (event === 'SIGNED_IN' && session?.user) {
+          // Capture skip flag before the async restoreFromSupabase call so that
+          // an in-progress onboarding sign-up doesn't get its state overwritten
+          // when the restored data arrives (the onboarding upsert may not have
+          // committed yet when we read the DB).
+          const shouldSkip = signInNavRef.skip
+          signInNavRef.skip = false
           const restored = await restoreFromSupabase(session.user.id, session.user.email)
           if (restored) {
-            setState(restored)
-            saveState(restored)
-            const shouldSkip = signInNavRef.skip
-            signInNavRef.skip = false
-            if (!shouldSkip) onSignIn?.()
+            if (!shouldSkip) {
+              setState(restored)
+              saveState(restored)
+              onSignIn?.()
+            } else {
+              // Onboarding path: persist to disk but don't overwrite the state
+              // that completeOnboarding is building in memory.
+              saveState(restored)
+            }
           }
         }
         if (event === 'SIGNED_OUT') {
@@ -298,22 +310,20 @@ export function useAppState(onSignIn) {
       })
     }
 
-    if (state.userId) {
-      if (!isRemoving) {
-        supabase.from('checkins').insert({ user_id: state.userId, date_key: date, need_id: key }).then(({ error }) => {
-          if (error) {
-            logSupabaseError('checkIn', error)
-            revert()
-          }
-        })
-      } else {
-        supabase.from('checkins').delete().eq('user_id', state.userId).eq('date_key', date).eq('need_id', key).then(({ error }) => {
-          if (error) {
-            logSupabaseError('checkIn', error)
-            revert()
-          }
-        })
-      }
+    const uid = userIdRef.current
+    if (!uid) {
+      console.error('[checkIn] called without userId — practice not persisted')
+      revert()
+      return
+    }
+    if (!isRemoving) {
+      supabase.from('checkins').insert({ user_id: uid, date_key: date, need_id: key }).then(({ error }) => {
+        if (error) { logSupabaseError('checkIn', error); revert() }
+      })
+    } else {
+      supabase.from('checkins').delete().eq('user_id', uid).eq('date_key', date).eq('need_id', key).then(({ error }) => {
+        if (error) { logSupabaseError('checkIn', error); revert() }
+      })
     }
   }
 
@@ -498,12 +508,13 @@ export async function addNoteDeckCard(userId, { text, imageUrl }) {
 
 async function appendNoteHistory(userId, text) {
   const trimmed = text?.trim()
-  if (!trimmed) return
-  const { data } = await supabase.from('users').select('note_history').eq('id', userId).single()
-  const existing = data?.note_history || []
-  if (existing.some(e => e.text === trimmed)) return
-  const updated = [{ date: new Date().toLocaleDateString('en-CA'), text: trimmed }, ...existing].slice(0, 20)
-  await supabase.from('users').update({ note_history: updated }).eq('id', userId)
+  if (!trimmed || !userId) return
+  const { error } = await supabase.rpc('append_note_history', {
+    p_user_id: userId,
+    p_text: trimmed,
+    p_date: new Date().toLocaleDateString('en-CA'),
+  })
+  if (error) logSupabaseError('appendNoteHistory', error)
 }
 
 export async function updateNoteDeckCard(id, { text, imageUrl, userId, previousText }) {
@@ -528,13 +539,12 @@ export async function deleteNoteDeckCard(id, userId, text) {
 }
 
 export async function reorderNoteDeck(cards) {
-  await Promise.all(
-    cards.map((card, i) =>
-      supabase.from('note_deck').update({ position: i }).eq('id', card.id).then(({ error }) => {
-        if (error) logSupabaseError('reorderNoteDeck', error)
-      })
-    )
-  )
+  const positions = cards.map((card, i) => ({ id: card.id, position: i }))
+  const { error } = await supabase.rpc('reorder_note_deck', { p_positions: positions })
+  if (error) {
+    logSupabaseError('reorderNoteDeck', error)
+    throw error
+  }
 }
 
 export async function loadNoteHistory(userId) {

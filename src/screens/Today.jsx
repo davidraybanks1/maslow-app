@@ -209,9 +209,13 @@ export default function Today({ state, checkIn, logMood }) {
     if (!over || active.id === over.id) return
     const oldIndex = noteDeck.findIndex(c => c.id === active.id)
     const newIndex = noteDeck.findIndex(c => c.id === over.id)
+    const previousDeck = noteDeck
     const reordered = arrayMove(noteDeck, oldIndex, newIndex)
     setNoteDeck(reordered)
-    reorderNoteDeck(reordered)
+    reorderNoteDeck(reordered).catch(err => {
+      console.error('[handleDragEnd] reorder failed — reverting', err)
+      setNoteDeck(previousDeck)
+    })
   }
 
   function openComposerForNew() {
@@ -271,6 +275,8 @@ export default function Today({ state, checkIn, logMood }) {
   const [journalEntry, setJournalEntry] = useState('')
   const debounceRef = useRef(null)
   const journalRef = useRef(null)
+  const journalUserIdRef = useRef(state.userId)
+  useEffect(() => { journalUserIdRef.current = state.userId }, [state.userId])
 
   useEffect(() => {
     if (!state.userId) { console.error('[loadJournalEntry] called without userId — session may be invalid'); return }
@@ -294,7 +300,9 @@ export default function Today({ state, checkIn, logMood }) {
     }
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
-      saveJournalEntry(state.userId, today, val)
+      const uid = journalUserIdRef.current
+      if (!uid) { console.error('[saveJournalEntry] no userId at save time — entry not persisted'); return }
+      saveJournalEntry(uid, today, val)
     }, 1500)
   }
 

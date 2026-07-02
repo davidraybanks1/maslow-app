@@ -483,8 +483,9 @@ function OnboardingAccount({ destination, recommendation, updateCanvas, onDone }
 
     const { data: { user } } = await supabase.auth.getUser()
     const userId = user?.id
+    let canvasObj = null
     if (userId && recommendation) {
-      const canvasObj = { ...recommendation.universal, ...recommendation.personal }
+      canvasObj = { ...recommendation.universal, ...recommendation.personal }
       await supabase.from('users').upsert({
         id: userId,
         email: email.trim().toLowerCase(),
@@ -494,14 +495,12 @@ function OnboardingAccount({ destination, recommendation, updateCanvas, onDone }
         onboarded: true,
         profile: { smsEnabled: smsEnabled && !!phone.trim() },
       }, { onConflict: 'id' })
-
-      for (const [needId, m] of Object.entries(canvasObj)) {
-        updateCanvas(needId, m)
-      }
     }
 
     setLoading(false)
-    onDone(destination, userId)
+    // Pass canvasObj so handleAccountDone can set it explicitly in completeOnboarding,
+    // preventing the SIGNED_IN → restoreFromSupabase race from clobbering the canvas.
+    onDone(destination, userId, canvasObj)
   }
 
   async function handleSignIn() {
@@ -754,8 +753,9 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
     for (const [needId, mode] of Object.entries(recommendation.personal))  updateCanvas(needId, mode)
   }
 
-  function handleAccountDone(dest, userId) {
-    if (completeOnboarding) completeOnboarding(null, null, userId ? { userId } : undefined)
+  function handleAccountDone(dest, userId, canvas) {
+    // Pass canvas explicitly so it survives any restoreFromSupabase race in the SIGNED_IN handler.
+    if (completeOnboarding) completeOnboarding(canvas || null, null, userId ? { userId } : undefined)
     navigate(dest)
   }
 

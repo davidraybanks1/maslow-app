@@ -126,6 +126,7 @@ export default function Debriefs({ state }) {
   const [detail, setDetail] = useState(null)
   const [colorPickerFor, setColorPickerFor] = useState(null)
   const [addInputs, setAddInputs] = useState({ nature: '', environment: '', peak: '' })
+  const [refreshError, setRefreshError] = useState(null)
 
   useEffect(() => {
     if (!state.userId) { console.error('[Debriefs] refresh called without userId — session may be invalid'); return }
@@ -133,9 +134,15 @@ export default function Debriefs({ state }) {
   }, [state.userId])
 
   async function refresh() {
-    const [d, t] = await Promise.all([loadDebriefs(state.userId), loadDebriefTypes(state.userId)])
-    setDebriefs(d)
-    setDebriefTypes(t)
+    setRefreshError(null)
+    try {
+      const [d, t] = await Promise.all([loadDebriefs(state.userId), loadDebriefTypes(state.userId)])
+      setDebriefs(d)
+      setDebriefTypes(t)
+    } catch (err) {
+      console.error('[Debriefs] refresh failed', err)
+      setRefreshError('failed to load debriefs')
+    }
   }
 
   async function handleAddType(category) {
@@ -145,18 +152,18 @@ export default function Debriefs({ state }) {
     const color = CUSTOM_TYPE_SWATCHES.find(c => !used.has(c)) || CUSTOM_TYPE_SWATCHES[0]
     await saveDebriefType(state.userId, { category, name, color })
     setAddInputs(prev => ({ ...prev, [category]: '' }))
-    refresh()
+    await refresh()
   }
 
   async function handleRemoveType(category, name) {
     await deleteDebriefType(state.userId, { category, name })
-    refresh()
+    await refresh()
   }
 
   async function handleChangeColor(category, name, color) {
     await saveDebriefType(state.userId, { category, name, color })
     setColorPickerFor(null)
-    refresh()
+    await refresh()
   }
 
   const natureBuiltins = BUILTIN_NATURE_TYPES.map(t => ({ name: t.name, color: t.bg }))
@@ -188,6 +195,12 @@ export default function Debriefs({ state }) {
           <span className={styles.newBtnLabel}>→ new debrief</span>
           <span className={styles.newBtnSub}>log an episode or moment from earlier today</span>
         </button>
+
+        {refreshError && (
+          <div className={styles.refreshError}>
+            {refreshError} — <button className={styles.retryBtn} onClick={refresh}>retry</button>
+          </div>
+        )}
 
         <div className={styles.filterRow}>
           {FILTERS.map(f => (
