@@ -86,6 +86,23 @@
 /* ── Customize section ── */
 .sectionLabel { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink3); margin: 4px 0 10px; }
 
+.patternsLink {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 12px 0;
+  text-align: left;
+  letter-spacing: 0.02em;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--motion-hover);
+}
+.patternsLink:hover { color: var(--ink2); }
+.patternsLink:active { color: var(--ink); }
+
 .typeCard { background: var(--bg); border: 0.5px solid var(--border); border-radius: 12px; padding: 4px 16px; margin-bottom: 10px; }
 .typeCardLabel { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink3); padding: 12px 0 4px; }
 

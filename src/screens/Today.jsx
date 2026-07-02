@@ -414,6 +414,28 @@ export default function Today({ state, checkIn, logMood }) {
     return init
   })
 
+  // Rows with a saved note start expanded; others start collapsed
+  const [expandedNoteRows, setExpandedNoteRows] = useState(() => {
+    const set = new Set()
+    todayMoods.forEach(m => { if (m.note) set.add(m.prompt_time) })
+    return set
+  })
+  const moodNoteRefs = useRef({})
+
+  function toggleNoteRow(period) {
+    setExpandedNoteRows(prev => {
+      const next = new Set(prev)
+      if (next.has(period)) {
+        next.delete(period)
+      } else {
+        next.add(period)
+        // auto-focus on next tick
+        setTimeout(() => moodNoteRefs.current[period]?.focus(), 0)
+      }
+      return next
+    })
+  }
+
   // Sync mood selections and notes from the server after restoreFromSupabase loads.
   // Only fills empty slots — never overwrites live user input.
   useEffect(() => {
@@ -427,6 +449,12 @@ export default function Today({ state, checkIn, logMood }) {
     setMoodNotes(prev => {
       const next = { ...prev }
       todayMoodsNow.forEach(m => { if (!next[m.prompt_time] && m.note) next[m.prompt_time] = m.note })
+      return next
+    })
+    // Expand rows that have saved notes
+    setExpandedNoteRows(prev => {
+      const next = new Set(prev)
+      todayMoodsNow.forEach(m => { if (m.note) next.add(m.prompt_time) })
       return next
     })
   }, [state.moods])
@@ -570,14 +598,25 @@ export default function Today({ state, checkIn, logMood }) {
                       ))}
                     </div>
                   </div>
-                  {(moodSelections[period] || moodNotes[period]) && (
+                  {expandedNoteRows.has(period) ? (
                     <input
+                      ref={el => { moodNoteRefs.current[period] = el }}
                       className={styles.moodNote}
                       placeholder="add a note…"
                       value={moodNotes[period] || ''}
                       onChange={e => setMoodNotes(prev => ({ ...prev, [period]: e.target.value }))}
-                      onBlur={() => handleNoteBlur(period)}
+                      onBlur={() => {
+                        handleNoteBlur(period)
+                        // Collapse if still empty after blur
+                        if (!moodNotes[period]?.trim()) {
+                          setExpandedNoteRows(prev => { const n = new Set(prev); n.delete(period); return n })
+                        }
+                      }}
                     />
+                  ) : (
+                    <button className={styles.moodNoteToggle} onClick={() => toggleNoteRow(period)}>
+                      + note
+                    </button>
                   )}
                 </div>
               </div>

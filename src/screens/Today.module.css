@@ -83,6 +83,7 @@
 
 .noteDeckWrapper {
   display: flex;
+  align-items: flex-start;  /* each card hugs its content; wrapper stays at tallest card height */
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
@@ -651,8 +652,24 @@
 .moodBtnGood { background: #1B3A2D; color: #fff; border-color: #1B3A2D; }
 .moodBtnFine { background: #B8C3B1; color: var(--ink); border-color: #B8C3B1; }
 .moodBtnBad { background: #D93B1C; color: #fff; border-color: #D93B1C; }
-.moodNote { width: 100%; box-sizing: border-box; padding: 7px 12px; border-radius: 8px; border: 0.5px solid var(--border); background: var(--bg2); font-family: var(--font-mono); font-size: 16px; font-weight: 200; color: var(--ink); outline: none; }
+.moodNote { width: 100%; box-sizing: border-box; padding: 7px 12px; border-radius: 8px; border: 0.5px solid var(--border); background: var(--bg2); font-family: var(--font-mono); font-size: 16px; font-weight: 200; color: var(--ink); outline: none; transition: border-color var(--motion-hover); }
+.moodNote:focus { border-color: var(--ink2); }
 .moodNote::placeholder { color: var(--ink4); }
+
+.moodNoteToggle {
+  background: none;
+  border: none;
+  padding: 2px 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink4);
+  cursor: pointer;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--motion-hover);
+}
+.moodNoteToggle:hover { color: var(--ink3); }
+.moodNoteToggle:active { color: var(--ink2); }
 .moodDivider { height: 1px; background: rgba(26, 26, 24, 0.07); }
 
 /* ── Journal ── */

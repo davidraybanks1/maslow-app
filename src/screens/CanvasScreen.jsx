@@ -67,18 +67,21 @@ function ModeDropdown({ needId, currentMode, modes, onSelect, isOpen, onToggle, 
         style={pill}
         onClick={() => onToggle(isOpen ? null : needId)}
       >
-        {currentMode}
+        {currentMode} <span className={styles.modePillChevron}>⌄</span>
       </button>
       {isOpen && (
         <div className={styles.modeDropdown}>
           {modes.map((m, i) => (
             <div key={m}>
               {i > 0 && <div className={styles.dropdownHairline} />}
-              <div className={styles.dropdownOption} onClick={() => onSelect(m)}>
+              <div
+                className={`${styles.dropdownOption} ${currentMode === m ? styles.dropdownOptionSelected : ''}`}
+                onClick={() => onSelect(m)}
+              >
                 <div className={styles.dropdownPip} style={{ background: MODE_COLORS[m] }} />
                 <span className={styles.dropdownModeName}>{m}</span>
                 <span className={styles.dropdownModeDesc}>{MODE_DESCRIPTIONS[m]}</span>
-                {currentMode === m && <div className={styles.dropdownSelectedDot} />}
+                {currentMode === m && <span className={styles.dropdownCheck}>✓</span>}
               </div>
             </div>
           ))}
@@ -102,6 +105,8 @@ function initCanvas(stored) {
 
 export default function CanvasScreen({ state, updateCanvas, replaceCanvas }) {
   const [canvas, setCanvas] = useState(() => initCanvas(state.canvas))
+  const [savedCanvas, setSavedCanvas] = useState(() => ({ ...state.canvas }))
+  const isDirty = JSON.stringify(canvas) !== JSON.stringify(savedCanvas)
   const [customNeeds, setCustomNeeds] = useState([])
   const [customInput, setCustomInput] = useState('')
   const [openPicker, setOpenPicker] = useState(null)
@@ -208,8 +213,8 @@ export default function CanvasScreen({ state, updateCanvas, replaceCanvas }) {
         if (canvas[need.id]) fullCanvas[need.id] = canvas[need.id]
       }
       await replaceCanvas(fullCanvas)
+      setSavedCanvas({ ...canvas })
       setSaveStatus('saved')
-      scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
       if (saveStatusTimer.current) clearTimeout(saveStatusTimer.current)
       saveStatusTimer.current = setTimeout(() => setSaveStatus('idle'), 2000)
     } catch (err) {
@@ -249,24 +254,6 @@ export default function CanvasScreen({ state, updateCanvas, replaceCanvas }) {
       </div>
 
       <div className={styles.scroll} ref={scrollRef}>
-        <button
-          className={styles.saveBtn}
-          onClick={handleSave}
-          disabled={saveStatus === 'saving'}
-          style={
-            !canSave ? { opacity: 0.35, pointerEvents: 'none' } :
-            saveStatus === 'error' ? { color: '#D93B1C', border: '0.5px solid #D93B1C' } :
-            {}
-          }
-        >
-          {saveStatus === 'saving' ? 'saving…'
-            : saveStatus === 'saved' ? 'canvas saved ✓'
-            : saveStatus === 'error' ? 'something went wrong — try again'
-            : 'save canvas'}
-        </button>
-        {!canSave && (
-          <div className={styles.saveNote}>add at least one appreciation or exploration need to save your canvas.</div>
-        )}
 
         {MODES.map(mode => {
           const needsInMode = inMode(mode)
@@ -420,6 +407,20 @@ export default function CanvasScreen({ state, updateCanvas, replaceCanvas }) {
             <button className={styles.addOwnBtn} onClick={handleAddCustom}>add</button>
           </div>
         </div>
+      </div>
+
+      {/* Sticky save bar — visible and active when canvas has unsaved changes */}
+      <div className={`${styles.stickyBar} ${isDirty ? styles.stickyBarDirty : ''}`}>
+        <button
+          className={styles.stickyBarBtn}
+          onClick={handleSave}
+          disabled={!isDirty || !canSave || saveStatus === 'saving'}
+        >
+          {saveStatus === 'saving' ? 'saving…'
+            : saveStatus === 'saved' ? 'saved ✓'
+            : saveStatus === 'error' ? 'something went wrong — try again'
+            : 'save canvas'}
+        </button>
       </div>
     </div>
   )

@@ -10,8 +10,7 @@ import {
   peakTagStyle,
   parseDebriefEntry,
 } from '../lib/debriefTypes'
-import { createDataStats } from '../lib/dataStats'
-import { AnxietyEpisodesCard, PeakMomentsCard } from '../components/DebriefStatsCards'
+import { useNavigate } from 'react-router-dom'
 import DebriefForm from '../components/DebriefForm'
 import PeakDebriefForm from '../components/PeakDebriefForm'
 import styles from './Debriefs.module.css'
@@ -119,6 +118,7 @@ function TypeCard({ title, builtins, customs, colorPickerOpen, onToggleColorPick
 }
 
 export default function Debriefs({ state }) {
+  const navigate = useNavigate()
   const [debriefs, setDebriefs] = useState([])
   const [debriefTypes, setDebriefTypes] = useState({ nature: [], environment: [], peak: [] })
   const [debriefLoading, setDebriefLoading] = useState(true)
@@ -185,11 +185,6 @@ export default function Debriefs({ state }) {
   })
   const groups = groupByMonth(filteredDebriefs)
 
-  // Data cards always reflect all debriefs, regardless of the history filter.
-  const stats = createDataStats({ canvas: state.canvas || {}, checkins: state.checkins || {}, moods: state.moods || [], practices: state.practices || {} })
-  const { byNatureAnxiety, byTypePeak, byEnvironment, patternAnxiety, patternPeak } = stats.getDebriefStats(debriefs)
-  const anxietyCount = debriefs.filter(d => d.type === 'anxiety' || !d.type).length
-  const peakCount = debriefs.filter(d => d.type === 'peak').length
 
   return (
     <div className={styles.screen}>
@@ -244,13 +239,19 @@ export default function Debriefs({ state }) {
                       </div>
                       <div className={styles.episodeExcerpt}>{parseDebriefEntry(d.entry, isPeak).sections[0]}</div>
                       <div className={styles.dotsRow}>
-                        {[0, 1, 2, 3].map(i => (
-                          <div
-                            key={i}
-                            className={styles.stepDot}
-                            style={i < (d.steps_completed || 0) ? { background: '#1B3A2D' } : {}}
-                          />
-                        ))}
+                        {(() => {
+                          const { sections, isLegacy } = parseDebriefEntry(d.entry, isPeak)
+                          return [0, 1, 2, 3].map(i => {
+                            const filled = isLegacy ? i === 0 && (d.entry || '').trim().length > 0 : (sections[i] || '').trim().length > 0
+                            return (
+                              <div
+                                key={i}
+                                className={styles.stepDot}
+                                style={filled ? { background: '#1B3A2D' } : {}}
+                              />
+                            )
+                          })
+                        })()}
                       </div>
                     </div>
                   )
@@ -260,8 +261,9 @@ export default function Debriefs({ state }) {
           )}
         </div>
 
-        <AnxietyEpisodesCard byNatureAnxiety={byNatureAnxiety} byEnvironment={byEnvironment} pattern={patternAnxiety} anxietyCount={anxietyCount} />
-        <PeakMomentsCard byTypePeak={byTypePeak} byEnvironment={byEnvironment} pattern={patternPeak} peakCount={peakCount} />
+        <button className={styles.patternsLink} onClick={() => navigate('/data?tab=debriefs')}>
+          view patterns → data
+        </button>
 
         <div className={styles.sectionLabel}>customize</div>
 
