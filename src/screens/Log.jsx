@@ -411,13 +411,16 @@ export default function Log({ state }) {
   const [finishing, setFinishing] = useState(false)
 
   const [reviewHistory, setReviewHistory] = useState([])
+  const [historyLoading, setHistoryLoading] = useState(true)
 
   const stats = createDataStats({ canvas: state.canvas || {}, checkins: state.checkins || {}, moods: state.moods || [], practices: state.practices || {} })
 
   useEffect(() => {
     if (!state.userId) { console.error('[reviewHistory] called without userId — session may be invalid'); return }
+    setHistoryLoading(true)
     Promise.all([loadWeeklyReviews(state.userId), loadUserCreatedAt(state.userId)]).then(([realReviews, createdAt]) => {
       setReviewHistory(buildReviewHistory(createdAt, state.reviewDay ?? 0, realReviews))
+      setHistoryLoading(false)
     })
   }, [state.userId, state.reviewDay])
 
@@ -659,7 +662,7 @@ export default function Log({ state }) {
 
         <div className={styles.reviewHistoryLabel}>REVIEW HISTORY</div>
         {reviewHistory.length === 0 ? (
-          <div className={styles.reviewHistoryEmpty}>no reviews yet — complete your first weekly review above.</div>
+          <div className={styles.reviewHistoryEmpty}>{historyLoading ? '—' : 'no reviews yet — complete your first weekly review above.'}</div>
         ) : (
           <div className={styles.reviewHistoryList}>
             {reviewHistory.map((r, i) => (
@@ -667,13 +670,12 @@ export default function Log({ state }) {
                 {i > 0 && <div className={styles.reviewHistoryDivider} />}
                 <div className={styles.reviewHistoryRow}>
                   <span className={styles.reviewHistoryLeft}>
-                    <span className={styles.reviewHistoryPrefix}>review:</span>
                     <span className={styles.reviewHistoryDate}>{formatHistoryDate(r.week_starting)}</span>
                   </span>
                   {r.steps_completed > 0 ? (
                     <span className={styles.reviewHistoryDone}>✓</span>
                   ) : (
-                    <span className={styles.reviewHistoryMissed}>×</span>
+                    <span className={styles.reviewHistoryMissed}>missed</span>
                   )}
                 </div>
               </div>

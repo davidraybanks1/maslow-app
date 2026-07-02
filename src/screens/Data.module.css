@@ -39,7 +39,7 @@
   padding: 5px 10px;
   border-radius: 6px;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: color var(--motion-hover), background var(--motion-hover), border-color var(--motion-hover), box-shadow var(--motion-hover);
 }
 
 .rangeBtnActive {
@@ -67,16 +67,19 @@
   border-bottom: 2px solid transparent;
   padding: 10px 4px;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: color var(--motion-hover), background var(--motion-hover), border-color var(--motion-hover), box-shadow var(--motion-hover);
   margin-bottom: -1px;
 }
 
 .viewBtn:hover { color: var(--ink2); }
+.viewBtn:active { color: var(--ink); }
+.viewBtn:focus-visible { outline: none; border-bottom-color: var(--ink2); }
 
 .viewBtnActive {
   color: var(--ink);
   border-bottom-color: var(--ink);
 }
+.viewBtnActive:focus-visible { border-bottom-color: var(--ink); }
 
 .section {
   flex: 1;
@@ -156,6 +159,12 @@
   flex-shrink: 0;
   padding: 0;
   line-height: 1;
+  position: relative;
+}
+.infoBtn::after {
+  content: '';
+  position: absolute;
+  inset: -15px;
 }
 
 .tooltip {
@@ -245,7 +254,7 @@
 .modeBarFill {
   height: 100%;
   border-radius: 3px;
-  transition: width 0.5s ease;
+  transition: width var(--motion-data) ease;
 }
 
 .modeBarPct {
@@ -491,7 +500,7 @@
   color: var(--ink3);
   flex-shrink: 0;
   display: inline-block;
-  transition: transform 0.15s ease;
+  transition: transform var(--motion-toggle) ease;
 }
 .needRowChevronOpen { transform: rotate(180deg); }
 
@@ -621,6 +630,10 @@
   font-size: 15px;
   color: var(--ink2);
   line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* Stale flags card */

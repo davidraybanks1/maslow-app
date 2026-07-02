@@ -17,7 +17,7 @@ export default function LiveCanvasCard({ stats, range }) {
 
       <div className={styles.lcOverallRow}>
         <div className={styles.lcOverallLabel}>OVERALL</div>
-        <div className={styles.lcOverallPace}>{overallPace}</div>
+        <div className={styles.lcOverallPace}>{overallPace}%</div>
       </div>
       <div className={styles.lcTrackContainer}>
         <div className={styles.lcOverallTrack}>

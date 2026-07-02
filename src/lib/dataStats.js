@@ -3,8 +3,8 @@ import { parseDebriefEntry } from './debriefTypes'
 
 const MOOD_RANK = { bad: 1, fine: 2, good: 3 }
 
-export const DEBRIEF_NATURE_COLORS = { frenetic: '#D93B1C', overwhelm: '#E8B81F', apathy: '#B8C3B1' }
-export const DEBRIEF_PEAK_COLORS = { confident: '#1B3A2D', creative: '#E8B81F', curious: '#B8C3B1' }
+export const DEBRIEF_NATURE_COLORS = { frenetic: '#C47B3A', overwhelm: '#7A8FA6', apathy: '#9E7B5A' }
+export const DEBRIEF_PEAK_COLORS = { confident: '#1B3A2D', creative: '#C47B3A', curious: '#7A8FA6' }
 export const DEBRIEF_ENVIRONMENT_COLORS = { work: '#1A1A1A', home: '#B8C3B1', social: '#7A8FA6', personal: '#E8B81F' }
 const DEBRIEF_DEFAULT_COLOR = '#999999'
 
@@ -478,7 +478,7 @@ export function createDataStats({ canvas, checkins, moods, practices }) {
         type: d.type || 'anxiety',
         nature: d.nature,
         environment: d.environment,
-        excerpt: excerptSource.slice(0, 80),
+        excerpt: excerptSource,
       }
     })
 

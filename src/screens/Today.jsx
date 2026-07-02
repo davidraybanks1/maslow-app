@@ -131,6 +131,7 @@ export default function Today({ state, checkIn, logMood }) {
   }
 
   const [noteDeck, setNoteDeck] = useState(() => state.noteDeck || [])
+  const [deckLoaded, setDeckLoaded] = useState(state.noteDeck != null && state.noteDeck !== undefined)
   const [activeCardIndex, setActiveCardIndex] = useState(0)
   const [deckHeight, setDeckHeight] = useState(undefined)
   const deckWrapperRef = useRef(null)
@@ -139,6 +140,7 @@ export default function Today({ state, checkIn, logMood }) {
 
   const [lightboxImage, setLightboxImage] = useState(null)
   const [manageDeckOpen, setManageDeckOpen] = useState(false)
+  const [manageDeckClosing, setManageDeckClosing] = useState(false)
   const [composer, setComposer] = useState(null) // null = list view; {} = new card; {id,text,image_url} = editing
   const [noteHistory, setNoteHistory] = useState([])
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
@@ -154,7 +156,10 @@ export default function Today({ state, checkIn, logMood }) {
   }
 
   // Sync local deck state whenever restoreFromSupabase pushes a fresh noteDeck
-  useEffect(() => { setNoteDeck(state.noteDeck || []) }, [state.noteDeck])
+  useEffect(() => {
+    setNoteDeck(state.noteDeck || [])
+    setDeckLoaded(true)
+  }, [state.noteDeck])
 
   useEffect(() => {
     const canvas = pieRef.current
@@ -204,8 +209,14 @@ export default function Today({ state, checkIn, logMood }) {
 
   function openManageDeck() {
     setManageDeckOpen(true)
+    setManageDeckClosing(false)
     setComposer(null)
     if (state.userId) loadNoteHistory(state.userId).then(setNoteHistory)
+  }
+
+  function closeManageDeck() {
+    setManageDeckClosing(true)
+    setTimeout(() => { setManageDeckOpen(false); setManageDeckClosing(false) }, 200)
   }
 
   function handleDragEnd({ active, over }) {
@@ -509,16 +520,24 @@ export default function Today({ state, checkIn, logMood }) {
                     ))}
                   </div>
                 </>
-              ) : (
+              ) : deckLoaded ? (
                 <div className={styles.noteDeckCard}>
                   <div className={styles.noteDeckEyebrow}>NOTE TO SELF</div>
                   <div className={styles.noteDeckBody}>
-                    <span className={styles.noteEmpty}>no notes yet</span>
+                    <span className={styles.noteEmpty}>no notes yet — tap manage to add one</span>
                   </div>
                   <div className={styles.noteDeckFooter}>
                     <span />
                     <button className={styles.notePencilBtn} onClick={openManageDeck}>manage ✎</button>
                   </div>
+                </div>
+              ) : (
+                <div className={styles.noteDeckCard}>
+                  <div className={styles.noteDeckEyebrow}>NOTE TO SELF</div>
+                  <div className={styles.noteDeckBody}>
+                    <span className={styles.noteEmpty}>—</span>
+                  </div>
+                  <div className={styles.noteDeckFooter}><span /></div>
                 </div>
               )}
             </div>
@@ -620,7 +639,10 @@ export default function Today({ state, checkIn, logMood }) {
                               <button
                                 key={p}
                                 className={isDone ? styles.practiceChipDone : styles.practiceChip}
-                                style={isDone ? { background: pip } : {}}
+                                style={isDone ? {
+                                  background: pip,
+                                  color: (mode === 'appreciation' || mode === 'nourishment') ? 'var(--ink)' : '#fff'
+                                } : {}}
                                 onClick={() => handleChipClick(n.id, mode, p)}
                               >
                                 {p}
@@ -701,12 +723,12 @@ export default function Today({ state, checkIn, logMood }) {
       </div>
 
       {manageDeckOpen && (
-        <div className={styles.noteOverlay}>
+        <div className={`${styles.noteOverlay} ${manageDeckClosing ? styles.noteOverlayClosing : ''}`}>
           <div className={styles.noteOverlayHeader}>
             <div className={styles.noteOverlayTitle}>{composer ? (composer.id ? 'edit note' : 'new note') : 'manage deck'}</div>
             <button
               className={styles.noteOverlayClose}
-              onClick={() => { if (composer) setComposer(null); else setManageDeckOpen(false) }}
+              onClick={() => { if (composer) setComposer(null); else closeManageDeck() }}
             >
               ×
             </button>

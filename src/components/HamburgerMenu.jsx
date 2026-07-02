@@ -24,7 +24,7 @@ const NAV_LINKS = [
   { to: '/debriefs',  label: 'Debriefs',  Icon: IconNotes },
 ]
 
-export default function HamburgerMenu({ onClose }) {
+export default function HamburgerMenu({ onClose, isClosing }) {
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -36,8 +36,8 @@ export default function HamburgerMenu({ onClose }) {
   }
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.panel} onClick={e => e.stopPropagation()}>
+    <div className={`${styles.overlay} ${isClosing ? styles.overlayClosing : ''}`} onClick={onClose}>
+      <div className={`${styles.panel} ${isClosing ? styles.panelClosing : ''}`} onClick={e => e.stopPropagation()}>
 
         <nav className={styles.nav}>
           {NAV_LINKS.map(({ to, label, Icon }) => {

@@ -25,6 +25,13 @@
   padding: 0;
   line-height: 1;
   -webkit-tap-highlight-color: transparent;
+  /* expand hit area without changing visual size */
+  position: relative;
+}
+.titleInfoBtn::after {
+  content: '';
+  position: absolute;
+  inset: -15px;
 }
 
 .titleTooltip {
@@ -172,7 +179,8 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0;
+  padding: 8px;
+  margin: -8px;
   -webkit-tap-highlight-color: transparent;
 }
 .removeBtn:hover { color: var(--ink); }
@@ -214,7 +222,7 @@
   letter-spacing: 0.04em;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: opacity 0.15s;
+  transition: opacity var(--motion-hover);
 }
 .modePill:hover { opacity: 0.75; }
 
@@ -268,7 +276,7 @@
   cursor: pointer;
   text-transform: lowercase;
   -webkit-tap-highlight-color: transparent;
-  transition: opacity 0.15s;
+  transition: opacity var(--motion-hover);
 }
 .poolSelChip:hover { opacity: 0.7; }
 
@@ -318,7 +326,7 @@
   cursor: pointer;
   text-transform: lowercase;
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.15s;
+  transition: background var(--motion-hover);
   white-space: nowrap;
 }
 .poolChip:hover { background: var(--bg2); }
@@ -371,7 +379,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 14px;
+  padding: 13px 14px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }

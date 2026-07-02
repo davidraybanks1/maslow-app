@@ -4,7 +4,9 @@
   width: 100%; height: 100%;
   background: rgba(0, 0, 0, 0.3);
   z-index: 100;
+  animation: hmFadeIn var(--motion-overlay-in) ease-out;
 }
+.overlayClosing { animation: hmFadeOut var(--motion-overlay-out) ease-in forwards; }
 
 .panel {
   position: fixed;
@@ -15,7 +17,14 @@
   display: flex;
   flex-direction: column;
   box-shadow: -4px 0 24px rgba(0, 0, 0, 0.08);
+  animation: hmSlideIn var(--motion-overlay-in) ease-out;
 }
+.panelClosing { animation: hmSlideOut var(--motion-overlay-out) ease-in forwards; }
+
+@keyframes hmFadeIn  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes hmFadeOut { from { opacity: 1; } to { opacity: 0; } }
+@keyframes hmSlideIn  { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes hmSlideOut { from { transform: translateX(0); } to { transform: translateX(100%); } }
 
 /* ── Primary nav ── */
 .nav { display: flex; flex-direction: column; }

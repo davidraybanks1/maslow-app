@@ -26,6 +26,8 @@ export function AnxietyEpisodesCard({ byNatureAnxiety, byEnvironment, pattern, a
         <div className={styles.eyebrow}>ANXIETY EPISODES</div>
         {anxietyCount === 0 ? (
           <div className={styles.cardEmpty}>no anxiety debriefs yet</div>
+        ) : anxietyCount < 3 ? (
+          <div className={styles.cardEmpty}>patterns appear after a few anxiety debriefs</div>
         ) : (
           <>
             <DistributionRow label="by nature" data={byNatureAnxiety} />
@@ -33,14 +35,12 @@ export function AnxietyEpisodesCard({ byNatureAnxiety, byEnvironment, pattern, a
           </>
         )}
       </div>
-      {pattern ? (
+      {pattern && (
         <div className={styles.patternCardGold}>
           <div className={styles.eyebrow}>pattern</div>
           <div className={styles.patternBody}>{pattern}</div>
         </div>
-      ) : anxietyCount < 3 ? (
-        <div className={styles.patternFallback}>patterns appear after a few anxiety debriefs</div>
-      ) : null}
+      )}
     </>
   )
 }
@@ -52,6 +52,8 @@ export function PeakMomentsCard({ byTypePeak, byEnvironment, pattern, peakCount 
         <div className={styles.eyebrow}>PEAK MOMENTS</div>
         {peakCount === 0 ? (
           <div className={styles.cardEmpty}>no peak debriefs yet</div>
+        ) : peakCount < 3 ? (
+          <div className={styles.cardEmpty}>patterns appear after a few peak moments</div>
         ) : (
           <>
             <DistributionRow label="by type" data={byTypePeak} />
@@ -59,14 +61,12 @@ export function PeakMomentsCard({ byTypePeak, byEnvironment, pattern, peakCount 
           </>
         )}
       </div>
-      {pattern ? (
+      {pattern && (
         <div className={styles.patternCardGreen}>
           <div className={styles.eyebrow}>pattern</div>
           <div className={styles.patternBody}>{pattern}</div>
         </div>
-      ) : peakCount < 3 ? (
-        <div className={styles.patternFallback}>peak patterns appear after a few moments are logged</div>
-      ) : null}
+      )}
     </>
   )
 }

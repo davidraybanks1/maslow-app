@@ -71,7 +71,7 @@ function ModeBars({ stats, range }) {
           <div key={mode} className={styles.modeBarRow}>
             <div className={styles.modeBarName}>{mode}</div>
             <div className={styles.modeBarTrack}>
-              {pct !== null && <div className={styles.modeBarFill} style={{ width: `${pct}%`, background: MODES[mode]?.pip }} />}
+              {pct !== null && <div className={styles.modeBarFill} style={{ width: `${pct}%`, background: mode === 'appreciation' ? 'var(--appreciation-strong)' : MODES[mode]?.pip }} />}
             </div>
             <div className={styles.modeBarPct}>{pct === null ? '—' : `${pct}%`}</div>
           </div>
@@ -232,7 +232,9 @@ function NeedPracticesAccordion({ needStats, practiceStats }) {
     practicesByNeed[p.need.id].push(p)
   }
 
-  const orderedNeeds = NEED_ACCORDION_MODES.flatMap(mode => needStats.filter(n => n.mode === mode))
+  const orderedNeeds = NEED_ACCORDION_MODES.flatMap(mode =>
+    needStats.filter(n => n.mode === mode).slice().sort((a, b) => b.pct - a.pct)
+  )
 
   function toggle(needId) {
     setOpenNeeds(prev => ({ ...prev, [needId]: !prev[needId] }))
@@ -376,13 +378,15 @@ export default function Data({ state }) {
   const [view, setView] = useState('overview')
   const [range, setRange] = useState(7)
   const [debriefs, setDebriefs] = useState([])
+  const [debriefLoading, setDebriefLoading] = useState(true)
 
   const moods = state.moods || []
   const stats = createDataStats({ canvas: state.canvas, checkins: state.checkins, moods, practices: state.practices })
 
   useEffect(() => {
     if (!state.userId) { console.error('[Data] loadDebriefs called without userId — session may be invalid'); return }
-    loadDebriefs(state.userId).then(setDebriefs)
+    setDebriefLoading(true)
+    loadDebriefs(state.userId).then(d => { setDebriefs(d); setDebriefLoading(false) })
   }, [state.userId])
 
   return (
@@ -427,7 +431,9 @@ export default function Data({ state }) {
 
       {view === 'debriefs' && (
         <div className={styles.section}>
-          <DebriefsTab stats={stats} debriefs={debriefs} />
+          {debriefLoading
+            ? <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink4)', padding: '24px 0' }}>—</div>
+            : <DebriefsTab stats={stats} debriefs={debriefs} />}
         </div>
       )}
 

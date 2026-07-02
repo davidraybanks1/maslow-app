@@ -76,7 +76,7 @@
 
 .tag { padding: 3px 10px; border-radius: 20px; font-family: var(--font-mono); font-size: 10px; text-transform: lowercase; white-space: nowrap; }
 
-.episodeExcerpt { font-family: var(--font-serif); font-style: italic; font-size: 15px; color: var(--ink2); line-height: 1.4; margin-bottom: 8px; }
+.episodeExcerpt { font-family: var(--font-serif); font-style: italic; font-size: 15px; color: var(--ink2); line-height: 1.4; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
 .dotsRow { display: flex; gap: 5px; }
 .stepDot { width: 6px; height: 6px; border-radius: 50%; background: var(--border2); }
@@ -95,18 +95,20 @@
 .typeName { font-family: var(--font-serif); font-size: 15px; color: var(--ink); text-transform: lowercase; }
 .builtinTag { font-family: var(--font-mono); font-size: 10px; color: var(--ink4); margin-left: auto; }
 
-.typeAction { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--ink3); background: none; border: none; cursor: pointer; padding: 0; margin-left: 12px; -webkit-tap-highlight-color: transparent; }
+.typeAction { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--ink3); background: none; border: none; cursor: pointer; padding: 8px; margin: -8px 0 -8px 4px; -webkit-tap-highlight-color: transparent; }
 .typeAction:first-of-type { margin-left: auto; }
 .typeAction:hover { color: var(--ink); }
+.typeAction:active { opacity: 0.7; }
 
-.swatchRow { display: flex; gap: 8px; padding: 0 0 12px; }
-.swatch { width: 22px; height: 22px; border-radius: 50%; border: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.swatchRow { display: flex; gap: 4px; padding: 0 0 12px; }
+.swatch { width: 36px; height: 36px; border-radius: 50%; border: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.swatch:active { opacity: 0.8; }
 
 .addRow { display: flex; gap: 8px; padding: 10px 0 12px; }
-.addInput { flex: 1; padding: 8px 12px; border-radius: 8px; border: 0.5px solid var(--border); background: var(--bg2); font-family: var(--font-mono); font-size: 16px; font-weight: 200; color: var(--ink); outline: none; transition: border-color 0.15s; }
+.addInput { flex: 1; padding: 8px 12px; border-radius: 8px; border: 0.5px solid var(--border); background: var(--bg2); font-family: var(--font-mono); font-size: 16px; font-weight: 200; color: var(--ink); outline: none; transition: border-color var(--motion-hover); }
 .addInput:focus { border-color: var(--ink2); }
 .addInput::placeholder { color: var(--ink4); }
-.addBtn { padding: 8px 14px; border-radius: 8px; border: 0.5px solid var(--border2); background: var(--bg); font-family: var(--font-mono); font-size: 11px; color: var(--ink); cursor: pointer; white-space: nowrap; transition: background 0.1s; }
+.addBtn { padding: 8px 14px; border-radius: 8px; border: 0.5px solid var(--border2); background: var(--bg); font-family: var(--font-mono); font-size: 11px; color: var(--ink); cursor: pointer; white-space: nowrap; transition: background var(--motion-micro); }
 .addBtn:hover:not(:disabled) { background: var(--bg2); }
 .addBtn:disabled { opacity: 0.35; cursor: not-allowed; }
 
@@ -146,12 +148,19 @@
   z-index: 200;
   display: flex;
   flex-direction: column;
-  animation: slideUp 0.25s ease-out;
+  animation: slideUp var(--motion-overlay-in) ease-out;
+}
+.overlayClosing {
+  animation: slideDown var(--motion-overlay-out) ease-in forwards;
 }
 
 @keyframes slideUp {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
+}
+@keyframes slideDown {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
 }
 
 .overlayHeader {

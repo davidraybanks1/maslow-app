@@ -43,6 +43,11 @@ function Protected({ children, onboarded, userId }) {
 function AppInner() {
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [menuClosing, setMenuClosing] = useState(false)
+  function closeMenu() {
+    setMenuClosing(true)
+    setTimeout(() => { setMenuOpen(false); setMenuClosing(false) }, 200)
+  }
   const { state, authLoading, updateCanvas, replaceCanvas, addPractice, removePractice, checkIn, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule } = useAppState(
     () => navigate('/today')
   )
@@ -78,7 +83,7 @@ function AppInner() {
           <Route path="/settings" element={<Protected onboarded={state.onboarded} userId={state.userId}><Settings state={state} updateShowNoteToSelf={updateShowNoteToSelf} updateReviewSchedule={updateReviewSchedule} /></Protected>} />
         </Routes>
       </div>
-      {menuOpen && <HamburgerMenu onClose={() => setMenuOpen(false)} />}
+      {menuOpen && <HamburgerMenu onClose={closeMenu} isClosing={menuClosing} />}
     </div>
   )
 }

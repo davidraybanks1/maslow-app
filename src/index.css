@@ -31,6 +31,7 @@
   --surv-text: #E13E15;
 
   --anxiety: #2C2820;
+  --appreciation-strong: #5A7A70;  /* darker sage for data-viz fills (readable against track) */
 
   /* Typography */
   --font-serif: 'Instrument Serif', serif;
@@ -41,6 +42,17 @@
   --radius: 14px;
   --radius-lg: 18px;
   --gap: 4px;
+
+  /* Motion scale — use these everywhere, never bare ms values */
+  --motion-micro:       100ms;   /* chip/button press, background flash */
+  --motion-hover:       150ms;   /* border-color, color, opacity on hover/focus */
+  --motion-toggle:      150ms;   /* chevron rotate, toggle thumb */
+  --motion-dropdown:    150ms;   /* dropdown/tooltip appear */
+  --motion-overlay-in:  250ms;   /* slide-up sheets, lightbox */
+  --motion-overlay-out: 200ms;   /* dismiss */
+  --motion-progress:    400ms;   /* progress-bar width */
+  --motion-data:        400ms;   /* data-viz bar fill on mount */
+  --motion-step:        150ms;   /* step/screen content fadeIn */
 }
 
 html { font-size: 16px; -webkit-font-smoothing: antialiased; }
@@ -72,6 +84,26 @@ body {
   text-transform: uppercase;
 }
 
+/* Global focus-visible: remove default ring, add on-brand outline */
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+/* Inputs handle focus via border-color, not outline */
+input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: none;
+}
+
+/* Reduced motion: collapse all durations for users who opt out */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
 .btn-primary {
   display: flex;
   align-items: center;
@@ -87,7 +119,7 @@ body {
   font-weight: 500;
   border: none;
   cursor: pointer;
-  transition: opacity 0.15s;
+  transition: opacity var(--motion-hover);
 }
 .btn-primary:hover { opacity: 0.88; }
 .btn-primary:disabled { opacity: 0.35; pointer-events: none; }
@@ -105,9 +137,10 @@ body {
   font-size: 13px;
   border: 1px solid var(--border);
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background var(--motion-hover);
 }
 .btn-ghost:hover { background: var(--bg3); }
+.btn-ghost:active { background: var(--bg3); }
 
 /* Page shell */
 .app-shell {
@@ -142,7 +175,7 @@ body {
   padding: 8px 0;
   cursor: pointer;
   text-decoration: none;
-  transition: opacity 0.15s;
+  transition: opacity var(--motion-hover);
 }
 .nav-item-label {
   font-family: var(--font-mono);
@@ -177,7 +210,7 @@ body {
   flex-direction: column;
   justify-content: space-between;
   background: transparent;
-  transition: border-color 0.3s;
+  transition: border-color var(--motion-overlay-in);
   overflow: hidden;
 }
 .tile-pip {

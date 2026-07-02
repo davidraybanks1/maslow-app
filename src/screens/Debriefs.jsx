@@ -42,13 +42,13 @@ function groupByMonth(debriefs) {
   return groups
 }
 
-function DetailOverlay({ debrief, debriefTypes, onClose }) {
+function DetailOverlay({ debrief, debriefTypes, onClose, isClosing }) {
   const isPeak = debrief.type === 'peak'
   const { sections, isLegacy } = parseDebriefEntry(debrief.entry, isPeak)
   const tagStyle = isPeak ? peakTagStyle(debrief.nature, debriefTypes.peak) : natureTagStyle(debrief.nature, debriefTypes.nature)
   const sectionLabels = isPeak ? PEAK_SECTION_LABELS : ANXIETY_SECTION_LABELS
   return (
-    <div className={styles.overlay}>
+    <div className={`${styles.overlay} ${isClosing ? styles.overlayClosing : ''}`}>
       <div className={styles.overlayHeader}>
         <button className={styles.backBtn} onClick={onClose}>← debriefs</button>
         <div className={styles.overlayTags}>
@@ -121,9 +121,14 @@ function TypeCard({ title, builtins, customs, colorPickerOpen, onToggleColorPick
 export default function Debriefs({ state }) {
   const [debriefs, setDebriefs] = useState([])
   const [debriefTypes, setDebriefTypes] = useState({ nature: [], environment: [], peak: [] })
+  const [debriefLoading, setDebriefLoading] = useState(true)
   const [filter, setFilter] = useState('all')
   const [newStep, setNewStep] = useState(null) // null | 'choose' | 'anxiety' | 'peak'
   const [detail, setDetail] = useState(null)
+  const [detailClosing, setDetailClosing] = useState(false)
+  const [newStepClosing, setNewStepClosing] = useState(false)
+  function closeDetail() { setDetailClosing(true); setTimeout(() => { setDetail(null); setDetailClosing(false) }, 200) }
+  function closeNewStep() { setNewStepClosing(true); setTimeout(() => { setNewStep(null); setNewStepClosing(false) }, 200) }
   const [colorPickerFor, setColorPickerFor] = useState(null)
   const [addInputs, setAddInputs] = useState({ nature: '', environment: '', peak: '' })
   const [refreshError, setRefreshError] = useState(null)
@@ -135,6 +140,7 @@ export default function Debriefs({ state }) {
 
   async function refresh() {
     setRefreshError(null)
+    setDebriefLoading(true)
     try {
       const [d, t] = await Promise.all([loadDebriefs(state.userId), loadDebriefTypes(state.userId)])
       setDebriefs(d)
@@ -142,6 +148,8 @@ export default function Debriefs({ state }) {
     } catch (err) {
       console.error('[Debriefs] refresh failed', err)
       setRefreshError('failed to load debriefs')
+    } finally {
+      setDebriefLoading(false)
     }
   }
 
@@ -217,7 +225,7 @@ export default function Debriefs({ state }) {
         <div className={styles.card}>
           {filteredDebriefs.length === 0 ? (
             <div className={styles.empty}>
-              {debriefs.length === 0 ? 'your first debrief will appear here.' : 'no debriefs match this filter.'}
+              {debriefLoading ? '—' : debriefs.length === 0 ? 'your first debrief will appear here.' : 'no debriefs match this filter.'}
             </div>
           ) : (
             groups.map(group => (
@@ -234,7 +242,7 @@ export default function Debriefs({ state }) {
                           <span className={styles.tag} style={ENVIRONMENT_TAG_STYLE}>{d.environment}</span>
                         </div>
                       </div>
-                      <div className={styles.episodeExcerpt}>{parseDebriefEntry(d.entry, isPeak).sections[0].slice(0, 80)}</div>
+                      <div className={styles.episodeExcerpt}>{parseDebriefEntry(d.entry, isPeak).sections[0]}</div>
                       <div className={styles.dotsRow}>
                         {[0, 1, 2, 3].map(i => (
                           <div
@@ -298,40 +306,37 @@ export default function Debriefs({ state }) {
         <div className={styles.envNote}>environment applies to both anxiety and peak debriefs.</div>
       </div>
 
-      {newStep === 'choose' && (
-        <div className={styles.overlay}>
+      {newStep && (
+        <div className={`${styles.overlay} ${newStepClosing ? styles.overlayClosing : ''}`}>
           <div className={styles.overlayHeader}>
-            <button className={styles.backBtn} onClick={() => setNewStep(null)}>← debriefs</button>
+            <button className={styles.backBtn} onClick={() => newStep === 'choose' ? closeNewStep() : setNewStep('choose')}>
+              {newStep === 'choose' ? '← debriefs' : '← back'}
+            </button>
           </div>
           <div className={styles.overlayContent}>
-            <div className={styles.chooseTitle}>what kind of debrief?</div>
-            <div className={styles.chooseCardAnxiety} onClick={() => setNewStep('anxiety')}>
-              <div className={styles.chooseCardLabel}>anxiety episode</div>
-              <div className={styles.chooseCardDesc}>turn an anxiety episode into a growth moment.</div>
-            </div>
-            <div className={styles.chooseCardPeak} onClick={() => setNewStep('peak')}>
-              <div className={styles.chooseCardLabel}>peak moment</div>
-              <div className={styles.chooseCardDesc}>capture a moment when you felt fully alive.</div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {(newStep === 'anxiety' || newStep === 'peak') && (
-        <div className={styles.overlay}>
-          <div className={styles.overlayHeader}>
-            <button className={styles.backBtn} onClick={() => setNewStep('choose')}>← back</button>
-          </div>
-          <div className={styles.overlayContent}>
-            {newStep === 'anxiety'
-              ? <DebriefForm userId={state.userId} debriefTypes={debriefTypes} onSaved={() => { setNewStep(null); refresh() }} />
-              : <PeakDebriefForm userId={state.userId} debriefTypes={debriefTypes} onSaved={() => { setNewStep(null); refresh() }} />}
+            {newStep === 'choose' ? (
+              <>
+                <div className={styles.chooseTitle}>what kind of debrief?</div>
+                <div className={styles.chooseCardAnxiety} onClick={() => setNewStep('anxiety')}>
+                  <div className={styles.chooseCardLabel}>anxiety episode</div>
+                  <div className={styles.chooseCardDesc}>turn an anxiety episode into a growth moment.</div>
+                </div>
+                <div className={styles.chooseCardPeak} onClick={() => setNewStep('peak')}>
+                  <div className={styles.chooseCardLabel}>peak moment</div>
+                  <div className={styles.chooseCardDesc}>capture a moment when you felt fully alive.</div>
+                </div>
+              </>
+            ) : newStep === 'anxiety' ? (
+              <DebriefForm userId={state.userId} debriefTypes={debriefTypes} onSaved={() => { closeNewStep(); refresh() }} />
+            ) : (
+              <PeakDebriefForm userId={state.userId} debriefTypes={debriefTypes} onSaved={() => { closeNewStep(); refresh() }} />
+            )}
           </div>
         </div>
       )}
 
       {detail && (
-        <DetailOverlay debrief={detail} debriefTypes={debriefTypes} onClose={() => setDetail(null)} />
+        <DetailOverlay debrief={detail} debriefTypes={debriefTypes} onClose={closeDetail} isClosing={detailClosing} />
       )}
     </div>
   )
