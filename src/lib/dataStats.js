@@ -116,10 +116,7 @@ export function createDataStats({ canvas, checkins, moods, practices }) {
   }
 
   function isDayHit(dateKey) {
-    const eligible = NEEDS.filter(n => canvas[n.id])
-    if (eligible.length === 0) return false
-    const met = eligible.filter(n => isNeedMet(n, dateKey)).length
-    return met / eligible.length >= 0.5
+    return isStreakDay(canvas, checkins, dateKey)
   }
 
   function getStreak() {

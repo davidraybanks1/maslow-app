@@ -402,7 +402,7 @@ export function useAppState(onSignIn) {
 
   function saveProfile({ name, phone, smsEnabled }) {
     setState(prev => {
-      const newProfile = { ...prev.profile, smsEnabled }
+      const newProfile = { ...prev.profile, name: name || '', smsEnabled }
       if (prev.userId) {
         supabase
           .from('users')
@@ -414,7 +414,30 @@ export function useAppState(onSignIn) {
     })
   }
 
-  return { state, authLoading, updateCanvas, addPractice, removePractice, checkIn, logMood, completeOnboarding, loadMoods, saveProfile, updateShowNoteToSelf, updateReviewSchedule }
+  function replaceCanvas(fullCanvas) {
+    return new Promise((resolve, reject) => {
+      setState(prev => {
+        const previousCanvas = prev.canvas
+        if (prev.userId) {
+          supabase.rpc('save_canvas', { p_canvas: fullCanvas }).then(({ error }) => {
+            if (error) {
+              logSupabaseError('replaceCanvas', error)
+              setState(p => ({ ...p, canvas: previousCanvas }))
+              reject(error)
+            } else {
+              resolve()
+            }
+          })
+        } else {
+          console.error('[replaceCanvas] called without userId')
+          reject(new Error('not authenticated'))
+        }
+        return { ...prev, canvas: fullCanvas }
+      })
+    })
+  }
+
+  return { state, authLoading, updateCanvas, replaceCanvas, addPractice, removePractice, checkIn, logMood, completeOnboarding, loadMoods, saveProfile, updateShowNoteToSelf, updateReviewSchedule }
 }
 
 export function todayKey() {
@@ -425,7 +448,7 @@ export function todayKey() {
 export function weekKey(date = new Date()) {
   const d = new Date(date)
   d.setHours(0, 0, 0, 0)
-  d.setDate(d.getDate() - d.getDay())
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7))  // Monday-anchored (was Sunday-anchored)
   return d.toLocaleDateString('en-CA')
 }
 

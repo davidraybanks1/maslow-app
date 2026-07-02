@@ -43,7 +43,7 @@ function Protected({ children, onboarded, userId }) {
 function AppInner() {
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
-  const { state, authLoading, updateCanvas, addPractice, removePractice, checkIn, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule } = useAppState(
+  const { state, authLoading, updateCanvas, replaceCanvas, addPractice, removePractice, checkIn, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule } = useAppState(
     () => navigate('/today')
   )
 
@@ -71,7 +71,7 @@ function AppInner() {
           <Route path="/debriefs" element={<Protected onboarded={state.onboarded} userId={state.userId}><Debriefs state={state} /></Protected>} />
           <Route path="/data" element={<Protected onboarded={state.onboarded} userId={state.userId}><Data state={state} /></Protected>} />
           <Route path="/log" element={<Protected onboarded={state.onboarded} userId={state.userId}><Log state={state} /></Protected>} />
-          <Route path="/canvas" element={<Protected onboarded={state.onboarded} userId={state.userId}><CanvasScreen state={state} updateCanvas={updateCanvas} /></Protected>} />
+          <Route path="/canvas" element={<Protected onboarded={state.onboarded} userId={state.userId}><CanvasScreen state={state} updateCanvas={updateCanvas} replaceCanvas={replaceCanvas} /></Protected>} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/password" element={<Protected onboarded={state.onboarded} userId={state.userId}><UpdatePassword /></Protected>} />
           <Route path="/notifications" element={<Protected onboarded={state.onboarded} userId={state.userId}><ComingSoon title="Notifications" /></Protected>} />

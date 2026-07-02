@@ -196,12 +196,14 @@ function nextMode(needId, mode) {
   return order[(idx + 1) % order.length]
 }
 
-const MODE_WEIGHTS = { exploration: 3, appreciation: 2, nourishment: 1, survival: 0.5 }
+// Daily practice count per mode (for canvas budget estimation — distinct from
+// the scoring weights in constants.js which use equal weights for all modes).
+const MODE_DAILY_PRACTICES = { exploration: 3, appreciation: 2, nourishment: 1, survival: 0.5 }
 const FLEX_MAX = { low: 6, mid: 8, high: 10 }
 const DROP_ORDER = ['money', 'dwelling', 'thrill', 'touch', 'intimacy', 'play', 'information', 'beauty', 'reflection', 'community']
 
 function practiceWeight(canvasObj) {
-  return Object.values(canvasObj).reduce((sum, mode) => sum + (MODE_WEIGHTS[mode] || 0), 0)
+  return Object.values(canvasObj).reduce((sum, mode) => sum + (MODE_DAILY_PRACTICES[mode] || 0), 0)
 }
 
 // Round up — half-weight survival needs still count as a full practice slot for display.
@@ -236,7 +238,7 @@ function capPersonalNeeds(universal, personal, maxTotal, protectedId) {
     if (total <= budget) break
     if (id === protectedId) continue
     if (personal[id]) {
-      total -= MODE_WEIGHTS[personal[id]] || 0
+      total -= MODE_DAILY_PRACTICES[personal[id]] || 0
       delete personal[id]
     }
   }
@@ -554,7 +556,7 @@ function OnboardingAccount({ destination, recommendation, updateCanvas, onDone }
           <div className={styles.headline}>create your account.</div>
           <div className={styles.sub}>your canvas, practices, and data are tied to your account.</div>
 
-          <div className={styles.accountForm}>
+          <form className={styles.accountForm} onSubmit={e => { e.preventDefault(); if (canSubmit && !loading) handleSignUp() }}>
             <input
               className={styles.accountInput}
               type="text"
@@ -592,7 +594,8 @@ function OnboardingAccount({ destination, recommendation, updateCanvas, onDone }
                 <div className={styles.inputErrorNote}>add a phone number to enable reminders</div>
               )}
             </div>
-          </div>
+            <button type="submit" style={{ display: 'none' }} aria-hidden="true" />
+          </form>
 
           <div className={styles.toggleRow}>
             <div className={styles.toggleLabels}>

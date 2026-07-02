@@ -90,7 +90,10 @@ export default function PeakDebriefForm({ userId, debriefTypes, onSaved }) {
       stepsCompleted,
       type: 'peak',
     })
-    if (!error) {
+    if (error) {
+      setMsg({ text: 'save failed — please try again', color: '#D93B1C' })
+      setTimeout(() => setMsg(null), 3000)
+    } else {
       setMsg({ text: 'saved ✓', color: '#1B3A2D' })
       setTimeout(() => { setMsg(null); reset(); onSaved?.() }, 1500)
     }

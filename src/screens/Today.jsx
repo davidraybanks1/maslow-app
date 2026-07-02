@@ -276,6 +276,7 @@ export default function Today({ state, checkIn, logMood }) {
   }
 
   const [journalEntry, setJournalEntry] = useState('')
+  const [journalSaveError, setJournalSaveError] = useState(null)
   const debounceRef = useRef(null)
   const journalRef = useRef(null)
   const journalUserIdRef = useRef(state.userId)
@@ -341,8 +342,15 @@ export default function Today({ state, checkIn, logMood }) {
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
       const uid = journalUserIdRef.current
-      if (!uid) { console.error('[saveJournalEntry] no userId at save time — entry not persisted'); return }
-      saveJournalEntry(uid, today, val)
+      if (!uid) {
+        console.error('[saveJournalEntry] no userId at save time — entry not persisted')
+        setJournalSaveError('session error — entry saved locally, will sync on next open')
+        return
+      }
+      saveJournalEntry(uid, today, val).then(({ error }) => {
+        if (error) setJournalSaveError('save failed — entry preserved locally')
+        else setJournalSaveError(null)
+      })
     }, 1500)
   }
 
@@ -642,6 +650,7 @@ export default function Today({ state, checkIn, logMood }) {
             onChange={handleJournalChange}
             rows={5}
           />
+          {journalSaveError && <div className={styles.journalSaveError}>{journalSaveError}</div>}
 
           {/* Anxiety debrief */}
           <button className={styles.debriefToggle} onClick={() => setDebriefExpanded(e => !e)}>

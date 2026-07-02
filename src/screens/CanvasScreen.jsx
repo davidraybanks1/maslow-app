@@ -100,7 +100,7 @@ function initCanvas(stored) {
   return c
 }
 
-export default function CanvasScreen({ state, updateCanvas }) {
+export default function CanvasScreen({ state, updateCanvas, replaceCanvas }) {
   const [canvas, setCanvas] = useState(() => initCanvas(state.canvas))
   const [customNeeds, setCustomNeeds] = useState([])
   const [customInput, setCustomInput] = useState('')
@@ -200,15 +200,21 @@ export default function CanvasScreen({ state, updateCanvas }) {
 
   async function handleSave() {
     if (!canSave || saveStatus === 'saving') return
+    const previousCanvas = { ...canvas }
     setSaveStatus('saving')
     try {
-      await Promise.all(allNeeds.map(need => updateCanvas(need.id, canvas[need.id])))
+      const fullCanvas = {}
+      for (const need of allNeeds) {
+        if (canvas[need.id]) fullCanvas[need.id] = canvas[need.id]
+      }
+      await replaceCanvas(fullCanvas)
       setSaveStatus('saved')
       scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
       if (saveStatusTimer.current) clearTimeout(saveStatusTimer.current)
       saveStatusTimer.current = setTimeout(() => setSaveStatus('idle'), 2000)
     } catch (err) {
       setSaveStatus('error')
+      setCanvas(previousCanvas)
       if (saveStatusTimer.current) clearTimeout(saveStatusTimer.current)
       saveStatusTimer.current = setTimeout(() => setSaveStatus('idle'), 3000)
     }

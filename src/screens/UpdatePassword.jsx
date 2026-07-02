@@ -68,20 +68,21 @@ export default function UpdatePassword() {
               />
             </div>
             {error && <div className={styles.error}>{error}</div>}
+            {/* Submit inside form so Enter key works */}
+            <button
+              type="submit"
+              className="btn-primary"
+              style={{ marginTop: 8 }}
+              disabled={loading || !password || !confirm}
+            >
+              {loading ? 'Updating…' : 'Update password →'}
+            </button>
           </form>
         )}
       </div>
 
       <div className={styles.qFooter}>
-        {!success && (
-          <button
-            className="btn-primary"
-            onClick={handleSubmit}
-            disabled={loading || !password || !confirm}
-          >
-            {loading ? 'Updating…' : 'Update password →'}
-          </button>
-        )}
+        {!success && null /* button moved inside form above */}
         <button className="btn-ghost" style={{ marginTop: 8 }} onClick={() => navigate(-1)}>
           ← back
         </button>

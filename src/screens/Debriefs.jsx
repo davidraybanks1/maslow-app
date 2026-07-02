@@ -234,7 +234,7 @@ export default function Debriefs({ state }) {
                           <span className={styles.tag} style={ENVIRONMENT_TAG_STYLE}>{d.environment}</span>
                         </div>
                       </div>
-                      <div className={styles.episodeExcerpt}>{(d.entry || '').slice(0, 80)}</div>
+                      <div className={styles.episodeExcerpt}>{parseDebriefEntry(d.entry, isPeak).sections[0].slice(0, 80)}</div>
                       <div className={styles.dotsRow}>
                         {[0, 1, 2, 3].map(i => (
                           <div
