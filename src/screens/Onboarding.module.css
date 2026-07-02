@@ -246,7 +246,7 @@
 .practiceDeleteBtn:hover { color: var(--ink); }
 .practiceEmpty { font-family: var(--font-mono); font-size: 11px; color: var(--ink4); padding: 4px 0 8px; }
 .practiceAddRow { display: flex; gap: 8px; margin-top: 10px; }
-.practiceAddInput { flex: 1; padding: 8px 12px; border-radius: 6px; border: 0.5px solid var(--border); background: var(--bg); font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink); outline: none; }
+.practiceAddInput { flex: 1; padding: 8px 12px; border-radius: 6px; border: 0.5px solid var(--border); background: var(--bg); font-family: var(--font-mono); font-size: 16px; font-weight: 200; color: var(--ink); outline: none; }
 .practiceAddInput:focus { border-color: var(--ink2); }
 .practiceAddInput::placeholder { color: var(--ink4); }
 .practiceAddBtn { padding: 8px 14px; border-radius: 6px; border: 0.5px solid var(--border2); background: var(--bg); font-family: var(--font-mono); font-size: 14px; color: var(--ink); cursor: pointer; }

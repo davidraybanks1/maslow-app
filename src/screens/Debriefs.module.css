@@ -103,7 +103,7 @@
 .swatch { width: 22px; height: 22px; border-radius: 50%; border: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 
 .addRow { display: flex; gap: 8px; padding: 10px 0 12px; }
-.addInput { flex: 1; padding: 8px 12px; border-radius: 8px; border: 0.5px solid var(--border); background: var(--bg2); font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink); outline: none; transition: border-color 0.15s; }
+.addInput { flex: 1; padding: 8px 12px; border-radius: 8px; border: 0.5px solid var(--border); background: var(--bg2); font-family: var(--font-mono); font-size: 16px; font-weight: 200; color: var(--ink); outline: none; transition: border-color 0.15s; }
 .addInput:focus { border-color: var(--ink2); }
 .addInput::placeholder { color: var(--ink4); }
 .addBtn { padding: 8px 14px; border-radius: 8px; border: 0.5px solid var(--border2); background: var(--bg); font-family: var(--font-mono); font-size: 11px; color: var(--ink); cursor: pointer; white-space: nowrap; transition: background 0.1s; }

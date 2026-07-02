@@ -265,7 +265,7 @@
   border-radius: 8px;
   font-family: 'Instrument Serif', serif;
   font-style: italic;
-  font-size: 15px;
+  font-size: 16px;
   color: var(--ink);
   background: var(--bg);
   outline: none;
@@ -635,7 +635,7 @@
 .moodBtnGood { background: #1B3A2D; color: #fff; border-color: #1B3A2D; }
 .moodBtnFine { background: #B8C3B1; color: var(--ink); border-color: #B8C3B1; }
 .moodBtnBad { background: #D93B1C; color: #fff; border-color: #D93B1C; }
-.moodNote { width: 100%; box-sizing: border-box; padding: 7px 12px; border-radius: 8px; border: 0.5px solid var(--border); background: var(--bg2); font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink); outline: none; }
+.moodNote { width: 100%; box-sizing: border-box; padding: 7px 12px; border-radius: 8px; border: 0.5px solid var(--border); background: var(--bg2); font-family: var(--font-mono); font-size: 16px; font-weight: 200; color: var(--ink); outline: none; }
 .moodNote::placeholder { color: var(--ink4); }
 .moodDivider { height: 1px; background: rgba(26, 26, 24, 0.07); }
 
@@ -647,7 +647,7 @@
   border-radius: 10px;
   background: #ffffff;
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 200;
   color: var(--ink);
   line-height: 1.7;

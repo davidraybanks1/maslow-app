@@ -41,6 +41,11 @@
 
 html { font-size: 16px; -webkit-font-smoothing: antialiased; }
 
+/* iOS Safari zooms the viewport when a focused input/textarea/select has
+   font-size < 16px. This baseline prevents that globally; individual
+   screens override as needed but must not go below 16px. */
+input, textarea, select { font-size: 16px; }
+
 body {
   font-family: var(--font-sans);
   background: var(--bg);

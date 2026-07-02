@@ -7,7 +7,7 @@
 .heading { font-family: 'Instrument Serif', serif; font-size: 28px; font-weight: 400; color: #1A1A1A; letter-spacing: -0.01em; }
 
 .form { display: flex; flex-direction: column; gap: 12px; }
-.input { width: 100%; padding: 12px 14px; border-radius: 8px; border: 1px solid #D8D8D8; background: #fff; font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 400; color: #1A1A1A; outline: none; transition: border-color 0.15s; box-sizing: border-box; }
+.input { width: 100%; padding: 12px 14px; border-radius: 8px; border: 1px solid #D8D8D8; background: #fff; font-family: 'DM Mono', monospace; font-size: 16px; font-weight: 400; color: #1A1A1A; outline: none; transition: border-color 0.15s; box-sizing: border-box; }
 .input:focus { border-color: #1A1A1A; }
 .input::placeholder { color: #ADADAD; }
 
