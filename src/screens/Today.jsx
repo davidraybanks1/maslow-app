@@ -430,6 +430,7 @@ export default function Today({ state, checkIn, logMood }) {
         if (next[promptTime] === mood) delete next[promptTime]
         return next
       })
+      setMoodNotes(prev => ({ ...prev, [promptTime]: '' }))
     }
   }
 

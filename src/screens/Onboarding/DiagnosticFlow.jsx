@@ -125,6 +125,9 @@ const ALWAYS_MATTERS_OPTIONS = [
   { id: 'thrill',     name: 'thrill',     desc: 'the feeling of being fully alive' },
 ]
 
+// Maps "always matters" survey answers to canvas need IDs.
+// 'creativity' consolidates into 'beauty' — the canvas has no separate creativity
+// need; beauty covers aesthetic/creative expression in the need taxonomy.
 const ALWAYS_MATTERS_TO_NEED = {
   community:  'community',
   reflection: 'reflection',
@@ -495,6 +498,7 @@ function OnboardingAccount({ destination, recommendation, updateCanvas, onDone }
         phone: phone.trim() || null,
         canvas: canvasObj,
         onboarded: true,
+        onboarded_at: new Date().toLocaleDateString('en-CA'),
         profile: { smsEnabled: smsEnabled && !!phone.trim() },
       }, { onConflict: 'id' })
     }

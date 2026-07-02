@@ -20,7 +20,7 @@ const BUILT_IN_NEEDS = [
 ]
 
 const MODES = ['exploration', 'appreciation', 'nourishment', 'survival']
-const MODE_MAX = { exploration: 1, appreciation: 2, nourishment: 4, survival: 4 }
+const MODE_NEED_LIMIT = { exploration: 1, appreciation: 2, nourishment: 4, survival: 4 }
 
 const MODE_COLORS = {
   exploration:  '#1B3A2D',
@@ -139,7 +139,7 @@ export default function CanvasScreen({ state, updateCanvas, replaceCanvas }) {
   const allNeeds = [...BUILT_IN_NEEDS, ...customNeeds]
   const explorationCount = allNeeds.filter(n => canvas[n.id] === 'exploration').length
   const appreciationCount = allNeeds.filter(n => canvas[n.id] === 'appreciation').length
-  const canSave = explorationCount >= 1 || appreciationCount >= 1
+  const canSave = Object.values(canvas).some(v => v)
 
   function inMode(mode) {
     return allNeeds.filter(n => canvas[n.id] === mode)
@@ -179,7 +179,7 @@ export default function CanvasScreen({ state, updateCanvas, replaceCanvas }) {
       return false
     }
     const countInMode = allNeeds.filter(n => n.id !== needId && canvas[n.id] === mode).length
-    if (countInMode >= MODE_MAX[mode]) {
+    if (countInMode >= MODE_NEED_LIMIT[mode]) {
       const maxLabel = { exploration: 'max 1', appreciation: 'max 2', nourishment: 'max 4', survival: 'max 4' }
       showPickerError(`${mode} is full (${maxLabel[mode]}).`)
       return false
@@ -279,7 +279,7 @@ export default function CanvasScreen({ state, updateCanvas, replaceCanvas }) {
                 <div className={styles.modeCardLabel}>
                   <span>{mode}</span>
                 </div>
-                <div className={styles.modeCount}>{needsInMode.length} of {MODE_MAX[mode]}</div>
+                <div className={styles.modeCount}>{needsInMode.length} of {MODE_NEED_LIMIT[mode]}</div>
               </div>
 
               {needsInMode.length === 0 && mode === 'exploration' && (

@@ -60,6 +60,7 @@ function migrateState(saved) {
     if (!saved.checkins || typeof saved.checkins !== 'object') saved.checkins = {}
     if (!saved.practices || typeof saved.practices !== 'object') saved.practices = {}
     if (!saved.noteDeck) saved.noteDeck = []
+    if (saved.onboardedAt === undefined) saved.onboardedAt = null
     if (saved.showNoteToSelf === undefined) saved.showNoteToSelf = true
     if (saved.reviewDay === undefined) saved.reviewDay = 0
     if (saved.reviewTime === undefined) saved.reviewTime = '10:00'
@@ -144,6 +145,7 @@ async function restoreFromSupabase(userId, email) {
       moods,
       noteDeck: noteDeck || [],
       profile: { name: user.name || '' },
+      onboardedAt: user.onboarded_at || null,
       showNoteToSelf: user.show_note_to_self !== false,
       reviewDay: user.review_day ?? 0,
       reviewTime: user.review_time || '10:00',
@@ -358,12 +360,6 @@ export function useAppState(onSignIn) {
     return { error }
   }
 
-  async function loadMoods() {
-    if (!state.userId) return
-    const moods = await fetchMoods(state.userId)
-    setState(prev => ({ ...prev, moods }))
-  }
-
   function completeOnboarding(canvas, practices, profile) {
     const { userId, ...profileData } = profile || {}
     setState(prev => ({
@@ -400,20 +396,6 @@ export function useAppState(onSignIn) {
     })
   }
 
-  function saveProfile({ name, phone, smsEnabled }) {
-    setState(prev => {
-      const newProfile = { ...prev.profile, name: name || '', smsEnabled }
-      if (prev.userId) {
-        supabase
-          .from('users')
-          .update({ name: name || null, phone: phone || null, profile: newProfile })
-          .eq('id', prev.userId)
-          .then(({ error }) => { if (error) logSupabaseError('saveProfile', error) })
-      }
-      return { ...prev, profile: newProfile }
-    })
-  }
-
   function replaceCanvas(fullCanvas) {
     return new Promise((resolve, reject) => {
       setState(prev => {
@@ -437,7 +419,7 @@ export function useAppState(onSignIn) {
     })
   }
 
-  return { state, authLoading, updateCanvas, replaceCanvas, addPractice, removePractice, checkIn, logMood, completeOnboarding, loadMoods, saveProfile, updateShowNoteToSelf, updateReviewSchedule }
+  return { state, authLoading, updateCanvas, replaceCanvas, addPractice, removePractice, checkIn, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule }
 }
 
 export function todayKey() {

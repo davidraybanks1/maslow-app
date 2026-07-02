@@ -12,7 +12,7 @@ export default function Practices({ state, addPractice, removePractice, complete
   const [inputs, setInputs] = useState({})
   const [openInputs, setOpenInputs] = useState({})
   const [editMode, setEditMode] = useState(false)
-  const [obDone, setObDone] = useState(() => !!sessionStorage.getItem(OB_FLAG))
+  const [obDone, setObDone] = useState(() => !!localStorage.getItem(OB_FLAG))
 
   const stats = createDataStats({ canvas: state.canvas, checkins: state.checkins, moods: state.moods, practices: state.practices })
   const lastDoneByKey = new Map(stats.getPracticeStats().map(p => [`${p.need.id}_${p.text}`, p.daysSinceLast]))
@@ -28,7 +28,7 @@ export default function Practices({ state, addPractice, removePractice, complete
   }
 
   function handleOnboardingDone() {
-    sessionStorage.setItem(OB_FLAG, '1')
+    localStorage.setItem(OB_FLAG, '1')
     setObDone(true)
     if (!state.onboarded && completeOnboarding) completeOnboarding()
     navigate('/today')

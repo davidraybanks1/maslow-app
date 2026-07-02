@@ -8,6 +8,9 @@
   --ink2: #5A5750;
   --ink3: #9A9690;
   --ink4: #C4C0BA;
+
+  /* Surface tokens */
+  --surface-reflective: #E8E4F0;  /* journal + note-to-self lavender */
   --border: #E5E1DA;
   --border2: #D8D4CC;
 
@@ -160,7 +163,7 @@ body {
 /* Cards */
 .card {
   background: var(--bg);
-  border: 1px solid var(--border);
+  border: 0.5px solid var(--border);
   border-radius: var(--radius);
   padding: 16px;
 }

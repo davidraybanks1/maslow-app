@@ -63,7 +63,7 @@
 }
 
 .cardJournal {
-  background: #E8E4F0;
+  background: var(--surface-reflective);
   border-radius: 12px;
   padding: 14px 16px;
   margin-bottom: 10px;
@@ -72,7 +72,7 @@
 
 /* ── Lavender wrapper (note to self deck) ── */
 .reflectiveSection {
-  background: #E8E4F0;
+  background: var(--surface-reflective);
   border-radius: 16px;
   padding: 12px;
   margin-bottom: 10px;
@@ -95,7 +95,7 @@
   flex: 0 0 100%;
   scroll-snap-align: start;
   box-sizing: border-box;
-  background: #E8E4F0;
+  background: var(--surface-reflective);
   border: 0.5px solid rgba(26,26,26,0.08);
   border-radius: 12px;
   padding: 13px 14px;
