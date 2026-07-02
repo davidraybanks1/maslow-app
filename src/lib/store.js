@@ -510,7 +510,6 @@ async function appendNoteHistory(userId, text) {
   const trimmed = text?.trim()
   if (!trimmed || !userId) return
   const { error } = await supabase.rpc('append_note_history', {
-    p_user_id: userId,
     p_text: trimmed,
     p_date: new Date().toLocaleDateString('en-CA'),
   })
