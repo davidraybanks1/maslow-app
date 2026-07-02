@@ -320,6 +320,17 @@
   border-radius: 10px;
   padding: 10px 12px;
 }
+.deckListHandle {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--ink3);
+  cursor: grab;
+  flex-shrink: 0;
+  line-height: 1;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.deckListHandle:active { cursor: grabbing; }
 .deckListText {
   flex: 1;
   font-family: 'Instrument Serif', serif;
@@ -343,6 +354,34 @@
   -webkit-tap-highlight-color: transparent;
 }
 .deckListDelete:hover { color: #D93B1C; }
+
+.noteHistoryCard {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--bg);
+  border: 0.5px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.noteHistoryCard:hover { background: var(--bg2); }
+.noteHistoryText {
+  font-family: 'Instrument Serif', serif;
+  font-style: italic;
+  font-size: 13px;
+  color: var(--ink2);
+  line-height: 1.4;
+  flex: 1;
+}
+.noteHistoryDate {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink3);
+  flex-shrink: 0;
+}
 
 .composerImageRow {
   display: flex;

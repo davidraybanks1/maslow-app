@@ -1,11 +1,37 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
+import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { NEEDS, MODES, MODE_ORDER, MODE_MAX_BUBBLES, MODE_WEIGHTS } from '../lib/constants'
-import { todayKey, loadJournalEntry, saveJournalEntry, loadDebriefTypes, loadDebriefs, loadNoteDeck, addNoteDeckCard, updateNoteDeckCard, deleteNoteDeckCard, uploadNoteImage } from '../lib/store'
+import { todayKey, loadJournalEntry, saveJournalEntry, loadDebriefTypes, loadDebriefs, loadNoteDeck, addNoteDeckCard, updateNoteDeckCard, deleteNoteDeckCard, uploadNoteImage, reorderNoteDeck, loadNoteHistory } from '../lib/store'
 import { createDataStats, getCanvasGuidance } from '../lib/dataStats'
 import DebriefForm from '../components/DebriefForm'
 import PeakDebriefForm from '../components/PeakDebriefForm'
 import styles from './Today.module.css'
+
+function SortableDeckRow({ card, onEdit, onDelete, onLightbox }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: card.id })
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }}
+      className={styles.deckListRow}
+    >
+      <span className={styles.deckListHandle} {...attributes} {...listeners}>⠿</span>
+      {card.image_url && (
+        <img
+          src={card.image_url}
+          alt=""
+          className={styles.noteThumbnail}
+          onClick={e => { e.stopPropagation(); onLightbox(card.image_url) }}
+        />
+      )}
+      <span className={styles.deckListText} onClick={() => onEdit(card)}>{card.text}</span>
+      <button className={styles.deckListDelete} onClick={() => onDelete(card.id)}>×</button>
+    </div>
+  )
+}
 
 const MOOD_PERIODS = ['morning', 'midday', 'evening']
 const MOODS = ['good', 'fine', 'bad']
@@ -111,6 +137,8 @@ export default function Today({ state, checkIn, logMood }) {
   const [lightboxImage, setLightboxImage] = useState(null)
   const [manageDeckOpen, setManageDeckOpen] = useState(false)
   const [composer, setComposer] = useState(null) // null = list view; {} = new card; {id,text,image_url} = editing
+  const [noteHistory, setNoteHistory] = useState([])
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
   const [composerText, setComposerText] = useState('')
   const [composerImageUrl, setComposerImageUrl] = useState(null)
   const [composerUploading, setComposerUploading] = useState(false)
@@ -174,6 +202,16 @@ export default function Today({ state, checkIn, logMood }) {
   function openManageDeck() {
     setManageDeckOpen(true)
     setComposer(null)
+    if (state.userId) loadNoteHistory(state.userId).then(setNoteHistory)
+  }
+
+  function handleDragEnd({ active, over }) {
+    if (!over || active.id === over.id) return
+    const oldIndex = noteDeck.findIndex(c => c.id === active.id)
+    const newIndex = noteDeck.findIndex(c => c.id === over.id)
+    const reordered = arrayMove(noteDeck, oldIndex, newIndex)
+    setNoteDeck(reordered)
+    reorderNoteDeck(reordered)
   }
 
   function openComposerForNew() {
@@ -628,6 +666,29 @@ export default function Today({ state, checkIn, logMood }) {
                 />
                 <div className={styles.noteCharCount}>{NOTE_MAX_LENGTH - composerText.length} characters remaining</div>
 
+                <div className={styles.noteSectionLabel}>FROM THE LIBRARY</div>
+                <div className={styles.noteLibraryList}>
+                  {NOTE_LIBRARY.map((text, i) => (
+                    <div key={i} className={styles.noteCard} onClick={() => setComposerText(text)}>
+                      {text}
+                    </div>
+                  ))}
+                </div>
+
+                {noteHistory.length > 0 && (
+                  <>
+                    <div className={styles.noteSectionLabel}>FROM YOUR HISTORY</div>
+                    <div className={styles.noteLibraryList}>
+                      {noteHistory.map((item, i) => (
+                        <div key={i} className={styles.noteHistoryCard} onClick={() => setComposerText(item.text)}>
+                          <span className={styles.noteHistoryText}>{item.text}</span>
+                          <span className={styles.noteHistoryDate}>{item.date}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+
                 <div className={styles.noteSectionLabel}>IMAGE</div>
                 {composerImageUrl ? (
                   <div className={styles.composerImageRow}>
@@ -655,36 +716,26 @@ export default function Today({ state, checkIn, logMood }) {
                   style={{ display: 'none' }}
                   onChange={handleComposerImageSelect}
                 />
-
-                <div className={styles.noteSectionLabel}>OR CHOOSE FROM THE LIBRARY</div>
-                <div className={styles.noteLibraryList}>
-                  {NOTE_LIBRARY.map((text, i) => (
-                    <div key={i} className={styles.noteCard} onClick={() => setComposerText(text)}>
-                      {text}
-                    </div>
-                  ))}
-                </div>
               </>
             ) : (
               <>
                 <button className={styles.addDeckCardBtn} onClick={openComposerForNew}>+ add note</button>
                 {noteDeck.length > 0 && (
-                  <div className={styles.noteLibraryList}>
-                    {noteDeck.map(card => (
-                      <div key={card.id} className={styles.deckListRow}>
-                        {card.image_url && (
-                          <img
-                            src={card.image_url}
-                            alt=""
-                            className={styles.noteThumbnail}
-                            onClick={e => { e.stopPropagation(); setLightboxImage(card.image_url) }}
+                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                    <SortableContext items={noteDeck.map(c => c.id)} strategy={verticalListSortingStrategy}>
+                      <div className={styles.noteLibraryList}>
+                        {noteDeck.map(card => (
+                          <SortableDeckRow
+                            key={card.id}
+                            card={card}
+                            onEdit={openComposerForEdit}
+                            onDelete={handleDeleteCard}
+                            onLightbox={setLightboxImage}
                           />
-                        )}
-                        <span className={styles.deckListText} onClick={() => openComposerForEdit(card)}>{card.text}</span>
-                        <button className={styles.deckListDelete} onClick={() => handleDeleteCard(card.id)}>×</button>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    </SortableContext>
+                  </DndContext>
                 )}
               </>
             )}

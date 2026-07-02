@@ -513,6 +513,21 @@ export async function deleteNoteDeckCard(id) {
   return { error }
 }
 
+export async function reorderNoteDeck(cards) {
+  await Promise.all(
+    cards.map((card, i) =>
+      supabase.from('note_deck').update({ position: i }).eq('id', card.id).then(({ error }) => {
+        if (error) logSupabaseError('reorderNoteDeck', error)
+      })
+    )
+  )
+}
+
+export async function loadNoteHistory(userId) {
+  const { data } = await supabase.from('users').select('note_history').eq('id', userId).single()
+  return data?.note_history || []
+}
+
 export async function uploadNoteImage(userId, file) {
   const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
   const path = `${userId}/${Date.now()}.${ext}`
