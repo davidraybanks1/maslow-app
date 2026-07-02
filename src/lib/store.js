@@ -496,7 +496,20 @@ export async function addNoteDeckCard(userId, { text, imageUrl }) {
   return { data, error }
 }
 
-export async function updateNoteDeckCard(id, { text, imageUrl }) {
+async function appendNoteHistory(userId, text) {
+  const trimmed = text?.trim()
+  if (!trimmed) return
+  const { data } = await supabase.from('users').select('note_history').eq('id', userId).single()
+  const existing = data?.note_history || []
+  if (existing.some(e => e.text === trimmed)) return
+  const updated = [{ date: new Date().toLocaleDateString('en-CA'), text: trimmed }, ...existing].slice(0, 20)
+  await supabase.from('users').update({ note_history: updated }).eq('id', userId)
+}
+
+export async function updateNoteDeckCard(id, { text, imageUrl, userId, previousText }) {
+  if (userId && previousText?.trim() && previousText.trim() !== text?.trim()) {
+    await appendNoteHistory(userId, previousText)
+  }
   const { data, error } = await supabase
     .from('note_deck')
     .update({ text, image_url: imageUrl || null })
@@ -507,7 +520,8 @@ export async function updateNoteDeckCard(id, { text, imageUrl }) {
   return { data, error }
 }
 
-export async function deleteNoteDeckCard(id) {
+export async function deleteNoteDeckCard(id, userId, text) {
+  await appendNoteHistory(userId, text)
   const { error } = await supabase.from('note_deck').delete().eq('id', id)
   if (error) logSupabaseError('deleteNoteDeckCard', error)
   return { error }

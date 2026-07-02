@@ -248,7 +248,7 @@ export default function Today({ state, checkIn, logMood }) {
     try {
       let error
       if (composer?.id) {
-        ;({ error } = await updateNoteDeckCard(composer.id, { text, imageUrl: composerImageUrl }))
+        ;({ error } = await updateNoteDeckCard(composer.id, { text, imageUrl: composerImageUrl, userId: state.userId, previousText: composer.text }))
       } else {
         ;({ error } = await addNoteDeckCard(state.userId, { text, imageUrl: composerImageUrl }))
       }
@@ -263,7 +263,8 @@ export default function Today({ state, checkIn, logMood }) {
 
   async function handleDeleteCard(id) {
     if (!state.userId) { console.error('[handleDeleteCard] called without userId — session may be invalid'); navigate('/signin'); return }
-    await deleteNoteDeckCard(id)
+    const card = noteDeck.find(c => c.id === id)
+    await deleteNoteDeckCard(id, state.userId, card?.text)
     loadDeck()
   }
 
