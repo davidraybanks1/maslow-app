@@ -41,6 +41,7 @@ function Protected({ children, onboarded, userId }) {
   return children
 }
 
+const RITUAL_MS    = 1800 // intentional greeting duration — tune here
 const LOADER_FADE_MS = 350 // matches --motion-page
 
 function AppInner() {
@@ -52,10 +53,10 @@ function AppInner() {
     setTimeout(() => { setMenuOpen(false); setMenuClosing(false) }, 200)
   }
 
-  // Minimum display time: loader stays up for at least 1 s even on fast connections
-  const [minElapsed, setMinElapsed] = useState(false)
+  // Ritual timer: loader never dismisses before RITUAL_MS, even on instant init
+  const [ritualElapsed, setRitualElapsed] = useState(false)
   useEffect(() => {
-    const t = setTimeout(() => setMinElapsed(true), 1000)
+    const t = setTimeout(() => setRitualElapsed(true), RITUAL_MS)
     return () => clearTimeout(t)
   }, [])
 
@@ -67,9 +68,9 @@ function AppInner() {
     () => navigate('/today')
   )
 
-  // Trigger fade-out once auth resolves AND the minimum display time has passed
+  // Trigger fade-out once auth resolves AND the ritual timer has elapsed
   useEffect(() => {
-    if (!authLoading && minElapsed && showLoader && !loaderFading) {
+    if (!authLoading && ritualElapsed && showLoader && !loaderFading) {
       setLoaderFading(true)
       setTimeout(() => setShowLoader(false), LOADER_FADE_MS)
     }
