@@ -74,7 +74,7 @@ function AppInner() {
       setLoaderFading(true)
       setTimeout(() => setShowLoader(false), LOADER_FADE_MS)
     }
-  }, [authLoading, minElapsed])
+  }, [authLoading, ritualElapsed])
 
   if (showLoader) {
     return <LoadingScreen greeting="hey, you" fading={loaderFading} />
