@@ -33,6 +33,16 @@
   --anxiety: #2C2820;
   --appreciation-strong: #5A7A70;  /* darker sage for data-viz fills (readable against track) */
 
+  /* Mode identity tokens (pip colors — used for chips, fills, and the loading screen) */
+  --exploration:  #1B3A2D;
+  --appreciation: #B8C3B1;
+  --nourishment:  #E8B81F;
+  --survival:     #D93B1C;
+
+  /* Loading screen */
+  --loader-lavender: #C9C1E0;  /* deeper lavender for bubble pool (--surface-reflective is too pale) */
+  --motion-page: 350ms;        /* full-page entry/exit fade */
+
   /* Typography */
   --font-serif: 'Instrument Serif', serif;
   --font-mono: 'DM Mono', monospace;

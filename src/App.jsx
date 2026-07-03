@@ -1,6 +1,7 @@
-import { useState, Component } from 'react'
+import { useState, useEffect, Component } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { useAppState } from './lib/store'
+import LoadingScreen from './components/LoadingScreen'
 import DiagnosticFlow from './screens/Onboarding/DiagnosticFlow'
 import Today from './screens/Today'
 import CanvasScreen from './screens/CanvasScreen'
@@ -40,6 +41,8 @@ function Protected({ children, onboarded, userId }) {
   return children
 }
 
+const LOADER_FADE_MS = 350 // matches --motion-page
+
 function AppInner() {
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -48,16 +51,32 @@ function AppInner() {
     setMenuClosing(true)
     setTimeout(() => { setMenuOpen(false); setMenuClosing(false) }, 200)
   }
+
+  // Minimum display time: loader stays up for at least 1 s even on fast connections
+  const [minElapsed, setMinElapsed] = useState(false)
+  useEffect(() => {
+    const t = setTimeout(() => setMinElapsed(true), 1000)
+    return () => clearTimeout(t)
+  }, [])
+
+  // Loader fade-out state — keep component mounted through the 350ms opacity transition
+  const [loaderFading, setLoaderFading] = useState(false)
+  const [showLoader, setShowLoader] = useState(true)
+
   const { state, authLoading, updateCanvas, replaceCanvas, addPractice, removePractice, checkIn, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule } = useAppState(
     () => navigate('/today')
   )
 
-  if (authLoading) {
-    return (
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', fontFamily:'var(--font-mono)', fontSize:11, color:'var(--ink3)', letterSpacing:'0.1em', textTransform:'uppercase' }}>
-        loading...
-      </div>
-    )
+  // Trigger fade-out once auth resolves AND the minimum display time has passed
+  useEffect(() => {
+    if (!authLoading && minElapsed && showLoader && !loaderFading) {
+      setLoaderFading(true)
+      setTimeout(() => setShowLoader(false), LOADER_FADE_MS)
+    }
+  }, [authLoading, minElapsed])
+
+  if (showLoader) {
+    return <LoadingScreen greeting="hey, you" fading={loaderFading} />
   }
 
   return (
