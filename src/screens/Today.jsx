@@ -96,7 +96,7 @@ function GuidanceCard({ type, onDismiss }) {
   )
 }
 
-export default function Today({ state, checkIn, logMood }) {
+export default function Today({ state, checkIn, removeCheckin, logMood }) {
   const navigate = useNavigate()
   const today = todayKey()
   const checked = state.checkins[today] || []
@@ -109,9 +109,10 @@ export default function Today({ state, checkIn, logMood }) {
     const maxBubbles = MODE_MAX_BUBBLES[mode] || 0
     const weight = MODE_WEIGHTS[mode] || 0
     maxScore += maxBubbles * weight
-    const prefix = `${n.id}_`
-    const filledBubbles = Math.min(checked.filter(k => k.startsWith(prefix)).length, maxBubbles)
-    currentScore += filledBubbles * weight
+    const completions = checked.filter(e => e.need_id === n.id).length
+    const filled = Math.min(completions, maxBubbles)
+    const bonus = Math.max(0, completions - maxBubbles)
+    currentScore += filled * weight + bonus * 0.5
   }
   const piePct = maxScore > 0 ? currentScore / maxScore : 0
 
@@ -177,23 +178,36 @@ export default function Today({ state, checkIn, logMood }) {
     const r = size / 2 - 1
     const innerR = r * 0.55
     const bg2 = getComputedStyle(document.documentElement).getPropertyValue('--bg2').trim() || '#F5F3ED'
+    const basePct = Math.min(piePct, 1)
+    const overflowPct = Math.max(0, piePct - 1)
+
     ctx.clearRect(0, 0, size, size)
     ctx.beginPath()
     ctx.arc(cx, cy, r, 0, Math.PI * 2)
     ctx.fillStyle = 'rgba(26,26,26,0.08)'
     ctx.fill()
-    if (piePct > 0) {
+    if (basePct > 0) {
       ctx.beginPath()
       ctx.moveTo(cx, cy)
-      ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + piePct * 2 * Math.PI)
+      ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + basePct * 2 * Math.PI)
       ctx.closePath()
-      ctx.fillStyle = piePct >= 1 ? '#1B3A2D' : '#1A1A1A'
+      ctx.fillStyle = '#1B3A2D'
       ctx.fill()
     }
     ctx.beginPath()
     ctx.arc(cx, cy, innerR, 0, Math.PI * 2)
     ctx.fillStyle = bg2
     ctx.fill()
+    // Overflow arc: gold mini-arc inside the donut hole, shows how far above 100%
+    if (overflowPct > 0) {
+      const ovR = innerR * 0.65
+      ctx.beginPath()
+      ctx.arc(cx, cy, ovR, -Math.PI / 2, -Math.PI / 2 + Math.min(overflowPct, 1) * 2 * Math.PI)
+      ctx.lineWidth = 3.5
+      ctx.strokeStyle = '#E8B81F'
+      ctx.lineCap = 'round'
+      ctx.stroke()
+    }
   }, [currentScore, maxScore])
 
   useLayoutEffect(() => {
@@ -479,15 +493,11 @@ export default function Today({ state, checkIn, logMood }) {
   }
 
   function handleChipClick(needId, mode, practiceText) {
-    const maxBubbles = MODE_MAX_BUBBLES[mode]
-    const prefix = `${needId}_`
-    const checkedForNeed = checked.filter(k => k.startsWith(prefix))
-    const isChecked = checkedForNeed.includes(`${needId}_${practiceText}`)
-    if (!isChecked && checkedForNeed.length >= maxBubbles) {
-      const oldestText = checkedForNeed[0].slice(prefix.length)
-      checkIn(needId, oldestText)
-    }
-    checkIn(needId, practiceText)
+    checkIn(needId, practiceText, mode)
+  }
+
+  function handleBubbleRemove(needId) {
+    removeCheckin(needId)
   }
 
   return (
@@ -646,9 +656,10 @@ export default function Today({ state, checkIn, logMood }) {
 
                 {modeNeeds.map((n, needIdx) => {
                   const pool = state.practices[n.id] || []
-                  const prefix = `${n.id}_`
-                  const checkedForNeed = checked.filter(k => k.startsWith(prefix))
-                  const filledBubbles = Math.min(checkedForNeed.length, maxBubbles)
+                  const checkedForNeed = checked.filter(e => e.need_id === n.id)
+                  const completions = checkedForNeed.length
+                  const filledBubbles = Math.min(completions, maxBubbles)
+                  const bonusBubbles = Math.max(0, completions - maxBubbles)
 
                   return (
                     <div key={n.id}>
@@ -661,9 +672,18 @@ export default function Today({ state, checkIn, logMood }) {
                               key={i}
                               className={styles.bubble}
                               style={i < filledBubbles
-                                ? { background: pip, border: `1.5px solid ${pip}` }
+                                ? { background: pip, border: `1.5px solid ${pip}`, cursor: i === filledBubbles - 1 && bonusBubbles === 0 ? 'pointer' : undefined }
                                 : { background: 'transparent', border: `1.5px solid ${pip}` }
                               }
+                              onClick={i < filledBubbles ? () => handleBubbleRemove(n.id) : undefined}
+                            />
+                          ))}
+                          {Array.from({ length: bonusBubbles }).map((_, i) => (
+                            <div
+                              key={`bonus-${i}`}
+                              className={styles.bubbleBonus}
+                              style={{ border: `1.5px dashed ${pip}` }}
+                              onClick={() => handleBubbleRemove(n.id)}
                             />
                           ))}
                         </div>
@@ -673,7 +693,7 @@ export default function Today({ state, checkIn, logMood }) {
                       ) : (
                         <div className={styles.chipRow}>
                           {pool.map(p => {
-                            const isDone = checkedForNeed.includes(`${n.id}_${p}`)
+                            const isDone = checkedForNeed.some(e => e.practice_text === p)
                             return (
                               <button
                                 key={p}

@@ -61,8 +61,7 @@ function requiredFor(canvas, needId) {
 }
 
 function completedFor(checkins, needId, dateKey) {
-  const prefix = `${needId}_`
-  return (checkins[dateKey] || []).filter(k => k.startsWith(prefix)).length
+  return (checkins[dateKey] || []).filter(e => e.need_id === needId).length
 }
 
 function dayCompletionPct(canvas, checkins, dateKey) {
@@ -382,13 +381,15 @@ export function createDataStats({ canvas, checkins, moods, practices }) {
       const pool = (practices && practices[need.id]) || []
 
       for (const text of pool) {
-        const key = `${need.id}_${text}`
         let completedDays = 0
+        let totalCompletions = 0
         let daysSinceLast = null
 
         for (let i = days.length - 1; i >= 0; i--) {
-          if ((checkins[days[i]] || []).includes(key)) {
+          const dayCount = (checkins[days[i]] || []).filter(e => e.need_id === need.id && e.practice_text === text).length
+          if (dayCount > 0) {
             completedDays++
+            totalCompletions += dayCount
             if (daysSinceLast === null) daysSinceLast = days.length - 1 - i
           }
         }
@@ -398,6 +399,7 @@ export function createDataStats({ canvas, checkins, moods, practices }) {
           text,
           mode: canvas[need.id],
           completionPct: Math.round((completedDays / days.length) * 100),
+          totalCompletions,
           daysSinceLast,
         })
       }

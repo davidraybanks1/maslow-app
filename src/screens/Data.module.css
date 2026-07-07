@@ -678,3 +678,95 @@
   text-decoration: underline;
   cursor: pointer;
 }
+
+/* Practice sub-row total completions count */
+.practiceSubTotal {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink3);
+  flex-shrink: 0;
+}
+
+/* ── Practice frequency card ── */
+.freqLoading {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink4);
+}
+
+.freqNeedGroup {
+  padding: 10px 0;
+}
+
+.freqNeedGroupDivider {
+  border-top: 1px solid rgba(26, 26, 24, 0.07);
+}
+
+.freqNeedHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.freqPip {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.freqNeedName {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  color: var(--ink);
+  text-transform: lowercase;
+}
+
+.freqEmpty {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink4);
+  padding: 2px 0 4px 13px;
+}
+
+.freqRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 4px 0 4px 13px;
+}
+
+.freqPracticeName {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 200;
+  color: var(--ink2);
+  flex: 1;
+}
+
+.freqCounts {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.freqTotal {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.freqSep {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink4);
+}
+
+.freqMonth {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink3);
+}

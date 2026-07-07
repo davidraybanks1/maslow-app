@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { NEEDS, MODES, MODE_ORDER } from '../lib/constants'
-import { loadDebriefs } from '../lib/store'
+import { loadDebriefs, loadPracticeCompletionStats } from '../lib/store'
 import { createDataStats, formatLastDone } from '../lib/dataStats'
 import { natureTagStyle, peakTagStyle, ENVIRONMENT_TAG_STYLE } from '../lib/debriefTypes'
 import { AnxietyEpisodesCard, PeakMomentsCard } from '../components/DebriefStatsCards'
@@ -265,6 +265,9 @@ function NeedPracticesAccordion({ needStats, practiceStats }) {
                       <div key={i} className={styles.practiceSubRow}>
                         <span className={styles.practiceSubName}>{p.text}</span>
                         <span className={styles.practiceSubPct}>{p.completionPct}%</span>
+                        {p.totalCompletions > 0 && (
+                          <span className={styles.practiceSubTotal}>×{p.totalCompletions}</span>
+                        )}
                         <span className={styles.practiceSubLast}>{formatLastDone(p.daysSinceLast)}</span>
                       </div>
                     ))}
@@ -357,7 +360,74 @@ function DebriefsTab({ stats, debriefs }) {
   )
 }
 
-function PracticesTab({ stats, navigate }) {
+function PracticeFrequencyCard({ stats, canvas, practiceCompletionStats }) {
+  if (!practiceCompletionStats) {
+    return (
+      <div className={styles.card}>
+        <div className={styles.eyebrow}>all-time frequency</div>
+        <div className={styles.freqLoading}>—</div>
+      </div>
+    )
+  }
+
+  // Group by need, in canvas order, filtering to only assigned needs
+  const needGroups = {}
+  for (const s of practiceCompletionStats) {
+    if (!canvas[s.need_id]) continue
+    if (!needGroups[s.need_id]) needGroups[s.need_id] = { mode: canvas[s.need_id], rows: [] }
+    needGroups[s.need_id].rows.push(s)
+  }
+
+  // Also include canvas needs with no completions yet
+  for (const [needId, mode] of Object.entries(canvas)) {
+    if (!needGroups[needId]) needGroups[needId] = { mode, rows: [] }
+  }
+
+  const orderedNeeds = NEEDS.filter(n => needGroups[n.id])
+
+  if (orderedNeeds.length === 0) {
+    return (
+      <div className={styles.card}>
+        <div className={styles.eyebrow}>all-time frequency</div>
+        <div className={styles.dataEmpty}>no completions logged yet</div>
+      </div>
+    )
+  }
+
+  return (
+    <div className={styles.card}>
+      <div className={styles.eyebrow}>all-time frequency</div>
+      {orderedNeeds.map((need, ni) => {
+        const { mode, rows } = needGroups[need.id]
+        const pip = MODES[mode]?.pip
+        return (
+          <div key={need.id} className={`${styles.freqNeedGroup} ${ni > 0 ? styles.freqNeedGroupDivider : ''}`}>
+            <div className={styles.freqNeedHeader}>
+              <div className={styles.freqPip} style={{ background: pip }} />
+              <span className={styles.freqNeedName}>{need.name}</span>
+            </div>
+            {rows.length === 0 ? (
+              <div className={styles.freqEmpty}>no completions yet</div>
+            ) : (
+              rows.map((s, i) => (
+                <div key={i} className={styles.freqRow}>
+                  <span className={styles.freqPracticeName}>{s.practice_text}</span>
+                  <span className={styles.freqCounts}>
+                    <span className={styles.freqTotal}>{s.total}</span>
+                    <span className={styles.freqSep}>/</span>
+                    <span className={styles.freqMonth}>{s.month} this mo.</span>
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function PracticesTab({ stats, navigate, canvas, practiceCompletionStats }) {
   const practiceStats = stats.getPracticeStats()
   const completionByWeekday = stats.getCompletionByWeekday()
   const goingWell = stats.getGoingWell()
@@ -369,6 +439,7 @@ function PracticesTab({ stats, navigate }) {
       <GoingWellCard goingWell={goingWell} />
       <NeedPracticesAccordion needStats={needStats} practiceStats={practiceStats} />
       <WeeklyRhythmCard completionByWeekday={completionByWeekday} />
+      <PracticeFrequencyCard stats={stats} canvas={canvas} practiceCompletionStats={practiceCompletionStats} />
     </>
   )
 }
@@ -379,6 +450,7 @@ export default function Data({ state }) {
   const [range, setRange] = useState(7)
   const [debriefs, setDebriefs] = useState([])
   const [debriefLoading, setDebriefLoading] = useState(true)
+  const [practiceCompletionStats, setPracticeCompletionStats] = useState(null)
 
   const moods = state.moods || []
   const stats = createDataStats({ canvas: state.canvas, checkins: state.checkins, moods, practices: state.practices })
@@ -388,6 +460,12 @@ export default function Data({ state }) {
     setDebriefLoading(true)
     loadDebriefs(state.userId).then(d => { setDebriefs(d); setDebriefLoading(false) })
   }, [state.userId])
+
+  useEffect(() => {
+    if (view !== 'practices' || !state.userId) return
+    if (practiceCompletionStats !== null) return  // already loaded
+    loadPracticeCompletionStats(state.userId).then(setPracticeCompletionStats)
+  }, [view, state.userId])
 
   return (
     <div className={styles.screen}>
@@ -419,7 +497,7 @@ export default function Data({ state }) {
 
       {view === 'practices' && (
         <div className={styles.section}>
-          <PracticesTab stats={stats} navigate={navigate} />
+          <PracticesTab stats={stats} navigate={navigate} canvas={state.canvas} practiceCompletionStats={practiceCompletionStats} />
         </div>
       )}
 

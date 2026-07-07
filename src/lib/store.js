@@ -66,6 +66,23 @@ function migrateState(saved) {
     if (saved.reviewTime === undefined) saved.reviewTime = '10:00'
     saved.canvas = sanitizeCanvas(saved.canvas)
 
+    // Migrate old checkin format (string array like 'movement_go for a run')
+    // to new object array format [{ id, need_id, practice_text, mode, completed_at }]
+    for (const [dateKey, entries] of Object.entries(saved.checkins)) {
+      if (!Array.isArray(entries) || entries.length === 0) continue
+      if (typeof entries[0] !== 'string') continue
+      saved.checkins[dateKey] = entries.map(key => {
+        const sep = key.indexOf('_')
+        return {
+          id: null,
+          need_id: sep > 0 ? key.slice(0, sep) : key,
+          practice_text: sep > 0 ? key.slice(sep + 1) : '',
+          mode: null,
+          completed_at: null,
+        }
+      })
+    }
+
     return saved
   } catch (e) {
     console.error('migrateState error', e)
@@ -132,7 +149,13 @@ async function restoreFromSupabase(userId, email) {
     const checkinsMap = {}
     for (const row of (checkins || [])) {
       if (!checkinsMap[row.date_key]) checkinsMap[row.date_key] = []
-      checkinsMap[row.date_key].push(row.need_id)
+      checkinsMap[row.date_key].push({
+        id: row.id,
+        need_id: row.need_id,
+        practice_text: row.practice_text || '',
+        mode: row.mode || null,
+        completed_at: row.completed_at || null,
+      })
     }
     const canvas = sanitizeCanvas(user.canvas)
     return {
@@ -290,43 +313,77 @@ export function useAppState(onSignIn) {
     })
   }
 
-  function checkIn(needId, practiceText, date = todayKey()) {
-    const key = `${needId}_${practiceText}`
-    const existing = checkinsRef.current[date] || []
-    const isRemoving = existing.includes(key)
-    const updated = isRemoving ? existing.filter(k => k !== key) : [...existing, key]
-    const newCheckins = { ...checkinsRef.current, [date]: updated }
-    checkinsRef.current = newCheckins
-
-    setState(prev => ({ ...prev, checkins: newCheckins }))
-
-    function revert() {
-      setState(prev => {
-        const current = prev.checkins[date] || []
-        const restored = isRemoving
-          ? (current.includes(key) ? current : [...current, key])
-          : current.filter(k => k !== key)
-        const reverted = { ...prev.checkins, [date]: restored }
-        checkinsRef.current = reverted
-        return { ...prev, checkins: reverted }
-      })
-    }
-
+  function checkIn(needId, practiceText, mode, date = todayKey()) {
     const uid = userIdRef.current
     if (!uid) {
       console.error('[checkIn] called without userId — practice not persisted')
-      revert()
       return
     }
-    if (!isRemoving) {
-      supabase.from('checkins').insert({ user_id: uid, date_key: date, need_id: key }).then(({ error }) => {
-        if (error) { logSupabaseError('checkIn', error); revert() }
-      })
-    } else {
-      supabase.from('checkins').delete().eq('user_id', uid).eq('date_key', date).eq('need_id', key).then(({ error }) => {
-        if (error) { logSupabaseError('checkIn', error); revert() }
-      })
+
+    const completedAt = new Date().toISOString()
+    const tempId = `pending_${Date.now()}_${Math.random()}`
+    const newEntry = { id: tempId, need_id: needId, practice_text: practiceText, mode: mode || null, completed_at: completedAt }
+
+    const newCheckins = {
+      ...checkinsRef.current,
+      [date]: [...(checkinsRef.current[date] || []), newEntry],
     }
+    checkinsRef.current = newCheckins
+    setState(prev => ({ ...prev, checkins: newCheckins }))
+
+    supabase.from('checkins')
+      .insert({ user_id: uid, date_key: date, need_id: needId, practice_text: practiceText, mode: mode || null, completed_at: completedAt })
+      .select('id').single()
+      .then(({ data, error }) => {
+        if (error) {
+          logSupabaseError('checkIn', error)
+          setState(prev => {
+            const day = (prev.checkins[date] || []).filter(e => e.id !== tempId)
+            const reverted = { ...prev.checkins, [date]: day }
+            checkinsRef.current = reverted
+            return { ...prev, checkins: reverted }
+          })
+        } else if (data) {
+          setState(prev => {
+            const day = (prev.checkins[date] || []).map(e => e.id === tempId ? { ...e, id: data.id } : e)
+            const updated = { ...prev.checkins, [date]: day }
+            checkinsRef.current = updated
+            return { ...prev, checkins: updated }
+          })
+        }
+      })
+  }
+
+  function removeCheckin(needId, date = todayKey()) {
+    const uid = userIdRef.current
+    const existing = checkinsRef.current[date] || []
+
+    // Find the most recent entry for this need (last one in the append-ordered array)
+    let lastIdx = -1
+    for (let i = existing.length - 1; i >= 0; i--) {
+      if (existing[i].need_id === needId) { lastIdx = i; break }
+    }
+    if (lastIdx === -1) return
+
+    const removed = existing[lastIdx]
+    const updated = existing.filter((_, i) => i !== lastIdx)
+    const newCheckins = { ...checkinsRef.current, [date]: updated }
+    checkinsRef.current = newCheckins
+    setState(prev => ({ ...prev, checkins: newCheckins }))
+
+    // Pending entries (not yet saved) have no real DB row to delete
+    if (!uid || !removed.id || String(removed.id).startsWith('pending_')) return
+
+    supabase.from('checkins').delete().eq('id', removed.id).then(({ error }) => {
+      if (error) {
+        logSupabaseError('removeCheckin', error)
+        setState(prev => {
+          const reverted = { ...prev.checkins, [date]: [...(prev.checkins[date] || []), removed] }
+          checkinsRef.current = reverted
+          return { ...prev, checkins: reverted }
+        })
+      }
+    })
   }
 
   async function logMood(userId, promptTime, mood, note, date) {
@@ -419,7 +476,7 @@ export function useAppState(onSignIn) {
     })
   }
 
-  return { state, authLoading, updateCanvas, replaceCanvas, addPractice, removePractice, checkIn, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule }
+  return { state, authLoading, updateCanvas, replaceCanvas, addPractice, removePractice, checkIn, removeCheckin, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule }
 }
 
 export function todayKey() {
@@ -596,6 +653,28 @@ export async function saveWeeklyReview(userId, { weekStarting, weeklyMood, steps
     .single()
   if (error) logSupabaseError('saveWeeklyReview', error)
   return { data, error }
+}
+
+export async function loadPracticeCompletionStats(userId) {
+  const now = new Date()
+  const monthStartKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+
+  const { data } = await supabase
+    .from('checkins')
+    .select('need_id, practice_text, date_key')
+    .eq('user_id', userId)
+  if (!data) return []
+
+  const map = new Map()
+  for (const row of data) {
+    if (!row.practice_text) continue
+    const key = `${row.need_id}|${row.practice_text}`
+    if (!map.has(key)) map.set(key, { need_id: row.need_id, practice_text: row.practice_text, total: 0, month: 0 })
+    const entry = map.get(key)
+    entry.total++
+    if (row.date_key >= monthStartKey) entry.month++
+  }
+  return [...map.values()].sort((a, b) => b.total - a.total)
 }
 
 export async function loadDebriefs(userId) {
