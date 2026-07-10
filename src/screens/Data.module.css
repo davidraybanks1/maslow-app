@@ -588,52 +588,246 @@
   text-transform: lowercase;
 }
 
-/* ── Debriefs tab: recent episodes ── */
-.episodeRow {
-  padding: 12px 0;
-}
-.episodeRowDivider {
-  border-top: 0.5px solid var(--border);
+/* ── Days tab ── */
+
+.periodSelector {
+  display: flex;
+  background: var(--bg);
+  border: 0.5px solid var(--border);
+  border-radius: 10px;
+  padding: 3px;
+  margin-bottom: 10px;
 }
 
-.episodeTop {
+.periodBtn {
+  flex: 1;
+  padding: 8px 4px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink3);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--motion-micro), color var(--motion-micro);
+}
+
+.periodBtnActive {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+.dayNav {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 6px;
+  gap: 4px;
+  background: var(--bg);
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 10px;
+  margin-bottom: 10px;
 }
 
-.episodeDate {
+.navArrow {
+  font-size: 22px;
+  color: var(--ink2);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--motion-hover);
+  flex-shrink: 0;
+  line-height: 1;
+}
+.navArrow:disabled { color: var(--ink4); cursor: default; }
+
+.navCenter {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.navDate {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.navMoodLabel {
   font-family: var(--font-mono);
   font-size: 11px;
   color: var(--ink3);
 }
 
-.episodeTags {
+.navProgressRow {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
 }
 
-.tag {
-  padding: 3px 10px;
-  border-radius: 20px;
+.navProgressScore {
   font-family: var(--font-mono);
   font-size: 10px;
-  text-transform: lowercase;
+  color: var(--ink2);
+  flex-shrink: 0;
   white-space: nowrap;
 }
 
-.episodeExcerpt {
+.navProgressTrack {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(26,26,26,0.08);
+  overflow: hidden;
+}
+
+.navProgressFill {
+  height: 100%;
+  border-radius: 2px;
+  background: #E8B81F;
+  transition: width var(--motion-data) ease;
+}
+
+.navProgressPct {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink3);
+  flex-shrink: 0;
+}
+
+.spokeDiagramCard {
+  background: var(--bg);
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.spokeTooltipArea {
+  width: 100%;
+  min-height: 52px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  margin-bottom: 6px;
+}
+
+.spokeTooltip {
+  background: var(--ink);
+  color: var(--bg);
+  border-radius: 7px;
+  padding: 6px 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-align: center;
+  position: relative;
+  max-width: 230px;
+  line-height: 1.5;
+}
+
+.spokeTooltipArrow {
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 8px;
+  height: 8px;
+  background: var(--ink);
+}
+
+.spokeCanvas {
+  display: block;
+  width: 260px;
+  height: 260px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.spokeHint {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink4);
+  margin-top: 10px;
+  align-self: center;
+}
+
+/* By-need bars (days tab) */
+.dayNeedRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+}
+.dayNeedRow + .dayNeedRow { border-top: 1px solid rgba(26,26,26,0.06); }
+
+.dayNeedPip {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dayNeedName {
+  font-family: var(--font-serif);
+  font-size: 13px;
+  color: var(--ink);
+  text-transform: lowercase;
+  width: 80px;
+  flex-shrink: 0;
+}
+
+.dayNeedBarTrack {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(26,26,26,0.07);
+  overflow: hidden;
+}
+
+.dayNeedBarFill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width var(--motion-data) ease;
+}
+
+.dayNeedPct {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink3);
+  width: 36px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Synopsis card */
+.synopsisText {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  color: var(--ink2);
+  line-height: 1.65;
+}
+.synopsisText em {
   font-family: var(--font-serif);
   font-style: italic;
-  font-size: 15px;
-  color: var(--ink2);
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  color: var(--ink);
+}
+
+.synopsisEmpty {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink4);
+  line-height: 1.6;
 }
 
 /* Stale flags card */

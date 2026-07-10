@@ -1,15 +1,356 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { NEEDS, MODES, MODE_ORDER } from '../lib/constants'
-import { loadDebriefs, loadPracticeCompletionStats } from '../lib/store'
+import { NEEDS, MODES, MODE_ORDER, MODE_MAX_BUBBLES, MODE_WEIGHTS } from '../lib/constants'
+import { loadPracticeCompletionStats } from '../lib/store'
 import { createDataStats, formatLastDone } from '../lib/dataStats'
-import { natureTagStyle, peakTagStyle, ENVIRONMENT_TAG_STYLE } from '../lib/debriefTypes'
-import { AnxietyEpisodesCard, PeakMomentsCard } from '../components/DebriefStatsCards'
 import LiveCanvasCard from '../components/LiveCanvasCard'
 import styles from './Data.module.css'
 
 const MOOD_PERIODS = ['morning', 'midday', 'evening']
 const WEEKDAY_LETTERS = ['m', 't', 'w', 't', 'f', 's', 's']
+
+// ── Days tab helpers ───────────────────────────────────────────────────────────
+
+const SPOKE_SIZE = 260
+const SPOKE_MAX_R = 100
+const SPOKE_MOOD_R = 20
+const MOOD_COLORS = { good: '#1B3A2D', fine: '#B8C3B1', bad: '#D93B1C' }
+
+function buildWindowKeys(period, dayOffset) {
+  return Array.from({ length: period }, (_, i) => {
+    const d = new Date()
+    d.setDate(d.getDate() - dayOffset - i)
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  })
+}
+
+function formatDayLabel(dateKey) {
+  return new Date(dateKey + 'T12:00:00').toLocaleDateString('en-US', {
+    weekday: 'long', month: 'long', day: 'numeric',
+  }).toLowerCase()
+}
+
+function fmtScore(v) {
+  if (Math.abs((v % 1) - 0.5) < 0.01) return Math.floor(v) === 0 ? '½' : `${Math.floor(v)}½`
+  return `${Math.round(v)}`
+}
+
+function getDominantMood(moodsList) {
+  if (!moodsList || moodsList.length === 0) return null
+  const c = {}
+  for (const m of moodsList) c[m.mood] = (c[m.mood] || 0) + 1
+  return Object.keys(c).length === 0 ? null : Object.entries(c).sort((a, b) => b[1] - a[1])[0][0]
+}
+
+function distToSegment(px, py, ax, ay, bx, by) {
+  const dx = bx - ax, dy = by - ay, lenSq = dx * dx + dy * dy
+  if (lenSq === 0) return Math.hypot(px - ax, py - ay)
+  const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / lenSq))
+  return Math.hypot(px - (ax + t * dx), py - (ay + t * dy))
+}
+
+function drawSpokeCanvas(canvasEl, canvasConfig, checkins, practices, moods, period, windowKeys) {
+  if (!canvasEl) return []
+  const dpr = window.devicePixelRatio || 1
+  canvasEl.width = SPOKE_SIZE * dpr
+  canvasEl.height = SPOKE_SIZE * dpr
+  const ctx = canvasEl.getContext('2d')
+  ctx.scale(dpr, dpr)
+  const cx = SPOKE_SIZE / 2, cy = SPOKE_SIZE / 2
+
+  ctx.clearRect(0, 0, SPOKE_SIZE, SPOKE_SIZE)
+
+  // Concentric rings
+  for (let i = 1; i <= period; i++) {
+    const r = (i / period) * SPOKE_MAX_R
+    ctx.beginPath()
+    ctx.arc(cx, cy, r, 0, Math.PI * 2)
+    ctx.strokeStyle = i === period ? 'rgba(26,26,26,0.12)' : 'rgba(26,26,26,0.07)'
+    ctx.lineWidth = i === period ? 1 : 0.75
+    ctx.stroke()
+  }
+
+  // Collect practice spokes
+  const items = []
+  for (const needId of Object.keys(canvasConfig)) {
+    const mode = canvasConfig[needId]
+    const need = NEEDS.find(n => n.id === needId)
+    if (!need) continue
+    const color = MODES[mode]?.pip || '#999'
+    for (const text of ((practices || {})[needId] || [])) {
+      let streak = 0
+      for (const dk of windowKeys) {
+        if ((checkins[dk] || []).some(e => e.need_id === needId && e.practice_text === text)) streak++
+        else break
+      }
+      if (streak > 0) items.push({ needId, needName: need.name, text, color, streak })
+    }
+  }
+
+  const spokePositions = []
+  const n = items.length
+  items.forEach((item, i) => {
+    const angle = (n > 0 ? i / n : 0) * Math.PI * 2 - Math.PI / 2
+    const r = (item.streak / period) * SPOKE_MAX_R
+    const ex = cx + r * Math.cos(angle)
+    const ey = cy + r * Math.sin(angle)
+
+    ctx.beginPath()
+    ctx.moveTo(cx, cy)
+    ctx.lineTo(ex, ey)
+    ctx.strokeStyle = item.color
+    ctx.lineWidth = 1.5
+    ctx.lineCap = 'round'
+    ctx.stroke()
+
+    // Label at tip
+    const lr = Math.max(r + 14, SPOKE_MOOD_R + 18)
+    const lx = cx + lr * Math.cos(angle)
+    const ly = cy + lr * Math.sin(angle)
+    ctx.font = `8px 'DM Mono', monospace`
+    ctx.fillStyle = 'rgba(26,26,26,0.5)'
+    ctx.textBaseline = 'middle'
+    const cosA = Math.cos(angle)
+    ctx.textAlign = cosA > 0.1 ? 'left' : cosA < -0.1 ? 'right' : 'center'
+    ctx.fillText(item.text.split(' ')[0], lx, ly)
+
+    spokePositions.push({ cx, cy, ex, ey, needName: item.needName, practice: item.text, streakCount: item.streak })
+  })
+
+  // Mood center
+  const dom = getDominantMood(moods.filter(m => m.date_key === windowKeys[0]))
+  ctx.beginPath()
+  ctx.arc(cx, cy, SPOKE_MOOD_R, 0, Math.PI * 2)
+  ctx.fillStyle = dom ? MOOD_COLORS[dom] : 'rgba(26,26,26,0.1)'
+  ctx.fill()
+  if (dom) {
+    ctx.font = `bold 8px 'DM Mono', monospace`
+    ctx.fillStyle = '#fff'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText(dom, cx, cy)
+  }
+
+  return spokePositions
+}
+
+function buildWhenLabel(anchorMoods) {
+  const byTime = {}
+  for (const m of anchorMoods) byTime[m.prompt_time] = m.mood
+  const times = ['morning', 'midday', 'evening'].filter(t => byTime[t])
+  if (times.length === 0) return ''
+  const L = { morning: 'this morning', midday: 'this afternoon', evening: 'this evening' }
+  if (times.length === 1) return L[times[0]]
+  if (times.length === 2) return `${L[times[0]]} and ${L[times[1]]}`
+  return 'throughout the day'
+}
+
+function SynopsisCard({ canvasConfig, checkins, moods, period, windowKeys }) {
+  const daysWithData = windowKeys.filter(k => (checkins[k] || []).length > 0).length
+
+  if (daysWithData < Math.min(period, 2)) {
+    return (
+      <div className={styles.card}>
+        <div className={styles.eyebrow}>what created this day</div>
+        <div className={styles.synopsisEmpty}>not enough data yet — check back after a few more days.</div>
+      </div>
+    )
+  }
+
+  const anchorKey = windowKeys[0]
+  const anchorMoods = moods.filter(m => m.date_key === anchorKey)
+  const windowMoods = period > 1 ? moods.filter(m => windowKeys.includes(m.date_key)) : anchorMoods
+  const dom = getDominantMood(period === 1 ? anchorMoods : windowMoods)
+
+  const needData = NEEDS.filter(n => canvasConfig[n.id]).map(need => {
+    const mode = canvasConfig[need.id]
+    const modeMax = MODE_MAX_BUBBLES[mode] || 1
+    let completed = 0
+    for (const dk of windowKeys) completed += (checkins[dk] || []).filter(e => e.need_id === need.id).length
+    return { need, pct: Math.round((completed / (modeMax * period)) * 100), completed }
+  })
+
+  const highNeeds = needData.filter(n => n.pct >= 80).sort((a, b) => b.pct - a.pct).slice(0, 2)
+  const lowNeed = needData.find(n => n.completed === 0) || null
+  const consistentStretch = period === 7 && daysWithData >= 6
+
+  const sentences = []
+
+  if (dom) {
+    if (period === 1) {
+      const when = buildWhenLabel(anchorMoods)
+      if (when) sentences.push(<>you logged <em>{dom}</em> {when}.</>)
+    } else {
+      sentences.push(<>you mostly logged <em>{dom}</em> over the last {period} days.</>)
+    }
+  }
+
+  if (highNeeds.length > 0) {
+    if (period === 1) {
+      const names = highNeeds.map(n => n.need.name.toLowerCase()).join(' and ')
+      sentences.push(<><em>{names}</em> {highNeeds.length === 1 ? 'was' : 'were'} fully met.</>)
+    } else {
+      highNeeds.forEach(hn => sentences.push(
+        <><em>{hn.need.name.toLowerCase()}</em> was at {hn.pct}% over the last {period} days.</>
+      ))
+    }
+  }
+
+  if (lowNeed) {
+    sentences.push(
+      <><em>{lowNeed.need.name.toLowerCase()}</em> was lighter than usual — nothing logged{period > 1 ? ` in the last ${period} days` : ' today'}.</>
+    )
+  }
+
+  if (consistentStretch) sentences.push(<>your most consistent stretch in recent weeks.</>)
+  if (sentences.length === 0) sentences.push(<>a day in progress — keep going.</>)
+
+  return (
+    <div className={styles.card}>
+      <div className={styles.eyebrow}>what created this day</div>
+      <div className={styles.synopsisText}>
+        {sentences.map((s, i) => <span key={i}>{s}{i < sentences.length - 1 ? ' ' : ''}</span>)}
+      </div>
+    </div>
+  )
+}
+
+function ByNeedBarsCard({ canvasConfig, checkins, period, windowKeys }) {
+  const activeNeeds = NEEDS.filter(n => canvasConfig[n.id])
+  return (
+    <div className={styles.card}>
+      <div className={styles.eyebrow}>by need — {period} day completion</div>
+      {activeNeeds.map(need => {
+        const mode = canvasConfig[need.id]
+        const modeMax = MODE_MAX_BUBBLES[mode] || 1
+        const color = MODES[mode]?.pip || '#999'
+        let completed = 0
+        for (const dk of windowKeys) completed += (checkins[dk] || []).filter(e => e.need_id === need.id).length
+        const pct = Math.min(100, Math.round((completed / (modeMax * period)) * 100))
+        return (
+          <div key={need.id} className={styles.dayNeedRow}>
+            <div className={styles.dayNeedPip} style={{ background: color }} />
+            <div className={styles.dayNeedName}>{need.name}</div>
+            <div className={styles.dayNeedBarTrack}>
+              <div className={styles.dayNeedBarFill} style={{ width: `${pct}%`, background: color }} />
+            </div>
+            <div className={styles.dayNeedPct}>{pct}%</div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function DaysTab({ canvasConfig, checkins, moods, practices }) {
+  const [period, setPeriod] = useState(1)
+  const [dayOffset, setDayOffset] = useState(0)
+  const [tooltip, setTooltip] = useState(null)
+  const tooltipTimerRef = useRef(null)
+  const canvasRef = useRef(null)
+  const spokeDataRef = useRef([])
+
+  const windowKeys = buildWindowKeys(period, dayOffset)
+  const anchorKey = windowKeys[0]
+
+  // Weighted score
+  let score = 0, maxScore = 0
+  for (const [needId, mode] of Object.entries(canvasConfig)) {
+    const mm = MODE_MAX_BUBBLES[mode] || 1, wt = MODE_WEIGHTS[mode] || 1
+    maxScore += mm * wt * period
+    for (const dk of windowKeys) {
+      const c = (checkins[dk] || []).filter(e => e.need_id === needId).length
+      score += Math.min(c, mm) * wt + Math.max(0, c - mm) * 0.5
+    }
+  }
+
+  const anchorMoods = moods.filter(m => m.date_key === anchorKey)
+  const dominantMood = getDominantMood(anchorMoods)
+  const progressPct = maxScore > 0 ? Math.min(100, (score / maxScore) * 100) : 0
+
+  // Draw spoke diagram
+  useEffect(() => {
+    const wk = buildWindowKeys(period, dayOffset)
+    spokeDataRef.current = drawSpokeCanvas(canvasRef.current, canvasConfig, checkins, practices, moods, period, wk)
+    setTooltip(null)
+  }, [period, dayOffset, canvasConfig, checkins, moods, practices])
+
+  // Cleanup tooltip timer on unmount
+  useEffect(() => () => clearTimeout(tooltipTimerRef.current), [])
+
+  function handleCanvasClick(e) {
+    const el = canvasRef.current
+    if (!el || spokeDataRef.current.length === 0) return
+    const rect = el.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+
+    let nearest = null, nearestDist = Infinity
+    for (const spoke of spokeDataRef.current) {
+      const d = distToSegment(x, y, spoke.cx, spoke.cy, spoke.ex, spoke.ey)
+      if (d < nearestDist) { nearestDist = d; nearest = spoke }
+    }
+
+    if (nearest && nearestDist <= 20) {
+      clearTimeout(tooltipTimerRef.current)
+      setTooltip({ practice: nearest.practice, needName: nearest.needName, streak: nearest.streakCount })
+      tooltipTimerRef.current = setTimeout(() => setTooltip(null), 2500)
+    } else {
+      setTooltip(null)
+    }
+  }
+
+  return (
+    <>
+      <div className={styles.periodSelector}>
+        {[1, 3, 7].map(p => (
+          <button
+            key={p}
+            className={`${styles.periodBtn} ${period === p ? styles.periodBtnActive : ''}`}
+            onClick={() => { setPeriod(p); setDayOffset(0) }}
+          >
+            {p} day{p > 1 ? 's' : ''}
+          </button>
+        ))}
+      </div>
+
+      <div className={styles.dayNav}>
+        <button className={styles.navArrow} onClick={() => setDayOffset(o => Math.min(o + 1, 30))} aria-label="go back">‹</button>
+        <div className={styles.navCenter}>
+          <div className={styles.navDate}>{formatDayLabel(anchorKey)}</div>
+          <div className={styles.navMoodLabel}>mood: {dominantMood || '—'}</div>
+          <div className={styles.navProgressRow}>
+            <span className={styles.navProgressScore}>{fmtScore(score)} of {fmtScore(maxScore)}</span>
+            <div className={styles.navProgressTrack}>
+              <div className={styles.navProgressFill} style={{ width: `${progressPct}%` }} />
+            </div>
+            <span className={styles.navProgressPct}>{Math.round(progressPct)}%</span>
+          </div>
+        </div>
+        <button className={styles.navArrow} onClick={() => setDayOffset(o => Math.max(o - 1, 0))} disabled={dayOffset === 0} aria-label="go forward">›</button>
+      </div>
+
+      <div className={styles.spokeDiagramCard}>
+        <div className={styles.spokeTooltipArea}>
+          {tooltip && (
+            <div className={styles.spokeTooltip}>
+              <div style={{ fontWeight: 600 }}>{tooltip.practice}</div>
+              <div>{tooltip.needName} · {tooltip.streak} of {period} day{period > 1 ? 's' : ''}</div>
+              <div className={styles.spokeTooltipArrow} />
+            </div>
+          )}
+        </div>
+        <canvas ref={canvasRef} className={styles.spokeCanvas} onClick={handleCanvasClick} />
+        <div className={styles.spokeHint}>tap a spoke to see the practice</div>
+      </div>
+
+      <ByNeedBarsCard canvasConfig={canvasConfig} checkins={checkins} period={period} windowKeys={windowKeys} />
+      <SynopsisCard canvasConfig={canvasConfig} checkins={checkins} moods={moods} period={period} windowKeys={windowKeys} />
+    </>
+  )
+}
+
+// ── Shared stat/chart components ───────────────────────────────────────────────
 
 function StatCards({ stats, range }) {
   const streak = stats.getStreak()
@@ -322,45 +663,7 @@ function StaleFlagsCard({ practiceStats, navigate }) {
   )
 }
 
-function formatEpisodeDate(dateKey) {
-  return new Date(dateKey + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toLowerCase()
-}
-
-function RecentEpisodesCard({ episodes }) {
-  if (episodes.length === 0) return null
-  return (
-    <div className={styles.card}>
-      <div className={styles.eyebrow}>recent episodes</div>
-      {episodes.slice(0, 5).map((e, i) => (
-        <div key={i} className={`${styles.episodeRow} ${i > 0 ? styles.episodeRowDivider : ''}`}>
-          <div className={styles.episodeTop}>
-            <span className={styles.episodeDate}>{formatEpisodeDate(e.date)}</span>
-            <div className={styles.episodeTags}>
-              <span className={styles.tag} style={e.type === 'peak' ? peakTagStyle(e.nature, []) : natureTagStyle(e.nature, [])}>{e.nature}</span>
-              <span className={styles.tag} style={ENVIRONMENT_TAG_STYLE}>{e.environment}</span>
-            </div>
-          </div>
-          <div className={styles.episodeExcerpt}>{e.excerpt}</div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function DebriefsTab({ stats, debriefs }) {
-  const { byNatureAnxiety, byTypePeak, byEnvironment, patternAnxiety, patternPeak, recentEpisodes } = stats.getDebriefStats(debriefs)
-  const anxietyCount = debriefs.filter(d => d.type === 'anxiety' || !d.type).length
-  const peakCount = debriefs.filter(d => d.type === 'peak').length
-  return (
-    <>
-      <AnxietyEpisodesCard byNatureAnxiety={byNatureAnxiety} byEnvironment={byEnvironment} pattern={patternAnxiety} anxietyCount={anxietyCount} />
-      <PeakMomentsCard byTypePeak={byTypePeak} byEnvironment={byEnvironment} pattern={patternPeak} peakCount={peakCount} />
-      <RecentEpisodesCard episodes={recentEpisodes} />
-    </>
-  )
-}
-
-function PracticeFrequencyCard({ stats, canvas, practiceCompletionStats }) {
+function PracticeFrequencyCard({ canvas, practiceCompletionStats }) {
   if (!practiceCompletionStats) {
     return (
       <div className={styles.card}>
@@ -370,7 +673,6 @@ function PracticeFrequencyCard({ stats, canvas, practiceCompletionStats }) {
     )
   }
 
-  // Group by need, in canvas order, filtering to only assigned needs
   const needGroups = {}
   for (const s of practiceCompletionStats) {
     if (!canvas[s.need_id]) continue
@@ -378,7 +680,6 @@ function PracticeFrequencyCard({ stats, canvas, practiceCompletionStats }) {
     needGroups[s.need_id].rows.push(s)
   }
 
-  // Also include canvas needs with no completions yet
   for (const [needId, mode] of Object.entries(canvas)) {
     if (!needGroups[needId]) needGroups[needId] = { mode, rows: [] }
   }
@@ -439,7 +740,7 @@ function PracticesTab({ stats, navigate, canvas, practiceCompletionStats }) {
       <GoingWellCard goingWell={goingWell} />
       <NeedPracticesAccordion needStats={needStats} practiceStats={practiceStats} />
       <WeeklyRhythmCard completionByWeekday={completionByWeekday} />
-      <PracticeFrequencyCard stats={stats} canvas={canvas} practiceCompletionStats={practiceCompletionStats} />
+      <PracticeFrequencyCard canvas={canvas} practiceCompletionStats={practiceCompletionStats} />
     </>
   )
 }
@@ -448,22 +749,14 @@ export default function Data({ state }) {
   const navigate = useNavigate()
   const [view, setView] = useState('overview')
   const [range, setRange] = useState(7)
-  const [debriefs, setDebriefs] = useState([])
-  const [debriefLoading, setDebriefLoading] = useState(true)
   const [practiceCompletionStats, setPracticeCompletionStats] = useState(null)
 
   const moods = state.moods || []
   const stats = createDataStats({ canvas: state.canvas, checkins: state.checkins, moods, practices: state.practices })
 
   useEffect(() => {
-    if (!state.userId) { console.error('[Data] loadDebriefs called without userId — session may be invalid'); return }
-    setDebriefLoading(true)
-    loadDebriefs(state.userId).then(d => { setDebriefs(d); setDebriefLoading(false) })
-  }, [state.userId])
-
-  useEffect(() => {
     if (view !== 'practices' || !state.userId) return
-    if (practiceCompletionStats !== null) return  // already loaded
+    if (practiceCompletionStats !== null) return
     loadPracticeCompletionStats(state.userId).then(setPracticeCompletionStats)
   }, [view, state.userId])
 
@@ -471,7 +764,7 @@ export default function Data({ state }) {
     <div className={styles.screen}>
       <div className={styles.header}>
         <div className={styles.title}>data</div>
-        {view !== 'debriefs' && (
+        {view !== 'days' && (
           <div className={styles.rangeToggle}>
             <button className={`${styles.rangeBtn} ${range === 7 ? styles.rangeBtnActive : ''}`} onClick={() => setRange(7)}>7d</button>
             <button className={`${styles.rangeBtn} ${range === 30 ? styles.rangeBtnActive : ''}`} onClick={() => setRange(30)}>30d</button>
@@ -483,7 +776,7 @@ export default function Data({ state }) {
         <button className={`${styles.viewBtn} ${view === 'overview' ? styles.viewBtnActive : ''}`} onClick={() => setView('overview')}>Overview</button>
         <button className={`${styles.viewBtn} ${view === 'practices' ? styles.viewBtnActive : ''}`} onClick={() => setView('practices')}>Practices</button>
         <button className={`${styles.viewBtn} ${view === 'mood' ? styles.viewBtnActive : ''}`} onClick={() => setView('mood')}>Mood</button>
-        <button className={`${styles.viewBtn} ${view === 'debriefs' ? styles.viewBtnActive : ''}`} onClick={() => setView('debriefs')}>Debriefs</button>
+        <button className={`${styles.viewBtn} ${view === 'days' ? styles.viewBtnActive : ''}`} onClick={() => setView('days')}>Days</button>
       </div>
 
       {view === 'overview' && (
@@ -507,14 +800,16 @@ export default function Data({ state }) {
         </div>
       )}
 
-      {view === 'debriefs' && (
+      {view === 'days' && (
         <div className={styles.section}>
-          {debriefLoading
-            ? <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink4)', padding: '24px 0' }}>—</div>
-            : <DebriefsTab stats={stats} debriefs={debriefs} />}
+          <DaysTab
+            canvasConfig={state.canvas}
+            checkins={state.checkins}
+            moods={state.moods || []}
+            practices={state.practices}
+          />
         </div>
       )}
-
     </div>
   )
 }
