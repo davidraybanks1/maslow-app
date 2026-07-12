@@ -119,6 +119,24 @@ function dominantMoodForDay(moods, dateKey) {
   return best
 }
 
+// Checkins are v2 object rows: { id, need_id, practice_text, mode, completed_at }.
+// A string fallback is kept for any stale v1 entries ('needId_practice text').
+function checkinNeedId(c) {
+  if (typeof c === 'string') {
+    const sep = c.indexOf('_')
+    return sep > 0 ? c.slice(0, sep) : c
+  }
+  return c?.need_id || null
+}
+
+function checkinPracticeText(c) {
+  if (typeof c === 'string') {
+    const sep = c.indexOf('_')
+    return sep > 0 ? c.slice(sep + 1) : ''
+  }
+  return c?.practice_text || ''
+}
+
 function dayPracticeCount(canvas, checkins, dateKey) {
   const checked = checkins[dateKey] || []
   let total = 0
@@ -128,8 +146,7 @@ function dayPracticeCount(canvas, checkins, dateKey) {
     if (!mode) continue
     const maxBubbles = MODE_MAX_BUBBLES[mode] || 0
     max += maxBubbles
-    const prefix = `${n.id}_`
-    total += Math.min(checked.filter(k => k.startsWith(prefix)).length, maxBubbles)
+    total += Math.min(checked.filter(c => checkinNeedId(c) === n.id).length, maxBubbles)
   }
   return { total, max }
 }
@@ -138,12 +155,10 @@ function practicesByNeedForDay(checkins, dateKey) {
   const dayCheckins = checkins[dateKey] || []
   const byNeed = {}
   for (const c of dayCheckins) {
-    const underscore = c.indexOf('_')
-    if (underscore === -1) continue
-    const needId = c.slice(0, underscore)
-    const text = c.slice(underscore + 1)
+    const needId = checkinNeedId(c)
+    if (!needId) continue
     if (!byNeed[needId]) byNeed[needId] = []
-    byNeed[needId].push(text)
+    byNeed[needId].push(checkinPracticeText(c))
   }
   return byNeed
 }
@@ -197,7 +212,7 @@ function DayCardExpandedContent({ canvas, checkins, dateKey, moods, journal, deb
               <div key={n.id}>
                 {i > 0 && <div className={styles.practiceDivider} />}
                 <div className={styles.practiceNeedName}>{n.name}</div>
-                <div className={styles.practiceNamesText}>{byNeed[n.id].join(' · ')}</div>
+                <div className={styles.practiceNamesText}>{byNeed[n.id].filter(Boolean).join(' · ') || '—'}</div>
               </div>
             ))}
           </div>

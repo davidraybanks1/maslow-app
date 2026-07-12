@@ -191,11 +191,28 @@ export function useAppState(onSignIn) {
   useEffect(() => {
     async function checkSession() {
       try {
-        const { data: { session } } = await supabase.auth.getSession()
+        // getSession() can hang (auth lock contention / stalled token refresh).
+        // Race it against a timeout so the loader always dismisses; if the real
+        // call resolves later, restore the session in the background.
+        const sessionPromise = supabase.auth.getSession()
+        const timeoutMs = 5000
+        const result = await Promise.race([
+          sessionPromise,
+          new Promise(resolve => setTimeout(() => resolve({ timedOut: true }), timeoutMs)),
+        ])
         setAuthLoading(false)
-        if (session?.user) {
+
+        async function restore(session) {
+          if (!session?.user) return
           const restored = await restoreFromSupabase(session.user.id, session.user.email)
           if (restored) { setState(restored); saveState(restored) }
+        }
+
+        if (result?.timedOut) {
+          console.warn(`checkSession: getSession() did not resolve within ${timeoutMs}ms — showing app from cached state`)
+          sessionPromise.then(({ data }) => restore(data?.session)).catch(e => console.error('checkSession late-resolve error', e))
+        } else {
+          await restore(result?.data?.session)
         }
       } catch (e) {
         console.error('checkSession error', e)
