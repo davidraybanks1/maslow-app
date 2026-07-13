@@ -795,3 +795,36 @@
 @media (prefers-reduced-motion: reduce) {
   .spaceBarComplete { animation: none; }
 }
+
+/* ── Debrief pills: side by side under the journal ── */
+.debriefPillRow {
+  display: flex;
+  gap: 8px;
+  padding-top: 14px;
+}
+.debriefPill {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 12px;
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink2);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--motion-hover), border-color var(--motion-hover), color var(--motion-hover);
+}
+.debriefPill:hover { border-color: var(--ink3); color: var(--ink); }
+.debriefPill:active { background: var(--bg2); }
+.debriefPillOpen {
+  background: var(--nourishment);
+  border-color: var(--nourishment);
+  color: var(--ink);
+}
+.debriefPillOpen .debriefCount { color: rgba(26, 26, 24, 0.55); }

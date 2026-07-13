@@ -730,13 +730,25 @@ export default function Today({ state, checkIn, removeCheckin, logMood }) {
           />
           {journalSaveError && <div className={styles.journalSaveError}>{journalSaveError}</div>}
 
-          {/* Anxiety debrief */}
-          <button className={styles.debriefToggle} onClick={() => setDebriefExpanded(e => !e)}>
-            <span className={`${styles.chevron} ${debriefExpanded ? styles.chevronOpen : ''}`}>›</span>
-            {todayDebriefCount > 0 && <span className={styles.debriefDot} />}
-            <span>anxiety debrief</span>
-            {todayDebriefCount > 0 && <span className={styles.debriefCount}>· {todayDebriefCount}</span>}
-          </button>
+          {/* Debrief pills — side by side, same expand behavior */}
+          <div className={styles.debriefPillRow}>
+            <button
+              className={`${styles.debriefPill} ${debriefExpanded ? styles.debriefPillOpen : ''}`}
+              onClick={() => { setDebriefExpanded(e => !e); setPeakExpanded(false) }}
+            >
+              {todayDebriefCount > 0 && <span className={styles.debriefDot} />}
+              <span>anxiety debrief</span>
+              {todayDebriefCount > 0 && <span className={styles.debriefCount}>· {todayDebriefCount}</span>}
+            </button>
+            <button
+              className={`${styles.debriefPill} ${peakExpanded ? styles.debriefPillOpen : ''}`}
+              onClick={() => { setPeakExpanded(e => !e); setDebriefExpanded(false) }}
+            >
+              {todayPeakCount > 0 && <span className={styles.debriefDot} />}
+              <span>peak debrief</span>
+              {todayPeakCount > 0 && <span className={styles.debriefCount}>· {todayPeakCount}</span>}
+            </button>
+          </div>
 
           {debriefExpanded && (
             <>
@@ -751,14 +763,6 @@ export default function Today({ state, checkIn, removeCheckin, logMood }) {
               />
             </>
           )}
-
-          {/* Peak debrief */}
-          <button className={styles.debriefToggle} onClick={() => setPeakExpanded(e => !e)}>
-            <span className={`${styles.chevron} ${peakExpanded ? styles.chevronOpen : ''}`}>›</span>
-            {todayPeakCount > 0 && <span className={styles.debriefDot} />}
-            <span>peak debrief</span>
-            {todayPeakCount > 0 && <span className={styles.debriefCount}>· {todayPeakCount}</span>}
-          </button>
 
           {peakExpanded && (
             <>
