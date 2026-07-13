@@ -1,6 +1,7 @@
 import { useState, useEffect, Component } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { useAppState } from './lib/store'
+import { hideSplash, scheduleReminders } from './lib/native'
 import LoadingScreen from './components/LoadingScreen'
 import DiagnosticFlow from './screens/Onboarding/DiagnosticFlow'
 import Today from './screens/Today'
@@ -82,6 +83,15 @@ function AppInner() {
       setTimeout(() => setShowLoader(false), LOADER_FADE_MS)
     }
   }, [authLoading, hasCachedSession, ritualElapsed])
+
+  // Native shell: dismiss the iOS splash once we're rendering (loader or app),
+  // and keep the local reminder schedule in sync with the review settings.
+  useEffect(() => { hideSplash() }, [])
+  useEffect(() => {
+    if (state.onboarded && state.userId) {
+      scheduleReminders({ reviewDay: state.reviewDay ?? 0, reviewTime: state.reviewTime || '10:00' })
+    }
+  }, [state.onboarded, state.userId, state.reviewDay, state.reviewTime])
 
   if (showLoader) {
     const firstName = (state.profile?.name || '').trim().split(' ')[0]

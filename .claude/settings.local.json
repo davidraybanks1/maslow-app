@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -n \"{detail &&\\\\|{newStep\\\\|detail, debriefTypes\\\\|onClose.*setDetail\\\\|setDetail\\(null\\)\\\\|setNewStep\\(null\\)\" /Users/davidbanks/Desktop/maslow-app/src/screens/Debriefs.jsx)"
+    ]
+  }
+}

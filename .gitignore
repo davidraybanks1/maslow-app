@@ -3,3 +3,9 @@ dist
 .env
 .env.local
 .DS_Store
+
+# Capacitor iOS
+ios/App/Pods/
+ios/App/output/
+ios/DerivedData/
+assets/

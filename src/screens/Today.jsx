@@ -6,6 +6,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { NEEDS, MODES, MODE_ORDER, MODE_MAX_BUBBLES, MODE_WEIGHTS } from '../lib/constants'
 import { todayKey, loadJournalEntry, saveJournalEntry, loadDebriefTypes, loadDebriefs, loadNoteDeck, addNoteDeckCard, updateNoteDeckCard, deleteNoteDeckCard, uploadNoteImage, reorderNoteDeck, loadNoteHistory } from '../lib/store'
 import { createDataStats, getCanvasGuidance } from '../lib/dataStats'
+import { hapticTick } from '../lib/native'
 import DebriefForm from '../components/DebriefForm'
 import PeakDebriefForm from '../components/PeakDebriefForm'
 import styles from './Today.module.css'
@@ -521,6 +522,7 @@ export default function Today({ state, checkIn, removeCheckin, logMood }) {
   }
 
   function handleChipClick(needId, mode, practiceText) {
+    hapticTick()
     checkIn(needId, practiceText, mode)
   }
 

@@ -1,0 +1,14 @@
+{
+  "appId": "com.mymaslow.app",
+  "appName": "MyMaslow",
+  "webDir": "dist",
+  "ios": {
+    "contentInset": "automatic"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": false,
+      "backgroundColor": "#FFFFFF"
+    }
+  }
+}
