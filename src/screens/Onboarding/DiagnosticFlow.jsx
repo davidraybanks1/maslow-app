@@ -155,8 +155,8 @@ const FLEXIBILITY_OPTIONS = [
   {
     id: 'low',
     name: 'very little',
-    desc: 'life is full and margins are thin. too much change at once will create more stress, not less.',
-    tag: 'start with 5–6 practices · no exploration required',
+    desc: 'life is full and margins are thin. too much change at once will create more stress.',
+    tag: 'start with 5–6 practices · no exploration',
     tagBg: 'rgba(217,59,28,0.08)',
     tagColor: '#993C1D',
   },
