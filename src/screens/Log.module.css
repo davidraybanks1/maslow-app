@@ -586,5 +586,5 @@
 
 /* desktop tier: center the screen at a comfortable reading width */
 @media (min-width: 1024px) {
-  .screen { max-width: 680px; margin: 0 auto; width: 100%; }
+  .screen { max-width: 680px; margin: 0 auto; width: 100%; background: transparent; }
 }
