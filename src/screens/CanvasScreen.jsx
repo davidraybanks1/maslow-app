@@ -255,6 +255,68 @@ export default function CanvasScreen({ state, updateCanvas, replaceCanvas }) {
 
       <div className={styles.scroll} ref={scrollRef}>
 
+        {/* The pool — pull needs from here onto your canvas */}
+        <div className={styles.poolCard}>
+        {/* Unassigned pool */}
+        <div className={styles.poolSection}>
+          <div className={styles.sectionEyebrow}>UNASSIGNED</div>
+          {poolNeeds.length === 0 ? (
+            <div className={styles.allAssigned}>all needs assigned</div>
+          ) : (
+            <div className={styles.poolChips}>
+              {poolNeeds.map(need => {
+                const isPoolPickerOpen = openPicker?.type === 'pool' && openPicker.needId === need.id
+                const pickerModes = need.id === 'rest' ? ['nourishment', 'survival'] : MODES
+
+                return (
+                  <div key={need.id} className={styles.poolChipGroup}>
+                    <div
+                      className={`${styles.poolChip} ${isPoolPickerOpen ? styles.poolChipActive : ''}`}
+                      onClick={() => isPoolPickerOpen ? closePicker() : openNewPicker({ type: 'pool', needId: need.id })}
+                    >
+                      {need.name}
+                    </div>
+                    {isPoolPickerOpen && (
+                      <div className={styles.poolChipPicker}>
+                        <div className={styles.pickerPills}>
+                          {pickerModes.map(m => (
+                            <button
+                              key={m}
+                              className={styles.modePill}
+                              style={MODE_PILL_STYLE[m]}
+                              onClick={() => { if (tryAssign(need.id, m)) closePicker() }}
+                            >
+                              {m}
+                            </button>
+                          ))}
+                        </div>
+                        {pickerError && <div className={styles.pickerError}>{pickerError}</div>}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+          <div className={styles.poolSub}>needs not yet on your canvas. tap one to place it.</div>
+        </div>
+
+        {/* Add your own */}
+        <div className={styles.addOwnSection}>
+          <div className={styles.sectionEyebrow}>ADD YOUR OWN</div>
+          <div className={styles.addOwnRow}>
+            <input
+              className={styles.addOwnInput}
+              placeholder="name a need…"
+              value={customInput}
+              onChange={e => setCustomInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleAddCustom() }}
+            />
+            <button className={styles.addOwnBtn} onClick={handleAddCustom}>add</button>
+          </div>
+        </div>
+        </div>
+
         {MODES.map(mode => {
           const needsInMode = inMode(mode)
           const isAddOpen = openPicker?.type === 'add' && openPicker.mode === mode
@@ -349,64 +411,6 @@ export default function CanvasScreen({ state, updateCanvas, replaceCanvas }) {
           )
         })}
 
-        {/* Unassigned pool */}
-        <div className={styles.poolSection}>
-          <div className={styles.sectionEyebrow}>UNASSIGNED</div>
-          {poolNeeds.length === 0 ? (
-            <div className={styles.allAssigned}>all needs assigned</div>
-          ) : (
-            <div className={styles.poolChips}>
-              {poolNeeds.map(need => {
-                const isPoolPickerOpen = openPicker?.type === 'pool' && openPicker.needId === need.id
-                const pickerModes = need.id === 'rest' ? ['nourishment', 'survival'] : MODES
-
-                return (
-                  <div key={need.id} className={styles.poolChipGroup}>
-                    <div
-                      className={`${styles.poolChip} ${isPoolPickerOpen ? styles.poolChipActive : ''}`}
-                      onClick={() => isPoolPickerOpen ? closePicker() : openNewPicker({ type: 'pool', needId: need.id })}
-                    >
-                      {need.name}
-                    </div>
-                    {isPoolPickerOpen && (
-                      <div className={styles.poolChipPicker}>
-                        <div className={styles.pickerPills}>
-                          {pickerModes.map(m => (
-                            <button
-                              key={m}
-                              className={styles.modePill}
-                              style={MODE_PILL_STYLE[m]}
-                              onClick={() => { if (tryAssign(need.id, m)) closePicker() }}
-                            >
-                              {m}
-                            </button>
-                          ))}
-                        </div>
-                        {pickerError && <div className={styles.pickerError}>{pickerError}</div>}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
-          <div className={styles.poolSub}>needs not yet on your canvas. tap one to place it.</div>
-        </div>
-
-        {/* Add your own */}
-        <div className={styles.addOwnSection}>
-          <div className={styles.sectionEyebrow}>ADD YOUR OWN</div>
-          <div className={styles.addOwnRow}>
-            <input
-              className={styles.addOwnInput}
-              placeholder="name a need…"
-              value={customInput}
-              onChange={e => setCustomInput(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') handleAddCustom() }}
-            />
-            <button className={styles.addOwnBtn} onClick={handleAddCustom}>add</button>
-          </div>
-        </div>
       </div>
 
       {/* Sticky save bar — visible and active when canvas has unsaved changes */}
