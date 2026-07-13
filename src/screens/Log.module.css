@@ -124,10 +124,11 @@
 
 .scheduleCard {
   background: var(--bg);
-  border: 0.5px solid var(--border);
+  border: 1px solid #D8D3C3;
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 16px;
+  box-shadow: 0 1px 2px rgba(26, 26, 26, 0.05), 0 18px 44px -14px rgba(26, 26, 26, 0.10);
 }
 .scheduleLabel {
   font-family: var(--font-mono);
@@ -203,9 +204,10 @@
 }
 .reviewHistoryList {
   background: var(--bg);
-  border: 0.5px solid var(--border);
+  border: 1px solid #D8D3C3;
   border-radius: 12px;
   padding: 0 16px;
+  box-shadow: 0 1px 2px rgba(26, 26, 26, 0.05), 0 18px 44px -14px rgba(26, 26, 26, 0.10);
 }
 .reviewHistoryDivider { height: 0.5px; background: var(--border); }
 .reviewHistoryRow {
@@ -316,11 +318,12 @@
 .dayCardList { display: flex; flex-direction: column; gap: 10px; }
 .dayCard {
   background: var(--bg);
-  border: 0.5px solid var(--border);
+  border: 1px solid #D8D3C3;
   border-radius: 12px;
   padding: 12px 14px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 1px 2px rgba(26, 26, 26, 0.05), 0 18px 44px -14px rgba(26, 26, 26, 0.10);
 }
 .dayCardTop {
   display: flex;

@@ -97,10 +97,11 @@
 /* ── Overview cards ── */
 .card {
   background: var(--bg);
-  border: 0.5px solid var(--border);
+  border: 1px solid #D8D3C3;
   border-radius: 12px;
   padding: 14px 16px;
   margin-bottom: 10px;
+  box-shadow: 0 1px 2px rgba(26, 26, 26, 0.05), 0 18px 44px -14px rgba(26, 26, 26, 0.10);
 }
 
 .eyebrow {
@@ -122,10 +123,11 @@
 
 .statCard {
   background: var(--bg);
-  border: 0.5px solid var(--border);
+  border: 1px solid #D8D3C3;
   border-radius: 12px;
   padding: 12px 14px;
   position: relative;
+  box-shadow: 0 1px 2px rgba(26, 26, 26, 0.05), 0 18px 44px -14px rgba(26, 26, 26, 0.10);
 }
 
 .statCardTop {
@@ -623,10 +625,11 @@
   align-items: center;
   gap: 4px;
   background: var(--bg);
-  border: 0.5px solid var(--border);
+  border: 1px solid #D8D3C3;
   border-radius: 12px;
   padding: 12px 10px;
   margin-bottom: 10px;
+  box-shadow: 0 1px 2px rgba(26, 26, 26, 0.05), 0 18px 44px -14px rgba(26, 26, 26, 0.10);
 }
 
 .navArrow {
@@ -705,13 +708,14 @@
 
 .spokeDiagramCard {
   background: var(--bg);
-  border: 0.5px solid var(--border);
+  border: 1px solid #D8D3C3;
   border-radius: 12px;
   padding: 14px 16px;
   margin-bottom: 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  box-shadow: 0 1px 2px rgba(26, 26, 26, 0.05), 0 18px 44px -14px rgba(26, 26, 26, 0.10);
 }
 
 .spokeTooltipArea {
