@@ -1,4 +1,4 @@
-/* ── Daily ritual loader: black gives way, the words take the space ── */
+/* ── Daily ritual: take / up / space. push the black away ── */
 
 .overlay {
   position: fixed;
@@ -10,55 +10,50 @@
 }
 .overlayFading { opacity: 0; pointer-events: none; }
 
-/* anxiety's black — pushed completely off the top */
+/* anxiety's black — stepped upward by each word, then pushed off entirely */
 .blackPanel {
   position: absolute;
   inset: 0;
   background: var(--ink);
-  animation: panelUp 1.0s cubic-bezier(0.65, 0, 0.35, 1) 1.6s forwards;
-}
-@keyframes panelUp {
-  to { transform: translateY(-102%); }
 }
 
-/* the words + mark: rise from the bottom edge to center, then flip to ink
-   as the black passes off */
-.riseGroup {
+/* bottom-anchored word stack; JS opens each slot in sequence */
+.stack {
   position: absolute;
   left: 0;
   right: 0;
-  top: 50%;
+  bottom: calc(40px + env(safe-area-inset-bottom, 0px));
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
-  color: #ffffff;
-  transform: translate(0, calc(-50% + 70vh));
-  animation:
-    riseUp 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) 0.45s forwards,
-    inkFlip 0.25s linear 2.05s forwards;
 }
-@keyframes riseUp {
-  to { transform: translate(0, -50%); }
-}
-@keyframes inkFlip {
-  to { color: var(--ink); }
+.stackStatic {
+  bottom: auto;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
-.takeBack {
-  font-family: var(--font-mono);
-  font-size: clamp(17px, 4.6vw, 21px);
-  font-weight: 500;
-  letter-spacing: 0.3em;
-  padding-left: 0.3em; /* optically recenter the tracked text */
-  white-space: nowrap;
+.wordSlot { height: 0; overflow: hidden; }
+.word {
+  font-family: var(--font-serif);
+  font-size: clamp(38px, 11vw, 46px);
+  line-height: 54px;
+  transform: translateY(100%);
 }
 
-/* reduced motion: no curtain, no rise — ink words on white, done */
-.riseStatic {
-  transform: translate(0, -50%);
-  color: var(--ink);
-  animation: none;
+.logoSlot { height: 0; overflow: hidden; padding-top: 0; }
+.logoSvg { display: block; transform: translateY(110%); }
+
+/* the slow celebratory burst */
+.burst {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.burstDot {
+  position: absolute;
+  bottom: -14px;
+  border-radius: 50%;
 }
 
 .srOnly {
@@ -71,6 +66,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .blackPanel { animation: none; display: none; }
-  .riseGroup { animation: none; }
+  .blackPanel { display: none; }
+  .burst { display: none; }
 }

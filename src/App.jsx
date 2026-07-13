@@ -42,7 +42,8 @@ function Protected({ children, onboarded, userId }) {
   return children
 }
 
-const RITUAL_MS    = 2900 // ritual choreography: rise (0.45–1.35s) + black exit (1.6–2.6s) — tune here
+const PREFERS_REDUCED_MOTION = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+const RITUAL_MS    = PREFERS_REDUCED_MOTION ? 1200 : 4800 // full choreography: pushes 0.45–2.95s, center+burst 3.05–4.8s
 const LOADER_FADE_MS = 350 // matches --motion-page
 
 function AppInner() {
