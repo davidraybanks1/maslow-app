@@ -902,6 +902,9 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
         </div>
         <div className={styles.footer}>
           <button className="btn-primary" onClick={() => setStep(1)}>let's start →</button>
+          <div className={styles.signInPrompt}>
+            already have an account? <span className={styles.signInLink} onClick={() => navigate('/signin')}>sign in →</span>
+          </div>
         </div>
       </div>
     )
