@@ -82,7 +82,7 @@
 }
 
 .cardJournal .journalInput {
-  background: #FFFFFF;
+  background: #FAF8F1;
 }
 
 
@@ -95,7 +95,7 @@
   box-shadow: 0 1px 2px rgba(26, 26, 26, 0.05), 0 18px 44px -14px rgba(26, 26, 26, 0.10);
   padding: 12px;
   margin-bottom: 10px;
-  --surface-reflective: #FFFFFF;
+  --surface-reflective: #FAF8F1;
 }
 
 /* ── Note to self deck ── */
@@ -103,7 +103,7 @@
 
 .noteDeckWrapper {
   display: flex;
-  align-items: flex-start;  /* each card hugs its content; wrapper stays at tallest card height */
+  align-items: stretch;  /* all cards share the tallest card's height so footers stay put */
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
@@ -167,10 +167,11 @@
 }
 
 .noteDeckFooter {
+  margin-top: auto;
+  padding-top: 10px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 10px;
 }
 
 .noteDeckDots { display: flex; gap: 4px; }
