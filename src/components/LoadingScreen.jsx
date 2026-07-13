@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react'
 import styles from './LoadingScreen.module.css'
+import BrandMark from './BrandMark'
 
 /* Daily ritual: the screen starts fully black — anxiety owns all of it.
    take (red) → up (gold) → space. (green) rise one at a time, each word
@@ -142,23 +143,13 @@ export default function LoadingScreen({ greeting = 'hey, you', fading = false })
           ref={logoWrapRef}
           style={reduce ? { height: LOGO_H, paddingTop: LOGO_PAD } : undefined}
         >
-          <svg
+          <div
             ref={logoRef}
             className={styles.logoSvg}
             style={reduce ? { transform: 'none' } : undefined}
-            width="34" height="42" viewBox="0 0 52 52" fill="none" aria-hidden="true"
           >
-            <circle cx="26" cy="10" r="3" fill="#E8B81F" />
-            <circle cx="21" cy="20" r="3" fill="var(--ink)" />
-            <circle cx="31" cy="20" r="3" fill="var(--ink)" />
-            <circle cx="16" cy="30" r="3" fill="var(--ink)" />
-            <circle cx="26" cy="30" r="3" fill="var(--ink)" />
-            <circle cx="36" cy="30" r="3" fill="var(--ink)" />
-            <circle cx="11" cy="40" r="3" fill="var(--ink)" />
-            <circle cx="21" cy="40" r="3" fill="var(--ink)" />
-            <circle cx="31" cy="40" r="3" fill="var(--ink)" />
-            <circle cx="41" cy="40" r="3" fill="var(--ink)" />
-          </svg>
+            <BrandMark size={26} />
+          </div>
         </div>
       </div>
       <span className={styles.srOnly}>{greeting} — loading</span>
