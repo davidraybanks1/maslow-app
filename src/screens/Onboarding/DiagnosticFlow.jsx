@@ -1168,6 +1168,8 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
             {totalRevealRows} needs · {practiceCount(recommendation.universal, recommendation.personal)} practices a day — space claimed back from anxiety.
           </div>
 
+          <div className={styles.sub}>this is a starting point, not a verdict. tap a mode to change anything that doesn&apos;t feel right.</div>
+
           {(() => {
             const lines = becauseLines({ anxietyType, alwaysNeedId: ALWAYS_MATTERS_TO_NEED[alwaysMatters] || alwaysMatters, flexibility })
             return lines.length > 0 && (
@@ -1177,8 +1179,6 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
               </div>
             )
           })()}
-
-          <div className={styles.sub}>a starting point, not a verdict — change anything that doesn&apos;t feel right. tap a mode to change it.</div>
 
           <div className={styles.canvasSectionLabel}>RECOMMENDED CANVAS</div>
 
