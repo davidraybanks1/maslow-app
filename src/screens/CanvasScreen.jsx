@@ -250,7 +250,7 @@ export default function CanvasScreen({ state, updateCanvas, replaceCanvas }) {
             </div>
           )}
         </div>
-        <div className={styles.sub}>add, remove, or move needs between modes to determine the number of practices you commit to each day.</div>
+        <div className={styles.sub}>add, remove, or move needs between modes to define your daily practices.</div>
       </div>
 
       <div className={styles.scroll} ref={scrollRef}>
