@@ -36,7 +36,14 @@
   gap: 4px;
   flex-shrink: 0;
 }
-.pieCanvas { display: block; }
+.spacePct {
+  font-family: var(--font-serif);
+  font-size: 30px;
+  line-height: 1;
+  text-align: right;
+  color: var(--ink);
+  margin-bottom: 3px;
+}
 .pieLabel {
   font-family: var(--font-mono);
   font-size: 9px;
@@ -63,43 +70,28 @@
 }
 
 .cardJournal {
-  background: #1A1A1A;
+  /* warm cream field — matches the site's text surfaces */
+  background: #FAF8F1;
+  border: 1px solid #E9E6DB;
   border-radius: 12px;
   padding: 14px 16px;
   margin-bottom: 10px;
-  /* Override CSS tokens so all children — including DebriefForm/PeakDebriefForm — inherit dark theme */
-  --ink:     #fff;
-  --ink2:    rgba(255,255,255,0.75);
-  --ink3:    rgba(255,255,255,0.45);
-  --ink4:    rgba(255,255,255,0.28);
-  --bg:      rgba(255,255,255,0.10);
-  --bg2:     rgba(255,255,255,0.07);
-  --border:  rgba(255,255,255,0.12);
-  --border2: rgba(255,255,255,0.10);
 }
 
-/* journalInput has a hardcoded white bg that the token cascade can't reach */
 .cardJournal .journalInput {
-  background: rgba(255,255,255,0.08);
+  background: #FFFFFF;
 }
 
 
 /* ── Dark wrapper (note to self deck) ── */
 .reflectiveSection {
-  background: #1A1A1A;
+  /* warm cream field — matches the site's text surfaces */
+  background: #FAF8F1;
+  border: 1px solid #E9E6DB;
   border-radius: 16px;
   padding: 12px;
   margin-bottom: 10px;
-  /* Override CSS tokens so all children — including shared components — inherit dark theme */
-  --surface-reflective: rgba(255,255,255,0.04);
-  --ink:     #fff;
-  --ink2:    rgba(255,255,255,0.75);
-  --ink3:    rgba(255,255,255,0.45);
-  --ink4:    rgba(255,255,255,0.28);
-  --bg:      rgba(255,255,255,0.10);
-  --bg2:     rgba(255,255,255,0.07);
-  --border:  rgba(255,255,255,0.12);
-  --border2: rgba(255,255,255,0.10);
+  --surface-reflective: #FFFFFF;
 }
 
 /* ── Note to self deck ── */
@@ -121,7 +113,7 @@
   scroll-snap-align: start;
   box-sizing: border-box;
   background: var(--surface-reflective);
-  border: 0.5px solid rgba(255,255,255,0.08);
+  border: 0.5px solid rgba(26,26,24,0.10);
   border-radius: 12px;
   padding: 13px 14px;
   display: flex;
@@ -465,8 +457,8 @@
 .noteSaveBtn {
   width: 100%;
   padding: 14px;
-  background: #1A1A18;
-  color: #F5F3ED;
+  background: var(--nourishment);
+  color: var(--ink);
   border: none;
   border-radius: 12px;
   font-family: var(--font-mono);

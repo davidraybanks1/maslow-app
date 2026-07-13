@@ -144,6 +144,7 @@ export default function Today({ state, checkIn, removeCheckin, logMood }) {
   }
   const spaceLeft = Math.max(0, spaceMax - spaceDoneCount)
   const spaceComplete = spaceMax > 0 && spaceLeft === 0
+  const spacePct = spaceMax > 0 ? Math.round((spaceDoneCount / spaceMax) * 100) : 0
 
   const todayMoods = (state.moods || []).filter(m => m.date_key === today)
   const stats = createDataStats({ canvas: state.canvas || {}, checkins: state.checkins || {}, moods: state.moods || [], practices: state.practices || {} })
@@ -166,7 +167,6 @@ export default function Today({ state, checkIn, removeCheckin, logMood }) {
   const [deckHeight, setDeckHeight] = useState(undefined)
   const deckWrapperRef = useRef(null)
   const cardRefs = useRef([])
-  const pieRef = useRef(null)
 
   const [lightboxImage, setLightboxImage] = useState(null)
   const [manageDeckOpen, setManageDeckOpen] = useState(false)
@@ -190,54 +190,6 @@ export default function Today({ state, checkIn, removeCheckin, logMood }) {
     setNoteDeck(state.noteDeck || [])
     setDeckLoaded(true)
   }, [state.noteDeck])
-
-  useEffect(() => {
-    const canvas = pieRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    const dpr = window.devicePixelRatio || 1
-    const size = 44
-    canvas.width = size * dpr
-    canvas.height = size * dpr
-    canvas.style.width = `${size}px`
-    canvas.style.height = `${size}px`
-    ctx.scale(dpr, dpr)
-    const cx = size / 2
-    const cy = size / 2
-    const r = size / 2 - 1
-    const innerR = r * 0.55
-    const bg2 = getComputedStyle(document.documentElement).getPropertyValue('--bg2').trim() || '#F5F3ED'
-    const basePct = Math.min(piePct, 1)
-    const overflowPct = Math.max(0, piePct - 1)
-
-    ctx.clearRect(0, 0, size, size)
-    ctx.beginPath()
-    ctx.arc(cx, cy, r, 0, Math.PI * 2)
-    ctx.fillStyle = 'rgba(26,26,26,0.08)'
-    ctx.fill()
-    if (basePct > 0) {
-      ctx.beginPath()
-      ctx.moveTo(cx, cy)
-      ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + basePct * 2 * Math.PI)
-      ctx.closePath()
-      ctx.fillStyle = '#1B3A2D'
-      ctx.fill()
-    }
-    ctx.beginPath()
-    ctx.arc(cx, cy, innerR, 0, Math.PI * 2)
-    ctx.fillStyle = bg2
-    ctx.fill()
-    // Overflow arc: gold mini-arc inside the donut hole, shows how far above 100%
-    if (overflowPct > 0) {
-      const ovR = innerR * 0.65
-      ctx.beginPath()
-      ctx.arc(cx, cy, ovR, -Math.PI / 2, -Math.PI / 2 + Math.min(overflowPct, 1) * 2 * Math.PI)
-      ctx.lineWidth = 3.5
-      ctx.strokeStyle = '#E8B81F'
-      ctx.lineCap = 'round'
-      ctx.stroke()
-    }
-  }, [currentScore, maxScore])
 
   useLayoutEffect(() => {
     const heights = cardRefs.current.filter(Boolean).map(el => el.offsetHeight)
@@ -542,8 +494,8 @@ export default function Today({ state, checkIn, removeCheckin, logMood }) {
             {STREAK_LINES[streak] && <div className={styles.milestoneLine}>{STREAK_LINES[streak]}</div>}
           </div>
           <div className={styles.headerRight}>
-            <canvas ref={pieRef} width={44} height={44} className={styles.pieCanvas} />
-            <div className={styles.pieLabel}>{formatScore(currentScore)} of {formatScore(maxScore)}</div>
+            <div className={styles.spacePct}>{spacePct}%</div>
+            <div className={styles.pieLabel}>space owned</div>
           </div>
         </div>
         {spaceMax > 0 && (
