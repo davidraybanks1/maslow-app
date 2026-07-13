@@ -1,103 +1,76 @@
+/* ── Daily ritual loader: black gives way, the words take the space ── */
+
 .overlay {
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background: var(--bg2);
+  background: var(--bg);
   overflow: hidden;
   transition: opacity var(--motion-page) ease;
 }
+.overlayFading { opacity: 0; pointer-events: none; }
 
-.overlayFading {
-  opacity: 0;
-  pointer-events: none;
-}
-
-.fountain {
+/* anxiety's black — pushed completely off the top */
+.blackPanel {
   position: absolute;
   inset: 0;
-  overflow: hidden;
+  background: var(--ink);
+  animation: panelUp 1.0s cubic-bezier(0.65, 0, 0.35, 1) 1.6s forwards;
+}
+@keyframes panelUp {
+  to { transform: translateY(-102%); }
 }
 
-/* Each drop rises from bottom-edge to above the viewport */
-.drop {
+/* the words + mark: rise from the bottom edge to center, then flip to ink
+   as the black passes off */
+.riseGroup {
   position: absolute;
-  bottom: -12vh;
-  left: var(--x);
-  animation: rise var(--dur) linear var(--delay) infinite;
-  will-change: transform, opacity;
-}
-
-@keyframes rise {
-  0%   { transform: translateY(0);       opacity: 0; }
-  12%  { opacity: var(--op); }
-  88%  { opacity: var(--op); }
-  100% { transform: translateY(-118vh);  opacity: 0; }
-}
-
-.bubble {
-  width: var(--size);
-  height: var(--size);
-  border-radius: 50%;
-  background: var(--color);
-  filter: blur(var(--blur));
-  animation: sway var(--sdur) ease-in-out var(--sdelay) infinite alternate;
-  will-change: transform;
-}
-
-@keyframes sway {
-  from { transform: translateX(calc(var(--drift) * -1)); }
-  to   { transform: translateX(var(--drift)); }
-}
-
-/* Radial veil punches out the centre so the brand text reads cleanly */
-.veil {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(
-    circle at 50% 46%,
-    var(--bg2) 0%,
-    rgba(245, 242, 236, 0.55) 26%,
-    transparent 52%
-  );
-}
-
-.brand {
-  position: absolute;
-  inset: 0;
+  left: 0;
+  right: 0;
+  top: 50%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
-  pointer-events: none;
+  gap: 20px;
+  color: #ffffff;
+  transform: translate(0, calc(-50% + 70vh));
+  animation:
+    riseUp 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) 0.45s forwards,
+    inkFlip 0.25s linear 2.05s forwards;
+}
+@keyframes riseUp {
+  to { transform: translate(0, -50%); }
+}
+@keyframes inkFlip {
+  to { color: var(--ink); }
 }
 
-/* Instrument Serif italic — matches Today screen greeting */
-.greeting {
-  font-family: 'Instrument Serif', serif;
-  font-style: italic;
-  font-size: 40px;
+.takeBack {
+  font-family: var(--font-mono);
+  font-size: clamp(17px, 4.6vw, 21px);
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  padding-left: 0.3em; /* optically recenter the tracked text */
+  white-space: nowrap;
+}
+
+/* reduced motion: no curtain, no rise — ink words on white, done */
+.riseStatic {
+  transform: translate(0, -50%);
   color: var(--ink);
-  opacity: 0.82;
+  animation: none;
 }
 
-.wordmark {
-  font-family: 'DM Mono', monospace;
-  font-weight: 400;
-  font-size: 15px;
-  letter-spacing: 0.04em;
-  opacity: 0.7;
-  display: flex;
-  align-items: baseline;
-  gap: 2px;
-  color: var(--ink);
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
-
-/* Nourishment yellow accent on the dot */
-.dot { color: var(--nourishment); }
 
 @media (prefers-reduced-motion: reduce) {
-  .drop,
-  .bubble { animation: none !important; }
+  .blackPanel { animation: none; display: none; }
+  .riseGroup { animation: none; }
 }

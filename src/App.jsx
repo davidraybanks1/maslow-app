@@ -42,7 +42,7 @@ function Protected({ children, onboarded, userId }) {
   return children
 }
 
-const RITUAL_MS    = 1800 // intentional greeting duration — tune here
+const RITUAL_MS    = 2900 // ritual choreography: rise (0.45–1.35s) + black exit (1.6–2.6s) — tune here
 const LOADER_FADE_MS = 350 // matches --motion-page
 
 function AppInner() {
