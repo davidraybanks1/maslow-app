@@ -298,7 +298,7 @@ export default function CanvasScreen({ state, updateCanvas, replaceCanvas }) {
               })}
             </div>
           )}
-          <div className={styles.poolSub}>needs not yet on your canvas. tap one to place it.</div>
+          <div className={styles.poolSub}>tap a need to assign it.</div>
         </div>
 
         {/* Add your own */}

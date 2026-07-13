@@ -452,8 +452,8 @@
   flex: 1;
   padding: 10px 12px;
   border-radius: 8px;
-  border: 0.5px solid var(--border);
-  background: var(--bg);
+  border: 1px solid #E9E6DB;
+  background: #FAF8F1;
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 200;
