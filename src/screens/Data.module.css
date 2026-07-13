@@ -968,3 +968,8 @@
   font-size: 10px;
   color: var(--ink3);
 }
+
+/* desktop tier: center the screen at a comfortable reading width */
+@media (min-width: 1024px) {
+  .screen { max-width: 880px; margin: 0 auto; width: 100%; }
+}

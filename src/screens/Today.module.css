@@ -833,3 +833,8 @@
   color: var(--ink);
 }
 .debriefPillOpen .debriefCount { color: rgba(26, 26, 24, 0.55); }
+
+/* desktop tier: center the screen at a comfortable reading width */
+@media (min-width: 1024px) {
+  .screen { max-width: 660px; margin: 0 auto; width: 100%; }
+}

@@ -94,3 +94,17 @@
   -webkit-tap-highlight-color: transparent;
 }
 .starterChip:active { transform: scale(0.97); }
+
+/* desktop tier: center the screen at a comfortable reading width */
+@media (min-width: 1024px) {
+  .screen { max-width: 660px; margin: 0 auto; width: 100%; }
+}
+
+@media (min-width: 1024px) {
+  .obFooter {
+    position: sticky;
+    bottom: 0;
+    left: auto;
+    right: auto;
+  }
+}

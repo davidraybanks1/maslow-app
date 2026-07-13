@@ -16,6 +16,7 @@ import UpdatePassword from './screens/UpdatePassword'
 import Settings from './screens/Settings'
 import HamburgerMenu from './components/HamburgerMenu'
 import AppHeader from './components/AppHeader'
+import DesktopNav from './components/DesktopNav'
 import styles from './App.module.css'
 
 class AppErrorBoundary extends Component {
@@ -101,6 +102,8 @@ function AppInner() {
 
   return (
     <div className={styles.shell}>
+      {state.onboarded && <DesktopNav />}
+      <div className={styles.column}>
       {state.onboarded && (
         <div className={styles.appHeader}>
           <AppHeader onMenuOpen={() => setMenuOpen(true)} />
@@ -121,6 +124,7 @@ function AppInner() {
           <Route path="/notifications" element={<Protected onboarded={state.onboarded} userId={state.userId}><ComingSoon title="Notifications" /></Protected>} />
           <Route path="/settings" element={<Protected onboarded={state.onboarded} userId={state.userId}><Settings state={state} updateShowNoteToSelf={updateShowNoteToSelf} updateReviewSchedule={updateReviewSchedule} /></Protected>} />
         </Routes>
+      </div>
       </div>
       {menuOpen && <HamburgerMenu onClose={closeMenu} isClosing={menuClosing} />}
     </div>
