@@ -5,6 +5,23 @@ import { createDataStats, formatLastDone } from '../lib/dataStats'
 import styles from './Practices.module.css'
 
 const MAX = 10
+
+// Starter practices — one tap to add, so an empty list is never a dead end.
+const STARTERS = {
+  movement:    ['walk', 'stretch', 'run', 'lift'],
+  nutrition:   ['cook a meal', 'full water bottle', 'greens'],
+  rest:        ['7 hours', 'nap', 'screens off by 10'],
+  reflection:  ['journal', 'morning minutes', 'read'],
+  community:   ['thoughtful text', 'call a friend', 'family dinner'],
+  beauty:      ['time in nature', 'music', 'make something'],
+  play:        ['game night', 'no-screen play', 'something silly'],
+  information: ['learn one thing', 'read the news once'],
+  intimacy:    ['check in with your person', 'undistracted time together'],
+  touch:       ['hug someone', 'physical affection'],
+  thrill:      ['something thrilling', 'cold plunge'],
+  money:       ['review budget', 'no-spend day'],
+  dwelling:    ['tidy one surface', '10-minute reset'],
+}
 const OB_FLAG = 'onboardingPracticesDone'
 
 export default function Practices({ state, addPractice, removePractice, completeOnboarding }) {
@@ -62,7 +79,18 @@ export default function Practices({ state, addPractice, removePractice, complete
 
                 <div className={styles.pool}>
                   {pool.length === 0 && (
-                    <div className={styles.empty}>No practices yet.</div>
+                    (STARTERS[n.id] || []).length > 0 ? (
+                      <div className={styles.starterWrap}>
+                        <div className={styles.starterLabel}>starters — tap to add</div>
+                        <div className={styles.starterChips}>
+                          {STARTERS[n.id].map(t => (
+                            <button key={t} className={styles.starterChip} onClick={() => addPractice(n.id, t)}>+ {t}</button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className={styles.empty}>no practices yet.</div>
+                    )
                   )}
                   {pool.map((p, i) => (
                     <div key={i} className={styles.poolItem}>
@@ -77,12 +105,12 @@ export default function Practices({ state, addPractice, removePractice, complete
                 </div>
 
                 {atMax ? (
-                  <div className={styles.maxNote}>Max {MAX} practices reached.</div>
+                  <div className={styles.maxNote}>max {MAX} practices reached.</div>
                 ) : showInput ? (
                   <div className={styles.addRow}>
                     <input
                       className={styles.addInput}
-                      placeholder="New practice…"
+                      placeholder="new practice…"
                       value={inputs[n.id] || ''}
                       onChange={e => setInputs(prev => ({ ...prev, [n.id]: e.target.value }))}
                       onKeyDown={e => e.key === 'Enter' && handleAdd(n.id)}
@@ -93,7 +121,7 @@ export default function Practices({ state, addPractice, removePractice, complete
                       onClick={() => handleAdd(n.id)}
                       disabled={!(inputs[n.id] || '').trim()}
                     >
-                      Add
+                      add
                     </button>
                   </div>
                 ) : (

@@ -2,13 +2,14 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { signInNavRef } from '../../lib/store'
+import { hapticTick } from '../../lib/native'
 import styles from './DiagnosticFlow.module.css'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const MODES = {
   survival:     { name: 'survival',     bg: '#FFF0EC', text: '#D93B1C' },
-  nourishment:  { name: 'nourishment',  bg: '#FFF9E0', text: '#8A6A00' },
+  nourishment:  { name: 'nourishment',  bg: 'rgba(232,184,31,0.12)', text: '#854F0B' },
   appreciation: { name: 'appreciation', bg: '#F2F5F3', text: '#4A6860' },
   exploration:  { name: 'exploration',  bg: '#E8EFE9', text: '#1B3A2D' },
 }
@@ -365,6 +366,52 @@ function buildRecommendation({ anxietyLevel, anxietyType, energyGives, energyDra
   return { universal, personal }
 }
 
+// ─── Session persistence (answers survive a mid-flow refresh) ────────────────
+
+const SS_KEY = 'maslow_onboarding_v1'
+
+function loadSavedAnswers() {
+  try { return JSON.parse(sessionStorage.getItem(SS_KEY)) || {} } catch { return {} }
+}
+
+function rebuildFromSaved(s) {
+  try {
+    const alwaysNeedId = ALWAYS_MATTERS_TO_NEED[s.alwaysMatters] || s.alwaysMatters
+    const gives  = Object.entries(s.energyMap || {}).filter(([, v]) => v === 'gives').map(([k]) => k)
+    const drains = Object.entries(s.energyMap || {}).filter(([, v]) => v === 'drains').map(([k]) => k)
+    return buildRecommendation({ anxietyLevel: s.anxietyLevel, anxietyType: s.anxietyType, energyGives: gives, energyDrains: drains, season: s.season, alwaysNeedId, canWait: s.canWait || [], flexibility: s.flexibility })
+  } catch { return null }
+}
+
+// ─── "Because" lines: make the personalization legible ───────────────────────
+
+const NEED_NAMES = Object.fromEntries([...UNIVERSAL_NEEDS, ...PERSONAL_NEEDS].map(n => [n.id, n.name.toLowerCase()]))
+
+const BECAUSE_TYPE = {
+  frenetic:  'because anxiety runs frenetic for you, reflection takes your deepest commitment — clarity over more to-dos.',
+  overwhelm: 'because overwhelm is the shape of it, your canvas leans on small, steady, provable wins.',
+  apathy:    'because apathy is the shape of it, beauty and play carry extra weight — feeling something comes first.',
+}
+
+function becauseLines({ anxietyType, alwaysNeedId, flexibility }) {
+  const lines = []
+  if (BECAUSE_TYPE[anxietyType]) lines.push(BECAUSE_TYPE[anxietyType])
+  if (alwaysNeedId && NEED_NAMES[alwaysNeedId]) {
+    lines.push(flexibility === 'low'
+      ? `${NEED_NAMES[alwaysNeedId]} is your non-negotiable — and because margins are thin right now, the canvas starts small on purpose.`
+      : `${NEED_NAMES[alwaysNeedId]} is your non-negotiable — it holds the deepest slot on your canvas.`)
+  }
+  return lines.slice(0, 2)
+}
+
+function canvasModeWeights(recommendation) {
+  const weights = { exploration: 0, appreciation: 0, nourishment: 0, survival: 0 }
+  for (const mode of Object.values({ ...recommendation.universal, ...recommendation.personal })) {
+    if (weights[mode] != null) weights[mode] += MODE_DAILY_PRACTICES[mode] || 0.5
+  }
+  return weights
+}
+
 // ─── Small components ─────────────────────────────────────────────────────────
 
 function MaslowMark() {
@@ -381,6 +428,59 @@ function MaslowMark() {
       <circle cx="31" cy="40" r="3" fill="#ffffff"/>
       <circle cx="41" cy="40" r="3" fill="#ffffff"/>
     </svg>
+  )
+}
+
+// The brand's opening statement, miniaturized: colors reclaim space from black.
+function WelcomeBar() {
+  const [stage, setStage] = useState(0)
+  useEffect(() => {
+    const ts = [setTimeout(() => setStage(1), 500), setTimeout(() => setStage(2), 1800), setTimeout(() => setStage(3), 3100)]
+    return () => ts.forEach(clearTimeout)
+  }, [])
+  const GROWS = [
+    { e: 0.3, a: 0.3, n: 0.3, s: 0.3, x: 5 },
+    { e: 0.8, a: 0.9, n: 1.1, s: 1.2, x: 3.4 },
+    { e: 0.8, a: 1.2, n: 1.5, s: 1.7, x: 2.2 },
+    { e: 1.1, a: 1.5, n: 1.7, s: 2.0, x: 1.4 },
+  ]
+  const g = GROWS[stage]
+  return (
+    <div className={styles.welcomeBar} aria-hidden="true">
+      <div className={styles.welcomeSeg} style={{ flexGrow: g.e, background: MODE_COLORS.exploration }} />
+      <div className={styles.welcomeSeg} style={{ flexGrow: g.a, background: MODE_COLORS.appreciation }} />
+      <div className={styles.welcomeSeg} style={{ flexGrow: g.n, background: MODE_COLORS.nourishment }} />
+      <div className={styles.welcomeSeg} style={{ flexGrow: g.s, background: MODE_COLORS.survival }} />
+      <div className={styles.welcomeSegX} style={{ flexGrow: g.x }} />
+    </div>
+  )
+}
+
+// The reveal: THEIR canvas, sweeping in from black.
+function RevealBar({ recommendation }) {
+  const [on, setOn] = useState(false)
+  useEffect(() => { const t = setTimeout(() => setOn(true), 400); return () => clearTimeout(t) }, [])
+  const weights = canvasModeWeights(recommendation)
+  return (
+    <div className={styles.revealBar} aria-hidden="true">
+      {CARD_MODE_ORDER.map(m => weights[m] > 0 && (
+        <div key={m} className={styles.revealSeg} style={{ flexGrow: on ? weights[m] : 0.25, background: MODE_COLORS[m] }} />
+      ))}
+      <div className={`${styles.revealSeg} ${styles.welcomeSegX}`} style={{ flexGrow: on ? 0.9 : 6 }} />
+    </div>
+  )
+}
+
+// Static mini bar — the thing being saved on the account screen.
+function CanvasMiniBar({ recommendation }) {
+  if (!recommendation) return null
+  const weights = canvasModeWeights(recommendation)
+  return (
+    <div className={styles.miniBar} aria-hidden="true">
+      {CARD_MODE_ORDER.map(m => weights[m] > 0 && (
+        <div key={m} className={styles.miniBarSeg} style={{ flexGrow: weights[m], background: MODE_COLORS[m] }} />
+      ))}
+    </div>
   )
 }
 
@@ -442,16 +542,13 @@ function ModeDropdown({ id, currentMode, modes, onSelect, isOpen, onToggle }) {
 
 // ─── Account screen (final step) ─────────────────────────────────────────────
 
-function OnboardingAccount({ destination, recommendation, updateCanvas, onDone }) {
+function OnboardingAccount({ destination, recommendation, updateCanvas, onDone, onBack }) {
   const [mode, setMode]             = useState('create')
 
   // Create form
   const [name, setName]             = useState('')
   const [email, setEmail]           = useState('')
   const [password, setPassword]     = useState('')
-  const [phone, setPhone]           = useState('')
-  const [smsEnabled, setSmsEnabled] = useState(false)
-
   // Sign-in form
   const [siEmail, setSiEmail]       = useState('')
   const [siPassword, setSiPassword] = useState('')
@@ -495,11 +592,9 @@ function OnboardingAccount({ destination, recommendation, updateCanvas, onDone }
         id: userId,
         email: email.trim().toLowerCase(),
         name: name.trim() || null,
-        phone: phone.trim() || null,
         canvas: canvasObj,
         onboarded: true,
         onboarded_at: new Date().toLocaleDateString('en-CA'),
-        profile: { smsEnabled: smsEnabled && !!phone.trim() },
       }, { onConflict: 'id' })
     }
 
@@ -555,9 +650,12 @@ function OnboardingAccount({ destination, recommendation, updateCanvas, onDone }
 
     return (
       <div className={styles.screen}>
+        <ProgressBar pct={100} />
         <div className={styles.content}>
+          <button className={styles.backBtn} onClick={onBack}>← back</button>
           <div className={styles.eyebrow}>SAVE YOUR CANVAS</div>
           <div className={styles.headline}>create your account.</div>
+          <CanvasMiniBar recommendation={recommendation} />
           <div className={styles.sub}>your canvas, practices, and data are tied to your account.</div>
 
           <form className={styles.accountForm} onSubmit={e => { e.preventDefault(); if (canSubmit && !loading) handleSignUp() }}>
@@ -577,46 +675,25 @@ function OnboardingAccount({ destination, recommendation, updateCanvas, onDone }
               onChange={e => { setEmail(e.target.value); setError(null); setDuplicateAccount(false) }}
               autoComplete="email"
             />
-            <input
-              className={styles.accountInput}
-              type="password"
-              placeholder="create a password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              autoComplete="new-password"
-            />
             <div>
               <input
                 className={styles.accountInput}
-                type="tel"
-                placeholder="phone number (optional)"
-                value={phone}
-                onChange={e => setPhone(e.target.value)}
-                autoComplete="tel"
+                type="password"
+                placeholder="create a password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                autoComplete="new-password"
               />
-              {smsEnabled && !phone.trim() && (
-                <div className={styles.inputErrorNote}>add a phone number to enable reminders</div>
-              )}
+              <div className={styles.inputHintNote}>8+ characters</div>
             </div>
             <button type="submit" style={{ display: 'none' }} aria-hidden="true" />
           </form>
-
-          <div className={styles.toggleRow}>
-            <div className={styles.toggleLabels}>
-              <div className={styles.toggleLabel}>daily check-in reminders</div>
-              <div className={styles.toggleSub}>a gentle nudge three times a day</div>
-            </div>
-            <div className={styles.toggleSwitch} onClick={() => setSmsEnabled(p => !p)}>
-              <div className={`${styles.toggleTrack} ${smsEnabled ? styles.toggleTrackOn : ''}`}>
-                <div className={`${styles.toggleThumb} ${smsEnabled ? styles.toggleThumbOn : ''}`} />
-              </div>
-            </div>
-          </div>
 
           {error && <div className={styles.formError}>{error}</div>}
         </div>
 
         <div className={styles.footer}>
+          <div className={styles.privacyNote}>your answers stay yours — never shared, never sold.</div>
           <button className="btn-primary" onClick={handleSignUp} disabled={!canSubmit || loading}>
             {loading ? 'creating account…' : 'create account →'}
           </button>
@@ -638,6 +715,7 @@ function OnboardingAccount({ destination, recommendation, updateCanvas, onDone }
 
   return (
     <div className={styles.screen}>
+      <ProgressBar pct={100} />
       <div className={styles.content}>
         <div className={styles.eyebrow}>WELCOME BACK</div>
         <div className={styles.headline}>sign in.</div>
@@ -699,20 +777,50 @@ function OnboardingAccount({ destination, recommendation, updateCanvas, onDone }
 
 export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
   const navigate = useNavigate()
-  const [step, setStep]                     = useState(0)
+  const [saved] = useState(loadSavedAnswers)
+  const [step, setStep]                     = useState(() => saved.step ?? 0)
   const [destination, setDestination]       = useState('/practices')
 
-  const [anxietyLevel, setAnxietyLevel]     = useState(null)
-  const [anxietyType, setAnxietyType]       = useState(null)
-  const [energyMap, setEnergyMap]           = useState({})
-  const [season, setSeason]                 = useState(null)
-  const [flexibility, setFlexibility]       = useState(null)
-  const [alwaysMatters, setAlwaysMatters]   = useState(null)
-  const [canWait, setCanWait]               = useState([])
-  const [recommendation, setRecommendation] = useState(null)
+  const [anxietyLevel, setAnxietyLevel]     = useState(saved.anxietyLevel ?? null)
+  const [anxietyType, setAnxietyType]       = useState(saved.anxietyType ?? null)
+  const [energyMap, setEnergyMap]           = useState(saved.energyMap ?? {})
+  const [season, setSeason]                 = useState(saved.season ?? null)
+  const [flexibility, setFlexibility]       = useState(saved.flexibility ?? null)
+  const [alwaysMatters, setAlwaysMatters]   = useState(saved.alwaysMatters ?? null)
+  const [canWait, setCanWait]               = useState(saved.canWait ?? [])
+  // A refresh at the reveal/account step rebuilds the recommendation from saved answers.
+  const [recommendation, setRecommendation] = useState(() => ((saved.step ?? 0) >= 8 ? rebuildFromSaved(saved) : null))
   const [openDropdownId, setOpenDropdownId] = useState(null)
+  const [revealCount, setRevealCount]       = useState(0)
+
+  // Persist answers as they're given — five minutes of honesty shouldn't die on a refresh.
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(SS_KEY, JSON.stringify({
+        step: typeof step === 'number' ? step : 3,
+        anxietyLevel, anxietyType, energyMap, season, flexibility, alwaysMatters, canWait,
+      }))
+    } catch {}
+  }, [step, anxietyLevel, anxietyType, energyMap, season, flexibility, alwaysMatters, canWait])
+
+  // Staged reveal: canvas rows land one at a time when the reveal opens.
+  const totalRevealRows = recommendation
+    ? Object.keys(recommendation.universal).length + Object.keys(recommendation.personal).length
+    : 0
+  useEffect(() => {
+    if (step !== 8 || !recommendation) return
+    setRevealCount(0)
+    let i = 0
+    const t = setInterval(() => {
+      i += 1
+      setRevealCount(i)
+      if (i >= totalRevealRows) clearInterval(t)
+    }, 140)
+    return () => clearInterval(t)
+  }, [step]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function cycleSituation(s) {
+    hapticTick()
     setEnergyMap(prev => {
       const cur = prev[s]
       if (!cur)            return { ...prev, [s]: 'gives' }
@@ -724,6 +832,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
   }
 
   function toggleCanWait(needId) {
+    hapticTick()
     setCanWait(prev => prev.includes(needId) ? prev.filter(id => id !== needId) : [...prev, needId])
   }
 
@@ -761,6 +870,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
   }
 
   function handleAccountDone(dest, userId, canvas) {
+    try { sessionStorage.removeItem(SS_KEY) } catch {}
     // Pass canvas explicitly so it survives any restoreFromSupabase race in the SIGNED_IN handler.
     if (completeOnboarding) completeOnboarding(canvas || null, null, userId ? { userId } : undefined)
     navigate(dest)
@@ -774,7 +884,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
       <div className={styles.screen}>
         <div className={styles.welcomeHeader}>
           <MaslowMark />
-          <span className={styles.welcomeWordmark}>maslow.</span>
+          <span className={styles.welcomeWordmark}>mymaslow.</span>
         </div>
         <div className={styles.logoHairline} />
         <div className={styles.welcomeBody}>
@@ -783,19 +893,11 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
               meet your needs.<br />
               <em>become more of yourself.</em>
             </div>
+            <WelcomeBar />
             <div className={styles.bodyText}>
-              maslow identifies your needs, determines to what degree each one should be met, and surfaces the daily practices that express them.
+              anxiety fills the space you give it. answer seven honest questions and maslow builds you a canvas to take that space back.
             </div>
-            <div className={styles.bodyText}>
-              to get started, give thoughtful, honest answers to the following questions and maslow will propose a canvas tailored to you.
-            </div>
-            <div className={styles.infoCard}>
-              <div className={styles.infoCardEyebrow} style={{ background: 'rgba(232,184,31,0.15)' }}>WHAT YOU GET</div>
-              <div className={styles.infoRow}><span className={styles.infoTerm}>a canvas</span> — your needs, each with a mode that sets the daily expectation</div>
-              <div className={styles.infoRow}><span className={styles.infoTerm}>a practice library</span> — the specific things you do each day to meet each need</div>
-              <div className={styles.infoRow}><span className={styles.infoTerm}>data</span> — patterns that show what's working and what's costing you.</div>
-            </div>
-            <div className={styles.mutedNote} style={{ marginTop: 16 }}>takes about 5 minutes.</div>
+            <div className={styles.mutedNote} style={{ marginTop: 16 }}>takes about 5 minutes. your answers stay yours.</div>
           </div>
         </div>
         <div className={styles.footer}>
@@ -820,7 +922,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
               <div
                 key={opt.id}
                 className={`${styles.optionCard} ${anxietyLevel === opt.id ? styles.optionCardSelected : ''}`}
-                onClick={() => setAnxietyLevel(opt.id)}
+                onClick={() => { hapticTick(); setAnxietyLevel(opt.id) }}
               >
                 <div className={styles.optionName}>{opt.name}</div>
                 <div className={styles.optionDesc}>{opt.desc}</div>
@@ -850,7 +952,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
               <div
                 key={opt.id}
                 className={`${styles.optionCard} ${anxietyType === opt.id ? styles.optionCardSelected : ''}`}
-                onClick={() => setAnxietyType(opt.id)}
+                onClick={() => { hapticTick(); setAnxietyType(opt.id) }}
               >
                 <div className={styles.optionName}>{opt.name}</div>
                 <div className={styles.optionDesc}>{opt.desc}</div>
@@ -859,7 +961,23 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
           </div>
         </div>
         <div className={styles.footer}>
-          <button className="btn-primary" onClick={() => setStep(3)} disabled={!anxietyType}>continue →</button>
+          <button className="btn-primary" onClick={() => setStep('breath')} disabled={!anxietyType}>continue →</button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Interstitial: an exhale after the hard questions ────────────────────────
+  if (step === 'breath') {
+    return (
+      <div className={styles.screen}>
+        <ProgressBar pct={PROGRESS[1]} />
+        <div className={styles.breathWrap}>
+          <div className={styles.breathLine}>that&apos;s the hard part.</div>
+          <div className={styles.breathSub}>now the good stuff — what gives you energy?</div>
+        </div>
+        <div className={styles.footer}>
+          <button className="btn-primary" onClick={() => setStep(3)}>continue →</button>
         </div>
       </div>
     )
@@ -886,12 +1004,13 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
             </div>
           </div>
           <div className={styles.twoColGrid}>
-            {ENERGY_SITUATIONS.map(s => {
+            {ENERGY_SITUATIONS.map((s, si) => {
               const state = energyMap[s]
+              const nudge = si === 0 && Object.keys(energyMap).length === 0
               return (
                 <div
                   key={s}
-                  className={`${styles.situationCard} ${state === 'gives' ? styles.situationCardGives : state === 'drains' ? styles.situationCardDrains : ''}`}
+                  className={`${styles.situationCard} ${state === 'gives' ? styles.situationCardGives : state === 'drains' ? styles.situationCardDrains : ''} ${nudge ? styles.situationNudge : ''}`}
                   onClick={() => cycleSituation(s)}
                 >
                   {s}
@@ -923,7 +1042,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
               <div
                 key={s}
                 className={`${styles.gridCard} ${season === s ? styles.gridCardSelected : ''}`}
-                onClick={() => setSeason(s)}
+                onClick={() => { hapticTick(); setSeason(s) }}
               >
                 {s}
               </div>
@@ -952,7 +1071,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
               <div
                 key={opt.id}
                 className={`${styles.optionCard} ${flexibility === opt.id ? styles.optionCardSelected : ''}`}
-                onClick={() => setFlexibility(opt.id)}
+                onClick={() => { hapticTick(); setFlexibility(opt.id) }}
               >
                 <div className={styles.optionName}>{opt.name}</div>
                 <div className={styles.optionDesc}>{opt.desc}</div>
@@ -983,7 +1102,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
               <div
                 key={opt.id}
                 className={`${styles.needGridCard} ${alwaysMatters === opt.id ? styles.needGridCardSelected : ''}`}
-                onClick={() => setAlwaysMatters(opt.id)}
+                onClick={() => { hapticTick(); setAlwaysMatters(opt.id) }}
               >
                 <div className={styles.needGridName}>{opt.name}</div>
                 <div className={styles.needGridDesc}>{opt.desc}</div>
@@ -1043,22 +1162,32 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
           <button className={styles.backBtn} onClick={() => setStep(7)}>← back</button>
           <div className={styles.eyebrow}>YOUR CANVAS</div>
           <div className={styles.headline}>here's what we're working with.</div>
-          <div className={styles.sub}>this is your canvas. it recommends needs you should focus on and the mode in which you should approach them. this is just a starting point — change anything that doesn't feel right. tap a mode to change it.</div>
 
-          <div className={styles.howItWorksCard}>
-            <div className={styles.howItWorksEyebrow}>HOW THE CANVAS WORKS</div>
-            {HOW_IT_WORKS.map(({ mode, color, desc }) => (
-              <div key={mode} className={styles.howItWorksRow}>
-                <div className={styles.howItWorksPip} style={{ background: color }} />
-                <span className={styles.howItWorksName}>{mode}</span>
-                <span className={styles.howItWorksDesc}> — {desc}</span>
-              </div>
-            ))}
+          <RevealBar recommendation={recommendation} />
+          <div className={styles.revealSummary}>
+            {totalRevealRows} needs · {practiceCount(recommendation.universal, recommendation.personal)} practices a day — space claimed back from anxiety.
           </div>
+
+          {(() => {
+            const lines = becauseLines({ anxietyType, alwaysNeedId: ALWAYS_MATTERS_TO_NEED[alwaysMatters] || alwaysMatters, flexibility })
+            return lines.length > 0 && (
+              <div className={styles.becauseCard}>
+                <div className={styles.becauseEyebrow}>WHY THIS SHAPE</div>
+                {lines.map(line => <div key={line} className={styles.becauseLine}>{line}</div>)}
+              </div>
+            )
+          })()}
+
+          <div className={styles.sub}>a starting point, not a verdict — change anything that doesn&apos;t feel right. tap a mode to change it.</div>
 
           <div className={styles.canvasSectionLabel}>RECOMMENDED CANVAS</div>
 
-          {CARD_MODE_ORDER.map(mode => {
+          {(() => { let rowIdx = 0
+          const rowStyle = () => {
+            const visible = rowIdx++ < revealCount
+            return { opacity: visible ? 1 : 0, transform: visible ? 'none' : 'translateY(6px)', transition: 'opacity .35s ease, transform .35s ease' }
+          }
+          return CARD_MODE_ORDER.map(mode => {
             const color           = MODE_COLORS[mode]
             const universalInMode = UNIVERSAL_NEEDS.filter(n => recommendation.universal[n.id] === mode)
             const personalInMode  = PERSONAL_NEEDS.filter(n => recommendation.personal[n.id] === mode)
@@ -1075,7 +1204,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
                       const dropId  = `u-${n.id}`
                       const uModes  = n.id === 'rest' ? ['nourishment', 'survival'] : MODE_ORDER
                       return (
-                        <div key={n.id} className={styles.needRow}>
+                        <div key={n.id} className={styles.needRow} style={rowStyle()}>
                           <div className={styles.needName}>{n.name}</div>
                           <ModeDropdown
                             id={dropId}
@@ -1091,7 +1220,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
                     {personalInMode.map(n => {
                       const dropId = `p-${n.id}`
                       return (
-                        <div key={n.id} className={styles.needRow}>
+                        <div key={n.id} className={styles.needRow} style={rowStyle()}>
                           <div className={styles.needName}>{n.name}</div>
                           <div className={styles.needRowRight}>
                             <ModeDropdown
@@ -1109,19 +1238,31 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
                     })}
                   </div>
                 )}
-                {addableNeeds.length > 0 && (
-                  <div className={styles.addWrap}>
-                    <div className={styles.addLabel}>add a need</div>
-                    <div className={styles.addChips}>
-                      {addableNeeds.map(n => (
-                        <div key={n.id} className={styles.addChip} onClick={() => addPersonalNeed(n.id, mode)}>+ {n.name}</div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             )
-          })}
+          }) })()}
+
+          {addableNeeds.length > 0 && (
+            <div className={styles.addWrap}>
+              <div className={styles.addLabel}>add more needs</div>
+              <div className={styles.addChips}>
+                {addableNeeds.map(n => (
+                  <div key={n.id} className={styles.addChip} onClick={() => addPersonalNeed(n.id)}>+ {n.name}</div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className={styles.howItWorksCard}>
+            <div className={styles.howItWorksEyebrow}>HOW THE CANVAS WORKS</div>
+            {HOW_IT_WORKS.map(({ mode, color, desc }) => (
+              <div key={mode} className={styles.howItWorksRow}>
+                <div className={styles.howItWorksPip} style={{ background: color }} />
+                <span className={styles.howItWorksName}>{mode}</span>
+                <span className={styles.howItWorksDesc}> — {desc}</span>
+              </div>
+            ))}
+          </div>
 
         </div>
         <div className={styles.footer}>
@@ -1150,6 +1291,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
         recommendation={recommendation}
         updateCanvas={updateCanvas}
         onDone={handleAccountDone}
+        onBack={() => setStep(8)}
       />
     )
   }

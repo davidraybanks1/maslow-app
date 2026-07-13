@@ -51,8 +51,8 @@
 /* Option cards (energy / anxiety type) */
 .options { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
 .optionCard { position: relative; border: 1.5px solid var(--border); border-radius: 14px; background: var(--bg); padding: 16px; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none; }
-.optionCardSelected { border: 2px solid var(--ink); background: var(--bg3); }
-.optionCardSelected::after { content: ''; position: absolute; top: 12px; right: 12px; width: 10px; height: 10px; border-radius: 50%; background: var(--ink); }
+.optionCardSelected { border: 2px solid var(--nourishment); background: rgba(232,184,31,0.10); }
+.optionCardSelected::after { content: ''; position: absolute; top: 12px; right: 12px; width: 10px; height: 10px; border-radius: 50%; background: var(--nourishment); }
 .optionName { font-family: var(--font-serif); font-size: 18px; font-weight: 400; color: var(--ink); text-transform: lowercase; margin-bottom: 6px; }
 .optionDesc { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink2); line-height: 1.6; }
 .flexTag { display: inline-block; margin-top: 10px; padding: 4px 10px; border-radius: 20px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.02em; }
@@ -245,8 +245,8 @@
   color: var(--ink);
   text-transform: lowercase;
 }
-.gridCardSelected { border: 2px solid var(--ink); background: var(--bg3); }
-.gridCardSelected::after { content: ''; position: absolute; top: 10px; right: 10px; width: 10px; height: 10px; border-radius: 50%; background: var(--ink); }
+.gridCardSelected { border: 2px solid var(--nourishment); background: rgba(232,184,31,0.10); }
+.gridCardSelected::after { content: ''; position: absolute; top: 10px; right: 10px; width: 10px; height: 10px; border-radius: 50%; background: var(--nourishment); }
 
 /* ── Screens 5 & 6: Need grid cards ── */
 
@@ -261,8 +261,8 @@
   touch-action: manipulation;
   user-select: none;
 }
-.needGridCardSelected { border: 2px solid var(--ink); background: var(--bg3); }
-.needGridCardSelected::after { content: ''; position: absolute; top: 12px; right: 12px; width: 10px; height: 10px; border-radius: 50%; background: var(--ink); }
+.needGridCardSelected { border: 2px solid var(--nourishment); background: rgba(232,184,31,0.10); }
+.needGridCardSelected::after { content: ''; position: absolute; top: 12px; right: 12px; width: 10px; height: 10px; border-radius: 50%; background: var(--nourishment); }
 .needGridCardWait { border: 2px solid var(--ink); background: var(--bg3); }
 .needGridCardWait::after { content: ''; position: absolute; top: 12px; right: 12px; width: 10px; height: 10px; border-radius: 50%; background: var(--ink); }
 .needGridName {
@@ -475,4 +475,48 @@
   border-radius: 50%;
   background: var(--ink);
   flex-shrink: 0;
+}
+
+/* ── Onboarding upgrades (July 2026) ── */
+
+/* press feedback on all selectable cards */
+.optionCard:active, .gridCard:active, .needGridCard:active, .situationCard:active { transform: scale(0.985); }
+
+/* welcome + reveal bars: colors reclaim space from anxiety's black */
+.welcomeBar { display: flex; height: 40px; border-radius: 8px; overflow: hidden; margin: 22px 0 18px; }
+.welcomeSeg { min-width: 0; transition: flex-grow 1.1s cubic-bezier(0.3, 0.8, 0.3, 1); }
+.welcomeSegX { min-width: 0; background: var(--anxiety); transition: flex-grow 1.1s cubic-bezier(0.3, 0.8, 0.3, 1); }
+.revealBar { display: flex; height: 40px; border-radius: 8px; overflow: hidden; margin: 6px 0 10px; }
+.revealSeg { min-width: 0; transition: flex-grow 1.2s cubic-bezier(0.3, 0.8, 0.3, 1); }
+.revealSummary { font-family: var(--font-mono); font-size: 11px; font-weight: 200; color: var(--ink2); margin-bottom: 16px; line-height: 1.6; }
+
+/* why this shape */
+.becauseCard { background: rgba(232,184,31,0.10); border-left: 3px solid var(--nourishment); border-radius: 0 10px 10px 0; padding: 12px 16px; margin-bottom: 18px; }
+.becauseEyebrow { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; color: #854F0B; margin-bottom: 6px; }
+.becauseLine { font-family: var(--font-mono); font-size: 11.5px; font-weight: 200; color: var(--ink2); line-height: 1.7; }
+.becauseLine + .becauseLine { margin-top: 8px; }
+
+/* the exhale between anxiety and energy */
+.breathWrap { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 0 28px; }
+.breathLine { font-family: var(--font-serif); font-size: 30px; color: var(--ink); margin-bottom: 10px; animation: breathIn 0.6s ease; }
+.breathSub { font-family: var(--font-mono); font-size: 13px; font-weight: 200; color: var(--ink2); line-height: 1.7; animation: breathIn 0.9s ease both; }
+@keyframes breathIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* energy map: nudge the first card until the first tap */
+.situationNudge { animation: nudgePulse 1.6s ease-in-out infinite; }
+@keyframes nudgePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(232, 184, 31, 0); }
+  50%      { box-shadow: 0 0 0 3px rgba(232, 184, 31, 0.35); }
+}
+
+/* account screen */
+.inputHintNote { font-family: var(--font-mono); font-size: 10px; color: var(--ink4); margin-top: 6px; }
+.privacyNote { font-family: var(--font-mono); font-size: 10px; color: var(--ink3); text-align: center; margin-bottom: 10px; line-height: 1.6; }
+.miniBar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; margin: 4px 0 14px; }
+.miniBarSeg { min-width: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .situationNudge { animation: none; }
+  .welcomeSeg, .welcomeSegX, .revealSeg { transition: none; }
+  .breathLine, .breathSub { animation: none; }
 }

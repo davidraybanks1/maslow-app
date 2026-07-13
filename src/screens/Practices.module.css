@@ -70,3 +70,27 @@
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
+
+/* ── Starter chips: empty lists are never a dead end ── */
+.starterWrap { padding: 4px 0 8px; }
+.starterLabel {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink4);
+  margin-bottom: 8px;
+}
+.starterChips { display: flex; flex-wrap: wrap; gap: 8px; }
+.starterChip {
+  border: 1px dashed var(--border2);
+  background: #FAF8F1;
+  border-radius: 999px;
+  padding: 7px 13px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink2);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.starterChip:active { transform: scale(0.97); }
