@@ -219,9 +219,16 @@ export default function Debriefs({ state }) {
 
         <div className={styles.card}>
           {filteredDebriefs.length === 0 ? (
-            <div className={styles.empty}>
-              {debriefLoading ? '—' : debriefs.length === 0 ? 'your first debrief will appear here.' : 'no debriefs match this filter.'}
-            </div>
+            debriefLoading ? (
+              <div className={styles.empty} aria-label="loading debriefs">
+                <span className={styles.skeletonBar} style={{ width: '34%' }} />
+                <span className={styles.skeletonBar} style={{ width: '78%' }} />
+              </div>
+            ) : (
+              <div className={styles.empty}>
+                {debriefs.length === 0 ? 'your first debrief will appear here.' : 'no debriefs match this filter.'}
+              </div>
+            )
           ) : (
             groups.map(group => (
               <div key={group.label}>

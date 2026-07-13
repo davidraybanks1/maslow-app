@@ -677,7 +677,24 @@ export default function Log({ state }) {
 
         <div className={styles.reviewHistoryLabel}>REVIEW HISTORY</div>
         {reviewHistory.length === 0 ? (
-          <div className={styles.reviewHistoryEmpty}>{historyLoading ? '—' : 'no reviews yet — complete your first weekly review above.'}</div>
+          historyLoading ? (
+            <div aria-label="loading review history">
+              <span className={styles.skeletonBar} style={{ width: '42%' }} />
+              <span className={styles.skeletonBar} style={{ width: '68%' }} />
+            </div>
+          ) : (
+            <>
+              <div className={styles.reviewHistoryEmpty}>no reviews yet — your first one takes about seven minutes.</div>
+              <div className={styles.ritualPreview}>
+                {['last week, in data', 'how the week felt', 'does your canvas still fit', 'one thing the data noticed', 'a note to your future self'].map((step, i) => (
+                  <div key={step} className={styles.ritualPreviewRow}>
+                    <span className={styles.ritualPreviewNum}>{i + 1}</span>
+                    {step}
+                  </div>
+                ))}
+              </div>
+            </>
+          )
         ) : (
           <div className={styles.reviewHistoryList}>
             {reviewHistory.map((r, i) => (

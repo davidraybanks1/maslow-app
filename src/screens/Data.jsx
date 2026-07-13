@@ -232,7 +232,7 @@ function ByNeedBarsCard({ canvasConfig, checkins, period, windowKeys }) {
             <div className={styles.dayNeedPip} style={{ background: color }} />
             <div className={styles.dayNeedName}>{need.name}</div>
             <div className={styles.dayNeedBarTrack}>
-              <div className={styles.dayNeedBarFill} style={{ width: `${pct}%`, background: color }} />
+              <div className={styles.dayNeedBarFill} style={{ width: pct > 0 ? `${pct}%` : '3px', background: color, opacity: pct > 0 ? 1 : 0.45 }} />
             </div>
             <div className={styles.dayNeedPct}>{pct}%</div>
           </div>

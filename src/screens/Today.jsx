@@ -96,6 +96,17 @@ function GuidanceCard({ type, onDismiss }) {
   )
 }
 
+// Quiet streak-milestone greetings — copy only, shown for that one day.
+const STREAK_LINES = {
+  7: 'one week of showing up.',
+  14: 'two weeks of showing up.',
+  21: 'three weeks of showing up.',
+  30: 'a month of showing up.',
+  60: 'two months of showing up.',
+  100: '100 days of showing up.',
+  365: 'a year of showing up.',
+}
+
 export default function Today({ state, checkIn, removeCheckin, logMood }) {
   const navigate = useNavigate()
   const today = todayKey()
@@ -115,6 +126,23 @@ export default function Today({ state, checkIn, removeCheckin, logMood }) {
     currentScore += filled * weight + bonus * 0.5
   }
   const piePct = maxScore > 0 ? currentScore / maxScore : 0
+
+  // Space-owned bar: today's practices claim colored space from anxiety's black.
+  // Unweighted practice counts (capped per need) so the bar reads as literal space.
+  const spaceByMode = {}
+  let spaceMax = 0
+  let spaceDoneCount = 0
+  for (const n of NEEDS) {
+    const mode = state.canvas[n.id]
+    if (!mode) continue
+    const maxBubbles = MODE_MAX_BUBBLES[mode] || 0
+    spaceMax += maxBubbles
+    const filled = Math.min(checked.filter(e => e.need_id === n.id).length, maxBubbles)
+    if (filled > 0) spaceByMode[mode] = (spaceByMode[mode] || 0) + filled
+    spaceDoneCount += filled
+  }
+  const spaceLeft = Math.max(0, spaceMax - spaceDoneCount)
+  const spaceComplete = spaceMax > 0 && spaceLeft === 0
 
   const todayMoods = (state.moods || []).filter(m => m.date_key === today)
   const stats = createDataStats({ canvas: state.canvas || {}, checkins: state.checkins || {}, moods: state.moods || [], practices: state.practices || {} })
@@ -509,12 +537,26 @@ export default function Today({ state, checkIn, removeCheckin, logMood }) {
           <div className={styles.headerLeft}>
             <div className={styles.dateLabel}>{dateLabel}</div>
             <div className={styles.greeting}>good {hour()}.</div>
+            {STREAK_LINES[streak] && <div className={styles.milestoneLine}>{STREAK_LINES[streak]}</div>}
           </div>
           <div className={styles.headerRight}>
             <canvas ref={pieRef} width={44} height={44} className={styles.pieCanvas} />
             <div className={styles.pieLabel}>{formatScore(currentScore)} of {formatScore(maxScore)}</div>
           </div>
         </div>
+        {spaceMax > 0 && (
+          <div
+            className={`${styles.spaceBar} ${spaceComplete ? styles.spaceBarComplete : ''}`}
+            aria-label={`space owned: ${spaceDoneCount} of ${spaceMax} practices`}
+          >
+            {MODE_ORDER.map(mode =>
+              spaceByMode[mode] > 0 ? (
+                <span key={mode} className={styles.spaceSeg} style={{ flexGrow: spaceByMode[mode], background: `var(--${mode})` }} />
+              ) : null
+            )}
+            {spaceLeft > 0 && <span className={`${styles.spaceSeg} ${styles.spaceSegAnxiety}`} style={{ flexGrow: spaceLeft }} />}
+          </div>
+        )}
       </div>
 
       {/* ── Scrollable body ── */}

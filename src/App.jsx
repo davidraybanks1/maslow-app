@@ -62,22 +62,30 @@ function AppInner() {
 
   // Loader fade-out state — keep component mounted through the 350ms opacity transition
   const [loaderFading, setLoaderFading] = useState(false)
-  const [showLoader, setShowLoader] = useState(true)
+  // The ritual greeting plays once per day. Every other open renders the app
+  // instantly from cached local state while auth resolves in the background.
+  const [showLoader, setShowLoader] = useState(() => {
+    try { return localStorage.getItem('maslow_last_ritual') !== new Date().toDateString() } catch { return true }
+  })
 
   const { state, authLoading, updateCanvas, replaceCanvas, addPractice, removePractice, checkIn, removeCheckin, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule } = useAppState(
     () => navigate('/today')
   )
 
-  // Trigger fade-out once auth resolves AND the ritual timer has elapsed
+  // Dismiss once the ritual timer elapses. A cached session is enough to enter
+  // the app — we never make a returning user wait on the auth round-trip.
+  const hasCachedSession = state.onboarded && !!state.userId
   useEffect(() => {
-    if (!authLoading && ritualElapsed && showLoader && !loaderFading) {
+    if ((hasCachedSession || !authLoading) && ritualElapsed && showLoader && !loaderFading) {
       setLoaderFading(true)
+      try { localStorage.setItem('maslow_last_ritual', new Date().toDateString()) } catch {}
       setTimeout(() => setShowLoader(false), LOADER_FADE_MS)
     }
-  }, [authLoading, ritualElapsed])
+  }, [authLoading, hasCachedSession, ritualElapsed])
 
   if (showLoader) {
-    return <LoadingScreen greeting="hey, you" fading={loaderFading} />
+    const firstName = (state.profile?.name || '').trim().split(' ')[0]
+    return <LoadingScreen greeting={firstName ? `hey, ${firstName.toLowerCase()}` : 'hey, you'} fading={loaderFading} />
   }
 
   return (

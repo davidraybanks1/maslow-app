@@ -771,3 +771,35 @@
 .debriefCount { color: var(--ink4); }
 
 .debriefHairline { height: 0.5px; background: var(--border); margin: 14px 0; }
+
+/* ── Space-owned bar: today's practices claim space from anxiety's black ── */
+.spaceBar {
+  display: flex;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 14px;
+}
+.spaceSeg {
+  min-width: 0;
+  transition: flex-grow var(--motion-progress) cubic-bezier(0.3, 0.8, 0.3, 1);
+}
+.spaceSegAnxiety { background: var(--anxiety); }
+.spaceBarComplete { animation: spaceSweep 0.7s ease; }
+@keyframes spaceSweep {
+  0%   { filter: brightness(1); }
+  40%  { filter: brightness(1.22); }
+  100% { filter: brightness(1); }
+}
+
+.milestoneLine {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 15px;
+  color: var(--ink2);
+  margin-top: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spaceBarComplete { animation: none; }
+}

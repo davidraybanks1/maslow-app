@@ -150,8 +150,8 @@
 .startReviewBtnPrimary {
   width: 100%;
   padding: 14px;
-  background: #1A1A18;
-  color: #F5F3ED;
+  background: var(--nourishment);
+  color: var(--ink);
   border: none;
   border-radius: 10px;
   font-family: var(--font-mono);
@@ -163,9 +163,9 @@
 .startReviewBtnSecondary {
   width: 100%;
   padding: 14px;
-  background: var(--bg2);
-  color: var(--ink2);
-  border: 0.5px solid var(--border2);
+  background: var(--bg);
+  color: var(--ink);
+  border: 1px solid var(--border2);
   border-radius: 10px;
   font-family: var(--font-mono);
   font-size: 13px;
@@ -288,8 +288,8 @@
 .reviewContinueBtn {
   width: 100%;
   padding: 14px;
-  background: #1A1A18;
-  color: #F5F3ED;
+  background: var(--nourishment);
+  color: var(--ink);
   border: none;
   border-radius: 12px;
   font-family: var(--font-mono);
@@ -544,3 +544,39 @@
   -webkit-tap-highlight-color: transparent;
 }
 .noteCard:hover { background: var(--bg2); }
+
+/* loading skeleton — replaces the bare em-dash */
+.skeletonBar {
+  display: block;
+  height: 10px;
+  border-radius: 5px;
+  background: var(--bg3);
+  margin-bottom: 8px;
+  animation: skeletonPulse 1.2s ease-in-out infinite;
+}
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1; }
+}
+
+/* the ritual, previewed — shown until the first review exists */
+.ritualPreview { margin-top: 10px; }
+.ritualPreviewRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink3);
+  padding: 5px 0;
+}
+.ritualPreviewNum {
+  font-size: 10px;
+  color: var(--nour-text);
+  width: 14px;
+  flex: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeletonBar { animation: none; }
+}

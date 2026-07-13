@@ -22,7 +22,7 @@ export default function AppHeader({ onMenuOpen }) {
     <header className={styles.header}>
       <div className={styles.left}>
         <MaslowMark />
-        <span className={styles.wordmark}>maslow.</span>
+        <span className={styles.wordmark}>mymaslow.</span>
       </div>
       <button className={styles.menuBtn} onClick={onMenuOpen} aria-label="Open menu">
         <div /><div /><div />

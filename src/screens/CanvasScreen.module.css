@@ -86,8 +86,8 @@
 .stickyBarBtn {
   width: 100%;
   padding: 14px;
-  background: var(--ink);
-  color: var(--bg);
+  background: var(--nourishment);
+  color: var(--ink);
   border: none;
   border-radius: 12px;
   font-family: var(--font-mono);

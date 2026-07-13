@@ -4,9 +4,8 @@ import styles from './LoadingScreen.module.css'
 // Palette weighted for calm — soft colors appear often, survival rarely.
 // All vars map to tokens declared in :root.
 const PALETTE = [
-  ['var(--appreciation)',  5],
-  ['var(--loader-lavender)', 5],
-  ['var(--nourishment)',   3],
+  ['var(--appreciation)',  6],
+  ['var(--nourishment)',   4],
   ['var(--exploration)',   3],
   ['var(--survival)',      1],
 ]

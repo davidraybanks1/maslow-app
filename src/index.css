@@ -6,7 +6,7 @@
   --bg3: #F0EDE6;
   --ink: #1A1A18;
   --ink2: #5A5750;
-  --ink3: #9A9690;
+  --ink3: #8A867F;
   --ink4: #C4C0BA;
 
   /* Surface tokens */
@@ -15,7 +15,7 @@
   --border2: #D8D4CC;
 
   /* Layer / mode colors */
-  --play: #1B3627;
+  --play: #1B3A2D;
   --play-bg: #E8EFE9;
   --play-text: #1B3627;
 
@@ -23,12 +23,12 @@
   --appr-border: #A8B8B0;
   --appr-text: #4A6860;
 
-  --nour: #FFC300;
+  --nour: #E8B81F;
   --nour-border: #CC9C00;
   --nour-text: #8A6A00;
 
-  --surv: #E13E15;
-  --surv-text: #E13E15;
+  --surv: #D93B1C;
+  --surv-text: #D93B1C;
 
   --anxiety: #2C2820;
   --appreciation-strong: #5A7A70;  /* darker sage for data-viz fills (readable against track) */
@@ -122,8 +122,8 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
   width: 100%;
   padding: 15px;
   border-radius: 12px;
-  background: var(--ink);
-  color: var(--bg);
+  background: var(--nourishment);
+  color: var(--ink);
   font-family: var(--font-sans);
   font-size: 14px;
   font-weight: 500;
@@ -242,4 +242,10 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Keyboard focus — brand-gold ring, only for keyboard users */
+:focus-visible {
+  outline: 2px solid var(--nourishment);
+  outline-offset: 2px;
 }

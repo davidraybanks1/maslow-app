@@ -35,7 +35,7 @@ export default function LiveCanvasCard({ stats, range }) {
           <div className={styles.lcNeedName}>{name}</div>
           <div className={styles.lcNeedTrackContainer}>
             <div className={styles.lcNeedTrack}>
-              <div className={styles.lcNeedFill} style={{ width: `${pace}%`, background: modeColor }} />
+              <div className={styles.lcNeedFill} style={{ width: pace > 0 ? `${pace}%` : '3px', background: modeColor, opacity: pace > 0 ? 1 : 0.45 }} />
             </div>
             <div className={styles.lcNeedTick} style={{ left: `${target}%` }} />
           </div>

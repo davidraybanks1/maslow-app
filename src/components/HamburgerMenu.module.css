@@ -10,7 +10,9 @@
 
 .panel {
   position: fixed;
-  top: 0; right: 0;
+  top: 0;
+  /* anchor the sheet to the app column on wide viewports */
+  right: max(0px, calc((100vw - 480px) / 2));
   width: 280px; height: 100%;
   background: var(--bg);
   padding: 24px;
@@ -41,7 +43,14 @@
   text-decoration: none;
   letter-spacing: 0.04em;
 }
-.navItemActive { color: var(--ink); font-weight: 500; }
+.navItemActive {
+  color: var(--ink);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: var(--nourishment);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 5px;
+}
 
 /* ── Secondary links ── */
 .secondary { margin-top: auto; display: flex; flex-direction: column; }
