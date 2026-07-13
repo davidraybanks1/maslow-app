@@ -60,8 +60,8 @@
   display: block;
   width: 100%;
   padding: 14px;
-  background: #1A1A1A;
-  color: #fff;
+  background: var(--nourishment);
+  color: var(--ink);
   border: none;
   border-radius: 10px;
   font-family: var(--font-mono);
