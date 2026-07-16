@@ -71,7 +71,7 @@ function AppInner() {
     try { return localStorage.getItem('maslow_last_ritual') !== new Date().toDateString() } catch { return true }
   })
 
-  const { state, authLoading, updateCanvas, replaceCanvas, addPractice, removePractice, checkIn, removeCheckin, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule } = useAppState(
+  const { state, authLoading, updateCanvas, replaceCanvas, addPractice, removePractice, checkIn, removeCheckin, clearPracticeCheckins, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule } = useAppState(
     () => navigate('/today')
   )
 
@@ -113,7 +113,7 @@ function AppInner() {
         <Routes>
           <Route path="/" element={state.onboarded ? <Navigate to="/today" replace /> : <Navigate to="/onboarding" replace />} />
           <Route path="/onboarding" element={state.onboarded ? <Navigate to="/today" replace /> : <DiagnosticFlow updateCanvas={updateCanvas} completeOnboarding={completeOnboarding} />} />
-          <Route path="/today" element={<Protected onboarded={state.onboarded} userId={state.userId}><Today state={state} checkIn={checkIn} removeCheckin={removeCheckin} logMood={logMood} /></Protected>} />
+          <Route path="/today" element={<Protected onboarded={state.onboarded} userId={state.userId}><Today state={state} checkIn={checkIn} removeCheckin={removeCheckin} clearPracticeCheckins={clearPracticeCheckins} logMood={logMood} /></Protected>} />
           <Route path="/practices" element={<Protected onboarded={state.onboarded} userId={state.userId}><Practices state={state} addPractice={addPractice} removePractice={removePractice} completeOnboarding={completeOnboarding} /></Protected>} />
           <Route path="/debriefs" element={<Protected onboarded={state.onboarded} userId={state.userId}><Debriefs state={state} /></Protected>} />
           <Route path="/data" element={<Protected onboarded={state.onboarded} userId={state.userId}><Data state={state} /></Protected>} />

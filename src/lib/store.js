@@ -403,6 +403,33 @@ export function useAppState(onSignIn) {
     })
   }
 
+  function clearPracticeCheckins(needId, practiceText, date = todayKey()) {
+    const uid = userIdRef.current
+    const existing = checkinsRef.current[date] || []
+
+    const toRemove = existing.filter(e => e.need_id === needId && e.practice_text === practiceText)
+    if (toRemove.length === 0) return
+
+    const kept = existing.filter(e => !(e.need_id === needId && e.practice_text === practiceText))
+    const newCheckins = { ...checkinsRef.current, [date]: kept }
+    checkinsRef.current = newCheckins
+    setState(prev => ({ ...prev, checkins: newCheckins }))
+
+    const realIds = toRemove.map(e => e.id).filter(id => id && !String(id).startsWith('pending_'))
+    if (!uid || realIds.length === 0) return
+
+    supabase.from('checkins').delete().in('id', realIds).then(({ error }) => {
+      if (error) {
+        logSupabaseError('clearPracticeCheckins', error)
+        setState(prev => {
+          const reverted = { ...prev.checkins, [date]: [...(prev.checkins[date] || []), ...toRemove] }
+          checkinsRef.current = reverted
+          return { ...prev, checkins: reverted }
+        })
+      }
+    })
+  }
+
   async function logMood(userId, promptTime, mood, note, date) {
     if (!userId) return { error: 'Not authenticated' }
     const previous = (state.moods || []).find(
@@ -493,7 +520,7 @@ export function useAppState(onSignIn) {
     })
   }
 
-  return { state, authLoading, updateCanvas, replaceCanvas, addPractice, removePractice, checkIn, removeCheckin, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule }
+  return { state, authLoading, updateCanvas, replaceCanvas, addPractice, removePractice, checkIn, removeCheckin, clearPracticeCheckins, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule }
 }
 
 export function todayKey() {

@@ -108,7 +108,7 @@ const STREAK_LINES = {
   365: 'a year of showing up.',
 }
 
-export default function Today({ state, checkIn, removeCheckin, logMood }) {
+export default function Today({ state, checkIn, removeCheckin, clearPracticeCheckins, logMood }) {
   const navigate = useNavigate()
   const today = todayKey()
   const checked = state.checkins[today] || []
@@ -475,7 +475,12 @@ export default function Today({ state, checkIn, removeCheckin, logMood }) {
 
   function handleChipClick(needId, mode, practiceText) {
     hapticTick()
-    checkIn(needId, practiceText, mode)
+    const practiceCount = checked.filter(e => e.need_id === needId && e.practice_text === practiceText).length
+    if (practiceCount >= 2) {
+      clearPracticeCheckins(needId, practiceText)
+    } else {
+      checkIn(needId, practiceText, mode)
+    }
   }
 
   function handleBubbleRemove(needId) {
@@ -689,18 +694,17 @@ export default function Today({ state, checkIn, removeCheckin, logMood }) {
                       ) : (
                         <div className={styles.chipRow}>
                           {pool.map(p => {
-                            const isDone = checkedForNeed.some(e => e.practice_text === p)
+                            const practiceCount = checkedForNeed.filter(e => e.practice_text === p).length
+                            const isDone = practiceCount >= 1
+                            const chipColor = (mode === 'appreciation' || mode === 'nourishment') ? 'var(--ink)' : '#fff'
                             return (
                               <button
                                 key={p}
                                 className={isDone ? styles.practiceChipDone : styles.practiceChip}
-                                style={isDone ? {
-                                  background: pip,
-                                  color: (mode === 'appreciation' || mode === 'nourishment') ? 'var(--ink)' : '#fff'
-                                } : {}}
+                                style={isDone ? { background: pip, color: chipColor } : {}}
                                 onClick={() => handleChipClick(n.id, mode, p)}
                               >
-                                {p}
+                                {p}{practiceCount >= 2 && <sup className={styles.chipCount} style={isDone ? { color: chipColor } : {}}>×{practiceCount}</sup>}
                               </button>
                             )
                           })}
