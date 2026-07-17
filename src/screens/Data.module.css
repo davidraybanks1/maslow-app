@@ -535,6 +535,16 @@
   flex: 1;
 }
 
+.practiceSubStreak {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink3);
+  flex-shrink: 0;
+  padding: 1px 5px;
+  border: 1px solid rgba(26, 26, 24, 0.14);
+  border-radius: 8px;
+}
+
 .practiceSubPct {
   font-family: var(--font-mono);
   font-size: 11px;

@@ -372,8 +372,10 @@ export function createDataStats({ canvas, checkins, moods, practices }) {
     return `${names.join(' and ')} run harder than the rest of your week.`
   }
 
-  function getPracticeStats() {
-    const days = dayRange(30, 0)
+  function getPracticeStats(rangeDays = 30) {
+    const windowDays = dayRange(rangeDays, 0)
+    // recency uses a fixed 30-day lookback so "Xd ago" and stale flags don't shift with the toggle
+    const recencyDays = dayRange(Math.max(30, rangeDays), 0)
     const result = []
 
     for (const need of NEEDS) {
@@ -381,26 +383,43 @@ export function createDataStats({ canvas, checkins, moods, practices }) {
       const pool = (practices && practices[need.id]) || []
 
       for (const text of pool) {
+        const doneOn = dk => (checkins[dk] || []).some(e => e.need_id === need.id && e.practice_text === text)
+
         let completedDays = 0
         let totalCompletions = 0
-        let daysSinceLast = null
-
-        for (let i = days.length - 1; i >= 0; i--) {
-          const dayCount = (checkins[days[i]] || []).filter(e => e.need_id === need.id && e.practice_text === text).length
+        for (const day of windowDays) {
+          const dayCount = (checkins[day] || []).filter(e => e.need_id === need.id && e.practice_text === text).length
           if (dayCount > 0) {
             completedDays++
             totalCompletions += dayCount
-            if (daysSinceLast === null) daysSinceLast = days.length - 1 - i
           }
+        }
+
+        let daysSinceLast = null
+        for (let i = recencyDays.length - 1; i >= 0; i--) {
+          if (doneOn(recencyDays[i])) {
+            daysSinceLast = recencyDays.length - 1 - i
+            break
+          }
+        }
+
+        // consecutive days done, ending today — an unfinished today doesn't break the streak
+        const cursor = new Date()
+        if (!doneOn(dateKeyFor(cursor))) cursor.setDate(cursor.getDate() - 1)
+        let streak = 0
+        while (doneOn(dateKeyFor(cursor))) {
+          streak++
+          cursor.setDate(cursor.getDate() - 1)
         }
 
         result.push({
           need,
           text,
           mode: canvas[need.id],
-          completionPct: Math.round((completedDays / days.length) * 100),
+          completionPct: Math.round((completedDays / windowDays.length) * 100),
           totalCompletions,
           daysSinceLast,
+          streak,
         })
       }
     }
@@ -408,8 +427,8 @@ export function createDataStats({ canvas, checkins, moods, practices }) {
     return result
   }
 
-  function getGoingWell() {
-    const candidates = getPracticeStats().filter(p =>
+  function getGoingWell(rangeDays = 30) {
+    const candidates = getPracticeStats(rangeDays).filter(p =>
       p.completionPct >= GOING_WELL_MIN && p.daysSinceLast !== null && p.daysSinceLast <= 7
     )
     if (candidates.length === 0) return null

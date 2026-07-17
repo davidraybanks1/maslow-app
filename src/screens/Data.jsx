@@ -548,14 +548,14 @@ function MoodTab({ stats, range }) {
   )
 }
 
-function GoingWellCard({ goingWell }) {
+function GoingWellCard({ goingWell, range }) {
   if (!goingWell) return null
   return (
     <div className={styles.goingWellCard}>
-      <div className={styles.eyebrow}>going well</div>
+      <div className={styles.eyebrow}>going well — last {range} days</div>
       {goingWell.map((p, i) => (
         <div key={i} className={`${styles.goingWellRow} ${i > 0 ? styles.goingWellRowDivider : ''}`}>
-          <em className={styles.goingWellName}>{p.text}</em> — {p.completionPct}%, done {formatLastDone(p.daysSinceLast)}
+          <em className={styles.goingWellName}>{p.text}</em> — {p.completionPct}%, done {formatLastDone(p.daysSinceLast)}{p.streak >= 2 ? `, ${p.streak} day streak` : ''}
         </div>
       ))}
     </div>
@@ -564,7 +564,7 @@ function GoingWellCard({ goingWell }) {
 
 const NEED_ACCORDION_MODES = MODE_ORDER
 
-function NeedPracticesAccordion({ needStats, practiceStats }) {
+function NeedPracticesAccordion({ needStats, practiceStats, range }) {
   const [openNeeds, setOpenNeeds] = useState({})
 
   const practicesByNeed = {}
@@ -583,7 +583,7 @@ function NeedPracticesAccordion({ needStats, practiceStats }) {
 
   return (
     <div className={styles.card}>
-      <div className={styles.eyebrow}>by need</div>
+      <div className={styles.eyebrow}>by need — last {range} days</div>
       <div className={styles.needsTable}>
         {orderedNeeds.map(({ need, mode, pct }) => {
           const pool = (practicesByNeed[need.id] || []).slice().sort((a, b) => a.completionPct - b.completionPct)
@@ -605,6 +605,9 @@ function NeedPracticesAccordion({ needStats, practiceStats }) {
                     {pool.map((p, i) => (
                       <div key={i} className={styles.practiceSubRow}>
                         <span className={styles.practiceSubName}>{p.text}</span>
+                        {p.streak >= 2 && (
+                          <span className={styles.practiceSubStreak}>{p.streak}d streak</span>
+                        )}
                         <span className={styles.practiceSubPct}>{p.completionPct}%</span>
                         {p.totalCompletions > 0 && (
                           <span className={styles.practiceSubTotal}>×{p.totalCompletions}</span>
@@ -728,17 +731,17 @@ function PracticeFrequencyCard({ canvas, practiceCompletionStats }) {
   )
 }
 
-function PracticesTab({ stats, navigate, canvas, practiceCompletionStats }) {
-  const practiceStats = stats.getPracticeStats()
+function PracticesTab({ stats, navigate, canvas, practiceCompletionStats, range }) {
+  const practiceStats = stats.getPracticeStats(range)
   const completionByWeekday = stats.getCompletionByWeekday()
-  const goingWell = stats.getGoingWell()
-  const needStats = stats.getNeedStats(30)
+  const goingWell = stats.getGoingWell(range)
+  const needStats = stats.getNeedStats(range)
 
   return (
     <>
       <StaleFlagsCard practiceStats={practiceStats} navigate={navigate} />
-      <GoingWellCard goingWell={goingWell} />
-      <NeedPracticesAccordion needStats={needStats} practiceStats={practiceStats} />
+      <GoingWellCard goingWell={goingWell} range={range} />
+      <NeedPracticesAccordion needStats={needStats} practiceStats={practiceStats} range={range} />
       <WeeklyRhythmCard completionByWeekday={completionByWeekday} />
       <PracticeFrequencyCard canvas={canvas} practiceCompletionStats={practiceCompletionStats} />
     </>
@@ -790,7 +793,7 @@ export default function Data({ state }) {
 
       {view === 'practices' && (
         <div className={styles.section}>
-          <PracticesTab stats={stats} navigate={navigate} canvas={state.canvas} practiceCompletionStats={practiceCompletionStats} />
+          <PracticesTab stats={stats} navigate={navigate} canvas={state.canvas} practiceCompletionStats={practiceCompletionStats} range={range} />
         </div>
       )}
 
