@@ -347,6 +347,16 @@
 }
 .addDeckCardBtn:hover { background: var(--bg2); }
 
+.deckFullMsg {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 200;
+  color: var(--ink);
+  opacity: 0.6;
+  padding: 12px 0;
+  margin-bottom: 10px;
+}
+
 .deckListRow {
   display: flex;
   align-items: center;

@@ -42,6 +42,7 @@ const JOURNAL_DRAFT_PREFIX = 'journal-draft-'
 function journalDraftKey(dateKey) { return `${JOURNAL_DRAFT_PREFIX}${dateKey}` }
 
 const NOTE_MAX_LENGTH = 120
+const DECK_MAX = 5
 const NOTE_LIBRARY = [
   'everything can be appreciated. most things can be enjoyed. everything else can be learned from.',
   'take up space.',
@@ -256,6 +257,10 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     const text = composerText.trim()
     if (!text) return
     if (!state.userId) { console.error('[handleComposerSave] called without userId — session may be invalid'); navigate('/signin'); return }
+    if (!composer?.id && noteDeck.length >= DECK_MAX) {
+      setComposerError('deck is full — remove a card to add another')
+      return
+    }
     setComposerError(null)
 
     try {
@@ -863,7 +868,11 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               </>
             ) : (
               <>
-                <button className={styles.addDeckCardBtn} onClick={openComposerForNew}>+ add note</button>
+                {noteDeck.length >= DECK_MAX ? (
+                  <div className={styles.deckFullMsg}>deck is full — remove a card to add another</div>
+                ) : (
+                  <button className={styles.addDeckCardBtn} onClick={openComposerForNew}>+ add note</button>
+                )}
                 {noteDeck.length > 0 && (
                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                     <SortableContext items={noteDeck.map(c => c.id)} strategy={verticalListSortingStrategy}>
@@ -886,8 +895,15 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
           </div>
           {composer && (
             <div className={styles.noteOverlayFooter}>
+              {!composer.id && noteDeck.length >= DECK_MAX && (
+                <div className={styles.deckFullMsg}>deck is full — remove a card to add another</div>
+              )}
               {composerError && <div className={styles.composerError}>{composerError}</div>}
-              <button className={styles.noteSaveBtn} onClick={handleComposerSave} disabled={!composerText.trim()}>
+              <button
+                className={styles.noteSaveBtn}
+                onClick={handleComposerSave}
+                disabled={!composerText.trim() || (!composer.id && noteDeck.length >= DECK_MAX)}
+              >
                 save note →
               </button>
             </div>
