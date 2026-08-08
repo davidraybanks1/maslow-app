@@ -589,6 +589,9 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
           </div>
         )}
 
+        {/* ── Timer card ── */}
+        <TimerCard />
+
         {showGuidance && <GuidanceCard type={guidanceType} onDismiss={handleDismissGuidance} />}
 
         {/* ── Mood card ── */}
@@ -723,9 +726,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
             )
           })}
         </div>
-
-        {/* ── Timer card ── */}
-        <TimerCard />
 
         {/* ── Journal card ── */}
         <div className={styles.cardJournal}>
