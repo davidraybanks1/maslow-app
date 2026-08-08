@@ -1,0 +1,202 @@
+/* ── Collapsed / expanded card ── */
+.card {
+  background: var(--clay);
+  border-radius: 12px;
+  padding: 0;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 2px rgba(26, 26, 26, 0.05), 0 18px 44px -14px rgba(26, 26, 26, 0.10);
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 14px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  text-align: left;
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 200;
+  color: var(--on-clay);
+  letter-spacing: 0.02em;
+}
+
+.chevron {
+  color: var(--on-clay);
+  opacity: 0.55;
+  display: flex;
+  align-items: center;
+}
+
+/* ── Drawer with max-height animation ── */
+.drawer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.28s ease;
+}
+
+.drawerOpen {
+  max-height: 200px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer { transition: none; }
+}
+
+.pills {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px;
+}
+
+.pill {
+  flex: 1;
+  padding: 12px 0;
+  background: var(--on-clay);
+  color: var(--clay);
+  border: none;
+  border-radius: 10px;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 400;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.minutesLabel {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 200;
+  color: var(--on-clay);
+  opacity: 0.5;
+  padding: 8px 0 16px;
+}
+
+/* ── Full-screen overlay ── */
+.fullScreen {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  background: var(--clay);
+  color: var(--on-clay);
+  display: flex;
+  flex-direction: column;
+}
+
+.fsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 56px 16px 16px;
+}
+
+.fsBack {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: var(--on-clay);
+  display: flex;
+  align-items: center;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.fsEyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 200;
+  letter-spacing: 0.1em;
+  color: var(--on-clay);
+  opacity: 0.45;
+}
+
+.fsSpacer {
+  width: 30px; /* balances the back button */
+}
+
+/* ── Ring ── */
+.fsBody {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ringWrapper {
+  position: relative;
+  width: 270px;
+  height: 270px;
+}
+
+.ring {
+  transform: rotate(-90deg);
+  color: var(--on-clay);
+}
+
+.ringContent {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.timeDisplay {
+  font-family: var(--font-mono);
+  font-size: 56px;
+  font-weight: 300;
+  color: var(--on-clay);
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.timeLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 200;
+  letter-spacing: 0.1em;
+  color: var(--on-clay);
+  opacity: 0.45;
+}
+
+/* ── Footer buttons ── */
+.fsFooter {
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px max(40px, env(safe-area-inset-bottom, 40px));
+}
+
+.fsBtn {
+  flex: 1;
+  padding: 16px;
+  border-radius: 12px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 200;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.fsBtnOutline {
+  background: transparent;
+  border: 1.5px solid var(--on-clay);
+  color: var(--on-clay);
+}
+
+.fsBtnFilled {
+  background: var(--on-clay);
+  border: none;
+  color: var(--clay);
+}

@@ -9,6 +9,7 @@ import { createDataStats, getCanvasGuidance } from '../lib/dataStats'
 import { hapticTick } from '../lib/native'
 import DebriefForm from '../components/DebriefForm'
 import PeakDebriefForm from '../components/PeakDebriefForm'
+import TimerCard from '../components/TimerCard'
 import styles from './Today.module.css'
 
 function SortableDeckRow({ card, onEdit, onDelete, onLightbox }) {
@@ -722,6 +723,9 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
             )
           })}
         </div>
+
+        {/* ── Timer card ── */}
+        <TimerCard />
 
         {/* ── Journal card ── */}
         <div className={styles.cardJournal}>

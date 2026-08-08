@@ -1,3 +1,6 @@
+export const CLAY    = '#3E2D26'
+export const ON_CLAY = '#F6EFE9'
+
 export const MODES = {
   exploration:  { name: 'exploration',  color: '#1B3A2D', pip: '#1B3A2D' },
   appreciation: { name: 'appreciation', color: '#B8C3B1', pip: '#B8C3B1' },
