@@ -42,14 +42,27 @@ function dateKeyFor(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-function lastWeekDayKeys() {
-  const days = []
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date()
-    d.setDate(d.getDate() - i)
-    days.push(dateKeyFor(d))
+// Returns 7 day keys oldest-first for the review window.
+// daily: rolling previous 7 days ending today.
+// weekly: fixed calendar week Mon–Sun anchored on the current Monday.
+function reviewWindowKeys(cadence) {
+  if (cadence === 'daily') {
+    const days = []
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date()
+      d.setDate(d.getDate() - i)
+      days.push(dateKeyFor(d))
+    }
+    return days
   }
-  return days
+  const monday = new Date()
+  monday.setHours(0, 0, 0, 0)
+  monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7))
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday)
+    d.setDate(d.getDate() + i)
+    return dateKeyFor(d)
+  })
 }
 
 function todayWeekdayMonday() {
@@ -424,6 +437,8 @@ export default function Log({ state }) {
   const [stepsCompletedCount, setStepsCompletedCount] = useState(0)
   const [noteDraft, setNoteDraft] = useState('')
   const [finishing, setFinishing] = useState(false)
+  const [skipDecisionSteps, setSkipDecisionSteps] = useState(false)
+  const [reviewWindowDays, setReviewWindowDays] = useState([])
 
   const [reviewHistory, setReviewHistory] = useState([])
   const [historyLoading, setHistoryLoading] = useState(true)
@@ -433,11 +448,16 @@ export default function Log({ state }) {
   useEffect(() => {
     if (!state.userId) { console.error('[reviewHistory] called without userId — session may be invalid'); return }
     setHistoryLoading(true)
+    const cadence = state.reviewCadence || 'weekly'
     Promise.all([loadWeeklyReviews(state.userId), loadUserCreatedAt(state.userId)]).then(([realReviews, createdAt]) => {
-      setReviewHistory(buildReviewHistory(createdAt, state.reviewDay ?? 0, realReviews))
+      if (cadence === 'daily') {
+        setReviewHistory(realReviews.filter(r => r.steps_completed > 0).sort((a, b) => b.week_starting.localeCompare(a.week_starting)))
+      } else {
+        setReviewHistory(buildReviewHistory(createdAt, state.reviewDay ?? 0, realReviews))
+      }
       setHistoryLoading(false)
     })
-  }, [state.userId, state.reviewDay])
+  }, [state.userId, state.reviewDay, state.reviewCadence])
 
   async function startReview() {
     setWeeklyMood(null)
@@ -448,7 +468,13 @@ export default function Log({ state }) {
     setReviewStep(1)
 
     if (!state.userId) { console.error('[startReview] called without userId — session may be invalid'); setReviewStep(null); return }
-    const days = lastWeekDayKeys()
+    const cadence = state.reviewCadence || 'weekly'
+    const days = reviewWindowKeys(cadence)
+    setReviewWindowDays(days)
+
+    const shouldSkip = cadence === 'daily' && reviewHistory.some(r => r.week_starting === weekKey() && r.steps_completed > 0)
+    setSkipDecisionSteps(shouldSkip)
+
     const [entries, allDebriefs, types] = await Promise.all([
       Promise.all(days.map(d => loadJournalEntry(state.userId, d))),
       loadDebriefs(state.userId),
@@ -472,13 +498,27 @@ export default function Log({ state }) {
   }
 
   function advance(fromStep) {
-    if (fromStep === 3 && !insightText) { setReviewStep(5); return }
-    if (fromStep === 4) { setReviewStep(5); return }
+    const cadence = state.reviewCadence || 'weekly'
+    const skip = cadence === 'daily' && skipDecisionSteps
+    if (fromStep === 1 && skip) {
+      if (insightText) { setReviewStep(4) } else { handleFinishReview() }
+      return
+    }
+    if (fromStep === 3 && !insightText) {
+      if (skip) { handleFinishReview(); return }
+      setReviewStep(5); return
+    }
+    if (fromStep === 4) {
+      if (skip) { handleFinishReview(); return }
+      setReviewStep(5); return
+    }
     setReviewStep(fromStep + 1)
   }
 
   function handleBack(fromStep) {
+    const cadence = state.reviewCadence || 'weekly'
     if (fromStep === 1) { setReviewStep(null); return }
+    if (fromStep === 4 && cadence === 'daily' && skipDecisionSteps) { setReviewStep(1); return }
     if (fromStep === 5 && !insightText) { setReviewStep(3); return }
     setReviewStep(fromStep - 1)
   }
@@ -490,13 +530,21 @@ export default function Log({ state }) {
     if (trimmed) {
       await addNoteDeckCard(state.userId, { text: trimmed })
     }
+    const cadence = state.reviewCadence || 'weekly'
+    const windowStart = reviewWindowDays[0] || weekKey()
     await saveWeeklyReview(state.userId, {
-      weekStarting: weekKey(),
+      weekStarting: windowStart,
       weeklyMood,
       stepsCompleted: stepsCompletedCount + 1,
+      reviewDate: new Date().toLocaleDateString('en-CA'),
+      cadence,
     })
     const [realReviews, createdAt] = await Promise.all([loadWeeklyReviews(state.userId), loadUserCreatedAt(state.userId)])
-    setReviewHistory(buildReviewHistory(createdAt, state.reviewDay ?? 0, realReviews))
+    if (cadence === 'daily') {
+      setReviewHistory(realReviews.filter(r => r.steps_completed > 0).sort((a, b) => b.week_starting.localeCompare(a.week_starting)))
+    } else {
+      setReviewHistory(buildReviewHistory(createdAt, state.reviewDay ?? 0, realReviews))
+    }
     setFinishing(false)
     setReviewStep(null)
     setJustFinished(true)
@@ -505,7 +553,7 @@ export default function Log({ state }) {
 
   // ── Step 1: Last week's log ───────────────────────────────────────────────
   if (reviewStep === 1) {
-    const days = [...lastWeekDayKeys()].reverse()
+    const days = [...reviewWindowDays].reverse()
     const canvas = state.canvas || {}
     const checkins = state.checkins || {}
     const moods = state.moods || []
@@ -589,6 +637,7 @@ export default function Log({ state }) {
 
   // ── Step 4: Insight (auto-skipped if no qualifying pattern) ──────────────
   if (reviewStep === 4 && insightText) {
+    const isLastStep = (state.reviewCadence || 'weekly') === 'daily' && skipDecisionSteps
     return (
       <ReviewStepShell
         pct={REVIEW_PROGRESS[4]}
@@ -597,6 +646,7 @@ export default function Log({ state }) {
         sub="from your practices, mood, and debriefs this week."
         onBack={() => handleBack(4)}
         onContinue={() => handleContinue(4)}
+        continueLabel={isLastStep ? (finishing ? 'saving…' : 'finish review →') : undefined}
         onSkip={() => handleSkip(4)}
       >
         <div className={styles.insightCard}>
@@ -641,25 +691,28 @@ export default function Log({ state }) {
   }
 
   // ── Default state ─────────────────────────────────────────────────────────
-  const isScheduledDay = todayWeekdayMonday() === (state.reviewDay ?? 0)
+  const cadence = state.reviewCadence || 'weekly'
+  const isScheduledDay = cadence === 'daily' || todayWeekdayMonday() === (state.reviewDay ?? 0)
 
   return (
     <div className={styles.screen}>
       <div className={styles.header}>
-        <div className={styles.title}>weekly review.</div>
-        <div className={styles.sub}>your weekly review and daily log.</div>
+        <div className={styles.title}>review.</div>
+        <div className={styles.sub}>your review and daily log.</div>
       </div>
       <div className={styles.content}>
         {justFinished && (
           <div className={styles.completeBanner}>
-            review complete. see you {REVIEW_DAY_LABELS[state.reviewDay ?? 0]}.
+            {cadence === 'daily'
+              ? 'review complete. see you tomorrow.'
+              : `review complete. see you ${REVIEW_DAY_LABELS[state.reviewDay ?? 0]}.`}
           </div>
         )}
 
         <div className={styles.scheduleCard}>
           <div className={styles.scheduleLabel}>next review</div>
           <div className={styles.scheduleValue}>
-            {REVIEW_DAY_LABELS[state.reviewDay ?? 0]} at {formatReviewTime(state.reviewTime)}
+            {cadence === 'daily' ? 'today' : REVIEW_DAY_LABELS[state.reviewDay ?? 0]} at {formatReviewTime(state.reviewTime)}
           </div>
           <button
             className={isScheduledDay ? styles.startReviewBtnPrimary : styles.startReviewBtnSecondary}
@@ -706,9 +759,9 @@ export default function Log({ state }) {
                   </span>
                   {r.steps_completed > 0 ? (
                     <span className={styles.reviewHistoryDone}>✓</span>
-                  ) : (
+                  ) : cadence !== 'daily' ? (
                     <span className={styles.reviewHistoryMissed}>missed</span>
-                  )}
+                  ) : null}
                 </div>
               </div>
             ))}

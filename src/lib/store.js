@@ -64,6 +64,7 @@ function migrateState(saved) {
     if (saved.showNoteToSelf === undefined) saved.showNoteToSelf = true
     if (saved.reviewDay === undefined) saved.reviewDay = 0
     if (saved.reviewTime === undefined) saved.reviewTime = '10:00'
+    if (saved.reviewCadence === undefined) saved.reviewCadence = 'weekly'
     saved.canvas = sanitizeCanvas(saved.canvas)
 
     // Migrate old checkin format (string array like 'movement_go for a run')
@@ -115,6 +116,7 @@ export function initialState() {
     showNoteToSelf: true,
     reviewDay: 0,
     reviewTime: '10:00',
+    reviewCadence: 'weekly',
   }
 }
 
@@ -172,6 +174,7 @@ async function restoreFromSupabase(userId, email) {
       showNoteToSelf: user.show_note_to_self !== false,
       reviewDay: user.review_day ?? 0,
       reviewTime: user.review_time || '10:00',
+      reviewCadence: user.review_cadence || 'weekly',
     }
   } catch (e) {
     console.error('restoreFromSupabase error', e)
@@ -497,6 +500,17 @@ export function useAppState(onSignIn) {
     })
   }
 
+  function updateReviewCadence(cadence) {
+    setState(prev => {
+      if (prev.userId) {
+        supabase.from('users').update({ review_cadence: cadence }).eq('id', prev.userId).then(({ error }) => {
+          if (error) logSupabaseError('updateReviewCadence', error)
+        })
+      }
+      return { ...prev, reviewCadence: cadence }
+    })
+  }
+
   function replaceCanvas(fullCanvas) {
     return new Promise((resolve, reject) => {
       setState(prev => {
@@ -520,7 +534,7 @@ export function useAppState(onSignIn) {
     })
   }
 
-  return { state, authLoading, updateCanvas, replaceCanvas, addPractice, removePractice, checkIn, removeCheckin, clearPracticeCheckins, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule }
+  return { state, authLoading, updateCanvas, replaceCanvas, addPractice, removePractice, checkIn, removeCheckin, clearPracticeCheckins, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule, updateReviewCadence }
 }
 
 export function todayKey() {
@@ -686,11 +700,18 @@ export async function loadUserCreatedAt(userId) {
   return data?.created_at || null
 }
 
-export async function saveWeeklyReview(userId, { weekStarting, weeklyMood, stepsCompleted }) {
+export async function saveWeeklyReview(userId, { weekStarting, weeklyMood, stepsCompleted, reviewDate, cadence }) {
   const { data, error } = await supabase
     .from('weekly_reviews')
     .upsert(
-      { user_id: userId, week_starting: weekStarting, weekly_mood: weeklyMood, steps_completed: stepsCompleted },
+      {
+        user_id: userId,
+        week_starting: weekStarting,
+        weekly_mood: weeklyMood,
+        steps_completed: stepsCompleted,
+        review_date: reviewDate || null,
+        cadence: cadence || 'weekly',
+      },
       { onConflict: 'user_id,week_starting' }
     )
     .select()

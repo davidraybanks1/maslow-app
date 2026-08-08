@@ -10,7 +10,9 @@ const REVIEW_DAYS = [
   { value: 6, label: 'sun' },
 ]
 
-export default function Settings({ state, updateShowNoteToSelf, updateReviewSchedule }) {
+export default function Settings({ state, updateShowNoteToSelf, updateReviewSchedule, updateReviewCadence }) {
+  const cadence = state.reviewCadence || 'weekly'
+
   return (
     <div className={styles.screen}>
       <div className={styles.header}>
@@ -31,20 +33,36 @@ export default function Settings({ state, updateShowNoteToSelf, updateReviewSche
         </div>
       </div>
 
-      <div className={styles.sectionEyebrow}>WEEKLY REVIEW</div>
+      <div className={styles.sectionEyebrow}>REVIEW</div>
       <div className={styles.card}>
-        <div className={styles.fieldLabel}>day</div>
+        <div className={styles.fieldLabel}>cadence</div>
         <div className={styles.dayRow}>
-          {REVIEW_DAYS.map(d => (
-            <button
-              key={d.value}
-              className={`${styles.dayBtn} ${state.reviewDay === d.value ? styles.dayBtnActive : ''}`}
-              onClick={() => updateReviewSchedule(d.value, state.reviewTime || '10:00')}
-            >
-              {d.label}
-            </button>
-          ))}
+          <button
+            className={`${styles.dayBtn} ${cadence === 'weekly' ? styles.dayBtnActive : ''}`}
+            onClick={() => updateReviewCadence('weekly')}
+          >weekly</button>
+          <button
+            className={`${styles.dayBtn} ${cadence === 'daily' ? styles.dayBtnActive : ''}`}
+            onClick={() => updateReviewCadence('daily')}
+          >daily</button>
         </div>
+
+        {cadence === 'weekly' && (
+          <>
+            <div className={styles.fieldLabel} style={{ marginTop: 16 }}>day</div>
+            <div className={styles.dayRow}>
+              {REVIEW_DAYS.map(d => (
+                <button
+                  key={d.value}
+                  className={`${styles.dayBtn} ${state.reviewDay === d.value ? styles.dayBtnActive : ''}`}
+                  onClick={() => updateReviewSchedule(d.value, state.reviewTime || '10:00')}
+                >
+                  {d.label}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
 
         <div className={styles.fieldLabel} style={{ marginTop: 16 }}>time</div>
         <input

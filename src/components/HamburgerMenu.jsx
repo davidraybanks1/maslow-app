@@ -20,7 +20,7 @@ const NAV_LINKS = [
   { to: '/canvas',    label: 'Canvas',    Icon: IconLayoutGrid },
   { to: '/practices', label: 'Practices', Icon: IconList },
   { to: '/data',      label: 'Data',      Icon: IconChartBar },
-  { to: '/log',       label: 'Weekly Review', Icon: IconCalendar },
+  { to: '/log',       label: 'Review', Icon: IconCalendar },
   { to: '/debriefs',  label: 'Debriefs',  Icon: IconNotes },
 ]
 

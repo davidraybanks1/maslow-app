@@ -71,7 +71,7 @@ function AppInner() {
     try { return localStorage.getItem('maslow_last_ritual') !== new Date().toDateString() } catch { return true }
   })
 
-  const { state, authLoading, updateCanvas, replaceCanvas, addPractice, removePractice, checkIn, removeCheckin, clearPracticeCheckins, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule } = useAppState(
+  const { state, authLoading, updateCanvas, replaceCanvas, addPractice, removePractice, checkIn, removeCheckin, clearPracticeCheckins, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule, updateReviewCadence } = useAppState(
     () => navigate('/today')
   )
 
@@ -122,7 +122,7 @@ function AppInner() {
           <Route path="/signin" element={<SignIn />} />
           <Route path="/password" element={<Protected onboarded={state.onboarded} userId={state.userId}><UpdatePassword /></Protected>} />
           <Route path="/notifications" element={<Protected onboarded={state.onboarded} userId={state.userId}><ComingSoon title="Notifications" /></Protected>} />
-          <Route path="/settings" element={<Protected onboarded={state.onboarded} userId={state.userId}><Settings state={state} updateShowNoteToSelf={updateShowNoteToSelf} updateReviewSchedule={updateReviewSchedule} /></Protected>} />
+          <Route path="/settings" element={<Protected onboarded={state.onboarded} userId={state.userId}><Settings state={state} updateShowNoteToSelf={updateShowNoteToSelf} updateReviewSchedule={updateReviewSchedule} updateReviewCadence={updateReviewCadence} /></Protected>} />
         </Routes>
       </div>
       </div>
