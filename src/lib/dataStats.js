@@ -107,7 +107,10 @@ export function getCanvasGuidance(checkins, canvas) {
   return null
 }
 
-export function createDataStats({ canvas, checkins, moods, practices }) {
+// practicesDB: [{id, label, need_id, archived_at}] from the practices table.
+// When provided, getPracticeStats groups by practice_id (reliable); falls back to
+// practice_text grouping against the legacy users.practices JSONB when not provided.
+export function createDataStats({ canvas, checkins, moods, practices, practicesDB }) {
   function isNeedMet(need, dateKey) {
     const required = requiredFor(canvas, need.id)
     if (required < 1) return null
@@ -378,17 +381,33 @@ export function createDataStats({ canvas, checkins, moods, practices }) {
     const recencyDays = dayRange(Math.max(30, rangeDays), 0)
     const result = []
 
+    // Prefer practicesDB (grouped by practice_id — reliable);
+    // fall back to legacy users.practices JSONB with practice_text matching.
+    const useDB = Array.isArray(practicesDB) && practicesDB.length > 0
+
     for (const need of NEEDS) {
       if (!canvas[need.id]) continue
-      const pool = (practices && practices[need.id]) || []
 
-      for (const text of pool) {
-        const doneOn = dk => (checkins[dk] || []).some(e => e.need_id === need.id && e.practice_text === text)
+      // Include archived practices so historical stats stay correct
+      const pool = useDB
+        ? practicesDB.filter(p => p.need_id === need.id)
+        : (practices && practices[need.id] || []).map(text => ({ id: null, label: text }))
+
+      for (const practice of pool) {
+        const { id: practiceId, label: text } = practice
+
+        // Match by practice_id when both sides carry it; fall back to text
+        const matchEntry = e => {
+          if (e.need_id !== need.id) return false
+          if (practiceId && e.practice_id) return e.practice_id === practiceId
+          return e.practice_text === text
+        }
+        const doneOn = dk => (checkins[dk] || []).some(matchEntry)
 
         let completedDays = 0
         let totalCompletions = 0
         for (const day of windowDays) {
-          const dayCount = (checkins[day] || []).filter(e => e.need_id === need.id && e.practice_text === text).length
+          const dayCount = (checkins[day] || []).filter(matchEntry).length
           if (dayCount > 0) {
             completedDays++
             totalCompletions += dayCount
@@ -414,7 +433,8 @@ export function createDataStats({ canvas, checkins, moods, practices }) {
 
         result.push({
           need,
-          text,
+          practice,      // full practice record ({ id, label, archived_at, ... })
+          text,          // convenience alias kept for render compatibility
           mode: canvas[need.id],
           completionPct: Math.round((completedDays / windowDays.length) * 100),
           totalCompletions,

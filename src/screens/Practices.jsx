@@ -24,17 +24,22 @@ const STARTERS = {
 }
 const OB_FLAG = 'onboardingPracticesDone'
 
-export default function Practices({ state, addPractice, removePractice, completeOnboarding }) {
+export default function Practices({ state, addPractice, renamePractice, archivePractice, completeOnboarding }) {
   const navigate = useNavigate()
   const [inputs, setInputs] = useState({})
   const [openInputs, setOpenInputs] = useState({})
   const [editMode, setEditMode] = useState(false)
+  const [editingId, setEditingId] = useState(null)
+  const [renameValue, setRenameValue] = useState('')
   const [obDone, setObDone] = useState(() => !!localStorage.getItem(OB_FLAG))
 
-  const stats = createDataStats({ canvas: state.canvas, checkins: state.checkins, moods: state.moods, practices: state.practices })
-  const lastDoneByKey = new Map(stats.getPracticeStats().map(p => [`${p.need.id}_${p.text}`, p.daysSinceLast]))
+  const useDB = Array.isArray(state.practicesDB) && state.practicesDB.length > 0
+  const stats = createDataStats({ canvas: state.canvas, checkins: state.checkins, moods: state.moods, practices: state.practices, practicesDB: state.practicesDB })
+  const lastDoneByKey = new Map(stats.getPracticeStats().map(p => [p.practice?.id || `${p.need.id}_${p.text}`, p.daysSinceLast]))
 
-  const totalPractices = Object.values(state.practices || {}).flat().length
+  const totalPractices = useDB
+    ? state.practicesDB.filter(p => !p.archived_at).length
+    : Object.values(state.practices || {}).flat().length
   const showOnboardingCta = !obDone
 
   function handleAdd(needId) {
@@ -42,6 +47,23 @@ export default function Practices({ state, addPractice, removePractice, complete
     if (!text) return
     addPractice(needId, text)
     setInputs(prev => ({ ...prev, [needId]: '' }))
+  }
+
+  function handleStartRename(practice) {
+    setEditingId(practice.id)
+    setRenameValue(practice.label)
+  }
+
+  function handleCommitRename(practiceId) {
+    if (renameValue.trim()) renamePractice(practiceId, renameValue)
+    setEditingId(null)
+  }
+
+  function handleToggleEdit() {
+    setEditMode(e => {
+      if (e) setEditingId(null)
+      return !e
+    })
   }
 
   function handleOnboardingDone() {
@@ -55,7 +77,7 @@ export default function Practices({ state, addPractice, removePractice, complete
     <div className={styles.screen}>
       <div className={styles.header}>
         <div className={styles.eyebrowRow}>
-          <button className={styles.editToggle} onClick={() => setEditMode(e => !e)}>{editMode ? 'done' : 'edit'}</button>
+          <button className={styles.editToggle} onClick={handleToggleEdit}>{editMode ? 'done' : 'edit'}</button>
         </div>
         <div className={styles.title}>your practices.</div>
         <div className={styles.sub}>add or remove practices available for each need.</div>
@@ -66,7 +88,9 @@ export default function Practices({ state, addPractice, removePractice, complete
           if (!modeNeeds.length) return null
           const modeColor = MODES[mode]?.pip
           return modeNeeds.map(n => {
-            const pool = state.practices[n.id] || []
+            const pool = useDB
+              ? state.practicesDB.filter(p => p.need_id === n.id && !p.archived_at)
+              : (state.practices[n.id] || []).map(label => ({ id: null, label }))
             const atMax = pool.length >= MAX
             const showInput = !atMax && openInputs[n.id]
             return (
@@ -92,13 +116,35 @@ export default function Practices({ state, addPractice, removePractice, complete
                       <div className={styles.empty}>no practices yet.</div>
                     )
                   )}
-                  {pool.map((p, i) => (
-                    <div key={i} className={styles.poolItem}>
-                      <span className={styles.poolText}>{p}</span>
-                      {editMode ? (
-                        <button className={styles.deleteBtn} onClick={() => removePractice(n.id, i)}>×</button>
+                  {pool.map(p => (
+                    <div key={p.id || p.label} className={styles.poolItem}>
+                      {editMode && editingId === p.id ? (
+                        <>
+                          <input
+                            className={styles.renameInput}
+                            value={renameValue}
+                            onChange={e => setRenameValue(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') handleCommitRename(p.id)
+                              if (e.key === 'Escape') setEditingId(null)
+                            }}
+                            autoFocus
+                          />
+                          <button className={styles.saveBtn} onClick={() => handleCommitRename(p.id)}>save</button>
+                        </>
                       ) : (
-                        <span className={styles.lastDone}>{formatLastDone(lastDoneByKey.get(`${n.id}_${p}`))}</span>
+                        <>
+                          <span
+                            className={styles.poolText}
+                            onClick={editMode && p.id ? () => handleStartRename(p) : undefined}
+                            style={editMode && p.id ? { cursor: 'text' } : undefined}
+                          >{p.label}</span>
+                          {editMode ? (
+                            <button className={styles.deleteBtn} onClick={() => archivePractice(p.id)}>×</button>
+                          ) : (
+                            <span className={styles.lastDone}>{formatLastDone(lastDoneByKey.get(p.id || `${n.id}_${p.label}`))}</span>
+                          )}
+                        </>
                       )}
                     </div>
                   ))}

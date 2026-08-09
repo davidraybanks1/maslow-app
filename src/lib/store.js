@@ -59,6 +59,7 @@ function migrateState(saved) {
     if (!saved.moods) saved.moods = []
     if (!saved.checkins || typeof saved.checkins !== 'object') saved.checkins = {}
     if (!saved.practices || typeof saved.practices !== 'object') saved.practices = {}
+    if (!saved.practicesDB) saved.practicesDB = []
     if (!saved.noteDeck) saved.noteDeck = []
     if (saved.onboardedAt === undefined) saved.onboardedAt = null
     if (saved.showNoteToSelf === undefined) saved.showNoteToSelf = true
@@ -109,6 +110,7 @@ export function initialState() {
     userId: null,
     canvas: {},
     practices: {},
+    practicesDB: [],
     checkins: {},
     moods: [],
     noteDeck: [],
@@ -143,10 +145,11 @@ async function restoreFromSupabase(userId, email) {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
     const cutoff = thirtyDaysAgo.toLocaleDateString('en-CA')
 
-    const [{ data: checkins }, moods, noteDeck] = await Promise.all([
+    const [{ data: checkins }, moods, noteDeck, { data: practicesRows }] = await Promise.all([
       supabase.from('checkins').select('*').eq('user_id', user.id).gte('date_key', cutoff),
       fetchMoods(user.id),
       loadNoteDeck(user.id),
+      supabase.from('practices').select('id, label, need_id, created_at, archived_at').eq('user_id', user.id).order('created_at'),
     ])
     const checkinsMap = {}
     for (const row of (checkins || [])) {
@@ -155,6 +158,7 @@ async function restoreFromSupabase(userId, email) {
         id: row.id,
         need_id: row.need_id,
         practice_text: row.practice_text || '',
+        practice_id: row.practice_id || null,
         mode: row.mode || null,
         completed_at: row.completed_at || null,
       })
@@ -166,6 +170,7 @@ async function restoreFromSupabase(userId, email) {
       userId: user.id,
       canvas,
       practices: user.practices || {},
+      practicesDB: practicesRows || [],
       checkins: checkinsMap,
       moods,
       noteDeck: noteDeck || [],
@@ -301,20 +306,83 @@ export function useAppState(onSignIn) {
     setState(prev => {
       const current = prev.practices[needId] || []
       if (current.length >= 10) return prev
+      const label = text.trim()
       const previousPractices = prev.practices
-      const newPractices = { ...prev.practices, [needId]: [...current, text.trim()] }
+      const previousPracticesDB = prev.practicesDB
+      const newPractices = { ...prev.practices, [needId]: [...current, label] }
+      const tempId = `pending_${Date.now()}_${Math.random()}`
+      const tempRecord = { id: tempId, label, need_id: needId, created_at: new Date().toISOString(), archived_at: null }
       if (prev.userId) {
-        supabase.from('users').update({ practices: newPractices }).eq('id', prev.userId).then(({ error }) => {
-          if (error) {
-            logSupabaseError('addPractice', error)
-            setState(p => ({ ...p, practices: previousPractices }))
-          }
-        })
+        supabase.from('practices')
+          .insert({ user_id: prev.userId, label, need_id: needId })
+          .select('id, label, need_id, created_at, archived_at')
+          .single()
+          .then(({ data, error }) => {
+            if (error) {
+              logSupabaseError('addPractice', error)
+              setState(p => ({ ...p, practices: previousPractices, practicesDB: previousPracticesDB }))
+            } else if (data) {
+              // Replace temp record with real DB record
+              setState(p => ({ ...p, practicesDB: p.practicesDB.map(r => r.id === tempId ? data : r) }))
+            }
+            // Also sync the JSONB for backward compat
+            supabase.from('users').update({ practices: newPractices }).eq('id', prev.userId)
+          })
       }
-      return { ...prev, practices: newPractices }
+      return { ...prev, practices: newPractices, practicesDB: [...prev.practicesDB, tempRecord] }
     })
   }
 
+  function renamePractice(practiceId, newLabel) {
+    if (!newLabel.trim()) return
+    const label = newLabel.trim()
+    setState(prev => {
+      const record = prev.practicesDB.find(p => p.id === practiceId)
+      if (!record) return prev
+      const previousPracticesDB = prev.practicesDB
+      const previousPractices = prev.practices
+      const updatedDB = prev.practicesDB.map(p => p.id === practiceId ? { ...p, label } : p)
+      // Update JSONB: replace old label with new label in the need's array
+      const needArr = (prev.practices[record.need_id] || []).map(t => t === record.label ? label : t)
+      const newPractices = { ...prev.practices, [record.need_id]: needArr }
+      if (prev.userId) {
+        supabase.from('practices').update({ label }).eq('id', practiceId).then(({ error }) => {
+          if (error) {
+            logSupabaseError('renamePractice', error)
+            setState(p => ({ ...p, practicesDB: previousPracticesDB, practices: previousPractices }))
+          }
+        })
+        supabase.from('users').update({ practices: newPractices }).eq('id', prev.userId)
+      }
+      return { ...prev, practicesDB: updatedDB, practices: newPractices }
+    })
+  }
+
+  function archivePractice(practiceId) {
+    setState(prev => {
+      const record = prev.practicesDB.find(p => p.id === practiceId)
+      if (!record) return prev
+      const previousPracticesDB = prev.practicesDB
+      const previousPractices = prev.practices
+      const archivedAt = new Date().toISOString()
+      const updatedDB = prev.practicesDB.map(p => p.id === practiceId ? { ...p, archived_at: archivedAt } : p)
+      // Remove from JSONB for backward compat
+      const needArr = (prev.practices[record.need_id] || []).filter(t => t !== record.label)
+      const newPractices = { ...prev.practices, [record.need_id]: needArr }
+      if (prev.userId) {
+        supabase.from('practices').update({ archived_at: archivedAt }).eq('id', practiceId).then(({ error }) => {
+          if (error) {
+            logSupabaseError('archivePractice', error)
+            setState(p => ({ ...p, practicesDB: previousPracticesDB, practices: previousPractices }))
+          }
+        })
+        supabase.from('users').update({ practices: newPractices }).eq('id', prev.userId)
+      }
+      return { ...prev, practicesDB: updatedDB, practices: newPractices }
+    })
+  }
+
+  // Keep old removePractice for any callers not yet migrated
   function removePractice(needId, index) {
     setState(prev => {
       const previousPractices = prev.practices
@@ -333,7 +401,7 @@ export function useAppState(onSignIn) {
     })
   }
 
-  function checkIn(needId, practiceText, mode, date = todayKey()) {
+  function checkIn(needId, practiceText, mode, date = todayKey(), practiceId = null) {
     const uid = userIdRef.current
     if (!uid) {
       console.error('[checkIn] called without userId — practice not persisted')
@@ -342,7 +410,7 @@ export function useAppState(onSignIn) {
 
     const completedAt = new Date().toISOString()
     const tempId = `pending_${Date.now()}_${Math.random()}`
-    const newEntry = { id: tempId, need_id: needId, practice_text: practiceText, mode: mode || null, completed_at: completedAt }
+    const newEntry = { id: tempId, need_id: needId, practice_text: practiceText, practice_id: practiceId, mode: mode || null, completed_at: completedAt }
 
     const newCheckins = {
       ...checkinsRef.current,
@@ -352,8 +420,8 @@ export function useAppState(onSignIn) {
     setState(prev => ({ ...prev, checkins: newCheckins }))
 
     supabase.from('checkins')
-      .insert({ user_id: uid, date_key: date, need_id: needId, practice_text: practiceText, mode: mode || null, completed_at: completedAt })
-      .select('id').single()
+      .insert({ user_id: uid, date_key: date, need_id: needId, practice_text: practiceText, practice_id: practiceId, mode: mode || null, completed_at: completedAt })
+      .select('id, practice_id').single()
       .then(({ data, error }) => {
         if (error) {
           logSupabaseError('checkIn', error)
@@ -365,7 +433,9 @@ export function useAppState(onSignIn) {
           })
         } else if (data) {
           setState(prev => {
-            const day = (prev.checkins[date] || []).map(e => e.id === tempId ? { ...e, id: data.id } : e)
+            const day = (prev.checkins[date] || []).map(e =>
+              e.id === tempId ? { ...e, id: data.id, practice_id: data.practice_id || e.practice_id } : e
+            )
             const updated = { ...prev.checkins, [date]: day }
             checkinsRef.current = updated
             return { ...prev, checkins: updated }
@@ -534,7 +604,7 @@ export function useAppState(onSignIn) {
     })
   }
 
-  return { state, authLoading, updateCanvas, replaceCanvas, addPractice, removePractice, checkIn, removeCheckin, clearPracticeCheckins, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule, updateReviewCadence }
+  return { state, authLoading, updateCanvas, replaceCanvas, addPractice, renamePractice, archivePractice, removePractice, checkIn, removeCheckin, clearPracticeCheckins, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule, updateReviewCadence }
 }
 
 export function todayKey() {

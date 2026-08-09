@@ -602,8 +602,8 @@ function NeedPracticesAccordion({ needStats, practiceStats, range }) {
                   <div className={styles.needBodyEmpty}>no practices yet</div>
                 ) : (
                   <div className={styles.needBody}>
-                    {pool.map((p, i) => (
-                      <div key={i} className={styles.practiceSubRow}>
+                    {pool.map(p => (
+                      <div key={p.practice?.id || p.text} className={styles.practiceSubRow}>
                         <span className={styles.practiceSubName}>{p.text}</span>
                         {p.streak >= 2 && (
                           <span className={styles.practiceSubStreak}>{p.streak}d streak</span>
@@ -755,7 +755,7 @@ export default function Data({ state }) {
   const [practiceCompletionStats, setPracticeCompletionStats] = useState(null)
 
   const moods = state.moods || []
-  const stats = createDataStats({ canvas: state.canvas, checkins: state.checkins, moods, practices: state.practices })
+  const stats = createDataStats({ canvas: state.canvas, checkins: state.checkins, moods, practices: state.practices, practicesDB: state.practicesDB })
 
   useEffect(() => {
     if (view !== 'practices' || !state.userId) return

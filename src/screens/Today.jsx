@@ -149,7 +149,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   const spacePct = spaceMax > 0 ? Math.round((spaceDoneCount / spaceMax) * 100) : 0
 
   const todayMoods = (state.moods || []).filter(m => m.date_key === today)
-  const stats = createDataStats({ canvas: state.canvas || {}, checkins: state.checkins || {}, moods: state.moods || [], practices: state.practices || {} })
+  const stats = createDataStats({ canvas: state.canvas || {}, checkins: state.checkins || {}, moods: state.moods || [], practices: state.practices || {}, practicesDB: state.practicesDB })
   const streak = stats.getStreak()
   const dateLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).toLowerCase()
 
@@ -479,13 +479,16 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     logMood(state.userId, promptTime, moodSelections[promptTime], moodNotes[promptTime] || null, today)
   }
 
-  function handleChipClick(needId, mode, practiceText) {
+  function handleChipClick(needId, mode, practiceText, practiceId) {
     hapticTick()
-    const practiceCount = checked.filter(e => e.need_id === needId && e.practice_text === practiceText).length
+    const matchEntry = e => e.need_id === needId && (
+      (practiceId && e.practice_id) ? e.practice_id === practiceId : e.practice_text === practiceText
+    )
+    const practiceCount = checked.filter(matchEntry).length
     if (practiceCount >= 2) {
       clearPracticeCheckins(needId, practiceText)
     } else {
-      checkIn(needId, practiceText, mode)
+      checkIn(needId, practiceText, mode, undefined, practiceId)
     }
   }
 
@@ -665,7 +668,11 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 </div>
 
                 {modeNeeds.map((n, needIdx) => {
-                  const pool = state.practices[n.id] || []
+                  // Use practicesDB (stable IDs) when loaded; fall back to JSONB text array
+                  const practiceRecords = (state.practicesDB && state.practicesDB.length > 0)
+                    ? state.practicesDB.filter(p => p.need_id === n.id && !p.archived_at)
+                    : (state.practices[n.id] || []).map(label => ({ id: null, label }))
+                  const pool = practiceRecords  // kept as "pool" for rest of the loop
                   const checkedForNeed = checked.filter(e => e.need_id === n.id)
                   const completions = checkedForNeed.length
                   const filledBubbles = Math.min(completions, maxBubbles)
@@ -702,18 +709,23 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                         <div className={styles.noPractice}>No practices set — add some <span className={styles.noPracticeLink} onClick={() => navigate('/practices')}>in Practices</span></div>
                       ) : (
                         <div className={styles.chipRow}>
-                          {pool.map(p => {
-                            const practiceCount = checkedForNeed.filter(e => e.practice_text === p).length
+                          {pool.map(practice => {
+                            const label = practice.label
+                            const pid = practice.id
+                            const matchEntry = e => pid && e.practice_id
+                              ? e.practice_id === pid
+                              : e.practice_text === label
+                            const practiceCount = checkedForNeed.filter(matchEntry).length
                             const isDone = practiceCount >= 1
                             const chipColor = (mode === 'appreciation' || mode === 'nourishment') ? 'var(--ink)' : '#fff'
                             return (
                               <button
-                                key={p}
+                                key={pid || label}
                                 className={isDone ? styles.practiceChipDone : styles.practiceChip}
                                 style={isDone ? { background: pip, color: chipColor } : {}}
-                                onClick={() => handleChipClick(n.id, mode, p)}
+                                onClick={() => handleChipClick(n.id, mode, label, pid)}
                               >
-                                {p}{practiceCount >= 2 && <sup className={styles.chipCount} style={isDone ? { color: chipColor } : {}}>×{practiceCount}</sup>}
+                                {label}{practiceCount >= 2 && <sup className={styles.chipCount} style={isDone ? { color: chipColor } : {}}>×{practiceCount}</sup>}
                               </button>
                             )
                           })}
