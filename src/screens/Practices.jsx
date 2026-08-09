@@ -140,7 +140,7 @@ export default function Practices({ state, addPractice, renamePractice, archiveP
                             style={editMode && p.id ? { cursor: 'text' } : undefined}
                           >{p.label}</span>
                           {editMode ? (
-                            <button className={styles.deleteBtn} onClick={() => archivePractice(p.id)}>×</button>
+                            <button className={styles.archiveBtn} aria-label="archive — stops appearing, history kept" onClick={() => archivePractice(p.id)}>archive</button>
                           ) : (
                             <span className={styles.lastDone}>{formatLastDone(lastDoneByKey.get(p.id || `${n.id}_${p.label}`))}</span>
                           )}
