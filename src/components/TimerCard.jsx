@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { IconChevronDown, IconChevronUp, IconChevronLeft } from '@tabler/icons-react'
+import { IconChevronLeft } from '@tabler/icons-react'
 import { CLAY, ON_CLAY } from '../lib/constants'
 import styles from './TimerCard.module.css'
 
@@ -46,7 +46,6 @@ function formatTime(ms) {
 }
 
 export default function TimerCard() {
-  const [expanded, setExpanded] = useState(false)
   const [timer, setTimerRaw] = useState(null)
   const [fullScreen, setFullScreen] = useState(false)
   const [tick, setTick] = useState(0)
@@ -130,29 +129,17 @@ export default function TimerCard() {
   return (
     <>
       <div className={styles.card} style={CLAY_VARS}>
-        <button
-          className={styles.header}
-          onClick={() => setExpanded(e => !e)}
-          aria-expanded={expanded}
-        >
+        <div className={styles.header}>
           <span className={styles.label}>set a timer</span>
-          <span className={styles.chevron}>
-            {expanded
-              ? <IconChevronUp size={14} strokeWidth={2} />
-              : <IconChevronDown size={14} strokeWidth={2} />}
-          </span>
-        </button>
-
-        <div className={`${styles.drawer} ${expanded ? styles.drawerOpen : ''}`}>
-          <div className={styles.pills}>
-            {DURATION_OPTIONS.map(m => (
-              <button key={m} className={styles.pill} onClick={() => startTimer(m)}>
-                {m}
-              </button>
-            ))}
-          </div>
-          <div className={styles.minutesLabel}>minutes</div>
         </div>
+        <div className={styles.pills}>
+          {DURATION_OPTIONS.map(m => (
+            <button key={m} className={styles.pill} onClick={() => startTimer(m)}>
+              {m}
+            </button>
+          ))}
+        </div>
+        <div className={styles.minutesLabel}>minutes</div>
       </div>
 
       {fullScreen && timer && (
