@@ -128,10 +128,8 @@ export default function TimerCard() {
 
   return (
     <>
-      <div className={styles.card} style={CLAY_VARS}>
-        <div className={styles.header}>
-          <span className={styles.label}>set a timer</span>
-        </div>
+      <div className={styles.bar} style={CLAY_VARS}>
+        <span className={styles.label}>set a timer</span>
         <div className={styles.pills}>
           {DURATION_OPTIONS.map(m => (
             <button key={m} className={styles.pill} onClick={() => startTimer(m)}>
@@ -139,7 +137,6 @@ export default function TimerCard() {
             </button>
           ))}
         </div>
-        <div className={styles.minutesLabel}>minutes</div>
       </div>
 
       {fullScreen && timer && (
