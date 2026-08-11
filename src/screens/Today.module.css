@@ -607,18 +607,23 @@
   color: var(--ink3);
 }
 
-/* ── Need blocks ── */
-.needSeparator {
-  height: 0.5px;
-  background: rgba(26, 26, 24, 0.05);
-  margin: 10px 0;
+/* ── Collapsible need blocks ── */
+.needBlock + .needBlock {
+  border-top: 0.5px solid rgba(26, 26, 24, 0.07);
 }
 
-.needRow {
+/* Full-width toggle button for the need row */
+.needToggle {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
+  gap: 6px;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 10px 0;
+  cursor: pointer;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .needName {
@@ -626,7 +631,41 @@
   font-size: 16px;
   color: var(--ink);
   text-transform: lowercase;
+  flex-shrink: 0;
 }
+
+/* Dim count of not-yet-done practices — disappears at zero */
+.needRemainingCount {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 200;
+  color: rgba(26, 26, 24, 0.4);
+  flex-shrink: 0;
+}
+
+/* Completed practice pills on the row — stretch to push pips right */
+.donePillRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex: 1;
+  align-items: center;
+}
+
+/* Filled pill: mode color background, no border */
+.donePill {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 200;
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: none;
+  white-space: nowrap;
+  text-transform: lowercase;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.donePill:active { opacity: 0.8; }
 
 .bubbleRow {
   display: flex;
@@ -641,7 +680,6 @@
   border-radius: 50%;
   flex-shrink: 0;
   box-sizing: border-box;
-  cursor: pointer;
 }
 
 .bubbleBonus {
@@ -651,8 +689,30 @@
   flex-shrink: 0;
   box-sizing: border-box;
   background: transparent;
-  cursor: pointer;
   opacity: 0.7;
+}
+
+/* Drawer: max-height transition reveals the not-yet-done pills */
+.needDrawer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.22s ease;
+}
+.needDrawerOpen { max-height: 300px; }
+@media (prefers-reduced-motion: reduce) {
+  .needDrawer { transition: none; }
+}
+
+.needDrawerInner {
+  padding: 0 0 10px;
+}
+
+.allDone {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 200;
+  color: var(--ink3);
+  padding: 2px 0;
 }
 
 .noPractice { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink4); margin-top: 1px; margin-bottom: 4px; }
@@ -661,8 +721,6 @@
 .chipRow { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 4px; }
 .practiceChip { padding: 4px 10px; border-radius: 20px; border: 0.5px solid var(--border2); font-family: var(--font-mono); font-size: 11px; font-weight: 200; color: var(--ink2); background: var(--bg); cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent; transition: background var(--motion-micro); text-transform: lowercase; }
 .practiceChip:active { background: var(--bg2); }
-.practiceChipDone { padding: 4px 10px; border-radius: 20px; border: none; font-family: var(--font-mono); font-size: 11px; font-weight: 200; color: #fff; cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent; text-transform: lowercase; }
-.practiceChipDone:active { opacity: 0.8; }
 .chipCount { font-size: 9px; font-style: normal; margin-left: 2px; vertical-align: super; opacity: 0.85; }
 
 /* ── Mood & section headers ── */
