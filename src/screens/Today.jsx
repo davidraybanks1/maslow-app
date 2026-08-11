@@ -498,6 +498,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
 
   return (
     <div className={styles.screen}>
+    <div className={styles.desktopWrap}>
 
       {/* ── Greeting ── */}
       <div className={styles.header}>
@@ -527,7 +528,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         )}
       </div>
 
-      {/* ── Scrollable body ── */}
+      {/* ── Scrollable / grid body ── */}
       <div className={styles.list}>
 
         {/* ── Note to self deck ── */}
@@ -593,12 +594,17 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         )}
 
         {/* ── Timer card ── */}
-        <TimerCard />
+        <div className={styles.timerSlot}>
+          <TimerCard />
+        </div>
 
-        {showGuidance && <GuidanceCard type={guidanceType} onDismiss={handleDismissGuidance} />}
+        {/* ── Guidance (right col on desktop) ── */}
+        <div className={styles.guidanceSlot}>
+          {showGuidance && <GuidanceCard type={guidanceType} onDismiss={handleDismissGuidance} />}
+        </div>
 
         {/* ── Mood card ── */}
-        <div className={styles.card}>
+        <div className={`${styles.card} ${styles.moodCard}`}>
           <div className={styles.sectionHeader}>
             <span className={styles.sectionLabel}>mood</span>
           </div>
@@ -648,7 +654,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         </div>
 
         {/* ── Practices card ── */}
-        <div className={styles.card}>
+        <div className={`${styles.card} ${styles.practicesCard}`}>
           <div className={styles.sectionHeader}>
             <span className={styles.sectionLabel}>practices</span>
           </div>
@@ -805,6 +811,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         </div>
 
       </div>
+    </div>{/* /desktopWrap */}
 
       {manageDeckOpen && (
         <div className={`${styles.noteOverlay} ${manageDeckClosing ? styles.noteOverlayClosing : ''}`}>
