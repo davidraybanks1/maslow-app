@@ -575,7 +575,7 @@
 .guidanceSecondary:hover { color: var(--ink2); }
 
 /* ── List ── */
-.list { flex: 1; overflow-y: auto; }
+.list { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
 .list::-webkit-scrollbar { display: none; }
 
 /* ── Mode sections (practices card) ── */
@@ -905,11 +905,23 @@
 
 /* ── Column wrappers (mobile: transparent pass-throughs) ── */
 .desktopWrap { display: contents; }
-.timerSlot   { display: contents; }
-.guidanceSlot { display: contents; }
 .colLeft, .colRight { display: contents; }
+/* Slot wrappers are real blocks on mobile so they become flex items of .list */
+.timerSlot   { display: block; }
+.guidanceSlot { display: block; }
 .moodCard    { /* marker */ }
 .practicesCard { /* marker */ }
+
+/* ── Mobile visual order ── */
+/* .list is flex-column; colLeft/colRight are display:contents so their
+   children are direct flex items. Order places cards in the desired
+   mobile sequence regardless of DOM (desktop-friendly) source order. */
+.reflectiveSection { order: 1; }
+.timerSlot         { order: 2; }
+.guidanceSlot      { order: 3; }
+.moodCard          { order: 4; }
+.practicesCard     { order: 5; }
+.cardJournal       { order: 6; }
 
 /* ── Desktop two-column layout ── */
 @media (min-width: 900px) {
@@ -927,6 +939,10 @@
   .header { padding: 28px 0 20px; }
   .headerRow { align-items: baseline; }
   .spaceBar { max-width: 340px; }
+
+  /* Reset mobile order values — columns own the layout now */
+  .reflectiveSection, .timerSlot, .guidanceSlot,
+  .moodCard, .practicesCard, .cardJournal { order: 0; }
 
   /* .list is the 2-column grid; .colLeft / .colRight are its only children */
   .list {
