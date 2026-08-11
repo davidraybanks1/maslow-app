@@ -845,23 +845,19 @@
 }
 .debriefPillOpen .debriefCount { color: rgba(26, 26, 24, 0.55); }
 
-/* ── Slot wrappers (mobile: transparent pass-throughs) ── */
+/* ── Column wrappers (mobile: transparent pass-throughs) ── */
 .desktopWrap { display: contents; }
 .timerSlot   { display: contents; }
 .guidanceSlot { display: contents; }
-.moodCard    { /* marker — no mobile overrides */ }
-.practicesCard { /* marker — no mobile overrides */ }
+.colLeft, .colRight { display: contents; }
+.moodCard    { /* marker */ }
+.practicesCard { /* marker */ }
 
 /* ── Desktop two-column layout ── */
 @media (min-width: 900px) {
 
-  /* outer screen: no mobile padding—desktopWrap centers instead */
-  .screen {
-    padding: 0;
-    min-height: 100vh;
-  }
+  .screen { padding: 0; min-height: 100vh; }
 
-  /* centered content shell */
   .desktopWrap {
     display: block;
     max-width: 1200px;
@@ -870,60 +866,54 @@
     box-sizing: border-box;
   }
 
-  /* header: keep existing flex row, constrain space bar */
   .header { padding: 28px 0 20px; }
   .headerRow { align-items: baseline; }
   .spaceBar { max-width: 340px; }
 
-  /* ── Two-column grid ── */
-  /* The list itself becomes the grid. Children get explicit grid-column:
-     auto-placement then fills rows within each column in source order:
-       row1: reflectiveSection  | guidanceSlot
-       row2: timerSlot          | moodCard
-       row3: cardJournal        | practicesCard                       */
+  /* .list is the 2-column grid; .colLeft / .colRight are its only children */
   .list {
     display: grid;
     grid-template-columns: 1fr 400px;
     column-gap: 18px;
     align-items: start;
-    overflow-y: visible; /* page scrolls, not the list container */
+    overflow-y: visible;
     flex: unset;
   }
 
-  /* Slot wrappers become real block containers */
-  .timerSlot   { display: block; grid-column: 1; }
-  .guidanceSlot { display: block; grid-column: 2; }
+  /* Each column wrapper is an independent flex column — no shared row heights */
+  .colLeft, .colRight {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
 
-  /* Left column */
-  .reflectiveSection { grid-column: 1; margin-bottom: 20px; }
+  /* Slot wrappers become real block containers inside their flex column */
+  .timerSlot  { display: block; }
+  .guidanceSlot { display: block; }
+
+  /* Journal card: min-height, flex column so textarea fills it */
   .cardJournal {
-    grid-column: 1;
     min-height: 430px;
     display: flex;
     flex-direction: column;
   }
 
-  /* Right column */
-  .moodCard      { grid-column: 2; }
-  .practicesCard {
-    grid-column: 2;
-    max-height: 520px;
-    overflow-y: auto;
-  }
-
-  /* note → timer: slightly more gap so note reads as its own object */
-  .reflectiveSection { margin-bottom: 20px; }
-  /* timer → journal: tighter (timer .bar already has 10px margin-bottom) */
-  .timerSlot { margin-bottom: 4px; }
-
   /* Journal textarea: fill card height, scroll instead of auto-grow */
   .cardJournal .journalInput {
-    flex: 1 !important;       /* grow to fill card */
-    height: auto !important;  /* cancel JS-set inline height */
+    flex: 1 !important;
+    height: auto !important;
     min-height: 200px;
     overflow-y: auto !important;
   }
 
-  /* Practices card scroll affordance: let content clip naturally */
-  .practicesCard { box-sizing: border-box; }
+  /* Practices card: clip with scroll cue (padding-bottom = partial row visible) */
+  .practicesCard {
+    max-height: 520px;
+    overflow-y: auto;
+    padding-bottom: 20px;
+    box-sizing: border-box;
+  }
+
+  /* Gap handles spacing inside columns — cancel per-card margin-bottom */
+  .colLeft > *, .colRight > * { margin-bottom: 0; }
 }

@@ -530,6 +530,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
 
       {/* ── Scrollable / grid body ── */}
       <div className={styles.list}>
+        <div className={styles.colLeft}>
 
         {/* ── Note to self deck ── */}
         {state.showNoteToSelf && (
@@ -598,7 +599,76 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
           <TimerCard />
         </div>
 
-        {/* ── Guidance (right col on desktop) ── */}
+        {/* ── Journal card ── */}
+        <div className={styles.cardJournal}>
+          <div className={styles.sectionHeader}>
+            <span className={styles.sectionLabel}>journal</span>
+            <button className={styles.journalTimestampBtn} onClick={handleInsertTimestamp}>⏱</button>
+          </div>
+          <textarea
+            ref={journalRef}
+            className={styles.journalInput}
+            placeholder="add your thoughts for the day…"
+            value={journalEntry}
+            onChange={handleJournalChange}
+            rows={5}
+          />
+          {journalSaveError && <div className={styles.journalSaveError}>{journalSaveError}</div>}
+
+          {/* Debrief pills — side by side, same expand behavior */}
+          <div className={styles.debriefPillRow}>
+            <button
+              className={`${styles.debriefPill} ${debriefExpanded ? styles.debriefPillOpen : ''}`}
+              onClick={() => { setDebriefExpanded(e => !e); setPeakExpanded(false) }}
+            >
+              {todayDebriefCount > 0 && <span className={styles.debriefDot} />}
+              <span>anxiety debrief</span>
+              {todayDebriefCount > 0 && <span className={styles.debriefCount}>· {todayDebriefCount}</span>}
+            </button>
+            <button
+              className={`${styles.debriefPill} ${peakExpanded ? styles.debriefPillOpen : ''}`}
+              onClick={() => { setPeakExpanded(e => !e); setDebriefExpanded(false) }}
+            >
+              {todayPeakCount > 0 && <span className={styles.debriefDot} />}
+              <span>peak debrief</span>
+              {todayPeakCount > 0 && <span className={styles.debriefCount}>· {todayPeakCount}</span>}
+            </button>
+          </div>
+
+          {debriefExpanded && (
+            <>
+              <div className={styles.debriefHairline} />
+              <DebriefForm
+                userId={state.userId}
+                debriefTypes={debriefTypes}
+                onSaved={() => {
+                  setDebriefExpanded(false)
+                  setTodayDebriefCount(c => c + 1)
+                }}
+              />
+            </>
+          )}
+
+          {peakExpanded && (
+            <>
+              <div className={styles.debriefHairline} />
+              <PeakDebriefForm
+                userId={state.userId}
+                debriefTypes={debriefTypes}
+                onSaved={() => {
+                  setPeakExpanded(false)
+                  setTodayPeakCount(c => c + 1)
+                }}
+              />
+            </>
+          )}
+        </div>
+
+        </div>{/* /colLeft */}
+
+        <div className={styles.colRight}>
+
+        {/* ── Guidance ── */}
         <div className={styles.guidanceSlot}>
           {showGuidance && <GuidanceCard type={guidanceType} onDismiss={handleDismissGuidance} />}
         </div>
@@ -745,70 +815,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
           })}
         </div>
 
-        {/* ── Journal card ── */}
-        <div className={styles.cardJournal}>
-          <div className={styles.sectionHeader}>
-            <span className={styles.sectionLabel}>journal</span>
-            <button className={styles.journalTimestampBtn} onClick={handleInsertTimestamp}>⏱</button>
-          </div>
-          <textarea
-            ref={journalRef}
-            className={styles.journalInput}
-            placeholder="add your thoughts for the day…"
-            value={journalEntry}
-            onChange={handleJournalChange}
-            rows={5}
-          />
-          {journalSaveError && <div className={styles.journalSaveError}>{journalSaveError}</div>}
-
-          {/* Debrief pills — side by side, same expand behavior */}
-          <div className={styles.debriefPillRow}>
-            <button
-              className={`${styles.debriefPill} ${debriefExpanded ? styles.debriefPillOpen : ''}`}
-              onClick={() => { setDebriefExpanded(e => !e); setPeakExpanded(false) }}
-            >
-              {todayDebriefCount > 0 && <span className={styles.debriefDot} />}
-              <span>anxiety debrief</span>
-              {todayDebriefCount > 0 && <span className={styles.debriefCount}>· {todayDebriefCount}</span>}
-            </button>
-            <button
-              className={`${styles.debriefPill} ${peakExpanded ? styles.debriefPillOpen : ''}`}
-              onClick={() => { setPeakExpanded(e => !e); setDebriefExpanded(false) }}
-            >
-              {todayPeakCount > 0 && <span className={styles.debriefDot} />}
-              <span>peak debrief</span>
-              {todayPeakCount > 0 && <span className={styles.debriefCount}>· {todayPeakCount}</span>}
-            </button>
-          </div>
-
-          {debriefExpanded && (
-            <>
-              <div className={styles.debriefHairline} />
-              <DebriefForm
-                userId={state.userId}
-                debriefTypes={debriefTypes}
-                onSaved={() => {
-                  setDebriefExpanded(false)
-                  setTodayDebriefCount(c => c + 1)
-                }}
-              />
-            </>
-          )}
-
-          {peakExpanded && (
-            <>
-              <div className={styles.debriefHairline} />
-              <PeakDebriefForm
-                userId={state.userId}
-                debriefTypes={debriefTypes}
-                onSaved={() => {
-                  setPeakExpanded(false)
-                  setTodayPeakCount(c => c + 1)
-                }}
-              />
-            </>
-          )}
-        </div>
+        </div>{/* /colRight */}
 
       </div>
     </div>{/* /desktopWrap */}
