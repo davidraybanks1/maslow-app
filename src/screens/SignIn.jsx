@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import styles from './SignIn.module.css'
@@ -28,28 +28,59 @@ export default function SignIn() {
   const [error, setError]           = useState(null)
   const [magicSent, setMagicSent]   = useState(false)
   const [resetSent, setResetSent]   = useState(false)
+  // Tracks whether a sign-in request is still in flight after the timeout fired.
+  // Prevents a second submit from racing the first and blocks the retry button
+  // while the original request is still pending.
+  const pendingRef = useRef(false)
 
   async function handleSignIn(e) {
     e.preventDefault()
+    // Drop the click if a request is already in flight (timeout fired but original
+    // hasn't resolved yet — a second submit would race it).
+    if (pendingRef.current) return
+
     setLoading(true)
     setError(null)
+    pendingRef.current = true
 
     const TIMEOUT_MS = 5000
+    const signInPromise = supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password,
+    })
+
     const result = await Promise.race([
-      supabase.auth.signInWithPassword({
-        email: email.trim().toLowerCase(),
-        password,
-      }),
+      signInPromise,
       new Promise(resolve => setTimeout(() => resolve({ timedOut: true }), TIMEOUT_MS)),
     ])
 
-    setLoading(false)
-
     if (result?.timedOut) {
-      setError('Sign-in timed out — check your connection and try again.')
+      // Show a retryable error but keep pendingRef true — the original request is
+      // still in flight. If it eventually succeeds, onAuthStateChange will navigate
+      // to /today and we clear the error so "retry" doesn't flash during navigation.
+      // If it fails with an actual error, surface that instead.
+      setLoading(false)
+      setError('Sign-in is taking longer than expected — check your connection and retry.')
+      signInPromise
+        .then(({ error: err }) => {
+          pendingRef.current = false
+          if (err) {
+            setError(err.message)
+          } else {
+            // Late success — onAuthStateChange handles navigation; clear the
+            // error so the "retry" prompt doesn't show while the app transitions.
+            setError(null)
+          }
+        })
+        .catch(() => {
+          pendingRef.current = false
+          setError('Sign-in failed — please try again.')
+        })
       return
     }
 
+    pendingRef.current = false
+    setLoading(false)
     const { error: err } = result
     if (err) setError(err.message)
     // on success the session is delivered via onAuthStateChange in store, which navigates to /today

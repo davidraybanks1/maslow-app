@@ -151,7 +151,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   const spacePct = spaceMax > 0 ? Math.round((spaceDoneCount / spaceMax) * 100) : 0
 
   const todayMoods = (state.moods || []).filter(m => m.date_key === today)
-  const stats = createDataStats({ canvas: state.canvas || {}, checkins: state.checkins || {}, moods: state.moods || [], practices: state.practices || {}, practicesDB: state.practicesDB })
+  const stats = createDataStats({ canvas: state.canvas || {}, checkins: state.checkins || {}, moods: state.moods || [], practices: state.practices || {}, practicesDB: state.practicesDB || [] })
   const streak = stats.getStreak()
   const dateLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).toLowerCase()
 
