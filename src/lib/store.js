@@ -230,34 +230,34 @@ export function useAppState(onSignIn) {
 
     checkSession()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      try {
-        if (event === 'SIGNED_IN' && session?.user) {
-          // Capture skip flag before the async restoreFromSupabase call so that
-          // an in-progress onboarding sign-up doesn't get its state overwritten
-          // when the restored data arrives (the onboarding upsert may not have
-          // committed yet when we read the DB).
-          const shouldSkip = signInNavRef.skip
-          signInNavRef.skip = false
-          const restored = await restoreFromSupabase(session.user.id, session.user.email)
-          if (restored) {
-            if (!shouldSkip) {
-              setState(restored)
-              saveState(restored)
-              onSignIn?.()
-            } else {
-              // Onboarding path: persist to disk but don't overwrite the state
-              // that completeOnboarding is building in memory.
-              saveState(restored)
-            }
-          }
-        }
-        if (event === 'SIGNED_OUT') {
-          localStorage.removeItem('maslow_state')
-          setState(initialState())
-        }
-      } catch (e) {
-        console.error('onAuthStateChange error', e)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // NEVER await a Supabase call inside this callback — it holds the auth lock
+      // and any nested Supabase call will deadlock. Defer all async work via setTimeout.
+      if (event === 'SIGNED_IN' && session?.user) {
+        // Capture skip flag synchronously before yielding to the event loop.
+        const shouldSkip = signInNavRef.skip
+        signInNavRef.skip = false
+        const { id, email } = session.user
+        setTimeout(() => {
+          restoreFromSupabase(id, email)
+            .then(restored => {
+              if (!restored) return
+              if (!shouldSkip) {
+                setState(restored)
+                saveState(restored)
+                onSignIn?.()
+              } else {
+                // Onboarding path: persist to disk but don't overwrite the state
+                // that completeOnboarding is building in memory.
+                saveState(restored)
+              }
+            })
+            .catch(e => console.error('onAuthStateChange restore error', e))
+        }, 0)
+      }
+      if (event === 'SIGNED_OUT') {
+        localStorage.removeItem('maslow_state')
+        setState(initialState())
       }
     })
 

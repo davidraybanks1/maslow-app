@@ -34,14 +34,25 @@ export default function SignIn() {
     setLoading(true)
     setError(null)
 
-    const { error: err } = await supabase.auth.signInWithPassword({
-      email: email.trim().toLowerCase(),
-      password,
-    })
+    const TIMEOUT_MS = 5000
+    const result = await Promise.race([
+      supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      }),
+      new Promise(resolve => setTimeout(() => resolve({ timedOut: true }), TIMEOUT_MS)),
+    ])
 
     setLoading(false)
+
+    if (result?.timedOut) {
+      setError('Sign-in timed out — check your connection and try again.')
+      return
+    }
+
+    const { error: err } = result
     if (err) setError(err.message)
-    // on success, onAuthStateChange in store fires and navigates to /today
+    // on success the session is delivered via onAuthStateChange in store, which navigates to /today
   }
 
   async function handleMagicLink() {
