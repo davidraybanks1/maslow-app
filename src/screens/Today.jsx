@@ -883,23 +883,25 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                   )}
                 </div>
                 <div className={styles.journalComposer}>
-                  <textarea
-                    className={styles.journalComposerInput}
-                    placeholder="add a thought…"
-                    value={journalDraftText}
-                    onChange={e => setJournalDraftText(e.target.value)}
-                    onKeyDown={handleComposerKeyDown}
-                    rows={3}
-                  />
-                  {journalSaveError && <div className={styles.journalSaveError}>{journalSaveError}</div>}
-                  <div className={styles.journalComposerBar}>
-                    <span className={styles.journalHint}>⌘↵ to add</span>
-                    <button
-                      className={styles.journalAddBtn}
-                      onClick={handleAddEntry}
-                      disabled={!journalDraftText.trim()}
-                    >add</button>
+                  <div className={styles.journalComposerWrap}>
+                    <textarea
+                      className={styles.journalComposerInput}
+                      placeholder="add a thought…"
+                      value={journalDraftText}
+                      onChange={e => setJournalDraftText(e.target.value)}
+                      onKeyDown={handleComposerKeyDown}
+                      rows={3}
+                    />
+                    <div className={styles.journalComposerFooter}>
+                      <span className={styles.journalHint}>⌘↵</span>
+                      <button
+                        className={styles.journalAddBtn}
+                        onClick={handleAddEntry}
+                        disabled={!journalDraftText.trim()}
+                      >add</button>
+                    </div>
                   </div>
+                  {journalSaveError && <div className={styles.journalSaveError}>{journalSaveError}</div>}
                 </div>
               </div>
             </>

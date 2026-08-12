@@ -664,6 +664,7 @@
   text-transform: lowercase;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  transition: opacity 100ms ease;
 }
 .donePill:active { opacity: 0.8; }
 
@@ -719,7 +720,8 @@
 .noPracticeLink { color: var(--ink2); text-decoration: underline; cursor: pointer; }
 
 .chipRow { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 4px; }
-.practiceChip { padding: 4px 10px; border-radius: 20px; border: 0.5px solid var(--border2); font-family: var(--font-mono); font-size: 11px; font-weight: 200; color: var(--ink2); background: var(--bg); cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent; transition: background var(--motion-micro); text-transform: lowercase; }
+.practiceChip { padding: 4px 10px; border-radius: 20px; border: 0.5px solid var(--border2); font-family: var(--font-mono); font-size: 11px; font-weight: 200; color: var(--ink2); background: var(--bg); cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent; transition: background 100ms ease, color 100ms ease, border-color 100ms ease; text-transform: lowercase; }
+.practiceChip:hover { background: var(--bg2); }
 .practiceChip:active { background: var(--bg2); }
 .chipCount { font-size: 9px; font-style: normal; margin-left: 2px; vertical-align: super; opacity: 0.85; }
 
@@ -750,7 +752,7 @@
 .moodRowTop { display: flex; align-items: center; justify-content: space-between; }
 .moodLabel { font-size: 12px; color: var(--ink3); letter-spacing: 0.08em; font-family: var(--font-mono); }
 .moodBtns { display: flex; gap: 5px; }
-.moodBtn { padding: 4px 12px; border-radius: 20px; border: 0.5px solid var(--border2); background: transparent; color: var(--ink3); font-family: var(--font-mono); font-size: 11px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.moodBtn { padding: 4px 12px; border-radius: 20px; border: 0.5px solid var(--border2); background: transparent; color: var(--ink3); font-family: var(--font-mono); font-size: 11px; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background 100ms ease, color 100ms ease, opacity 100ms ease; }
 .moodBtnGood { background: #1B3A2D; color: #fff; border-color: #1B3A2D; }
 .moodBtnFine { background: #B8C3B1; color: var(--ink); border-color: #B8C3B1; }
 .moodBtnBad { background: #D93B1C; color: #fff; border-color: #D93B1C; }
@@ -1153,36 +1155,91 @@
   .journalComposerInput:focus { border-color: var(--ink2); }
   .journalComposerInput::placeholder { color: var(--ink4); }
 
-  .journalComposerBar {
+  /* Add button docked inside the textarea, bottom-right */
+  .journalComposerWrap { position: relative; }
+
+  .journalComposerInput { padding-bottom: 34px; }
+
+  .journalComposerFooter {
+    position: absolute;
+    bottom: 7px;
+    right: 8px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    margin-top: 8px;
-    padding-bottom: 2px;
+    gap: 7px;
   }
 
   .journalHint {
     font-family: var(--font-mono);
     font-size: 10px;
     color: var(--ink4);
-    letter-spacing: 0.04em;
+    letter-spacing: 0.02em;
+    user-select: none;
   }
 
   .journalAddBtn {
-    padding: 6px 18px;
-    border-radius: 8px;
+    padding: 4px 12px;
+    border-radius: 6px;
     background: var(--ink);
     color: var(--bg);
     border: none;
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: 11px;
     letter-spacing: 0.04em;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
-    transition: opacity var(--motion-hover);
+    transition: opacity 100ms ease;
   }
-  .journalAddBtn:disabled { opacity: 0.35; cursor: default; }
-  .journalAddBtn:not(:disabled):hover { opacity: 0.8; }
+  .journalAddBtn:disabled { opacity: 0.3; cursor: default; }
+  .journalAddBtn:not(:disabled):hover { opacity: 0.75; }
+  @media (prefers-reduced-motion: reduce) {
+    .journalAddBtn { transition: none; }
+  }
+
+  /* Debrief buttons: right-aligned, shrink to content */
+  .debriefPillRow {
+    justify-content: flex-end;
+    padding-top: 12px;
+  }
+  .debriefPill {
+    flex: none;
+    padding: 8px 20px;
+    background: transparent;
+    border-color: rgba(26,26,26,.15);
+    color: var(--ink3);
+    font-size: 11px;
+  }
+  .debriefPill:hover {
+    background: rgba(26,26,26,.05);
+    border-color: rgba(26,26,26,.25);
+    color: var(--ink2);
+  }
+  .debriefPillOpen {
+    background: rgba(26,26,26,.06);
+    border-color: rgba(26,26,26,.25);
+    color: var(--ink);
+  }
+  .debriefPillOpen:hover { background: rgba(26,26,26,.1); }
+
+  /* ── Hover states on interactive elements ── */
+  .moodBtn:not(.moodBtnGood):not(.moodBtnFine):not(.moodBtnBad):hover {
+    background: rgba(26,26,26,.06);
+    border-color: rgba(26,26,26,.2);
+    color: var(--ink2);
+  }
+  .moodBtnGood:hover  { opacity: 0.85; }
+  .moodBtnFine:hover  { opacity: 0.85; }
+  .moodBtnBad:hover   { opacity: 0.85; }
+
+  .needToggle:hover { background: rgba(26,26,26,.04); border-radius: 6px; }
+
+  .practiceChip:hover { background: rgba(26,26,26,.06); border-color: rgba(26,26,26,.2); color: var(--ink); }
+
+  .donePill:hover { opacity: 0.82; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .moodBtn, .needToggle, .practiceChip, .donePill, .debriefPill { transition: none; }
+  }
 
   .journalEntryCount {
     font-family: var(--font-mono);
