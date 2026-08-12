@@ -926,65 +926,206 @@
 /* ── Desktop two-column layout ── */
 @media (min-width: 900px) {
 
-  .screen { padding: 0; min-height: 100vh; }
-
-  .desktopWrap {
-    display: block;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 32px 40px;
-    box-sizing: border-box;
+  /* ── Viewport lock + surface vars ── */
+  .screen {
+    padding: 0;
+    height: 100vh;
+    overflow: hidden;
+    background: #EAE7E0;
+    --card-bg: #fff;
+    --card-bg-warm: #FAF8F1;
+    --card-border: 0.5px solid rgba(26,26,26,.12);
+    --card-shadow: 0 1px 2px rgba(26,26,26,.04), 0 4px 14px rgba(26,26,26,.05);
+    --timer-bar-bg: #fff;
+    --timer-bar-border: 0.5px solid rgba(26,26,26,.12);
+    --timer-bar-shadow: 0 1px 2px rgba(26,26,26,.04), 0 4px 14px rgba(26,26,26,.05);
   }
 
-  .header { padding: 28px 0 20px; }
+  /* Desktop container: flex column filling the viewport */
+  .desktopWrap {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 0 32px;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .header { flex-shrink: 0; padding: 20px 0 14px; }
   .headerRow { align-items: baseline; }
-  .spaceBar { max-width: 340px; }
+  .spaceBar { max-width: none; }
 
   /* Reset mobile order values — columns own the layout now */
   .reflectiveSection, .timerSlot, .guidanceSlot,
   .moodCard, .practicesCard, .cardJournal { order: 0; }
 
-  /* .list is the 2-column grid; .colLeft / .colRight are its only children */
-  .list {
-    display: grid;
-    grid-template-columns: 1fr 400px;
-    column-gap: 18px;
-    align-items: start;
-    overflow-y: visible;
-    flex: unset;
+  /* Cards: white surface, hairline border, soft shadow */
+  .card {
+    background: var(--card-bg, #fff);
+    border: var(--card-border, 0.5px solid rgba(26,26,26,.12));
+    box-shadow: var(--card-shadow, 0 1px 2px rgba(26,26,26,.04), 0 4px 14px rgba(26,26,26,.05));
   }
 
-  /* Each column wrapper is an independent flex column — no shared row heights */
-  .colLeft, .colRight {
+  /* Note-to-self keeps warm cream; update border/shadow to match card family */
+  .reflectiveSection {
+    border: var(--card-border, 0.5px solid rgba(26,26,26,.12));
+    box-shadow: var(--card-shadow, 0 1px 2px rgba(26,26,26,.04), 0 4px 14px rgba(26,26,26,.05));
+  }
+
+  /* ── Fixed-height two-column grid ── */
+  .list {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    column-gap: 18px;
+    align-items: stretch;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  /* Left rail: internal scroll when practices run long */
+  .colLeft {
     display: flex;
     flex-direction: column;
     gap: 14px;
+    overflow-y: auto;
+    padding-bottom: 32px;
+  }
+  .colLeft::-webkit-scrollbar { display: none; }
+
+  /* Right panel: no scroll — journal card manages its own overflow */
+  .colRight {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
 
   /* Slot wrappers become real block containers inside their flex column */
-  .timerSlot  { display: block; }
+  .timerSlot   { display: block; }
   .guidanceSlot { display: block; }
 
-  /* Journal card: min-height, flex column so textarea fills it */
+  /* Journal card: hero — fills the full right column */
   .cardJournal {
-    min-height: 430px;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
+    padding: 20px 24px;
+    background: var(--card-bg, #fff);
+    border: var(--card-border, 0.5px solid rgba(26,26,26,.12));
+    box-shadow: var(--card-shadow, 0 1px 2px rgba(26,26,26,.04), 0 4px 14px rgba(26,26,26,.05));
+    border-radius: 12px;
+    margin-bottom: 0;
   }
 
-  /* Journal textarea: fill card height, scroll instead of auto-grow */
-  .cardJournal .journalInput {
-    flex: 1 !important;
-    height: auto !important;
-    min-height: 200px;
-    overflow-y: auto !important;
-  }
-
-  /* Practices card: clip with scroll cue (padding-bottom = partial row visible) */
-  .practicesCard {
-    max-height: 520px;
+  /* ── Desktop journal: scrollable entries + pinned composer ── */
+  .journalEntries {
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
-    padding-bottom: 20px;
+    max-width: 640px;
+    margin: 0 auto;
+    width: 100%;
+    padding-bottom: 16px;
+    box-sizing: border-box;
+  }
+  .journalEntries::-webkit-scrollbar { display: none; }
+
+  .journalEntriesText {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 200;
+    color: var(--ink);
+    line-height: 1.75;
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin: 0;
+  }
+
+  .journalEntriesEmpty {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--ink4);
+    padding-top: 4px;
+  }
+
+  .journalComposer {
+    flex-shrink: 0;
+    border-top: 0.5px solid rgba(26,26,26,.08);
+    padding-top: 14px;
+    max-width: 640px;
+    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .journalComposerInput {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border: 0.5px solid rgba(26,26,26,.12);
+    border-radius: 8px;
+    background: var(--bg2, #f5f2ea);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 200;
+    color: var(--ink);
+    line-height: 1.6;
+    resize: none;
+    outline: none;
+    transition: border-color var(--motion-hover);
+  }
+  .journalComposerInput:focus { border-color: var(--ink2); }
+  .journalComposerInput::placeholder { color: var(--ink4); }
+
+  .journalComposerBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+    padding-bottom: 2px;
+  }
+
+  .journalHint {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--ink4);
+    letter-spacing: 0.04em;
+  }
+
+  .journalAddBtn {
+    padding: 6px 18px;
+    border-radius: 8px;
+    background: var(--ink);
+    color: var(--bg);
+    border: none;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity var(--motion-hover);
+  }
+  .journalAddBtn:disabled { opacity: 0.35; cursor: default; }
+  .journalAddBtn:not(:disabled):hover { opacity: 0.8; }
+
+  .journalEntryCount {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--ink4);
+    letter-spacing: 0.04em;
+  }
+
+  /* Practices card: no max-height cap — left rail scrolls as a whole */
+  .practicesCard {
+    max-height: none;
+    overflow-y: visible;
+    padding-bottom: 0;
     box-sizing: border-box;
   }
 

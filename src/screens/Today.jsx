@@ -291,8 +291,10 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
 
   const [journalEntry, setJournalEntry] = useState('')
   const [journalSaveError, setJournalSaveError] = useState(null)
+  const [journalDraftText, setJournalDraftText] = useState('')
   const debounceRef = useRef(null)
   const journalRef = useRef(null)
+  const journalEntriesRef = useRef(null)
   const journalUserIdRef = useRef(state.userId)
   const journalTextRef = useRef('')   // always holds latest text for event listeners
   const journalDateRef = useRef(today)
@@ -368,12 +370,16 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     }, 1500)
   }
 
-  function handleInsertTimestamp() {
+  function makeTimestamp() {
     const now = new Date()
     const h = now.getHours() % 12 || 12
     const m = String(now.getMinutes()).padStart(2, '0')
     const ampm = now.getHours() < 12 ? 'am' : 'pm'
-    const stamp = '[' + h + ':' + m + ampm + ']'
+    return '[' + h + ':' + m + ampm + ']'
+  }
+
+  function handleInsertTimestamp() {
+    const stamp = makeTimestamp()
     const insertion = journalEntry.length === 0 ? `${stamp} ` : `\n\n${stamp} `
     const newValue = journalEntry + insertion
     handleJournalChange({ target: { value: newValue } })
@@ -383,6 +389,23 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         journalRef.current.selectionStart = journalRef.current.selectionEnd = newValue.length
       }
     }, 0)
+  }
+
+  function handleAddEntry() {
+    const text = journalDraftText.trim()
+    if (!text) return
+    const stamp = makeTimestamp()
+    const separator = journalEntry.trimEnd() ? '\n\n' : ''
+    const newValue = journalEntry.trimEnd() + separator + stamp + ' ' + text
+    handleJournalChange({ target: { value: newValue } })
+    setJournalDraftText('')
+  }
+
+  function handleComposerKeyDown(e) {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault()
+      handleAddEntry()
+    }
   }
 
   const isDesktop = useIsDesktop()
@@ -522,6 +545,18 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     })
   }
 
+  // Count distinct journal entries by timestamp markers; fall back to 1 if there's any text
+  const journalEntryCount = journalEntry.trim()
+    ? ((journalEntry.match(/\[\d{1,2}:\d{2}(?:am|pm)\]/g) || []).length || 1)
+    : 0
+
+  // Auto-scroll entries to bottom when a new entry is appended on desktop
+  useEffect(() => {
+    if (isDesktop && journalEntriesRef.current) {
+      journalEntriesRef.current.scrollTop = journalEntriesRef.current.scrollHeight
+    }
+  }, [journalEntry, isDesktop])
+
   return (
     <div className={styles.screen}>
     <div className={styles.desktopWrap}>
@@ -625,79 +660,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
           <TimerCard />
         </div>
 
-        {/* ── Journal card ── */}
-        <div className={styles.cardJournal}>
-          <div className={styles.sectionHeader}>
-            <span className={styles.sectionLabel}>journal</span>
-            <button className={styles.journalTimestampBtn} onClick={handleInsertTimestamp}>⏱</button>
-          </div>
-          <textarea
-            ref={journalRef}
-            className={styles.journalInput}
-            placeholder="add your thoughts for the day…"
-            value={journalEntry}
-            onChange={handleJournalChange}
-            rows={5}
-          />
-          {journalSaveError && <div className={styles.journalSaveError}>{journalSaveError}</div>}
-
-          {/* Debrief pills — side by side, same expand behavior */}
-          <div className={styles.debriefPillRow}>
-            <button
-              className={`${styles.debriefPill} ${debriefExpanded ? styles.debriefPillOpen : ''}`}
-              onClick={() => { setDebriefExpanded(e => !e); setPeakExpanded(false) }}
-            >
-              {todayDebriefCount > 0 && <span className={styles.debriefDot} />}
-              <span>anxiety debrief</span>
-              {todayDebriefCount > 0 && <span className={styles.debriefCount}>· {todayDebriefCount}</span>}
-            </button>
-            <button
-              className={`${styles.debriefPill} ${peakExpanded ? styles.debriefPillOpen : ''}`}
-              onClick={() => { setPeakExpanded(e => !e); setDebriefExpanded(false) }}
-            >
-              {todayPeakCount > 0 && <span className={styles.debriefDot} />}
-              <span>peak debrief</span>
-              {todayPeakCount > 0 && <span className={styles.debriefCount}>· {todayPeakCount}</span>}
-            </button>
-          </div>
-
-          {!isDesktop && debriefExpanded && (
-            <>
-              <div className={styles.debriefHairline} />
-              <DebriefForm
-                userId={state.userId}
-                debriefTypes={debriefTypes}
-                onDirtyChange={setDebriefDirty}
-                onSaved={() => {
-                  setDebriefExpanded(false)
-                  setDebriefDirty(false)
-                  setTodayDebriefCount(c => c + 1)
-                }}
-              />
-            </>
-          )}
-
-          {!isDesktop && peakExpanded && (
-            <>
-              <div className={styles.debriefHairline} />
-              <PeakDebriefForm
-                userId={state.userId}
-                debriefTypes={debriefTypes}
-                onDirtyChange={setPeakDirty}
-                onSaved={() => {
-                  setPeakExpanded(false)
-                  setPeakDirty(false)
-                  setTodayPeakCount(c => c + 1)
-                }}
-              />
-            </>
-          )}
-        </div>
-
-        </div>{/* /colLeft */}
-
-        <div className={styles.colRight}>
-
         {/* ── Guidance ── */}
         <div className={styles.guidanceSlot}>
           {showGuidance && <GuidanceCard type={guidanceType} onDismiss={handleDismissGuidance} />}
@@ -736,7 +698,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                       onChange={e => setMoodNotes(prev => ({ ...prev, [period]: e.target.value }))}
                       onBlur={() => {
                         handleNoteBlur(period)
-                        // Collapse if still empty after blur
                         if (!moodNotes[period]?.trim()) {
                           setExpandedNoteRows(prev => { const n = new Set(prev); n.delete(period); return n })
                         }
@@ -775,7 +736,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 </div>
 
                 {modeNeeds.map((n) => {
-                  // Use practicesDB (stable IDs) when loaded; fall back to JSONB text array
                   const pool = (state.practicesDB && state.practicesDB.length > 0)
                     ? state.practicesDB.filter(p => p.need_id === n.id && !p.archived_at)
                     : (state.practices[n.id] || []).map(label => ({ id: null, label }))
@@ -827,19 +787,14 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                         </div>
                         <div className={styles.bubbleRow}>
                           {Array.from({ length: maxBubbles }).map((_, i) => (
-                            <div
-                              key={i}
-                              className={styles.bubble}
+                            <div key={i} className={styles.bubble}
                               style={i < filledBubbles
                                 ? { background: pip, border: `1.5px solid ${pip}` }
-                                : { background: 'transparent', border: `1.5px solid ${pip}` }
-                              }
+                                : { background: 'transparent', border: `1.5px solid ${pip}` }}
                             />
                           ))}
                           {Array.from({ length: bonusBubbles }).map((_, i) => (
-                            <div
-                              key={`bonus-${i}`}
-                              className={styles.bubbleBonus}
+                            <div key={`bonus-${i}`} className={styles.bubbleBonus}
                               style={{ border: `1.5px dashed ${pip}` }}
                             />
                           ))}
@@ -857,8 +812,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                           ) : (
                             <div className={styles.chipRow}>
                               {notDonePractices.map(practice => (
-                                <button
-                                  key={practice.id || practice.label}
+                                <button key={practice.id || practice.label}
                                   className={styles.practiceChip}
                                   onClick={() => handleChipClick(n.id, mode, practice.label, practice.id)}
                                 >
@@ -875,6 +829,120 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               </div>
             )
           })}
+        </div>
+
+        </div>{/* /colLeft */}
+
+        <div className={styles.colRight}>
+
+        {/* ── Journal card (hero on desktop) ── */}
+        <div className={styles.cardJournal}>
+          <div className={styles.sectionHeader}>
+            <span className={styles.sectionLabel}>journal</span>
+            {isDesktop
+              ? <span className={styles.journalEntryCount}>
+                  {journalEntryCount > 0
+                    ? `${journalEntryCount} ${journalEntryCount === 1 ? 'entry' : 'entries'} today`
+                    : ''}
+                </span>
+              : <button className={styles.journalTimestampBtn} onClick={handleInsertTimestamp}>⏱</button>
+            }
+          </div>
+
+          {isDesktop ? (
+            <>
+              <div className={styles.journalEntries} ref={journalEntriesRef}>
+                {journalEntry.trim() ? (
+                  <pre className={styles.journalEntriesText}>{journalEntry}</pre>
+                ) : (
+                  <span className={styles.journalEntriesEmpty}>nothing written yet — start typing below</span>
+                )}
+              </div>
+              <div className={styles.journalComposer}>
+                <textarea
+                  className={styles.journalComposerInput}
+                  placeholder="add a thought…"
+                  value={journalDraftText}
+                  onChange={e => setJournalDraftText(e.target.value)}
+                  onKeyDown={handleComposerKeyDown}
+                  rows={3}
+                />
+                {journalSaveError && <div className={styles.journalSaveError}>{journalSaveError}</div>}
+                <div className={styles.journalComposerBar}>
+                  <span className={styles.journalHint}>⌘↵ to add</span>
+                  <button
+                    className={styles.journalAddBtn}
+                    onClick={handleAddEntry}
+                    disabled={!journalDraftText.trim()}
+                  >add</button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <textarea
+                ref={journalRef}
+                className={styles.journalInput}
+                placeholder="add your thoughts for the day…"
+                value={journalEntry}
+                onChange={handleJournalChange}
+                rows={5}
+              />
+              {journalSaveError && <div className={styles.journalSaveError}>{journalSaveError}</div>}
+            </>
+          )}
+
+          {/* Debrief pills — footer of the journal card */}
+          <div className={styles.debriefPillRow}>
+            <button
+              className={`${styles.debriefPill} ${debriefExpanded ? styles.debriefPillOpen : ''}`}
+              onClick={() => { setDebriefExpanded(e => !e); setPeakExpanded(false) }}
+            >
+              {todayDebriefCount > 0 && <span className={styles.debriefDot} />}
+              <span>anxiety debrief</span>
+              {todayDebriefCount > 0 && <span className={styles.debriefCount}>· {todayDebriefCount}</span>}
+            </button>
+            <button
+              className={`${styles.debriefPill} ${peakExpanded ? styles.debriefPillOpen : ''}`}
+              onClick={() => { setPeakExpanded(e => !e); setDebriefExpanded(false) }}
+            >
+              {todayPeakCount > 0 && <span className={styles.debriefDot} />}
+              <span>peak debrief</span>
+              {todayPeakCount > 0 && <span className={styles.debriefCount}>· {todayPeakCount}</span>}
+            </button>
+          </div>
+
+          {!isDesktop && debriefExpanded && (
+            <>
+              <div className={styles.debriefHairline} />
+              <DebriefForm
+                userId={state.userId}
+                debriefTypes={debriefTypes}
+                onDirtyChange={setDebriefDirty}
+                onSaved={() => {
+                  setDebriefExpanded(false)
+                  setDebriefDirty(false)
+                  setTodayDebriefCount(c => c + 1)
+                }}
+              />
+            </>
+          )}
+
+          {!isDesktop && peakExpanded && (
+            <>
+              <div className={styles.debriefHairline} />
+              <PeakDebriefForm
+                userId={state.userId}
+                debriefTypes={debriefTypes}
+                onDirtyChange={setPeakDirty}
+                onSaved={() => {
+                  setPeakExpanded(false)
+                  setPeakDirty(false)
+                  setTodayPeakCount(c => c + 1)
+                }}
+              />
+            </>
+          )}
         </div>
 
         </div>{/* /colRight */}
