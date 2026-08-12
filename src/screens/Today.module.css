@@ -1130,6 +1130,9 @@
     letter-spacing: 0.04em;
   }
 
+  /* Unowned space-bar remainder: quiet on desktop so mode colors pop */
+  .spaceSegAnxiety { background: rgba(26,26,26,.12); }
+
   /* Practices card: no max-height cap — left rail scrolls as a whole */
   .practicesCard {
     max-height: none;
