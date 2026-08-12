@@ -1028,17 +1028,23 @@
     margin-bottom: 0;
   }
 
-  /* ── Desktop journal: scrollable entries + pinned composer ── */
-  .journalEntries {
+  /* ── Desktop journal: scroll container holds entries + composer together ── */
+  .journalScroll {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
     max-width: 640px;
     width: 100%;
-    padding-bottom: 16px;
+    padding-bottom: 24px;
     box-sizing: border-box;
+    scrollbar-width: none;
   }
-  .journalEntries::-webkit-scrollbar { display: none; }
+  .journalScroll::-webkit-scrollbar { display: none; }
+
+  /* Entries: natural height inside the scroll container */
+  .journalEntries {
+    width: 100%;
+  }
 
   .journalEntriesText {
     font-family: var(--font-mono);
@@ -1060,10 +1066,9 @@
   }
 
   .journalComposer {
-    flex-shrink: 0;
+    margin-top: 24px;
     border-top: 0.5px solid rgba(26,26,26,.08);
     padding-top: 14px;
-    max-width: 640px;
     width: 100%;
     box-sizing: border-box;
   }
