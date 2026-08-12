@@ -58,6 +58,55 @@
   border-color: transparent;
 }
 
+/* Countdown chip shown in bar on desktop while timer is running */
+.barCountdown {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 0 12px;
+  background: transparent;
+  border: 0.75px solid rgba(62, 45, 38, 0.45);
+  border-radius: 100px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--clay);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  margin-left: 12px;
+}
+.barCountdown:hover {
+  background: var(--clay);
+  color: var(--on-clay);
+  border-color: transparent;
+}
+
+/* ── Desktop modal timer content ── */
+.timerModal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0 4px;
+}
+
+.timerModalEyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 200;
+  letter-spacing: 0.1em;
+  color: var(--on-clay);
+  opacity: 0.45;
+  margin-bottom: 16px;
+}
+
+.timerModalFooter {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  padding-top: 20px;
+}
+
 /* ── Full-screen overlay ── */
 .fullScreen {
   position: fixed;

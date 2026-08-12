@@ -19,7 +19,7 @@ const ANXIETY_FIELDS = [
 
 const EMPTY_FIELDS = { name_it: '', feel_it: '', examine_it: '', reclaim_it: '' }
 
-export default function DebriefForm({ userId, debriefTypes, onSaved }) {
+export default function DebriefForm({ userId, debriefTypes, onSaved, onDirtyChange }) {
   const [nature, setNature] = useState(null)
   const [environment, setEnvironment] = useState(null)
   const [fields, setFields] = useState(EMPTY_FIELDS)
@@ -41,6 +41,11 @@ export default function DebriefForm({ userId, debriefTypes, onSaved }) {
     }, 1000)
     return () => clearInterval(id)
   }, [timerActive])
+
+  useEffect(() => {
+    const dirty = nature !== null || environment !== null || Object.values(fields).some(v => v.trim())
+    onDirtyChange?.(dirty)
+  }, [nature, environment, fields, onDirtyChange])
 
   function handleFieldChange(key, val) {
     setFields(prev => ({ ...prev, [key]: val }))

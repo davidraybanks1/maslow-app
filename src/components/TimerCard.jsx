@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { IconChevronLeft } from '@tabler/icons-react'
 import { CLAY, ON_CLAY } from '../lib/constants'
+import { useIsDesktop } from '../lib/useIsDesktop'
+import DesktopModal from './DesktopModal'
 import styles from './TimerCard.module.css'
 
 const TIMER_KEY = 'maslow_timer'
@@ -10,6 +12,7 @@ const SVG_SIZE = 270
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS
 
 const CLAY_VARS = { '--clay': CLAY, '--on-clay': ON_CLAY }
+const CLAY_MODAL_STYLE = { background: CLAY, color: ON_CLAY, border: 'none' }
 
 function readTimer() {
   try {
@@ -50,6 +53,7 @@ export default function TimerCard() {
   const [fullScreen, setFullScreen] = useState(false)
   const [tick, setTick] = useState(0)
   const vibratedRef = useRef(false)
+  const isDesktop = useIsDesktop()
 
   function setTimer(t) {
     setTimerRaw(t)
@@ -122,24 +126,63 @@ export default function TimerCard() {
     vibratedRef.current = false
   }
 
+  function dismissModal() {
+    setFullScreen(false)
+  }
+
   const isPaused = !!timer && timer.pausedRemainingMs !== null && timer.pausedRemainingMs !== undefined
   const elapsedFraction = timer ? Math.max(0, Math.min(1, 1 - remaining / timer.durationMs)) : 0
   const dashOffset = CIRCUMFERENCE * (1 - elapsedFraction)
+
+  const ringJSX = (
+    <div className={styles.ringWrapper}>
+      <svg width={SVG_SIZE} height={SVG_SIZE} className={styles.ring} aria-hidden="true">
+        <circle cx={SVG_SIZE / 2} cy={SVG_SIZE / 2} r={RADIUS}
+          fill="none" stroke="currentColor" strokeWidth={2.5} opacity={0.16} />
+        <circle cx={SVG_SIZE / 2} cy={SVG_SIZE / 2} r={RADIUS}
+          fill="none" stroke="currentColor" strokeWidth={2.5}
+          strokeLinecap="round" strokeDasharray={CIRCUMFERENCE} strokeDashoffset={dashOffset} />
+      </svg>
+      <div className={styles.ringContent}>
+        <div className={styles.timeDisplay}>{formatTime(remaining)}</div>
+        <div className={styles.timeLabel}>{isDone ? 'DONE' : 'REMAINING'}</div>
+      </div>
+    </div>
+  )
+
+  const footerButtons = (
+    <>
+      {!isDone && (
+        <button className={`${styles.fsBtn} ${styles.fsBtnOutline}`} onClick={isPaused ? resumeTimer : pauseTimer}>
+          {isPaused ? 'resume' : 'pause'}
+        </button>
+      )}
+      <button className={`${styles.fsBtn} ${styles.fsBtnFilled}`} onClick={endTimer}>
+        {isDone ? 'close' : 'end'}
+      </button>
+    </>
+  )
 
   return (
     <>
       <div className={styles.bar} style={CLAY_VARS}>
         <span className={styles.label}>set a timer</span>
-        <div className={styles.pills}>
-          {DURATION_OPTIONS.map(m => (
-            <button key={m} className={styles.pill} onClick={() => startTimer(m)}>
-              {m}
-            </button>
-          ))}
-        </div>
+        {isDesktop && timer ? (
+          <button className={styles.barCountdown} onClick={() => setFullScreen(true)}>
+            {isDone ? 'done' : formatTime(remaining)}
+          </button>
+        ) : (
+          <div className={styles.pills}>
+            {DURATION_OPTIONS.map(m => (
+              <button key={m} className={styles.pill} onClick={() => startTimer(m)}>
+                {m}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {fullScreen && timer && (
+      {!isDesktop && fullScreen && timer && (
         <div className={styles.fullScreen} style={CLAY_VARS}>
           <div className={styles.fsHeader}>
             <button className={styles.fsBack} onClick={endTimer} aria-label="close timer">
@@ -148,59 +191,31 @@ export default function TimerCard() {
             <span className={styles.fsEyebrow}>TIMER</span>
             <span className={styles.fsSpacer} />
           </div>
-
           <div className={styles.fsBody}>
-            <div className={styles.ringWrapper}>
-              <svg
-                width={SVG_SIZE}
-                height={SVG_SIZE}
-                className={styles.ring}
-                aria-hidden="true"
-              >
-                {/* Track ring at 16% opacity */}
-                <circle
-                  cx={SVG_SIZE / 2}
-                  cy={SVG_SIZE / 2}
-                  r={RADIUS}
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2.5}
-                  opacity={0.16}
-                />
-                {/* Progress ring — fills as time elapses, full at zero remaining */}
-                <circle
-                  cx={SVG_SIZE / 2}
-                  cy={SVG_SIZE / 2}
-                  r={RADIUS}
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2.5}
-                  strokeLinecap="round"
-                  strokeDasharray={CIRCUMFERENCE}
-                  strokeDashoffset={dashOffset}
-                />
-              </svg>
-              <div className={styles.ringContent}>
-                <div className={styles.timeDisplay}>{formatTime(remaining)}</div>
-                <div className={styles.timeLabel}>{isDone ? 'DONE' : 'REMAINING'}</div>
-              </div>
-            </div>
+            {ringJSX}
           </div>
-
           <div className={styles.fsFooter}>
-            {!isDone && (
-              <button
-                className={`${styles.fsBtn} ${styles.fsBtnOutline}`}
-                onClick={isPaused ? resumeTimer : pauseTimer}
-              >
-                {isPaused ? 'resume' : 'pause'}
-              </button>
-            )}
-            <button className={`${styles.fsBtn} ${styles.fsBtnFilled}`} onClick={endTimer}>
-              {isDone ? 'close' : 'end'}
-            </button>
+            {footerButtons}
           </div>
         </div>
+      )}
+
+      {isDesktop && fullScreen && timer && (
+        <DesktopModal
+          title="timer"
+          onClose={dismissModal}
+          onDismiss={dismissModal}
+          cardStyle={CLAY_MODAL_STYLE}
+          lightScrim
+        >
+          <div className={styles.timerModal}>
+            <span className={styles.timerModalEyebrow}>TIMER</span>
+            {ringJSX}
+            <div className={styles.timerModalFooter}>
+              {footerButtons}
+            </div>
+          </div>
+        </DesktopModal>
       )}
     </>
   )

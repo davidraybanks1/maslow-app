@@ -10,6 +10,8 @@ import { hapticTick } from '../lib/native'
 import DebriefForm from '../components/DebriefForm'
 import PeakDebriefForm from '../components/PeakDebriefForm'
 import TimerCard from '../components/TimerCard'
+import DesktopModal from '../components/DesktopModal'
+import { useIsDesktop } from '../lib/useIsDesktop'
 import styles from './Today.module.css'
 
 function SortableDeckRow({ card, onEdit, onDelete, onLightbox }) {
@@ -383,9 +385,23 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     }, 0)
   }
 
+  const isDesktop = useIsDesktop()
   const [debriefExpanded, setDebriefExpanded] = useState(false)
   const [peakExpanded, setPeakExpanded] = useState(false)
+  const [debriefDirty, setDebriefDirty] = useState(false)
+  const [peakDirty, setPeakDirty] = useState(false)
   const [debriefTypes, setDebriefTypes] = useState({ nature: [], environment: [], peak: [] })
+
+  function handleDebriefClose() { setDebriefExpanded(false); setDebriefDirty(false) }
+  function handleDebriefDismiss() {
+    if (debriefDirty && !window.confirm('Discard your debrief?')) return
+    setDebriefExpanded(false); setDebriefDirty(false)
+  }
+  function handlePeakClose() { setPeakExpanded(false); setPeakDirty(false) }
+  function handlePeakDismiss() {
+    if (peakDirty && !window.confirm('Discard your peak debrief?')) return
+    setPeakExpanded(false); setPeakDirty(false)
+  }
   const [todayDebriefCount, setTodayDebriefCount] = useState(0)
   const [todayPeakCount, setTodayPeakCount] = useState(0)
   const [openNeeds, setOpenNeeds] = useState(new Set())
@@ -645,28 +661,32 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
             </button>
           </div>
 
-          {debriefExpanded && (
+          {!isDesktop && debriefExpanded && (
             <>
               <div className={styles.debriefHairline} />
               <DebriefForm
                 userId={state.userId}
                 debriefTypes={debriefTypes}
+                onDirtyChange={setDebriefDirty}
                 onSaved={() => {
                   setDebriefExpanded(false)
+                  setDebriefDirty(false)
                   setTodayDebriefCount(c => c + 1)
                 }}
               />
             </>
           )}
 
-          {peakExpanded && (
+          {!isDesktop && peakExpanded && (
             <>
               <div className={styles.debriefHairline} />
               <PeakDebriefForm
                 userId={state.userId}
                 debriefTypes={debriefTypes}
+                onDirtyChange={setPeakDirty}
                 onSaved={() => {
                   setPeakExpanded(false)
+                  setPeakDirty(false)
                   setTodayPeakCount(c => c + 1)
                 }}
               />
@@ -861,6 +881,28 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
 
       </div>
     </div>{/* /desktopWrap */}
+
+      {isDesktop && debriefExpanded && (
+        <DesktopModal title="anxiety debrief" onClose={handleDebriefClose} onDismiss={handleDebriefDismiss}>
+          <DebriefForm
+            userId={state.userId}
+            debriefTypes={debriefTypes}
+            onDirtyChange={setDebriefDirty}
+            onSaved={() => { handleDebriefClose(); setTodayDebriefCount(c => c + 1) }}
+          />
+        </DesktopModal>
+      )}
+
+      {isDesktop && peakExpanded && (
+        <DesktopModal title="peak debrief" onClose={handlePeakClose} onDismiss={handlePeakDismiss}>
+          <PeakDebriefForm
+            userId={state.userId}
+            debriefTypes={debriefTypes}
+            onDirtyChange={setPeakDirty}
+            onSaved={() => { handlePeakClose(); setTodayPeakCount(c => c + 1) }}
+          />
+        </DesktopModal>
+      )}
 
       {manageDeckOpen && (
         <div className={`${styles.noteOverlay} ${manageDeckClosing ? styles.noteOverlayClosing : ''}`}>
