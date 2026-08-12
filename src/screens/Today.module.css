@@ -992,7 +992,8 @@
     flex-direction: column;
     gap: 14px;
     overflow-y: auto;
-    padding-bottom: 32px;
+    padding: 0 0 32px 0;
+    scrollbar-width: none;
   }
   .colLeft::-webkit-scrollbar { display: none; }
 
@@ -1001,7 +1002,12 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    padding: 0;
   }
+
+  /* Ensure first children have no stray top margin */
+  .colLeft > *:first-child,
+  .colRight > *:first-child { margin-top: 0; }
 
   /* Slot wrappers become real block containers inside their flex column */
   .timerSlot   { display: block; }

@@ -1,3 +1,8 @@
+/* Desktop: colLeft gap handles spacing — cancel bar's own margin-bottom */
+@media (min-width: 900px) {
+  .bar { margin-bottom: 0; }
+}
+
 /* ── Timer bar (Today screen) ── */
 .bar {
   display: flex;
