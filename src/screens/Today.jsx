@@ -691,24 +691,26 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                       ))}
                     </div>
                   </div>
-                  {expandedNoteRows.has(period) ? (
-                    <input
-                      ref={el => { moodNoteRefs.current[period] = el }}
-                      className={styles.moodNote}
-                      placeholder="add a note…"
-                      value={moodNotes[period] || ''}
-                      onChange={e => setMoodNotes(prev => ({ ...prev, [period]: e.target.value }))}
-                      onBlur={() => {
-                        handleNoteBlur(period)
-                        if (!moodNotes[period]?.trim()) {
-                          setExpandedNoteRows(prev => { const n = new Set(prev); n.delete(period); return n })
-                        }
-                      }}
-                    />
-                  ) : (
-                    <button className={styles.moodNoteToggle} onClick={() => toggleNoteRow(period)}>
-                      + note
-                    </button>
+                  {moodSelections[period] && (
+                    expandedNoteRows.has(period) ? (
+                      <input
+                        ref={el => { moodNoteRefs.current[period] = el }}
+                        className={styles.moodNote}
+                        placeholder="add a note…"
+                        value={moodNotes[period] || ''}
+                        onChange={e => setMoodNotes(prev => ({ ...prev, [period]: e.target.value }))}
+                        onBlur={() => {
+                          handleNoteBlur(period)
+                          if (!moodNotes[period]?.trim()) {
+                            setExpandedNoteRows(prev => { const n = new Set(prev); n.delete(period); return n })
+                          }
+                        }}
+                      />
+                    ) : (
+                      <button className={styles.moodNoteToggle} onClick={() => toggleNoteRow(period)}>
+                        + note
+                      </button>
+                    )
                   )}
                 </div>
               </div>
@@ -769,9 +771,10 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                         onClick={() => toggleNeed(n.id)}
                       >
                         <span className={styles.needName}>{n.name}</span>
-                        {notDonePractices.length > 0 && (
-                          <span className={styles.needRemainingCount}>{notDonePractices.length}</span>
-                        )}
+                        <span
+                          className={styles.needRemainingCount}
+                          style={notDonePractices.length === 0 ? { visibility: 'hidden' } : undefined}
+                        >{notDonePractices.length}</span>
                         <div className={styles.donePillRow}>
                           {donePractices.map(practice => {
                             const practiceCount = checkedForNeed.filter(e => matchPractice(practice, e)).length
