@@ -917,7 +917,7 @@
 .desktopWrap { display: contents; }
 .colLeft, .colRight { display: contents; }
 /* Slot wrappers are real blocks on mobile so they become flex items of .list */
-.timerSlot   { display: block; }
+.timerSlot   { display: block; margin-bottom: 12px; }
 .guidanceSlot { display: block; }
 .moodCard    { /* marker */ }
 .practicesCard { /* marker */ }
