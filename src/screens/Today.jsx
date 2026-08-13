@@ -12,7 +12,7 @@ import PeakDebriefForm from '../components/PeakDebriefForm'
 import TimerCard from '../components/TimerCard'
 import DesktopModal from '../components/DesktopModal'
 import { useIsDesktop } from '../lib/useIsDesktop'
-import { useTimer, DURATION_OPTIONS, formatTimerTime } from '../lib/useTimer'
+import { useTimer } from '../lib/useTimer'
 import styles from './Today.module.css'
 
 function SortableDeckRow({ card, onEdit, onDelete, onLightbox }) {
@@ -657,9 +657,9 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
           </div>
         )}
 
-        {/* ── Timer card (mobile only in rail; desktop gets it in journal header) ── */}
+        {/* ── Timer card ── */}
         <div className={styles.timerSlot}>
-          <TimerCard {...timerState} hideBar={isDesktop} />
+          <TimerCard {...timerState} />
         </div>
 
         {/* ── Guidance ── */}
@@ -841,35 +841,14 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         <div className={styles.cardJournal}>
           <div className={styles.sectionHeader}>
             <span className={styles.sectionLabel}>journal</span>
-            {isDesktop ? (
-              <div className={styles.journalHeaderRight}>
-                {timerState.timer ? (
-                  <button
-                    className={styles.journalTimerCountdown}
-                    onClick={() => timerState.setFullScreen(true)}
-                  >
-                    {timerState.isDone ? 'done' : formatTimerTime(timerState.remaining)}
-                  </button>
-                ) : (
-                  <div className={styles.journalTimerPills}>
-                    {DURATION_OPTIONS.map(m => (
-                      <button
-                        key={m}
-                        className={styles.journalTimerPill}
-                        onClick={() => timerState.startTimer(m)}
-                      >{m}</button>
-                    ))}
-                  </div>
-                )}
-                <span className={styles.journalEntryCount}>
+            {isDesktop
+              ? <span className={styles.journalEntryCount}>
                   {journalEntryCount > 0
                     ? `${journalEntryCount} ${journalEntryCount === 1 ? 'entry' : 'entries'} today`
                     : ''}
                 </span>
-              </div>
-            ) : (
-              <button className={styles.journalTimestampBtn} onClick={handleInsertTimestamp}>⏱</button>
-            )}
+              : <button className={styles.journalTimestampBtn} onClick={handleInsertTimestamp}>⏱</button>
+            }
           </div>
 
           {isDesktop ? (

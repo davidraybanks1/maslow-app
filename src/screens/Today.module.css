@@ -1011,70 +1011,9 @@
   .colLeft > *:first-child,
   .colRight > *:first-child { margin-top: 0; }
 
-  /* Timer slot hidden on desktop — timer controls live in the journal header */
-  .timerSlot   { display: none; }
+  /* Slot wrappers */
+  .timerSlot   { display: block; }
   .guidanceSlot { display: block; }
-
-  /* ── Journal header timer controls ── */
-  .journalHeaderRight {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .journalTimerPills {
-    display: flex;
-    gap: 4px;
-  }
-  .journalTimerPill {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    height: 22px;
-    padding: 0 11px;
-    background: transparent;
-    border: 0.75px solid rgba(62,45,38,.4);
-    border-radius: 100px;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    font-weight: 300;
-    color: var(--clay);
-    cursor: pointer;
-    transition: background 100ms ease, color 100ms ease, border-color 100ms ease;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .journalTimerPill:hover {
-    background: var(--clay);
-    color: var(--on-clay);
-    border-color: transparent;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .journalTimerPill { transition: none; }
-  }
-  .journalTimerCountdown {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    height: 22px;
-    padding: 0 11px;
-    background: transparent;
-    border: 0.75px solid rgba(62,45,38,.4);
-    border-radius: 100px;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    font-weight: 300;
-    color: var(--clay);
-    cursor: pointer;
-    transition: background 100ms ease, color 100ms ease, border-color 100ms ease;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .journalTimerCountdown:hover {
-    background: var(--clay);
-    color: var(--on-clay);
-    border-color: transparent;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .journalTimerCountdown { transition: none; }
-  }
 
   /* Journal card: hero — fills the full right column */
   .cardJournal {
