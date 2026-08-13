@@ -52,6 +52,18 @@ export function useTimer() {
     const t = readTimer()
     if (!t) return
     const rem = computeRemaining(t)
+
+    // Stale completion: if the timer finished more than 10 minutes ago and the
+    // user never acknowledged it (closed the app, returned later), clear it
+    // silently rather than demanding acknowledgment for a session they're done with.
+    if (rem === 0 && t.startedAt != null) {
+      const completedAt = t.startedAt + t.durationMs
+      if (Date.now() - completedAt > 10 * 60 * 1000) {
+        writeTimer(null)
+        return
+      }
+    }
+
     setTimerRaw(t)
     setFullScreen(true)
     if (rem === 0) vibratedRef.current = true

@@ -15,6 +15,7 @@ const CLAY_MODAL_STYLE = { background: CLAY, color: ON_CLAY, border: 'none' }
 export default function TimerCard({
   timer,
   fullScreen,
+  setFullScreen,
   isDone,
   remaining,
   isPaused,
@@ -65,7 +66,10 @@ export default function TimerCard({
         <div className={styles.bar} style={CLAY_VARS}>
           <span className={styles.label}>set a timer</span>
           {isDesktop && timer ? (
-            <button className={styles.barCountdown} onClick={() => {}}>
+            <button
+              className={styles.barCountdown}
+              onClick={isDone ? endTimer : () => setFullScreen(true)}
+            >
               {isDone ? 'done' : formatTimerTime(remaining)}
             </button>
           ) : (
@@ -101,8 +105,8 @@ export default function TimerCard({
       {isDesktop && fullScreen && timer && (
         <DesktopModal
           title="timer"
-          onClose={dismissModal}
-          onDismiss={dismissModal}
+          onClose={isDone ? endTimer : dismissModal}
+          onDismiss={isDone ? endTimer : dismissModal}
           cardStyle={CLAY_MODAL_STYLE}
           lightScrim
         >
