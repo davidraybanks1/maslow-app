@@ -17,6 +17,7 @@ import Settings from './screens/Settings'
 import HamburgerMenu from './components/HamburgerMenu'
 import AppHeader from './components/AppHeader'
 import DesktopNav from './components/DesktopNav'
+import UpdateToast from './components/UpdateToast'
 import styles from './App.module.css'
 
 class AppErrorBoundary extends Component {
@@ -137,6 +138,7 @@ export default function App() {
       <AppErrorBoundary>
         <AppInner />
       </AppErrorBoundary>
+      <UpdateToast />
     </BrowserRouter>
   )
 }

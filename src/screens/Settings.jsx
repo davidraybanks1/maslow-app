@@ -1,5 +1,16 @@
 import styles from './Settings.module.css'
 
+const BUILD_TIME = import.meta.env.VITE_BUILD_TIME
+function formatBuildTime(iso) {
+  if (!iso) return null
+  try {
+    return new Date(iso).toLocaleString('en-US', {
+      month: 'short', day: 'numeric', year: 'numeric',
+      hour: 'numeric', minute: '2-digit',
+    }).toLowerCase()
+  } catch { return null }
+}
+
 const REVIEW_DAYS = [
   { value: 0, label: 'mon' },
   { value: 1, label: 'tue' },
@@ -71,6 +82,13 @@ export default function Settings({ state, updateShowNoteToSelf, updateReviewSche
           value={state.reviewTime || '10:00'}
           onChange={e => updateReviewSchedule(state.reviewDay ?? 0, e.target.value)}
         />
+      </div>
+
+      <div className={styles.buildInfo}>
+        <span className={styles.buildVersion}>v1.0</span>
+        {formatBuildTime(BUILD_TIME) && (
+          <span className={styles.buildTimestamp}>· built {formatBuildTime(BUILD_TIME)}</span>
+        )}
       </div>
     </div>
   )
