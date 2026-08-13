@@ -59,6 +59,16 @@ function formatScore(v) {
   return Number.isInteger(v) ? String(v) : `${Math.floor(v)}½`
 }
 
+// Split journal text at [H:MMam/pm] markers so they can be styled separately.
+const TIMESTAMP_RE = /(\[\d{1,2}:\d{2}(?:am|pm)\])/g
+function parseJournalEntry(text, timestampClass) {
+  return text.split(TIMESTAMP_RE).map((part, i) =>
+    /^\[\d{1,2}:\d{2}(?:am|pm)\]$/.test(part)
+      ? <span key={i} className={timestampClass}>{part}</span>
+      : part
+  )
+}
+
 function dateKeyForOffset(daysAgo) {
   const d = new Date()
   d.setDate(d.getDate() - daysAgo)
@@ -855,38 +865,57 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
           </div>
 
           {isDesktop ? (
-            <>
-              <div className={styles.journalScroll} ref={journalEntriesRef}>
-                <div className={styles.journalEntries}>
-                  {journalEntry.trim() ? (
-                    <pre className={styles.journalEntriesText}>{journalEntry}</pre>
-                  ) : (
-                    <span className={styles.journalEntriesEmpty}>nothing written yet — start typing below</span>
-                  )}
-                </div>
-                <div className={styles.journalComposer}>
-                  <div className={styles.journalComposerWrap}>
-                    <textarea
-                      className={styles.journalComposerInput}
-                      placeholder="add a thought…"
-                      value={journalDraftText}
-                      onChange={e => setJournalDraftText(e.target.value)}
-                      onKeyDown={handleComposerKeyDown}
-                      rows={3}
-                    />
-                    <div className={styles.journalComposerFooter}>
-                      <span className={styles.journalHint}>⌘↵</span>
-                      <button
-                        className={styles.journalAddBtn}
-                        onClick={handleAddEntry}
-                        disabled={!journalDraftText.trim()}
-                      >add</button>
-                    </div>
+            <div className={styles.journalScroll} ref={journalEntriesRef}>
+              <div className={styles.journalEntries}>
+                {journalEntry.trim() ? (
+                  <div className={styles.journalEntriesText}>
+                    {parseJournalEntry(journalEntry, styles.entryTimestamp)}
                   </div>
-                  {journalSaveError && <div className={styles.journalSaveError}>{journalSaveError}</div>}
-                </div>
+                ) : (
+                  <span className={styles.journalEntriesEmpty}>nothing written yet — start typing below</span>
+                )}
               </div>
-            </>
+              <div className={styles.journalComposer}>
+                <div className={styles.journalComposerWrap}>
+                  <textarea
+                    className={styles.journalComposerInput}
+                    placeholder="add a thought…"
+                    value={journalDraftText}
+                    onChange={e => setJournalDraftText(e.target.value)}
+                    onKeyDown={handleComposerKeyDown}
+                    rows={3}
+                  />
+                  <div className={styles.journalComposerFooter}>
+                    <span className={styles.journalHint}>⌘↵</span>
+                    <button
+                      className={styles.journalAddBtn}
+                      onClick={handleAddEntry}
+                      disabled={!journalDraftText.trim()}
+                    >add</button>
+                  </div>
+                </div>
+                {journalSaveError && <div className={styles.journalSaveError}>{journalSaveError}</div>}
+              </div>
+              {/* Debrief pills — in content flow, directly below composer */}
+              <div className={styles.debriefPillRow}>
+                <button
+                  className={`${styles.debriefPill} ${debriefExpanded ? styles.debriefPillOpen : ''}`}
+                  onClick={() => { setDebriefExpanded(e => !e); setPeakExpanded(false) }}
+                >
+                  {todayDebriefCount > 0 && <span className={styles.debriefDot} />}
+                  <span>anxiety debrief</span>
+                  {todayDebriefCount > 0 && <span className={styles.debriefCount}>· {todayDebriefCount}</span>}
+                </button>
+                <button
+                  className={`${styles.debriefPill} ${peakExpanded ? styles.debriefPillOpen : ''}`}
+                  onClick={() => { setPeakExpanded(e => !e); setDebriefExpanded(false) }}
+                >
+                  {todayPeakCount > 0 && <span className={styles.debriefDot} />}
+                  <span>peak debrief</span>
+                  {todayPeakCount > 0 && <span className={styles.debriefCount}>· {todayPeakCount}</span>}
+                </button>
+              </div>
+            </div>
           ) : (
             <>
               <textarea
@@ -898,58 +927,55 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 rows={5}
               />
               {journalSaveError && <div className={styles.journalSaveError}>{journalSaveError}</div>}
-            </>
-          )}
-
-          {/* Debrief pills — footer of the journal card */}
-          <div className={styles.debriefPillRow}>
-            <button
-              className={`${styles.debriefPill} ${debriefExpanded ? styles.debriefPillOpen : ''}`}
-              onClick={() => { setDebriefExpanded(e => !e); setPeakExpanded(false) }}
-            >
-              {todayDebriefCount > 0 && <span className={styles.debriefDot} />}
-              <span>anxiety debrief</span>
-              {todayDebriefCount > 0 && <span className={styles.debriefCount}>· {todayDebriefCount}</span>}
-            </button>
-            <button
-              className={`${styles.debriefPill} ${peakExpanded ? styles.debriefPillOpen : ''}`}
-              onClick={() => { setPeakExpanded(e => !e); setDebriefExpanded(false) }}
-            >
-              {todayPeakCount > 0 && <span className={styles.debriefDot} />}
-              <span>peak debrief</span>
-              {todayPeakCount > 0 && <span className={styles.debriefCount}>· {todayPeakCount}</span>}
-            </button>
-          </div>
-
-          {!isDesktop && debriefExpanded && (
-            <>
-              <div className={styles.debriefHairline} />
-              <DebriefForm
-                userId={state.userId}
-                debriefTypes={debriefTypes}
-                onDirtyChange={setDebriefDirty}
-                onSaved={() => {
-                  setDebriefExpanded(false)
-                  setDebriefDirty(false)
-                  setTodayDebriefCount(c => c + 1)
-                }}
-              />
-            </>
-          )}
-
-          {!isDesktop && peakExpanded && (
-            <>
-              <div className={styles.debriefHairline} />
-              <PeakDebriefForm
-                userId={state.userId}
-                debriefTypes={debriefTypes}
-                onDirtyChange={setPeakDirty}
-                onSaved={() => {
-                  setPeakExpanded(false)
-                  setPeakDirty(false)
-                  setTodayPeakCount(c => c + 1)
-                }}
-              />
+              {/* Debrief pills — mobile: below textarea */}
+              <div className={styles.debriefPillRow}>
+                <button
+                  className={`${styles.debriefPill} ${debriefExpanded ? styles.debriefPillOpen : ''}`}
+                  onClick={() => { setDebriefExpanded(e => !e); setPeakExpanded(false) }}
+                >
+                  {todayDebriefCount > 0 && <span className={styles.debriefDot} />}
+                  <span>anxiety debrief</span>
+                  {todayDebriefCount > 0 && <span className={styles.debriefCount}>· {todayDebriefCount}</span>}
+                </button>
+                <button
+                  className={`${styles.debriefPill} ${peakExpanded ? styles.debriefPillOpen : ''}`}
+                  onClick={() => { setPeakExpanded(e => !e); setDebriefExpanded(false) }}
+                >
+                  {todayPeakCount > 0 && <span className={styles.debriefDot} />}
+                  <span>peak debrief</span>
+                  {todayPeakCount > 0 && <span className={styles.debriefCount}>· {todayPeakCount}</span>}
+                </button>
+              </div>
+              {debriefExpanded && (
+                <>
+                  <div className={styles.debriefHairline} />
+                  <DebriefForm
+                    userId={state.userId}
+                    debriefTypes={debriefTypes}
+                    onDirtyChange={setDebriefDirty}
+                    onSaved={() => {
+                      setDebriefExpanded(false)
+                      setDebriefDirty(false)
+                      setTodayDebriefCount(c => c + 1)
+                    }}
+                  />
+                </>
+              )}
+              {peakExpanded && (
+                <>
+                  <div className={styles.debriefHairline} />
+                  <PeakDebriefForm
+                    userId={state.userId}
+                    debriefTypes={debriefTypes}
+                    onDirtyChange={setPeakDirty}
+                    onSaved={() => {
+                      setPeakExpanded(false)
+                      setPeakDirty(false)
+                      setTodayPeakCount(c => c + 1)
+                    }}
+                  />
+                </>
+              )}
             </>
           )}
         </div>

@@ -779,6 +779,11 @@
 .moodBtnGood:active, .moodBtnFine:active, .moodBtnBad:active { opacity: 0.8; }
 .moodDivider { height: 1px; background: rgba(26, 26, 24, 0.07); }
 
+/* ── Journal timestamp tokens — applied wherever entries are rendered as HTML ── */
+.entryTimestamp {
+  color: rgba(26,26,26,.45);
+}
+
 /* ── Journal ── */
 .journalInput {
   width: 100%;
@@ -946,13 +951,14 @@
     --timer-bar-shadow: 0 1px 2px rgba(26,26,26,.04), 0 4px 14px rgba(26,26,26,.05);
   }
 
-  /* Desktop container: flex column filling the viewport */
+  /* Desktop container: flex column filling the viewport.
+     Left-anchored after the nav rail — max-width caps the right, no centering. */
   .desktopWrap {
     display: flex;
     flex-direction: column;
     height: 100%;
     max-width: 1280px;
-    margin: 0 auto;
+    margin: 0;
     width: 100%;
     padding: 0 32px;
     box-sizing: border-box;
@@ -1119,29 +1125,38 @@
     user-select: none;
   }
 
+  /* "add" button: two visually distinct states */
   .journalAddBtn {
     padding: 4px 12px;
     border-radius: 6px;
-    background: var(--ink);
-    color: var(--bg);
-    border: none;
+    /* disabled/empty: ghost — muted border, faint text */
+    background: transparent;
+    color: rgba(26,26,26,.35);
+    border: 0.5px solid rgba(26,26,26,.18);
     font-family: var(--font-mono);
     font-size: 11px;
     letter-spacing: 0.04em;
-    cursor: pointer;
+    cursor: default;
     -webkit-tap-highlight-color: transparent;
-    transition: opacity 100ms ease;
+    transition: background 100ms ease, color 100ms ease, border-color 100ms ease;
   }
-  .journalAddBtn:disabled { opacity: 0.3; cursor: default; }
-  .journalAddBtn:not(:disabled):hover { opacity: 0.75; }
+  /* enabled: solid ink fill, paper text */
+  .journalAddBtn:not(:disabled) {
+    background: #1A1A1A;
+    color: var(--bg);
+    border-color: #1A1A1A;
+    cursor: pointer;
+  }
+  .journalAddBtn:not(:disabled):hover { opacity: 0.78; }
   @media (prefers-reduced-motion: reduce) {
     .journalAddBtn { transition: none; }
   }
 
-  /* Debrief buttons: right-aligned, shrink to content */
+  /* Debrief buttons: right-aligned in content flow, ~16px below composer */
   .debriefPillRow {
     justify-content: flex-end;
-    padding-top: 12px;
+    padding-top: 0;
+    margin-top: 16px;
   }
   .debriefPill {
     flex: none;
