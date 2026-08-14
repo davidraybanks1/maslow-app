@@ -1,26 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
+import { NEEDS, MODE_ORDER } from '../lib/constants'
+import { createDataStats, formatLastDone } from '../lib/dataStats'
 import styles from './CanvasScreen.module.css'
 
 const UNIVERSAL_IDS = new Set(['movement', 'nutrition', 'rest'])
-
-const BUILT_IN_NEEDS = [
-  { id: 'movement',    name: 'movement' },
-  { id: 'nutrition',   name: 'nutrition' },
-  { id: 'rest',        name: 'rest' },
-  { id: 'community',   name: 'community' },
-  { id: 'beauty',      name: 'beauty' },
-  { id: 'intimacy',    name: 'intimacy' },
-  { id: 'reflection',  name: 'reflection' },
-  { id: 'play',        name: 'play' },
-  { id: 'money',       name: 'money' },
-  { id: 'dwelling',    name: 'dwelling' },
-  { id: 'information', name: 'information' },
-  { id: 'touch',       name: 'touch' },
-  { id: 'thrill',      name: 'thrill' },
-]
-
-const MODES = ['exploration', 'appreciation', 'nourishment', 'survival']
-const MODE_NEED_LIMIT = { exploration: 1, appreciation: 2, nourishment: 4, survival: 4 }
 
 const MODE_COLORS = {
   exploration:  '#1B3A2D',
@@ -29,402 +12,409 @@ const MODE_COLORS = {
   survival:     '#D93B1C',
 }
 
+const MODE_BAND_TEXT = {
+  exploration:  '#F6EFE9',
+  appreciation: '#1A1A1A',
+  nourishment:  '#1A1A1A',
+  survival:     '#FFFFFF',
+}
+
+const MODE_NEED_LIMIT = { exploration: 1, appreciation: 2, nourishment: 4, survival: 4 }
+
+const MODE_CARD_DESCS = {
+  exploration:  'the one need that feels like a passion',
+  appreciation: 'needs that bring enjoyment to your life',
+  nourishment:  'needs that keep you from feeling drained',
+  survival:     'needs that you just check the box on',
+}
+
 const MODE_PILL_STYLE = {
-  exploration:  { background: 'rgba(27,58,45,0.1)',    color: '#1B3A2D' },
-  appreciation: { background: 'rgba(184,195,177,0.3)', color: '#4a5e45' },
-  nourishment:  { background: 'rgba(232,184,31,0.12)', color: '#854F0B' },
-  survival:     { background: 'rgba(217,59,28,0.08)',  color: '#993C1D' },
+  exploration:  { background: 'rgba(27,58,45,0.12)',    color: '#1B3A2D' },
+  appreciation: { background: 'rgba(184,195,177,0.35)', color: '#4a5e45' },
+  nourishment:  { background: 'rgba(232,184,31,0.15)',  color: '#854F0B' },
+  survival:     { background: 'rgba(217,59,28,0.10)',   color: '#993C1D' },
 }
 
-const MODE_DESCRIPTIONS = {
-  exploration:  'deepest commitment · 3 practices a day',
-  appreciation: 'present and intentional · 2 practices a day',
-  nourishment:  'steady and reliable · 1 practice a day',
-  survival:     'the floor that frees everything else · ½ weight',
-}
-
-function ModeDropdown({ needId, currentMode, modes, onSelect, isOpen, onToggle, error }) {
-  const wrapRef = useRef(null)
-  const pill    = MODE_PILL_STYLE[currentMode]
-
-  useEffect(() => {
-    if (!isOpen) return
-    function handleOutside(e) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target)) onToggle(null)
-    }
-    document.addEventListener('mousedown', handleOutside, true)
-    document.addEventListener('touchstart', handleOutside, true)
-    return () => {
-      document.removeEventListener('mousedown', handleOutside, true)
-      document.removeEventListener('touchstart', handleOutside, true)
-    }
-  }, [isOpen, onToggle])
-
+function ChevronIcon({ className }) {
   return (
-    <div className={styles.modeDropdownWrap} ref={wrapRef}>
-      <button
-        className={styles.modePillBtn}
-        style={pill}
-        onClick={() => onToggle(isOpen ? null : needId)}
-      >
-        {currentMode} <span className={styles.modePillChevron}>⌄</span>
-      </button>
-      {isOpen && (
-        <div className={styles.modeDropdown}>
-          {modes.map((m, i) => (
-            <div key={m}>
-              {i > 0 && <div className={styles.dropdownHairline} />}
-              <div
-                className={`${styles.dropdownOption} ${currentMode === m ? styles.dropdownOptionSelected : ''}`}
-                onClick={() => onSelect(m)}
-              >
-                <div className={styles.dropdownPip} style={{ background: MODE_COLORS[m] }} />
-                <span className={styles.dropdownModeName}>{m}</span>
-                <span className={styles.dropdownModeDesc}>{MODE_DESCRIPTIONS[m]}</span>
-                {currentMode === m && <span className={styles.dropdownCheck}>✓</span>}
-              </div>
-            </div>
-          ))}
-          {error && <div className={styles.dropdownError}>{error}</div>}
-        </div>
-      )}
-    </div>
+    <svg className={className} width="12" height="12" viewBox="0 0 12 12" fill="none">
+      <path d="M2 4.5L6 8.5L10 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
   )
 }
 
-const VALID_MODES = new Set(MODES)
+export default function CanvasScreen({ state, updateCanvas, addPractice, archivePractice }) {
+  const [customNeeds, setCustomNeeds]         = useState([])
+  const [customInput, setCustomInput]         = useState('')
+  const [openLibPicker, setOpenLibPicker]     = useState(null) // needId
+  const [openModeFooter, setOpenModeFooter]   = useState(null) // mode
+  const [openDrawer, setOpenDrawer]           = useState(null) // needId
+  const [addInputs, setAddInputs]             = useState({})   // {needId: string}
+  const [addOpen, setAddOpen]                 = useState(new Set())
+  const [pickerError, setPickerError]         = useState(null)
+  const [writeError, setWriteError]           = useState(null)
+  const errTimer = useRef(null)
 
-function initCanvas(stored) {
-  const c = {}
-  for (const n of BUILT_IN_NEEDS) {
-    const m = stored[n.id]
-    c[n.id] = VALID_MODES.has(m) ? m : null
-  }
-  return c
-}
+  useEffect(() => () => { if (errTimer.current) clearTimeout(errTimer.current) }, [])
 
-export default function CanvasScreen({ state, updateCanvas, replaceCanvas }) {
-  const [canvas, setCanvas] = useState(() => initCanvas(state.canvas))
-  const [savedCanvas, setSavedCanvas] = useState(() => ({ ...state.canvas }))
-  const isDirty = JSON.stringify(canvas) !== JSON.stringify(savedCanvas)
-  const [customNeeds, setCustomNeeds] = useState([])
-  const [customInput, setCustomInput] = useState('')
-  const [openPicker, setOpenPicker] = useState(null)
-  // openPicker: { type: 'add', mode } | { type: 'pool', needId } | null
-  const [openModeDropdown, setOpenModeDropdown] = useState(null) // needId of open mode pill dropdown
-  const [pickerError, setPickerError] = useState(null)
-  const [removeError, setRemoveError] = useState(null) // { needId, message }
-  const [saveStatus, setSaveStatus] = useState('idle') // 'idle' | 'saving' | 'saved' | 'error'
-  const [titleTipOpen, setTitleTipOpen] = useState(false)
-  const errorTimer = useRef(null)
-  const removeTimer = useRef(null)
-  const saveStatusTimer = useRef(null)
-  const scrollRef = useRef(null)
-  const titleTipRef = useRef(null)
+  const allNeeds  = [...NEEDS, ...customNeeds]
+  const useDB     = Array.isArray(state.practicesDB) && state.practicesDB.length > 0
 
-  useEffect(() => () => {
-    if (errorTimer.current) clearTimeout(errorTimer.current)
-    if (removeTimer.current) clearTimeout(removeTimer.current)
-    if (saveStatusTimer.current) clearTimeout(saveStatusTimer.current)
-  }, [])
+  const stats       = createDataStats({ canvas: state.canvas, checkins: state.checkins, moods: state.moods, practices: state.practices, practicesDB: state.practicesDB })
+  const lastDoneMap = new Map(stats.getPracticeStats().map(p => [p.practice?.id || `${p.need.id}_${p.text}`, p.daysSinceLast]))
 
-  useEffect(() => {
-    if (!titleTipOpen) return
-    function handleOutside(e) {
-      if (titleTipRef.current && !titleTipRef.current.contains(e.target)) setTitleTipOpen(false)
-    }
-    document.addEventListener('mousedown', handleOutside, true)
-    document.addEventListener('touchstart', handleOutside, true)
-    return () => {
-      document.removeEventListener('mousedown', handleOutside, true)
-      document.removeEventListener('touchstart', handleOutside, true)
-    }
-  }, [titleTipOpen])
+  const unassigned = allNeeds.filter(n => !state.canvas[n.id])
 
-  const allNeeds = [...BUILT_IN_NEEDS, ...customNeeds]
-  const explorationCount = allNeeds.filter(n => canvas[n.id] === 'exploration').length
-  const appreciationCount = allNeeds.filter(n => canvas[n.id] === 'appreciation').length
-  const canSave = Object.values(canvas).some(v => v)
+  function needsInMode(mode) { return allNeeds.filter(n => state.canvas[n.id] === mode) }
 
-  function inMode(mode) {
-    return allNeeds.filter(n => canvas[n.id] === mode)
+  function isModeFull(mode, excludeId = null) {
+    return allNeeds.filter(n => n.id !== excludeId && state.canvas[n.id] === mode).length >= MODE_NEED_LIMIT[mode]
   }
 
-  function pool() {
-    return allNeeds.filter(n => !canvas[n.id])
+  function getPractices(needId) {
+    if (useDB) return state.practicesDB.filter(p => p.need_id === needId && !p.archived_at)
+    return (state.practices[needId] || []).map(label => ({ id: null, label, need_id: needId, archived_at: null }))
   }
 
-  function showPickerError(msg) {
-    if (errorTimer.current) clearTimeout(errorTimer.current)
-    setPickerError(msg)
-    errorTimer.current = setTimeout(() => setPickerError(null), 3000)
+  function showErr(msg, setFn) {
+    if (errTimer.current) clearTimeout(errTimer.current)
+    setFn(msg)
+    errTimer.current = setTimeout(() => setFn(null), 3500)
   }
 
-  function showRemoveError(needId, msg) {
-    if (removeTimer.current) clearTimeout(removeTimer.current)
-    setRemoveError({ needId, message: msg })
-    removeTimer.current = setTimeout(() => setRemoveError(null), 3000)
-  }
-
-  function closePicker() {
-    setOpenPicker(null)
-    setPickerError(null)
-    if (errorTimer.current) { clearTimeout(errorTimer.current); errorTimer.current = null }
-  }
-
-  function openNewPicker(picker) {
-    setOpenModeDropdown(null)
-    closePicker()
-    setOpenPicker(picker)
-  }
-
-  function tryAssign(needId, mode) {
+  async function handlePlace(needId, mode) {
     if (needId === 'rest' && (mode === 'exploration' || mode === 'appreciation')) {
-      showPickerError('rest cannot be set above nourishment.')
-      return false
+      showErr('rest cannot go above nourishment', setPickerError); return
     }
-    const countInMode = allNeeds.filter(n => n.id !== needId && canvas[n.id] === mode).length
-    if (countInMode >= MODE_NEED_LIMIT[mode]) {
-      const maxLabel = { exploration: 'max 1', appreciation: 'max 2', nourishment: 'max 4', survival: 'max 4' }
-      showPickerError(`${mode} is full (${maxLabel[mode]}).`)
-      return false
+    if (isModeFull(mode)) {
+      showErr(`${mode} is full`, setPickerError); return
     }
-    setCanvas(prev => ({ ...prev, [needId]: mode }))
-    return true
-  }
-
-  function tryRemove(needId) {
-    const expNeeds = allNeeds.filter(n => canvas[n.id] === 'exploration')
-    if (expNeeds.length === 1 && expNeeds[0].id === needId) {
-      showRemoveError(needId, 'move this need to another mode before removing it from exploration.')
-      return
-    }
-    setCanvas(prev => ({ ...prev, [needId]: null }))
-    closePicker()
-  }
-
-  async function handleSave() {
-    if (!canSave || saveStatus === 'saving') return
-    const previousCanvas = { ...canvas }
-    setSaveStatus('saving')
     try {
-      const fullCanvas = {}
-      for (const need of allNeeds) {
-        if (canvas[need.id]) fullCanvas[need.id] = canvas[need.id]
-      }
-      await replaceCanvas(fullCanvas)
-      setSavedCanvas({ ...canvas })
-      setSaveStatus('saved')
-      if (saveStatusTimer.current) clearTimeout(saveStatusTimer.current)
-      saveStatusTimer.current = setTimeout(() => setSaveStatus('idle'), 2000)
-    } catch (err) {
-      setSaveStatus('error')
-      setCanvas(previousCanvas)
-      if (saveStatusTimer.current) clearTimeout(saveStatusTimer.current)
-      saveStatusTimer.current = setTimeout(() => setSaveStatus('idle'), 3000)
+      await updateCanvas(needId, mode)
+      setOpenLibPicker(null)
+      setOpenModeFooter(null)
+      setPickerError(null)
+    } catch { showErr('save failed — try again', setWriteError) }
+  }
+
+  async function handleMove(needId, newMode) {
+    if (state.canvas[needId] === newMode) return
+    if (needId === 'rest' && (newMode === 'exploration' || newMode === 'appreciation')) return
+    if (isModeFull(newMode, needId)) {
+      showErr(`${newMode} is full`, setWriteError); return
     }
+    try { await updateCanvas(needId, newMode) }
+    catch { showErr('save failed — try again', setWriteError) }
+  }
+
+  async function handleRemove(needId) {
+    if (UNIVERSAL_IDS.has(needId)) return
+    try {
+      await updateCanvas(needId, null)
+      setOpenDrawer(null)
+    } catch { showErr('save failed — try again', setWriteError) }
   }
 
   function handleAddCustom() {
     const name = customInput.trim().toLowerCase()
-    if (!name) return
-    if (allNeeds.find(n => n.name.toLowerCase() === name)) { setCustomInput(''); return }
-    const id = `custom_${Date.now()}`
+    if (!name || allNeeds.find(n => n.name.toLowerCase() === name)) { setCustomInput(''); return }
+    const id = `custom_${name.replace(/\s+/g, '_')}_${Date.now()}`
     setCustomNeeds(prev => [...prev, { id, name }])
-    setCanvas(prev => ({ ...prev, [id]: null }))
     setCustomInput('')
   }
 
-  const poolNeeds = pool()
+  function handleAddPractice(needId) {
+    const text = (addInputs[needId] || '').trim()
+    if (!text) return
+    addPractice(needId, text)
+    setAddInputs(prev => ({ ...prev, [needId]: '' }))
+    setAddOpen(prev => { const s = new Set(prev); s.delete(needId); return s })
+  }
 
-  return (
-    <div className={styles.screen}>
-      <div className={styles.header}>
-        <div className={styles.titleRow} ref={titleTipRef}>
-          <div className={styles.title}>your canvas</div>
-          <button className={styles.titleInfoBtn} onClick={() => setTitleTipOpen(o => !o)}>i</button>
-          {titleTipOpen && (
-            <div className={styles.titleTooltip}>
-              <div className={styles.titleTooltipArrow} />
-              your canvas tailors your needs to where you are in life right now. each need is assigned a mode that sets how many practices you commit to daily — exploration gets the deepest commitment, survival keeps the floor stable. your canvas powers your today screen and your data.
-            </div>
-          )}
-        </div>
-        <div className={styles.sub}>add, remove, or move needs between modes to define your daily practices.</div>
-      </div>
+  function renderModeCard(mode) {
+    const inMode     = needsInMode(mode)
+    const cap        = MODE_NEED_LIMIT[mode]
+    const atCap      = inMode.length >= cap
+    const color      = MODE_COLORS[mode]
+    const textColor  = MODE_BAND_TEXT[mode]
+    const footerOpen = openModeFooter === mode
 
-      <div className={styles.scroll} ref={scrollRef}>
-
-        {/* The pool — pull needs from here onto your canvas */}
-        <div className={styles.poolCard}>
-        {/* Unassigned pool */}
-        <div className={styles.poolSection}>
-          <div className={styles.sectionEyebrow}>UNASSIGNED</div>
-          {poolNeeds.length === 0 ? (
-            <div className={styles.allAssigned}>all needs assigned</div>
-          ) : (
-            <div className={styles.poolChips}>
-              {poolNeeds.map(need => {
-                const isPoolPickerOpen = openPicker?.type === 'pool' && openPicker.needId === need.id
-                const pickerModes = need.id === 'rest' ? ['nourishment', 'survival'] : MODES
-
-                return (
-                  <div key={need.id} className={styles.poolChipGroup}>
-                    <div
-                      className={`${styles.poolChip} ${isPoolPickerOpen ? styles.poolChipActive : ''}`}
-                      onClick={() => isPoolPickerOpen ? closePicker() : openNewPicker({ type: 'pool', needId: need.id })}
-                    >
-                      {need.name}
-                    </div>
-                    {isPoolPickerOpen && (
-                      <div className={styles.poolChipPicker}>
-                        <div className={styles.pickerPills}>
-                          {pickerModes.map(m => (
-                            <button
-                              key={m}
-                              className={styles.modePill}
-                              style={MODE_PILL_STYLE[m]}
-                              onClick={() => { if (tryAssign(need.id, m)) closePicker() }}
-                            >
-                              {m}
-                            </button>
-                          ))}
-                        </div>
-                        {pickerError && <div className={styles.pickerError}>{pickerError}</div>}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
-          <div className={styles.poolSub}>tap a need to assign it.</div>
+    return (
+      <div key={mode} className={styles.modeCard} style={{ borderLeft: `3px solid ${color}` }}>
+        {/* Header band */}
+        <div className={styles.modeBand} style={{ background: color }}>
+          <span className={styles.modeBandName} style={{ color: textColor }}>
+            {mode.toUpperCase()}
+          </span>
+          <span className={styles.modeBandCount} style={{ color: textColor }}>
+            {inMode.length} of {cap}
+          </span>
         </div>
 
-        {/* Add your own */}
-        <div className={styles.addOwnSection}>
-          <div className={styles.sectionEyebrow}>ADD YOUR OWN</div>
-          <div className={styles.addOwnRow}>
-            <input
-              className={styles.addOwnInput}
-              placeholder="name a need…"
-              value={customInput}
-              onChange={e => setCustomInput(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') handleAddCustom() }}
-            />
-            <button className={styles.addOwnBtn} onClick={handleAddCustom}>add</button>
-          </div>
-        </div>
-        </div>
+        <p className={styles.modeDesc}>{MODE_CARD_DESCS[mode]}</p>
 
-        {MODES.map(mode => {
-          const needsInMode = inMode(mode)
-          const isAddOpen = openPicker?.type === 'add' && openPicker.mode === mode
-          const poolEmpty = poolNeeds.length === 0
+        {/* Need rows */}
+        {inMode.map(need => {
+          const isOpen     = openDrawer === need.id
+          const practices  = getPractices(need.id)
+          const addIsOpen  = addOpen.has(need.id)
+          const isUniversal = UNIVERSAL_IDS.has(need.id)
+          const modePills  = need.id === 'rest' ? ['nourishment', 'survival'] : MODE_ORDER
 
           return (
-            <div key={mode} className={styles.modeCard} style={{ borderLeft: `3px solid ${MODE_COLORS[mode]}` }}>
-              <div className={styles.modeCardHead}>
-                <div className={styles.modeCardLabel}>
-                  <span>{mode}</span>
-                </div>
-                <div className={styles.modeCount}>{needsInMode.length} of {MODE_NEED_LIMIT[mode]}</div>
-              </div>
-
-              {needsInMode.length === 0 && mode === 'exploration' && (
-                <div className={styles.emptyNote}>add the one need you're most committed to exploring right now.</div>
-              )}
-              {needsInMode.length === 0 && mode === 'appreciation' && (
-                <div className={styles.emptyNote}>you don't have any needs in appreciation mode. that's your choice. appreciation is about getting real joy from your day — being present for what you're meeting, not just checking it off. if you can't prioritize that right now, that's ok.</div>
-              )}
-
-              {needsInMode.map(need => {
-                const isUniversal  = UNIVERSAL_IDS.has(need.id)
-                const dropdownModes = MODES.filter(m =>
-                  !(need.id === 'rest' && (m === 'exploration' || m === 'appreciation'))
-                )
-
-                return (
-                  <div key={need.id}>
-                    <div className={styles.needRow}>
-                      <span className={styles.needName}>{need.name}</span>
-                      <div className={styles.needRowActions}>
-                        <ModeDropdown
-                          needId={need.id}
-                          currentMode={mode}
-                          modes={dropdownModes}
-                          onSelect={m => { tryAssign(need.id, m) && setOpenModeDropdown(null) }}
-                          isOpen={openModeDropdown === need.id}
-                          onToggle={id => {
-                            if (!id) { setOpenModeDropdown(null); return }
-                            closePicker()
-                            setOpenModeDropdown(id)
-                          }}
-                          error={openModeDropdown === need.id ? pickerError : null}
-                        />
-                        {!isUniversal && (
-                          <button className={styles.removeBtn} onClick={() => tryRemove(need.id)}>×</button>
-                        )}
-                      </div>
-                    </div>
-                    {removeError?.needId === need.id && (
-                      <div className={styles.removeError}>{removeError.message}</div>
-                    )}
-                  </div>
-                )
-              })}
-
-              <div
-                className={`${styles.addRow} ${poolEmpty ? styles.addRowDisabled : ''}`}
-                onClick={() => {
-                  if (poolEmpty) return
-                  isAddOpen ? closePicker() : openNewPicker({ type: 'add', mode })
-                }}
+            <div key={need.id} className={styles.needRow}>
+              <button
+                className={styles.needToggle}
+                onClick={() => setOpenDrawer(isOpen ? null : need.id)}
               >
-                + add a need to {mode}
-              </div>
+                <span className={styles.needToggleName}>{need.name}</span>
+                <span className={styles.needPracticeCount}>
+                  {practices.length} {practices.length === 1 ? 'practice' : 'practices'}
+                </span>
+                <ChevronIcon className={`${styles.chevron} ${isOpen ? styles.chevronOpen : ''}`} />
+              </button>
 
-              {isAddOpen && (
-                <div className={styles.addPoolSelector}>
-                  <div className={styles.addPoolChips}>
-                    {poolNeeds.map(n => {
-                      const blocked = n.id === 'rest' && (mode === 'exploration' || mode === 'appreciation')
-                      return (
-                        <button
-                          key={n.id}
-                          className={styles.poolSelChip}
-                          style={blocked ? { opacity: 0.35 } : {}}
-                          onClick={() => {
-                            if (blocked) { showPickerError('rest cannot be set above nourishment.'); return }
-                            if (tryAssign(n.id, mode)) closePicker()
-                          }}
+              {isOpen && (
+                <div className={styles.needDrawer}>
+                  <p className={styles.drawerHint}>how {need.name} shows up in your day:</p>
+
+                  {practices.length === 0 && (
+                    <p className={styles.drawerEmpty}>no practices yet</p>
+                  )}
+
+                  {practices.map(p => {
+                    const key     = p.id || `${need.id}_${p.label}`
+                    const days    = lastDoneMap.get(key) ?? null
+                    return (
+                      <div key={key} className={styles.practiceRow}>
+                        <span className={styles.practiceLabel}>{p.label}</span>
+                        <span
+                          className={styles.practiceLastDone}
+                          style={days === null ? { color: '#D93B1C' } : undefined}
                         >
-                          {n.name}
-                        </button>
-                      )
-                    })}
+                          {formatLastDone(days)}
+                        </span>
+                        <button
+                          className={styles.practiceArchiveBtn}
+                          onClick={() => p.id && archivePractice(p.id)}
+                          aria-label="archive practice"
+                        >✕</button>
+                      </div>
+                    )
+                  })}
+
+                  {/* Add practice */}
+                  {addIsOpen ? (
+                    <div className={styles.addPracticeRow}>
+                      <input
+                        className={styles.addPracticeInput}
+                        placeholder="new practice…"
+                        value={addInputs[need.id] || ''}
+                        onChange={e => setAddInputs(prev => ({ ...prev, [need.id]: e.target.value }))}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') handleAddPractice(need.id)
+                          if (e.key === 'Escape') setAddOpen(prev => { const s = new Set(prev); s.delete(need.id); return s })
+                        }}
+                        autoFocus
+                      />
+                      <button
+                        className={styles.addPracticeBtn}
+                        onClick={() => handleAddPractice(need.id)}
+                        disabled={!(addInputs[need.id] || '').trim()}
+                      >add</button>
+                    </div>
+                  ) : (
+                    <button
+                      className={styles.addPracticeToggle}
+                      onClick={() => setAddOpen(prev => new Set([...prev, need.id]))}
+                    >+ add practice</button>
+                  )}
+
+                  {/* Mode selector */}
+                  <div className={styles.modeSelector}>
+                    <span className={styles.modeSelectorLabel}>this need lives in:</span>
+                    <div className={styles.modeSelectorPills}>
+                      {modePills.map(m => {
+                        const isActive = m === state.canvas[need.id]
+                        const full     = !isActive && isModeFull(m, need.id)
+                        return (
+                          <button
+                            key={m}
+                            className={`${styles.modeSelectorPill} ${isActive ? styles.modeSelectorPillActive : ''} ${full ? styles.modeSelectorPillFull : ''}`}
+                            style={isActive ? { background: MODE_COLORS[m], color: MODE_BAND_TEXT[m], borderColor: MODE_COLORS[m] } : undefined}
+                            disabled={full}
+                            onClick={() => handleMove(need.id, m)}
+                          >
+                            {m}{full ? ' · full' : ''}
+                          </button>
+                        )
+                      })}
+                    </div>
                   </div>
-                  {pickerError && <div className={styles.pickerError}>{pickerError}</div>}
+
+                  {!isUniversal && (
+                    <button className={styles.removeFromCanvasBtn} onClick={() => handleRemove(need.id)}>
+                      remove from canvas — practices &amp; history kept
+                    </button>
+                  )}
                 </div>
               )}
             </div>
           )
         })}
 
+        {/* Mode footer */}
+        <div className={styles.modeFooter}>
+          {atCap ? (
+            <span className={styles.modeFooterDisabled}>
+              {mode === 'exploration' ? 'exploration is full' : `${mode} is full`}
+            </span>
+          ) : unassigned.length === 0 ? (
+            <span className={styles.modeFooterDisabled}>+ add a need to {mode}</span>
+          ) : footerOpen ? (
+            <div>
+              <div className={styles.footerPickerChips}>
+                {unassigned.map(n => {
+                  const blocked = n.id === 'rest' && (mode === 'exploration' || mode === 'appreciation')
+                  return (
+                    <button
+                      key={n.id}
+                      className={`${styles.footerPickerChip} ${blocked ? styles.footerPickerChipBlocked : ''}`}
+                      onClick={() => { if (!blocked) handlePlace(n.id, mode) }}
+                    >
+                      {n.name}
+                    </button>
+                  )
+                })}
+              </div>
+              {pickerError && <div className={styles.pickerError}>{pickerError}</div>}
+              <button className={styles.footerPickerCancel} onClick={() => { setOpenModeFooter(null); setPickerError(null) }}>cancel</button>
+            </div>
+          ) : (
+            <button
+              className={styles.modeFooterAdd}
+              onClick={() => { setOpenModeFooter(mode); setOpenLibPicker(null); setPickerError(null) }}
+            >
+              + add a need to {mode}
+            </button>
+          )}
+        </div>
       </div>
+    )
+  }
 
-      {/* Sticky save bar — visible and active when canvas has unsaved changes */}
-      <div className={`${styles.stickyBar} ${isDirty ? styles.stickyBarDirty : ''}`}>
-        <button
-          className={styles.stickyBarBtn}
-          onClick={handleSave}
-          disabled={!isDirty || !canSave || saveStatus === 'saving'}
-        >
-          {saveStatus === 'saving' ? 'saving…'
-            : saveStatus === 'saved' ? 'saved ✓'
-            : saveStatus === 'error' ? 'something went wrong — try again'
-            : 'save canvas'}
-        </button>
+  return (
+    <div className={styles.screen}>
+      <div className={styles.scroll}>
+
+        {/* Page header */}
+        <div className={styles.pageHeader}>
+          <h1 className={styles.pageTitle}>your canvas.</h1>
+          <p className={styles.pageLede}>
+            pick <strong>needs</strong> from the library. place each in a{' '}
+            <strong>mode</strong>. set your daily <strong>practices</strong>.
+          </p>
+        </div>
+
+        <div className={styles.topSection}>
+          {/* How-it-works strip */}
+          <div className={styles.howItWorks}>
+            <div className={styles.howCol}>
+              <span className={styles.howKey}>needs</span>
+              <span className={styles.howVal}>the parts of life that give you energy</span>
+            </div>
+            <div className={styles.howDivider} />
+            <div className={styles.howCol}>
+              <span className={styles.howKey}>modes</span>
+              <span className={styles.howVal}>the emphasis a need warrants for you</span>
+            </div>
+            <div className={styles.howDivider} />
+            <div className={styles.howCol}>
+              <span className={styles.howKey}>practices</span>
+              <span className={styles.howVal}>the daily acts that meet your needs</span>
+            </div>
+          </div>
+
+          {/* Need library */}
+          <div className={styles.libraryCard}>
+            <div className={styles.libraryHeader}>
+              <span className={styles.libraryLabel}>NEED LIBRARY</span>
+              <span className={styles.libraryHint}>select or create a need to add to your canvas</span>
+            </div>
+
+            {unassigned.length > 0 ? (
+              <div className={styles.libraryChips}>
+                {unassigned.map(need => {
+                  const isOpen    = openLibPicker === need.id
+                  const pickerModes = need.id === 'rest' ? ['nourishment', 'survival'] : MODE_ORDER
+                  return (
+                    <div key={need.id} className={styles.libraryChipGroup}>
+                      <button
+                        className={`${styles.libraryChip} ${isOpen ? styles.libraryChipOpen : ''}`}
+                        onClick={() => {
+                          setOpenLibPicker(isOpen ? null : need.id)
+                          setOpenModeFooter(null)
+                          setPickerError(null)
+                        }}
+                      >
+                        {need.name}
+                      </button>
+                      {isOpen && (
+                        <div className={styles.chipModePicker}>
+                          <div className={styles.chipModePickerPills}>
+                            {pickerModes.map(m => {
+                              const full = isModeFull(m)
+                              return (
+                                <button
+                                  key={m}
+                                  className={`${styles.chipModePill} ${full ? styles.chipModePillDisabled : ''}`}
+                                  style={!full ? MODE_PILL_STYLE[m] : undefined}
+                                  disabled={full}
+                                  onClick={() => handlePlace(need.id, m)}
+                                >
+                                  {m}{full ? ' · full' : ''}
+                                </button>
+                              )
+                            })}
+                          </div>
+                          {pickerError && <div className={styles.pickerError}>{pickerError}</div>}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <p className={styles.allAssigned}>all needs are on your canvas</p>
+            )}
+
+            <div className={styles.addNeedRow}>
+              <input
+                className={styles.addNeedInput}
+                placeholder="create a custom need…"
+                value={customInput}
+                onChange={e => setCustomInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleAddCustom() }}
+              />
+              <button className={styles.addNeedBtn} onClick={handleAddCustom}>add</button>
+            </div>
+          </div>
+        </div>
+
+        {writeError && <div className={styles.writeError}>{writeError}</div>}
+
+        {/* Mode cards — 2-col on desktop */}
+        <div className={styles.modeGrid}>
+          <div className={styles.modeCol}>
+            {renderModeCard('exploration')}
+            {renderModeCard('appreciation')}
+          </div>
+          <div className={styles.modeCol}>
+            {renderModeCard('nourishment')}
+            {renderModeCard('survival')}
+          </div>
+        </div>
+
       </div>
     </div>
   )

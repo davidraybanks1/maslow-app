@@ -8,7 +8,6 @@ import BrandMark from './BrandMark'
 const ITEMS = [
   ['/today', 'Today'],
   ['/canvas', 'Canvas'],
-  ['/practices', 'Practices'],
   ['/data', 'Data'],
   ['/log', 'Weekly Review'],
   ['/debriefs', 'Debriefs'],

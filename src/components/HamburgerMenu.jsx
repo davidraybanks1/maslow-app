@@ -2,7 +2,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   IconHome,
   IconLayoutGrid,
-  IconList,
   IconChartBar,
   IconCalendar,
   IconNotes,
@@ -16,12 +15,11 @@ import { supabase } from '../lib/supabase'
 import styles from './HamburgerMenu.module.css'
 
 const NAV_LINKS = [
-  { to: '/today',     label: 'Today',     Icon: IconHome },
-  { to: '/canvas',    label: 'Canvas',    Icon: IconLayoutGrid },
-  { to: '/practices', label: 'Practices', Icon: IconList },
-  { to: '/data',      label: 'Data',      Icon: IconChartBar },
-  { to: '/log',       label: 'Review', Icon: IconCalendar },
-  { to: '/debriefs',  label: 'Debriefs',  Icon: IconNotes },
+  { to: '/today',    label: 'Today',         Icon: IconHome },
+  { to: '/canvas',   label: 'Canvas',        Icon: IconLayoutGrid },
+  { to: '/data',     label: 'Data',          Icon: IconChartBar },
+  { to: '/log',      label: 'Review',        Icon: IconCalendar },
+  { to: '/debriefs', label: 'Debriefs',      Icon: IconNotes },
 ]
 
 export default function HamburgerMenu({ onClose, isClosing }) {
