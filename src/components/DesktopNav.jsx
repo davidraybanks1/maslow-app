@@ -21,7 +21,6 @@ export default function DesktopNav() {
     <aside className={styles.nav} aria-label="Primary">
       <div className={styles.brand}>
         <BrandMark size={17} />
-        <span>mymaslow.</span>
       </div>
       <nav className={styles.items}>
         {ITEMS.map(([to, label]) => (

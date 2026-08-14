@@ -17,11 +17,6 @@
   .brand {
     display: flex;
     align-items: center;
-    gap: 9px;
-    font-family: var(--font-mono);
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--ink);
     padding: 2px 10px 24px;
   }
   .items {
