@@ -631,7 +631,8 @@
   font-size: 16px;
   color: var(--ink);
   text-transform: lowercase;
-  flex-shrink: 0;
+  flex: 1;
+  min-width: 0;
 }
 
 /* Dim count of not-yet-done practices — disappears at zero */
