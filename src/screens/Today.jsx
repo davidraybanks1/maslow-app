@@ -792,6 +792,10 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                         onClick={() => toggleNeed(n.id)}
                       >
                         <span className={styles.needName}>{n.name}</span>
+                        <svg className={`${styles.needChevron} ${isOpen ? styles.needChevronOpen : ''}`} width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                          <path d="M2 4.5L6 8.5L10 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        <span className={styles.needToggleSpacer} />
                         <div className={styles.bubbleRow}>
                           {Array.from({ length: maxBubbles }).map((_, i) => (
                             <div key={i} className={styles.bubble}

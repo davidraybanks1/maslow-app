@@ -631,8 +631,30 @@
   font-size: 16px;
   color: var(--ink);
   text-transform: lowercase;
-  flex: 1;
+  flex-shrink: 0;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.needChevron {
+  flex-shrink: 0;
+  color: rgba(26, 26, 26, 0.45);
+  transition: transform 200ms ease;
+  display: block;
+}
+
+.needChevronOpen {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .needChevron { transition: none; }
+}
+
+.needToggleSpacer {
+  flex: 1;
 }
 
 /* Dim count of not-yet-done practices — disappears at zero */
