@@ -181,19 +181,28 @@
 
 /* ── Mode cards ── */
 .modeCard {
+  position: relative;
   background: var(--bg);
   border: 1px solid #D8D3C3;
-  border-radius: 2px 12px 12px 2px;
+  border-radius: 15px;
   margin-bottom: 10px;
   box-shadow: 0 1px 2px rgba(26,26,26,.05), 0 18px 44px -14px rgba(26,26,26,.08);
   overflow: hidden;
+}
+.modeCard::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--spine, transparent);
 }
 .modeBand {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 10px 16px;
-  border-radius: 2px 12px 0 0;
 }
 .modeBandName {
   font-family: var(--font-mono);

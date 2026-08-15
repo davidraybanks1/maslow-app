@@ -140,7 +140,7 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, archive
     const footerOpen = openModeFooter === mode
 
     return (
-      <div key={mode} className={styles.modeCard} style={{ borderLeft: `3px solid ${color}` }}>
+      <div key={mode} className={styles.modeCard} style={{ '--spine': color }}>
         {/* Header band */}
         <div className={styles.modeBand} style={{ background: color }}>
           <span className={styles.modeBandName} style={{ color: textColor }}>
