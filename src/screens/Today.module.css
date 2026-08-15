@@ -697,9 +697,9 @@
 .needDrawer {
   max-height: 0;
   overflow: hidden;
-  transition: max-height 0.22s ease;
+  transition: max-height 0.25s ease;
 }
-.needDrawerOpen { max-height: 300px; }
+.needDrawerOpen { max-height: 800px; }
 @media (prefers-reduced-motion: reduce) {
   .needDrawer { transition: none; }
 }
@@ -749,7 +749,7 @@
   -webkit-tap-highlight-color: transparent;
   transition: background 80ms ease;
 }
-.practiceRow:hover { background: rgba(26,26,26,.04); }
+.practiceRow:not([style]):hover { background: rgba(26,26,26,.04); }
 .practiceRow:active { background: rgba(26,26,26,.07); }
 
 .practiceLabel {

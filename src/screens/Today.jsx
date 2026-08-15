@@ -446,6 +446,16 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   const [todayDebriefCount, setTodayDebriefCount] = useState(0)
   const [todayPeakCount, setTodayPeakCount] = useState(0)
   const [justTapped, setJustTapped] = useState(null)
+  const [openNeeds, setOpenNeeds] = useState(new Set())
+
+  function toggleNeed(needId) {
+    setOpenNeeds(prev => {
+      const next = new Set(prev)
+      if (next.has(needId)) next.delete(needId)
+      else next.add(needId)
+      return next
+    })
+  }
 
   useEffect(() => {
     if (!state.userId) { console.error('[loadDebriefTypes] called without userId — session may be invalid'); return }
@@ -741,7 +751,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
             const modeNeeds = NEEDS.filter(n => state.canvas[n.id] === mode)
             if (!modeNeeds.length) return null
             const pip = MODES[mode]?.pip
-            const pipText = (mode === 'appreciation' || mode === 'nourishment') ? '#1A1A1A' : '#FFFFFF'
+            const maxBubbles = MODE_MAX_BUBBLES[mode]
 
             return (
               <div key={mode}>
@@ -756,6 +766,10 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                     ? state.practicesDB.filter(p => p.need_id === n.id && !p.archived_at)
                     : (state.practices[n.id] || []).map(label => ({ id: null, label }))
 
+                  const needCompletions = checked.filter(e => e.need_id === n.id).reduce((s, e) => s + (e.count || 1), 0)
+                  const filledBubbles = Math.min(needCompletions, maxBubbles)
+                  const bonusBubbles = Math.max(0, needCompletions - maxBubbles)
+
                   function getPracticeCount(practice) {
                     return checked
                       .filter(e => {
@@ -767,51 +781,78 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                   }
 
                   const sorted = [...pool].sort((a, b) => getPracticeCount(a) - getPracticeCount(b))
+                  const isOpen = openNeeds.has(n.id)
 
                   return (
-                    <div key={n.id} className={styles.needSection}>
-                      <div className={styles.needSectionName}>{n.name}</div>
-                      {pool.length === 0 ? (
-                        <div className={styles.noPractice}>
-                          no practices set — <span className={styles.noPracticeLink} onClick={() => navigate('/canvas')}>add some</span>
+                    <div key={n.id} className={styles.needBlock}>
+                      <button
+                        className={styles.needToggle}
+                        aria-expanded={isOpen}
+                        aria-label={n.name}
+                        onClick={() => toggleNeed(n.id)}
+                      >
+                        <span className={styles.needName}>{n.name}</span>
+                        <div className={styles.bubbleRow}>
+                          {Array.from({ length: maxBubbles }).map((_, i) => (
+                            <div key={i} className={styles.bubble}
+                              style={i < filledBubbles
+                                ? { background: pip, border: `1.5px solid ${pip}` }
+                                : { background: 'transparent', border: `1.5px solid ${pip}` }}
+                            />
+                          ))}
+                          {Array.from({ length: bonusBubbles }).map((_, i) => (
+                            <div key={`bonus-${i}`} className={styles.bubbleBonus}
+                              style={{ border: `1.5px dashed ${pip}` }}
+                            />
+                          ))}
                         </div>
-                      ) : sorted.map(practice => {
-                        const practiceKey = practice.id || `${n.id}_${practice.label}`
-                        const count = getPracticeCount(practice)
-                        const isJustNow = justTapped === practiceKey
-                        const lastDays = lastDoneMap.get(practiceKey) ?? null
+                      </button>
 
-                        const stamp = isJustNow
-                          ? 'just now'
-                          : count > 0
-                            ? 'today'
-                            : lastDays !== null && lastDays > 0
-                              ? `${lastDays}d ago`
-                              : ''
-
-                        return (
-                          <div
-                            key={practiceKey}
-                            className={styles.practiceRow}
-                            style={isJustNow ? { background: '#FBF3DC' } : undefined}
-                            onClick={() => handlePracticeTap(n.id, mode, practice.label, practice.id)}
-                          >
-                            <span className={styles.practiceLabel}>{practice.label}</span>
-                            {stamp && (
-                              <span
-                                className={styles.practiceStamp}
-                                style={isJustNow ? { color: '#8A6D0E' } : undefined}
-                              >{stamp}</span>
-                            )}
-                            <div
-                              className={`${styles.practiceCheck} ${count > 0 ? styles.practiceCheckFilled : ''}`}
-                              style={count > 0 ? { background: pip, borderColor: pip } : { borderColor: pip }}
-                            >
-                              {count >= 2 && <span className={styles.practiceCheckX2} style={{ color: pipText }}>×2</span>}
+                      <div className={`${styles.needDrawer} ${isOpen ? styles.needDrawerOpen : ''}`}>
+                        <div className={styles.needDrawerInner}>
+                          {pool.length === 0 ? (
+                            <div className={styles.noPractice}>
+                              no practices set — <span className={styles.noPracticeLink} onClick={() => navigate('/canvas')}>add some</span>
                             </div>
-                          </div>
-                        )
-                      })}
+                          ) : sorted.map(practice => {
+                            const practiceKey = practice.id || `${n.id}_${practice.label}`
+                            const count = getPracticeCount(practice)
+                            const isJustNow = justTapped === practiceKey
+                            const lastDays = lastDoneMap.get(practiceKey) ?? null
+
+                            const stamp = isJustNow
+                              ? 'just now'
+                              : count >= 2
+                                ? '×2 today'
+                                : count === 1
+                                  ? 'today'
+                                  : lastDays !== null && lastDays > 0
+                                    ? `${lastDays}d ago`
+                                    : ''
+
+                            return (
+                              <div
+                                key={practiceKey}
+                                className={styles.practiceRow}
+                                style={isJustNow ? { background: '#FBF3DC' } : undefined}
+                                onClick={() => handlePracticeTap(n.id, mode, practice.label, practice.id)}
+                              >
+                                <div
+                                  className={`${styles.practiceCheck} ${count > 0 ? styles.practiceCheckFilled : ''}`}
+                                  style={count > 0 ? { background: pip, borderColor: pip } : { borderColor: pip }}
+                                />
+                                <span className={styles.practiceLabel}>{practice.label}</span>
+                                {stamp && (
+                                  <span
+                                    className={styles.practiceStamp}
+                                    style={isJustNow ? { color: '#8A6D0E' } : undefined}
+                                  >{stamp}</span>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
                     </div>
                   )
                 })}
