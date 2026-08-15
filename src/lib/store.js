@@ -161,6 +161,7 @@ async function restoreFromSupabase(userId, email) {
         practice_id: row.practice_id || null,
         mode: row.mode || null,
         completed_at: row.completed_at || null,
+        count: row.count || 1,
       })
     }
     const canvas = sanitizeCanvas(user.canvas)
@@ -410,7 +411,7 @@ export function useAppState(onSignIn) {
 
     const completedAt = new Date().toISOString()
     const tempId = `pending_${Date.now()}_${Math.random()}`
-    const newEntry = { id: tempId, need_id: needId, practice_text: practiceText, practice_id: practiceId, mode: mode || null, completed_at: completedAt }
+    const newEntry = { id: tempId, need_id: needId, practice_text: practiceText, practice_id: practiceId, mode: mode || null, completed_at: completedAt, count: 1 }
 
     const newCheckins = {
       ...checkinsRef.current,
@@ -420,7 +421,7 @@ export function useAppState(onSignIn) {
     setState(prev => ({ ...prev, checkins: newCheckins }))
 
     supabase.from('checkins')
-      .insert({ user_id: uid, date_key: date, need_id: needId, practice_text: practiceText, practice_id: practiceId, mode: mode || null, completed_at: completedAt })
+      .insert({ user_id: uid, date_key: date, need_id: needId, practice_text: practiceText, practice_id: practiceId, mode: mode || null, completed_at: completedAt, count: 1 })
       .select('id, practice_id').single()
       .then(({ data, error }) => {
         if (error) {
@@ -500,6 +501,33 @@ export function useAppState(onSignIn) {
           return { ...prev, checkins: reverted }
         })
       }
+    })
+  }
+
+  function incrementCheckinCount(entryId, date = todayKey()) {
+    const uid = userIdRef.current
+    setState(prev => {
+      const day = (prev.checkins[date] || []).map(e =>
+        e.id === entryId ? { ...e, count: 2 } : e
+      )
+      const updated = { ...prev.checkins, [date]: day }
+      checkinsRef.current = updated
+      if (uid && entryId && !String(entryId).startsWith('pending_')) {
+        supabase.from('checkins').update({ count: 2 }).eq('id', entryId).then(({ error }) => {
+          if (error) {
+            logSupabaseError('incrementCheckinCount', error)
+            setState(p => {
+              const d = (p.checkins[date] || []).map(e =>
+                e.id === entryId ? { ...e, count: 1 } : e
+              )
+              const rev = { ...p.checkins, [date]: d }
+              checkinsRef.current = rev
+              return { ...p, checkins: rev }
+            })
+          }
+        })
+      }
+      return { ...prev, checkins: updated }
     })
   }
 
@@ -604,7 +632,7 @@ export function useAppState(onSignIn) {
     })
   }
 
-  return { state, authLoading, updateCanvas, replaceCanvas, addPractice, renamePractice, archivePractice, removePractice, checkIn, removeCheckin, clearPracticeCheckins, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule, updateReviewCadence }
+  return { state, authLoading, updateCanvas, replaceCanvas, addPractice, renamePractice, archivePractice, removePractice, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule, updateReviewCadence }
 }
 
 export function todayKey() {

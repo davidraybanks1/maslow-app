@@ -123,7 +123,7 @@ const STREAK_LINES = {
   365: 'a year of showing up.',
 }
 
-export default function Today({ state, checkIn, removeCheckin, clearPracticeCheckins, logMood }) {
+export default function Today({ state, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood }) {
   const navigate = useNavigate()
   const today = todayKey()
   const checked = state.checkins[today] || []
@@ -136,7 +136,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     const maxBubbles = MODE_MAX_BUBBLES[mode] || 0
     const weight = MODE_WEIGHTS[mode] || 0
     maxScore += maxBubbles * weight
-    const completions = checked.filter(e => e.need_id === n.id).length
+    const completions = checked.filter(e => e.need_id === n.id).reduce((s, e) => s + (e.count || 1), 0)
     const filled = Math.min(completions, maxBubbles)
     const bonus = Math.max(0, completions - maxBubbles)
     currentScore += filled * weight + bonus * 0.5
@@ -153,7 +153,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     if (!mode) continue
     const maxBubbles = MODE_MAX_BUBBLES[mode] || 0
     spaceMax += maxBubbles
-    const filled = Math.min(checked.filter(e => e.need_id === n.id).length, maxBubbles)
+    const filled = Math.min(checked.filter(e => e.need_id === n.id).reduce((s, e) => s + (e.count || 1), 0), maxBubbles)
     if (filled > 0) spaceByMode[mode] = (spaceByMode[mode] || 0) + filled
     spaceDoneCount += filled
   }
@@ -164,6 +164,12 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   const todayMoods = (state.moods || []).filter(m => m.date_key === today)
   const stats = createDataStats({ canvas: state.canvas || {}, checkins: state.checkins || {}, moods: state.moods || [], practices: state.practices || {}, practicesDB: state.practicesDB || [] })
   const streak = stats.getStreak()
+  const lastDoneMap = new Map(
+    stats.getPracticeStats().map(p => [
+      p.practice?.id || `${p.need.id}_${p.text}`,
+      p.daysSinceLast,
+    ])
+  )
   const dateLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).toLowerCase()
 
   const [guidanceDismissedNow, setGuidanceDismissedNow] = useState(false)
@@ -439,7 +445,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   }
   const [todayDebriefCount, setTodayDebriefCount] = useState(0)
   const [todayPeakCount, setTodayPeakCount] = useState(0)
-  const [openNeeds, setOpenNeeds] = useState(new Set())
+  const [justTapped, setJustTapped] = useState(null)
 
   useEffect(() => {
     if (!state.userId) { console.error('[loadDebriefTypes] called without userId — session may be invalid'); return }
@@ -531,30 +537,27 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     logMood(state.userId, promptTime, moodSelections[promptTime], moodNotes[promptTime] || null, today)
   }
 
-  function handleChipClick(needId, mode, practiceText, practiceId) {
+  function handlePracticeTap(needId, mode, practiceText, practiceId) {
     hapticTick()
-    const matchEntry = e => e.need_id === needId && (
-      (practiceId && e.practice_id) ? e.practice_id === practiceId : e.practice_text === practiceText
-    )
-    const practiceCount = checked.filter(matchEntry).length
-    if (practiceCount >= 2) {
-      clearPracticeCheckins(needId, practiceText)
-    } else {
-      checkIn(needId, practiceText, mode, undefined, practiceId)
+    function matchEntry(e) {
+      if (e.need_id !== needId) return false
+      if (practiceId && e.practice_id) return e.practice_id === practiceId
+      return e.practice_text === practiceText
     }
-  }
-
-  function handleBubbleRemove(needId) {
-    removeCheckin(needId)
-  }
-
-  function toggleNeed(needId) {
-    setOpenNeeds(prev => {
-      const next = new Set(prev)
-      if (next.has(needId)) next.delete(needId)
-      else next.add(needId)
-      return next
-    })
+    const practiceEntries = checked.filter(matchEntry)
+    const totalCount = practiceEntries.reduce((s, e) => s + (e.count || 1), 0)
+    const practiceKey = practiceId || `${needId}_${practiceText}`
+    if (totalCount === 0) {
+      checkIn(needId, practiceText, mode, undefined, practiceId)
+      setJustTapped(practiceKey)
+    } else if (totalCount === 1) {
+      const entry = practiceEntries[practiceEntries.length - 1]
+      incrementCheckinCount(entry.id)
+      setJustTapped(practiceKey)
+    } else {
+      clearPracticeCheckins(needId, practiceText)
+      setJustTapped(null)
+    }
   }
 
   // Count distinct journal entries by timestamp markers; fall back to 1 if there's any text
@@ -738,8 +741,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
             const modeNeeds = NEEDS.filter(n => state.canvas[n.id] === mode)
             if (!modeNeeds.length) return null
             const pip = MODES[mode]?.pip
-            const maxBubbles = MODE_MAX_BUBBLES[mode]
-            const chipColor = (mode === 'appreciation' || mode === 'nourishment') ? 'var(--ink)' : '#fff'
+            const pipText = (mode === 'appreciation' || mode === 'nourishment') ? '#1A1A1A' : '#FFFFFF'
 
             return (
               <div key={mode}>
@@ -749,95 +751,67 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                   <span className={styles.modeHeaderName}>{mode}</span>
                 </div>
 
-                {modeNeeds.map((n) => {
+                {modeNeeds.map(n => {
                   const pool = (state.practicesDB && state.practicesDB.length > 0)
                     ? state.practicesDB.filter(p => p.need_id === n.id && !p.archived_at)
                     : (state.practices[n.id] || []).map(label => ({ id: null, label }))
-                  const checkedForNeed = checked.filter(e => e.need_id === n.id)
-                  const completions = checkedForNeed.length
-                  const filledBubbles = Math.min(completions, maxBubbles)
-                  const bonusBubbles = Math.max(0, completions - maxBubbles)
 
-                  const matchPractice = (practice, e) => (practice.id && e.practice_id)
-                    ? e.practice_id === practice.id
-                    : e.practice_text === practice.label
-                  const donePractices = pool.filter(p => checkedForNeed.filter(e => matchPractice(p, e)).length >= 1)
-                  const notDonePractices = pool.filter(p => checkedForNeed.filter(e => matchPractice(p, e)).length === 0)
-                  const isOpen = openNeeds.has(n.id)
+                  function getPracticeCount(practice) {
+                    return checked
+                      .filter(e => {
+                        if (e.need_id !== n.id) return false
+                        if (practice.id && e.practice_id) return e.practice_id === practice.id
+                        return e.practice_text === practice.label
+                      })
+                      .reduce((s, e) => s + (e.count || 1), 0)
+                  }
 
-                  const ariaLabel = [
-                    n.name,
-                    notDonePractices.length > 0 ? `${notDonePractices.length} remaining` : null,
-                    `${filledBubbles} of ${maxBubbles} done`,
-                    isOpen ? 'expanded' : 'collapsed',
-                  ].filter(Boolean).join(', ')
+                  const sorted = [...pool].sort((a, b) => getPracticeCount(a) - getPracticeCount(b))
 
                   return (
-                    <div key={n.id} className={styles.needBlock}>
-                      <button
-                        className={styles.needToggle}
-                        aria-expanded={isOpen}
-                        aria-label={ariaLabel}
-                        onClick={() => toggleNeed(n.id)}
-                      >
-                        <span className={styles.needName}>{n.name}</span>
-                        <span
-                          className={styles.needRemainingCount}
-                          style={notDonePractices.length === 0 ? { visibility: 'hidden' } : undefined}
-                        >{notDonePractices.length}</span>
-                        <div className={styles.donePillRow}>
-                          {donePractices.map(practice => {
-                            const practiceCount = checkedForNeed.filter(e => matchPractice(practice, e)).length
-                            return (
-                              <span
-                                key={practice.id || practice.label}
-                                className={styles.donePill}
-                                style={{ background: pip, color: chipColor }}
-                                onClick={e => { e.stopPropagation(); handleChipClick(n.id, mode, practice.label, practice.id) }}
-                              >
-                                {practice.label}{practiceCount >= 2 && <sup className={styles.chipCount}>×{practiceCount}</sup>}
-                              </span>
-                            )
-                          })}
+                    <div key={n.id} className={styles.needSection}>
+                      <div className={styles.needSectionName}>{n.name}</div>
+                      {pool.length === 0 ? (
+                        <div className={styles.noPractice}>
+                          no practices set — <span className={styles.noPracticeLink} onClick={() => navigate('/canvas')}>add some</span>
                         </div>
-                        <div className={styles.bubbleRow}>
-                          {Array.from({ length: maxBubbles }).map((_, i) => (
-                            <div key={i} className={styles.bubble}
-                              style={i < filledBubbles
-                                ? { background: pip, border: `1.5px solid ${pip}` }
-                                : { background: 'transparent', border: `1.5px solid ${pip}` }}
-                            />
-                          ))}
-                          {Array.from({ length: bonusBubbles }).map((_, i) => (
-                            <div key={`bonus-${i}`} className={styles.bubbleBonus}
-                              style={{ border: `1.5px dashed ${pip}` }}
-                            />
-                          ))}
-                        </div>
-                      </button>
+                      ) : sorted.map(practice => {
+                        const practiceKey = practice.id || `${n.id}_${practice.label}`
+                        const count = getPracticeCount(practice)
+                        const isJustNow = justTapped === practiceKey
+                        const lastDays = lastDoneMap.get(practiceKey) ?? null
 
-                      <div className={`${styles.needDrawer} ${isOpen ? styles.needDrawerOpen : ''}`}>
-                        <div className={styles.needDrawerInner}>
-                          {pool.length === 0 ? (
-                            <div className={styles.noPractice}>
-                              No practices set — <span className={styles.noPracticeLink} onClick={() => navigate('/practices')}>add some</span>
+                        const stamp = isJustNow
+                          ? 'just now'
+                          : count > 0
+                            ? 'today'
+                            : lastDays !== null && lastDays > 0
+                              ? `${lastDays}d ago`
+                              : ''
+
+                        return (
+                          <div
+                            key={practiceKey}
+                            className={styles.practiceRow}
+                            style={isJustNow ? { background: '#FBF3DC' } : undefined}
+                            onClick={() => handlePracticeTap(n.id, mode, practice.label, practice.id)}
+                          >
+                            <span className={styles.practiceLabel}>{practice.label}</span>
+                            {stamp && (
+                              <span
+                                className={styles.practiceStamp}
+                                style={isJustNow ? { color: '#8A6D0E' } : undefined}
+                              >{stamp}</span>
+                            )}
+                            <div
+                              className={`${styles.practiceCheck} ${count > 0 ? styles.practiceCheckFilled : ''}`}
+                              style={count > 0 ? { background: pip, borderColor: pip } : { borderColor: pip }}
+                            >
+                              {count >= 2 && <span className={styles.practiceCheckX2} style={{ color: pipText }}>×2</span>}
                             </div>
-                          ) : notDonePractices.length === 0 ? (
-                            <div className={styles.allDone}>all done</div>
-                          ) : (
-                            <div className={styles.chipRow}>
-                              {notDonePractices.map(practice => (
-                                <button key={practice.id || practice.label}
-                                  className={styles.practiceChip}
-                                  onClick={() => handleChipClick(n.id, mode, practice.label, practice.id)}
-                                >
-                                  {practice.label}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
+                          </div>
+                        )
+                      })}
                     </div>
                   )
                 })}

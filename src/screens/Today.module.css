@@ -725,6 +725,72 @@
 .practiceChip:active { background: var(--bg2); }
 .chipCount { font-size: 9px; font-style: normal; margin-left: 2px; vertical-align: super; opacity: 0.85; }
 
+/* ── Flat practice rows ── */
+.needSection { margin-bottom: 10px; }
+.needSection:last-child { margin-bottom: 0; }
+
+.needSectionName {
+  font-family: 'Instrument Serif', serif;
+  font-size: 13px;
+  color: var(--ink3);
+  text-transform: lowercase;
+  margin-bottom: 3px;
+  letter-spacing: 0.01em;
+}
+
+.practiceRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  margin: 0 -10px;
+  border-radius: 8px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 80ms ease;
+}
+.practiceRow:hover { background: rgba(26,26,26,.04); }
+.practiceRow:active { background: rgba(26,26,26,.07); }
+
+.practiceLabel {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 200;
+  color: var(--ink);
+  flex: 1;
+  min-width: 0;
+}
+
+.practiceStamp {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink4);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.practiceCheck {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  transition: background 80ms ease, border-color 80ms ease;
+}
+.practiceCheckFilled { }
+.practiceCheckX2 {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
 /* ── Mood & section headers ── */
 .sectionHeader {
   display: flex;

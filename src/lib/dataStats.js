@@ -407,7 +407,8 @@ export function createDataStats({ canvas, checkins, moods, practices, practicesD
         let completedDays = 0
         let totalCompletions = 0
         for (const day of windowDays) {
-          const dayCount = (checkins[day] || []).filter(matchEntry).length
+          const dayEntries = (checkins[day] || []).filter(matchEntry)
+          const dayCount = dayEntries.reduce((s, e) => s + (e.count || 1), 0)
           if (dayCount > 0) {
             completedDays++
             totalCompletions += dayCount
