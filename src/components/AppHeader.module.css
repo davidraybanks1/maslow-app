@@ -1,7 +1,7 @@
 .header {
   width: 100%;
-  background: #1A1A1A;
-  padding: 14px 24px;
+  background: var(--paper);
+  padding: 12px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -27,6 +27,6 @@
 .menuBtn div {
   width: 22px;
   height: 1.5px;
-  background: #ffffff;
+  background: var(--ink);
   border-radius: 1px;
 }

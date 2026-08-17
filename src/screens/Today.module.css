@@ -1,7 +1,7 @@
 .screen {
   display: flex;
   flex-direction: column;
-  background: var(--bg2);
+  background: var(--paper);
   min-height: 100vh;
   padding: 0 16px 32px;
 }
@@ -28,74 +28,78 @@
   color: var(--ink3);
   letter-spacing: 0.06em;
 }
-.greeting { font-family: var(--font-serif); font-size: 34px; font-weight: 400; letter-spacing: -0.01em; line-height: 1.1; color: var(--ink); }
+.greeting { font-family: var(--font-serif); font-size: 30px; font-weight: 300; letter-spacing: -0.01em; line-height: 1.1; color: var(--ink); }
 .headerRight {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
   flex-shrink: 0;
 }
-.spacePct {
-  font-family: var(--font-serif);
-  font-size: 30px;
-  line-height: 1;
-  text-align: right;
-  color: var(--ink);
-  margin-bottom: 3px;
+
+/* ── Completion ring ── */
+.ring {
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
-.pieLabel {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  color: var(--ink3);
-  text-align: center;
-  white-space: nowrap;
+.ringInner {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--paper);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ringPct {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 300;
+  color: var(--ink);
+  line-height: 1;
+}
+.ringPctSign {
+  font-size: 11px;
 }
 
 /* ── Cards ── */
 .card {
-  background: var(--bg);
-  border: 1px solid #D8D3C3;
+  background: var(--card);
+  border: 0.5px solid var(--hairline);
   border-radius: 12px;
   padding: 14px 16px;
   margin-bottom: 12px;
-  box-shadow: 0 1px 2px rgba(26, 26, 26, 0.05), 0 18px 44px -14px rgba(26, 26, 26, 0.10);
 }
 
 .cardAlt {
-  background: var(--bg2);
-  border: 1px solid #D8D3C3;
-  box-shadow: 0 1px 2px rgba(26, 26, 26, 0.05), 0 18px 44px -14px rgba(26, 26, 26, 0.10);
+  background: var(--card);
+  border: 0.5px solid var(--hairline);
   border-radius: 12px;
   padding: 14px 16px;
   margin-bottom: 12px;
 }
 
 .cardJournal {
-  /* warm cream field — matches the site's text surfaces */
-  background: #FAF8F1;
-  border: 1px solid #D8D3C3;
+  background: var(--card);
+  border: 0.5px solid var(--hairline);
   border-radius: 12px;
   padding: 14px 16px;
   margin-bottom: 12px;
-  box-shadow: 0 1px 2px rgba(26, 26, 26, 0.05), 0 18px 44px -14px rgba(26, 26, 26, 0.10);
 }
 
 .cardJournal .journalInput {
-  background: #FAF8F1;
+  background: var(--card);
 }
 
-
-/* ── Dark wrapper (note to self deck) ── */
+/* ── Note to self deck wrapper ── */
 .reflectiveSection {
-  /* warm cream field — matches the site's text surfaces */
-  background: #FAF8F1;
-  border: 1px solid #D8D3C3;
+  background: var(--card);
+  border: 0.5px solid var(--hairline);
   border-radius: 16px;
-  box-shadow: 0 1px 2px rgba(26, 26, 26, 0.05), 0 18px 44px -14px rgba(26, 26, 26, 0.10);
   padding: 14px 16px;
   margin-bottom: 12px;
-  --surface-reflective: #FAF8F1;
+  --surface-reflective: var(--card);
 }
 
 /* ── Note to self deck ── */
@@ -141,11 +145,12 @@
 }
 
 .noteText {
-  font-family: var(--font-mono);
+  font-family: var(--font-serif);
   font-style: italic;
-  font-size: 13px;
+  font-weight: 300;
+  font-size: 15px;
   color: var(--ink);
-  line-height: 1.6;
+  line-height: 1.55;
   flex: 1;
 }
 
@@ -174,27 +179,27 @@
   justify-content: space-between;
 }
 
-.noteDeckDots { display: flex; gap: 4px; }
-.noteDeckDot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--border2);
-}
-.noteDeckDotActive { background: var(--ink); }
-
-.notePencilBtn {
+.noteDeckCounter {
   font-family: var(--font-mono);
   font-size: 10px;
   color: var(--ink3);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  flex-shrink: 0;
-  -webkit-tap-highlight-color: transparent;
+  letter-spacing: 0.04em;
 }
-.notePencilBtn:hover { color: var(--ink2); }
+
+.noteEditPill {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink);
+  background: none;
+  border: 0.5px solid var(--hairline);
+  border-radius: 20px;
+  padding: 3px 10px;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--motion-hover);
+}
+.noteEditPill:hover { background: var(--track); }
 
 
 /* ── Lightbox ── */
@@ -236,7 +241,7 @@
 .noteOverlay {
   position: fixed;
   inset: 0;
-  background: var(--bg2);
+  background: var(--paper);
   z-index: 200;
   display: flex;
   flex-direction: column;
@@ -836,37 +841,146 @@
 .journalTimestampBtn:hover { color: var(--ink2); }
 .journalTimestampBtn:active { color: var(--ink2); }
 
-.moodSection { padding: 0 0 16px; display: flex; flex-direction: column; gap: 12px; }
-.moodRow { display: flex; flex-direction: column; gap: 6px; }
-.moodRowTop { display: flex; align-items: center; justify-content: space-between; }
-.moodLabel { font-size: 12px; color: var(--ink3); letter-spacing: 0.08em; font-family: var(--font-mono); }
-.moodBtns { display: flex; gap: 5px; }
-.moodBtn { padding: 4px 12px; border-radius: 20px; border: 0.5px solid var(--border2); background: transparent; color: var(--ink3); font-family: var(--font-mono); font-size: 11px; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background 100ms ease, color 100ms ease, opacity 100ms ease; }
-.moodBtnGood { background: #1B3A2D; color: #fff; border-color: #1B3A2D; }
-.moodBtnFine { background: #B8C3B1; color: var(--ink); border-color: #B8C3B1; }
-.moodBtnBad { background: #D93B1C; color: #fff; border-color: #D93B1C; }
-.moodNote { width: 100%; box-sizing: border-box; padding: 5px 10px; border-radius: 8px; border: 0.5px solid var(--border); background: var(--bg2); font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink); outline: none; transition: border-color var(--motion-hover); }
+/* ── New slot-based mood ── */
+.moodPips {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 16px;
+}
+
+.moodPip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 3px 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.moodPipDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1px solid var(--ink3);
+  flex-shrink: 0;
+  display: block;
+}
+.moodPipDotFilled {
+  background: var(--exploration);
+  border-color: var(--exploration);
+}
+
+.moodPipLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink3);
+  letter-spacing: 0.06em;
+}
+
+.retroRow {
+  background: var(--card);
+  border: 0.5px solid var(--hairline);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin: 4px 0 8px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.retroQ {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-weight: 300;
+  font-style: italic;
+  color: var(--ink);
+}
+
+.moodQuestion {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 300;
+  color: var(--ink);
+  margin-bottom: 16px;
+  letter-spacing: -0.01em;
+}
+
+.moodCircles {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.moodCircle {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 1px solid var(--hairline);
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink2);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--motion-micro), border-color var(--motion-micro), color var(--motion-micro);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.moodCircle:hover { border-color: var(--ink3); }
+.moodCircle:active { opacity: 0.8; }
+.moodCircleSelected {
+  background: var(--exploration);
+  border-color: var(--exploration);
+  color: #fff;
+}
+
+.moodCircleSm {
+  width: 36px;
+  height: 36px;
+  font-size: 10px;
+}
+
+.moodNote {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 0.5px solid var(--hairline);
+  background: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--ink);
+  outline: none;
+  resize: none;
+  transition: border-color var(--motion-hover);
+  min-height: 60px;
+}
 .moodNote:focus { border-color: var(--ink2); }
 .moodNote::placeholder { color: var(--ink4); }
 
-.moodNoteToggle {
+.moodNoteAffordance {
   background: none;
   border: none;
-  padding: 2px 0;
+  padding: 0;
   font-family: var(--font-mono);
   font-size: 11px;
   color: var(--ink4);
   cursor: pointer;
   text-align: left;
+  letter-spacing: 0.02em;
   -webkit-tap-highlight-color: transparent;
-  transition: color var(--motion-hover);
+  border-bottom: 1px dashed var(--ink4);
+  transition: color var(--motion-hover), border-color var(--motion-hover);
 }
-.moodNoteToggle:hover { color: var(--ink3); }
-.moodNoteToggle:active { color: var(--ink2); }
+.moodNoteAffordance:hover { color: var(--ink3); border-color: var(--ink3); }
+
 .needToggle:active { background: rgba(26,26,26,.05); border-radius: 6px; }
-.moodBtn:not(.moodBtnGood):not(.moodBtnFine):not(.moodBtnBad):active { background: rgba(26,26,26,.05); }
-.moodBtnGood:active, .moodBtnFine:active, .moodBtnBad:active { opacity: 0.8; }
-.moodDivider { height: 1px; background: rgba(26, 26, 24, 0.07); }
+.moodDivider { display: none; }
 
 /* ── Journal timestamp tokens — applied wherever entries are rendered as HTML ── */
 .entryTimestamp {
@@ -877,9 +991,9 @@
 .journalInput {
   width: 100%;
   padding: 14px;
-  border: 0.5px solid var(--border);
+  border: 0.5px solid var(--hairline);
   border-radius: 10px;
-  background: #ffffff;
+  background: var(--card);
   font-family: var(--font-mono);
   font-size: 16px;
   font-weight: 200;

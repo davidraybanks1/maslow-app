@@ -4,6 +4,7 @@ import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from 
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { NEEDS, MODES, MODE_ORDER, MODE_MAX_BUBBLES, MODE_WEIGHTS } from '../lib/constants'
+import { currentSlot, precedingSlots, SLOT_NOUN } from '../lib/slots'
 import { todayKey, loadJournalEntry, saveJournalEntry, loadDebriefTypes, loadDebriefs, loadNoteDeck, addNoteDeckCard, updateNoteDeckCard, deleteNoteDeckCard, uploadNoteImage, reorderNoteDeck, loadNoteHistory } from '../lib/store'
 import { createDataStats, getCanvasGuidance } from '../lib/dataStats'
 import { hapticTick } from '../lib/native'
@@ -38,9 +39,33 @@ function SortableDeckRow({ card, onEdit, onDelete, onLightbox }) {
   )
 }
 
-const MOOD_PERIODS = ['morning', 'midday', 'evening']
 const MOODS = ['good', 'fine', 'bad']
-const MOOD_SELECTED_CLASS = { good: 'moodBtnGood', fine: 'moodBtnFine', bad: 'moodBtnBad' }
+
+function buildRingGradient(arcs) {
+  const stops = []
+  for (const { color, startPct, fill, endPct } of arcs) {
+    const fillEndPct = startPct + fill * 25
+    if (fill > 0) {
+      stops.push(`${color} ${startPct.toFixed(2)}%`, `${color} ${fillEndPct.toFixed(2)}%`)
+    }
+    if (fillEndPct < endPct) {
+      stops.push(`var(--track) ${fillEndPct.toFixed(2)}%`, `var(--track) ${endPct.toFixed(2)}%`)
+    }
+  }
+  if (!stops.length) return `conic-gradient(var(--track) 0% 100%)`
+  return `conic-gradient(from -90deg, ${stops.join(', ')})`
+}
+
+function CompletionRing({ arcs, pct }) {
+  const gradient = buildRingGradient(arcs)
+  return (
+    <div className={styles.ring} style={{ background: gradient }} aria-label={`${pct}% complete today`} role="img">
+      <div className={styles.ringInner}>
+        <span className={styles.ringPct}>{pct}<span className={styles.ringPctSign}>%</span></span>
+      </div>
+    </div>
+  )
+}
 
 const JOURNAL_DRAFT_PREFIX = 'journal-draft-'
 function journalDraftKey(dateKey) { return `${JOURNAL_DRAFT_PREFIX}${dateKey}` }
@@ -127,24 +152,30 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   const navigate = useNavigate()
   const today = todayKey()
   const checked = state.checkins[today] || []
+  const slot = currentSlot()
 
-  let maxScore = 0
-  let currentScore = 0
-  for (const n of NEEDS) {
-    const mode = state.canvas[n.id]
-    if (!mode) continue
+  // Completion ring: each mode gets 1/4 of the ring, filled proportionally
+  const ringArcs = []
+  let totalRingFraction = 0
+  for (let i = 0; i < MODE_ORDER.length; i++) {
+    const mode = MODE_ORDER[i]
+    const modeNeeds = NEEDS.filter(n => state.canvas[n.id] === mode)
     const maxBubbles = MODE_MAX_BUBBLES[mode] || 0
-    const weight = MODE_WEIGHTS[mode] || 0
-    maxScore += maxBubbles * weight
-    const completions = checked.filter(e => e.need_id === n.id).reduce((s, e) => s + (e.count || 1), 0)
-    const filled = Math.min(completions, maxBubbles)
-    const bonus = Math.max(0, completions - maxBubbles)
-    currentScore += filled * weight + bonus * 0.5
+    const modeTarget = maxBubbles * modeNeeds.length
+    let modeCompletions = 0
+    for (const n of modeNeeds) {
+      modeCompletions += Math.min(
+        checked.filter(e => e.need_id === n.id).reduce((s, e) => s + (e.count || 1), 0),
+        maxBubbles
+      )
+    }
+    const fill = modeTarget > 0 ? Math.min(modeCompletions / modeTarget, 1) : 0
+    ringArcs.push({ mode, color: MODES[mode].pip, startPct: i * 25, fill, endPct: (i + 1) * 25 })
+    totalRingFraction += fill / 4
   }
-  const piePct = maxScore > 0 ? currentScore / maxScore : 0
+  const ringPct = Math.round(totalRingFraction * 100)
 
-  // Space-owned bar: today's practices claim colored space from anxiety's black.
-  // Unweighted practice counts (capped per need) so the bar reads as literal space.
+  // Space-owned: kept for Data/Log screens (not shown on Today any more)
   const spaceByMode = {}
   let spaceMax = 0
   let spaceDoneCount = 0
@@ -158,8 +189,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     spaceDoneCount += filled
   }
   const spaceLeft = Math.max(0, spaceMax - spaceDoneCount)
-  const spaceComplete = spaceMax > 0 && spaceLeft === 0
-  const spacePct = spaceMax > 0 ? Math.round((spaceDoneCount / spaceMax) * 100) : 0
 
   const todayMoods = (state.moods || []).filter(m => m.date_key === today)
   const stats = createDataStats({ canvas: state.canvas || {}, checkins: state.checkins || {}, moods: state.moods || [], practices: state.practices || {}, practicesDB: state.practicesDB || [] })
@@ -447,6 +476,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   const [todayPeakCount, setTodayPeakCount] = useState(0)
   const [justTapped, setJustTapped] = useState(null)
   const [openNeeds, setOpenNeeds] = useState(new Set())
+  const [openRetroSlot, setOpenRetroSlot] = useState(null)
 
   function toggleNeed(needId) {
     setOpenNeeds(prev => {
@@ -591,27 +621,13 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         <div className={styles.headerRow}>
           <div className={styles.headerLeft}>
             <div className={styles.dateLabel}>{dateLabel}</div>
-            <div className={styles.greeting}>good {hour()}.</div>
+            <div className={styles.greeting}>good {slot}.</div>
             {STREAK_LINES[streak] && <div className={styles.milestoneLine}>{STREAK_LINES[streak]}</div>}
           </div>
           <div className={styles.headerRight}>
-            <div className={styles.spacePct}>{spacePct}%</div>
-            <div className={styles.pieLabel}>space owned</div>
+            <CompletionRing arcs={ringArcs} pct={ringPct} />
           </div>
         </div>
-        {spaceMax > 0 && (
-          <div
-            className={`${styles.spaceBar} ${spaceComplete ? styles.spaceBarComplete : ''}`}
-            aria-label={`space owned: ${spaceDoneCount} of ${spaceMax} practices`}
-          >
-            {MODE_ORDER.map(mode =>
-              spaceByMode[mode] > 0 ? (
-                <span key={mode} className={styles.spaceSeg} style={{ flexGrow: spaceByMode[mode], background: `var(--${mode})` }} />
-              ) : null
-            )}
-            {spaceLeft > 0 && <span className={`${styles.spaceSeg} ${styles.spaceSegAnxiety}`} style={{ flexGrow: spaceLeft }} />}
-          </div>
-        )}
       </div>
 
       {/* ── Scrollable / grid body ── */}
@@ -645,12 +661,8 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                           )}
                         </div>
                         <div className={styles.noteDeckFooter}>
-                          <div className={styles.noteDeckDots}>
-                            {noteDeck.map((_, j) => (
-                              <span key={j} className={`${styles.noteDeckDot} ${j === activeCardIndex ? styles.noteDeckDotActive : ''}`} />
-                            ))}
-                          </div>
-                          <button className={styles.notePencilBtn} onClick={openManageDeck}>manage ✎</button>
+                          <span className={styles.noteDeckCounter}>{activeCardIndex + 1}/{noteDeck.length}</span>
+                          <button className={styles.noteEditPill} onClick={openManageDeck}>edit</button>
                         </div>
                       </div>
                     ))}
@@ -660,11 +672,11 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 <div className={styles.noteDeckCard}>
                   <div className={styles.noteDeckEyebrow}>NOTE TO SELF</div>
                   <div className={styles.noteDeckBody}>
-                    <span className={styles.noteEmpty}>no notes yet — tap manage to add one</span>
+                    <span className={styles.noteEmpty}>no notes yet — tap edit to add one</span>
                   </div>
                   <div className={styles.noteDeckFooter}>
                     <span />
-                    <button className={styles.notePencilBtn} onClick={openManageDeck}>manage ✎</button>
+                    <button className={styles.noteEditPill} onClick={openManageDeck}>edit</button>
                   </div>
                 </div>
               ) : (
@@ -692,53 +704,74 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
 
         {/* ── Mood card ── */}
         <div className={`${styles.card} ${styles.moodCard}`}>
-          <div className={styles.sectionHeader}>
-            <span className={styles.sectionLabel}>mood</span>
-          </div>
-          <div className={styles.moodSection}>
-            {MOOD_PERIODS.map((period, idx) => (
-              <div key={period}>
-                {idx > 0 && <div className={styles.moodDivider} />}
-                <div className={styles.moodRow}>
-                  <div className={styles.moodRowTop}>
-                    <span className={styles.moodLabel}>{period}</span>
-                    <div className={styles.moodBtns}>
-                      {MOODS.map(mood => (
-                        <button
-                          key={mood}
-                          className={`${styles.moodBtn} ${moodSelections[period] === mood ? styles[MOOD_SELECTED_CLASS[mood]] : ''}`}
-                          onClick={() => handleMoodSelect(period, mood)}
-                        >
-                          {mood}
-                        </button>
-                      ))}
+          {/* Preceding slot pips */}
+          {precedingSlots(slot).length > 0 && (
+            <div className={styles.moodPips}>
+              {precedingSlots(slot).map(prevSlot => (
+                <div key={prevSlot}>
+                  <button
+                    className={styles.moodPip}
+                    aria-expanded={openRetroSlot === prevSlot}
+                    onClick={() => setOpenRetroSlot(o => o === prevSlot ? null : prevSlot)}
+                  >
+                    <span className={`${styles.moodPipDot} ${moodSelections[prevSlot] ? styles.moodPipDotFilled : ''}`} />
+                    <span className={styles.moodPipLabel}>{SLOT_NOUN[prevSlot]}</span>
+                  </button>
+                  {openRetroSlot === prevSlot && (
+                    <div className={styles.retroRow}>
+                      <div className={styles.retroQ}>how was the {SLOT_NOUN[prevSlot]}?</div>
+                      <div className={styles.moodCircles}>
+                        {MOODS.map(mood => (
+                          <button
+                            key={mood}
+                            className={`${styles.moodCircle} ${styles.moodCircleSm} ${moodSelections[prevSlot] === mood ? styles.moodCircleSelected : ''}`}
+                            onClick={() => { handleMoodSelect(prevSlot, mood); setOpenRetroSlot(null) }}
+                          >{mood}</button>
+                        ))}
+                      </div>
+                      {moodSelections[prevSlot] && expandedNoteRows.has(prevSlot) && (
+                        <textarea
+                          ref={el => { moodNoteRefs.current[prevSlot] = el }}
+                          className={styles.moodNote}
+                          placeholder={`what made it ${moodSelections[prevSlot]}?`}
+                          value={moodNotes[prevSlot] || ''}
+                          onChange={e => setMoodNotes(prev => ({ ...prev, [prevSlot]: e.target.value }))}
+                          onBlur={() => { handleNoteBlur(prevSlot); if (!moodNotes[prevSlot]?.trim()) setExpandedNoteRows(prev => { const n = new Set(prev); n.delete(prevSlot); return n }) }}
+                        />
+                      )}
                     </div>
-                  </div>
-                  {moodSelections[period] && (
-                    expandedNoteRows.has(period) ? (
-                      <input
-                        ref={el => { moodNoteRefs.current[period] = el }}
-                        className={styles.moodNote}
-                        placeholder="add a note…"
-                        value={moodNotes[period] || ''}
-                        onChange={e => setMoodNotes(prev => ({ ...prev, [period]: e.target.value }))}
-                        onBlur={() => {
-                          handleNoteBlur(period)
-                          if (!moodNotes[period]?.trim()) {
-                            setExpandedNoteRows(prev => { const n = new Set(prev); n.delete(period); return n })
-                          }
-                        }}
-                      />
-                    ) : (
-                      <button className={styles.moodNoteToggle} onClick={() => toggleNoteRow(period)}>
-                        + note
-                      </button>
-                    )
                   )}
                 </div>
-              </div>
+              ))}
+            </div>
+          )}
+
+          {/* Current slot */}
+          <div className={styles.moodQuestion}>how's the {SLOT_NOUN[slot]}?</div>
+          <div className={styles.moodCircles}>
+            {MOODS.map(mood => (
+              <button
+                key={mood}
+                className={`${styles.moodCircle} ${moodSelections[slot] === mood ? styles.moodCircleSelected : ''}`}
+                onClick={() => handleMoodSelect(slot, mood)}
+              >{mood}</button>
             ))}
           </div>
+          {moodSelections[slot] && !expandedNoteRows.has(slot) && (
+            <button className={styles.moodNoteAffordance} onClick={() => toggleNoteRow(slot)}>
+              — add a note about your mood
+            </button>
+          )}
+          {expandedNoteRows.has(slot) && (
+            <textarea
+              ref={el => { moodNoteRefs.current[slot] = el }}
+              className={styles.moodNote}
+              placeholder={`what made it ${moodSelections[slot] || ''}?`}
+              value={moodNotes[slot] || ''}
+              onChange={e => setMoodNotes(prev => ({ ...prev, [slot]: e.target.value }))}
+              onBlur={() => { handleNoteBlur(slot); if (!moodNotes[slot]?.trim()) setExpandedNoteRows(prev => { const n = new Set(prev); n.delete(slot); return n }) }}
+            />
+          )}
         </div>
 
         {/* ── Practices card ── */}
@@ -1157,9 +1190,3 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   )
 }
 
-function hour() {
-  const h = new Date().getHours()
-  if (h < 12) return 'morning'
-  if (h < 17) return 'afternoon'
-  return 'evening'
-}
