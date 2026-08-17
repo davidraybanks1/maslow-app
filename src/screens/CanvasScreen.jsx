@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { HeaderSlotContext } from '../lib/headerSlot'
 import { NEEDS, MODE_ORDER, MODES } from '../lib/constants'
 import { createDataStats, formatLastDone } from '../lib/dataStats'
 import styles from './CanvasScreen.module.css'
@@ -50,6 +51,19 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
       try { localStorage.setItem(GUIDE_KEY, '1') } catch {}
     }
   }, [])
+
+  const setHeaderSlot = useContext(HeaderSlotContext)
+  useEffect(() => {
+    setHeaderSlot(
+      <button
+        className={`${styles.guidePill} ${guideOpen ? styles.guidePillActive : ''}`}
+        onClick={() => setGuideOpen(o => !o)}
+      >
+        {guideOpen ? 'hide guide' : 'what is this?'}
+      </button>
+    )
+    return () => setHeaderSlot(null)
+  }, [guideOpen, setHeaderSlot])
 
   const useDB = Array.isArray(state.practicesDB) && state.practicesDB.length > 0
 
@@ -175,7 +189,6 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
       {/* ── Static header ── */}
       <div className={styles.staticHeader}>
         <div className={styles.appBar}>
-          <span className={styles.wordmark}>m</span>
           <button
             className={`${styles.guidePill} ${guideOpen ? styles.guidePillActive : ''}`}
             onClick={() => setGuideOpen(o => !o)}

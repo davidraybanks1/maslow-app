@@ -1,4 +1,5 @@
 import { useState, useEffect, Component } from 'react'
+import { HeaderSlotContext } from './lib/headerSlot'
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { useAppState } from './lib/store'
 import { hideSplash, scheduleReminders } from './lib/native'
@@ -50,6 +51,7 @@ const LOADER_FADE_MS = 350 // matches --motion-page
 function AppInner() {
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [headerSlot, setHeaderSlot] = useState(null)
   const [menuClosing, setMenuClosing] = useState(false)
   function closeMenu() {
     setMenuClosing(true)
@@ -101,12 +103,13 @@ function AppInner() {
   }
 
   return (
+    <HeaderSlotContext.Provider value={setHeaderSlot}>
     <div className={styles.shell}>
       {state.onboarded && <DesktopNav />}
       <div className={styles.column}>
       {state.onboarded && (
         <div className={styles.appHeader}>
-          <AppHeader onMenuOpen={() => setMenuOpen(true)} />
+          <AppHeader onMenuOpen={() => setMenuOpen(true)} slot={headerSlot} />
         </div>
       )}
       <div className={styles.content}>
@@ -128,6 +131,7 @@ function AppInner() {
       </div>
       {menuOpen && <HamburgerMenu onClose={closeMenu} isClosing={menuClosing} />}
     </div>
+    </HeaderSlotContext.Provider>
   )
 }
 

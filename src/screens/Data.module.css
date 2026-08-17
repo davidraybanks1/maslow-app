@@ -8,20 +8,10 @@
 
 .appBar {
   flex-shrink: 0;
-  display: flex;
+  display: none;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   padding: 10px 22px 6px;
-}
-
-.wordmark {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-weight: 300;
-  font-size: 22px;
-  color: var(--ink);
-  line-height: 1;
-  user-select: none;
 }
 
 .periodToggle {
@@ -816,4 +806,9 @@
     margin: 0 auto;
     width: 100%;
   }
+}
+
+/* ≥1024px: shell AppHeader hides; screen appBar shows with period toggle only */
+@media (min-width: 1024px) {
+  .appBar { display: flex; }
 }

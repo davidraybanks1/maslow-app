@@ -16,20 +16,10 @@
 
 /* App bar row */
 .appBar {
-  display: flex;
+  display: none;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   padding: 8px 0 4px;
-}
-
-.wordmark {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-weight: 300;
-  font-size: 22px;
-  color: var(--ink);
-  line-height: 1;
-  user-select: none;
 }
 
 .guidePill {
@@ -930,4 +920,9 @@
     bottom: 50%;
     margin-bottom: -240px;
   }
+}
+
+/* ≥1024px: shell AppHeader hides; screen appBar shows with guide pill only */
+@media (min-width: 1024px) {
+  .appBar { display: flex; }
 }

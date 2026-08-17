@@ -1,5 +1,6 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useContext, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { HeaderSlotContext } from '../lib/headerSlot'
 import { NEEDS, MODE_ORDER } from '../lib/constants'
 import { createDataStats } from '../lib/dataStats'
 import styles from './Data.module.css'
@@ -750,6 +751,22 @@ function AllNumbersSection({ period, canvas, checkins }) {
 export default function Data({ state, archivePractice }) {
   const [period, setPeriod] = useState(7)
 
+  const setHeaderSlot = useContext(HeaderSlotContext)
+  useEffect(() => {
+    setHeaderSlot(
+      <div className={styles.periodToggle}>
+        {PERIODS.map(p => (
+          <button
+            key={p.days}
+            className={`${styles.periodPill}${period === p.days ? ` ${styles.periodPillActive}` : ''}`}
+            onClick={() => setPeriod(p.days)}
+          >{p.label}</button>
+        ))}
+      </div>
+    )
+    return () => setHeaderSlot(null)
+  }, [period, setHeaderSlot])
+
   const canvas    = state?.canvas    ?? {}
   const checkins  = state?.checkins  ?? {}
   const moods     = state?.moods     ?? []
@@ -767,7 +784,6 @@ export default function Data({ state, archivePractice }) {
   return (
     <div className={styles.screen}>
       <div className={styles.appBar}>
-        <span className={styles.wordmark}>m</span>
         <div className={styles.periodToggle}>
           {PERIODS.map(p => (
             <button
