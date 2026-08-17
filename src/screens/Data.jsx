@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { NEEDS } from '../lib/constants'
+import { NEEDS, MODE_ORDER } from '../lib/constants'
 import { createDataStats } from '../lib/dataStats'
 import styles from './Data.module.css'
 
@@ -670,6 +670,70 @@ function InsightsCard({ stats, checkins, moods }) {
   )
 }
 
+function AllNumbersSection({ period, canvas, checkins }) {
+  const [open, setOpen] = useState(false)
+  const periodDays = useMemo(() => buildWindowKeys(period, 0), [period])
+
+  const modeData = useMemo(() => {
+    return MODE_ORDER.map(mode => {
+      const needsInMode = NEEDS.filter(n => canvas[n.id] === mode)
+      if (!needsInMode.length) return null
+      let totalMet = 0, totalPossible = 0
+      const needRows = needsInMode.map(need => {
+        const met = periodDays.filter(dk => (checkins[dk] || []).some(e => e.need_id === need.id)).length
+        const total = periodDays.length
+        totalMet += met
+        totalPossible += total
+        return { need, met, total, pct: total > 0 ? Math.round(met / total * 100) : 0 }
+      })
+      const modePct = totalPossible > 0 ? Math.round(totalMet / totalPossible * 100) : 0
+      return { mode, modePct, needRows }
+    }).filter(Boolean)
+  }, [period, canvas, checkins, periodDays])
+
+  if (!modeData.length) return null
+
+  return (
+    <section className={styles.section}>
+      <button className={styles.allNumsHeader} onClick={() => setOpen(o => !o)}>
+        <span className={styles.sectionLabel}>ALL THE NUMBERS</span>
+        <span className={styles.sectionMeta}>by mode and need</span>
+        <span className={styles.ribbonChevron}>{open ? '▴' : '▾'}</span>
+      </button>
+
+      {open && (
+        <>
+          {modeData.map(({ mode, modePct, needRows }) => (
+            <div key={mode} className={styles.allNumsCard}>
+              <div className={styles.allNumsModeHeader}>
+                <span className={styles.moverDot} style={{ background: TIER_DOT[mode] }} />
+                <span className={styles.allNumsModeName}>{mode}</span>
+                <span className={styles.allNumsModeValue}>{modePct}%</span>
+              </div>
+              <div className={styles.allNumsBarWrap}>
+                <div className={styles.allNumsBarTrack}>
+                  <div className={styles.allNumsBarFill} style={{ width: `${modePct}%`, background: TIER_BAR[mode] }} />
+                </div>
+                <div className={styles.allNumsPaceTick} style={{ left: `${MODE_THRESHOLDS[mode]}%` }} />
+              </div>
+              {needRows.map(({ need, met, total, pct }) => (
+                <div key={need.id} className={styles.allNumsNeedRow}>
+                  <span className={styles.allNumsNeedName}>{need.name}</span>
+                  <span className={styles.allNumsFraction}>{met} of {total}</span>
+                  <span className={styles.allNumsPct}>{pct}%</span>
+                </div>
+              ))}
+            </div>
+          ))}
+          <p className={styles.allNumsFooter}>
+            tick marks are the pace you set on your canvas. Percentages are practices met out of practices possible in the window.
+          </p>
+        </>
+      )}
+    </section>
+  )
+}
+
 export default function Data({ state, archivePractice }) {
   const [period, setPeriod] = useState(7)
 
@@ -717,6 +781,7 @@ export default function Data({ state, archivePractice }) {
             <LongViewSection canvas={canvas} checkins={checkins} moods={moods} stats={stats} weeks={longViewWeeks} />
             <RibbonsSection canvas={canvas} checkins={checkins} practicesDB={practicesDB} weeks={longViewWeeks} />
             <GoneQuietSection canvas={canvas} checkins={checkins} practicesDB={practicesDB} archivePractice={archivePractice} />
+            <AllNumbersSection period={period} canvas={canvas} checkins={checkins} />
           </>
         )}
 

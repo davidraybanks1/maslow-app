@@ -687,6 +687,121 @@
   color: #C4381F;
 }
 
+/* ── All the numbers ────────────────────────────────────────────────────── */
+.allNumsHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  padding: 0;
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.allNumsCard {
+  background: var(--card);
+  border-radius: 14px;
+  padding: 13px 15px;
+  margin-top: 10px;
+}
+
+.allNumsModeHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.allNumsModeName {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink);
+  flex: 1;
+}
+
+.allNumsModeValue {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink);
+}
+
+.allNumsBarWrap {
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.allNumsBarTrack {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--track);
+  overflow: hidden;
+}
+
+.allNumsBarFill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 300ms ease;
+}
+
+.allNumsPaceTick {
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: 12px;
+  background: rgba(0,0,0,.35);
+  border-radius: 1px;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.allNumsNeedRow {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  gap: 8px;
+  border-top: 1px solid var(--hairline);
+}
+
+.allNumsNeedName {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--ink);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.allNumsFraction {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: rgba(0,0,0,.32);
+  flex-shrink: 0;
+}
+
+.allNumsPct {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--ink);
+  width: 36px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.allNumsFooter {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 300;
+  line-height: 1.5;
+  color: var(--ink3);
+  margin: 10px 0 0;
+}
+
 /* ── Desktop ────────────────────────────────────────────────────────────── */
 @media (min-width: 900px) {
   .scrollArea {
