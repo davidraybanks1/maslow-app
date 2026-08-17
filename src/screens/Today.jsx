@@ -391,6 +391,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   }
 
   async function handleDeleteEntry(id) {
+    if (!window.confirm('delete this entry?')) return
     setJournalEntries(prev => prev.filter(e => e.id !== id))
     await deleteJournalEntry(id)
   }
@@ -633,48 +634,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
 
         {/* ── Mood card ── */}
         <div className={`${styles.card} ${styles.moodCard}`}>
-          {/* Preceding slot pips */}
-          {precedingSlots(slot).length > 0 && (
-            <div className={styles.moodPips}>
-              {precedingSlots(slot).map(prevSlot => (
-                <div key={prevSlot}>
-                  <button
-                    className={styles.moodPip}
-                    aria-expanded={openRetroSlot === prevSlot}
-                    onClick={() => setOpenRetroSlot(o => o === prevSlot ? null : prevSlot)}
-                  >
-                    <span className={`${styles.moodPipDot} ${moodSelections[prevSlot] ? styles.moodPipDotFilled : ''}`} />
-                    <span className={styles.moodPipLabel}>{SLOT_NOUN[prevSlot]}</span>
-                  </button>
-                  {openRetroSlot === prevSlot && (
-                    <div className={styles.retroRow}>
-                      <div className={styles.retroQ}>how was the {SLOT_NOUN[prevSlot]}?</div>
-                      <div className={styles.moodCircles}>
-                        {MOODS.map(mood => (
-                          <button
-                            key={mood}
-                            className={`${styles.moodCircle} ${styles.moodCircleSm} ${moodSelections[prevSlot] === mood ? styles.moodCircleSelected : ''}`}
-                            onClick={() => { handleMoodSelect(prevSlot, mood); setOpenRetroSlot(null) }}
-                          >{mood}</button>
-                        ))}
-                      </div>
-                      {moodSelections[prevSlot] && expandedNoteRows.has(prevSlot) && (
-                        <textarea
-                          ref={el => { moodNoteRefs.current[prevSlot] = el }}
-                          className={styles.moodNote}
-                          placeholder={`what made it ${moodSelections[prevSlot]}?`}
-                          value={moodNotes[prevSlot] || ''}
-                          onChange={e => setMoodNotes(prev => ({ ...prev, [prevSlot]: e.target.value }))}
-                          onBlur={() => { handleNoteBlur(prevSlot); if (!moodNotes[prevSlot]?.trim()) setExpandedNoteRows(prev => { const n = new Set(prev); n.delete(prevSlot); return n }) }}
-                        />
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
           {/* Current slot */}
           <div className={styles.moodQuestion}>how's the {SLOT_NOUN[slot]}?</div>
           <div className={styles.moodCircles}>
@@ -700,6 +659,36 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               onChange={e => setMoodNotes(prev => ({ ...prev, [slot]: e.target.value }))}
               onBlur={() => { handleNoteBlur(slot); if (!moodNotes[slot]?.trim()) setExpandedNoteRows(prev => { const n = new Set(prev); n.delete(slot); return n }) }}
             />
+          )}
+          {/* Preceding slot pips */}
+          {precedingSlots(slot).length > 0 && (
+            <div className={styles.moodPipRow}>
+              {precedingSlots(slot).map(prevSlot => (
+                <button key={prevSlot} className={styles.moodPip} aria-expanded={openRetroSlot === prevSlot}
+                  onClick={() => setOpenRetroSlot(o => o === prevSlot ? null : prevSlot)}>
+                  <span className={`${styles.moodPipDot} ${moodSelections[prevSlot] ? styles.moodPipDotFilled : ''}`} />
+                  <span className={styles.moodPipLabel}>{prevSlot}</span>
+                </button>
+              ))}
+            </div>
+          )}
+          {openRetroSlot && (
+            <div className={styles.retroRow}>
+              <div className={styles.retroQ}>how was the {SLOT_NOUN[openRetroSlot]}?</div>
+              <div className={styles.moodCircles}>
+                {MOODS.map(mood => (
+                  <button key={mood} className={`${styles.moodCircle} ${styles.moodCircleSm} ${moodSelections[openRetroSlot] === mood ? styles.moodCircleSelected : ''}`}
+                    onClick={() => { handleMoodSelect(openRetroSlot, mood); setOpenRetroSlot(null) }}>{mood}</button>
+                ))}
+              </div>
+              {moodSelections[openRetroSlot] && expandedNoteRows.has(openRetroSlot) && (
+                <textarea ref={el => { moodNoteRefs.current[openRetroSlot] = el }} className={styles.moodNote}
+                  placeholder={`what made it ${moodSelections[openRetroSlot] || ''}?`}
+                  value={moodNotes[openRetroSlot] || ''}
+                  onChange={e => setMoodNotes(prev => ({ ...prev, [openRetroSlot]: e.target.value }))}
+                  onBlur={() => { handleNoteBlur(openRetroSlot); if (!moodNotes[openRetroSlot]?.trim()) setExpandedNoteRows(prev => { const n = new Set(prev); n.delete(openRetroSlot); return n }) }} />
+              )}
+            </div>
           )}
         </div>
 

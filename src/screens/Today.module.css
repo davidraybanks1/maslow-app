@@ -833,11 +833,12 @@
 .journalTimestampBtn:active { color: var(--ink2); }
 
 /* ── New slot-based mood ── */
-.moodPips {
+.moodPipRow {
   display: flex;
-  flex-direction: column;
-  gap: 0;
-  margin-bottom: 16px;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
 }
 
 .moodPip {
@@ -876,7 +877,7 @@
   border: 0.5px solid var(--hairline);
   border-radius: 10px;
   padding: 12px 14px;
-  margin: 4px 0 8px 14px;
+  margin-top: 10px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -1041,9 +1042,9 @@
 .journalEntryDelete:hover { color: var(--ink2); }
 
 .journalEntryText {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 200;
+  font-family: var(--font-serif);
+  font-size: 15px;
+  font-weight: 300;
   color: var(--ink);
   line-height: 1.65;
   white-space: pre-wrap;
@@ -1288,6 +1289,7 @@
 .timerSlot   { display: block; margin-bottom: 12px; }
 .guidanceSlot { display: block; }
 .moodCard    { /* marker */ }
+.moodCard { padding: 10px 14px; }
 .practicesCard { margin-bottom: 12px; }
 
 /* ── Mobile visual order ── */
