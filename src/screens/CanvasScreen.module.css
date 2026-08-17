@@ -50,9 +50,9 @@
 .guidePill:hover { border-color: rgba(0,0,0,.3); }
 
 .guidePillActive {
-  background: #1C3A2E;
+  background: #1B3A2D;
   color: #FCFAF4;
-  border-color: #1C3A2E;
+  border-color: #1B3A2D;
 }
 .guidePillActive:hover { opacity: .88; }
 
@@ -873,4 +873,61 @@
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   flex-shrink: 0;
+}
+
+/* ─────────────────────────────────────────
+   Stage 7 — Desktop layout (≥900px)
+───────────────────────────────────────── */
+
+@media (min-width: 900px) {
+  .screen {
+    flex-direction: row;
+    align-items: stretch;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* Left column: static header becomes a sidebar */
+  .staticHeader {
+    width: 360px;
+    flex-shrink: 0;
+    padding: 0 26px;
+    overflow-y: auto;
+    border-right: 1px solid rgba(0,0,0,.08);
+    border-bottom: none;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 40px;
+  }
+  .staticHeader::-webkit-scrollbar { display: none; }
+
+  /* Hairline is now a right-border on the sidebar; hide the bottom one */
+  .headerHairline { display: none; }
+
+  /* Right column: mode cards fill the rest */
+  .scrollArea {
+    flex: 1;
+    padding: 22px 28px 60px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-auto-rows: max-content;
+    gap: 14px;
+    align-content: start;
+  }
+
+  /* Each mode card fills its grid cell naturally */
+  .modeCard {
+    /* nothing extra needed — grid handles sizing */
+  }
+
+  /* Sheets stay mobile-width on desktop — max 480px centered */
+  .sheet {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: min(480px, 100vw);
+    border-radius: 24px;
+    bottom: 50%;
+    margin-bottom: -240px;
+  }
 }

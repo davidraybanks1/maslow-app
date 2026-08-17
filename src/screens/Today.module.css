@@ -605,10 +605,10 @@
   color: var(--ink4);
 }
 
-/* ── Tier accordion (column-reverse: survival renders at bottom) ── */
+/* ── Tier accordion — exploration first, survival last ── */
 .tierList {
   display: flex;
-  flex-direction: column-reverse;
+  flex-direction: column;
   gap: 6px;
 }
 
