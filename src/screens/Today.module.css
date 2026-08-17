@@ -851,7 +851,7 @@
   flex-direction: row;
   align-items: center;
   gap: 12px;
-  margin-top: 12px;
+  margin-top: 6px;
 }
 
 .moodPip {
@@ -904,19 +904,30 @@
   color: var(--ink);
 }
 
+/* Two-column row: question+pips left, circles right — stable across all selection states */
+.moodRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.moodLeft {
+  flex: 1;
+  min-width: 0;
+}
+
 .moodQuestion {
   font-family: var(--font-serif);
   font-size: 18px;
   font-weight: 300;
   color: var(--ink);
-  margin-bottom: 16px;
   letter-spacing: -0.01em;
 }
 
 .moodCircles {
   display: flex;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .moodCircle {
@@ -950,6 +961,8 @@
 }
 
 .moodNote {
+  display: block;
+  margin-top: 10px;
   width: 100%;
   box-sizing: border-box;
   padding: 8px 10px;
@@ -969,6 +982,8 @@
 .moodNote::placeholder { color: var(--ink4); }
 
 .moodNoteAffordance {
+  display: block;
+  margin-top: 10px;
   background: none;
   border: none;
   padding: 0;

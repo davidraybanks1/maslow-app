@@ -630,17 +630,33 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
 
         {/* ── Mood card ── */}
         <div className={`${styles.card} ${styles.moodCard}`}>
-          {/* Current slot */}
-          <div className={styles.moodQuestion}>how's the {SLOT_NOUN[slot]}?</div>
-          <div className={styles.moodCircles}>
-            {MOODS.map(mood => (
-              <button
-                key={mood}
-                className={`${styles.moodCircle} ${moodSelections[slot] === mood ? styles.moodCircleSelected : ''}`}
-                onClick={() => handleMoodSelect(slot, mood)}
-              >{mood}</button>
-            ))}
+          {/* Stable two-column row — never reflows on selection */}
+          <div className={styles.moodRow}>
+            <div className={styles.moodLeft}>
+              <div className={styles.moodQuestion}>how's the {SLOT_NOUN[slot]}?</div>
+              {precedingSlots(slot).length > 0 && (
+                <div className={styles.moodPipRow}>
+                  {precedingSlots(slot).map(prevSlot => (
+                    <button key={prevSlot} className={styles.moodPip} aria-expanded={openRetroSlot === prevSlot}
+                      onClick={() => setOpenRetroSlot(o => o === prevSlot ? null : prevSlot)}>
+                      <span className={`${styles.moodPipDot} ${moodSelections[prevSlot] ? styles.moodPipDotFilled : ''}`} />
+                      <span className={styles.moodPipLabel}>{prevSlot}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className={styles.moodCircles}>
+              {MOODS.map(mood => (
+                <button
+                  key={mood}
+                  className={`${styles.moodCircle} ${moodSelections[slot] === mood ? styles.moodCircleSelected : ''}`}
+                  onClick={() => handleMoodSelect(slot, mood)}
+                >{mood}</button>
+              ))}
+            </div>
           </div>
+          {/* Note affordance expands below the row without reflowing it */}
           {moodSelections[slot] && !expandedNoteRows.has(slot) && (
             <button className={styles.moodNoteAffordance} onClick={() => toggleNoteRow(slot)}>
               — add a note about your mood
@@ -656,18 +672,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               onBlur={() => { handleNoteBlur(slot); if (!moodNotes[slot]?.trim()) setExpandedNoteRows(prev => { const n = new Set(prev); n.delete(slot); return n }) }}
             />
           )}
-          {/* Preceding slot pips */}
-          {precedingSlots(slot).length > 0 && (
-            <div className={styles.moodPipRow}>
-              {precedingSlots(slot).map(prevSlot => (
-                <button key={prevSlot} className={styles.moodPip} aria-expanded={openRetroSlot === prevSlot}
-                  onClick={() => setOpenRetroSlot(o => o === prevSlot ? null : prevSlot)}>
-                  <span className={`${styles.moodPipDot} ${moodSelections[prevSlot] ? styles.moodPipDotFilled : ''}`} />
-                  <span className={styles.moodPipLabel}>{prevSlot}</span>
-                </button>
-              ))}
-            </div>
-          )}
+          {/* Retro slot detail */}
           {openRetroSlot && (
             <div className={styles.retroRow}>
               <div className={styles.retroQ}>how was the {SLOT_NOUN[openRetroSlot]}?</div>
