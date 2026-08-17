@@ -9,7 +9,7 @@ import styles from './Log.module.css'
 
 const MOOD_PILL = {
   good: { bg: '#1B3A2D', label: 'good' },
-  fine: { bg: '#B8C3B1', label: 'fine' },
+  fine: { bg: '#9DB394', label: 'fine' },
   bad: { bg: '#D93B1C', label: 'hard' },
 }
 const MOOD_PERIODS = ['morning', 'midday', 'evening']

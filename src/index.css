@@ -63,6 +63,13 @@ button { touch-action: manipulation; }
 
   --anxiety: #2C2820;
   --appreciation-strong: #5A7A70;
+  --appreciation-deep:   #9DB394; /* small marks <12px only — dots, deltas, grid cells */
+
+  /* Semantic data tokens */
+  --positive:         #2C6E49;
+  --destructive:      #C4381F;
+  --on-dark-negative: #F2A08C;
+  --empty-cell:       rgba(0,0,0,.06);
 
   /* Mode identity tokens — unchanged */
   --exploration:  #1B3A2D;
