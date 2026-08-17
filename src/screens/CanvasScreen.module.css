@@ -133,3 +133,469 @@
   gap: 10px;
 }
 .scrollArea::-webkit-scrollbar { display: none; }
+
+/* ─────────────────────────────────────────
+   Stage 2 — Mode cards
+───────────────────────────────────────── */
+
+.modeCard {
+  background: var(--card);
+  border: 1px solid rgba(0,0,0,.09);
+  border-radius: 16px;
+  padding: 14px 16px 6px;
+}
+
+/* Card header row */
+.modeHeader {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.modeDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.modeName {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: 10px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: rgba(0,0,0,.55);
+  flex: 1;
+}
+
+.modeCount {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  font-size: 15px;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+/* Blurb */
+.modeBlurb {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(0,0,0,.5);
+  margin: 8px 0 0;
+}
+
+/* Capacity bar */
+.capacityTrack {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(0,0,0,.07);
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.capacityFill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 300ms ease;
+}
+
+/* ─── Need block + row ─── */
+
+.needBlock {
+  /* wrapper — no extra styling needed */
+}
+
+.needRow {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 52px;
+  gap: 10px;
+  padding: 0 0 0 2px;
+  box-sizing: border-box;
+  border-top: 1px solid rgba(0,0,0,.08);
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.needName {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  font-size: 18px;
+  color: var(--ink);
+  flex: 1;
+}
+
+.practiceCount {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: 10.5px;
+  color: rgba(0,0,0,.4);
+  white-space: nowrap;
+}
+
+.needChevron {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: rgba(0,0,0,.3);
+  width: 12px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* ─── Need detail (expanded) ─── */
+
+.needDetail {
+  padding: 2px 0 14px;
+}
+
+/* Section label — shared by "HOW IT SHOWS UP IN YOUR DAY" and "MODE" */
+.sectionLabel {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: 9.5px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: rgba(0,0,0,.38);
+  margin: 8px 0 4px;
+}
+
+/* ─── Practice rows ─── */
+
+.practiceRow {
+  display: flex;
+  align-items: center;
+  height: 46px;
+  gap: 10px;
+  border-bottom: 1px solid rgba(0,0,0,.06);
+}
+
+.practiceCircle {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.practiceName {
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 13.5px;
+  color: var(--ink);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.practiceMeta {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: 10.5px;
+  color: rgba(0,0,0,.32);
+  white-space: nowrap;
+}
+
+.menuBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 16px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: rgba(0,0,0,.35);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  line-height: 1;
+  padding: 0;
+}
+.menuBtn:hover {
+  background: rgba(0,0,0,.05);
+}
+
+.menuBtnOpen {
+  background: var(--paper);
+  border-color: rgba(0,0,0,.16);
+  color: var(--ink);
+}
+
+/* ─── Inline practice editor ─── */
+
+.practiceEditor {
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0,0,0,.06);
+}
+
+.renameField {
+  display: block;
+  width: 100%;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,.16);
+  background: var(--paper);
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 13.5px;
+  color: var(--ink);
+  padding: 0 12px;
+  box-sizing: border-box;
+  outline: none;
+}
+.renameField:focus {
+  border-color: rgba(0,0,0,.3);
+}
+
+.editorActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 9px;
+}
+
+.saveBtn {
+  flex: 1;
+  height: 40px;
+  border-radius: 20px;
+  border: none;
+  background: #1B3A2D;
+  color: #FCFAF4;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cancelBtn {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(0,0,0,.14);
+  background: transparent;
+  color: rgba(0,0,0,.5);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+}
+
+.removeBtn {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(196,56,31,.45);
+  background: transparent;
+  color: #C4381F;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+}
+
+.removeBtnConfirm {
+  background: #C4381F;
+  color: #FCFAF4;
+  border-color: #C4381F;
+}
+
+.removeWarning {
+  color: rgba(196,56,31,.85);
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 11px;
+  line-height: 1.5;
+  margin: 8px 0 0;
+}
+
+/* ─── Add a practice button ─── */
+
+.addPracticeBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px dashed rgba(0,0,0,.16);
+  background: transparent;
+  padding: 0 14px;
+  margin-top: 4px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+}
+
+.addPracticePlus {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: rgba(0,0,0,.35);
+  line-height: 1;
+}
+
+.addPracticeLabel {
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 12.5px;
+  color: rgba(0,0,0,.4);
+}
+
+/* ─── Mode selector ─── */
+
+.modeSelectorSection {
+  margin-top: 16px;
+}
+
+.modeSelectorRow {
+  display: flex;
+  gap: 6px;
+}
+
+.modeSelectorBtn {
+  flex: 1;
+  height: 52px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,.12);
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  padding: 0;
+  min-width: 0;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+.modeSelectorBtn:disabled {
+  cursor: default;
+}
+
+.modeSelectorDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.modeSelectorAbbr {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.modeSelectorHint {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: 7.5px;
+}
+
+.modeSelectorNote {
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 11px;
+  line-height: 1.5;
+  color: rgba(0,0,0,.4);
+  margin: 8px 0 0;
+}
+
+/* ─── Remove from canvas ─── */
+
+.removeSection {
+  margin-top: 12px;
+}
+
+.removeFromCanvasBtn {
+  display: block;
+  width: 100%;
+  height: 40px;
+  border-radius: 20px;
+  border: 1px solid rgba(0,0,0,.12);
+  background: transparent;
+  color: rgba(0,0,0,.5);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.removeFromCanvasNote {
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: rgba(0,0,0,.35);
+  margin: 8px 0 0;
+}
+
+/* ─── Mode footer ─── */
+
+.modeFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 48px;
+  border-top: 1px solid rgba(0,0,0,.08);
+}
+
+.atCapacityLabel {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: 10px;
+  color: rgba(0,0,0,.4);
+}
+
+.swapNeedBtn {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: 11px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.addNeedRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 48px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.addNeedPlus {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  line-height: 1;
+}
+
+.addNeedLabel {
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 12.5px;
+  color: rgba(0,0,0,.5);
+}
