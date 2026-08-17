@@ -260,9 +260,8 @@ function practicesColor(pct) {
 const MOOD_LENS_COLOR = { good: '#1B3A2D', fine: '#9DB394', bad: '#D93B1C' }
 const EMPTY_CELL = 'rgba(0,0,0,.06)'
 
-function LongViewSection({ canvas, checkins, moods, stats }) {
+function LongViewSection({ canvas, checkins, moods, stats, weeks }) {
   const [lens, setLens] = useState('practices')
-  const weeks = useMemo(() => buildLongViewWeeks(), [])
   const todayKey = buildWindowKeys(1, 0)[0]
 
   // Month labels: group weeks by the month of their Monday
@@ -367,6 +366,161 @@ function LongViewSection({ canvas, checkins, moods, stats }) {
   )
 }
 
+function weekNeedDays(checkins, needId, week) {
+  return week.filter(dk => (checkins[dk] || []).some(e => e.need_id === needId)).length
+}
+
+function ribbonNeedColor(days, mode) {
+  if (days === 0) return 'rgba(0,0,0,.05)'
+  if (days < 4) return 'rgba(0,0,0,.12)'
+  return TIER_BAR[mode]
+}
+
+function weekPracticeDone(checkins, needId, practiceId, practiceLabel, week) {
+  return week.some(dk =>
+    (checkins[dk] || []).some(e =>
+      e.need_id === needId &&
+      (practiceId && e.practice_id ? e.practice_id === practiceId : e.practice_text === practiceLabel)
+    )
+  )
+}
+
+function practiceClosingLine(allCount, activeCount) {
+  if (allCount === 0) return null
+  if (activeCount === allCount) return `All ${allCount} practice${allCount === 1 ? '' : 's'} are still running.`
+  if (activeCount === 1) return 'One practice is the whole need — worth adding a second so a bad week does not empty it.'
+  if (activeCount === 0) return 'No practices have run recently — consider retiring or restarting them.'
+  const word = activeCount === 2 ? 'two' : activeCount === 3 ? 'three' : `${activeCount}`
+  return `${activeCount} of ${allCount} practices still run. The need looks alive because ${word} practices carry it.`
+}
+
+function RibbonsSection({ canvas, checkins, practicesDB, weeks }) {
+  const [openNeed, setOpenNeed] = useState(null)
+  const recent30 = useMemo(() => buildWindowKeys(30, 0), [])
+  const todayKey = buildWindowKeys(1, 0)[0]
+
+  const needRows = useMemo(() => {
+    return NEEDS.filter(n => canvas[n.id]).map(need => {
+      const mode = canvas[need.id]
+      const weekActivity = weeks.map(wk => weekNeedDays(checkins, need.id, wk))
+      const weeksActive = weekActivity.filter(d => d > 0).length
+      const isDormant = !recent30.some(dk => (checkins[dk] || []).some(e => e.need_id === need.id))
+      const lastLoggedDk = weeks.flat().reverse().find(dk =>
+        (checkins[dk] || []).some(e => e.need_id === need.id)
+      ) ?? null
+      const sinceMonth = lastLoggedDk
+        ? new Date(lastLoggedDk + 'T12:00:00').toLocaleDateString('en-GB', { month: 'long' }).toLowerCase()
+        : null
+      return { need, mode, weekActivity, weeksActive, isDormant, sinceMonth }
+    }).sort((a, b) => b.weeksActive - a.weeksActive)
+  }, [canvas, checkins, weeks, recent30])
+
+  return (
+    <section className={styles.section}>
+      <div className={styles.sectionHeader}>
+        <span className={styles.sectionLabel}>EACH NEED, WEEK BY WEEK</span>
+        <span className={styles.sectionMeta}>held ▸ faded</span>
+      </div>
+      <div className={styles.ribbonStack}>
+        {needRows.map(({ need, mode, weekActivity, weeksActive, isDormant, sinceMonth }) => {
+          const isOpen = openNeed === need.id
+          const practices = practicesDB.filter(p => p.need_id === need.id)
+          const activePractices = practices.filter(p =>
+            recent30.some(dk =>
+              (checkins[dk] || []).some(e =>
+                e.need_id === need.id &&
+                (p.id && e.practice_id ? e.practice_id === p.id : e.practice_text === p.label)
+              )
+            )
+          )
+          const closingLine = practiceClosingLine(practices.length, activePractices.length)
+
+          return (
+            <div key={need.id} className={styles.ribbonRow}>
+              <button
+                className={styles.ribbonHeader}
+                onClick={() => setOpenNeed(isOpen ? null : need.id)}
+              >
+                <span className={styles.moverDot} style={{ background: TIER_DOT[mode] }} />
+                <span className={`${styles.ribbonName}${isDormant ? ` ${styles.ribbonNameDormant}` : ''}`}>
+                  {need.name}
+                </span>
+                {isDormant ? (
+                  <span className={styles.ribbonStatDormant}>
+                    {sinceMonth ? `nothing logged since ${sinceMonth}` : 'nothing logged'}
+                  </span>
+                ) : (
+                  <span className={styles.ribbonStat}>{weeksActive} of 34 weeks</span>
+                )}
+                <span className={styles.ribbonChevron}>{isOpen ? '▴' : '▾'}</span>
+              </button>
+
+              {/* Need band — 34 weekly cells */}
+              <div className={styles.ribbonBand}>
+                {weekActivity.map((days, wi) => (
+                  <div
+                    key={wi}
+                    className={styles.ribbonCell}
+                    style={{ background: ribbonNeedColor(days, mode) }}
+                  />
+                ))}
+              </div>
+
+              {/* Practice expansion */}
+              {isOpen && (
+                <div className={styles.ribbonExpand}>
+                  {practices.length === 0 ? (
+                    <p className={styles.ribbonExpandNote}>no practices recorded.</p>
+                  ) : (
+                    <>
+                      {practices.map(p => {
+                        const practiceWeeks = weeks.map(wk =>
+                          weekPracticeDone(checkins, need.id, p.id, p.label, wk)
+                        )
+                        const weeksP = practiceWeeks.filter(Boolean).length
+                        const lastDk = weeks.flat().reverse().find(dk =>
+                          (checkins[dk] || []).some(e =>
+                            e.need_id === need.id &&
+                            (p.id && e.practice_id ? e.practice_id === p.id : e.practice_text === p.label)
+                          )
+                        ) ?? null
+                        const daysSince = lastDk
+                          ? Math.round((new Date(todayKey + 'T12:00:00') - new Date(lastDk + 'T12:00:00')) / 86400000)
+                          : null
+                        const isQuiet = daysSince === null || daysSince > 30
+                        return (
+                          <div key={p.id ?? p.label} className={styles.practiceRow}>
+                            <div className={styles.practiceRowTop}>
+                              <span className={styles.practiceName}>{p.label}</span>
+                              <span className={`${styles.practiceStat}${isQuiet ? ` ${styles.practiceStatQuiet}` : ''}`}>
+                                {isQuiet ? `${daysSince ?? '∞'}d quiet` : `${weeksP}/34`}
+                              </span>
+                            </div>
+                            <div className={styles.practiceBand}>
+                              {practiceWeeks.map((done, wi) => (
+                                <div
+                                  key={wi}
+                                  className={styles.practiceBandCell}
+                                  style={{ background: done ? TIER_BAR[mode] : 'rgba(0,0,0,.05)' }}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )
+                      })}
+                      {closingLine && <p className={styles.ribbonExpandNote}>{closingLine}</p>}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
 function buildInsightCopy(link, checkins, moods) {
   const days30 = buildWindowKeys(30, 0)
   const validDays = days30.filter(dk =>
@@ -432,6 +586,7 @@ export default function Data({ state }) {
     [canvas, checkins, moods, practices, practicesDB]
   )
 
+  const longViewWeeks = useMemo(() => buildLongViewWeeks(), [])
   const hasCanvas = Object.keys(canvas).length > 0
 
   return (
@@ -461,7 +616,8 @@ export default function Data({ state }) {
             <InsightsCard stats={stats} checkins={checkins} moods={moods} />
             <WhatChanged period={period} canvas={canvas} checkins={checkins} />
             <RhythmSection stats={stats} canvas={canvas} checkins={checkins} moods={moods} />
-            <LongViewSection canvas={canvas} checkins={checkins} moods={moods} stats={stats} />
+            <LongViewSection canvas={canvas} checkins={checkins} moods={moods} stats={stats} weeks={longViewWeeks} />
+            <RibbonsSection canvas={canvas} checkins={checkins} practicesDB={practicesDB} weeks={longViewWeeks} />
           </>
         )}
 
