@@ -2,10 +2,19 @@ import { useState } from 'react'
 import styles from './Data.module.css'
 
 const PERIODS = [
-  { label: '3d', days: 3 },
   { label: '7d', days: 7 },
   { label: '30d', days: 30 },
 ]
+
+// Rolling window ending today; comparison = same length immediately prior.
+// 7d: today-6 through today inclusive. 30d: same pattern.
+function buildWindowKeys(n, offset = 0) {
+  return Array.from({ length: n }, (_, i) => {
+    const d = new Date()
+    d.setDate(d.getDate() - offset - (n - 1 - i))
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  })
+}
 
 function buildSubhead(period) {
   const today = new Date()
@@ -17,8 +26,7 @@ function buildSubhead(period) {
     return `${weekday} ${d.getDate()}`
   }
   const month = today.toLocaleDateString('en-GB', { month: 'long' }).toLowerCase()
-  const comparison = period === 3 ? 'the 3 days before' : 'the week before'
-  return `${fmtDay(start)} — ${fmtDay(today)} ${month} · compared with ${comparison}`
+  return `${fmtDay(start)} — ${fmtDay(today)} ${month} · compared with the week before`
 }
 
 // eslint-disable-next-line no-unused-vars
