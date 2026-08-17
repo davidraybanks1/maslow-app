@@ -802,6 +802,15 @@
   margin: 10px 0 0;
 }
 
+.emptyState {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--ink3);
+  margin-top: 48px;
+  text-align: center;
+}
+
 /* ── Desktop ────────────────────────────────────────────────────────────── */
 @media (min-width: 900px) {
   .scrollArea {

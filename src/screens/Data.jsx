@@ -565,9 +565,9 @@ function GoneQuietSection({ canvas, checkins, practicesDB, archivePractice }) {
   const modeCounts = {}
   for (const { mode } of quietPractices) modeCounts[mode] = (modeCounts[mode] || 0) + 1
   const [topMode, topCount] = Object.entries(modeCounts).sort((a, b) => b[1] - a[1])[0]
-  const closingRead = topCount >= Math.ceil(total / 2)
+  const closingRead = total >= 3 && topCount >= Math.ceil(total / 2)
     ? `${topCount} of these ${total} belong to ${topMode}. That is a mode going dormant, not ${total} separate failures — retire what you have outgrown.`
-    : `${total} practices have gone quiet. Review each to retire or restart.`
+    : `${total} practice${total !== 1 ? 's' : ''} have gone quiet. Review each to retire or restart.`
 
   return (
     <section className={styles.section}>
@@ -596,16 +596,14 @@ function GoneQuietSection({ canvas, checkins, practicesDB, archivePractice }) {
                 <span className={styles.quietPracticeName}>{practice.label}</span>
                 <div className={styles.quietActions}>
                   <button className={styles.quietBtn} onClick={() => navigate('/today')}>log</button>
-                  {archivePractice && (
-                    retireConfirm === (practice.id ?? practice.label) ? (
+                  {archivePractice && practice.id && (
+                    retireConfirm === practice.id ? (
                       <button
                         className={`${styles.quietBtn} ${styles.quietBtnConfirm}`}
                         onClick={() => { archivePractice(practice.id); setRetireConfirm(null) }}
                       >confirm retire</button>
                     ) : (
-                      <button className={styles.quietBtn} onClick={() => setRetireConfirm(practice.id ?? practice.label)}>
-                        retire
-                      </button>
+                      <button className={styles.quietBtn} onClick={() => setRetireConfirm(practice.id)}>retire</button>
                     )
                   )}
                 </div>
@@ -771,6 +769,10 @@ export default function Data({ state, archivePractice }) {
       <div className={styles.scrollArea}>
         <h1 className={styles.pageTitle}>data</h1>
         <p className={styles.pageSubhead}>{buildSubhead(period)}</p>
+
+        {!hasCanvas && (
+          <p className={styles.emptyState}>set up your canvas to see your data.</p>
+        )}
 
         {hasCanvas && (
           <>
