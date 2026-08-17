@@ -33,8 +33,17 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
   const [practiceDraft, setPracticeDraft] = useState('')
   const [deleteConfirm, setDeleteConfirm] = useState(null)   // practice id
 
-  // For Stage 5 scroll-to-mode behavior
-  const modeRefs = useRef({})
+  // Stage 5 state
+  const [draft, setDraft] = useState('')
+
+  // Stage 6 state
+  const [pendingNeed, setPendingNeed]       = useState(null)
+  const [showModePicker, setShowModePicker] = useState(false)
+  const [showSwapFor, setShowSwapFor]       = useState(null)  // mode key
+
+  // Refs
+  const modeRefs      = useRef({})
+  const scrollAreaRef = useRef(null)
 
   useEffect(() => {
     if (guideOpen) {
@@ -83,6 +92,16 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
       ? '1 open slot'
       : `${openSlots} open slots`
 
+  // Stage 5 — derived
+  const unplacedNeeds = NEEDS.filter(n => !state.canvas[n.id])
+  const allModesFull  = MODE_ORDER.every(m => needsInMode(m).length >= MODE_NEED_CAP[m])
+
+  function scrollToMode(mode) {
+    modeRefs.current[mode]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    const firstNeed = needsInMode(mode)[0]
+    setOpenNeed(firstNeed ? firstNeed.id : null)
+  }
+
   function toggleNeed(needId) {
     const isOpening = openNeed !== needId
     setOpenNeed(isOpening ? needId : null)
@@ -130,6 +149,27 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
     return { borderColor: tierColor, background: 'transparent' }
   }
 
+  // Hint text for create field
+  function getCreateHint() {
+    const trimmed = draft.trim()
+    if (!trimmed) return null
+    const matchedNeed = NEEDS.find(n => n.name === trimmed)
+    if (!matchedNeed) return `"${trimmed}" isn't in the need library.`
+    if (allModesFull) return 'every mode is at capacity. free a slot first, or swap a need out.'
+    return `"${trimmed}" will be added — pick a mode for it next.`
+  }
+
+  function handleAddClick() {
+    const trimmed = draft.trim()
+    if (!trimmed) return
+    const matchedNeed = NEEDS.find(n => n.name === trimmed)
+    if (matchedNeed && !allModesFull) {
+      setPendingNeed(matchedNeed)
+      setShowModePicker(true)
+      setDraft('')
+    }
+  }
+
   return (
     <div className={styles.screen}>
       {/* ── Static header ── */}
@@ -168,11 +208,87 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
           </p>
         </div>
 
+        {/* ── Capacity map ── */}
+        <div className={styles.capacityMap}>
+          {MODE_ORDER.map(mode => {
+            const tierColor = MODES[mode].color
+            const placed    = needsInMode(mode)
+            const cap       = MODE_NEED_CAP[mode]
+            const full      = placed.length >= cap
+            return (
+              <button
+                key={mode}
+                className={styles.capacityMapCard}
+                style={{ background: full ? 'rgba(0,0,0,.04)' : 'var(--card)' }}
+                onClick={() => scrollToMode(mode)}
+              >
+                <div className={styles.capacityMapTop}>
+                  <span className={styles.capacityMapDot} style={{ background: tierColor }} />
+                  <span className={styles.capacityMapCount}>{placed.length}/{cap}</span>
+                </div>
+                <div className={styles.capacityMapTrack}>
+                  <div
+                    className={styles.capacityMapFill}
+                    style={{
+                      width: cap > 0 ? `${(placed.length / cap) * 100}%` : '0%',
+                      background: tierColor,
+                    }}
+                  />
+                </div>
+                <span className={styles.capacityMapLabel}>{MODE_ABBR[mode]}</span>
+              </button>
+            )
+          })}
+        </div>
+
+        {/* ── Library + create ── */}
+        <div className={styles.librarySection}>
+          {unplacedNeeds.length > 0 && (
+            <div className={styles.libraryHeader}>
+              <span className={styles.libraryHeaderLeft}>not on your canvas yet</span>
+              <span className={styles.libraryHeaderRight}>{unplacedNeeds.length} in the library</span>
+            </div>
+          )}
+          {unplacedNeeds.length > 0 && (
+            <div className={styles.libraryChips}>
+              {unplacedNeeds.map(need => (
+                <button
+                  key={need.id}
+                  className={styles.libraryChip}
+                  onClick={() => setDraft(need.name)}
+                >
+                  <span className={styles.libraryChipName}>{need.name}</span>
+                  <span className={styles.libraryChipPlus}>+</span>
+                </button>
+              ))}
+            </div>
+          )}
+          <div className={styles.createRow}>
+            <input
+              className={styles.createField}
+              type="text"
+              placeholder="create a custom need…"
+              value={draft}
+              onChange={e => setDraft(e.target.value)}
+            />
+            <button
+              className={`${styles.addBtn}${draft.trim() ? ` ${styles.addBtnActive}` : ''}`}
+              disabled={!draft.trim()}
+              onClick={handleAddClick}
+            >
+              add
+            </button>
+          </div>
+          {draft.trim() && (
+            <p className={styles.createHint}>{getCreateHint()}</p>
+          )}
+        </div>
+
         <div className={styles.headerHairline} />
       </div>
 
       {/* ── Scroll area — mode cards ── */}
-      <div className={styles.scrollArea}>
+      <div ref={scrollAreaRef} className={styles.scrollArea}>
         {MODE_ORDER.map(mode => {
           const tierColor = MODES[mode].color
           const placed    = needsInMode(mode)
@@ -363,7 +479,11 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
                 {full ? (
                   <>
                     <span className={styles.atCapacityLabel}>at capacity</span>
-                    <button className={styles.swapNeedBtn} style={{ color: tierColor }}>
+                    <button
+                      className={styles.swapNeedBtn}
+                      style={{ color: tierColor }}
+                      onClick={() => setShowSwapFor(mode)}
+                    >
                       swap a need →
                     </button>
                   </>
@@ -378,6 +498,86 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
           )
         })}
       </div>
+
+      {/* ── Mode picker sheet ── */}
+      {showModePicker && pendingNeed && (
+        <div className={styles.sheetOverlay}>
+          <div
+            className={styles.sheetBackdrop}
+            onClick={() => { setShowModePicker(false); setPendingNeed(null) }}
+          />
+          <div className={styles.sheet}>
+            <h2 className={styles.sheetTitle}>add {pendingNeed.name} to…</h2>
+            <div className={styles.modeSelectorRow}>
+              {MODE_ORDER.map(m => {
+                const mc      = MODES[m].color
+                const mPlaced = needsInMode(m).length
+                const mCap    = MODE_NEED_CAP[m]
+                const mFull   = mPlaced >= mCap
+                return (
+                  <button
+                    key={m}
+                    className={styles.modeSelectorBtn}
+                    style={mFull ? { opacity: 0.4 } : {}}
+                    disabled={mFull}
+                    onClick={() => {
+                      if (!mFull) {
+                        updateCanvas(pendingNeed.id, m)
+                        setShowModePicker(false)
+                        setPendingNeed(null)
+                      }
+                    }}
+                  >
+                    <span className={styles.modeSelectorDot} style={{ background: mc }} />
+                    <span className={styles.modeSelectorAbbr} style={{ color: 'rgba(0,0,0,.5)' }}>{MODE_ABBR[m]}</span>
+                    <span className={styles.modeSelectorHint} style={{ color: 'rgba(0,0,0,.4)' }}>{mFull ? 'full' : `${mPlaced}/${mCap}`}</span>
+                  </button>
+                )
+              })}
+            </div>
+            <button
+              className={styles.sheetCancel}
+              onClick={() => { setShowModePicker(false); setPendingNeed(null) }}
+            >
+              cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Swap sheet ── */}
+      {showSwapFor && (
+        <div className={styles.sheetOverlay}>
+          <div
+            className={styles.sheetBackdrop}
+            onClick={() => setShowSwapFor(null)}
+          />
+          <div className={styles.sheet}>
+            <h2 className={styles.sheetTitle}>make room in {showSwapFor}</h2>
+            <p className={styles.sheetSubtitle}>remove a need to free a slot.</p>
+            {needsInMode(showSwapFor).map(need => (
+              <div key={need.id} className={styles.swapRow}>
+                <span className={styles.swapNeedName}>{need.name}</span>
+                <button
+                  className={styles.swapRemoveBtn}
+                  onClick={() => {
+                    updateCanvas(need.id, null)
+                    setShowSwapFor(null)
+                  }}
+                >
+                  remove
+                </button>
+              </div>
+            ))}
+            <button
+              className={styles.sheetCancel}
+              onClick={() => setShowSwapFor(null)}
+            >
+              cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
