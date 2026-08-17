@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { NEEDS, MODE_ORDER } from '../lib/constants'
 import { createDataStats } from '../lib/dataStats'
 import styles from './Data.module.css'
@@ -159,6 +159,57 @@ function WhatChanged({ period, canvas, checkins }) {
   )
 }
 
+function buildInsightCopy(link, checkins, moods) {
+  const days30 = buildWindowKeys(30, 0)
+  const validDays = days30.filter(dk =>
+    moods.some(m => m.date_key === dk) && (checkins[dk] || []).length > 0
+  )
+  const metDays = validDays.filter(dk =>
+    (checkins[dk] || []).some(e => e.need_id === link.need.id)
+  )
+  const unmetDays = validDays.filter(dk =>
+    !(checkins[dk] || []).some(e => e.need_id === link.need.id)
+  )
+  const r = link.ratio
+  const mult = r < 2 ? `~${r.toFixed(1)}×` : `${r.toFixed(1)}×`
+  const n = link.need.name
+  let finding
+  if (link.direction === 'met') {
+    finding = link.daypart === 'morning'
+      ? `On days you log ${n}, the next morning runs good ${mult} more often.`
+      : `On days you log ${n}, your evening mood runs good ${mult} more often.`
+  } else {
+    finding = link.daypart === 'morning'
+      ? `On days ${n} goes unmet, the next morning runs bad ${mult} more often.`
+      : `On days ${n} goes unmet, your evening mood runs bad ${mult} more often.`
+  }
+  return {
+    finding,
+    basis: `based on ${metDays.length} days with ${n} logged vs ${unmetDays.length} without.`,
+  }
+}
+
+function InsightsCard({ stats, checkins, moods }) {
+  const [idx, setIdx] = useState(0)
+  const links = useMemo(() => stats.getNeedMoodLinks(), [stats])
+  const advance = useCallback(() => setIdx(i => (i + 1) % links.length), [links.length])
+
+  if (!links.length) return null
+  const link = links[idx % links.length]
+  const { finding, basis } = buildInsightCopy(link, checkins, moods)
+
+  return (
+    <div className={styles.insightCard}>
+      <div className={styles.insightLabel}>YOUR INSIGHTS</div>
+      <p className={styles.insightFinding}>{finding}</p>
+      <p className={styles.insightBasis}>{basis}</p>
+      {links.length > 1 && (
+        <button className={styles.insightNext} onClick={advance}>next insight</button>
+      )}
+    </div>
+  )
+}
+
 export default function Data({ state }) {
   const [period, setPeriod] = useState(7)
 
@@ -199,6 +250,7 @@ export default function Data({ state }) {
         {hasCanvas && (
           <>
             <HeadlineCard period={period} stats={stats} canvas={canvas} />
+            <InsightsCard stats={stats} checkins={checkins} moods={moods} />
             <WhatChanged period={period} canvas={canvas} checkins={checkins} />
           </>
         )}
