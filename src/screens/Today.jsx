@@ -628,8 +628,8 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
           {showGuidance && <GuidanceCard type={guidanceType} onDismiss={handleDismissGuidance} />}
         </div>
 
-        {/* ── Mood card ── */}
-        <div className={`${styles.card} ${styles.moodCard}`}>
+        {/* ── Mood section ── */}
+        <div className={styles.moodCard}>
           {/* Stable two-column row — never reflows on selection */}
           <div className={styles.moodRow}>
             <div className={styles.moodLeft}>
