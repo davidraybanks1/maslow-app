@@ -665,22 +665,43 @@ export async function signInWithPassword(email, password) {
   return { data, error }
 }
 
-export async function loadJournalEntry(userId, dateKey) {
+export async function loadJournalEntries(userId, dateKey) {
   const { data } = await supabase
     .from('journal')
-    .select('entry')
+    .select('id, entry, slot, need_id, state, created_at')
     .eq('user_id', userId)
     .eq('date_key', dateKey)
-    .maybeSingle()
-  return data?.entry || ''
+    .order('created_at', { ascending: true })
+  return data || []
+}
+
+export async function addJournalEntry(userId, dateKey, { entry, slot, needId, state }) {
+  const { data, error } = await supabase
+    .from('journal')
+    .insert({ user_id: userId, date_key: dateKey, entry, slot: slot || null, need_id: needId || null, state: state || null })
+    .select('id, entry, slot, need_id, state, created_at')
+    .single()
+  if (error) logSupabaseError('addJournalEntry', error)
+  return { data, error }
+}
+
+export async function deleteJournalEntry(id) {
+  const { error } = await supabase
+    .from('journal')
+    .delete()
+    .eq('id', id)
+  if (error) logSupabaseError('deleteJournalEntry', error)
+  return { error }
+}
+
+// Legacy single-blob helpers — kept for Log/Data screens that haven't migrated yet
+export async function loadJournalEntry(userId, dateKey) {
+  const entries = await loadJournalEntries(userId, dateKey)
+  return entries.map(e => e.entry || '').filter(Boolean).join('\n\n')
 }
 
 export async function saveJournalEntry(userId, dateKey, entry) {
-  const { error } = await supabase
-    .from('journal')
-    .upsert({ user_id: userId, date_key: dateKey, entry }, { onConflict: 'user_id,date_key' })
-  if (error) logSupabaseError('saveJournalEntry', error)
-  return { error }
+  return addJournalEntry(userId, dateKey, { entry, slot: null, needId: null, state: null })
 }
 
 // Loads every note_deck card for a user, ordered for the swipe deck. If the user has no

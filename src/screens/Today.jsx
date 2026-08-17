@@ -5,7 +5,8 @@ import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } 
 import { CSS } from '@dnd-kit/utilities'
 import { NEEDS, MODES, MODE_ORDER, MODE_MAX_BUBBLES, MODE_WEIGHTS } from '../lib/constants'
 import { currentSlot, precedingSlots, SLOT_NOUN } from '../lib/slots'
-import { todayKey, loadJournalEntry, saveJournalEntry, loadDebriefTypes, loadDebriefs, loadNoteDeck, addNoteDeckCard, updateNoteDeckCard, deleteNoteDeckCard, uploadNoteImage, reorderNoteDeck, loadNoteHistory } from '../lib/store'
+import { todayKey, loadJournalEntries, addJournalEntry, deleteJournalEntry, loadDebriefTypes, loadDebriefs, loadNoteDeck, addNoteDeckCard, updateNoteDeckCard, deleteNoteDeckCard, uploadNoteImage, reorderNoteDeck, loadNoteHistory } from '../lib/store'
+import { BUILTIN_NATURE_TYPES, BUILTIN_PEAK_TYPES } from '../lib/debriefTypes'
 import { createDataStats, getCanvasGuidance } from '../lib/dataStats'
 import { hapticTick } from '../lib/native'
 import DebriefForm from '../components/DebriefForm'
@@ -67,8 +68,21 @@ function CompletionRing({ arcs, pct }) {
   )
 }
 
-const JOURNAL_DRAFT_PREFIX = 'journal-draft-'
-function journalDraftKey(dateKey) { return `${JOURNAL_DRAFT_PREFIX}${dateKey}` }
+function formatEntryTime(ts) {
+  const d = new Date(ts)
+  const h = d.getHours() % 12 || 12
+  const m = String(d.getMinutes()).padStart(2, '0')
+  const ampm = d.getHours() < 12 ? 'am' : 'pm'
+  return `${h}:${m}${ampm}`
+}
+
+function entryStateStyle(name) {
+  const nature = BUILTIN_NATURE_TYPES.find(t => t.name === name)
+  if (nature) return { background: nature.bg, color: nature.text }
+  const peak = BUILTIN_PEAK_TYPES.find(t => t.name === name)
+  if (peak) return { background: peak.bg, color: peak.text }
+  return { background: '#9A9690', color: '#fff' }
+}
 
 const NOTE_MAX_LENGTH = 120
 const DECK_MAX = 5
@@ -335,116 +349,38 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     loadDeck()
   }
 
-  const [journalEntry, setJournalEntry] = useState('')
+  const [journalEntries, setJournalEntries] = useState([])
   const [journalSaveError, setJournalSaveError] = useState(null)
-  const [journalDraftText, setJournalDraftText] = useState('')
-  const debounceRef = useRef(null)
-  const journalRef = useRef(null)
+  const [draftText, setDraftText] = useState('')
+  const [draftNeedId, setDraftNeedId] = useState(null)
+  const [draftState, setDraftState] = useState(null)
+  const [composerOpen, setComposerOpen] = useState(false)
+  const [needPickerOpen, setNeedPickerOpen] = useState(false)
+  const [statePickerOpen, setStatePickerOpen] = useState(false)
   const journalEntriesRef = useRef(null)
-  const journalUserIdRef = useRef(state.userId)
-  const journalTextRef = useRef('')   // always holds latest text for event listeners
-  const journalDateRef = useRef(today)
-  useEffect(() => { journalUserIdRef.current = state.userId }, [state.userId])
-  useEffect(() => { journalDateRef.current = today }, [today])
 
   useEffect(() => {
-    if (!state.userId) { console.error('[loadJournalEntry] called without userId — session may be invalid'); return }
-
-    // Clean up draft keys from previous days on every load
-    try {
-      for (const key of Object.keys(localStorage)) {
-        if (key.startsWith(JOURNAL_DRAFT_PREFIX) && key !== journalDraftKey(today)) {
-          localStorage.removeItem(key)
-        }
-      }
-    } catch {}
-
-    loadJournalEntry(state.userId, today).then(serverEntry => {
-      const localDraft = (() => { try { return localStorage.getItem(journalDraftKey(today)) || '' } catch { return '' } })()
-      // Prefer local draft when it has more content than Supabase (unsaved keystrokes survived an exit)
-      const entry = localDraft.length > (serverEntry || '').length ? localDraft : (serverEntry || '')
-      setJournalEntry(entry)
-      journalTextRef.current = entry
-      if (localDraft.length > (serverEntry || '').length) {
-        // Flush recovered draft to Supabase now so it isn't lost again
-        saveJournalEntry(state.userId, today, localDraft)
-      }
-      setTimeout(() => {
-        if (journalRef.current && entry) {
-          journalRef.current.style.height = 'auto'
-          journalRef.current.style.height = journalRef.current.scrollHeight + 'px'
-        }
-      }, 50)
-    })
+    if (!state.userId) return
+    loadJournalEntries(state.userId, today).then(setJournalEntries)
   }, [state.userId, today])
 
-  // Flush the pending debounce when the page is hidden (PWA backgrounded / tab switched / closed).
-  // visibilitychange is the only event that fires reliably on mobile; beforeunload/pagehide do not.
-  useEffect(() => {
-    function handleVisibilityChange() {
-      if (document.visibilityState !== 'hidden') return
-      if (debounceRef.current) { clearTimeout(debounceRef.current); debounceRef.current = null }
-      const uid = journalUserIdRef.current
-      if (uid) saveJournalEntry(uid, journalDateRef.current, journalTextRef.current)
-    }
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
-  }, []) // empty — reads only from refs
-
-  function handleJournalChange(e) {
-    const val = e.target.value
-    setJournalEntry(val)
-    journalTextRef.current = val
-    // Synchronous local backup — survives any exit before the debounce fires
-    try { localStorage.setItem(journalDraftKey(today), val) } catch {}
-    if (journalRef.current) {
-      journalRef.current.style.height = 'auto'
-      journalRef.current.style.height = journalRef.current.scrollHeight + 'px'
-    }
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => {
-      const uid = journalUserIdRef.current
-      if (!uid) {
-        console.error('[saveJournalEntry] no userId at save time — entry not persisted')
-        setJournalSaveError('session error — entry saved locally, will sync on next open')
-        return
-      }
-      saveJournalEntry(uid, today, val).then(({ error }) => {
-        if (error) setJournalSaveError('save failed — entry preserved locally')
-        else setJournalSaveError(null)
-      })
-    }, 1500)
-  }
-
-  function makeTimestamp() {
-    const now = new Date()
-    const h = now.getHours() % 12 || 12
-    const m = String(now.getMinutes()).padStart(2, '0')
-    const ampm = now.getHours() < 12 ? 'am' : 'pm'
-    return '[' + h + ':' + m + ampm + ']'
-  }
-
-  function handleInsertTimestamp() {
-    const stamp = makeTimestamp()
-    const insertion = journalEntry.length === 0 ? `${stamp} ` : `\n\n${stamp} `
-    const newValue = journalEntry + insertion
-    handleJournalChange({ target: { value: newValue } })
-    setTimeout(() => {
-      if (journalRef.current) {
-        journalRef.current.focus()
-        journalRef.current.selectionStart = journalRef.current.selectionEnd = newValue.length
-      }
-    }, 0)
-  }
-
-  function handleAddEntry() {
-    const text = journalDraftText.trim()
-    if (!text) return
-    const stamp = makeTimestamp()
-    const separator = journalEntry.trimEnd() ? '\n\n' : ''
-    const newValue = journalEntry.trimEnd() + separator + stamp + ' ' + text
-    handleJournalChange({ target: { value: newValue } })
-    setJournalDraftText('')
+  async function handleAddEntry() {
+    const text = draftText.trim()
+    if (!text || !state.userId) return
+    const { data, error } = await addJournalEntry(state.userId, today, {
+      entry: text,
+      slot: currentSlot(),
+      needId: draftNeedId,
+      state: draftState,
+    })
+    if (error) { setJournalSaveError('save failed — try again'); return }
+    setJournalEntries(prev => [...prev, data])
+    setDraftText('')
+    setDraftNeedId(null)
+    setDraftState(null)
+    setJournalSaveError(null)
+    setNeedPickerOpen(false)
+    setStatePickerOpen(false)
   }
 
   function handleComposerKeyDown(e) {
@@ -452,6 +388,11 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
       e.preventDefault()
       handleAddEntry()
     }
+  }
+
+  async function handleDeleteEntry(id) {
+    setJournalEntries(prev => prev.filter(e => e.id !== id))
+    await deleteJournalEntry(id)
   }
 
   const isDesktop = useIsDesktop()
@@ -591,17 +532,14 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     }
   }
 
-  // Count distinct journal entries by timestamp markers; fall back to 1 if there's any text
-  const journalEntryCount = journalEntry.trim()
-    ? ((journalEntry.match(/\[\d{1,2}:\d{2}(?:am|pm)\]/g) || []).length || 1)
-    : 0
+  const journalEntryCount = journalEntries.length
+  const activeNeeds = NEEDS.filter(n => state.canvas[n.id])
 
-  // Auto-scroll entries to bottom when a new entry is appended on desktop
   useEffect(() => {
     if (isDesktop && journalEntriesRef.current) {
       journalEntriesRef.current.scrollTop = journalEntriesRef.current.scrollHeight
     }
-  }, [journalEntry, isDesktop])
+  }, [journalEntries, isDesktop])
 
   return (
     <div className={styles.screen}>
@@ -894,62 +832,80 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         <div className={styles.cardJournal}>
           <div className={styles.sectionHeader}>
             <span className={styles.sectionLabel}>journal</span>
-            {isDesktop
-              ? <span className={styles.journalEntryCount}>
-                  {journalEntryCount > 0
-                    ? `${journalEntryCount} ${journalEntryCount === 1 ? 'entry' : 'entries'} today`
-                    : ''}
-                </span>
-              : <button className={styles.journalTimestampBtn} onClick={handleInsertTimestamp}>⏱</button>
-            }
+            <span className={styles.journalEntryCount}>
+              {journalEntryCount > 0 ? `${journalEntryCount} ${journalEntryCount === 1 ? 'entry' : 'entries'} today` : ''}
+            </span>
           </div>
 
           {isDesktop ? (
             <div className={styles.journalScroll} ref={journalEntriesRef}>
               <div className={styles.journalEntries}>
-                {journalEntry.trim() ? (
-                  <div className={styles.journalEntriesText}>
-                    {parseJournalEntry(journalEntry, styles.entryTimestamp)}
-                  </div>
-                ) : (
+                {journalEntries.length === 0 ? (
                   <span className={styles.journalEntriesEmpty}>nothing written yet — start typing below</span>
-                )}
+                ) : journalEntries.map(e => (
+                  <div key={e.id} className={styles.journalEntryCard}>
+                    <div className={styles.journalEntryMeta}>
+                      {e.slot && <span className={styles.journalSlotChip}>{e.slot}</span>}
+                      <span className={styles.journalEntryTime}>{formatEntryTime(e.created_at)}</span>
+                      {e.state && <span className={styles.journalStateTag} style={entryStateStyle(e.state)}>{e.state}</span>}
+                      {e.need_id && <span className={styles.journalNeedTag}>{e.need_id}</span>}
+                      <button className={styles.journalEntryDelete} onClick={() => handleDeleteEntry(e.id)} aria-label="delete entry">×</button>
+                    </div>
+                    <div className={styles.journalEntryText}>{e.entry}</div>
+                  </div>
+                ))}
               </div>
               <div className={styles.journalComposer}>
+                <div className={styles.composerChips}>
+                  <span className={styles.composerSlotChip}>{slot}</span>
+                  {draftNeedId ? (
+                    <button className={styles.composerTagActive} onClick={() => setDraftNeedId(null)}>{draftNeedId} ×</button>
+                  ) : (
+                    <button className={styles.composerTagBtn} onClick={() => { setNeedPickerOpen(o => !o); setStatePickerOpen(false) }}>+ need</button>
+                  )}
+                  {draftState ? (
+                    <button className={styles.composerTagActive} style={entryStateStyle(draftState)} onClick={() => setDraftState(null)}>{draftState} ×</button>
+                  ) : (
+                    <button className={styles.composerTagBtn} onClick={() => { setStatePickerOpen(o => !o); setNeedPickerOpen(false) }}>+ state</button>
+                  )}
+                </div>
+                {needPickerOpen && activeNeeds.length > 0 && (
+                  <div className={styles.composerPicker}>
+                    {activeNeeds.map(n => (
+                      <button key={n.id} className={styles.composerPickerItem} onClick={() => { setDraftNeedId(n.id); setNeedPickerOpen(false) }}>{n.name}</button>
+                    ))}
+                  </div>
+                )}
+                {statePickerOpen && (
+                  <div className={styles.composerPicker}>
+                    {[...BUILTIN_NATURE_TYPES, ...BUILTIN_PEAK_TYPES].map(t => (
+                      <button key={t.name} className={styles.composerPickerItem} style={{ background: t.bg, color: t.text }} onClick={() => { setDraftState(t.name); setStatePickerOpen(false) }}>{t.name}</button>
+                    ))}
+                  </div>
+                )}
                 <div className={styles.journalComposerWrap}>
                   <textarea
                     className={styles.journalComposerInput}
                     placeholder="add a thought…"
-                    value={journalDraftText}
-                    onChange={e => setJournalDraftText(e.target.value)}
+                    value={draftText}
+                    onChange={e => setDraftText(e.target.value)}
                     onKeyDown={handleComposerKeyDown}
                     rows={3}
                   />
                   <div className={styles.journalComposerFooter}>
                     <span className={styles.journalHint}>⌘↵</span>
-                    <button
-                      className={styles.journalAddBtn}
-                      onClick={handleAddEntry}
-                      disabled={!journalDraftText.trim()}
-                    >add</button>
+                    <button className={styles.journalAddBtn} onClick={handleAddEntry} disabled={!draftText.trim()}>add</button>
                   </div>
                 </div>
                 {journalSaveError && <div className={styles.journalSaveError}>{journalSaveError}</div>}
               </div>
-              {/* Debrief pills — in content flow, directly below composer */}
               <div className={styles.debriefPillRow}>
-                <button
-                  className={`${styles.debriefPill} ${debriefExpanded ? styles.debriefPillOpen : ''}`}
-                  onClick={() => { setDebriefExpanded(e => !e); setPeakExpanded(false) }}
-                >
+                <button className={`${styles.debriefPill} ${debriefExpanded ? styles.debriefPillOpen : ''}`} onClick={() => { setDebriefExpanded(e => !e); setPeakExpanded(false) }}>
                   {todayDebriefCount > 0 && <span className={styles.debriefDot} />}
                   <span>anxiety debrief</span>
                   {todayDebriefCount > 0 && <span className={styles.debriefCount}>· {todayDebriefCount}</span>}
                 </button>
-                <button
-                  className={`${styles.debriefPill} ${peakExpanded ? styles.debriefPillOpen : ''}`}
-                  onClick={() => { setPeakExpanded(e => !e); setDebriefExpanded(false) }}
-                >
+                <button className={`${styles.debriefPill} ${peakExpanded ? styles.debriefPillOpen : ''}`} onClick={() => { setPeakExpanded(e => !e); setDebriefExpanded(false) }}>
                   {todayPeakCount > 0 && <span className={styles.debriefDot} />}
                   <span>peak debrief</span>
                   {todayPeakCount > 0 && <span className={styles.debriefCount}>· {todayPeakCount}</span>}
@@ -958,29 +914,78 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
             </div>
           ) : (
             <>
-              <textarea
-                ref={journalRef}
-                className={styles.journalInput}
-                placeholder="add your thoughts for the day…"
-                value={journalEntry}
-                onChange={handleJournalChange}
-                rows={5}
-              />
-              {journalSaveError && <div className={styles.journalSaveError}>{journalSaveError}</div>}
-              {/* Debrief pills — mobile: below textarea */}
+              {journalEntries.length > 0 && (
+                <div className={styles.journalMobileEntries}>
+                  {journalEntries.map(e => (
+                    <div key={e.id} className={styles.journalEntryCard}>
+                      <div className={styles.journalEntryMeta}>
+                        {e.slot && <span className={styles.journalSlotChip}>{e.slot}</span>}
+                        <span className={styles.journalEntryTime}>{formatEntryTime(e.created_at)}</span>
+                        {e.state && <span className={styles.journalStateTag} style={entryStateStyle(e.state)}>{e.state}</span>}
+                        {e.need_id && <span className={styles.journalNeedTag}>{e.need_id}</span>}
+                        <button className={styles.journalEntryDelete} onClick={() => handleDeleteEntry(e.id)} aria-label="delete entry">×</button>
+                      </div>
+                      <div className={styles.journalEntryText}>{e.entry}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {!composerOpen ? (
+                <button className={styles.composerCollapsed} onClick={() => setComposerOpen(true)}>
+                  + add a thought…
+                </button>
+              ) : (
+                <div className={styles.journalComposer}>
+                  <div className={styles.composerChips}>
+                    <span className={styles.composerSlotChip}>{slot}</span>
+                    {draftNeedId ? (
+                      <button className={styles.composerTagActive} onClick={() => setDraftNeedId(null)}>{draftNeedId} ×</button>
+                    ) : (
+                      <button className={styles.composerTagBtn} onClick={() => { setNeedPickerOpen(o => !o); setStatePickerOpen(false) }}>+ need</button>
+                    )}
+                    {draftState ? (
+                      <button className={styles.composerTagActive} style={entryStateStyle(draftState)} onClick={() => setDraftState(null)}>{draftState} ×</button>
+                    ) : (
+                      <button className={styles.composerTagBtn} onClick={() => { setStatePickerOpen(o => !o); setNeedPickerOpen(false) }}>+ state</button>
+                    )}
+                  </div>
+                  {needPickerOpen && activeNeeds.length > 0 && (
+                    <div className={styles.composerPicker}>
+                      {activeNeeds.map(n => (
+                        <button key={n.id} className={styles.composerPickerItem} onClick={() => { setDraftNeedId(n.id); setNeedPickerOpen(false) }}>{n.name}</button>
+                      ))}
+                    </div>
+                  )}
+                  {statePickerOpen && (
+                    <div className={styles.composerPicker}>
+                      {[...BUILTIN_NATURE_TYPES, ...BUILTIN_PEAK_TYPES].map(t => (
+                        <button key={t.name} className={styles.composerPickerItem} style={{ background: t.bg, color: t.text }} onClick={() => { setDraftState(t.name); setStatePickerOpen(false) }}>{t.name}</button>
+                      ))}
+                    </div>
+                  )}
+                  <textarea
+                    autoFocus
+                    className={styles.journalInput}
+                    placeholder="what's on your mind?"
+                    value={draftText}
+                    onChange={e => setDraftText(e.target.value)}
+                    onKeyDown={handleComposerKeyDown}
+                    rows={4}
+                  />
+                  <div className={styles.composerMobileFooter}>
+                    <button className={styles.composerCancelBtn} onClick={() => { setComposerOpen(false); setNeedPickerOpen(false); setStatePickerOpen(false) }}>cancel</button>
+                    <button className={styles.journalAddBtn} onClick={handleAddEntry} disabled={!draftText.trim()}>add</button>
+                  </div>
+                  {journalSaveError && <div className={styles.journalSaveError}>{journalSaveError}</div>}
+                </div>
+              )}
               <div className={styles.debriefPillRow}>
-                <button
-                  className={`${styles.debriefPill} ${debriefExpanded ? styles.debriefPillOpen : ''}`}
-                  onClick={() => { setDebriefExpanded(e => !e); setPeakExpanded(false) }}
-                >
+                <button className={`${styles.debriefPill} ${debriefExpanded ? styles.debriefPillOpen : ''}`} onClick={() => { setDebriefExpanded(e => !e); setPeakExpanded(false) }}>
                   {todayDebriefCount > 0 && <span className={styles.debriefDot} />}
                   <span>anxiety debrief</span>
                   {todayDebriefCount > 0 && <span className={styles.debriefCount}>· {todayDebriefCount}</span>}
                 </button>
-                <button
-                  className={`${styles.debriefPill} ${peakExpanded ? styles.debriefPillOpen : ''}`}
-                  onClick={() => { setPeakExpanded(e => !e); setDebriefExpanded(false) }}
-                >
+                <button className={`${styles.debriefPill} ${peakExpanded ? styles.debriefPillOpen : ''}`} onClick={() => { setPeakExpanded(e => !e); setDebriefExpanded(false) }}>
                   {todayPeakCount > 0 && <span className={styles.debriefDot} />}
                   <span>peak debrief</span>
                   {todayPeakCount > 0 && <span className={styles.debriefCount}>· {todayPeakCount}</span>}
@@ -989,31 +994,13 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               {debriefExpanded && (
                 <>
                   <div className={styles.debriefHairline} />
-                  <DebriefForm
-                    userId={state.userId}
-                    debriefTypes={debriefTypes}
-                    onDirtyChange={setDebriefDirty}
-                    onSaved={() => {
-                      setDebriefExpanded(false)
-                      setDebriefDirty(false)
-                      setTodayDebriefCount(c => c + 1)
-                    }}
-                  />
+                  <DebriefForm userId={state.userId} debriefTypes={debriefTypes} onDirtyChange={setDebriefDirty} onSaved={() => { setDebriefExpanded(false); setDebriefDirty(false); setTodayDebriefCount(c => c + 1) }} />
                 </>
               )}
               {peakExpanded && (
                 <>
                   <div className={styles.debriefHairline} />
-                  <PeakDebriefForm
-                    userId={state.userId}
-                    debriefTypes={debriefTypes}
-                    onDirtyChange={setPeakDirty}
-                    onSaved={() => {
-                      setPeakExpanded(false)
-                      setPeakDirty(false)
-                      setTodayPeakCount(c => c + 1)
-                    }}
-                  />
+                  <PeakDebriefForm userId={state.userId} debriefTypes={debriefTypes} onDirtyChange={setPeakDirty} onSaved={() => { setPeakExpanded(false); setPeakDirty(false); setTodayPeakCount(c => c + 1) }} />
                 </>
               )}
             </>

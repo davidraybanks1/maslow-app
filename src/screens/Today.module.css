@@ -972,12 +972,187 @@
 
 .moodDivider { display: none; }
 
-/* ── Journal timestamp tokens — applied wherever entries are rendered as HTML ── */
-.entryTimestamp {
-  color: rgba(26,26,26,.45);
+/* ── Journal entry cards ── */
+.journalMobileEntries {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 10px;
 }
 
-/* ── Journal ── */
+.journalEntryCard {
+  padding: 10px 0;
+  border-bottom: 0.5px solid var(--track);
+}
+.journalEntryCard:last-child { border-bottom: none; }
+
+.journalEntryMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 4px;
+}
+
+.journalSlotChip {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  background: var(--track);
+  border-radius: 4px;
+  padding: 2px 5px;
+}
+
+.journalEntryTime {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink4);
+}
+
+.journalStateTag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+.journalNeedTag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink3);
+  background: var(--track);
+  border-radius: 4px;
+  padding: 2px 5px;
+}
+
+.journalEntryDelete {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--ink4);
+  padding: 0 2px;
+  line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+}
+.journalEntryDelete:hover { color: var(--ink2); }
+
+.journalEntryText {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 200;
+  color: var(--ink);
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── Composer chips & pickers ── */
+.composerCollapsed {
+  display: block;
+  width: 100%;
+  padding: 12px 0;
+  background: none;
+  border: none;
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink4);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.composerCollapsed:hover { color: var(--ink3); }
+
+.composerChips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.composerSlotChip {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  background: var(--track);
+  border-radius: 4px;
+  padding: 3px 6px;
+}
+
+.composerTagBtn {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink4);
+  background: none;
+  border: 0.5px solid var(--hairline);
+  border-radius: 4px;
+  padding: 3px 7px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color var(--motion-hover), color var(--motion-hover);
+}
+.composerTagBtn:hover { border-color: var(--ink3); color: var(--ink3); }
+
+.composerTagActive {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  background: var(--track);
+  border: 0.5px solid var(--hairline);
+  border-radius: 4px;
+  padding: 3px 7px;
+  cursor: pointer;
+  color: var(--ink);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.composerPicker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.composerPickerItem {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 4px 9px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  background: var(--track);
+  color: var(--ink);
+  transition: opacity var(--motion-hover);
+}
+.composerPickerItem:hover { opacity: 0.8; }
+
+.composerMobileFooter {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.composerCancelBtn {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink4);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.composerCancelBtn:hover { color: var(--ink3); }
+
+/* ── Journal (mobile textarea) ── */
 .journalInput {
   width: 100%;
   padding: 14px;
