@@ -11,10 +11,8 @@ import { createDataStats, getCanvasGuidance } from '../lib/dataStats'
 import { hapticTick } from '../lib/native'
 import DebriefForm from '../components/DebriefForm'
 import PeakDebriefForm from '../components/PeakDebriefForm'
-import TimerCard from '../components/TimerCard'
 import DesktopModal from '../components/DesktopModal'
 import { useIsDesktop } from '../lib/useIsDesktop'
-import { useTimer } from '../lib/useTimer'
 import styles from './Today.module.css'
 
 function SortableDeckRow({ card, onEdit, onDelete, onLightbox }) {
@@ -43,15 +41,20 @@ function SortableDeckRow({ card, onEdit, onDelete, onLightbox }) {
 const MOODS = ['good', 'fine', 'bad']
 
 function buildRingGradient(arcs) {
+  // Contiguous fill: segments pack from 12 o'clock in mode order.
+  // Each mode contributes up to 25% of the ring; filled segments are adjacent,
+  // then a single track-colored remainder closes the arc.
   const stops = []
-  for (const { color, startPct, fill, endPct } of arcs) {
-    const fillEndPct = startPct + fill * 25
-    if (fill > 0) {
-      stops.push(`${color} ${startPct.toFixed(2)}%`, `${color} ${fillEndPct.toFixed(2)}%`)
+  let cursor = 0
+  for (const { color, fill } of arcs) {
+    const segPct = fill * 25
+    if (segPct > 0.001) {
+      stops.push(`${color} ${cursor.toFixed(2)}%`, `${color} ${(cursor + segPct).toFixed(2)}%`)
+      cursor += segPct
     }
-    if (fillEndPct < endPct) {
-      stops.push(`var(--track) ${fillEndPct.toFixed(2)}%`, `var(--track) ${endPct.toFixed(2)}%`)
-    }
+  }
+  if (cursor < 99.999) {
+    stops.push(`var(--track) ${cursor.toFixed(2)}%`, `var(--track) 100%`)
   }
   if (!stops.length) return `conic-gradient(var(--track) 0% 100%)`
   return `conic-gradient(from -90deg, ${stops.join(', ')})`
@@ -168,11 +171,10 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   const checked = state.checkins[today] || []
   const slot = currentSlot()
 
-  // Completion ring: each mode gets 1/4 of the ring, filled proportionally
+  // Completion ring: segments pack contiguously from 12 o'clock in mode order.
   const ringArcs = []
   let totalRingFraction = 0
-  for (let i = 0; i < MODE_ORDER.length; i++) {
-    const mode = MODE_ORDER[i]
+  for (const mode of MODE_ORDER) {
     const modeNeeds = NEEDS.filter(n => state.canvas[n.id] === mode)
     const maxBubbles = MODE_MAX_BUBBLES[mode] || 0
     const modeTarget = maxBubbles * modeNeeds.length
@@ -184,7 +186,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
       )
     }
     const fill = modeTarget > 0 ? Math.min(modeCompletions / modeTarget, 1) : 0
-    ringArcs.push({ mode, color: MODES[mode].pip, startPct: i * 25, fill, endPct: (i + 1) * 25 })
+    ringArcs.push({ color: MODES[mode].pip, fill })
     totalRingFraction += fill / 4
   }
   const ringPct = Math.round(totalRingFraction * 100)
@@ -397,7 +399,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   }
 
   const isDesktop = useIsDesktop()
-  const timerState = useTimer()
   const [debriefExpanded, setDebriefExpanded] = useState(false)
   const [peakExpanded, setPeakExpanded] = useState(false)
   const [debriefDirty, setDebriefDirty] = useState(false)
@@ -417,7 +418,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   const [todayDebriefCount, setTodayDebriefCount] = useState(0)
   const [todayPeakCount, setTodayPeakCount] = useState(0)
   const [justTapped, setJustTapped] = useState(null)
-  const [openTier, setOpenTier] = useState('survival')
+  const [openTier, setOpenTier] = useState(null)
   const [openRetroSlot, setOpenRetroSlot] = useState(null)
 
   useEffect(() => {
@@ -622,11 +623,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
           </div>
         )}
 
-        {/* ── Timer card ── */}
-        <div className={styles.timerSlot}>
-          <TimerCard {...timerState} />
-        </div>
-
         {/* ── Guidance ── */}
         <div className={styles.guidanceSlot}>
           {showGuidance && <GuidanceCard type={guidanceType} onDismiss={handleDismissGuidance} />}
@@ -733,6 +729,11 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                         style={{ width: `${progressPct}%`, background: pip }}
                       />
                     </div>
+                    {!isOpen && (
+                      <div className={styles.tierNeedLabels}>
+                        {modeNeeds.map(n => n.name).join(', ')}
+                      </div>
+                    )}
                   </button>
 
                   <div className={`${styles.tierContent} ${isOpen ? styles.tierContentOpen : ''}`}>
