@@ -42,6 +42,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transform: scaleX(-1);
 }
 .ringInner {
   width: 72px;
@@ -58,6 +59,7 @@
   font-weight: 300;
   color: var(--ink);
   line-height: 1;
+  transform: scaleX(-1);
 }
 .ringPctSign {
   font-size: 11px;
