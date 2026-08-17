@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from 'react'
-import { NEEDS, MODE_ORDER } from '../lib/constants'
+import { useNavigate } from 'react-router-dom'
+import { NEEDS } from '../lib/constants'
 import { createDataStats } from '../lib/dataStats'
 import styles from './Data.module.css'
 
@@ -521,6 +522,103 @@ function RibbonsSection({ canvas, checkins, practicesDB, weeks }) {
   )
 }
 
+const QUIET_GROUPS = [
+  { key: 'month+',  label: 'a month or more',    min: 30,  max: Infinity },
+  { key: '3to4w',   label: 'three to four weeks', min: 21,  max: 29 },
+  { key: '2to3w',   label: 'two to three weeks',  min: 14,  max: 20 },
+]
+
+function GoneQuietSection({ canvas, checkins, practicesDB, archivePractice }) {
+  const [openGroup, setOpenGroup] = useState('month+')
+  const [retireConfirm, setRetireConfirm] = useState(null)
+  const navigate = useNavigate()
+
+  const recent90 = useMemo(() => buildWindowKeys(90, 0), [])
+  const todayKey = buildWindowKeys(1, 0)[0]
+
+  const quietPractices = useMemo(() => {
+    const result = []
+    for (const need of NEEDS) {
+      const mode = canvas[need.id]
+      if (!mode) continue
+      const practices = practicesDB.filter(p => p.need_id === need.id && !p.archived_at)
+      for (const p of practices) {
+        const lastDk = recent90.slice().reverse().find(dk =>
+          (checkins[dk] || []).some(e =>
+            e.need_id === need.id &&
+            (p.id && e.practice_id ? e.practice_id === p.id : e.practice_text === p.label)
+          )
+        ) ?? null
+        const daysSince = lastDk
+          ? Math.round((new Date(todayKey + 'T12:00:00') - new Date(lastDk + 'T12:00:00')) / 86400000)
+          : 99
+        if (daysSince >= 14) result.push({ need, mode, practice: p, daysSince })
+      }
+    }
+    return result.sort((a, b) => b.daysSince - a.daysSince)
+  }, [canvas, checkins, practicesDB, recent90, todayKey])
+
+  const total = quietPractices.length
+  if (total === 0) return null
+
+  // Closing read: dominant mode among quiet practices
+  const modeCounts = {}
+  for (const { mode } of quietPractices) modeCounts[mode] = (modeCounts[mode] || 0) + 1
+  const [topMode, topCount] = Object.entries(modeCounts).sort((a, b) => b[1] - a[1])[0]
+  const closingRead = topCount >= Math.ceil(total / 2)
+    ? `${topCount} of these ${total} belong to ${topMode}. That is a mode going dormant, not ${total} separate failures — retire what you have outgrown.`
+    : `${total} practices have gone quiet. Review each to retire or restart.`
+
+  return (
+    <section className={styles.section}>
+      <div className={styles.sectionHeader}>
+        <span className={styles.sectionLabel}>GONE QUIET</span>
+        <span className={styles.sectionMeta}>{total} practice{total !== 1 ? 's' : ''}</span>
+      </div>
+
+      {QUIET_GROUPS.map(grp => {
+        const rows = quietPractices.filter(p => p.daysSince >= grp.min && p.daysSince <= grp.max)
+        if (rows.length === 0) return null
+        const isOpen = openGroup === grp.key
+        return (
+          <div key={grp.key} className={styles.quietCard}>
+            <button
+              className={styles.quietCardHeader}
+              onClick={() => setOpenGroup(isOpen ? null : grp.key)}
+            >
+              <span className={styles.quietCardTitle}>{grp.label}</span>
+              <span className={styles.quietCardCount}>{rows.length}</span>
+              <span className={styles.ribbonChevron}>{isOpen ? '▴' : '▾'}</span>
+            </button>
+            {isOpen && rows.map(({ need, mode, practice }) => (
+              <div key={practice.id ?? practice.label} className={styles.quietRow}>
+                <span className={styles.moverDot} style={{ background: TIER_DOT[mode] }} />
+                <span className={styles.quietPracticeName}>{practice.label}</span>
+                <div className={styles.quietActions}>
+                  <button className={styles.quietBtn} onClick={() => navigate('/today')}>log</button>
+                  {archivePractice && (
+                    retireConfirm === (practice.id ?? practice.label) ? (
+                      <button
+                        className={`${styles.quietBtn} ${styles.quietBtnConfirm}`}
+                        onClick={() => { archivePractice(practice.id); setRetireConfirm(null) }}
+                      >confirm retire</button>
+                    ) : (
+                      <button className={styles.quietBtn} onClick={() => setRetireConfirm(practice.id ?? practice.label)}>
+                        retire
+                      </button>
+                    )
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )
+      })}
+      <p className={styles.sectionRead}>{closingRead}</p>
+    </section>
+  )
+}
+
 function buildInsightCopy(link, checkins, moods) {
   const days30 = buildWindowKeys(30, 0)
   const validDays = days30.filter(dk =>
@@ -572,7 +670,7 @@ function InsightsCard({ stats, checkins, moods }) {
   )
 }
 
-export default function Data({ state }) {
+export default function Data({ state, archivePractice }) {
   const [period, setPeriod] = useState(7)
 
   const canvas    = state?.canvas    ?? {}
@@ -618,6 +716,7 @@ export default function Data({ state }) {
             <RhythmSection stats={stats} canvas={canvas} checkins={checkins} moods={moods} />
             <LongViewSection canvas={canvas} checkins={checkins} moods={moods} stats={stats} weeks={longViewWeeks} />
             <RibbonsSection canvas={canvas} checkins={checkins} practicesDB={practicesDB} weeks={longViewWeeks} />
+            <GoneQuietSection canvas={canvas} checkins={checkins} practicesDB={practicesDB} archivePractice={archivePractice} />
           </>
         )}
 

@@ -604,6 +604,89 @@
   border-radius: 2px;
 }
 
+/* ── Gone quiet ─────────────────────────────────────────────────────────── */
+.quietCard {
+  background: var(--card);
+  border: 1px solid rgba(0,0,0,.09);
+  border-radius: 14px;
+  padding: 13px 15px 11px;
+  margin-bottom: 8px;
+}
+
+.quietCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  padding: 0;
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.quietCardTitle {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-weight: 300;
+  color: var(--ink);
+  flex: 1;
+}
+
+.quietCardCount {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--ink3);
+}
+
+.quietRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 46px;
+  border-top: 1px solid rgba(0,0,0,.06);
+}
+
+.quietPracticeName {
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  font-weight: 300;
+  color: var(--ink);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quietActions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.quietBtn {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(0,0,0,.14);
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--ink);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  white-space: nowrap;
+}
+.quietBtn:active { opacity: 0.65; }
+
+.quietBtnConfirm {
+  border-color: #C4381F;
+  color: #C4381F;
+}
+
 /* ── Desktop ────────────────────────────────────────────────────────────── */
 @media (min-width: 900px) {
   .scrollArea {
