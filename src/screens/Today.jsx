@@ -475,17 +475,8 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   const [todayDebriefCount, setTodayDebriefCount] = useState(0)
   const [todayPeakCount, setTodayPeakCount] = useState(0)
   const [justTapped, setJustTapped] = useState(null)
-  const [openNeeds, setOpenNeeds] = useState(new Set())
+  const [openTier, setOpenTier] = useState('survival')
   const [openRetroSlot, setOpenRetroSlot] = useState(null)
-
-  function toggleNeed(needId) {
-    setOpenNeeds(prev => {
-      const next = new Set(prev)
-      if (next.has(needId)) next.delete(needId)
-      else next.add(needId)
-      return next
-    })
-  }
 
   useEffect(() => {
     if (!state.userId) { console.error('[loadDebriefTypes] called without userId — session may be invalid'); return }
@@ -774,128 +765,125 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
           )}
         </div>
 
-        {/* ── Practices card ── */}
-        <div className={`${styles.card} ${styles.practicesCard}`}>
-          <div className={styles.sectionHeader}>
-            <span className={styles.sectionLabel}>practices</span>
+        {/* ── Needs & Practices ── */}
+        <div className={styles.practicesCard}>
+          <div className={styles.tierSectionHeader}>
+            <span className={styles.tierSectionLabel}>NEEDS & PRACTICES</span>
+            <span className={styles.tierSectionHint}>tap a tier to fill it</span>
           </div>
+          <div className={styles.tierList}>
+            {[...MODE_ORDER].reverse().map(mode => {
+              const modeNeeds = NEEDS.filter(n => state.canvas[n.id] === mode)
+              if (!modeNeeds.length) return null
+              const pip = MODES[mode]?.pip
+              const maxBubbles = MODE_MAX_BUBBLES[mode] || 0
+              const totalPossible = maxBubbles * modeNeeds.length
+              let modeDone = 0
+              for (const n of modeNeeds) {
+                modeDone += Math.min(
+                  checked.filter(e => e.need_id === n.id).reduce((s, e) => s + (e.count || 1), 0),
+                  maxBubbles
+                )
+              }
+              const progressPct = totalPossible > 0 ? Math.round((modeDone / totalPossible) * 100) : 0
+              const isOpen = openTier === mode
 
-          {MODE_ORDER.map((mode, modeIdx) => {
-            const modeNeeds = NEEDS.filter(n => state.canvas[n.id] === mode)
-            if (!modeNeeds.length) return null
-            const pip = MODES[mode]?.pip
-            const maxBubbles = MODE_MAX_BUBBLES[mode]
+              return (
+                <div key={mode} className={`${styles.tier} ${isOpen ? styles.tierOpen : ''}`}>
+                  <button
+                    className={styles.tierHeader}
+                    onClick={() => setOpenTier(prev => prev === mode ? null : mode)}
+                    aria-expanded={isOpen}
+                  >
+                    <div className={styles.tierHeaderTop}>
+                      <div className={styles.tierDot} style={{ background: pip }} />
+                      <span className={styles.tierName}>{mode}</span>
+                      <span className={styles.tierCount}>{modeDone}/{totalPossible}</span>
+                    </div>
+                    <div className={styles.tierBar}>
+                      <div
+                        className={styles.tierBarFill}
+                        style={{ width: `${progressPct}%`, background: pip }}
+                      />
+                    </div>
+                  </button>
 
-            return (
-              <div key={mode}>
-                {modeIdx > 0 && <div className={styles.modeSeparator} />}
-                <div className={styles.modeHeader}>
-                  <div className={styles.modeHeaderPip} style={{ background: pip }} />
-                  <span className={styles.modeHeaderName}>{mode}</span>
-                </div>
+                  <div className={`${styles.tierContent} ${isOpen ? styles.tierContentOpen : ''}`}>
+                    <div className={styles.tierContentInner}>
+                      {modeNeeds.map(n => {
+                        const pool = (state.practicesDB && state.practicesDB.length > 0)
+                          ? state.practicesDB.filter(p => p.need_id === n.id && !p.archived_at)
+                          : (state.practices[n.id] || []).map(label => ({ id: null, label }))
 
-                {modeNeeds.map(n => {
-                  const pool = (state.practicesDB && state.practicesDB.length > 0)
-                    ? state.practicesDB.filter(p => p.need_id === n.id && !p.archived_at)
-                    : (state.practices[n.id] || []).map(label => ({ id: null, label }))
+                        const needDone = Math.min(
+                          checked.filter(e => e.need_id === n.id).reduce((s, e) => s + (e.count || 1), 0),
+                          maxBubbles
+                        )
 
-                  const needCompletions = checked.filter(e => e.need_id === n.id).reduce((s, e) => s + (e.count || 1), 0)
-                  const filledBubbles = Math.min(needCompletions, maxBubbles)
-                  const bonusBubbles = Math.max(0, needCompletions - maxBubbles)
+                        function getPracticeCount(practice) {
+                          return checked
+                            .filter(e => {
+                              if (e.need_id !== n.id) return false
+                              if (practice.id && e.practice_id) return e.practice_id === practice.id
+                              return e.practice_text === practice.label
+                            })
+                            .reduce((s, e) => s + (e.count || 1), 0)
+                        }
 
-                  function getPracticeCount(practice) {
-                    return checked
-                      .filter(e => {
-                        if (e.need_id !== n.id) return false
-                        if (practice.id && e.practice_id) return e.practice_id === practice.id
-                        return e.practice_text === practice.label
-                      })
-                      .reduce((s, e) => s + (e.count || 1), 0)
-                  }
+                        const sorted = [...pool].sort((a, b) => getPracticeCount(a) - getPracticeCount(b))
 
-                  const sorted = [...pool].sort((a, b) => getPracticeCount(a) - getPracticeCount(b))
-                  const isOpen = openNeeds.has(n.id)
-
-                  return (
-                    <div key={n.id} className={styles.needBlock}>
-                      <button
-                        className={styles.needToggle}
-                        aria-expanded={isOpen}
-                        aria-label={n.name}
-                        onClick={() => toggleNeed(n.id)}
-                      >
-                        <span className={styles.needName}>{n.name}</span>
-                        <svg className={`${styles.needChevron} ${isOpen ? styles.needChevronOpen : ''}`} width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-                          <path d="M2 4.5L6 8.5L10 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                        <span className={styles.needToggleSpacer} />
-                        <div className={styles.bubbleRow}>
-                          {Array.from({ length: maxBubbles }).map((_, i) => (
-                            <div key={i} className={styles.bubble}
-                              style={i < filledBubbles
-                                ? { background: pip, border: `1.5px solid ${pip}` }
-                                : { background: 'transparent', border: `1.5px solid ${pip}` }}
-                            />
-                          ))}
-                          {Array.from({ length: bonusBubbles }).map((_, i) => (
-                            <div key={`bonus-${i}`} className={styles.bubbleBonus}
-                              style={{ border: `1.5px dashed ${pip}` }}
-                            />
-                          ))}
-                        </div>
-                      </button>
-
-                      <div className={`${styles.needDrawer} ${isOpen ? styles.needDrawerOpen : ''}`}>
-                        <div className={styles.needDrawerInner}>
-                          {pool.length === 0 ? (
-                            <div className={styles.noPractice}>
-                              no practices set — <span className={styles.noPracticeLink} onClick={() => navigate('/canvas')}>add some</span>
+                        return (
+                          <div key={n.id} className={styles.needGroup}>
+                            <div className={styles.needSubHeader}>
+                              <span className={styles.needSubName}>{n.name}</span>
+                              <span className={styles.needSubCount}>{needDone}/{maxBubbles}</span>
                             </div>
-                          ) : sorted.map(practice => {
-                            const practiceKey = practice.id || `${n.id}_${practice.label}`
-                            const count = getPracticeCount(practice)
-                            const isJustNow = justTapped === practiceKey
-                            const lastDays = lastDoneMap.get(practiceKey) ?? null
+                            {pool.length === 0 ? (
+                              <div className={styles.noPractice}>
+                                no practices — <span className={styles.noPracticeLink} onClick={() => navigate('/canvas')}>add some</span>
+                              </div>
+                            ) : sorted.map(practice => {
+                              const practiceKey = practice.id || `${n.id}_${practice.label}`
+                              const count = getPracticeCount(practice)
+                              const isJustNow = justTapped === practiceKey
+                              const lastDays = lastDoneMap.get(practiceKey) ?? null
+                              const isX2 = count >= 2
 
-                            const stamp = isJustNow
-                              ? 'just now'
-                              : count >= 2
-                                ? '×2 today'
-                                : count === 1
+                              const meta = isJustNow
+                                ? 'just now'
+                                : count >= 1
                                   ? 'today'
                                   : lastDays !== null && lastDays > 0
                                     ? `${lastDays}d ago`
                                     : ''
 
-                            return (
-                              <div
-                                key={practiceKey}
-                                className={styles.practiceRow}
-                                style={isJustNow ? { background: '#FBF3DC' } : undefined}
-                                onClick={() => handlePracticeTap(n.id, mode, practice.label, practice.id)}
-                              >
+                              return (
                                 <div
-                                  className={`${styles.practiceCheck} ${count > 0 ? styles.practiceCheckFilled : ''}`}
-                                  style={count > 0 ? { background: pip, borderColor: pip } : { borderColor: pip }}
-                                />
-                                <span className={styles.practiceLabel}>{practice.label}</span>
-                                {stamp && (
-                                  <span
-                                    className={styles.practiceStamp}
-                                    style={isJustNow ? { color: '#8A6D0E' } : undefined}
-                                  >{stamp}</span>
-                                )}
-                              </div>
-                            )
-                          })}
-                        </div>
-                      </div>
+                                  key={practiceKey}
+                                  className={styles.practiceRow}
+                                  onClick={e => { e.stopPropagation(); handlePracticeTap(n.id, mode, practice.label, practice.id) }}
+                                >
+                                  <div
+                                    className={`${styles.practiceCheck} ${count > 0 ? styles.practiceCheckFilled : ''}`}
+                                    style={count > 0 ? { background: pip, borderColor: pip } : { borderColor: pip }}
+                                  />
+                                  <span className={styles.practiceLabel}>{practice.label}</span>
+                                  <div className={styles.practiceMeta}>
+                                    {isX2 && <span className={styles.practiceX2}>×2</span>}
+                                    {meta && <span className={styles.practiceStamp}>{meta}</span>}
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )
+                      })}
                     </div>
-                  )
-                })}
-              </div>
-            )
-          })}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </div>
 
         </div>{/* /colLeft */}

@@ -583,28 +583,15 @@
 .list { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
 .list::-webkit-scrollbar { display: none; }
 
-/* ── Mode sections (practices card) ── */
-.modeSeparator {
-  height: 0.5px;
-  background: rgba(26, 26, 24, 0.07);
-  margin: 14px 0 12px;
-}
-
-.modeHeader {
+/* ── Needs & Practices section header ── */
+.tierSectionHeader {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  justify-content: space-between;
+  align-items: baseline;
   margin-bottom: 10px;
 }
 
-.modeHeaderPip {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.modeHeaderName {
+.tierSectionLabel {
   font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 0.14em;
@@ -612,139 +599,141 @@
   color: var(--ink3);
 }
 
-/* ── Collapsible need blocks ── */
-.needBlock + .needBlock {
-  border-top: 0.5px solid rgba(26, 26, 24, 0.07);
+.tierSectionHint {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink4);
 }
 
-/* Full-width toggle button for the need row */
-.needToggle {
+/* ── Tier accordion (column-reverse: survival renders at bottom) ── */
+.tierList {
   display: flex;
-  align-items: center;
+  flex-direction: column-reverse;
   gap: 6px;
+}
+
+.tier {
+  border-radius: 10px;
+  border: 0.5px solid var(--hairline);
+  background: transparent;
+  overflow: hidden;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.tierOpen {
+  background: var(--card);
+}
+
+.tierHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   width: 100%;
   background: none;
   border: none;
-  padding: 10px 0;
+  padding: 12px 14px;
   cursor: pointer;
   text-align: left;
   -webkit-tap-highlight-color: transparent;
 }
+.tierHeader:active { opacity: 0.85; }
 
-.needName {
+.tierHeaderTop {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.tierDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tierName {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  flex: 1;
+}
+
+.tierCount {
   font-family: var(--font-serif);
-  font-size: 16px;
+  font-size: 15px;
+  font-weight: 300;
   color: var(--ink);
-  text-transform: lowercase;
-  flex-shrink: 0;
-  min-width: 0;
+  line-height: 1;
+}
+
+.tierBar {
+  height: 10px;
+  background: var(--track);
+  border-radius: 5px;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-.needChevron {
-  flex-shrink: 0;
-  color: rgba(26, 26, 26, 0.45);
-  transition: transform 200ms ease;
-  display: block;
-}
-
-.needChevronOpen {
-  transform: rotate(180deg);
+.tierBarFill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 300ms ease;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .needChevron { transition: none; }
+  .tierBarFill { transition: none; }
 }
 
-.needToggleSpacer {
-  flex: 1;
-}
-
-/* Dim count of not-yet-done practices — disappears at zero */
-.needRemainingCount {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  font-weight: 200;
-  color: rgba(26, 26, 24, 0.4);
-  flex-shrink: 0;
-}
-
-/* Completed practice pills on the row — stretch to push pips right */
-.donePillRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  flex: 1;
-  align-items: center;
-}
-
-/* Filled pill: mode color background, no border */
-.donePill {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  font-weight: 200;
-  padding: 3px 10px;
-  border-radius: 20px;
-  border: none;
-  white-space: nowrap;
-  text-transform: lowercase;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: opacity 100ms ease;
-}
-.donePill:active { opacity: 0.8; }
-
-.bubbleRow {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
-.bubble {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  box-sizing: border-box;
-}
-
-.bubbleBonus {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  box-sizing: border-box;
-  background: transparent;
-  opacity: 0.7;
-}
-
-/* Drawer: max-height transition reveals the not-yet-done pills */
-.needDrawer {
+/* Tier expanded content */
+.tierContent {
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.25s ease;
 }
-.needDrawerOpen { max-height: 800px; }
+
+.tierContentOpen { max-height: 1200px; }
+
 @media (prefers-reduced-motion: reduce) {
-  .needDrawer { transition: none; }
+  .tierContent { transition: none; }
 }
 
-.needDrawerInner {
-  padding: 0 0 10px;
+.tierContentInner {
+  padding: 0 14px 12px;
 }
 
-.allDone {
+/* ── Need group (sub-header + practice rows) ── */
+.needGroup {
+  padding-top: 10px;
+}
+
+.needGroup + .needGroup {
+  border-top: 0.5px solid var(--track);
+  margin-top: 6px;
+}
+
+.needSubHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.needSubName {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-weight: 300;
+  color: var(--ink);
+  text-transform: lowercase;
+}
+
+.needSubCount {
   font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 200;
-  color: var(--ink3);
-  padding: 2px 0;
+  font-size: 10px;
+  color: var(--ink4);
 }
 
-.noPractice { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink4); margin-top: 1px; margin-bottom: 4px; }
+.noPractice { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink4); margin-top: 4px; margin-bottom: 4px; }
 .noPracticeLink { color: var(--ink2); text-decoration: underline; cursor: pointer; }
 
 .chipRow { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 4px; }
@@ -753,31 +742,20 @@
 .practiceChip:active { background: var(--bg2); }
 .chipCount { font-size: 9px; font-style: normal; margin-left: 2px; vertical-align: super; opacity: 0.85; }
 
-/* ── Flat practice rows ── */
-.needSection { margin-bottom: 10px; }
-.needSection:last-child { margin-bottom: 0; }
-
-.needSectionName {
-  font-family: var(--font-serif);
-  font-size: 13px;
-  color: var(--ink3);
-  text-transform: lowercase;
-  margin-bottom: 3px;
-  letter-spacing: 0.01em;
-}
-
+/* ── Practice rows (46px tall) ── */
 .practiceRow {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 9px 10px;
-  margin: 0 -10px;
-  border-radius: 8px;
+  gap: 10px;
+  min-height: 46px;
+  padding: 0 2px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: background 80ms ease;
+  border-radius: 6px;
+  margin: 0 -2px;
 }
-.practiceRow:not([style]):hover { background: rgba(26,26,26,.04); }
+.practiceRow:hover { background: rgba(26,26,26,.04); }
 .practiceRow:active { background: rgba(26,26,26,.07); }
 
 .practiceLabel {
@@ -787,6 +765,23 @@
   color: var(--ink);
   flex: 1;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.practiceMeta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.practiceX2 {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--ink3);
 }
 
 .practiceStamp {
@@ -794,18 +789,14 @@
   font-size: 10px;
   color: var(--ink4);
   white-space: nowrap;
-  flex-shrink: 0;
 }
 
 .practiceCheck {
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   border: 1.5px solid;
   flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   box-sizing: border-box;
   transition: background 80ms ease, border-color 80ms ease;
 }
@@ -979,7 +970,6 @@
 }
 .moodNoteAffordance:hover { color: var(--ink3); border-color: var(--ink3); }
 
-.needToggle:active { background: rgba(26,26,26,.05); border-radius: 6px; }
 .moodDivider { display: none; }
 
 /* ── Journal timestamp tokens — applied wherever entries are rendered as HTML ── */
@@ -1123,7 +1113,7 @@
 .timerSlot   { display: block; margin-bottom: 12px; }
 .guidanceSlot { display: block; }
 .moodCard    { /* marker */ }
-.practicesCard { /* marker */ }
+.practicesCard { margin-bottom: 12px; }
 
 /* ── Mobile visual order ── */
 /* .list is flex-column; colLeft/colRight are display:contents so their
