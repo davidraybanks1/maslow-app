@@ -695,7 +695,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
             <span className={styles.tierSectionHint}>tap a tier to fill it</span>
           </div>
           <div className={styles.tierList}>
-            {[...MODE_ORDER].reverse().map(mode => {
+            {MODE_ORDER.map(mode => {
               const modeNeeds = NEEDS.filter(n => state.canvas[n.id] === mode)
               if (!modeNeeds.length) return null
               const pip = MODES[mode]?.pip

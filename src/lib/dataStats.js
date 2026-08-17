@@ -48,7 +48,7 @@ function weekdayIndex(dateKey) {
 const WEEKDAY_NAMES = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
 
 export function formatLastDone(days) {
-  if (days === null) return 'never'
+  if (days === null) return 'not yet'
   if (days === 0) return 'today'
   return `${days}d ago`
 }
