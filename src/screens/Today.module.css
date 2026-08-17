@@ -949,9 +949,7 @@
 .moodCircle:hover { border-color: var(--ink3); }
 .moodCircle:active { opacity: 0.8; }
 .moodCircleSelected {
-  background: var(--exploration);
-  border-color: var(--exploration);
-  color: #fff;
+  /* fill colors applied per-mood via inline style */
 }
 
 .moodCircleSm {
@@ -960,44 +958,6 @@
   font-size: 10px;
 }
 
-.moodNote {
-  display: block;
-  margin-top: 10px;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 8px 10px;
-  border-radius: 8px;
-  border: 0.5px solid var(--hairline);
-  background: var(--paper);
-  font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 300;
-  color: var(--ink);
-  outline: none;
-  resize: none;
-  transition: border-color var(--motion-hover);
-  min-height: 60px;
-}
-.moodNote:focus { border-color: var(--ink2); }
-.moodNote::placeholder { color: var(--ink4); }
-
-.moodNoteAffordance {
-  display: block;
-  margin-top: 10px;
-  background: none;
-  border: none;
-  padding: 0;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--ink4);
-  cursor: pointer;
-  text-align: left;
-  letter-spacing: 0.02em;
-  -webkit-tap-highlight-color: transparent;
-  border-bottom: 1px dashed var(--ink4);
-  transition: color var(--motion-hover), border-color var(--motion-hover);
-}
-.moodNoteAffordance:hover { color: var(--ink3); border-color: var(--ink3); }
 
 .moodDivider { display: none; }
 
@@ -1350,8 +1310,9 @@
 .guidanceSlot { display: block; }
 .moodCard {
   border-top: 0.5px solid var(--hairline);
-  padding: 16px 0 20px;
-  margin-bottom: 0;
+  border-bottom: 0.5px solid var(--hairline);
+  padding: 16px 0 18px;
+  margin-bottom: 18px;
 }
 .practicesCard { margin-bottom: 12px; }
 

@@ -39,6 +39,11 @@ function SortableDeckRow({ card, onEdit, onDelete, onLightbox }) {
 }
 
 const MOODS = ['good', 'fine', 'bad']
+const MOOD_FILL = {
+  good: { background: 'var(--exploration)', borderColor: 'var(--exploration)', color: 'var(--paper)' },
+  fine: { background: '#B8C3B1',            borderColor: '#B8C3B1',            color: 'var(--ink)'   },
+  bad:  { background: '#D93B1C',            borderColor: '#D93B1C',            color: 'var(--paper)' },
+}
 
 function buildRingGradient(arcs) {
   // Contiguous fill: segments pack from 12 o'clock in mode order.
@@ -447,28 +452,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     return init
   })
 
-  // Rows with a saved note start expanded; others start collapsed
-  const [expandedNoteRows, setExpandedNoteRows] = useState(() => {
-    const set = new Set()
-    todayMoods.forEach(m => { if (m.note) set.add(m.prompt_time) })
-    return set
-  })
-  const moodNoteRefs = useRef({})
-
-  function toggleNoteRow(period) {
-    setExpandedNoteRows(prev => {
-      const next = new Set(prev)
-      if (next.has(period)) {
-        next.delete(period)
-      } else {
-        next.add(period)
-        // auto-focus on next tick
-        setTimeout(() => moodNoteRefs.current[period]?.focus(), 0)
-      }
-      return next
-    })
-  }
-
   // Sync mood selections and notes from the server after restoreFromSupabase loads.
   // Only fills empty slots — never overwrites live user input.
   useEffect(() => {
@@ -482,12 +465,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     setMoodNotes(prev => {
       const next = { ...prev }
       todayMoodsNow.forEach(m => { if (!next[m.prompt_time] && m.note) next[m.prompt_time] = m.note })
-      return next
-    })
-    // Expand rows that have saved notes
-    setExpandedNoteRows(prev => {
-      const next = new Set(prev)
-      todayMoodsNow.forEach(m => { if (m.note) next.add(m.prompt_time) })
       return next
     })
   }, [state.moods])
@@ -504,11 +481,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
       })
       setMoodNotes(prev => ({ ...prev, [promptTime]: '' }))
     }
-  }
-
-  function handleNoteBlur(promptTime) {
-    if (!moodSelections[promptTime] || !logMood) return
-    logMood(state.userId, promptTime, moodSelections[promptTime], moodNotes[promptTime] || null, today)
   }
 
   function handlePracticeTap(needId, mode, practiceText, practiceId) {
@@ -651,27 +623,12 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 <button
                   key={mood}
                   className={`${styles.moodCircle} ${moodSelections[slot] === mood ? styles.moodCircleSelected : ''}`}
+                  style={moodSelections[slot] === mood ? MOOD_FILL[mood] : undefined}
                   onClick={() => handleMoodSelect(slot, mood)}
                 >{mood}</button>
               ))}
             </div>
           </div>
-          {/* Note affordance expands below the row without reflowing it */}
-          {moodSelections[slot] && !expandedNoteRows.has(slot) && (
-            <button className={styles.moodNoteAffordance} onClick={() => toggleNoteRow(slot)}>
-              — add a note about your mood
-            </button>
-          )}
-          {expandedNoteRows.has(slot) && (
-            <textarea
-              ref={el => { moodNoteRefs.current[slot] = el }}
-              className={styles.moodNote}
-              placeholder={`what made it ${moodSelections[slot] || ''}?`}
-              value={moodNotes[slot] || ''}
-              onChange={e => setMoodNotes(prev => ({ ...prev, [slot]: e.target.value }))}
-              onBlur={() => { handleNoteBlur(slot); if (!moodNotes[slot]?.trim()) setExpandedNoteRows(prev => { const n = new Set(prev); n.delete(slot); return n }) }}
-            />
-          )}
           {/* Retro slot detail */}
           {openRetroSlot && (
             <div className={styles.retroRow}>
@@ -679,16 +636,10 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               <div className={styles.moodCircles}>
                 {MOODS.map(mood => (
                   <button key={mood} className={`${styles.moodCircle} ${styles.moodCircleSm} ${moodSelections[openRetroSlot] === mood ? styles.moodCircleSelected : ''}`}
+                    style={moodSelections[openRetroSlot] === mood ? MOOD_FILL[mood] : undefined}
                     onClick={() => { handleMoodSelect(openRetroSlot, mood); setOpenRetroSlot(null) }}>{mood}</button>
                 ))}
               </div>
-              {moodSelections[openRetroSlot] && expandedNoteRows.has(openRetroSlot) && (
-                <textarea ref={el => { moodNoteRefs.current[openRetroSlot] = el }} className={styles.moodNote}
-                  placeholder={`what made it ${moodSelections[openRetroSlot] || ''}?`}
-                  value={moodNotes[openRetroSlot] || ''}
-                  onChange={e => setMoodNotes(prev => ({ ...prev, [openRetroSlot]: e.target.value }))}
-                  onBlur={() => { handleNoteBlur(openRetroSlot); if (!moodNotes[openRetroSlot]?.trim()) setExpandedNoteRows(prev => { const n = new Set(prev); n.delete(openRetroSlot); return n }) }} />
-              )}
             </div>
           )}
         </div>
