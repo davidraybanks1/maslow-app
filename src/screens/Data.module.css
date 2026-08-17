@@ -131,17 +131,15 @@
   font-weight: 300;
   color: #F2F0E8;
   margin-left: 2px;
-  align-self: flex-end;
-  padding-bottom: 4px;
 }
 
 .headlineContext {
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  padding-bottom: 4px;
-  margin-left: 12px;
-  gap: 0;
+  justify-content: center;
+  align-self: center;
+  margin-left: 14px;
+  gap: 4px;
 }
 .headlineContext span {
   font-family: var(--font-mono);

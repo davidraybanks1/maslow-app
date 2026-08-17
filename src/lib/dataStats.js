@@ -323,7 +323,7 @@ export function createDataStats({ canvas, checkins, moods, practices, practicesD
 
       const metDays = validDays.filter(day => isNeedMet(need, day))
       const unmetDays = validDays.filter(day => !isNeedMet(need, day))
-      if (metDays.length < 3 || unmetDays.length < 3) continue
+      if (metDays.length < 10 || unmetDays.length < 10) continue
 
       const flavors = [
         { daypart: 'evening', metKeys: metDays, unmetKeys: unmetDays },

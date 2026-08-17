@@ -104,7 +104,7 @@ function HeadlineCard({ period, stats, canvas }) {
         <span className={styles.headlinePct}>%</span>
         <div className={styles.headlineContext}>
           <span>of your canvas met</span>
-          <span>you set a pace of {canvasTarget}%</span>
+          <span>your canvas implies a pace of {canvasTarget}%</span>
         </div>
       </div>
       <div className={styles.headlineBarWrap}>
@@ -634,12 +634,12 @@ function buildInsightCopy(link, checkins, moods) {
   let finding
   if (link.direction === 'met') {
     finding = link.daypart === 'morning'
-      ? `On days you log ${n}, the next morning runs good ${mult} more often.`
-      : `On days you log ${n}, your evening mood runs good ${mult} more often.`
+      ? `On days you log ${n}, the next morning feels good ${mult} more often.`
+      : `On days you log ${n}, your evening mood feels good ${mult} more often.`
   } else {
     finding = link.daypart === 'morning'
-      ? `On days ${n} goes unmet, the next morning runs bad ${mult} more often.`
-      : `On days ${n} goes unmet, your evening mood runs bad ${mult} more often.`
+      ? `On days ${n} goes unmet, the next morning feels bad ${mult} more often.`
+      : `On days ${n} goes unmet, your evening mood feels bad ${mult} more often.`
   }
   return {
     finding,
@@ -652,7 +652,22 @@ function InsightsCard({ stats, checkins, moods }) {
   const links = useMemo(() => stats.getNeedMoodLinks(), [stats])
   const advance = useCallback(() => setIdx(i => (i + 1) % links.length), [links.length])
 
-  if (!links.length) return null
+  if (!links.length) {
+    const validCount = buildWindowKeys(30, 0).filter(dk =>
+      moods.some(m => m.date_key === dk) && (checkins[dk] || []).length > 0
+    ).length
+    const needed = Math.max(0, 14 - validCount)
+    return (
+      <div className={styles.insightCard}>
+        <div className={styles.insightLabel}>YOUR INSIGHTS</div>
+        <p className={styles.insightFinding}>
+          {needed > 0
+            ? `log ${needed} more day${needed === 1 ? '' : 's'} with mood and practices checked in to unlock insights.`
+            : 'keep going — insights appear once a need has 10 or more days on each side.'}
+        </p>
+      </div>
+    )
+  }
   const link = links[idx % links.length]
   const { finding, basis } = buildInsightCopy(link, checkins, moods)
 
@@ -724,7 +739,7 @@ function AllNumbersSection({ period, canvas, checkins }) {
             </div>
           ))}
           <p className={styles.allNumsFooter}>
-            tick marks are the pace you set on your canvas. Percentages are practices met out of practices possible in the window.
+            tick marks are the pace your canvas implies. Percentages are practices met out of practices possible in the window.
           </p>
         </>
       )}
