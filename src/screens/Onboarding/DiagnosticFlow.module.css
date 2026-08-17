@@ -183,7 +183,7 @@
   border-top: 0.5px solid var(--border);
 }
 .infoTerm {
-  font-family: 'Instrument Serif', serif;
+  font-family: var(--font-serif);
   font-size: 13px;
   color: var(--ink);
 }
@@ -239,7 +239,7 @@
   touch-action: manipulation;
   user-select: none;
   text-align: center;
-  font-family: 'Instrument Serif', serif;
+  font-family: var(--font-serif);
   font-size: 14px;
   font-weight: 400;
   color: var(--ink);
@@ -266,7 +266,7 @@
 .needGridCardWait { border: 2px solid var(--ink); background: var(--bg3); }
 .needGridCardWait::after { content: ''; position: absolute; top: 12px; right: 12px; width: 10px; height: 10px; border-radius: 50%; background: var(--ink); }
 .needGridName {
-  font-family: 'Instrument Serif', serif;
+  font-family: var(--font-serif);
   font-size: 14px;
   font-weight: 400;
   color: var(--ink);
@@ -453,7 +453,7 @@
 .dropdownPip { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 
 .dropdownModeName {
-  font-family: 'Instrument Serif', serif;
+  font-family: var(--font-serif);
   font-size: 14px;
   font-weight: 400;
   color: var(--ink);

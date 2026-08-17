@@ -261,7 +261,7 @@
   flex-shrink: 0;
 }
 .noteOverlayTitle {
-  font-family: 'Instrument Serif', serif;
+  font-family: var(--font-serif);
   font-size: 18px;
   font-weight: 400;
   color: var(--ink);
@@ -299,7 +299,7 @@
   padding: 10px 12px;
   border: 0.5px solid var(--border);
   border-radius: 8px;
-  font-family: 'Instrument Serif', serif;
+  font-family: var(--font-serif);
   font-style: italic;
   font-size: 16px;
   color: var(--ink);
@@ -322,7 +322,7 @@
   border: 0.5px solid var(--border);
   border-radius: 10px;
   padding: 12px 14px;
-  font-family: 'Instrument Serif', serif;
+  font-family: var(--font-serif);
   font-style: italic;
   font-size: 13px;
   color: var(--ink2);
@@ -379,7 +379,7 @@
 .deckListHandle:active { cursor: grabbing; }
 .deckListText {
   flex: 1;
-  font-family: 'Instrument Serif', serif;
+  font-family: var(--font-serif);
   font-style: italic;
   font-size: 13px;
   color: var(--ink2);
@@ -416,7 +416,7 @@
 }
 .noteHistoryCard:hover { background: var(--bg2); }
 .noteHistoryText {
-  font-family: 'Instrument Serif', serif;
+  font-family: var(--font-serif);
   font-style: italic;
   font-size: 13px;
   color: var(--ink2);
@@ -516,7 +516,7 @@
   margin-bottom: 8px;
 }
 .guidanceHeadline {
-  font-family: 'Instrument Serif', serif;
+  font-family: var(--font-serif);
   font-size: 17px;
   font-weight: 400;
   color: var(--ink);
@@ -627,7 +627,7 @@
 }
 
 .needName {
-  font-family: 'Instrument Serif', serif;
+  font-family: var(--font-serif);
   font-size: 16px;
   color: var(--ink);
   text-transform: lowercase;
@@ -753,7 +753,7 @@
 .needSection:last-child { margin-bottom: 0; }
 
 .needSectionName {
-  font-family: 'Instrument Serif', serif;
+  font-family: var(--font-serif);
   font-size: 13px;
   color: var(--ink3);
   text-transform: lowercase;
@@ -982,7 +982,7 @@
   justify-content: center;
   gap: 6px;
   padding: 10px 12px;
-  background: #FFFFFF;
+  background: var(--card);
   border: 1px solid var(--border);
   border-radius: 999px;
   font-family: var(--font-mono);
@@ -1030,7 +1030,7 @@
     padding: 0;
     height: 100vh;
     overflow: hidden;
-    background: #EAE7E0;
+    background: var(--paper);
     --card-bg: #fff;
     --card-bg-warm: #FAF8F1;
     --card-border: 0.5px solid rgba(26,26,26,.12);

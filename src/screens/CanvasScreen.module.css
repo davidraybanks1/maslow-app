@@ -6,7 +6,7 @@
 /* ── Page header ── */
 .pageHeader { margin-bottom: 14px; }
 .pageTitle {
-  font-family: 'Instrument Serif', serif;
+  font-family: var(--font-serif);
   font-size: 28px;
   font-weight: 400;
   letter-spacing: -0.02em;
@@ -43,7 +43,7 @@
 }
 .howDivider { width: 0.5px; background: #D8D3C3; flex-shrink: 0; }
 .howKey {
-  font-family: 'Instrument Serif', serif;
+  font-family: var(--font-serif);
   font-size: 14.5px;
   font-weight: 400;
   color: var(--ink);
@@ -84,7 +84,7 @@
 .libraryChips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
 .libraryChipGroup { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 6px; }
 .libraryChip {
-  font-family: 'Instrument Serif', serif;
+  font-family: var(--font-serif);
   font-size: 14px;
   color: var(--ink);
   background: none;
@@ -242,7 +242,7 @@
 }
 .needToggle:active { background: rgba(26,26,26,.03); }
 .needToggleName {
-  font-family: 'Instrument Serif', serif;
+  font-family: var(--font-serif);
   font-size: 17px;
   color: var(--ink);
   flex: 1;
@@ -425,7 +425,7 @@
 }
 .footerPickerChips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 8px; }
 .footerPickerChip {
-  font-family: 'Instrument Serif', serif;
+  font-family: var(--font-serif);
   font-size: 13px;
   color: var(--ink);
   background: none;

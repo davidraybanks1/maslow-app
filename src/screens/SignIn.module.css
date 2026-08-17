@@ -1,13 +1,13 @@
-.screen { display: flex; flex-direction: column; justify-content: space-between; height: 100%; padding: 80px 32px 48px; background: #fff; }
+.screen { display: flex; flex-direction: column; justify-content: space-between; height: 100%; padding: 80px 32px 48px; background: var(--paper); }
 
 .top { display: flex; flex-direction: column; align-items: center; gap: 14px; }
-.wordmark { font-family: 'Instrument Serif', serif; font-size: 36px; font-style: italic; color: #1A1A1A; letter-spacing: -0.01em; }
+.wordmark { font-family: var(--font-serif); font-size: 36px; font-style: italic; font-weight: 300; color: var(--ink); letter-spacing: -0.01em; }
 
 .body { display: flex; flex-direction: column; gap: 20px; }
-.heading { font-family: 'Instrument Serif', serif; font-size: 28px; font-weight: 400; color: #1A1A1A; letter-spacing: -0.01em; }
+.heading { font-family: var(--font-serif); font-size: 28px; font-weight: 300; color: var(--ink); letter-spacing: -0.01em; }
 
 .form { display: flex; flex-direction: column; gap: 12px; }
-.input { width: 100%; padding: 12px 14px; border-radius: 8px; border: 0.5px solid var(--border); background: #fff; font-family: 'DM Mono', monospace; font-size: 16px; font-weight: 400; color: var(--ink); outline: none; transition: border-color var(--motion-hover); box-sizing: border-box; }
+.input { width: 100%; padding: 12px 14px; border-radius: 8px; border: 0.5px solid var(--hairline); background: var(--card); font-family: 'DM Mono', monospace; font-size: 16px; font-weight: 400; color: var(--ink); outline: none; transition: border-color var(--motion-hover); box-sizing: border-box; }
 .input:focus { border-color: var(--ink); }
 .input::placeholder { color: var(--ink4); }
 

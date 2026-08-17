@@ -158,7 +158,7 @@
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.chooseCardLabel { font-family: 'Instrument Serif', serif; font-size: 18px; font-weight: 400; color: var(--ink); text-transform: lowercase; margin-bottom: 6px; }
+.chooseCardLabel { font-family: var(--font-serif); font-size: 18px; font-weight: 400; color: var(--ink); text-transform: lowercase; margin-bottom: 6px; }
 .chooseCardDesc { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink2); line-height: 1.5; }
 
 /* ── Full-screen overlay ── */

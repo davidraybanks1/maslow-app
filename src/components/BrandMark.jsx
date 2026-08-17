@@ -5,7 +5,7 @@ export default function BrandMark({ size = 22, dark = false }) {
   const tail = dark ? '#F5F3ED' : '#1A1A18'
   return (
     <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center' }} aria-hidden="true">
-      <span style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: size, lineHeight: 1, color: ink }}>m</span>
+      <span style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 300, fontSize: size, lineHeight: 1, color: ink }}>m</span>
       <svg
         width={Math.round(size * 1.15)}
         height={Math.max(3, Math.round(size * 0.2))}

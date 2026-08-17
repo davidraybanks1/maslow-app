@@ -37,7 +37,7 @@
 .practicesList { display: flex; flex-direction: column; }
 .practiceDivider { height: 0.5px; background: var(--border); margin: 10px 0; }
 .practiceNeedName {
-  font-family: 'Instrument Serif', serif;
+  font-family: var(--font-serif);
   font-size: 13px;
   color: var(--ink);
   text-transform: lowercase;
@@ -52,7 +52,7 @@
 }
 
 .journalEntryText {
-  font-family: 'Instrument Serif', serif;
+  font-family: var(--font-serif);
   font-style: italic;
   font-size: 14px;
   color: var(--ink);
@@ -139,7 +139,7 @@
   margin-bottom: 6px;
 }
 .scheduleValue {
-  font-family: 'Instrument Serif', serif;
+  font-family: var(--font-serif);
   font-size: 20px;
   font-weight: 400;
   color: var(--ink);
@@ -225,7 +225,7 @@
   flex-shrink: 0;
 }
 .reviewHistoryDate {
-  font-family: 'Instrument Serif', serif;
+  font-family: var(--font-serif);
   font-size: 14px;
   color: var(--ink);
   text-transform: lowercase;
@@ -263,7 +263,7 @@
   margin-bottom: 10px;
 }
 .reviewHeadline {
-  font-family: 'Instrument Serif', serif;
+  font-family: var(--font-serif);
   font-size: 26px;
   font-weight: 400;
   line-height: 1.2;
@@ -333,7 +333,7 @@
   margin-bottom: 8px;
 }
 .dayCardDate {
-  font-family: 'Instrument Serif', serif;
+  font-family: var(--font-serif);
   font-size: 14px;
   color: var(--ink);
   text-transform: lowercase;
@@ -366,7 +366,7 @@
   margin-bottom: 6px;
 }
 .dayCardExcerpt {
-  font-family: 'Instrument Serif', serif;
+  font-family: var(--font-serif);
   font-style: italic;
   font-size: 13px;
   color: var(--ink);
@@ -447,7 +447,7 @@
 .weeklyMoodCardSelected { border: 2px solid var(--ink); background: var(--bg3); }
 .weeklyMoodCardSelected::after { content: ''; position: absolute; top: 12px; right: 12px; width: 10px; height: 10px; border-radius: 50%; background: var(--ink); }
 .weeklyMoodName {
-  font-family: 'Instrument Serif', serif;
+  font-family: var(--font-serif);
   font-size: 18px;
   font-weight: 400;
   color: var(--ink);
@@ -508,7 +508,7 @@
   padding: 10px 12px;
   border: 0.5px solid var(--border);
   border-radius: 8px;
-  font-family: 'Instrument Serif', serif;
+  font-family: var(--font-serif);
   font-style: italic;
   font-size: 16px;
   color: var(--ink);
@@ -538,7 +538,7 @@
   border: 0.5px solid var(--border);
   border-radius: 10px;
   padding: 12px 14px;
-  font-family: 'Instrument Serif', serif;
+  font-family: var(--font-serif);
   font-style: italic;
   font-size: 13px;
   color: var(--ink2);

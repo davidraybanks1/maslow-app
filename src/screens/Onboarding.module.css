@@ -100,7 +100,7 @@
   border-color: var(--ink);
   background: var(--ink);
 }
-.optionSelected .optLabel { color: #F0EDE6; }
+.optionSelected .optLabel { color: var(--card); }
 .optionSelected .optSub { color: #6A6860; }
 
 .optCheck {
@@ -114,8 +114,8 @@
   justify-content: center;
 }
 .optCheckSelected {
-  background: #F0EDE6;
-  border-color: #F0EDE6;
+  background: var(--card);
+  border-color: var(--card);
 }
 .optCheckInner {
   width: 7px;
