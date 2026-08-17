@@ -159,6 +159,80 @@ function WhatChanged({ period, canvas, checkins }) {
   )
 }
 
+const WEEKDAY_LETTERS = ['m', 't', 'w', 't', 'f', 's', 's']
+
+// Current week keys, Monday-first
+function currentWeekKeys() {
+  const today = new Date()
+  const mondayOffset = (today.getDay() + 6) % 7
+  const monday = new Date(today)
+  monday.setDate(today.getDate() - mondayOffset)
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday)
+    d.setDate(monday.getDate() + i)
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  })
+}
+
+function dayCompPct(canvas, checkins, dk) {
+  const active = NEEDS.filter(n => canvas[n.id])
+  if (!active.length) return 0
+  const met = active.filter(n => (checkins[dk] || []).some(e => e.need_id === n.id)).length
+  return Math.round(met / active.length * 100)
+}
+
+function dominantMoodFor(moods, dk) {
+  const dayMoods = moods.filter(m => m.date_key === dk)
+  if (!dayMoods.length) return null
+  const c = {}
+  for (const m of dayMoods) c[m.mood] = (c[m.mood] || 0) + 1
+  return Object.entries(c).sort((a, b) => b[1] - a[1])[0][0]
+}
+
+const RHYTHM_MOOD_DOT = { good: '#1B3A2D', fine: '#9DB394', bad: '#D93B1C' }
+
+function RhythmSection({ stats, canvas, checkins, moods }) {
+  const weekKeys = useMemo(() => currentWeekKeys(), [])
+  const todayKey = buildWindowKeys(1, 0)[0]
+
+  const moodByWeekday = useMemo(() => stats.getMoodByWeekday(), [stats])
+  const moodByPeriod  = useMemo(() => stats.getMoodByPeriod(30), [stats])
+  const closingRead = stats.getWeekdaySummary(moodByWeekday) ?? stats.getTimeOfDaySummary(moodByPeriod)
+
+  return (
+    <section className={styles.section}>
+      <div className={styles.sectionHeader}>
+        <span className={styles.sectionLabel}>YOUR RHYTHM</span>
+        <span className={styles.sectionMeta}>bar = practices met · dot = mood</span>
+      </div>
+      <div className={styles.rhythmGrid}>
+        {weekKeys.map((dk, i) => {
+          const pct = dayCompPct(canvas, checkins, dk)
+          const mood = dominantMoodFor(moods, dk)
+          const isToday = dk === todayKey
+          const isFuture = dk > todayKey
+          const barColor = isToday || pct >= 70 ? '#E8B81F' : 'rgba(232,184,31,.45)'
+          const dotColor = mood ? RHYTHM_MOOD_DOT[mood] : 'rgba(0,0,0,.06)'
+          return (
+            <div key={dk} className={styles.rhythmCol}>
+              <div className={styles.rhythmBarArea}>
+                {!isFuture && pct > 0 && (
+                  <div className={styles.rhythmBar} style={{ height: `${pct}%`, background: barColor }} />
+                )}
+              </div>
+              <div className={styles.rhythmDot} style={{ background: dotColor }} />
+              <span className={`${styles.rhythmLetter}${isToday ? ` ${styles.rhythmLetterToday}` : ''}`}>
+                {WEEKDAY_LETTERS[i]}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+      {closingRead && <p className={styles.rhythmRead}>{closingRead}</p>}
+    </section>
+  )
+}
+
 function buildInsightCopy(link, checkins, moods) {
   const days30 = buildWindowKeys(30, 0)
   const validDays = days30.filter(dk =>
@@ -252,6 +326,7 @@ export default function Data({ state }) {
             <HeadlineCard period={period} stats={stats} canvas={canvas} />
             <InsightsCard stats={stats} checkins={checkins} moods={moods} />
             <WhatChanged period={period} canvas={canvas} checkins={checkins} />
+            <RhythmSection stats={stats} canvas={canvas} checkins={checkins} moods={moods} />
           </>
         )}
 
