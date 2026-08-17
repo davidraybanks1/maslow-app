@@ -233,6 +233,140 @@ function RhythmSection({ stats, canvas, checkins, moods }) {
   )
 }
 
+// 34 weeks ending this week, oldest first. Each entry = 7 date-key strings Mon–Sun.
+function buildLongViewWeeks() {
+  const today = new Date()
+  const mondayOffset = (today.getDay() + 6) % 7
+  const thisMonday = new Date(today)
+  thisMonday.setDate(today.getDate() - mondayOffset)
+  return Array.from({ length: 34 }, (_, wi) => {
+    const weekMonday = new Date(thisMonday)
+    weekMonday.setDate(thisMonday.getDate() - (33 - wi) * 7)
+    return Array.from({ length: 7 }, (_, di) => {
+      const d = new Date(weekMonday)
+      d.setDate(weekMonday.getDate() + di)
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    })
+  })
+}
+
+function practicesColor(pct) {
+  if (pct < 30) return 'rgba(28,58,46,.14)'
+  if (pct < 50) return 'rgba(28,58,46,.34)'
+  if (pct < 70) return 'rgba(28,58,46,.56)'
+  if (pct < 85) return 'rgba(28,58,46,.78)'
+  return '#1B3A2D'
+}
+const MOOD_LENS_COLOR = { good: '#1B3A2D', fine: '#9DB394', bad: '#D93B1C' }
+const EMPTY_CELL = 'rgba(0,0,0,.06)'
+
+function LongViewSection({ canvas, checkins, moods, stats }) {
+  const [lens, setLens] = useState('practices')
+  const weeks = useMemo(() => buildLongViewWeeks(), [])
+  const todayKey = buildWindowKeys(1, 0)[0]
+
+  // Month labels: group weeks by the month of their Monday
+  const monthGroups = useMemo(() => {
+    const groups = []
+    weeks.forEach(wk => {
+      const mon = wk[0].slice(0, 7)
+      if (!groups.length || groups[groups.length - 1].key !== mon) {
+        groups.push({ key: mon, span: 1 })
+      } else {
+        groups[groups.length - 1].span++
+      }
+    })
+    return groups.map(g => ({
+      label: new Date(g.key + '-15').toLocaleDateString('en-GB', { month: 'short' }).toLowerCase(),
+      span: g.span,
+    }))
+  }, [weeks])
+
+  const moodByPeriod = useMemo(() => stats.getMoodByPeriod(30), [stats])
+  const closingRead = stats.getTimeOfDaySummary(moodByPeriod)
+
+  const activeWeeks = weeks.filter(wk =>
+    wk.some(dk => (checkins[dk] || []).length > 0 || moods.some(m => m.date_key === dk))
+  ).length
+
+  const readFallback = `${activeWeeks} of 34 weeks with data.`
+
+  return (
+    <section className={styles.section}>
+      <div className={styles.sectionHeader}>
+        <span className={styles.sectionLabel}>THE LONG VIEW</span>
+        <div className={styles.lensPills}>
+          {['practices', 'mood'].map(l => (
+            <button
+              key={l}
+              className={`${styles.lensPill}${lens === l ? ` ${styles.lensPillActive}` : ''}`}
+              onClick={() => setLens(l)}
+            >{l}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Month labels */}
+      <div className={styles.monthRow}>
+        {monthGroups.map(g => (
+          <span key={g.key} className={styles.monthLabel} style={{ flex: g.span }}>{g.label}</span>
+        ))}
+      </div>
+
+      {/* Grid */}
+      <div className={styles.longViewGrid}>
+        {weeks.map((wk, wi) => {
+          const isCurrentWeek = wk.includes(todayKey)
+          return (
+            <div key={wi} className={`${styles.weekCol}${isCurrentWeek ? ` ${styles.weekColSelected}` : ''}`}>
+              {wk.map(dk => {
+                const isFuture = dk > todayKey
+                let color = EMPTY_CELL
+                if (!isFuture) {
+                  if (lens === 'practices') {
+                    const hasPractice = (checkins[dk] || []).length > 0
+                    color = hasPractice ? practicesColor(dayCompPct(canvas, checkins, dk)) : EMPTY_CELL
+                  } else {
+                    const hasMood = moods.some(m => m.date_key === dk)
+                    const mood = hasMood ? dominantMoodFor(moods, dk) : null
+                    color = mood ? MOOD_LENS_COLOR[mood] : EMPTY_CELL
+                  }
+                }
+                return <div key={dk} className={styles.longViewCell} style={{ background: color }} />
+              })}
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Legend */}
+      {lens === 'practices' ? (
+        <div className={styles.legend}>
+          <span className={styles.legendText}>not logged</span>
+          <span className={styles.legendSwatch} style={{ background: EMPTY_CELL }} />
+          <span className={styles.legendText}>less met</span>
+          {['rgba(28,58,46,.14)', 'rgba(28,58,46,.34)', 'rgba(28,58,46,.56)', 'rgba(28,58,46,.78)', '#1B3A2D'].map((c, i) => (
+            <span key={i} className={styles.legendSwatch} style={{ background: c }} />
+          ))}
+          <span className={styles.legendText}>more met</span>
+        </div>
+      ) : (
+        <div className={styles.legend}>
+          <span className={styles.legendText}>mood</span>
+          {Object.entries(MOOD_LENS_COLOR).map(([k, c]) => (
+            <span key={k} className={styles.legendSwatch} style={{ background: c }} />
+          ))}
+          <span className={styles.legendText}>good · fine · bad</span>
+          <span className={styles.legendSwatch} style={{ background: EMPTY_CELL }} />
+          <span className={styles.legendText}>not logged</span>
+        </div>
+      )}
+
+      <p className={styles.rhythmRead}>{closingRead ?? readFallback}</p>
+    </section>
+  )
+}
+
 function buildInsightCopy(link, checkins, moods) {
   const days30 = buildWindowKeys(30, 0)
   const validDays = days30.filter(dk =>
@@ -327,6 +461,7 @@ export default function Data({ state }) {
             <InsightsCard stats={stats} checkins={checkins} moods={moods} />
             <WhatChanged period={period} canvas={canvas} checkins={checkins} />
             <RhythmSection stats={stats} canvas={canvas} checkins={checkins} moods={moods} />
+            <LongViewSection canvas={canvas} checkins={checkins} moods={moods} stats={stats} />
           </>
         )}
 
