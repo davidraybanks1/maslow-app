@@ -568,6 +568,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
 
         {/* ── Mood section ── */}
         <div className={styles.moodCard}>
+          <div className={styles.moodEyebrow}>MOOD CHECK</div>
           {/* Stable two-column row — never reflows on selection */}
           <div className={styles.moodRow}>
             <div className={styles.moodLeft}>
