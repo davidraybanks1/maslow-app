@@ -580,8 +580,22 @@
 .facetRows {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
   margin-top: 11px;
+}
+
+.facetGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.facetGroupLabel {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-variant: small-caps;
+  letter-spacing: 0.1em;
+  color: rgba(0,0,0,.32);
 }
 
 .facetRow {

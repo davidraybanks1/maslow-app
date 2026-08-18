@@ -1043,45 +1043,54 @@ export default function Log({ state }) {
               <div className={styles.archiveSectionLabel}>the archive</div>
 
               <div className={styles.facetRows}>
-                {/* slot row */}
-                <div className={styles.facetRow}>
-                  {ARCHIVE_SLOTS.map(s => (
-                    <button
-                      key={s}
-                      className={`${styles.facetChip} ${filterSlot === s ? styles.facetChipActive : ''}`}
-                      onClick={() => { setFilterSlot(v => v === s ? null : s); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}
-                    >
-                      {s}<span className={styles.facetCount}>{slotCounts[s]}</span>
-                    </button>
-                  ))}
-                </div>
-                {/* need row — canvas needs only */}
-                {canvasNeeds.length > 0 && (
+                {/* slot group */}
+                <div className={styles.facetGroup}>
+                  <div className={styles.facetGroupLabel}>TIME OF DAY</div>
                   <div className={styles.facetRow}>
-                    {canvasNeeds.map(n => (
+                    {ARCHIVE_SLOTS.map(s => (
                       <button
-                        key={n.id}
-                        className={`${styles.facetChip} ${filterNeed === n.id ? styles.facetChipActive : ''}`}
-                        style={needCounts[n.id] === 0 ? { opacity: 0.4 } : undefined}
-                        onClick={() => { setFilterNeed(v => v === n.id ? null : n.id); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}
+                        key={s}
+                        className={`${styles.facetChip} ${filterSlot === s ? styles.facetChipActive : ''}`}
+                        onClick={() => { setFilterSlot(v => v === s ? null : s); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}
                       >
-                        {n.name}<span className={styles.facetCount}>{needCounts[n.id]}</span>
+                        {s}<span className={styles.facetCount}>{slotCounts[s]}</span>
                       </button>
                     ))}
                   </div>
+                </div>
+                {/* need group — canvas needs only */}
+                {canvasNeeds.length > 0 && (
+                  <div className={styles.facetGroup}>
+                    <div className={styles.facetGroupLabel}>NEED</div>
+                    <div className={styles.facetRow}>
+                      {canvasNeeds.map(n => (
+                        <button
+                          key={n.id}
+                          className={`${styles.facetChip} ${filterNeed === n.id ? styles.facetChipActive : ''}`}
+                          style={needCounts[n.id] === 0 ? { opacity: 0.4 } : undefined}
+                          onClick={() => { setFilterNeed(v => v === n.id ? null : n.id); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}
+                        >
+                          {n.name}<span className={styles.facetCount}>{needCounts[n.id]}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 )}
-                {/* state row — full state vocabulary */}
-                <div className={styles.facetRow}>
-                  {ARCHIVE_STATES.map(s => (
-                    <button
-                      key={s}
-                      className={`${styles.facetChip} ${filterState === s ? styles.facetChipActive : ''}`}
-                      style={stateCounts[s] === 0 ? { opacity: 0.4 } : undefined}
-                      onClick={() => { setFilterState(v => v === s ? null : s); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}
-                    >
-                      {s}<span className={styles.facetCount}>{stateCounts[s]}</span>
-                    </button>
-                  ))}
+                {/* state group — full state vocabulary */}
+                <div className={styles.facetGroup}>
+                  <div className={styles.facetGroupLabel}>HOW IT FELT</div>
+                  <div className={styles.facetRow}>
+                    {ARCHIVE_STATES.map(s => (
+                      <button
+                        key={s}
+                        className={`${styles.facetChip} ${filterState === s ? styles.facetChipActive : ''}`}
+                        style={stateCounts[s] === 0 ? { opacity: 0.4 } : undefined}
+                        onClick={() => { setFilterState(v => v === s ? null : s); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}
+                      >
+                        {s}<span className={styles.facetCount}>{stateCounts[s]}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
