@@ -4,7 +4,7 @@
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background: var(--bg);
+  background: var(--paper);
   overflow: hidden;
   transition: opacity var(--motion-page) ease;
 }
