@@ -270,7 +270,7 @@
 .noteOverlayTitle {
   font-family: var(--font-serif);
   font-size: 18px;
-  font-weight: 400;
+  font-weight: 300;
   color: var(--ink);
   letter-spacing: -0.01em;
 }
@@ -303,14 +303,15 @@
 .noteTextarea {
   width: 100%;
   box-sizing: border-box;
-  padding: 10px 12px;
-  border: 0.5px solid var(--border);
-  border-radius: 8px;
+  padding: 12px 14px;
+  border: 0.5px solid var(--hairline);
+  border-radius: 14px;
   font-family: var(--font-serif);
   font-style: italic;
   font-size: 16px;
+  font-weight: 300;
   color: var(--ink);
-  background: var(--bg);
+  background: var(--card);
   outline: none;
   resize: none;
 }
@@ -325,25 +326,26 @@
 
 .noteLibraryList { display: flex; flex-direction: column; gap: 8px; }
 .noteCard {
-  background: var(--bg);
-  border: 0.5px solid var(--border);
-  border-radius: 10px;
+  background: var(--card);
+  border: 0.5px solid var(--hairline);
+  border-radius: 16px;
   padding: 12px 14px;
   font-family: var(--font-serif);
   font-style: italic;
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 300;
   color: var(--ink2);
-  line-height: 1.4;
+  line-height: 1.5;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.noteCard:hover { background: var(--bg2); }
+.noteCard:hover { background: var(--paper); }
 
 .addDeckCardBtn {
   width: 100%;
   padding: 12px;
-  border-radius: 10px;
-  border: 0.5px dashed var(--border2);
+  border-radius: 999px;
+  border: 0.5px dashed var(--hairline);
   background: none;
   font-family: var(--font-mono);
   font-size: 12px;
@@ -352,7 +354,7 @@
   margin-bottom: 14px;
   -webkit-tap-highlight-color: transparent;
 }
-.addDeckCardBtn:hover { background: var(--bg2); }
+.addDeckCardBtn:hover { background: var(--paper); }
 
 .deckFullMsg {
   font-family: var(--font-mono);
@@ -368,10 +370,10 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  background: var(--bg);
-  border: 0.5px solid var(--border);
-  border-radius: 10px;
-  padding: 10px 12px;
+  background: var(--card);
+  border: 0.5px solid var(--hairline);
+  border-radius: 16px;
+  padding: 10px 14px;
 }
 .deckListHandle {
   font-family: var(--font-mono);
@@ -388,9 +390,10 @@
   flex: 1;
   font-family: var(--font-serif);
   font-style: italic;
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 300;
   color: var(--ink2);
-  line-height: 1.4;
+  line-height: 1.5;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
@@ -407,27 +410,28 @@
   flex-shrink: 0;
   -webkit-tap-highlight-color: transparent;
 }
-.deckListDelete:hover { color: #D93B1C; }
+.deckListDelete:hover { color: var(--survival); }
 
 .noteHistoryCard {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 10px;
-  background: var(--bg);
-  border: 0.5px solid var(--border);
-  border-radius: 10px;
+  background: var(--card);
+  border: 0.5px solid var(--hairline);
+  border-radius: 16px;
   padding: 12px 14px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.noteHistoryCard:hover { background: var(--bg2); }
+.noteHistoryCard:hover { background: var(--paper); }
 .noteHistoryText {
   font-family: var(--font-serif);
   font-style: italic;
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 300;
   color: var(--ink2);
-  line-height: 1.4;
+  line-height: 1.5;
   flex: 1;
 }
 .noteHistoryDate {
@@ -456,22 +460,22 @@
 .composerImageRemove:hover { color: var(--ink2); }
 .composerAddImageBtn {
   padding: 8px 14px;
-  border-radius: 8px;
-  border: 0.5px solid var(--border2);
-  background: var(--bg);
+  border-radius: 999px;
+  border: 0.5px solid var(--hairline);
+  background: transparent;
   font-family: var(--font-mono);
   font-size: 11px;
   color: var(--ink2);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.composerAddImageBtn:hover { background: var(--bg2); }
+.composerAddImageBtn:hover { background: var(--paper); }
 .composerAddImageBtn:disabled { opacity: 0.5; cursor: default; }
 
 .composerError {
   font-family: var(--font-mono);
   font-size: 11px;
-  color: #D93B1C;
+  color: var(--survival);
   margin-bottom: 10px;
 }
 
@@ -482,7 +486,7 @@
   background: var(--nourishment);
   color: var(--ink);
   border: none;
-  border-radius: 12px;
+  border-radius: 999px;
   font-family: var(--font-mono);
   font-size: 13px;
   letter-spacing: 0.06em;
@@ -493,16 +497,16 @@
 
 /* ── Guidance card ── */
 .guidanceCardGrow {
-  border-left: 3px solid #1B3A2D;
+  border-left: 2px solid var(--exploration);
   background: rgba(27,58,45,0.06);
-  border-radius: 0 12px 12px 0;
+  border-radius: 0 16px 16px 0;
   padding: 14px 16px;
   margin-bottom: 12px;
 }
 .guidanceCardSimplify {
-  border-left: 3px solid #E8B81F;
+  border-left: 2px solid var(--nourishment);
   background: rgba(232,184,31,0.07);
-  border-radius: 0 12px 12px 0;
+  border-radius: 0 16px 16px 0;
   padding: 14px 16px;
   margin-bottom: 12px;
 }
@@ -511,7 +515,7 @@
   font-size: 10px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #1B3A2D;
+  color: var(--exploration);
   margin-bottom: 8px;
 }
 .guidanceEyebrowSimplify {
@@ -525,7 +529,7 @@
 .guidanceHeadline {
   font-family: var(--font-serif);
   font-size: 17px;
-  font-weight: 400;
+  font-weight: 300;
   color: var(--ink);
   letter-spacing: -0.01em;
   line-height: 1.3;
@@ -543,10 +547,10 @@
 .guidanceCtaGrow {
   width: 100%;
   padding: 12px;
-  background: #1B3A2D;
-  color: #ffffff;
+  background: var(--exploration);
+  color: var(--paper);
   border: none;
-  border-radius: 10px;
+  border-radius: 999px;
   font-family: var(--font-mono);
   font-size: 13px;
   letter-spacing: 0.02em;
@@ -556,10 +560,10 @@
 .guidanceCtaSimplify {
   width: 100%;
   padding: 12px;
-  background: #E8B81F;
+  background: var(--nourishment);
   color: var(--ink);
   border: none;
-  border-radius: 10px;
+  border-radius: 999px;
   font-family: var(--font-mono);
   font-size: 13px;
   letter-spacing: 0.02em;
@@ -1219,7 +1223,7 @@
 .journalSaveError {
   font-family: var(--font-mono);
   font-size: 11px;
-  color: #D93B1C;
+  color: var(--survival);
   margin-top: 4px;
 }
 
