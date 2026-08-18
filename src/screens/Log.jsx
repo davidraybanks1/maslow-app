@@ -538,19 +538,32 @@ export default function Log({ state }) {
   useEffect(() => {
     if (!archiveLoaded || archiveEntries.length < 10) { setResurfacePool([]); return }
     const today = new Date(); today.setHours(12, 0, 0, 0)
+    const todayKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`
     const oldest = archiveEntries[archiveEntries.length - 1]
     const journalAge = Math.round((today - new Date(oldest.date_key + 'T12:00:00')) / 86400000)
-    const exclusionDays = Math.max(25, Math.floor(journalAge / 2))
+    const exclusionDays = Math.min(25, Math.floor(journalAge / 2))
+    const todayStates = new Set(
+      archiveEntries.filter(e => e.date_key === todayKey && e.state).map(e => e.state)
+    )
     const eligible = archiveEntries.filter(e => {
+      if (e.date_key === todayKey) return false
       const age = Math.round((today - new Date(e.date_key + 'T12:00:00')) / 86400000)
       return age >= exclusionDays && (e.entry || '').trim().length > 0
     })
-    const pool = [...eligible]
-    for (let i = pool.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1))
-      ;[pool[i], pool[j]] = [pool[j], pool[i]]
+    const shuffle = arr => {
+      const a = [...arr]
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        ;[a[i], a[j]] = [a[j], a[i]]
+      }
+      return a
     }
-    setResurfacePool(pool)
+    const matches = eligible.filter(e => e.state && todayStates.has(e.state))
+    const others = eligible.filter(e => !e.state || !todayStates.has(e.state))
+    setResurfacePool([
+      ...shuffle(matches).map(e => ({ ...e, _isMatch: true })),
+      ...shuffle(others).map(e => ({ ...e, _isMatch: false })),
+    ])
     setResurfaceIdx(0)
   }, [archiveEntries, archiveLoaded])
 
@@ -862,8 +875,20 @@ export default function Log({ state }) {
         {archiveLoaded && resurfacePool.length > 0 && (() => {
           const entry = resurfacePool[resurfaceIdx % resurfacePool.length]
           const today = new Date(); today.setHours(12, 0, 0, 0)
+          const todayKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`
           const age = Math.round((today - new Date(entry.date_key + 'T12:00:00')) / 86400000)
-          const frameLine = `${formatArchiveDate(entry.date_key)}${entry.slot ? ` · ${entry.slot}` : ''}`
+          const frameParts = [`${age} days ago`]
+          if (entry.slot) frameParts.push(entry.slot)
+          if (entry.state) frameParts.push(`tagged ${entry.state}`)
+          const frameLine = frameParts.join(', ') + ' —'
+          const todayStateSlots = {}
+          for (const e of archiveEntries) {
+            if (e.date_key === todayKey && e.state && e.slot && !todayStateSlots[e.state]) {
+              todayStateSlots[e.state] = e.slot
+            }
+          }
+          const matchSlot = entry._isMatch && entry.state ? todayStateSlots[entry.state] : null
+          const reasonText = matchSlot ? `matched to this ${matchSlot}` : 'a day at random'
           return (
             <div className={styles.resurfaceSection}>
               <div className={styles.resurfaceSectionLabel}>from your past</div>
@@ -876,7 +901,7 @@ export default function Log({ state }) {
                     onClick={() => setResurfaceIdx(i => (i + 1) % resurfacePool.length)}
                   >another one</button>
                   <span className={styles.resurfaceFooterSpacer} />
-                  <span className={styles.resurfaceWhy}>{age} days ago</span>
+                  <span className={styles.resurfaceWhy}>{reasonText}</span>
                 </div>
               </div>
             </div>
