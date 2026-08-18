@@ -13,16 +13,6 @@ function TodayIcon({ active }) {
   )
 }
 
-function CanvasIcon({ active }) {
-  return (
-    <svg width="18" height="18" viewBox="0 0 18 18" fill={active ? 'currentColor' : 'none'} aria-hidden="true">
-      <rect x="1" y="1" width="7" height="7" rx="1.5" stroke={active ? undefined : 'currentColor'} strokeWidth={active ? undefined : 1.5}/>
-      <rect x="10" y="1" width="7" height="7" rx="1.5" stroke={active ? undefined : 'currentColor'} strokeWidth={active ? undefined : 1.5}/>
-      <rect x="1" y="10" width="7" height="7" rx="1.5" stroke={active ? undefined : 'currentColor'} strokeWidth={active ? undefined : 1.5}/>
-      <rect x="10" y="10" width="7" height="7" rx="1.5" stroke={active ? undefined : 'currentColor'} strokeWidth={active ? undefined : 1.5}/>
-    </svg>
-  )
-}
 
 function DataIcon({ active }) {
   return (
@@ -48,7 +38,6 @@ function ReviewIcon({ active }) {
 
 const TABS = [
   { to: '/today',  label: 'today',  Icon: TodayIcon },
-  { to: '/canvas', label: 'canvas', Icon: CanvasIcon },
   { to: '/data',   label: 'data',   Icon: DataIcon },
   { to: '/log',    label: 'review', Icon: ReviewIcon },
 ]

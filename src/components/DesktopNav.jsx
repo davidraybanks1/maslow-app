@@ -7,7 +7,6 @@ import ProfileMenu from './ProfileMenu'
 
 const ITEMS = [
   ['/today', 'today'],
-  ['/canvas', 'canvas'],
   ['/data', 'data'],
   ['/log', 'review'],
 ]
