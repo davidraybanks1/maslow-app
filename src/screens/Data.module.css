@@ -145,17 +145,28 @@
 }
 
 .headlineBarTrack {
+  position: relative;
   height: 10px;
   border-radius: 5px;
   background: rgba(242,240,232,.16);
   overflow: hidden;
 }
 
-.headlineBarFill {
+.headlineBarBase {
+  position: absolute;
+  top: 0;
+  left: 0;
   height: 100%;
-  border-radius: 5px;
   background: #F2F0E8;
   transition: width 400ms ease;
+}
+
+.headlineBarSurplus {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: rgba(242,240,232,.55);
+  transition: left 400ms ease, width 400ms ease;
 }
 
 .headlinePaceTick {

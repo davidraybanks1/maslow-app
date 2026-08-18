@@ -65,23 +65,52 @@ function buildNeedDeltas(canvas, checkins, period) {
 }
 
 function cap(str) { return str[0].toUpperCase() + str.slice(1) }
+function pts(n) { return `${n} pt${n === 1 ? '' : 's'}` }
 
-function headlineSentence(pct, canvasTarget, modeStats) {
-  const diff = pct - canvasTarget
-  const pacePhrase = Math.abs(diff) < 3
-    ? 'Right on your pace.'
-    : `${Math.abs(diff)} pts ${diff > 0 ? 'ahead of' : 'behind'} your own pace.`
-  const behind = modeStats.filter(ms => ms.pct < MODE_THRESHOLDS[ms.mode])
-  if (behind.length === 0) return pacePhrase
-  const modeClause = behind.length === 1
-    ? `${cap(behind[0].mode)} is the only mode still behind.`
-    : behind.length === modeStats.length
-    ? 'All modes are running below target.'
-    : `${behind.map(m => cap(m.mode)).join(' and ')} are still behind.`
-  return `${pacePhrase} ${modeClause}`
+function buildHeadlineSegments(canvas, checkins, period) {
+  const days = buildWindowKeys(period, 0)
+  const activeNeeds = NEEDS.filter(n => canvas[n.id])
+  const possible = period * activeNeeds.length
+  if (possible === 0) return { basePct: 0, surplusPct: 0, surplusNeeds: [] }
+
+  let totalToward = 0, totalSurplus = 0
+  const surplusPerNeed = []
+  for (const need of activeNeeds) {
+    const doneDays = days.filter(dk => (checkins[dk] || []).some(e => e.need_id === need.id)).length
+    const targetDays = (MODE_THRESHOLDS[canvas[need.id]] ?? 50) / 100 * period
+    const toward = Math.min(doneDays, targetDays)
+    const surplus = Math.max(0, doneDays - targetDays)
+    totalToward += toward
+    totalSurplus += surplus
+    if (surplus > 0) surplusPerNeed.push({ need, surplus })
+  }
+
+  surplusPerNeed.sort((a, b) => b.surplus - a.surplus)
+  return {
+    basePct: totalToward / possible * 100,
+    surplusPct: totalSurplus / possible * 100,
+    surplusNeeds: surplusPerNeed.slice(0, 2).map(s => s.need.name),
+  }
 }
 
-function HeadlineCard({ period, stats, canvas }) {
+function buildHeadlineSentence(diff, canvasTarget, modeStats, surplusNeeds) {
+  const p = `${canvasTarget}%`
+  if (Math.abs(diff) < 3) return `right on your pace of ${p}.`
+  if (diff > 0) {
+    const needPhrase = surplusNeeds.length === 0 ? ''
+      : surplusNeeds.length === 1 ? ` — mostly extra ${surplusNeeds[0]}`
+      : ` — mostly extra ${surplusNeeds[0]} and ${surplusNeeds[1]}`
+    return `${pts(diff)} ahead of your own pace of ${p}${needPhrase}.`
+  }
+  const behind = modeStats.filter(ms => ms.pct < MODE_THRESHOLDS[ms.mode])
+  const modeClause = behind.length === 0 ? ''
+    : behind.length === 1 ? ` ${cap(behind[0].mode)} is the only mode still behind.`
+    : behind.length === modeStats.length ? ' All modes are running below target.'
+    : ` ${behind.map(m => cap(m.mode)).join(' and ')} are still behind.`
+  return `${pts(Math.abs(diff))} behind your own pace of ${p}.${modeClause}`
+}
+
+function HeadlineCard({ period, stats, canvas, checkins }) {
   const { pct, delta } = stats.getCompletion(period)
   const activeNeeds = NEEDS.filter(n => canvas[n.id])
   const canvasTarget = activeNeeds.length > 0
@@ -89,6 +118,15 @@ function HeadlineCard({ period, stats, canvas }) {
     : 50
   const modeStats = stats.getModeStats(period).filter(ms => NEEDS.some(n => canvas[n.id] === ms.mode))
   const periodLabel = period === 7 ? 'last week' : 'last 30d'
+  const { basePct, surplusPct, surplusNeeds } = buildHeadlineSegments(canvas, checkins, period)
+  const diff = pct - canvasTarget
+  const showSurplus = diff > 0 && surplusPct > 0.1
+
+  // Assert: bar segments sum to the headline pct (if they diverge, math has drifted)
+  console.assert(
+    Math.abs(Math.round(basePct + surplusPct) - pct) <= 1,
+    `Headline bar math diverged: bar=${(basePct + surplusPct).toFixed(2)} vs headline=${pct}`
+  )
 
   return (
     <div className={styles.headlineCard}>
@@ -104,17 +142,25 @@ function HeadlineCard({ period, stats, canvas }) {
         <span className={styles.headlineBig}>{pct}</span>
         <span className={styles.headlinePct}>%</span>
         <div className={styles.headlineContext}>
-          <span>of your canvas met</span>
-          <span>your canvas implies a pace of {canvasTarget}%</span>
+          <span>of your needs have been met for this time period.</span>
         </div>
       </div>
       <div className={styles.headlineBarWrap}>
         <div className={styles.headlineBarTrack}>
-          <div className={styles.headlineBarFill} style={{ width: `${Math.min(pct, 100)}%` }} />
+          <div
+            className={styles.headlineBarBase}
+            style={{ width: `${showSurplus ? basePct : Math.min(pct, 100)}%` }}
+          />
+          {showSurplus && (
+            <div
+              className={styles.headlineBarSurplus}
+              style={{ left: `${basePct}%`, width: `${surplusPct}%` }}
+            />
+          )}
         </div>
         <div className={styles.headlinePaceTick} style={{ left: `${canvasTarget}%` }} />
       </div>
-      <p className={styles.headlineSentence}>{headlineSentence(pct, canvasTarget, modeStats)}</p>
+      <p className={styles.headlineSentence}>{buildHeadlineSentence(diff, canvasTarget, modeStats, surplusNeeds)}</p>
     </div>
   )
 }
@@ -796,7 +842,7 @@ export default function Data({ state, archivePractice }) {
 
         {hasCanvas && (
           <>
-            <HeadlineCard period={period} stats={stats} canvas={canvas} />
+            <HeadlineCard period={period} stats={stats} canvas={canvas} checkins={checkins} />
             <InsightsCard stats={stats} checkins={checkins} moods={moods} />
             <WhatChanged period={period} canvas={canvas} checkins={checkins} />
             <RhythmSection stats={stats} canvas={canvas} checkins={checkins} moods={moods} />
