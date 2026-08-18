@@ -103,7 +103,7 @@
   white-space: nowrap;
 }
 
-/* ── Default state: review schedule ── */
+/* ── Default state: review frame ── */
 .completeBanner {
   background: rgba(27,58,45,0.07);
   border: 0.5px solid var(--border);
@@ -117,69 +117,124 @@
   line-height: 1.5;
 }
 
-.scheduleCard {
-  background: var(--bg);
-  border: 1px solid #D8D3C3;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 16px;
-  box-shadow: 0 1px 2px rgba(26, 26, 26, 0.05), 0 18px 44px -14px rgba(26, 26, 26, 0.10);
+.reviewTitle {
+  font-family: var(--font-serif);
+  font-size: 30px;
+  font-weight: 300;
+  line-height: 1.1;
+  color: var(--ink);
 }
-.scheduleLabel {
+
+.reviewSubtitle {
+  margin-top: 7px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--ink3);
+  line-height: 1.5;
+  margin-bottom: 18px;
+}
+
+/* ── Ritual card: due state ── */
+.ritualDueCard {
+  background: #1C3A2E;
+  border-radius: 18px;
+  padding: 18px 18px 16px;
+  color: var(--paper);
+  margin-bottom: 20px;
+}
+
+.ritualEyebrow {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 400;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--ink3);
-  margin-bottom: 6px;
+  color: rgba(239,234,221,.55);
 }
-.scheduleValue {
+
+.ritualHeadline {
+  margin-top: 10px;
   font-family: var(--font-serif);
-  font-size: 20px;
-  font-weight: 400;
-  color: var(--ink);
-  letter-spacing: -0.01em;
-  text-transform: lowercase;
-  margin-bottom: 14px;
+  font-size: 24px;
+  font-weight: 300;
+  line-height: 1.3;
+  color: var(--paper);
 }
 
-.startReviewBtnPrimary {
-  width: 100%;
-  padding: 14px;
-  background: var(--nourishment);
-  color: var(--ink);
+.ritualMeta {
+  margin-top: 7px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 300;
+  line-height: 1.5;
+  color: rgba(239,234,221,.65);
+}
+
+.ritualBtns {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.ritualStartBtn {
+  flex: 1;
+  height: 46px;
   border: none;
-  border-radius: 10px;
+  border-radius: 23px;
+  background: var(--paper);
+  color: #1C3A2E;
   font-family: var(--font-mono);
   font-size: 13px;
-  letter-spacing: 0.06em;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-.startReviewBtnSecondary {
-  width: 100%;
-  padding: 14px;
-  background: var(--bg);
-  color: var(--ink);
-  border: 1px solid var(--border2);
-  border-radius: 10px;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  letter-spacing: 0.06em;
+  font-weight: 500;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 
-.viewFullLogToggle {
+.ritualLaterBtn {
+  height: 46px;
+  padding: 0 16px;
+  border: 1px solid rgba(239,234,221,.35);
+  border-radius: 23px;
+  background: transparent;
+  color: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Ritual card: quiet state ── */
+.ritualQuiet {
+  display: flex;
+  width: 100%;
+  align-items: baseline;
+  gap: 10px;
+  border: none;
+  border-top: 1px solid rgba(0,0,0,.1);
+  background: none;
+  padding: 14px 0 0;
+  cursor: pointer;
+  text-align: left;
+  margin-bottom: 20px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ritualQuietNext {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-style: italic;
+  color: var(--ink3);
+}
+
+.ritualQuietSpacer { flex: 1; }
+
+.ritualQuietStart {
   font-family: var(--font-mono);
   font-size: 11px;
-  letter-spacing: 0.04em;
-  color: var(--ink3);
-  cursor: pointer;
-  padding: 12px 0 16px;
-  -webkit-tap-highlight-color: transparent;
+  color: var(--ink4);
+  flex-shrink: 0;
 }
-.viewFullLogToggle:hover { color: var(--ink2); }
 
 /* ── Review history ── */
 .reviewHistoryLabel {

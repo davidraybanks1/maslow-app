@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { NEEDS, MODE_MAX_BUBBLES } from '../lib/constants'
-import { weekKey, loadJournalEntry, loadDebriefs, loadDebriefTypes, addNoteDeckCard, saveWeeklyReview, loadWeeklyReviews, loadUserCreatedAt } from '../lib/store'
+import { weekKey, loadJournalEntry, loadDebriefs, loadDebriefTypes, addNoteDeckCard, saveWeeklyReview, loadWeeklyReviews, loadUserCreatedAt, loadAllJournalMeta } from '../lib/store'
 import { createDataStats } from '../lib/dataStats'
 import { natureTagStyle, peakTagStyle, ENVIRONMENT_TAG_STYLE, parseDebriefEntry } from '../lib/debriefTypes'
 import LiveCanvasCard from '../components/LiveCanvasCard'
@@ -77,6 +77,16 @@ function formatCardDate(dateKey) {
 function formatHistoryDate(dateKey) {
   const d = new Date(dateKey + 'T12:00:00')
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toLowerCase()
+}
+
+const WDAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday']
+const MONTHS_LONG = ['january','february','march','april','may','june','july','august','september','october','november','december']
+
+function ritualMetaLine(cadence) {
+  const days = reviewWindowKeys(cadence)
+  const first = new Date(days[0] + 'T12:00:00')
+  const last = new Date(days[days.length - 1] + 'T12:00:00')
+  return `${WDAYS[first.getDay()]} ${first.getDate()} — ${WDAYS[last.getDay()]} ${last.getDate()} ${MONTHS_LONG[last.getMonth()]} · ~8 min`
 }
 
 // Monday-indexed (0=Mon..6=Sun) review day -> the matching JS Date.getDay() value (0=Sun..6=Sat)
@@ -443,6 +453,11 @@ export default function Log({ state }) {
   const [reviewHistory, setReviewHistory] = useState([])
   const [historyLoading, setHistoryLoading] = useState(true)
 
+  const [journalMeta, setJournalMeta] = useState([])
+  const [ritualDismissed, setRitualDismissed] = useState(() => {
+    try { return localStorage.getItem('maslow_ritual_dismissed') === new Date().toDateString() } catch { return false }
+  })
+
   const stats = createDataStats({ canvas: state.canvas || {}, checkins: state.checkins || {}, moods: state.moods || [], practices: state.practices || {} })
 
   useEffect(() => {
@@ -458,6 +473,11 @@ export default function Log({ state }) {
       setHistoryLoading(false)
     })
   }, [state.userId, state.reviewDay, state.reviewCadence])
+
+  useEffect(() => {
+    if (!state.userId) return
+    loadAllJournalMeta(state.userId).then(setJournalMeta)
+  }, [state.userId])
 
   async function startReview() {
     setWeeklyMood(null)
@@ -693,6 +713,11 @@ export default function Log({ state }) {
   // ── Default state ─────────────────────────────────────────────────────────
   const cadence = state.reviewCadence || 'weekly'
   const isScheduledDay = cadence === 'daily' || todayWeekdayMonday() === (state.reviewDay ?? 0)
+  const ritualDue = isScheduledDay && !ritualDismissed
+
+  const entryCount = journalMeta.length
+  const needCount = journalMeta.filter(e => e.need_id).length
+  const stateCount = journalMeta.filter(e => e.state).length
 
   return (
     <div className={styles.screen}>
@@ -705,24 +730,38 @@ export default function Log({ state }) {
           </div>
         )}
 
-        <div className={styles.scheduleCard}>
-          <div className={styles.scheduleLabel}>next review</div>
-          <div className={styles.scheduleValue}>
-            {cadence === 'daily' ? 'today' : REVIEW_DAY_LABELS[state.reviewDay ?? 0]} at {formatReviewTime(state.reviewTime)}
+        <div className={styles.reviewTitle}>review.</div>
+        <div className={styles.reviewSubtitle}>
+          {entryCount} {entryCount === 1 ? 'entry' : 'entries'} · {needCount} tagged with a need, {stateCount} with a state
+        </div>
+
+        {ritualDue ? (
+          <div className={styles.ritualDueCard}>
+            <div className={styles.ritualEyebrow}>ready for you</div>
+            <div className={styles.ritualHeadline}>
+              {cadence === 'daily' ? "today's review is ready." : 'your week is ready to review.'}
+            </div>
+            <div className={styles.ritualMeta}>{ritualMetaLine(cadence)}</div>
+            <div className={styles.ritualBtns}>
+              <button className={styles.ritualStartBtn} onClick={startReview}>start the review</button>
+              <button
+                className={styles.ritualLaterBtn}
+                onClick={() => {
+                  try { localStorage.setItem('maslow_ritual_dismissed', new Date().toDateString()) } catch {}
+                  setRitualDismissed(true)
+                }}
+              >later</button>
+            </div>
           </div>
-          <button
-            className={isScheduledDay ? styles.startReviewBtnPrimary : styles.startReviewBtnSecondary}
-            onClick={startReview}
-          >
-            start review →
+        ) : (
+          <button className={styles.ritualQuiet} onClick={startReview}>
+            <span className={styles.ritualQuietNext}>
+              {cadence === 'daily' ? 'next daily review: tomorrow' : `next weekly review: ${REVIEW_DAY_LABELS[state.reviewDay ?? 0]}`}
+            </span>
+            <span className={styles.ritualQuietSpacer} />
+            <span className={styles.ritualQuietStart}>start early →</span>
           </button>
-        </div>
-
-        <div className={styles.viewFullLogToggle} onClick={() => setShowFullLog(o => !o)}>
-          {showFullLog ? '− hide full log' : '+ view full log'}
-        </div>
-
-        {showFullLog && <FullLogAccordion state={state} />}
+        )}
 
         <div className={styles.reviewHistoryLabel}>REVIEW HISTORY</div>
         {reviewHistory.length === 0 ? (

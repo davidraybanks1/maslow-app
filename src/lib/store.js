@@ -688,6 +688,14 @@ export async function addJournalEntry(userId, dateKey, { entry, slot, needId, st
   return { data, error }
 }
 
+export async function loadAllJournalMeta(userId) {
+  const { data } = await supabase
+    .from('journal')
+    .select('id, need_id, state')
+    .eq('user_id', userId)
+  return data || []
+}
+
 export async function deleteJournalEntry(id) {
   const { error } = await supabase
     .from('journal')
