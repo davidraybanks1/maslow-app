@@ -1059,9 +1059,6 @@ export default function Log({ state }) {
         {/* ── Archive ── */}
         {(() => {
           const canvasNeeds = NEEDS.filter(n => state.canvas?.[n.id])
-          const slotCounts = Object.fromEntries(ARCHIVE_SLOTS.map(s => [s, archiveEntries.filter(e => e.slot === s).length]))
-          const needCounts = Object.fromEntries(canvasNeeds.map(n => [n.id, archiveEntries.filter(e => e.need_id === n.id).length]))
-          const stateCounts = Object.fromEntries(ARCHIVE_STATES.map(s => [s, archiveEntries.filter(e => e.state === s).length]))
           const allJournalDays = new Set(archiveEntries.map(e => e.date_key))
           const today = new Date(); today.setHours(12, 0, 0, 0)
           let filterAfterKey = null
@@ -1080,6 +1077,20 @@ export default function Log({ state }) {
           const filtered = archiveEntries.filter(e => matchesPredicate(e, { slot: filterSlot, need: filterNeed, state: filterState }, filterAfterKey, filterBeforeKey))
           const anyFilter = filterSlot || filterNeed || filterState || filterDate || rangeStart
           const visible = filtered.slice(0, archiveVisible)
+          // Conditional counts: each chip's value substituted for its own dim, all other dims + date held fixed.
+          const slotCounts = Object.fromEntries(ARCHIVE_SLOTS.map(s => [s,
+            archiveEntries.filter(e => matchesPredicate(e, { slot: s, need: filterNeed, state: filterState }, filterAfterKey, filterBeforeKey)).length
+          ]))
+          const needCounts = Object.fromEntries(canvasNeeds.map(n => [n.id,
+            archiveEntries.filter(e => matchesPredicate(e, { slot: filterSlot, need: n.id, state: filterState }, filterAfterKey, filterBeforeKey)).length
+          ]))
+          const stateCounts = Object.fromEntries(ARCHIVE_STATES.map(s => [s,
+            archiveEntries.filter(e => matchesPredicate(e, { slot: filterSlot, need: filterNeed, state: s }, filterAfterKey, filterBeforeKey)).length
+          ]))
+          const presetCounts = Object.fromEntries(ARCHIVE_DATE_PRESETS.map(r => {
+            const d = new Date(today); d.setDate(d.getDate() - (r.key === '30d' ? 30 : 90))
+            return [r.key, archiveEntries.filter(e => matchesPredicate(e, { slot: filterSlot, need: filterNeed, state: filterState }, dateKeyFor(d), null)).length]
+          }))
 
           return (
             <div className={styles.archiveSection}>
@@ -1090,19 +1101,25 @@ export default function Log({ state }) {
                 <div className={styles.facetGroup}>
                   <div className={styles.facetGroupLabel}>WHEN</div>
                   <div className={styles.facetRow}>
-                    {ARCHIVE_DATE_PRESETS.map(r => (
-                      <button
-                        key={r.key}
-                        className={`${styles.facetChip} ${filterDate === r.key ? styles.facetChipActive : ''}`}
-                        onClick={() => {
-                          setFilterDate(v => v === r.key ? null : r.key)
-                          setRangeStart(null); setRangeEnd(null); setPickAnchor(null); setDatePickerOpen(false)
-                          setArchiveVisible(ARCHIVE_PAGE_SIZE)
-                        }}
-                      >
-                        {r.label}
-                      </button>
-                    ))}
+                    {ARCHIVE_DATE_PRESETS.map(r => {
+                      const cnt = presetCounts[r.key]
+                      const isInert = cnt === 0 && filterDate !== r.key
+                      return (
+                        <button
+                          key={r.key}
+                          className={`${styles.facetChip} ${filterDate === r.key ? styles.facetChipActive : ''}`}
+                          style={isInert ? { opacity: 0.4 } : undefined}
+                          disabled={isInert}
+                          onClick={() => {
+                            setFilterDate(v => v === r.key ? null : r.key)
+                            setRangeStart(null); setRangeEnd(null); setPickAnchor(null); setDatePickerOpen(false)
+                            setArchiveVisible(ARCHIVE_PAGE_SIZE)
+                          }}
+                        >
+                          {r.label}<span className={styles.facetCount}>{cnt}</span>
+                        </button>
+                      )
+                    })}
                     <button
                       className={`${styles.facetChip} ${rangeStart || datePickerOpen ? styles.facetChipActive : ''}`}
                       onClick={() => {
@@ -1203,15 +1220,21 @@ export default function Log({ state }) {
                 <div className={styles.facetGroup}>
                   <div className={styles.facetGroupLabel}>TIME OF DAY</div>
                   <div className={styles.facetRow}>
-                    {ARCHIVE_SLOTS.map(s => (
-                      <button
-                        key={s}
-                        className={`${styles.facetChip} ${filterSlot === s ? styles.facetChipActive : ''}`}
-                        onClick={() => { setFilterSlot(v => v === s ? null : s); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}
-                      >
-                        {s}<span className={styles.facetCount}>{slotCounts[s]}</span>
-                      </button>
-                    ))}
+                    {ARCHIVE_SLOTS.map(s => {
+                      const cnt = slotCounts[s]
+                      const isInert = cnt === 0 && filterSlot !== s
+                      return (
+                        <button
+                          key={s}
+                          className={`${styles.facetChip} ${filterSlot === s ? styles.facetChipActive : ''}`}
+                          style={isInert ? { opacity: 0.4 } : undefined}
+                          disabled={isInert}
+                          onClick={() => { setFilterSlot(v => v === s ? null : s); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}
+                        >
+                          {s}<span className={styles.facetCount}>{cnt}</span>
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
                 {/* need group — canvas needs only */}
@@ -1219,16 +1242,21 @@ export default function Log({ state }) {
                   <div className={styles.facetGroup}>
                     <div className={styles.facetGroupLabel}>NEED</div>
                     <div className={styles.facetRow}>
-                      {canvasNeeds.map(n => (
-                        <button
-                          key={n.id}
-                          className={`${styles.facetChip} ${filterNeed === n.id ? styles.facetChipActive : ''}`}
-                          style={needCounts[n.id] === 0 ? { opacity: 0.4 } : undefined}
-                          onClick={() => { setFilterNeed(v => v === n.id ? null : n.id); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}
-                        >
-                          {n.name}<span className={styles.facetCount}>{needCounts[n.id]}</span>
-                        </button>
-                      ))}
+                      {canvasNeeds.map(n => {
+                        const cnt = needCounts[n.id]
+                        const isInert = cnt === 0 && filterNeed !== n.id
+                        return (
+                          <button
+                            key={n.id}
+                            className={`${styles.facetChip} ${filterNeed === n.id ? styles.facetChipActive : ''}`}
+                            style={isInert ? { opacity: 0.4 } : undefined}
+                            disabled={isInert}
+                            onClick={() => { setFilterNeed(v => v === n.id ? null : n.id); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}
+                          >
+                            {n.name}<span className={styles.facetCount}>{cnt}</span>
+                          </button>
+                        )
+                      })}
                     </div>
                   </div>
                 )}
@@ -1236,16 +1264,21 @@ export default function Log({ state }) {
                 <div className={styles.facetGroup}>
                   <div className={styles.facetGroupLabel}>HOW IT FELT</div>
                   <div className={styles.facetRow}>
-                    {ARCHIVE_STATES.map(s => (
-                      <button
-                        key={s}
-                        className={`${styles.facetChip} ${filterState === s ? styles.facetChipActive : ''}`}
-                        style={stateCounts[s] === 0 ? { opacity: 0.4 } : undefined}
-                        onClick={() => { setFilterState(v => v === s ? null : s); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}
-                      >
-                        {s}<span className={styles.facetCount}>{stateCounts[s]}</span>
-                      </button>
-                    ))}
+                    {ARCHIVE_STATES.map(s => {
+                      const cnt = stateCounts[s]
+                      const isInert = cnt === 0 && filterState !== s
+                      return (
+                        <button
+                          key={s}
+                          className={`${styles.facetChip} ${filterState === s ? styles.facetChipActive : ''}`}
+                          style={isInert ? { opacity: 0.4 } : undefined}
+                          disabled={isInert}
+                          onClick={() => { setFilterState(v => v === s ? null : s); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}
+                        >
+                          {s}<span className={styles.facetCount}>{cnt}</span>
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
               </div>

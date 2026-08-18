@@ -621,6 +621,7 @@
   -webkit-tap-highlight-color: transparent;
 }
 .facetChip:hover { border-color: rgba(0,0,0,.3); }
+.facetChip:disabled { cursor: default; }
 
 .facetChipActive {
   border-color: var(--ink);
