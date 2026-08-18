@@ -912,11 +912,12 @@ export default function Log({ state }) {
           const entry = resurfacePool[resurfaceIdx % resurfacePool.length]
           const today = new Date(); today.setHours(12, 0, 0, 0)
           const todayKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`
-          const age = Math.round((today - new Date(entry.date_key + 'T12:00:00')) / 86400000)
-          const frameParts = [`${age} days ago`]
-          if (entry.slot) frameParts.push(entry.slot)
-          if (entry.state) frameParts.push(`tagged ${entry.state}`)
-          const frameLine = frameParts.join(', ') + ' —'
+          const [ey, em, ed] = entry.date_key.split('-').map(Number)
+          const entryDateStr = new Date(ey, em - 1, ed).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })
+          const entryTags = [
+            entry.state || null,
+            entry.need_id ? (NEEDS.find(n => n.id === entry.need_id)?.name || null) : null,
+          ].filter(Boolean)
           const todayStateSlots = {}
           for (const e of archiveEntries) {
             if (e.date_key === todayKey && e.state && e.slot && !todayStateSlots[e.state]) {
@@ -929,7 +930,14 @@ export default function Log({ state }) {
             <div className={styles.resurfaceSection}>
               <div className={styles.resurfaceSectionLabel}>from your past</div>
               <div className={styles.resurfaceCard}>
-                <div className={styles.resurfaceLine}>{frameLine}</div>
+                <div className={styles.resurfaceHeader}>
+                  <span className={styles.resurfaceDate}>{entryDateStr}</span>
+                  {entryTags.length > 0 && (
+                    <span className={styles.resurfaceTagRow}>
+                      {entryTags.map(t => <span key={t} className={styles.resurfaceTag}>{t}</span>)}
+                    </span>
+                  )}
+                </div>
                 <p className={styles.resurfaceBody}>{entry.entry}</p>
                 <div className={styles.resurfaceFooter}>
                   <button
