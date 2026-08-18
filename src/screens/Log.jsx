@@ -79,7 +79,7 @@ const WDAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','satu
 const MONTHS_LONG = ['january','february','march','april','may','june','july','august','september','october','november','december']
 const MONTHS_SHORT = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec']
 
-const MOOD_DOT_COLOR = { good: '#1C3A2E', fine: '#9DB394', bad: '#E4472B' }
+const MOOD_DOT_COLOR = { good: 'var(--exploration)', fine: '#9DB394', bad: 'var(--survival)' }
 const SLOT_ORDER = { morning: 0, midday: 1, evening: 2 }
 const MODE_DOT_TOKEN = {
   exploration:  'var(--exploration)',

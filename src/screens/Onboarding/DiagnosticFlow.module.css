@@ -23,7 +23,7 @@
 /* Welcome screen */
 .welcomeHeader {
   flex-shrink: 0;
-  background: #1A1A1A;
+  background: var(--ink);
   padding: 14px 18px;
   display: flex;
   align-items: center;
@@ -360,7 +360,7 @@
   position: relative;
   transition: background 0.15s ease;
 }
-.toggleTrackOn { background: #1A1A1A; }
+.toggleTrackOn { background: var(--ink); }
 .toggleThumb {
   position: absolute;
   top: 3px;

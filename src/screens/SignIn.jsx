@@ -7,15 +7,15 @@ function Logo() {
   return (
     <svg width="72" height="72" viewBox="0 0 72 72" fill="none">
       <circle cx="36" cy="14" r="4" fill="#E8B81F"/>
-      <circle cx="29" cy="28" r="4" fill="#1A1A1A"/>
-      <circle cx="43" cy="28" r="4" fill="#1A1A1A"/>
-      <circle cx="22" cy="42" r="4" fill="#1A1A1A"/>
-      <circle cx="36" cy="42" r="4" fill="#1A1A1A"/>
-      <circle cx="50" cy="42" r="4" fill="#1A1A1A"/>
-      <circle cx="15" cy="56" r="4" fill="#1A1A1A"/>
-      <circle cx="29" cy="56" r="4" fill="#1A1A1A"/>
-      <circle cx="43" cy="56" r="4" fill="#1A1A1A"/>
-      <circle cx="57" cy="56" r="4" fill="#1A1A1A"/>
+      <circle cx="29" cy="28" r="4" fill="currentColor"/>
+      <circle cx="43" cy="28" r="4" fill="currentColor"/>
+      <circle cx="22" cy="42" r="4" fill="currentColor"/>
+      <circle cx="36" cy="42" r="4" fill="currentColor"/>
+      <circle cx="50" cy="42" r="4" fill="currentColor"/>
+      <circle cx="15" cy="56" r="4" fill="currentColor"/>
+      <circle cx="29" cy="56" r="4" fill="currentColor"/>
+      <circle cx="43" cy="56" r="4" fill="currentColor"/>
+      <circle cx="57" cy="56" r="4" fill="currentColor"/>
     </svg>
   )
 }

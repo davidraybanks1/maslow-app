@@ -1490,9 +1490,9 @@
   }
   /* enabled: solid ink fill, paper text */
   .journalAddBtn:not(:disabled) {
-    background: #1A1A1A;
-    color: var(--bg);
-    border-color: #1A1A1A;
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
     cursor: pointer;
   }
   .journalAddBtn:not(:disabled):hover { opacity: 0.78; }
