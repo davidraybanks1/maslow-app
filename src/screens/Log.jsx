@@ -90,6 +90,11 @@ const MODE_DOT_TOKEN = {
 }
 const ARCHIVE_SLOTS = ['morning', 'midday', 'evening']
 const ARCHIVE_STATES = [...BUILTIN_NATURE_TYPES, ...BUILTIN_PEAK_TYPES].map(t => t.name)
+const ARCHIVE_DATE_RANGES = [
+  { key: '30d',  label: 'last 30 days' },
+  { key: '90d',  label: 'last 90 days' },
+  { key: 'year', label: 'this year' },
+]
 const ARCHIVE_PAGE_SIZE = 15
 
 function formatArchiveDate(dateKey) {
@@ -102,23 +107,25 @@ function formatEntryTime(createdAt) {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
-function archiveHeaderText(filteredEntries, total, filterSlot, filterNeed, filterState) {
-  if (!filterSlot && !filterNeed && !filterState) {
+function archiveHeaderText(filteredEntries, total, filterSlot, filterNeed, filterState, filterDate) {
+  if (!filterSlot && !filterNeed && !filterState && !filterDate) {
     return `all ${total} ${total === 1 ? 'entry' : 'entries'}, newest first.`
   }
   const n = filteredEntries.length
   const stateCounts = {}
   for (const e of filteredEntries) if (e.state) stateCounts[e.state] = (stateCounts[e.state] || 0) + 1
   const topState = Object.entries(stateCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || null
-  let daysBack = null
-  if (n > 0) {
-    const oldest = filteredEntries[filteredEntries.length - 1]
-    const today = new Date(); today.setHours(12, 0, 0, 0)
-    daysBack = Math.round((today - new Date(oldest.date_key + 'T12:00:00')) / 86400000)
-  }
   let text = `${n} ${n === 1 ? 'entry' : 'entries'}`
   if (topState) text += ` · mostly ${topState}`
-  if (daysBack !== null) text += ` · back to ${daysBack}d ago`
+  if (filterDate === '30d') text += ' · in the last 30 days'
+  else if (filterDate === '90d') text += ' · in the last 90 days'
+  else if (filterDate === 'year') text += ' · this year'
+  else if (n > 0) {
+    const oldest = filteredEntries[filteredEntries.length - 1]
+    const today = new Date(); today.setHours(12, 0, 0, 0)
+    const daysBack = Math.round((today - new Date(oldest.date_key + 'T12:00:00')) / 86400000)
+    text += ` · back to ${daysBack}d ago`
+  }
   return text
 }
 
@@ -129,10 +136,11 @@ function ritualMetaLine(cadence) {
   return `${WDAYS[first.getDay()]} ${first.getDate()} — ${WDAYS[last.getDay()]} ${last.getDate()} ${MONTHS_LONG[last.getMonth()]} · ~8 min`
 }
 
-function matchesPredicate(e, pred) {
+function matchesPredicate(e, pred, afterKey) {
   if (pred.slot  && e.slot    !== pred.slot)  return false
   if (pred.need  && e.need_id !== pred.need)  return false
   if (pred.state && e.state   !== pred.state) return false
+  if (afterKey   && e.date_key < afterKey)    return false
   return true
 }
 
@@ -541,6 +549,7 @@ export default function Log({ state }) {
   const [filterSlot, setFilterSlot] = useState(null)
   const [filterNeed, setFilterNeed] = useState(null)
   const [filterState, setFilterState] = useState(null)
+  const [filterDate, setFilterDate] = useState(null)
   const [openThreadId, setOpenThreadId] = useState(null)
   const [archiveVisible, setArchiveVisible] = useState(ARCHIVE_PAGE_SIZE)
   const [expandedEntries, setExpandedEntries] = useState(new Set())
@@ -577,7 +586,7 @@ export default function Log({ state }) {
     const eligible = archiveEntries.filter(e => {
       if (e.date_key === todayKey) return false
       const age = Math.round((today - new Date(e.date_key + 'T12:00:00')) / 86400000)
-      return age >= exclusionDays && (e.entry || '').trim().length > 0
+      return age >= exclusionDays && (e.entry || '').trim().length >= 20
     })
     const shuffle = arr => {
       const a = [...arr]
@@ -905,7 +914,7 @@ export default function Log({ state }) {
         {/* ── Resurfacing ── */}
         {archiveLoaded && archiveEntries.length > 0 && archiveEntries.length < 10 && (
           <div className={styles.resurfaceSection}>
-            <div className={styles.resurfaceSectionLabel}>from your past</div>
+            <div className={styles.resurfaceSectionLabel}>a peek into the past</div>
             <div className={styles.resurfaceGrowth}>keep writing — your past will start speaking back soon.</div>
           </div>
         )}
@@ -929,7 +938,7 @@ export default function Log({ state }) {
           const reasonText = matchSlot ? `matched to this ${matchSlot}` : 'a day at random'
           return (
             <div className={styles.resurfaceSection}>
-              <div className={styles.resurfaceSectionLabel}>from your past</div>
+              <div className={styles.resurfaceSectionLabel}>a peek into the past</div>
               <div className={styles.resurfaceCard}>
                 <div className={styles.resurfaceHeader}>
                   <span className={styles.resurfaceDate}>{entryDateStr}</span>
@@ -1035,8 +1044,19 @@ export default function Log({ state }) {
           const slotCounts = Object.fromEntries(ARCHIVE_SLOTS.map(s => [s, archiveEntries.filter(e => e.slot === s).length]))
           const needCounts = Object.fromEntries(canvasNeeds.map(n => [n.id, archiveEntries.filter(e => e.need_id === n.id).length]))
           const stateCounts = Object.fromEntries(ARCHIVE_STATES.map(s => [s, archiveEntries.filter(e => e.state === s).length]))
-          const filtered = archiveEntries.filter(e => matchesPredicate(e, { slot: filterSlot, need: filterNeed, state: filterState }))
-          const anyFilter = filterSlot || filterNeed || filterState
+          const today = new Date(); today.setHours(12, 0, 0, 0)
+          let filterAfterKey = null
+          if (filterDate === '30d') {
+            const d = new Date(today); d.setDate(d.getDate() - 30)
+            filterAfterKey = dateKeyFor(d)
+          } else if (filterDate === '90d') {
+            const d = new Date(today); d.setDate(d.getDate() - 90)
+            filterAfterKey = dateKeyFor(d)
+          } else if (filterDate === 'year') {
+            filterAfterKey = `${today.getFullYear()}-01-01`
+          }
+          const filtered = archiveEntries.filter(e => matchesPredicate(e, { slot: filterSlot, need: filterNeed, state: filterState }, filterAfterKey))
+          const anyFilter = filterSlot || filterNeed || filterState || filterDate
           const visible = filtered.slice(0, archiveVisible)
 
           return (
@@ -1044,6 +1064,21 @@ export default function Log({ state }) {
               <div className={styles.archiveSectionLabel}>the archive</div>
 
               <div className={styles.facetRows}>
+                {/* date group */}
+                <div className={styles.facetGroup}>
+                  <div className={styles.facetGroupLabel}>WHEN</div>
+                  <div className={styles.facetRow}>
+                    {ARCHIVE_DATE_RANGES.map(r => (
+                      <button
+                        key={r.key}
+                        className={`${styles.facetChip} ${filterDate === r.key ? styles.facetChipActive : ''}`}
+                        onClick={() => { setFilterDate(v => v === r.key ? null : r.key); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}
+                      >
+                        {r.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 {/* slot group */}
                 <div className={styles.facetGroup}>
                   <div className={styles.facetGroupLabel}>TIME OF DAY</div>
@@ -1099,10 +1134,10 @@ export default function Log({ state }) {
                 <span className={styles.archiveHeaderText}>
                   {archiveEntries.length === 0
                     ? 'no entries yet.'
-                    : archiveHeaderText(filtered, archiveEntries.length, filterSlot, filterNeed, filterState)}
+                    : archiveHeaderText(filtered, archiveEntries.length, filterSlot, filterNeed, filterState, filterDate)}
                 </span>
                 {anyFilter && (
-                  <button className={styles.archiveClearBtn} onClick={() => { setFilterSlot(null); setFilterNeed(null); setFilterState(null); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}>clear</button>
+                  <button className={styles.archiveClearBtn} onClick={() => { setFilterSlot(null); setFilterNeed(null); setFilterState(null); setFilterDate(null); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}>clear</button>
                 )}
               </div>
 
