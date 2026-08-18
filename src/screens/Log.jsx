@@ -943,6 +943,7 @@ export default function Log({ state }) {
           const [ey, em, ed] = entry.date_key.split('-').map(Number)
           const entryDateStr = new Date(ey, em - 1, ed).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })
           const entryTags = [
+            entry.slot || null,
             entry.state || null,
             entry.need_id ? (NEEDS.find(n => n.id === entry.need_id)?.name || null) : null,
           ].filter(Boolean)
