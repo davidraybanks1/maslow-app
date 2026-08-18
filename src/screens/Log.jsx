@@ -828,8 +828,9 @@ export default function Log({ state }) {
 
         {/* ── Archive ── */}
         {(() => {
+          const canvasNeeds = NEEDS.filter(n => state.canvas?.[n.id])
           const slotCounts = Object.fromEntries(ARCHIVE_SLOTS.map(s => [s, archiveEntries.filter(e => e.slot === s).length]))
-          const needCounts = Object.fromEntries(NEEDS.map(n => [n.id, archiveEntries.filter(e => e.need_id === n.id).length]))
+          const needCounts = Object.fromEntries(canvasNeeds.map(n => [n.id, archiveEntries.filter(e => e.need_id === n.id).length]))
           const stateCounts = Object.fromEntries(ARCHIVE_STATES.map(s => [s, archiveEntries.filter(e => e.state === s).length]))
           const filtered = archiveEntries.filter(e => {
             if (filterSlot && e.slot !== filterSlot) return false
@@ -857,19 +858,21 @@ export default function Log({ state }) {
                     </button>
                   ))}
                 </div>
-                {/* need row — full canvas vocabulary */}
-                <div className={styles.facetRow}>
-                  {NEEDS.map(n => (
-                    <button
-                      key={n.id}
-                      className={`${styles.facetChip} ${filterNeed === n.id ? styles.facetChipActive : ''}`}
-                      style={needCounts[n.id] === 0 ? { opacity: 0.4 } : undefined}
-                      onClick={() => { setFilterNeed(v => v === n.id ? null : n.id); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}
-                    >
-                      {n.name}<span className={styles.facetCount}>{needCounts[n.id]}</span>
-                    </button>
-                  ))}
-                </div>
+                {/* need row — canvas needs only */}
+                {canvasNeeds.length > 0 && (
+                  <div className={styles.facetRow}>
+                    {canvasNeeds.map(n => (
+                      <button
+                        key={n.id}
+                        className={`${styles.facetChip} ${filterNeed === n.id ? styles.facetChipActive : ''}`}
+                        style={needCounts[n.id] === 0 ? { opacity: 0.4 } : undefined}
+                        onClick={() => { setFilterNeed(v => v === n.id ? null : n.id); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}
+                      >
+                        {n.name}<span className={styles.facetCount}>{needCounts[n.id]}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
                 {/* state row — full state vocabulary */}
                 <div className={styles.facetRow}>
                   {ARCHIVE_STATES.map(s => (
@@ -897,12 +900,7 @@ export default function Log({ state }) {
               </div>
 
               <div className={styles.archiveCards}>
-                {(() => {
-                  const canvasNeeds = NEEDS.filter(n => state.canvas?.[n.id])
-                  const needOptions = canvasNeeds.length > 0 ? canvasNeeds : NEEDS
-                  const allStateTypes = [...BUILTIN_NATURE_TYPES, ...BUILTIN_PEAK_TYPES]
-
-                  return visible.map(e => {
+                {visible.map(e => {
                     const slotMood = (e.slot && !e.state)
                       ? ((state.moods || []).find(m => m.date_key === e.date_key && m.prompt_time === e.slot)?.mood || null)
                       : null
@@ -912,17 +910,17 @@ export default function Log({ state }) {
                     const isTruncatable = body.length > JOURNAL_TRUNCATE
                     const displayBody = !isExpanded && isTruncatable ? body.slice(0, JOURNAL_TRUNCATE).trimEnd() + '…' : body
                     const needName = e.need_id ? (NEEDS.find(n => n.id === e.need_id)?.name || e.need_id) : null
-                    const missingNeed = !e.need_id
-                    const missingState = !e.state
+                    const canAddNeed = !e.need_id && canvasNeeds.length > 0
+                    const canAddState = !e.state
                     const isTagging = taggingEntryId === e.id
                     const toggleExpand = () => setExpandedEntries(prev => {
                       const next = new Set(prev)
                       next.has(e.id) ? next.delete(e.id) : next.add(e.id)
                       return next
                     })
-                    const panelLabel = missingNeed && missingState
+                    const panelLabel = canAddNeed && canAddState
                       ? 'add a tag — this entry has no need or state yet'
-                      : missingNeed ? 'add a need to this entry'
+                      : canAddNeed ? 'add a need to this entry'
                       : 'add a state to this entry'
 
                     return (
@@ -941,7 +939,7 @@ export default function Log({ state }) {
                         <span className={styles.archiveCardTags}>
                           {needName && <span className={styles.archiveTag}>{needName}</span>}
                           {e.state && <span className={styles.archiveTag}>{e.state}</span>}
-                          {(missingNeed || missingState) && (
+                          {(canAddNeed || canAddState) && (
                             <button
                               className={`${styles.archiveTagBtn} ${isTagging ? styles.archiveTagBtnOpen : ''}`}
                               onClick={() => setTaggingEntryId(id => id === e.id ? null : e.id)}
@@ -952,18 +950,13 @@ export default function Log({ state }) {
                           <div className={styles.retroTagPanel}>
                             <div className={styles.retroTagLabel}>{panelLabel}</div>
                             <div className={styles.retroTagOptions}>
-                              {missingNeed && needOptions.map(n => (
+                              {canAddNeed && canvasNeeds.map(n => (
                                 <button key={n.id} className={styles.retroTagOption} onClick={() => handleRetroTag(e.id, { needId: n.id })}>
                                   {n.name}
                                 </button>
                               ))}
-                              {missingState && allStateTypes.map(t => (
-                                <button
-                                  key={t.name}
-                                  className={styles.retroTagOption}
-                                  style={{ borderColor: t.bg, color: t.bg }}
-                                  onClick={() => handleRetroTag(e.id, { stateName: t.name })}
-                                >
+                              {canAddState && [...BUILTIN_NATURE_TYPES, ...BUILTIN_PEAK_TYPES].map(t => (
+                                <button key={t.name} className={styles.retroTagOption} onClick={() => handleRetroTag(e.id, { stateName: t.name })}>
                                   {t.name}
                                 </button>
                               ))}
@@ -972,8 +965,7 @@ export default function Log({ state }) {
                         )}
                       </div>
                     )
-                  })
-                })()}
+                  })}
               </div>
 
               {filtered.length > archiveVisible && (

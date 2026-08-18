@@ -803,7 +803,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 {statePickerOpen && (
                   <div className={styles.composerPicker}>
                     {[...BUILTIN_NATURE_TYPES, ...BUILTIN_PEAK_TYPES].map(t => (
-                      <button key={t.name} className={styles.composerPickerItem} style={{ background: t.bg, color: t.text }} onClick={() => { setDraftState(t.name); setStatePickerOpen(false) }}>{t.name}</button>
+                      <button key={t.name} className={styles.composerPickerItem} onClick={() => { setDraftState(t.name); setStatePickerOpen(false) }}>{t.name}</button>
                     ))}
                   </div>
                 )}
@@ -883,7 +883,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                   {statePickerOpen && (
                     <div className={styles.composerPicker}>
                       {[...BUILTIN_NATURE_TYPES, ...BUILTIN_PEAK_TYPES].map(t => (
-                        <button key={t.name} className={styles.composerPickerItem} style={{ background: t.bg, color: t.text }} onClick={() => { setDraftState(t.name); setStatePickerOpen(false) }}>{t.name}</button>
+                        <button key={t.name} className={styles.composerPickerItem} onClick={() => { setDraftState(t.name); setStatePickerOpen(false) }}>{t.name}</button>
                       ))}
                     </div>
                   )}
