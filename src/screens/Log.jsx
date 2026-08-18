@@ -963,60 +963,66 @@ export default function Log({ state }) {
                 <span className={styles.threadSectionLabel}>threads</span>
                 {showGrowingMeta && <span className={styles.threadSectionMeta}>growing as you tag</span>}
               </div>
-              <div className={styles.threadCards}>
+              <div className={styles.threadListCard}>
                 {THREADS.map(thread => {
                   const matches = archiveEntries.filter(e => matchesPredicate(e, thread.predicate))
                   const distinctWeeks = new Set(matches.map(e => isoYearWeek(e.date_key))).size
-                  const isThin = matches.length < 8
-                  const isInert = matches.length === 0
+                  const isThin = matches.length > 0 && matches.length < 8
+                  const isEmpty = matches.length === 0
                   const modeName = thread.predicate.need ? (state.canvas?.[thread.predicate.need] || null) : null
                   const dotColor = modeName ? (MODE_DOT_TOKEN[modeName] || 'var(--ink)') : 'var(--ink)'
                   return (
                     <button
                       key={thread.id}
-                      className={`${styles.threadCard}${isInert ? ` ${styles.threadCardInert}` : ''}`}
-                      disabled={isInert}
+                      className={`${styles.threadListRow}${isEmpty ? ` ${styles.threadListRowEmpty}` : ''}`}
                       onClick={() => setOpenThreadId(id => id === thread.id ? null : thread.id)}
                     >
                       <div className={styles.threadCardRow}>
                         <span className={styles.threadDot} style={{ background: dotColor }} />
-                        <span className={styles.threadTitle}>{thread.title}</span>
+                        <span className={isEmpty ? styles.threadTitleEmpty : styles.threadTitle}>{thread.title}</span>
                         <span className={styles.threadChevron} aria-hidden="true">›</span>
                       </div>
-                      <div className={styles.threadStat}>
-                        {matches.length} {matches.length === 1 ? 'entry' : 'entries'} across {distinctWeeks} {distinctWeeks === 1 ? 'week' : 'weeks'}{isThin ? ' · thread is thin — keep tagging' : ''}
+                      <div className={isEmpty ? styles.threadStatEmpty : styles.threadStat}>
+                        {isEmpty
+                          ? '0 entries'
+                          : `${matches.length} ${matches.length === 1 ? 'entry' : 'entries'} across ${distinctWeeks} ${distinctWeeks === 1 ? 'week' : 'weeks'}${isThin ? ' · thread is thin — keep tagging' : ''}`}
                       </div>
                     </button>
                   )
                 })}
               </div>
-              {openThread && (
-                <div key={openThread.id} className={styles.threadRead}>
-                  <div className={styles.threadReadHeader}>
-                    <span className={styles.threadReadTitle}>{openThread.title}</span>
-                    <button className={styles.threadReadCloseBtn} onClick={() => setOpenThreadId(null)}>close</button>
-                  </div>
-                  <p className={styles.threadReadIntro}>{openThread.intro}</p>
-                  {archiveEntries
-                    .filter(e => matchesPredicate(e, openThread.predicate))
-                    .slice().reverse()
-                    .map(e => {
-                      const slotMood = e.slot && !e.state
-                        ? ((state.moods || []).find(m => m.date_key === e.date_key && m.prompt_time === e.slot)?.mood || null)
-                        : null
-                      const moodDotColor = slotMood ? MOOD_DOT_COLOR[slotMood] : null
-                      return (
-                        <div key={e.id} className={styles.threadReadEntry}>
-                          <div className={styles.threadReadEntryDate}>
-                            {moodDotColor && <span className={styles.threadReadEntryDot} style={{ background: moodDotColor }} />}
-                            {formatThreadDate(e.date_key, e.slot)}
+              {openThread && (() => {
+                const openMatches = archiveEntries.filter(e => matchesPredicate(e, openThread.predicate))
+                const emptyDimension = Object.values(openThread.predicate)[0]
+                return (
+                  <div key={openThread.id} className={styles.threadRead}>
+                    <div className={styles.threadReadHeader}>
+                      <span className={styles.threadReadTitle}>{openThread.title}</span>
+                      <button className={styles.threadReadCloseBtn} onClick={() => setOpenThreadId(null)}>close</button>
+                    </div>
+                    <p className={styles.threadReadIntro}>{openThread.intro}</p>
+                    {openMatches.length === 0 ? (
+                      <p className={styles.threadReadEmpty}>nothing here yet — tag an entry with {emptyDimension} and it will appear.</p>
+                    ) : (
+                      openMatches.slice().reverse().map(e => {
+                        const slotMood = e.slot && !e.state
+                          ? ((state.moods || []).find(m => m.date_key === e.date_key && m.prompt_time === e.slot)?.mood || null)
+                          : null
+                        const moodDotColor = slotMood ? MOOD_DOT_COLOR[slotMood] : null
+                        return (
+                          <div key={e.id} className={styles.threadReadEntry}>
+                            <div className={styles.threadReadEntryDate}>
+                              {moodDotColor && <span className={styles.threadReadEntryDot} style={{ background: moodDotColor }} />}
+                              {formatThreadDate(e.date_key, e.slot)}
+                            </div>
+                            <p className={styles.threadReadEntryBody}>{e.entry}</p>
                           </div>
-                          <p className={styles.threadReadEntryBody}>{e.entry}</p>
-                        </div>
-                      )
-                    })}
-                </div>
-              )}
+                        )
+                      })
+                    )}
+                  </div>
+                )
+              })()}
               <p className={styles.threadInterpretive}>{threadsInterpretiveLine(THREADS, archiveEntries)}</p>
             </div>
           )
