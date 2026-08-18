@@ -1,6 +1,6 @@
-import { useState, useEffect, Component } from 'react'
+import { useState, useEffect, useRef, Component } from 'react'
 import { HeaderSlotContext } from './lib/headerSlot'
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, useNavigationType } from 'react-router-dom'
 import { useAppState } from './lib/store'
 import { hideSplash, scheduleReminders } from './lib/native'
 import LoadingScreen from './components/LoadingScreen'
@@ -48,7 +48,18 @@ const LOADER_FADE_MS = 350 // matches --motion-page
 
 function AppInner() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const navType = useNavigationType()
+  const contentRef = useRef(null)
   const [headerSlot, setHeaderSlot] = useState(null)
+
+  // Reset scroll on every PUSH navigation (tab taps, in-app links).
+  // POP (browser back/forward) is left alone so position can restore naturally.
+  useEffect(() => {
+    if (navType !== 'POP' && contentRef.current) {
+      contentRef.current.scrollTop = 0
+    }
+  }, [location.pathname]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Ritual timer: loader never dismisses before RITUAL_MS, even on instant init
   const [ritualElapsed, setRitualElapsed] = useState(false)
@@ -104,7 +115,7 @@ function AppInner() {
           <AppHeader slot={headerSlot} name={state.profile.name} email={state.email} showNoteToSelf={state.showNoteToSelf} updateShowNoteToSelf={updateShowNoteToSelf} reviewCadence={state.reviewCadence} updateReviewCadence={updateReviewCadence} reviewDay={state.reviewDay} reviewTime={state.reviewTime} updateReviewSchedule={updateReviewSchedule} />
         </div>
       )}
-      <div className={styles.content}>
+      <div className={styles.content} ref={contentRef}>
         <Routes>
           <Route path="/" element={state.onboarded ? <Navigate to="/today" replace /> : <Navigate to="/onboarding" replace />} />
           <Route path="/onboarding" element={state.onboarded ? <Navigate to="/today" replace /> : <DiagnosticFlow updateCanvas={updateCanvas} completeOnboarding={completeOnboarding} />} />
