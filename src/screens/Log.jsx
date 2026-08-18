@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { NEEDS, MODE_MAX_BUBBLES, JOURNAL_TRUNCATE } from '../lib/constants'
-import { weekKey, loadJournalEntry, loadDebriefs, loadDebriefTypes, addNoteDeckCard, saveWeeklyReview, loadWeeklyReviews, loadUserCreatedAt, loadAllJournalMeta, loadJournalArchive, updateJournalEntryTags } from '../lib/store'
+import { weekKey, loadJournalEntry, loadDebriefs, loadDebriefTypes, addNoteDeckCard, saveWeeklyReview, loadAllJournalMeta, loadJournalArchive, updateJournalEntryTags, loadDayCheckins } from '../lib/store'
 import { createDataStats } from '../lib/dataStats'
 import { BUILTIN_NATURE_TYPES, BUILTIN_PEAK_TYPES, natureTagStyle, peakTagStyle, ENVIRONMENT_TAG_STYLE, parseDebriefEntry } from '../lib/debriefTypes'
 import LiveCanvasCard from '../components/LiveCanvasCard'
@@ -74,16 +74,13 @@ function formatCardDate(dateKey) {
   return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toLowerCase()
 }
 
-function formatHistoryDate(dateKey) {
-  const d = new Date(dateKey + 'T12:00:00')
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toLowerCase()
-}
 
 const WDAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday']
 const MONTHS_LONG = ['january','february','march','april','may','june','july','august','september','october','november','december']
 const MONTHS_SHORT = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec']
 
 const MOOD_DOT_COLOR = { good: '#1C3A2E', fine: '#9DB394', bad: '#E4472B' }
+const SLOT_ORDER = { morning: 0, midday: 1, evening: 2 }
 const MODE_DOT_TOKEN = {
   exploration:  'var(--exploration)',
   appreciation: 'var(--appreciation-deep)',
@@ -152,6 +149,11 @@ function formatThreadDate(dateKey, slot) {
   return `${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}${slot ? ` · ${slot}` : ''}`
 }
 
+function formatDayDetailDate(dateKey) {
+  const d = new Date(dateKey + 'T12:00:00')
+  return `${WDAYS[d.getDay()]}, ${MONTHS_LONG[d.getMonth()]} ${d.getDate()}`
+}
+
 const THREADS = [
   { id: 'community', title: 'community',              predicate: { need: 'community' }, intro: 'entries where community came up — people, belonging, and the texture of connection.' },
   { id: 'frenetic',  title: 'frenetic days',           predicate: { state: 'frenetic' }, intro: 'the days tagged frenetic — scattered, reactive, out of rhythm.' },
@@ -192,25 +194,6 @@ function firstScheduledDateOnOrAfter(startDate, reviewDay) {
   return d
 }
 
-// Builds one row per scheduled review week from account creation through today, filling in
-// any week with no saved weekly_reviews row as a missed (×) entry.
-function buildReviewHistory(createdAt, reviewDay, realReviews) {
-  if (!createdAt) return realReviews
-  const realByWeek = new Map(realReviews.map(r => [r.week_starting, r]))
-
-  const today = new Date()
-  today.setHours(12, 0, 0, 0)
-  let cursor = firstScheduledDateOnOrAfter(createdAt, reviewDay)
-
-  const rows = []
-  while (cursor <= today) {
-    const ws = weekKey(cursor)
-    rows.push(realByWeek.get(ws) || { week_starting: ws, weekly_mood: null, steps_completed: 0 })
-    cursor = new Date(cursor)
-    cursor.setDate(cursor.getDate() + 7)
-  }
-  return rows.sort((a, b) => b.week_starting.localeCompare(a.week_starting))
-}
 
 function formatReviewTime(time) {
   const [hStr, m] = (time || '10:00').split(':')
@@ -540,8 +523,12 @@ export default function Log({ state }) {
   const [skipDecisionSteps, setSkipDecisionSteps] = useState(false)
   const [reviewWindowDays, setReviewWindowDays] = useState([])
 
-  const [reviewHistory, setReviewHistory] = useState([])
-  const [historyLoading, setHistoryLoading] = useState(true)
+  const [calYear, setCalYear] = useState(() => new Date().getFullYear())
+  const [calMonth, setCalMonth] = useState(() => new Date().getMonth())
+  const [selectedDayKey, setSelectedDayKey] = useState(null)
+  const [detailCheckins, setDetailCheckins] = useState([])
+  const [detailLoading, setDetailLoading] = useState(false)
+  const calCheckinCache = useRef({})
 
   const [journalMeta, setJournalMeta] = useState([])
   const [ritualDismissed, setRitualDismissed] = useState(() => {
@@ -562,20 +549,6 @@ export default function Log({ state }) {
   const [resurfaceIdx, setResurfaceIdx] = useState(0)
 
   const stats = createDataStats({ canvas: state.canvas || {}, checkins: state.checkins || {}, moods: state.moods || [], practices: state.practices || {} })
-
-  useEffect(() => {
-    if (!state.userId) { console.error('[reviewHistory] called without userId — session may be invalid'); return }
-    setHistoryLoading(true)
-    const cadence = state.reviewCadence || 'weekly'
-    Promise.all([loadWeeklyReviews(state.userId), loadUserCreatedAt(state.userId)]).then(([realReviews, createdAt]) => {
-      if (cadence === 'daily') {
-        setReviewHistory(realReviews.filter(r => r.steps_completed > 0).sort((a, b) => b.week_starting.localeCompare(a.week_starting)))
-      } else {
-        setReviewHistory(buildReviewHistory(createdAt, state.reviewDay ?? 0, realReviews))
-      }
-      setHistoryLoading(false)
-    })
-  }, [state.userId, state.reviewDay, state.reviewCadence])
 
   useEffect(() => {
     if (!state.userId) return
@@ -649,8 +622,7 @@ export default function Log({ state }) {
     const days = reviewWindowKeys(cadence)
     setReviewWindowDays(days)
 
-    const shouldSkip = cadence === 'daily' && reviewHistory.some(r => r.week_starting === weekKey() && r.steps_completed > 0)
-    setSkipDecisionSteps(shouldSkip)
+    setSkipDecisionSteps(false)
 
     const [entries, allDebriefs, types] = await Promise.all([
       Promise.all(days.map(d => loadJournalEntry(state.userId, d))),
@@ -716,16 +688,25 @@ export default function Log({ state }) {
       reviewDate: new Date().toLocaleDateString('en-CA'),
       cadence,
     })
-    const [realReviews, createdAt] = await Promise.all([loadWeeklyReviews(state.userId), loadUserCreatedAt(state.userId)])
-    if (cadence === 'daily') {
-      setReviewHistory(realReviews.filter(r => r.steps_completed > 0).sort((a, b) => b.week_starting.localeCompare(a.week_starting)))
-    } else {
-      setReviewHistory(buildReviewHistory(createdAt, state.reviewDay ?? 0, realReviews))
-    }
     setFinishing(false)
     setReviewStep(null)
     setJustFinished(true)
     setTimeout(() => setJustFinished(false), 3000)
+  }
+
+  async function selectDay(dateKey) {
+    if (selectedDayKey === dateKey) { setSelectedDayKey(null); return }
+    setSelectedDayKey(dateKey)
+    setDetailCheckins([])
+    const thirtyAgo = new Date(); thirtyAgo.setDate(thirtyAgo.getDate() - 30)
+    const cutoffKey = dateKeyFor(thirtyAgo)
+    if (dateKey >= cutoffKey) { setDetailCheckins(state.checkins[dateKey] || []); return }
+    if (calCheckinCache.current[dateKey] !== undefined) { setDetailCheckins(calCheckinCache.current[dateKey]); return }
+    setDetailLoading(true)
+    const data = await loadDayCheckins(state.userId, dateKey)
+    calCheckinCache.current[dateKey] = data
+    setDetailCheckins(data)
+    setDetailLoading(false)
   }
 
   // ── Step 1: Last week's log ───────────────────────────────────────────────
@@ -1179,45 +1160,197 @@ export default function Log({ state }) {
           )
         })()}
 
-        <div className={styles.reviewHistoryLabel}>REVIEW HISTORY</div>
-        {reviewHistory.length === 0 ? (
-          historyLoading ? (
-            <div aria-label="loading review history">
-              <span className={styles.skeletonBar} style={{ width: '42%' }} />
-              <span className={styles.skeletonBar} style={{ width: '68%' }} />
-            </div>
-          ) : (
-            <>
-              <div className={styles.reviewHistoryEmpty}>no reviews yet — your first one takes about seven minutes.</div>
-              <div className={styles.ritualPreview}>
-                {['last week, in data', 'how the week felt', 'does your canvas still fit', 'one thing the data noticed', 'a note to your future self'].map((step, i) => (
-                  <div key={step} className={styles.ritualPreviewRow}>
-                    <span className={styles.ritualPreviewNum}>{i + 1}</span>
-                    {step}
-                  </div>
-                ))}
-              </div>
-            </>
+        {/* ── Calendar ── */}
+        {archiveLoaded && (() => {
+          const today = new Date(); today.setHours(12, 0, 0, 0)
+          const todayKey = dateKeyFor(today)
+          const isCurrentMonth = calYear === today.getFullYear() && calMonth === today.getMonth()
+          const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate()
+          const firstDayOfWeek = (new Date(calYear, calMonth, 1).getDay() + 6) % 7
+          const monthPrefix = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-`
+
+          // Mood grid index: first match wins (state.moods ordered created_at DESC)
+          const monthMoodIndex = {}
+          for (const m of (state.moods || [])) {
+            if (m.date_key.startsWith(monthPrefix) && !monthMoodIndex[m.date_key]) {
+              monthMoodIndex[m.date_key] = m
+            }
+          }
+          const monthHasJournal = new Set(
+            archiveEntries.filter(e => e.date_key.startsWith(monthPrefix)).map(e => e.date_key)
           )
-        ) : (
-          <div className={styles.reviewHistoryList}>
-            {reviewHistory.map((r, i) => (
-              <div key={r.week_starting}>
-                {i > 0 && <div className={styles.reviewHistoryDivider} />}
-                <div className={styles.reviewHistoryRow}>
-                  <span className={styles.reviewHistoryLeft}>
-                    <span className={styles.reviewHistoryDate}>{formatHistoryDate(r.week_starting)}</span>
-                  </span>
-                  {r.steps_completed > 0 ? (
-                    <span className={styles.reviewHistoryDone}>✓</span>
-                  ) : cadence !== 'daily' ? (
-                    <span className={styles.reviewHistoryMissed}>missed</span>
-                  ) : null}
+
+          // Day detail derived data
+          const detailMoods = selectedDayKey
+            ? (state.moods || []).filter(m => m.date_key === selectedDayKey)
+                .sort((a, b) => (SLOT_ORDER[a.prompt_time] || 0) - (SLOT_ORDER[b.prompt_time] || 0))
+            : []
+          const detailJournals = selectedDayKey
+            ? archiveEntries.filter(e => e.date_key === selectedDayKey).slice().reverse()
+            : []
+          const canvasNeedIds = new Set(Object.keys(state.canvas || {}).filter(id => state.canvas[id]))
+          const activePractices = (state.practicesDB || []).filter(p => !p.archived_at && canvasNeedIds.has(p.need_id))
+          const findCheckin = p => detailCheckins.find(c =>
+            (c.practice_id && c.practice_id === p.id) ||
+            (!c.practice_id && c.practice_text === p.label && c.need_id === p.need_id)
+          )
+          const metCount = activePractices.filter(p => findCheckin(p)).length
+
+          return (
+            <div className={styles.calSection}>
+              <div className={styles.calSectionHeader}>
+                <span className={styles.calSectionLabel}>calendar</span>
+                <div className={styles.calNavRow}>
+                  <button
+                    className={styles.calNavBtn}
+                    onClick={() => {
+                      if (calMonth === 0) { setCalYear(y => y - 1); setCalMonth(11) }
+                      else setCalMonth(m => m - 1)
+                      setSelectedDayKey(null)
+                    }}
+                    aria-label="previous month"
+                  >‹</button>
+                  <span className={styles.calNavMonthLabel}>{MONTHS_LONG[calMonth]} {calYear}</span>
+                  <button
+                    className={`${styles.calNavBtn}${isCurrentMonth ? ` ${styles.calNavBtnDisabled}` : ''}`}
+                    disabled={isCurrentMonth}
+                    onClick={() => {
+                      if (calMonth === 11) { setCalYear(y => y + 1); setCalMonth(0) }
+                      else setCalMonth(m => m + 1)
+                      setSelectedDayKey(null)
+                    }}
+                    aria-label="next month"
+                  >›</button>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+
+              <div className={styles.calDayLabels}>
+                {['M','T','W','T','F','S','S'].map((d, i) => (
+                  <span key={i} className={styles.calDayLabel}>{d}</span>
+                ))}
+              </div>
+
+              <div className={styles.calGrid}>
+                {Array.from({ length: firstDayOfWeek }, (_, i) => (
+                  <div key={`blank-${i}`} className={styles.calDayBlank} />
+                ))}
+                {Array.from({ length: daysInMonth }, (_, i) => {
+                  const day = i + 1
+                  const dateKey = `${monthPrefix}${String(day).padStart(2, '0')}`
+                  const isFuture = dateKey > todayKey
+                  const moodEntry = monthMoodIndex[dateKey]
+                  const moodDotColor = moodEntry ? MOOD_DOT_COLOR[moodEntry.mood] : null
+                  const hasJournal = monthHasJournal.has(dateKey)
+                  const isSelected = selectedDayKey === dateKey
+
+                  if (isFuture) {
+                    return (
+                      <div key={dateKey} className={`${styles.calDay} ${styles.calDayFuture}`}>
+                        <span className={styles.calDayNum}>{day}</span>
+                      </div>
+                    )
+                  }
+
+                  return (
+                    <button
+                      key={dateKey}
+                      className={`${styles.calDay}${isSelected ? ` ${styles.calDaySelected}` : ''}`}
+                      onClick={() => selectDay(dateKey)}
+                    >
+                      <span className={styles.calDayNum}>{day}</span>
+                      {(moodDotColor || hasJournal) && (
+                        <div className={styles.calDayDots}>
+                          {moodDotColor && <span className={styles.calDayDot} style={{ background: moodDotColor }} />}
+                          {hasJournal && <span className={styles.calDayDot} style={{ background: 'var(--exploration)' }} />}
+                        </div>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+
+              {selectedDayKey && (
+                <div key={selectedDayKey} className={styles.calDetail}>
+                  <div className={styles.calDetailHeader}>
+                    <span className={styles.calDetailDate}>{formatDayDetailDate(selectedDayKey)}</span>
+                    <button className={styles.calDetailCloseBtn} onClick={() => setSelectedDayKey(null)}>close</button>
+                  </div>
+
+                  {detailMoods.length > 0 && (
+                    <div className={styles.calDetailMoodRow}>
+                      {detailMoods.flatMap((m, i) => {
+                        const pair = (
+                          <span key={`pair-${m.prompt_time}`} className={styles.calDetailMoodPair}>
+                            <span className={styles.calDetailMoodDot} style={{ background: MOOD_DOT_COLOR[m.mood] }} />
+                            <span className={styles.calDetailMoodLabel}>{m.prompt_time} {m.mood}</span>
+                          </span>
+                        )
+                        return i === 0
+                          ? [pair]
+                          : [<span key={`sep-${i}`} className={styles.calDetailMoodSep} aria-hidden="true">·</span>, pair]
+                      })}
+                    </div>
+                  )}
+
+                  {activePractices.length > 0 && (
+                    <div>
+                      <div className={styles.calDetailSectionLabel}>
+                        practices · {detailLoading ? '…' : `${metCount} of ${activePractices.length} met`}
+                      </div>
+                      {!detailLoading && activePractices.map(p => {
+                        const checkin = findCheckin(p)
+                        const isMet = !!checkin
+                        const count = checkin?.count || 0
+                        const modeName = state.canvas?.[p.need_id] || null
+                        return (
+                          <div key={p.id} className={styles.calDetailPracticeRow}>
+                            <span
+                              className={styles.calDetailPracticeRing}
+                              style={isMet
+                                ? { background: modeName ? `var(--${modeName})` : 'var(--ink3)' }
+                                : { border: '1px solid rgba(0,0,0,.25)', background: 'transparent' }
+                              }
+                            />
+                            <span className={styles.calDetailPracticeName}>
+                              {p.label}{count > 1 ? ` ×${count}` : ''}
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  <div className={styles.calDetailSectionLabel}>journal</div>
+                  {detailJournals.length > 0 ? detailJournals.map(e => {
+                    const timeStr = `${e.slot ? `${e.slot} · ` : ''}${formatEntryTime(e.created_at)}`
+                    const slotMood = e.slot && !e.state
+                      ? (detailMoods.find(m => m.prompt_time === e.slot)?.mood || null)
+                      : null
+                    const entryMoodDotColor = slotMood ? MOOD_DOT_COLOR[slotMood] : null
+                    const needName = e.need_id ? (NEEDS.find(n => n.id === e.need_id)?.name || e.need_id) : null
+                    return (
+                      <div key={e.id} className={styles.calDetailJournalEntry}>
+                        <div className={styles.calDetailJournalMeta}>
+                          {entryMoodDotColor && <span className={styles.calDetailJournalDot} style={{ background: entryMoodDotColor }} />}
+                          <span>{timeStr}</span>
+                        </div>
+                        <p className={styles.calDetailJournalBody}>{e.entry}</p>
+                        {(needName || e.state) && (
+                          <div className={styles.calDetailJournalTags}>
+                            {needName && <span className={styles.calDetailJournalTag}>{needName}</span>}
+                            {e.state && <span className={styles.calDetailJournalTag}>{e.state}</span>}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  }) : (
+                    <p className={styles.calDetailEmpty}>nothing written this day.</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )
+        })()}
       </div>
     </div>
   )

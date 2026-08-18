@@ -705,6 +705,23 @@ export async function loadJournalArchive(userId) {
   return data || []
 }
 
+export async function loadDayCheckins(userId, dateKey) {
+  const { data } = await supabase
+    .from('checkins')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('date_key', dateKey)
+  return (data || []).map(row => ({
+    id: row.id,
+    need_id: row.need_id,
+    practice_text: row.practice_text || '',
+    practice_id: row.practice_id || null,
+    mode: row.mode || null,
+    completed_at: row.completed_at || null,
+    count: row.count || 1,
+  }))
+}
+
 export async function updateJournalEntryTags(id, { needId, stateName }) {
   const updates = {}
   if (needId !== undefined) updates.need_id = needId

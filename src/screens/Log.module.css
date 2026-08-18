@@ -763,52 +763,247 @@
 }
 .archiveLoadMore:hover { background: var(--bg2); }
 
-/* ── Review history ── */
-.reviewHistoryLabel {
+/* ── Calendar ── */
+.calSection {
+  margin-top: 20px;
+  border-top: 1px solid rgba(0,0,0,.1);
+  padding-top: 18px;
+  margin-bottom: 20px;
+}
+
+.calSectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.calSectionLabel {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 9.5px;
+  font-weight: 400;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--ink3);
-  margin: 8px 0;
+  color: rgba(0,0,0,.42);
 }
-.reviewHistoryEmpty {
+
+.calNavRow { display: flex; align-items: center; gap: 6px; }
+
+.calNavBtn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 0.5px solid var(--hairline);
+  background: transparent;
   font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 200;
-  color: var(--ink4);
-  padding-bottom: 8px;
-}
-.reviewHistoryList {
-  background: var(--bg);
-  border: 1px solid #D8D3C3;
-  border-radius: 12px;
-  padding: 0 16px;
-  box-shadow: 0 1px 2px rgba(26, 26, 26, 0.05), 0 18px 44px -14px rgba(26, 26, 26, 0.10);
-}
-.reviewHistoryDivider { height: 0.5px; background: var(--border); }
-.reviewHistoryRow {
+  font-size: 14px;
+  color: var(--ink2);
+  cursor: pointer;
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 12px 0;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  line-height: 1;
+  padding: 0;
 }
-.reviewHistoryLeft { display: flex; align-items: baseline; gap: 6px; }
-.reviewHistoryPrefix {
+.calNavBtn:hover { background: var(--bg2); }
+.calNavBtnDisabled,
+.calNavBtn:disabled { opacity: 0.3; cursor: default; pointer-events: none; }
+
+.calNavMonthLabel {
   font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--ink3);
-  flex-shrink: 0;
+  font-size: 10.5px;
+  color: var(--ink2);
+  min-width: 74px;
+  text-align: center;
 }
-.reviewHistoryDate {
+
+.calDayLabels {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+  margin-bottom: 3px;
+}
+
+.calDayLabel {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-align: center;
+  color: rgba(0,0,0,.35);
+  padding: 2px 0;
+}
+
+.calGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+
+.calDayBlank { aspect-ratio: 1; visibility: hidden; }
+
+.calDay {
+  aspect-ratio: 1;
+  border-radius: 9px;
+  border: 1.5px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  background: transparent;
+  padding: 0;
+}
+.calDay:hover { background: var(--bg2); }
+
+.calDayFuture { pointer-events: none; cursor: default; }
+.calDayFuture .calDayNum { color: rgba(0,0,0,.3); }
+
+.calDaySelected { border-color: var(--exploration) !important; }
+
+.calDayNum {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.calDayDots { display: flex; align-items: center; gap: 2px; }
+.calDayDot { width: 4px; height: 4px; border-radius: 50%; }
+
+/* Calendar day detail */
+.calDetail {
+  margin-top: 9px;
+  background: var(--card);
+  border: 0.5px solid rgba(0,0,0,.1);
+  border-radius: 18px;
+  padding: 16px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .calDetail { animation: threadReadIn 180ms ease-out both; }
+}
+
+.calDetailHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.calDetailDate {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 300;
+  color: var(--ink);
+  line-height: 1.2;
+  flex: 1;
+}
+
+.calDetailCloseBtn {
+  height: 26px;
+  padding: 0 11px;
+  border: 0.5px solid rgba(0,0,0,.2);
+  border-radius: 13px;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: rgba(0,0,0,.5);
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.calDetailCloseBtn:hover { opacity: 0.7; }
+
+.calDetailMoodRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.calDetailMoodPair { display: flex; align-items: center; gap: 5px; }
+.calDetailMoodDot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+
+.calDetailMoodLabel {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 300;
+  color: var(--ink2);
+}
+
+.calDetailMoodSep { font-family: var(--font-mono); font-size: 14px; color: rgba(0,0,0,.3); }
+
+.calDetailSectionLabel {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(0,0,0,.4);
+  margin: 10px 0 4px;
+}
+
+.calDetailPracticeRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 38px;
+  border-top: 0.5px solid rgba(0,0,0,.06);
+}
+
+.calDetailPracticeRing { width: 13px; height: 13px; border-radius: 50%; flex-shrink: 0; }
+
+.calDetailPracticeName {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--ink);
+}
+
+.calDetailJournalEntry { padding: 10px 0; border-top: 0.5px solid rgba(0,0,0,.07); }
+
+.calDetailJournalMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: rgba(0,0,0,.4);
+  margin-bottom: 5px;
+}
+
+.calDetailJournalDot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+
+.calDetailJournalBody {
   font-family: var(--font-serif);
   font-size: 14px;
+  font-weight: 300;
+  line-height: 1.5;
   color: var(--ink);
-  text-transform: lowercase;
 }
-.reviewHistoryDone { color: #1B3A2D; font-size: 15px; flex-shrink: 0; }
-.reviewHistoryMissed { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.04em; color: var(--ink4); flex-shrink: 0; }
+
+.calDetailJournalTags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+
+.calDetailJournalTag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: rgba(0,0,0,.5);
+  border: 0.5px solid rgba(0,0,0,.2);
+  border-radius: 10px;
+  padding: 2px 8px;
+}
+
+.calDetailEmpty {
+  font-family: var(--font-serif);
+  font-size: 13px;
+  font-weight: 300;
+  font-style: italic;
+  color: rgba(0,0,0,.4);
+  padding: 8px 0;
+}
 
 /* ── Guided review shell ── */
 .reviewProgressBar { height: 2px; background: var(--border); flex-shrink: 0; }
@@ -1126,41 +1321,6 @@
 }
 .noteCard:hover { background: var(--bg2); }
 
-/* loading skeleton — replaces the bare em-dash */
-.skeletonBar {
-  display: block;
-  height: 10px;
-  border-radius: 5px;
-  background: var(--bg3);
-  margin-bottom: 8px;
-  animation: skeletonPulse 1.2s ease-in-out infinite;
-}
-@keyframes skeletonPulse {
-  0%, 100% { opacity: 0.55; }
-  50%      { opacity: 1; }
-}
-
-/* the ritual, previewed — shown until the first review exists */
-.ritualPreview { margin-top: 10px; }
-.ritualPreviewRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--ink3);
-  padding: 5px 0;
-}
-.ritualPreviewNum {
-  font-size: 10px;
-  color: var(--nour-text);
-  width: 14px;
-  flex: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .skeletonBar { animation: none; }
-}
 
 /* desktop tier: center the screen at a comfortable reading width */
 @media (min-width: 1024px) {
