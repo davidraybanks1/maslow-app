@@ -17,6 +17,7 @@ import Settings from './screens/Settings'
 import HamburgerMenu from './components/HamburgerMenu'
 import AppHeader from './components/AppHeader'
 import DesktopNav from './components/DesktopNav'
+import TabBar from './components/TabBar'
 import UpdateToast from './components/UpdateToast'
 import styles from './App.module.css'
 
@@ -105,11 +106,11 @@ function AppInner() {
   return (
     <HeaderSlotContext.Provider value={setHeaderSlot}>
     <div className={styles.shell}>
-      {state.onboarded && <DesktopNav />}
+      {state.onboarded && <DesktopNav name={state.profile.name} email={state.email} />}
       <div className={styles.column}>
       {state.onboarded && (
         <div className={styles.appHeader}>
-          <AppHeader onMenuOpen={() => setMenuOpen(true)} slot={headerSlot} />
+          <AppHeader onMenuOpen={() => setMenuOpen(true)} slot={headerSlot} name={state.profile.name} email={state.email} />
         </div>
       )}
       <div className={styles.content}>
@@ -129,6 +130,7 @@ function AppInner() {
         </Routes>
       </div>
       </div>
+      {state.onboarded && <TabBar />}
       {menuOpen && <HamburgerMenu onClose={closeMenu} isClosing={menuClosing} />}
     </div>
     </HeaderSlotContext.Provider>

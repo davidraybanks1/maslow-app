@@ -1,20 +1,18 @@
 import { NavLink } from 'react-router-dom'
 import styles from './DesktopNav.module.css'
 import BrandMark from './BrandMark'
+import ProfileMenu from './ProfileMenu'
 
-/* Persistent sidebar for ≥1024px viewports. Hidden entirely on mobile —
-   the phone experience (black header + hamburger) is untouched. */
+/* Persistent sidebar for ≥1024px viewports. */
 
 const ITEMS = [
-  ['/today', 'Today'],
-  ['/canvas', 'Canvas'],
-  ['/data', 'Data'],
-  ['/log', 'Weekly Review'],
-  ['/debriefs', 'Debriefs'],
+  ['/today', 'today'],
+  ['/canvas', 'canvas'],
+  ['/data', 'data'],
+  ['/log', 'review'],
 ]
 
-
-export default function DesktopNav() {
+export default function DesktopNav({ name, email }) {
   const linkClass = ({ isActive }) => `${styles.item} ${isActive ? styles.itemActive : ''}`
   return (
     <aside className={styles.nav} aria-label="Primary">
@@ -23,12 +21,11 @@ export default function DesktopNav() {
       </div>
       <nav className={styles.items}>
         {ITEMS.map(([to, label]) => (
-          <NavLink key={to} to={to} className={linkClass}>{label.toLowerCase()}</NavLink>
+          <NavLink key={to} to={to} className={linkClass}>{label}</NavLink>
         ))}
       </nav>
       <div className={styles.footer}>
-        <NavLink to="/settings" className={linkClass}>settings</NavLink>
-        <div className={styles.version}>v1.0</div>
+        <ProfileMenu name={name} email={email} dropUp />
       </div>
     </aside>
   )

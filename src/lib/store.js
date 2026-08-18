@@ -97,6 +97,7 @@ function migrateState(saved) {
       checkins: {},
       moods: [],
       profile: saved.profile || { name: '' },
+      email: saved.email || '',
     }
   }
 }
@@ -115,6 +116,7 @@ export function initialState() {
     moods: [],
     noteDeck: [],
     profile: { name: '' },
+    email: '',
     showNoteToSelf: true,
     reviewDay: 0,
     reviewTime: '10:00',
@@ -176,6 +178,7 @@ async function restoreFromSupabase(userId, email) {
       moods,
       noteDeck: noteDeck || [],
       profile: { name: user.name || '' },
+      email: email,
       onboardedAt: user.onboarded_at || null,
       showNoteToSelf: user.show_note_to_self !== false,
       reviewDay: user.review_day ?? 0,

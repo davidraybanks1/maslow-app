@@ -45,14 +45,6 @@
   }
   .footer {
     margin-top: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-  .version {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    color: var(--ink4);
-    padding: 10px;
+    padding: 8px 0;
   }
 }
