@@ -1,5 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -169,6 +169,7 @@ const STREAK_LINES = {
 
 export default function Today({ state, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood }) {
   const navigate = useNavigate()
+  const location = useLocation()
   const today = todayKey()
   const checked = state.checkins[today] || []
   const slot = currentSlot()
@@ -247,6 +248,14 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   const [composerUploading, setComposerUploading] = useState(false)
   const [composerError, setComposerError] = useState(null)
   const fileInputRef = useRef(null)
+
+  // Open manage deck when navigated here from profile sheet
+  useEffect(() => {
+    if (location.state?.openDeck) {
+      openManageDeck()
+      navigate(location.pathname, { replace: true, state: {} })
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   function loadDeck() {
     if (!state.userId) { console.error('[loadDeck] called without userId — session may be invalid'); return }

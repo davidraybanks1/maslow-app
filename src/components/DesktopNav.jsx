@@ -11,7 +11,7 @@ const ITEMS = [
   ['/log', 'review'],
 ]
 
-export default function DesktopNav({ name, email }) {
+export default function DesktopNav({ name, email, reviewCadence, updateReviewCadence }) {
   const linkClass = ({ isActive }) => `${styles.item} ${isActive ? styles.itemActive : ''}`
   return (
     <aside className={styles.nav} aria-label="Primary">
@@ -24,7 +24,7 @@ export default function DesktopNav({ name, email }) {
         ))}
       </nav>
       <div className={styles.footer}>
-        <ProfileMenu name={name} email={email} dropUp />
+        <ProfileMenu name={name} email={email} reviewCadence={reviewCadence} updateReviewCadence={updateReviewCadence} dropUp />
       </div>
     </aside>
   )

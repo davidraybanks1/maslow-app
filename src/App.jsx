@@ -98,11 +98,11 @@ function AppInner() {
   return (
     <HeaderSlotContext.Provider value={setHeaderSlot}>
     <div className={styles.shell}>
-      {state.onboarded && <DesktopNav name={state.profile.name} email={state.email} />}
+      {state.onboarded && <DesktopNav name={state.profile.name} email={state.email} reviewCadence={state.reviewCadence} updateReviewCadence={updateReviewCadence} />}
       <div className={styles.column}>
       {state.onboarded && (
         <div className={styles.appHeader}>
-          <AppHeader slot={headerSlot} name={state.profile.name} email={state.email} />
+          <AppHeader slot={headerSlot} name={state.profile.name} email={state.email} reviewCadence={state.reviewCadence} updateReviewCadence={updateReviewCadence} />
         </div>
       )}
       <div className={styles.content}>
