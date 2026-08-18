@@ -19,20 +19,3 @@
   gap: 10px;
 }
 
-.menuBtn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.menuBtn div {
-  width: 22px;
-  height: 1.5px;
-  background: var(--ink);
-  border-radius: 1px;
-}

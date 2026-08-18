@@ -696,10 +696,6 @@ export default function Log({ state }) {
 
   return (
     <div className={styles.screen}>
-      <div className={styles.header}>
-        <div className={styles.title}>review.</div>
-        <div className={styles.sub}>your review and daily log.</div>
-      </div>
       <div className={styles.content}>
         {justFinished && (
           <div className={styles.completeBanner}>

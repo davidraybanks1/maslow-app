@@ -188,11 +188,6 @@ export default function Debriefs({ state }) {
 
   return (
     <div className={styles.screen}>
-      <div className={styles.header}>
-        <div className={styles.title}>your debriefs.</div>
-        <div className={styles.sub}>revisit your debriefs or modify the attributes you associate with them.</div>
-      </div>
-
       <div className={styles.list}>
         <button className={styles.newBtn} onClick={() => setNewStep('choose')}>
           <span className={styles.newBtnLabel}>→ new debrief</span>

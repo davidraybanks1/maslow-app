@@ -1,7 +1,4 @@
-.screen { display: flex; flex-direction: column; min-height: 100vh; background: var(--bg2); padding: 0 16px 32px; }
-
-.header { padding: 20px 0 16px; }
-.title { font-family: var(--font-serif); font-size: 26px; font-weight: 400; letter-spacing: -0.01em; color: var(--ink); }
+.screen { display: flex; flex-direction: column; min-height: 100vh; background: var(--bg2); padding: 20px 16px 32px; }
 
 .card {
   background: var(--bg);

@@ -14,7 +14,6 @@ import SignIn from './screens/SignIn'
 import ComingSoon from './screens/ComingSoon'
 import UpdatePassword from './screens/UpdatePassword'
 import Settings from './screens/Settings'
-import HamburgerMenu from './components/HamburgerMenu'
 import AppHeader from './components/AppHeader'
 import DesktopNav from './components/DesktopNav'
 import TabBar from './components/TabBar'
@@ -51,13 +50,7 @@ const LOADER_FADE_MS = 350 // matches --motion-page
 
 function AppInner() {
   const navigate = useNavigate()
-  const [menuOpen, setMenuOpen] = useState(false)
   const [headerSlot, setHeaderSlot] = useState(null)
-  const [menuClosing, setMenuClosing] = useState(false)
-  function closeMenu() {
-    setMenuClosing(true)
-    setTimeout(() => { setMenuOpen(false); setMenuClosing(false) }, 200)
-  }
 
   // Ritual timer: loader never dismisses before RITUAL_MS, even on instant init
   const [ritualElapsed, setRitualElapsed] = useState(false)
@@ -110,7 +103,7 @@ function AppInner() {
       <div className={styles.column}>
       {state.onboarded && (
         <div className={styles.appHeader}>
-          <AppHeader onMenuOpen={() => setMenuOpen(true)} slot={headerSlot} name={state.profile.name} email={state.email} />
+          <AppHeader slot={headerSlot} name={state.profile.name} email={state.email} />
         </div>
       )}
       <div className={styles.content}>
@@ -131,7 +124,6 @@ function AppInner() {
       </div>
       </div>
       {state.onboarded && <TabBar />}
-      {menuOpen && <HamburgerMenu onClose={closeMenu} isClosing={menuClosing} />}
     </div>
     </HeaderSlotContext.Provider>
   )

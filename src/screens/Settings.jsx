@@ -26,10 +26,6 @@ export default function Settings({ state, updateShowNoteToSelf, updateReviewSche
 
   return (
     <div className={styles.screen}>
-      <div className={styles.header}>
-        <div className={styles.title}>settings</div>
-      </div>
-
       <div className={styles.card}>
         <div className={styles.toggleRow}>
           <div className={styles.toggleLabels}>
