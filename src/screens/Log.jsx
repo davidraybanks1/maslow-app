@@ -1130,7 +1130,7 @@ export default function Log({ state }) {
                       : 'add a state to this entry'
 
                     return (
-                      <div key={e.id} className={styles.archiveCard}>
+                      <div key={e.id} className={`${styles.archiveRow}${isTagging ? ` ${styles.archiveRowOpen}` : ''}`}>
                         <button className={styles.archiveCardInner} onClick={toggleExpand}>
                           <span className={styles.archiveCardMeta}>
                             {dotColor && <span className={styles.archiveCardDot} style={{ background: dotColor }} />}
@@ -1172,13 +1172,12 @@ export default function Log({ state }) {
                       </div>
                     )
                   })}
+                {filtered.length > archiveVisible && (
+                  <button className={styles.archiveLoadMore} onClick={() => setArchiveVisible(v => v + ARCHIVE_PAGE_SIZE)}>
+                    show more · {filtered.length - archiveVisible} remaining
+                  </button>
+                )}
               </div>
-
-              {filtered.length > archiveVisible && (
-                <button className={styles.archiveLoadMore} onClick={() => setArchiveVisible(v => v + ARCHIVE_PAGE_SIZE)}>
-                  show more · {filtered.length - archiveVisible} remaining
-                </button>
-              )}
             </div>
           )
         })()}
