@@ -84,6 +84,12 @@ const MONTHS_LONG = ['january','february','march','april','may','june','july','a
 const MONTHS_SHORT = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec']
 
 const MOOD_DOT_COLOR = { good: '#1C3A2E', fine: '#9DB394', bad: '#E4472B' }
+const MODE_DOT_TOKEN = {
+  exploration:  'var(--exploration)',
+  appreciation: 'var(--appreciation-deep)',
+  nourishment:  'var(--nourishment)',
+  survival:     'var(--survival)',
+}
 const ARCHIVE_SLOTS = ['morning', 'midday', 'evening']
 const ARCHIVE_STATES = [...BUILTIN_NATURE_TYPES, ...BUILTIN_PEAK_TYPES].map(t => t.name)
 const ARCHIVE_PAGE_SIZE = 15
@@ -975,7 +981,7 @@ export default function Log({ state }) {
                   const isThin = matches.length < 8
                   const isInert = matches.length === 0
                   const modeName = thread.predicate.need ? (state.canvas?.[thread.predicate.need] || null) : null
-                  const dotColor = modeName ? `var(--${modeName}-deep)` : 'var(--ink)'
+                  const dotColor = modeName ? (MODE_DOT_TOKEN[modeName] || 'var(--ink)') : 'var(--ink)'
                   return (
                     <button
                       key={thread.id}
