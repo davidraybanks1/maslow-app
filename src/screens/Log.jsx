@@ -495,12 +495,16 @@ export default function Log({ state }) {
   })
 
   const [archiveEntries, setArchiveEntries] = useState([])
+  const [archiveLoaded, setArchiveLoaded] = useState(false)
   const [filterSlot, setFilterSlot] = useState(null)
   const [filterNeed, setFilterNeed] = useState(null)
   const [filterState, setFilterState] = useState(null)
   const [archiveVisible, setArchiveVisible] = useState(ARCHIVE_PAGE_SIZE)
   const [expandedEntries, setExpandedEntries] = useState(new Set())
   const [taggingEntryId, setTaggingEntryId] = useState(null)
+
+  const [resurfacePool, setResurfacePool] = useState([])
+  const [resurfaceIdx, setResurfaceIdx] = useState(0)
 
   const stats = createDataStats({ canvas: state.canvas || {}, checkins: state.checkins || {}, moods: state.moods || [], practices: state.practices || {} })
 
@@ -525,8 +529,30 @@ export default function Log({ state }) {
 
   useEffect(() => {
     if (!state.userId) return
-    loadJournalArchive(state.userId).then(setArchiveEntries)
+    loadJournalArchive(state.userId).then(data => {
+      setArchiveEntries(data)
+      setArchiveLoaded(true)
+    })
   }, [state.userId])
+
+  useEffect(() => {
+    if (!archiveLoaded || archiveEntries.length < 10) { setResurfacePool([]); return }
+    const today = new Date(); today.setHours(12, 0, 0, 0)
+    const oldest = archiveEntries[archiveEntries.length - 1]
+    const journalAge = Math.round((today - new Date(oldest.date_key + 'T12:00:00')) / 86400000)
+    const exclusionDays = Math.max(25, Math.floor(journalAge / 2))
+    const eligible = archiveEntries.filter(e => {
+      const age = Math.round((today - new Date(e.date_key + 'T12:00:00')) / 86400000)
+      return age >= exclusionDays && (e.entry || '').trim().length > 0
+    })
+    const pool = [...eligible]
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[pool[i], pool[j]] = [pool[j], pool[i]]
+    }
+    setResurfacePool(pool)
+    setResurfaceIdx(0)
+  }, [archiveEntries, archiveLoaded])
 
   async function handleRetroTag(entryId, { needId, stateName }) {
     const { error } = await updateJournalEntryTags(entryId, { needId, stateName })
@@ -825,6 +851,37 @@ export default function Log({ state }) {
             <span className={styles.ritualQuietStart}>start early →</span>
           </button>
         )}
+
+        {/* ── Resurfacing ── */}
+        {archiveLoaded && archiveEntries.length > 0 && archiveEntries.length < 10 && (
+          <div className={styles.resurfaceSection}>
+            <div className={styles.resurfaceSectionLabel}>from your past</div>
+            <div className={styles.resurfaceGrowth}>keep writing — your past will start speaking back soon.</div>
+          </div>
+        )}
+        {archiveLoaded && resurfacePool.length > 0 && (() => {
+          const entry = resurfacePool[resurfaceIdx % resurfacePool.length]
+          const today = new Date(); today.setHours(12, 0, 0, 0)
+          const age = Math.round((today - new Date(entry.date_key + 'T12:00:00')) / 86400000)
+          const frameLine = `${formatArchiveDate(entry.date_key)}${entry.slot ? ` · ${entry.slot}` : ''}`
+          return (
+            <div className={styles.resurfaceSection}>
+              <div className={styles.resurfaceSectionLabel}>from your past</div>
+              <div className={styles.resurfaceCard}>
+                <div className={styles.resurfaceLine}>{frameLine}</div>
+                <p className={styles.resurfaceBody}>{entry.entry}</p>
+                <div className={styles.resurfaceFooter}>
+                  <button
+                    className={styles.resurfaceAnotherBtn}
+                    onClick={() => setResurfaceIdx(i => (i + 1) % resurfacePool.length)}
+                  >another one</button>
+                  <span className={styles.resurfaceFooterSpacer} />
+                  <span className={styles.resurfaceWhy}>{age} days ago</span>
+                </div>
+              </div>
+            </div>
+          )
+        })()}
 
         {/* ── Archive ── */}
         {(() => {
