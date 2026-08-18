@@ -1041,6 +1041,18 @@
   white-space: pre-wrap;
   word-break: break-word;
 }
+.journalReadMore {
+  display: inline-block;
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--ink3);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
 
 /* ── Journal entry count: chrome register ── */
 .journalEntryCount {

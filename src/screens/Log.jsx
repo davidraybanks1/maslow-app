@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { NEEDS, MODE_MAX_BUBBLES } from '../lib/constants'
+import { NEEDS, MODE_MAX_BUBBLES, JOURNAL_TRUNCATE } from '../lib/constants'
 import { weekKey, loadJournalEntry, loadDebriefs, loadDebriefTypes, addNoteDeckCard, saveWeeklyReview, loadWeeklyReviews, loadUserCreatedAt, loadAllJournalMeta, loadJournalArchive } from '../lib/store'
 import { createDataStats } from '../lib/dataStats'
 import { BUILTIN_NATURE_TYPES, BUILTIN_PEAK_TYPES, natureTagStyle, peakTagStyle, ENVIRONMENT_TAG_STYLE, parseDebriefEntry } from '../lib/debriefTypes'
@@ -98,15 +98,24 @@ function formatEntryTime(createdAt) {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
-function archiveHeaderText(filteredCount, total, filterSlot, filterNeed, filterState) {
+function archiveHeaderText(filteredEntries, total, filterSlot, filterNeed, filterState) {
   if (!filterSlot && !filterNeed && !filterState) {
     return `all ${total} ${total === 1 ? 'entry' : 'entries'}, newest first.`
   }
-  const parts = []
-  if (filterSlot) parts.push(filterSlot)
-  if (filterNeed) parts.push(NEEDS.find(n => n.id === filterNeed)?.name || filterNeed)
-  if (filterState) parts.push(filterState)
-  return `${filteredCount} ${filteredCount === 1 ? 'entry' : 'entries'} tagged with ${parts.join(' and ')}.`
+  const n = filteredEntries.length
+  const stateCounts = {}
+  for (const e of filteredEntries) if (e.state) stateCounts[e.state] = (stateCounts[e.state] || 0) + 1
+  const topState = Object.entries(stateCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || null
+  let daysBack = null
+  if (n > 0) {
+    const oldest = filteredEntries[filteredEntries.length - 1]
+    const today = new Date(); today.setHours(12, 0, 0, 0)
+    daysBack = Math.round((today - new Date(oldest.date_key + 'T12:00:00')) / 86400000)
+  }
+  let text = `${n} ${n === 1 ? 'entry' : 'entries'}`
+  if (topState) text += ` · mostly ${topState}`
+  if (daysBack !== null) text += ` · back to ${daysBack}d ago`
+  return text
 }
 
 function ritualMetaLine(cadence) {
@@ -807,9 +816,6 @@ export default function Log({ state }) {
           const slotCounts = Object.fromEntries(ARCHIVE_SLOTS.map(s => [s, archiveEntries.filter(e => e.slot === s).length]))
           const needCounts = Object.fromEntries(NEEDS.map(n => [n.id, archiveEntries.filter(e => e.need_id === n.id).length]))
           const stateCounts = Object.fromEntries(ARCHIVE_STATES.map(s => [s, archiveEntries.filter(e => e.state === s).length]))
-          const activeNeeds = NEEDS.filter(n => needCounts[n.id] > 0)
-          const activeStates = ARCHIVE_STATES.filter(s => stateCounts[s] > 0)
-
           const filtered = archiveEntries.filter(e => {
             if (filterSlot && e.slot !== filterSlot) return false
             if (filterNeed && e.need_id !== filterNeed) return false
@@ -836,41 +842,39 @@ export default function Log({ state }) {
                     </button>
                   ))}
                 </div>
-                {/* need row */}
-                {activeNeeds.length > 0 && (
-                  <div className={styles.facetRow}>
-                    {activeNeeds.map(n => (
-                      <button
-                        key={n.id}
-                        className={`${styles.facetChip} ${filterNeed === n.id ? styles.facetChipActive : ''}`}
-                        onClick={() => { setFilterNeed(v => v === n.id ? null : n.id); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}
-                      >
-                        {n.name}<span className={styles.facetCount}>{needCounts[n.id]}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-                {/* state row */}
-                {activeStates.length > 0 && (
-                  <div className={styles.facetRow}>
-                    {activeStates.map(s => (
-                      <button
-                        key={s}
-                        className={`${styles.facetChip} ${filterState === s ? styles.facetChipActive : ''}`}
-                        onClick={() => { setFilterState(v => v === s ? null : s); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}
-                      >
-                        {s}<span className={styles.facetCount}>{stateCounts[s]}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
+                {/* need row — full canvas vocabulary */}
+                <div className={styles.facetRow}>
+                  {NEEDS.map(n => (
+                    <button
+                      key={n.id}
+                      className={`${styles.facetChip} ${filterNeed === n.id ? styles.facetChipActive : ''}`}
+                      style={needCounts[n.id] === 0 ? { opacity: 0.4 } : undefined}
+                      onClick={() => { setFilterNeed(v => v === n.id ? null : n.id); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}
+                    >
+                      {n.name}<span className={styles.facetCount}>{needCounts[n.id]}</span>
+                    </button>
+                  ))}
+                </div>
+                {/* state row — full state vocabulary */}
+                <div className={styles.facetRow}>
+                  {ARCHIVE_STATES.map(s => (
+                    <button
+                      key={s}
+                      className={`${styles.facetChip} ${filterState === s ? styles.facetChipActive : ''}`}
+                      style={stateCounts[s] === 0 ? { opacity: 0.4 } : undefined}
+                      onClick={() => { setFilterState(v => v === s ? null : s); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}
+                    >
+                      {s}<span className={styles.facetCount}>{stateCounts[s]}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className={styles.archiveHeader}>
                 <span className={styles.archiveHeaderText}>
                   {archiveEntries.length === 0
                     ? 'no entries yet.'
-                    : archiveHeaderText(filtered.length, archiveEntries.length, filterSlot, filterNeed, filterState)}
+                    : archiveHeaderText(filtered, archiveEntries.length, filterSlot, filterNeed, filterState)}
                 </span>
                 {anyFilter && (
                   <button className={styles.archiveClearBtn} onClick={() => { setFilterSlot(null); setFilterNeed(null); setFilterState(null); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}>clear</button>
@@ -879,13 +883,14 @@ export default function Log({ state }) {
 
               <div className={styles.archiveCards}>
                 {visible.map(e => {
-                  const mood = dominantMoodForDay(state.moods || [], e.date_key)
-                  const dotColor = MOOD_DOT_COLOR[mood] || 'rgba(0,0,0,.15)'
+                  const slotMood = (e.slot && !e.state)
+                    ? ((state.moods || []).find(m => m.date_key === e.date_key && m.prompt_time === e.slot)?.mood || null)
+                    : null
+                  const dotColor = slotMood ? MOOD_DOT_COLOR[slotMood] : null
                   const body = e.entry || ''
                   const isExpanded = expandedEntries.has(e.id)
-                  const TRUNCATE = 200
-                  const isTruncatable = body.length > TRUNCATE
-                  const displayBody = !isExpanded && isTruncatable ? body.slice(0, TRUNCATE).trimEnd() + '…' : body
+                  const isTruncatable = body.length > JOURNAL_TRUNCATE
+                  const displayBody = !isExpanded && isTruncatable ? body.slice(0, JOURNAL_TRUNCATE).trimEnd() + '…' : body
                   const needName = e.need_id ? (NEEDS.find(n => n.id === e.need_id)?.name || e.need_id) : null
                   const toggleExpand = () => setExpandedEntries(prev => {
                     const next = new Set(prev)
@@ -897,7 +902,7 @@ export default function Log({ state }) {
                     <div key={e.id} className={styles.archiveCard}>
                       <button className={styles.archiveCardInner} onClick={toggleExpand}>
                         <span className={styles.archiveCardMeta}>
-                          <span className={styles.archiveCardDot} style={{ background: dotColor }} />
+                          {dotColor && <span className={styles.archiveCardDot} style={{ background: dotColor }} />}
                           <span className={styles.archiveCardDateSlot}>{formatArchiveDate(e.date_key)}{e.slot ? ` · ${e.slot}` : ''}</span>
                           <span className={styles.archiveCardTime}>{formatEntryTime(e.created_at)}</span>
                         </span>

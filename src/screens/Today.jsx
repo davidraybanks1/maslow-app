@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { NEEDS, MODES, MODE_ORDER, MODE_MAX_BUBBLES, MODE_WEIGHTS } from '../lib/constants'
+import { NEEDS, MODES, MODE_ORDER, MODE_MAX_BUBBLES, MODE_WEIGHTS, JOURNAL_TRUNCATE } from '../lib/constants'
 import { currentSlot, precedingSlots, SLOT_NOUN } from '../lib/slots'
 import { todayKey, loadJournalEntries, addJournalEntry, deleteJournalEntry, loadNoteDeck, addNoteDeckCard, updateNoteDeckCard, deleteNoteDeckCard, uploadNoteImage, reorderNoteDeck, loadNoteHistory } from '../lib/store'
 import { BUILTIN_NATURE_TYPES, BUILTIN_PEAK_TYPES } from '../lib/debriefTypes'
@@ -355,6 +355,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
 
   const [journalEntries, setJournalEntries] = useState([])
   const [journalSaveError, setJournalSaveError] = useState(null)
+  const [expandedTodayEntries, setExpandedTodayEntries] = useState(() => new Set())
   const [draftText, setDraftText] = useState('')
   const [draftNeedId, setDraftNeedId] = useState(null)
   const [draftState, setDraftState] = useState(null)
@@ -762,7 +763,19 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                       {e.need_id && <span className={styles.journalNeedTag}>{e.need_id}</span>}
                       <button className={styles.journalEntryDelete} onClick={() => handleDeleteEntry(e.id)} aria-label="delete entry">×</button>
                     </div>
-                    <div className={styles.journalEntryText}>{e.entry}</div>
+                    {(() => {
+                      const body = e.entry || ''
+                      const isExp = expandedTodayEntries.has(e.id)
+                      const trunc = body.length > JOURNAL_TRUNCATE
+                      const display = !isExp && trunc ? body.slice(0, JOURNAL_TRUNCATE).trimEnd() + '…' : body
+                      const toggle = () => setExpandedTodayEntries(prev => { const s = new Set(prev); isExp ? s.delete(e.id) : s.add(e.id); return s })
+                      return (
+                        <>
+                          <div className={styles.journalEntryText}>{display}</div>
+                          {!isExp && trunc && <button className={styles.journalReadMore} onClick={toggle}>read more</button>}
+                        </>
+                      )
+                    })()}
                   </div>
                 ))}
               </div>
@@ -824,7 +837,19 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                         {e.need_id && <span className={styles.journalNeedTag}>{e.need_id}</span>}
                         <button className={styles.journalEntryDelete} onClick={() => handleDeleteEntry(e.id)} aria-label="delete entry">×</button>
                       </div>
-                      <div className={styles.journalEntryText}>{e.entry}</div>
+                      {(() => {
+                      const body = e.entry || ''
+                      const isExp = expandedTodayEntries.has(e.id)
+                      const trunc = body.length > JOURNAL_TRUNCATE
+                      const display = !isExp && trunc ? body.slice(0, JOURNAL_TRUNCATE).trimEnd() + '…' : body
+                      const toggle = () => setExpandedTodayEntries(prev => { const s = new Set(prev); isExp ? s.delete(e.id) : s.add(e.id); return s })
+                      return (
+                        <>
+                          <div className={styles.journalEntryText}>{display}</div>
+                          {!isExp && trunc && <button className={styles.journalReadMore} onClick={toggle}>read more</button>}
+                        </>
+                      )
+                    })()}
                     </div>
                   ))}
                 </div>
