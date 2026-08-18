@@ -1,32 +1,36 @@
-.screen { display: flex; flex-direction: column; min-height: 100%; background: var(--bg2); }
+.screen { display: flex; flex-direction: column; min-height: 100%; background: var(--paper); }
 
 .header { padding: 20px 16px 16px; }
 .eyebrowRow { display: flex; align-items: center; justify-content: flex-end; margin-bottom: 6px; }
 .editToggle { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink3); background: none; border: none; cursor: pointer; padding: 0; -webkit-tap-highlight-color: transparent; }
 .editToggle:hover { color: var(--ink); }
-.title { font-family: var(--font-serif); font-size: 26px; font-weight: 400; letter-spacing: -0.01em; color: var(--ink); }
-.sub { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink3); margin-top: 6px; }
+.title { font-family: var(--font-serif); font-size: 26px; font-weight: 300; letter-spacing: -0.01em; color: var(--ink); }
+.sub { font-family: var(--font-mono); font-size: 12px; color: var(--ink3); margin-top: 6px; }
 
 .list { flex: 1; overflow-y: auto; padding: 0 16px 32px; }
 .list::-webkit-scrollbar { display: none; }
 
-.needGroup { background: var(--bg); border: 1px solid #D8D3C3; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; 
-  box-shadow: 0 1px 2px rgba(26, 26, 26, 0.05), 0 18px 44px -14px rgba(26, 26, 26, 0.10);
+.needGroup {
+  background: var(--card);
+  border: 0.5px solid var(--hairline);
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin-bottom: 9px;
 }
 
 .needHeader { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
 .needPip { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.needName { font-family: var(--font-serif); font-size: 16px; font-weight: 400; color: var(--ink); letter-spacing: -0.01em; text-transform: lowercase; }
+.needName { font-family: var(--font-serif); font-size: 16px; font-weight: 300; color: var(--ink); letter-spacing: -0.01em; text-transform: lowercase; }
 .needTag { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; color: var(--ink3); margin-left: auto; }
 
 .pool { display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; }
-.poolItem { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(26, 26, 24, 0.07); }
-.poolItem:last-child { border-bottom: none; }
-.poolText { font-family: var(--font-mono); font-size: 13px; font-weight: 200; color: var(--ink2); }
+.poolItem { display: flex; align-items: center; justify-content: space-between; min-height: 38px; padding: 6px 0; border-top: 0.5px solid var(--hairline); }
+.poolItem:first-child { border-top: none; }
+.poolText { font-family: var(--font-serif); font-size: 15px; font-weight: 300; font-style: italic; color: var(--ink); }
 .lastDone { font-family: var(--font-mono); font-size: 11px; color: var(--ink3); flex-shrink: 0; }
 .archiveBtn { background: none; border: none; font-family: var(--font-mono); font-size: 11px; color: var(--ink3); cursor: pointer; padding: 0 4px; flex-shrink: 0; }
 .archiveBtn:hover { color: var(--ink2); }
-.renameInput { flex: 1; padding: 4px 8px; border-radius: 6px; border: 0.5px solid var(--border2); background: var(--bg2); font-family: var(--font-mono); font-size: 13px; font-weight: 200; color: var(--ink); outline: none; }
+.renameInput { flex: 1; padding: 4px 8px; border-radius: 6px; border: 0.5px solid var(--hairline); background: var(--paper); font-family: var(--font-serif); font-size: 15px; font-weight: 300; font-style: italic; color: var(--ink); outline: none; }
 .renameInput:focus { border-color: var(--ink2); }
 .saveBtn { background: none; border: none; font-family: var(--font-mono); font-size: 11px; color: var(--ink2); cursor: pointer; padding: 0 4px; flex-shrink: 0; }
 
@@ -36,11 +40,11 @@
 .addToggle:hover { color: var(--ink2); }
 
 .addRow { display: flex; gap: 8px; padding-top: 4px; }
-.addInput { flex: 1; padding: 10px 12px; border-radius: 8px; border: 0.5px solid var(--border); background: var(--bg2); font-family: var(--font-mono); font-size: 16px; font-weight: 200; color: var(--ink); outline: none; transition: border-color var(--motion-hover); }
+.addInput { flex: 1; padding: 10px 12px; border-radius: 999px; border: 0.5px solid var(--hairline); background: var(--paper); font-family: var(--font-mono); font-size: 16px; color: var(--ink); outline: none; transition: border-color var(--motion-hover); }
 .addInput:focus { border-color: var(--ink2); }
 .addInput::placeholder { color: var(--ink4); }
-.addBtn { padding: 10px 16px; border-radius: 8px; border: 0.5px solid var(--border2); background: var(--bg); font-family: var(--font-mono); font-size: 12px; color: var(--ink); cursor: pointer; white-space: nowrap; transition: background var(--motion-micro); }
-.addBtn:hover:not(:disabled) { background: var(--bg2); }
+.addBtn { padding: 10px 16px; border-radius: 999px; border: 0.5px solid var(--hairline); background: transparent; font-family: var(--font-mono); font-size: 12px; color: var(--ink); cursor: pointer; white-space: nowrap; transition: background var(--motion-micro); }
+.addBtn:hover:not(:disabled) { background: var(--paper); }
 .addBtn:disabled { opacity: 0.35; cursor: not-allowed; }
 
 .maxNote { font-family: var(--font-mono); font-size: 11px; color: var(--ink4); padding-top: 8px; }
@@ -54,8 +58,8 @@
   right: 0;
   padding: 12px 16px;
   padding-bottom: max(12px, env(safe-area-inset-bottom));
-  background: var(--bg2);
-  border-top: 0.5px solid var(--border);
+  background: var(--paper);
+  border-top: 0.5px solid var(--hairline);
   z-index: 10;
 }
 
@@ -66,7 +70,7 @@
   background: var(--nourishment);
   color: var(--ink);
   border: none;
-  border-radius: 10px;
+  border-radius: 999px;
   font-family: var(--font-mono);
   font-size: 13px;
   cursor: pointer;
@@ -86,8 +90,8 @@
 }
 .starterChips { display: flex; flex-wrap: wrap; gap: 8px; }
 .starterChip {
-  border: 1px dashed var(--border2);
-  background: #FAF8F1;
+  border: 1px dashed var(--hairline);
+  background: var(--card);
   border-radius: 999px;
   padding: 7px 13px;
   font-family: var(--font-mono);
