@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { NEEDS, MODE_MAX_BUBBLES, JOURNAL_TRUNCATE } from '../lib/constants'
-import { weekKey, loadJournalEntry, loadDebriefs, loadDebriefTypes, addNoteDeckCard, saveWeeklyReview, loadWeeklyReviews, loadUserCreatedAt, loadAllJournalMeta, loadJournalArchive } from '../lib/store'
+import { weekKey, loadJournalEntry, loadDebriefs, loadDebriefTypes, addNoteDeckCard, saveWeeklyReview, loadWeeklyReviews, loadUserCreatedAt, loadAllJournalMeta, loadJournalArchive, updateJournalEntryTags } from '../lib/store'
 import { createDataStats } from '../lib/dataStats'
 import { BUILTIN_NATURE_TYPES, BUILTIN_PEAK_TYPES, natureTagStyle, peakTagStyle, ENVIRONMENT_TAG_STYLE, parseDebriefEntry } from '../lib/debriefTypes'
 import LiveCanvasCard from '../components/LiveCanvasCard'
@@ -500,6 +500,7 @@ export default function Log({ state }) {
   const [filterState, setFilterState] = useState(null)
   const [archiveVisible, setArchiveVisible] = useState(ARCHIVE_PAGE_SIZE)
   const [expandedEntries, setExpandedEntries] = useState(new Set())
+  const [taggingEntryId, setTaggingEntryId] = useState(null)
 
   const stats = createDataStats({ canvas: state.canvas || {}, checkins: state.checkins || {}, moods: state.moods || [], practices: state.practices || {} })
 
@@ -526,6 +527,20 @@ export default function Log({ state }) {
     if (!state.userId) return
     loadJournalArchive(state.userId).then(setArchiveEntries)
   }, [state.userId])
+
+  async function handleRetroTag(entryId, { needId, stateName }) {
+    const { error } = await updateJournalEntryTags(entryId, { needId, stateName })
+    if (!error) {
+      const patch = e => e.id !== entryId ? e : {
+        ...e,
+        need_id: needId !== undefined ? needId : e.need_id,
+        state: stateName !== undefined ? stateName : e.state,
+      }
+      setArchiveEntries(prev => prev.map(patch))
+      setJournalMeta(prev => prev.map(patch))
+      setTaggingEntryId(null)
+    }
+  }
 
   async function startReview() {
     setWeeklyMood(null)
@@ -882,43 +897,83 @@ export default function Log({ state }) {
               </div>
 
               <div className={styles.archiveCards}>
-                {visible.map(e => {
-                  const slotMood = (e.slot && !e.state)
-                    ? ((state.moods || []).find(m => m.date_key === e.date_key && m.prompt_time === e.slot)?.mood || null)
-                    : null
-                  const dotColor = slotMood ? MOOD_DOT_COLOR[slotMood] : null
-                  const body = e.entry || ''
-                  const isExpanded = expandedEntries.has(e.id)
-                  const isTruncatable = body.length > JOURNAL_TRUNCATE
-                  const displayBody = !isExpanded && isTruncatable ? body.slice(0, JOURNAL_TRUNCATE).trimEnd() + '…' : body
-                  const needName = e.need_id ? (NEEDS.find(n => n.id === e.need_id)?.name || e.need_id) : null
-                  const toggleExpand = () => setExpandedEntries(prev => {
-                    const next = new Set(prev)
-                    next.has(e.id) ? next.delete(e.id) : next.add(e.id)
-                    return next
-                  })
+                {(() => {
+                  const canvasNeeds = NEEDS.filter(n => state.canvas?.[n.id])
+                  const needOptions = canvasNeeds.length > 0 ? canvasNeeds : NEEDS
+                  const allStateTypes = [...BUILTIN_NATURE_TYPES, ...BUILTIN_PEAK_TYPES]
 
-                  return (
-                    <div key={e.id} className={styles.archiveCard}>
-                      <button className={styles.archiveCardInner} onClick={toggleExpand}>
-                        <span className={styles.archiveCardMeta}>
-                          {dotColor && <span className={styles.archiveCardDot} style={{ background: dotColor }} />}
-                          <span className={styles.archiveCardDateSlot}>{formatArchiveDate(e.date_key)}{e.slot ? ` · ${e.slot}` : ''}</span>
-                          <span className={styles.archiveCardTime}>{formatEntryTime(e.created_at)}</span>
+                  return visible.map(e => {
+                    const slotMood = (e.slot && !e.state)
+                      ? ((state.moods || []).find(m => m.date_key === e.date_key && m.prompt_time === e.slot)?.mood || null)
+                      : null
+                    const dotColor = slotMood ? MOOD_DOT_COLOR[slotMood] : null
+                    const body = e.entry || ''
+                    const isExpanded = expandedEntries.has(e.id)
+                    const isTruncatable = body.length > JOURNAL_TRUNCATE
+                    const displayBody = !isExpanded && isTruncatable ? body.slice(0, JOURNAL_TRUNCATE).trimEnd() + '…' : body
+                    const needName = e.need_id ? (NEEDS.find(n => n.id === e.need_id)?.name || e.need_id) : null
+                    const missingNeed = !e.need_id
+                    const missingState = !e.state
+                    const isTagging = taggingEntryId === e.id
+                    const toggleExpand = () => setExpandedEntries(prev => {
+                      const next = new Set(prev)
+                      next.has(e.id) ? next.delete(e.id) : next.add(e.id)
+                      return next
+                    })
+                    const panelLabel = missingNeed && missingState
+                      ? 'add a tag — this entry has no need or state yet'
+                      : missingNeed ? 'add a need to this entry'
+                      : 'add a state to this entry'
+
+                    return (
+                      <div key={e.id} className={styles.archiveCard}>
+                        <button className={styles.archiveCardInner} onClick={toggleExpand}>
+                          <span className={styles.archiveCardMeta}>
+                            {dotColor && <span className={styles.archiveCardDot} style={{ background: dotColor }} />}
+                            <span className={styles.archiveCardDateSlot}>{formatArchiveDate(e.date_key)}{e.slot ? ` · ${e.slot}` : ''}</span>
+                            <span className={styles.archiveCardTime}>{formatEntryTime(e.created_at)}</span>
+                          </span>
+                          <span className={styles.archiveCardBody}>{displayBody}</span>
+                          {!isExpanded && isTruncatable && (
+                            <span className={styles.archiveCardReadMore}>read more</span>
+                          )}
+                        </button>
+                        <span className={styles.archiveCardTags}>
+                          {needName && <span className={styles.archiveTag}>{needName}</span>}
+                          {e.state && <span className={styles.archiveTag}>{e.state}</span>}
+                          {(missingNeed || missingState) && (
+                            <button
+                              className={`${styles.archiveTagBtn} ${isTagging ? styles.archiveTagBtnOpen : ''}`}
+                              onClick={() => setTaggingEntryId(id => id === e.id ? null : e.id)}
+                            >+ tag</button>
+                          )}
                         </span>
-                        <span className={styles.archiveCardBody}>{displayBody}</span>
-                        {!isExpanded && isTruncatable && (
-                          <span className={styles.archiveCardReadMore}>read more</span>
+                        {isTagging && (
+                          <div className={styles.retroTagPanel}>
+                            <div className={styles.retroTagLabel}>{panelLabel}</div>
+                            <div className={styles.retroTagOptions}>
+                              {missingNeed && needOptions.map(n => (
+                                <button key={n.id} className={styles.retroTagOption} onClick={() => handleRetroTag(e.id, { needId: n.id })}>
+                                  {n.name}
+                                </button>
+                              ))}
+                              {missingState && allStateTypes.map(t => (
+                                <button
+                                  key={t.name}
+                                  className={styles.retroTagOption}
+                                  style={{ borderColor: t.bg, color: t.bg }}
+                                  onClick={() => handleRetroTag(e.id, { stateName: t.name })}
+                                >
+                                  {t.name}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
                         )}
-                      </button>
-                      <span className={styles.archiveCardTags}>
-                        {needName && <span className={styles.archiveTag}>{needName}</span>}
-                        {e.state && <span className={styles.archiveTag}>{e.state}</span>}
-                        <button className={styles.archiveTagBtn}>+ tag</button>
-                      </span>
-                    </div>
-                  )
-                })}
+                      </div>
+                    )
+                  })
+                })()}
               </div>
 
               {filtered.length > archiveVisible && (

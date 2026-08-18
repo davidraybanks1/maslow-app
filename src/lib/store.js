@@ -705,6 +705,15 @@ export async function loadJournalArchive(userId) {
   return data || []
 }
 
+export async function updateJournalEntryTags(id, { needId, stateName }) {
+  const updates = {}
+  if (needId !== undefined) updates.need_id = needId
+  if (stateName !== undefined) updates.state = stateName
+  const { error } = await supabase.from('journal').update(updates).eq('id', id)
+  if (error) logSupabaseError('updateJournalEntryTags', error)
+  return { error }
+}
+
 export async function deleteJournalEntry(id) {
   const { error } = await supabase
     .from('journal')
