@@ -5,13 +5,10 @@ import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } 
 import { CSS } from '@dnd-kit/utilities'
 import { NEEDS, MODES, MODE_ORDER, MODE_MAX_BUBBLES, MODE_WEIGHTS } from '../lib/constants'
 import { currentSlot, precedingSlots, SLOT_NOUN } from '../lib/slots'
-import { todayKey, loadJournalEntries, addJournalEntry, deleteJournalEntry, loadDebriefTypes, loadDebriefs, loadNoteDeck, addNoteDeckCard, updateNoteDeckCard, deleteNoteDeckCard, uploadNoteImage, reorderNoteDeck, loadNoteHistory } from '../lib/store'
+import { todayKey, loadJournalEntries, addJournalEntry, deleteJournalEntry, loadNoteDeck, addNoteDeckCard, updateNoteDeckCard, deleteNoteDeckCard, uploadNoteImage, reorderNoteDeck, loadNoteHistory } from '../lib/store'
 import { BUILTIN_NATURE_TYPES, BUILTIN_PEAK_TYPES } from '../lib/debriefTypes'
 import { createDataStats, getCanvasGuidance } from '../lib/dataStats'
 import { hapticTick } from '../lib/native'
-import DebriefForm from '../components/DebriefForm'
-import PeakDebriefForm from '../components/PeakDebriefForm'
-import DesktopModal from '../components/DesktopModal'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import styles from './Today.module.css'
 
@@ -404,41 +401,9 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   }
 
   const isDesktop = useIsDesktop()
-  const [debriefExpanded, setDebriefExpanded] = useState(false)
-  const [peakExpanded, setPeakExpanded] = useState(false)
-  const [debriefDirty, setDebriefDirty] = useState(false)
-  const [peakDirty, setPeakDirty] = useState(false)
-  const [debriefTypes, setDebriefTypes] = useState({ nature: [], environment: [], peak: [] })
-
-  function handleDebriefClose() { setDebriefExpanded(false); setDebriefDirty(false) }
-  function handleDebriefDismiss() {
-    if (debriefDirty && !window.confirm('Discard your debrief?')) return
-    setDebriefExpanded(false); setDebriefDirty(false)
-  }
-  function handlePeakClose() { setPeakExpanded(false); setPeakDirty(false) }
-  function handlePeakDismiss() {
-    if (peakDirty && !window.confirm('Discard your peak debrief?')) return
-    setPeakExpanded(false); setPeakDirty(false)
-  }
-  const [todayDebriefCount, setTodayDebriefCount] = useState(0)
-  const [todayPeakCount, setTodayPeakCount] = useState(0)
   const [justTapped, setJustTapped] = useState(null)
   const [openTier, setOpenTier] = useState(null)
   const [openRetroSlot, setOpenRetroSlot] = useState(null)
-
-  useEffect(() => {
-    if (!state.userId) { console.error('[loadDebriefTypes] called without userId — session may be invalid'); return }
-    loadDebriefTypes(state.userId).then(setDebriefTypes)
-  }, [state.userId])
-
-  useEffect(() => {
-    if (!state.userId) { console.error('[loadDebriefs] called without userId — session may be invalid'); return }
-    loadDebriefs(state.userId).then(debriefs => {
-      const todayDebriefs = debriefs.filter(d => d.date_key === today)
-      setTodayDebriefCount(todayDebriefs.filter(d => !d.type || d.type === 'anxiety').length)
-      setTodayPeakCount(todayDebriefs.filter(d => d.type === 'peak').length)
-    })
-  }, [state.userId])
 
   const [moodSelections, setMoodSelections] = useState(() => {
     const init = {}
@@ -845,18 +810,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 </div>
                 {journalSaveError && <div className={styles.journalSaveError}>{journalSaveError}</div>}
               </div>
-              <div className={styles.debriefPillRow}>
-                <button className={`${styles.debriefPill} ${debriefExpanded ? styles.debriefPillOpen : ''}`} onClick={() => { setDebriefExpanded(e => !e); setPeakExpanded(false) }}>
-                  {todayDebriefCount > 0 && <span className={styles.debriefDot} />}
-                  <span>anxiety debrief</span>
-                  {todayDebriefCount > 0 && <span className={styles.debriefCount}>· {todayDebriefCount}</span>}
-                </button>
-                <button className={`${styles.debriefPill} ${peakExpanded ? styles.debriefPillOpen : ''}`} onClick={() => { setPeakExpanded(e => !e); setDebriefExpanded(false) }}>
-                  {todayPeakCount > 0 && <span className={styles.debriefDot} />}
-                  <span>peak debrief</span>
-                  {todayPeakCount > 0 && <span className={styles.debriefCount}>· {todayPeakCount}</span>}
-                </button>
-              </div>
             </div>
           ) : (
             <>
@@ -925,30 +878,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                   {journalSaveError && <div className={styles.journalSaveError}>{journalSaveError}</div>}
                 </div>
               )}
-              <div className={styles.debriefPillRow}>
-                <button className={`${styles.debriefPill} ${debriefExpanded ? styles.debriefPillOpen : ''}`} onClick={() => { setDebriefExpanded(e => !e); setPeakExpanded(false) }}>
-                  {todayDebriefCount > 0 && <span className={styles.debriefDot} />}
-                  <span>anxiety debrief</span>
-                  {todayDebriefCount > 0 && <span className={styles.debriefCount}>· {todayDebriefCount}</span>}
-                </button>
-                <button className={`${styles.debriefPill} ${peakExpanded ? styles.debriefPillOpen : ''}`} onClick={() => { setPeakExpanded(e => !e); setDebriefExpanded(false) }}>
-                  {todayPeakCount > 0 && <span className={styles.debriefDot} />}
-                  <span>peak debrief</span>
-                  {todayPeakCount > 0 && <span className={styles.debriefCount}>· {todayPeakCount}</span>}
-                </button>
-              </div>
-              {debriefExpanded && (
-                <>
-                  <div className={styles.debriefHairline} />
-                  <DebriefForm userId={state.userId} debriefTypes={debriefTypes} onDirtyChange={setDebriefDirty} onSaved={() => { setDebriefExpanded(false); setDebriefDirty(false); setTodayDebriefCount(c => c + 1) }} />
-                </>
-              )}
-              {peakExpanded && (
-                <>
-                  <div className={styles.debriefHairline} />
-                  <PeakDebriefForm userId={state.userId} debriefTypes={debriefTypes} onDirtyChange={setPeakDirty} onSaved={() => { setPeakExpanded(false); setPeakDirty(false); setTodayPeakCount(c => c + 1) }} />
-                </>
-              )}
             </>
           )}
         </div>
@@ -957,28 +886,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
 
       </div>
     </div>{/* /desktopWrap */}
-
-      {isDesktop && debriefExpanded && (
-        <DesktopModal title="anxiety debrief" onClose={handleDebriefClose} onDismiss={handleDebriefDismiss}>
-          <DebriefForm
-            userId={state.userId}
-            debriefTypes={debriefTypes}
-            onDirtyChange={setDebriefDirty}
-            onSaved={() => { handleDebriefClose(); setTodayDebriefCount(c => c + 1) }}
-          />
-        </DesktopModal>
-      )}
-
-      {isDesktop && peakExpanded && (
-        <DesktopModal title="peak debrief" onClose={handlePeakClose} onDismiss={handlePeakDismiss}>
-          <PeakDebriefForm
-            userId={state.userId}
-            debriefTypes={debriefTypes}
-            onDirtyChange={setPeakDirty}
-            onSaved={() => { handlePeakClose(); setTodayPeakCount(c => c + 1) }}
-          />
-        </DesktopModal>
-      )}
 
       {manageDeckOpen && (
         <div className={`${styles.noteOverlay} ${manageDeckClosing ? styles.noteOverlayClosing : ''}`}>

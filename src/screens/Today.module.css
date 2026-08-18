@@ -1211,34 +1211,6 @@
   margin-top: 4px;
 }
 
-/* ── Anxiety debrief expander ── */
-.debriefToggle {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-  background: none;
-  border: none;
-  padding: 14px 0 0;
-  margin: 0;
-  cursor: pointer;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  color: var(--ink);
-  text-transform: lowercase;
-  text-align: left;
-  -webkit-tap-highlight-color: transparent;
-}
-.debriefToggle:hover { color: var(--ink2); }
-
-.chevron { display: inline-block; font-size: 11px; line-height: 1; transition: transform var(--motion-toggle) ease; transform: rotate(0deg); }
-.chevronOpen { transform: rotate(90deg); }
-
-.debriefDot { width: 6px; height: 6px; border-radius: 50%; background: #1B3A2D; flex-shrink: 0; }
-.debriefCount { color: var(--ink4); }
-
-.debriefHairline { height: 0.5px; background: var(--border); margin: 14px 0; }
 
 /* ── Space-owned bar: today's practices claim space from anxiety's black ── */
 .spaceBar {
@@ -1271,39 +1243,6 @@
 @media (prefers-reduced-motion: reduce) {
   .spaceBarComplete { animation: none; }
 }
-
-/* ── Debrief pills: side by side under the journal ── */
-.debriefPillRow {
-  display: flex;
-  gap: 8px;
-  padding-top: 14px;
-}
-.debriefPill {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 10px 12px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  color: var(--ink2);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: background var(--motion-hover), border-color var(--motion-hover), color var(--motion-hover);
-}
-.debriefPill:hover { border-color: var(--ink3); color: var(--ink); }
-.debriefPill:active { background: var(--bg2); }
-.debriefPillOpen {
-  background: var(--nourishment);
-  border-color: var(--nourishment);
-  color: var(--ink);
-}
-.debriefPillOpen .debriefCount { color: rgba(26, 26, 24, 0.55); }
 
 /* ── Column wrappers (mobile: transparent pass-throughs) ── */
 .desktopWrap { display: contents; }
@@ -1549,32 +1488,6 @@
     .journalAddBtn { transition: none; }
   }
 
-  /* Debrief buttons: right-aligned in content flow, ~16px below composer */
-  .debriefPillRow {
-    justify-content: flex-end;
-    padding-top: 0;
-    margin-top: 16px;
-  }
-  .debriefPill {
-    flex: none;
-    padding: 8px 20px;
-    background: transparent;
-    border-color: rgba(26,26,26,.15);
-    color: var(--ink3);
-    font-size: 11px;
-  }
-  .debriefPill:hover {
-    background: rgba(26,26,26,.05);
-    border-color: rgba(26,26,26,.25);
-    color: var(--ink2);
-  }
-  .debriefPillOpen {
-    background: rgba(26,26,26,.06);
-    border-color: rgba(26,26,26,.25);
-    color: var(--ink);
-  }
-  .debriefPillOpen:hover { background: rgba(26,26,26,.1); }
-
   /* ── Hover states on interactive elements ── */
   .moodBtn:not(.moodBtnGood):not(.moodBtnFine):not(.moodBtnBad):hover {
     background: rgba(26,26,26,.06);
@@ -1592,7 +1505,7 @@
   .donePill:hover { opacity: 0.82; }
 
   @media (prefers-reduced-motion: reduce) {
-    .moodBtn, .needToggle, .practiceChip, .donePill, .debriefPill { transition: none; }
+    .moodBtn, .needToggle, .practiceChip, .donePill { transition: none; }
   }
 
   .journalEntryCount {

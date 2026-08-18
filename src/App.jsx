@@ -9,7 +9,6 @@ import Today from './screens/Today'
 import CanvasScreen from './screens/CanvasScreen'
 import Data from './screens/Data'
 import Log from './screens/Log'
-import Debriefs from './screens/Debriefs'
 import SignIn from './screens/SignIn'
 import ComingSoon from './screens/ComingSoon'
 import UpdatePassword from './screens/UpdatePassword'
@@ -112,7 +111,6 @@ function AppInner() {
           <Route path="/onboarding" element={state.onboarded ? <Navigate to="/today" replace /> : <DiagnosticFlow updateCanvas={updateCanvas} completeOnboarding={completeOnboarding} />} />
           <Route path="/today" element={<Protected onboarded={state.onboarded} userId={state.userId}><Today state={state} checkIn={checkIn} removeCheckin={removeCheckin} clearPracticeCheckins={clearPracticeCheckins} incrementCheckinCount={incrementCheckinCount} logMood={logMood} /></Protected>} />
           <Route path="/practices" element={<Navigate to="/canvas" replace />} />
-          <Route path="/debriefs" element={<Protected onboarded={state.onboarded} userId={state.userId}><Debriefs state={state} /></Protected>} />
           <Route path="/data" element={<Protected onboarded={state.onboarded} userId={state.userId}><Data state={state} archivePractice={archivePractice} /></Protected>} />
           <Route path="/log" element={<Protected onboarded={state.onboarded} userId={state.userId}><Log state={state} /></Protected>} />
           <Route path="/canvas" element={<Protected onboarded={state.onboarded} userId={state.userId}><CanvasScreen state={state} updateCanvas={updateCanvas} addPractice={addPractice} renamePractice={renamePractice} archivePractice={archivePractice} /></Protected>} />

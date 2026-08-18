@@ -50,7 +50,6 @@ export default function ProfileMenu({ name, email, dropUp = false }) {
         <>
           <div className={styles.scrim} onClick={() => setOpen(false)} />
           <div className={`${styles.menu} ${dropUp ? styles.menuDropUp : ''}`}>
-            <NavLink to="/debriefs" className={styles.menuItem} onClick={() => setOpen(false)}>debriefs</NavLink>
             <NavLink to="/settings" className={styles.menuItem} onClick={() => setOpen(false)}>settings</NavLink>
             <button className={`${styles.menuItem} ${styles.menuItemBtn}`} onClick={handleSignOut}>sign out</button>
             <div className={styles.version}>v1.0</div>
