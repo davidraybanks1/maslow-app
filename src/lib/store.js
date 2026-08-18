@@ -696,6 +696,15 @@ export async function loadAllJournalMeta(userId) {
   return data || []
 }
 
+export async function loadJournalArchive(userId) {
+  const { data } = await supabase
+    .from('journal')
+    .select('id, date_key, entry, slot, need_id, state, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+  return data || []
+}
+
 export async function deleteJournalEntry(id) {
   const { error } = await supabase
     .from('journal')

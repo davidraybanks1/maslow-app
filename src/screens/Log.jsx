@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { NEEDS, MODE_MAX_BUBBLES } from '../lib/constants'
-import { weekKey, loadJournalEntry, loadDebriefs, loadDebriefTypes, addNoteDeckCard, saveWeeklyReview, loadWeeklyReviews, loadUserCreatedAt, loadAllJournalMeta } from '../lib/store'
+import { weekKey, loadJournalEntry, loadDebriefs, loadDebriefTypes, addNoteDeckCard, saveWeeklyReview, loadWeeklyReviews, loadUserCreatedAt, loadAllJournalMeta, loadJournalArchive } from '../lib/store'
 import { createDataStats } from '../lib/dataStats'
-import { natureTagStyle, peakTagStyle, ENVIRONMENT_TAG_STYLE, parseDebriefEntry } from '../lib/debriefTypes'
+import { BUILTIN_NATURE_TYPES, BUILTIN_PEAK_TYPES, natureTagStyle, peakTagStyle, ENVIRONMENT_TAG_STYLE, parseDebriefEntry } from '../lib/debriefTypes'
 import LiveCanvasCard from '../components/LiveCanvasCard'
 import styles from './Log.module.css'
 
@@ -81,6 +81,33 @@ function formatHistoryDate(dateKey) {
 
 const WDAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday']
 const MONTHS_LONG = ['january','february','march','april','may','june','july','august','september','october','november','december']
+const MONTHS_SHORT = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec']
+
+const MOOD_DOT_COLOR = { good: '#1C3A2E', fine: '#9DB394', bad: '#E4472B' }
+const ARCHIVE_SLOTS = ['morning', 'midday', 'evening']
+const ARCHIVE_STATES = [...BUILTIN_NATURE_TYPES, ...BUILTIN_PEAK_TYPES].map(t => t.name)
+const ARCHIVE_PAGE_SIZE = 15
+
+function formatArchiveDate(dateKey) {
+  const d = new Date(dateKey + 'T12:00:00')
+  return `${WDAYS[d.getDay()].slice(0, 3)} ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`
+}
+
+function formatEntryTime(createdAt) {
+  const d = new Date(createdAt)
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
+function archiveHeaderText(filteredCount, total, filterSlot, filterNeed, filterState) {
+  if (!filterSlot && !filterNeed && !filterState) {
+    return `all ${total} ${total === 1 ? 'entry' : 'entries'}, newest first.`
+  }
+  const parts = []
+  if (filterSlot) parts.push(filterSlot)
+  if (filterNeed) parts.push(NEEDS.find(n => n.id === filterNeed)?.name || filterNeed)
+  if (filterState) parts.push(filterState)
+  return `${filteredCount} ${filteredCount === 1 ? 'entry' : 'entries'} tagged with ${parts.join(' and ')}.`
+}
 
 function ritualMetaLine(cadence) {
   const days = reviewWindowKeys(cadence)
@@ -458,6 +485,13 @@ export default function Log({ state }) {
     try { return localStorage.getItem('maslow_ritual_dismissed') === new Date().toDateString() } catch { return false }
   })
 
+  const [archiveEntries, setArchiveEntries] = useState([])
+  const [filterSlot, setFilterSlot] = useState(null)
+  const [filterNeed, setFilterNeed] = useState(null)
+  const [filterState, setFilterState] = useState(null)
+  const [archiveVisible, setArchiveVisible] = useState(ARCHIVE_PAGE_SIZE)
+  const [expandedEntries, setExpandedEntries] = useState(new Set())
+
   const stats = createDataStats({ canvas: state.canvas || {}, checkins: state.checkins || {}, moods: state.moods || [], practices: state.practices || {} })
 
   useEffect(() => {
@@ -477,6 +511,11 @@ export default function Log({ state }) {
   useEffect(() => {
     if (!state.userId) return
     loadAllJournalMeta(state.userId).then(setJournalMeta)
+  }, [state.userId])
+
+  useEffect(() => {
+    if (!state.userId) return
+    loadJournalArchive(state.userId).then(setArchiveEntries)
   }, [state.userId])
 
   async function startReview() {
@@ -762,6 +801,129 @@ export default function Log({ state }) {
             <span className={styles.ritualQuietStart}>start early →</span>
           </button>
         )}
+
+        {/* ── Archive ── */}
+        {(() => {
+          const slotCounts = Object.fromEntries(ARCHIVE_SLOTS.map(s => [s, archiveEntries.filter(e => e.slot === s).length]))
+          const needCounts = Object.fromEntries(NEEDS.map(n => [n.id, archiveEntries.filter(e => e.need_id === n.id).length]))
+          const stateCounts = Object.fromEntries(ARCHIVE_STATES.map(s => [s, archiveEntries.filter(e => e.state === s).length]))
+          const activeNeeds = NEEDS.filter(n => needCounts[n.id] > 0)
+          const activeStates = ARCHIVE_STATES.filter(s => stateCounts[s] > 0)
+
+          const filtered = archiveEntries.filter(e => {
+            if (filterSlot && e.slot !== filterSlot) return false
+            if (filterNeed && e.need_id !== filterNeed) return false
+            if (filterState && e.state !== filterState) return false
+            return true
+          })
+          const anyFilter = filterSlot || filterNeed || filterState
+          const visible = filtered.slice(0, archiveVisible)
+
+          return (
+            <div className={styles.archiveSection}>
+              <div className={styles.archiveSectionLabel}>the archive</div>
+
+              <div className={styles.facetRows}>
+                {/* slot row */}
+                <div className={styles.facetRow}>
+                  {ARCHIVE_SLOTS.map(s => (
+                    <button
+                      key={s}
+                      className={`${styles.facetChip} ${filterSlot === s ? styles.facetChipActive : ''}`}
+                      onClick={() => { setFilterSlot(v => v === s ? null : s); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}
+                    >
+                      {s}<span className={styles.facetCount}>{slotCounts[s]}</span>
+                    </button>
+                  ))}
+                </div>
+                {/* need row */}
+                {activeNeeds.length > 0 && (
+                  <div className={styles.facetRow}>
+                    {activeNeeds.map(n => (
+                      <button
+                        key={n.id}
+                        className={`${styles.facetChip} ${filterNeed === n.id ? styles.facetChipActive : ''}`}
+                        onClick={() => { setFilterNeed(v => v === n.id ? null : n.id); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}
+                      >
+                        {n.name}<span className={styles.facetCount}>{needCounts[n.id]}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {/* state row */}
+                {activeStates.length > 0 && (
+                  <div className={styles.facetRow}>
+                    {activeStates.map(s => (
+                      <button
+                        key={s}
+                        className={`${styles.facetChip} ${filterState === s ? styles.facetChipActive : ''}`}
+                        onClick={() => { setFilterState(v => v === s ? null : s); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}
+                      >
+                        {s}<span className={styles.facetCount}>{stateCounts[s]}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className={styles.archiveHeader}>
+                <span className={styles.archiveHeaderText}>
+                  {archiveEntries.length === 0
+                    ? 'no entries yet.'
+                    : archiveHeaderText(filtered.length, archiveEntries.length, filterSlot, filterNeed, filterState)}
+                </span>
+                {anyFilter && (
+                  <button className={styles.archiveClearBtn} onClick={() => { setFilterSlot(null); setFilterNeed(null); setFilterState(null); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}>clear</button>
+                )}
+              </div>
+
+              <div className={styles.archiveCards}>
+                {visible.map(e => {
+                  const mood = dominantMoodForDay(state.moods || [], e.date_key)
+                  const dotColor = MOOD_DOT_COLOR[mood] || 'rgba(0,0,0,.15)'
+                  const body = e.entry || ''
+                  const isExpanded = expandedEntries.has(e.id)
+                  const TRUNCATE = 200
+                  const isTruncatable = body.length > TRUNCATE
+                  const displayBody = !isExpanded && isTruncatable ? body.slice(0, TRUNCATE).trimEnd() + '…' : body
+                  const needName = e.need_id ? (NEEDS.find(n => n.id === e.need_id)?.name || e.need_id) : null
+                  const toggleExpand = () => setExpandedEntries(prev => {
+                    const next = new Set(prev)
+                    next.has(e.id) ? next.delete(e.id) : next.add(e.id)
+                    return next
+                  })
+
+                  return (
+                    <div key={e.id} className={styles.archiveCard}>
+                      <button className={styles.archiveCardInner} onClick={toggleExpand}>
+                        <span className={styles.archiveCardMeta}>
+                          <span className={styles.archiveCardDot} style={{ background: dotColor }} />
+                          <span className={styles.archiveCardDateSlot}>{formatArchiveDate(e.date_key)}{e.slot ? ` · ${e.slot}` : ''}</span>
+                          <span className={styles.archiveCardTime}>{formatEntryTime(e.created_at)}</span>
+                        </span>
+                        <span className={styles.archiveCardBody}>{displayBody}</span>
+                        {!isExpanded && isTruncatable && (
+                          <span className={styles.archiveCardReadMore}>read more</span>
+                        )}
+                      </button>
+                      <span className={styles.archiveCardTags}>
+                        {needName && <span className={styles.archiveTag}>{needName}</span>}
+                        {e.state && <span className={styles.archiveTag}>{e.state}</span>}
+                        <button className={styles.archiveTagBtn}>+ tag</button>
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {filtered.length > archiveVisible && (
+                <button className={styles.archiveLoadMore} onClick={() => setArchiveVisible(v => v + ARCHIVE_PAGE_SIZE)}>
+                  show more · {filtered.length - archiveVisible} remaining
+                </button>
+              )}
+            </div>
+          )
+        })()}
 
         <div className={styles.reviewHistoryLabel}>REVIEW HISTORY</div>
         {reviewHistory.length === 0 ? (
