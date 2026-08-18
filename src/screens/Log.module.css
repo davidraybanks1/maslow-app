@@ -1006,7 +1006,7 @@
 }
 
 /* ── Guided review shell ── */
-.reviewProgressBar { height: 2px; background: var(--border); flex-shrink: 0; }
+.reviewProgressBar { height: 1px; background: var(--hairline); flex-shrink: 0; }
 .reviewProgressFill { height: 100%; background: var(--ink); transition: width var(--motion-progress) ease; }
 
 .reviewContent { flex: 1; overflow-y: auto; padding: 24px 16px 8px; }
@@ -1038,16 +1038,16 @@
 .reviewHeadline {
   font-family: var(--font-serif);
   font-size: 26px;
-  font-weight: 400;
+  font-weight: 300;
   line-height: 1.2;
   letter-spacing: -0.01em;
   color: var(--ink);
   margin-bottom: 8px;
 }
 .reviewSub {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 200;
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-weight: 300;
   color: var(--ink2);
   line-height: 1.6;
   margin-bottom: 20px;
@@ -1066,7 +1066,7 @@
   background: var(--nourishment);
   color: var(--ink);
   border: none;
-  border-radius: 12px;
+  border-radius: 999px;
   font-family: var(--font-mono);
   font-size: 13px;
   letter-spacing: 0.06em;
@@ -1090,13 +1090,12 @@
 /* ── Step 1: day cards ── */
 .dayCardList { display: flex; flex-direction: column; gap: 10px; }
 .dayCard {
-  background: var(--bg);
-  border: 1px solid #D8D3C3;
-  border-radius: 12px;
+  background: var(--card);
+  border: 0.5px solid var(--hairline);
+  border-radius: 16px;
   padding: 12px 14px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  box-shadow: 0 1px 2px rgba(26, 26, 26, 0.05), 0 18px 44px -14px rgba(26, 26, 26, 0.10);
 }
 .dayCardTop {
   display: flex;
@@ -1126,7 +1125,7 @@
 }
 .dayCardBarFill {
   height: 100%;
-  background: #E8B81F;
+  background: var(--nourishment);
   border-radius: 3px;
 }
 .dayCardMoodPill {
@@ -1208,21 +1207,21 @@
 .weeklyMoodGrid { display: flex; flex-direction: column; gap: 10px; }
 .weeklyMoodCard {
   position: relative;
-  border: 1.5px solid var(--border);
-  border-radius: 14px;
-  background: var(--bg);
+  border: 0.5px solid var(--hairline);
+  border-radius: 16px;
+  background: var(--card);
   padding: 16px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   user-select: none;
 }
-.weeklyMoodCardSelected { border: 2px solid var(--ink); background: var(--bg3); }
-.weeklyMoodCardSelected::after { content: ''; position: absolute; top: 12px; right: 12px; width: 10px; height: 10px; border-radius: 50%; background: var(--ink); }
+.weeklyMoodCardSelected { border: 1.5px solid var(--ink); background: var(--paper); }
+.weeklyMoodCardSelected::after { content: ''; position: absolute; top: 12px; right: 12px; width: 8px; height: 8px; border-radius: 50%; background: var(--ink); }
 .weeklyMoodName {
   font-family: var(--font-serif);
   font-size: 18px;
-  font-weight: 400;
+  font-weight: 300;
   color: var(--ink);
   text-transform: lowercase;
   margin-bottom: 6px;
@@ -1240,22 +1239,22 @@
   width: 100%;
   padding: 12px;
   background: none;
-  border: 0.5px solid var(--border2);
-  border-radius: 10px;
+  border: 0.5px solid var(--hairline);
+  border-radius: 999px;
   font-family: var(--font-mono);
   font-size: 12px;
   color: var(--ink2);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.canvasLinkBtn:hover { background: var(--bg2); }
+.canvasLinkBtn:hover { background: var(--paper); }
 
 /* ── Step 4: insight ── */
 .insightCard {
   background: rgba(232,184,31,0.07);
-  border: 0.5px solid var(--border);
-  border-left: 3px solid #E8B81F;
-  border-radius: 0 12px 12px 0;
+  border: 0.5px solid var(--hairline);
+  border-left: 2px solid var(--nourishment);
+  border-radius: 0 16px 16px 0;
   padding: 14px 16px;
 }
 .insightLabel {
@@ -1267,10 +1266,11 @@
   margin-bottom: 8px;
 }
 .insightBody {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 200;
-  color: var(--ink2);
+  font-family: var(--font-serif);
+  font-size: 15px;
+  font-weight: 300;
+  font-style: italic;
+  color: var(--ink);
   line-height: 1.6;
 }
 
@@ -1278,14 +1278,15 @@
 .noteTextarea {
   width: 100%;
   box-sizing: border-box;
-  padding: 10px 12px;
-  border: 0.5px solid var(--border);
-  border-radius: 8px;
+  padding: 12px 14px;
+  border: 0.5px solid var(--hairline);
+  border-radius: 14px;
   font-family: var(--font-serif);
   font-style: italic;
   font-size: 16px;
+  font-weight: 300;
   color: var(--ink);
-  background: var(--bg);
+  background: var(--card);
   outline: none;
   resize: none;
 }
@@ -1307,19 +1308,20 @@
 }
 .noteLibraryList { display: flex; flex-direction: column; gap: 8px; }
 .noteCard {
-  background: var(--bg);
-  border: 0.5px solid var(--border);
-  border-radius: 10px;
+  background: var(--card);
+  border: 0.5px solid var(--hairline);
+  border-radius: 14px;
   padding: 12px 14px;
   font-family: var(--font-serif);
   font-style: italic;
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 300;
   color: var(--ink2);
-  line-height: 1.4;
+  line-height: 1.5;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.noteCard:hover { background: var(--bg2); }
+.noteCard:hover { background: var(--paper); }
 
 
 /* desktop tier: center the screen at a comfortable reading width */
