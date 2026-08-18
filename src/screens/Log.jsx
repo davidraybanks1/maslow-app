@@ -80,6 +80,7 @@ const MONTHS_LONG = ['january','february','march','april','may','june','july','a
 const MONTHS_SHORT = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec']
 
 const MOOD_DOT_COLOR = { good: 'var(--exploration)', fine: '#9DB394', bad: 'var(--survival)' }
+const MOOD_WASH = { good: 'rgba(27,58,45,.10)', fine: 'rgba(157,179,148,.20)', bad: 'rgba(217,59,28,.13)' }
 const SLOT_ORDER = { morning: 0, midday: 1, evening: 2 }
 const MODE_DOT_TOKEN = {
   exploration:  'var(--exploration)',
@@ -1261,8 +1262,9 @@ export default function Log({ state }) {
                   const dateKey = `${monthPrefix}${String(day).padStart(2, '0')}`
                   const isFuture = dateKey > todayKey
                   const moodEntry = monthMoodIndex[dateKey]
-                  const moodDotColor = moodEntry ? MOOD_DOT_COLOR[moodEntry.mood] : null
+                  const moodWash = moodEntry ? MOOD_WASH[moodEntry.mood] : null
                   const hasJournal = monthHasJournal.has(dateKey)
+                  const hasData = !!(moodEntry || hasJournal)
                   const isSelected = selectedDayKey === dateKey
 
                   if (isFuture) {
@@ -1277,13 +1279,13 @@ export default function Log({ state }) {
                     <button
                       key={dateKey}
                       className={`${styles.calDay}${isSelected ? ` ${styles.calDaySelected}` : ''}`}
+                      style={moodWash ? { background: moodWash } : undefined}
                       onClick={() => selectDay(dateKey)}
                     >
-                      <span className={styles.calDayNum}>{day}</span>
-                      {(moodDotColor || hasJournal) && (
+                      <span className={`${styles.calDayNum}${!hasData ? ` ${styles.calDayNumMuted}` : ''}`}>{day}</span>
+                      {hasJournal && (
                         <div className={styles.calDayDots}>
-                          {moodDotColor && <span className={styles.calDayDot} style={{ background: moodDotColor }} />}
-                          {hasJournal && <span className={styles.calDayDot} style={{ background: 'var(--exploration)' }} />}
+                          <span className={styles.calDayDot} style={{ background: 'var(--exploration)' }} />
                         </div>
                       )}
                     </button>
