@@ -12,7 +12,6 @@ import Log from './screens/Log'
 import SignIn from './screens/SignIn'
 import ComingSoon from './screens/ComingSoon'
 import UpdatePassword from './screens/UpdatePassword'
-import Settings from './screens/Settings'
 import AppHeader from './components/AppHeader'
 import DesktopNav from './components/DesktopNav'
 import TabBar from './components/TabBar'
@@ -98,11 +97,11 @@ function AppInner() {
   return (
     <HeaderSlotContext.Provider value={setHeaderSlot}>
     <div className={styles.shell}>
-      {state.onboarded && <DesktopNav name={state.profile.name} email={state.email} reviewCadence={state.reviewCadence} updateReviewCadence={updateReviewCadence} />}
+      {state.onboarded && <DesktopNav name={state.profile.name} email={state.email} showNoteToSelf={state.showNoteToSelf} updateShowNoteToSelf={updateShowNoteToSelf} reviewCadence={state.reviewCadence} updateReviewCadence={updateReviewCadence} reviewDay={state.reviewDay} reviewTime={state.reviewTime} updateReviewSchedule={updateReviewSchedule} />}
       <div className={styles.column}>
       {state.onboarded && (
         <div className={styles.appHeader}>
-          <AppHeader slot={headerSlot} name={state.profile.name} email={state.email} reviewCadence={state.reviewCadence} updateReviewCadence={updateReviewCadence} />
+          <AppHeader slot={headerSlot} name={state.profile.name} email={state.email} showNoteToSelf={state.showNoteToSelf} updateShowNoteToSelf={updateShowNoteToSelf} reviewCadence={state.reviewCadence} updateReviewCadence={updateReviewCadence} reviewDay={state.reviewDay} reviewTime={state.reviewTime} updateReviewSchedule={updateReviewSchedule} />
         </div>
       )}
       <div className={styles.content}>
@@ -117,7 +116,7 @@ function AppInner() {
           <Route path="/signin" element={<SignIn />} />
           <Route path="/password" element={<Protected onboarded={state.onboarded} userId={state.userId}><UpdatePassword /></Protected>} />
           <Route path="/notifications" element={<Protected onboarded={state.onboarded} userId={state.userId}><ComingSoon title="Notifications" /></Protected>} />
-          <Route path="/settings" element={<Protected onboarded={state.onboarded} userId={state.userId}><Settings state={state} updateShowNoteToSelf={updateShowNoteToSelf} updateReviewSchedule={updateReviewSchedule} updateReviewCadence={updateReviewCadence} /></Protected>} />
+          <Route path="/settings" element={<Navigate to="/today" replace />} />
         </Routes>
       </div>
       </div>

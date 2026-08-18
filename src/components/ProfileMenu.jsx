@@ -6,6 +6,16 @@ import styles from './ProfileMenu.module.css'
 const FEEDBACK_EMAIL = 'hello@mymaslow.com'
 const BUILD_TIME = import.meta.env.VITE_BUILD_TIME
 
+const REVIEW_DAYS = [
+  { value: 0, label: 'mon' },
+  { value: 1, label: 'tue' },
+  { value: 2, label: 'wed' },
+  { value: 3, label: 'thu' },
+  { value: 4, label: 'fri' },
+  { value: 5, label: 'sat' },
+  { value: 6, label: 'sun' },
+]
+
 function formatBuildTime(iso) {
   if (!iso) return null
   try {
@@ -16,7 +26,12 @@ function formatBuildTime(iso) {
   } catch { return null }
 }
 
-export default function ProfileMenu({ name, email, dropUp = false, reviewCadence, updateReviewCadence }) {
+export default function ProfileMenu({
+  name, email, dropUp = false,
+  showNoteToSelf, updateShowNoteToSelf,
+  reviewCadence, updateReviewCadence,
+  reviewDay, reviewTime, updateReviewSchedule,
+}) {
   const [open, setOpen] = useState(false)
   const [cadenceOpen, setCadenceOpen] = useState(false)
   const navigate = useNavigate()
@@ -83,6 +98,17 @@ export default function ProfileMenu({ name, email, dropUp = false, reviewCadence
               </button>
               <button
                 className={styles.row}
+                onClick={() => updateShowNoteToSelf?.(!showNoteToSelf)}
+              >
+                <span className={styles.rowLabel}>show note to self</span>
+                <div className={styles.toggleSwitch}>
+                  <div className={`${styles.toggleTrack} ${showNoteToSelf ? styles.toggleTrackOn : ''}`}>
+                    <div className={`${styles.toggleThumb} ${showNoteToSelf ? styles.toggleThumbOn : ''}`} />
+                  </div>
+                </div>
+              </button>
+              <button
+                className={styles.row}
                 onClick={() => setCadenceOpen(o => !o)}
               >
                 <span className={styles.rowLabel}>review cadence</span>
@@ -91,14 +117,37 @@ export default function ProfileMenu({ name, email, dropUp = false, reviewCadence
               </button>
               {cadenceOpen && (
                 <div className={styles.cadencePicker}>
-                  <button
-                    className={`${styles.cadenceBtn} ${cadence === 'weekly' ? styles.cadenceBtnActive : ''}`}
-                    onClick={() => { updateReviewCadence?.('weekly'); setCadenceOpen(false) }}
-                  >weekly</button>
-                  <button
-                    className={`${styles.cadenceBtn} ${cadence === 'daily' ? styles.cadenceBtnActive : ''}`}
-                    onClick={() => { updateReviewCadence?.('daily'); setCadenceOpen(false) }}
-                  >daily</button>
+                  <div className={styles.cadenceSection}>
+                    <button
+                      className={`${styles.cadenceBtn} ${cadence === 'weekly' ? styles.cadenceBtnActive : ''}`}
+                      onClick={() => updateReviewCadence?.('weekly')}
+                    >weekly</button>
+                    <button
+                      className={`${styles.cadenceBtn} ${cadence === 'daily' ? styles.cadenceBtnActive : ''}`}
+                      onClick={() => updateReviewCadence?.('daily')}
+                    >daily</button>
+                  </div>
+                  {cadence === 'weekly' && (
+                    <>
+                      <div className={styles.cadenceFieldLabel}>day</div>
+                      <div className={styles.cadenceDayRow}>
+                        {REVIEW_DAYS.map(d => (
+                          <button
+                            key={d.value}
+                            className={`${styles.cadenceDayBtn} ${reviewDay === d.value ? styles.cadenceBtnActive : ''}`}
+                            onClick={() => updateReviewSchedule?.(d.value, reviewTime || '10:00')}
+                          >{d.label}</button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                  <div className={styles.cadenceFieldLabel}>time</div>
+                  <input
+                    type="time"
+                    className={styles.cadenceTimeInput}
+                    value={reviewTime || '10:00'}
+                    onChange={e => updateReviewSchedule?.(reviewDay ?? 0, e.target.value)}
+                  />
                 </div>
               )}
             </div>
