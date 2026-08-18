@@ -64,6 +64,9 @@ button { touch-action: manipulation; }
   --anxiety: #2C2820;
   --appreciation-strong: #5A7A70;
   --appreciation-deep:   #9DB394; /* small marks <12px only — dots, deltas, grid cells */
+  --exploration-deep:    #1B3A2D; /* dots, grid cells */
+  --nourishment-deep:    #C9A20A; /* dots, grid cells */
+  --survival-deep:       #C73020; /* dots, grid cells */
 
   /* Semantic data tokens */
   --positive:         #2C6E49;

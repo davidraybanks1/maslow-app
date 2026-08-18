@@ -125,6 +125,54 @@ function ritualMetaLine(cadence) {
   return `${WDAYS[first.getDay()]} ${first.getDate()} — ${WDAYS[last.getDay()]} ${last.getDate()} ${MONTHS_LONG[last.getMonth()]} · ~8 min`
 }
 
+function matchesPredicate(e, pred) {
+  if (pred.slot  && e.slot    !== pred.slot)  return false
+  if (pred.need  && e.need_id !== pred.need)  return false
+  if (pred.state && e.state   !== pred.state) return false
+  return true
+}
+
+function isoYearWeek(dateKey) {
+  const d = new Date(dateKey + 'T12:00:00')
+  const day = d.getDay() || 7
+  d.setDate(d.getDate() + 4 - day)
+  const yearStart = new Date(d.getFullYear(), 0, 1)
+  const week = Math.ceil(((d - yearStart) / 86400000 + 1) / 7)
+  return `${d.getFullYear()}-W${String(week).padStart(2, '0')}`
+}
+
+function formatThreadDate(dateKey, slot) {
+  const d = new Date(dateKey + 'T12:00:00')
+  return `${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}${slot ? ` · ${slot}` : ''}`
+}
+
+const THREADS = [
+  { id: 'community', title: 'community',              predicate: { need: 'community' }, intro: 'entries where community came up — people, belonging, and the texture of connection.' },
+  { id: 'frenetic',  title: 'frenetic days',           predicate: { state: 'frenetic' }, intro: 'the days tagged frenetic — scattered, reactive, out of rhythm.' },
+  { id: 'mornings',  title: 'what mornings sound like', predicate: { slot: 'morning' },  intro: 'morning entries only — your first thoughts before the day takes over.' },
+  { id: 'money',     title: 'the money thread',        predicate: { need: 'money' },     intro: 'entries where money surfaced — scarcity, abundance, and what it means to you.' },
+]
+
+function threadsInterpretiveLine(threads, archiveEntries) {
+  const countFor = t => archiveEntries.filter(e => matchesPredicate(e, t.predicate)).length
+  const parts = []
+  const thinDims = []
+  for (const dim of ['slot', 'need', 'state']) {
+    const dimThreads = threads.filter(t => t.predicate[dim])
+    if (!dimThreads.length) continue
+    const richOnes = dimThreads.filter(t => countFor(t) >= 8)
+    if (richOnes.length > 0) {
+      if (dim === 'slot') parts.push('mornings run deep')
+      else if (dim === 'need') parts.push(richOnes.length === 1 ? `${richOnes[0].title} is building` : 'needs are building')
+      else parts.push(richOnes.length === 1 ? `${richOnes[0].title} has real shape` : 'states are taking shape')
+    } else if (dim !== 'slot') {
+      thinDims.push(dim === 'need' ? 'needs' : 'states')
+    }
+  }
+  if (thinDims.length) parts.push(`${thinDims.join(' and ')} ${thinDims.length > 1 ? 'are' : 'is'} still filling in`)
+  return parts.length ? parts.join('; ') + '.' : 'threads are growing — keep writing.'
+}
+
 // Monday-indexed (0=Mon..6=Sun) review day -> the matching JS Date.getDay() value (0=Sun..6=Sat)
 function reviewDayToJsDay(reviewDay) {
   return (reviewDay + 1) % 7
@@ -499,6 +547,7 @@ export default function Log({ state }) {
   const [filterSlot, setFilterSlot] = useState(null)
   const [filterNeed, setFilterNeed] = useState(null)
   const [filterState, setFilterState] = useState(null)
+  const [openThreadId, setOpenThreadId] = useState(null)
   const [archiveVisible, setArchiveVisible] = useState(ARCHIVE_PAGE_SIZE)
   const [expandedEntries, setExpandedEntries] = useState(new Set())
   const [taggingEntryId, setTaggingEntryId] = useState(null)
@@ -908,18 +957,83 @@ export default function Log({ state }) {
           )
         })()}
 
+        {/* ── Threads ── */}
+        {archiveLoaded && (() => {
+          const taggedCount = archiveEntries.filter(e => e.need_id || e.state).length
+          const showGrowingMeta = archiveEntries.length > 0 && taggedCount < archiveEntries.length / 2
+          const openThread = THREADS.find(t => t.id === openThreadId) || null
+          return (
+            <div className={styles.threadSection}>
+              <div className={styles.threadSectionHeader}>
+                <span className={styles.threadSectionLabel}>threads</span>
+                {showGrowingMeta && <span className={styles.threadSectionMeta}>growing as you tag</span>}
+              </div>
+              <div className={styles.threadCards}>
+                {THREADS.map(thread => {
+                  const matches = archiveEntries.filter(e => matchesPredicate(e, thread.predicate))
+                  const distinctWeeks = new Set(matches.map(e => isoYearWeek(e.date_key))).size
+                  const isThin = matches.length < 8
+                  const isInert = matches.length === 0
+                  const modeName = thread.predicate.need ? (state.canvas?.[thread.predicate.need] || null) : null
+                  const dotColor = modeName ? `var(--${modeName}-deep)` : 'var(--ink)'
+                  return (
+                    <button
+                      key={thread.id}
+                      className={`${styles.threadCard}${isInert ? ` ${styles.threadCardInert}` : ''}`}
+                      disabled={isInert}
+                      onClick={() => setOpenThreadId(id => id === thread.id ? null : thread.id)}
+                    >
+                      <div className={styles.threadCardRow}>
+                        <span className={styles.threadDot} style={{ background: dotColor }} />
+                        <span className={styles.threadTitle}>{thread.title}</span>
+                        <span className={styles.threadChevron} aria-hidden="true">›</span>
+                      </div>
+                      <div className={styles.threadStat}>
+                        {matches.length} {matches.length === 1 ? 'entry' : 'entries'} across {distinctWeeks} {distinctWeeks === 1 ? 'week' : 'weeks'}{isThin ? ' · thread is thin — keep tagging' : ''}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+              {openThread && (
+                <div key={openThread.id} className={styles.threadRead}>
+                  <div className={styles.threadReadHeader}>
+                    <span className={styles.threadReadTitle}>{openThread.title}</span>
+                    <button className={styles.threadReadCloseBtn} onClick={() => setOpenThreadId(null)}>close</button>
+                  </div>
+                  <p className={styles.threadReadIntro}>{openThread.intro}</p>
+                  {archiveEntries
+                    .filter(e => matchesPredicate(e, openThread.predicate))
+                    .slice().reverse()
+                    .map(e => {
+                      const slotMood = e.slot && !e.state
+                        ? ((state.moods || []).find(m => m.date_key === e.date_key && m.prompt_time === e.slot)?.mood || null)
+                        : null
+                      const moodDotColor = slotMood ? MOOD_DOT_COLOR[slotMood] : null
+                      return (
+                        <div key={e.id} className={styles.threadReadEntry}>
+                          <div className={styles.threadReadEntryDate}>
+                            {moodDotColor && <span className={styles.threadReadEntryDot} style={{ background: moodDotColor }} />}
+                            {formatThreadDate(e.date_key, e.slot)}
+                          </div>
+                          <p className={styles.threadReadEntryBody}>{e.entry}</p>
+                        </div>
+                      )
+                    })}
+                </div>
+              )}
+              <p className={styles.threadInterpretive}>{threadsInterpretiveLine(THREADS, archiveEntries)}</p>
+            </div>
+          )
+        })()}
+
         {/* ── Archive ── */}
         {(() => {
           const canvasNeeds = NEEDS.filter(n => state.canvas?.[n.id])
           const slotCounts = Object.fromEntries(ARCHIVE_SLOTS.map(s => [s, archiveEntries.filter(e => e.slot === s).length]))
           const needCounts = Object.fromEntries(canvasNeeds.map(n => [n.id, archiveEntries.filter(e => e.need_id === n.id).length]))
           const stateCounts = Object.fromEntries(ARCHIVE_STATES.map(s => [s, archiveEntries.filter(e => e.state === s).length]))
-          const filtered = archiveEntries.filter(e => {
-            if (filterSlot && e.slot !== filterSlot) return false
-            if (filterNeed && e.need_id !== filterNeed) return false
-            if (filterState && e.state !== filterState) return false
-            return true
-          })
+          const filtered = archiveEntries.filter(e => matchesPredicate(e, { slot: filterSlot, need: filterNeed, state: filterState }))
           const anyFilter = filterSlot || filterNeed || filterState
           const visible = filtered.slice(0, archiveVisible)
 

@@ -314,6 +314,201 @@
   color: rgba(0,0,0,.32);
 }
 
+/* ── Threads section ── */
+.threadSection {
+  margin-top: 20px;
+  border-top: 1px solid rgba(0,0,0,.1);
+  padding-top: 18px;
+}
+
+.threadSectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 13px;
+}
+
+.threadSectionLabel {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(0,0,0,.42);
+}
+
+.threadSectionMeta {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: rgba(0,0,0,.35);
+}
+
+.threadCards {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.threadCard {
+  background: var(--card);
+  border: 0.5px solid var(--hairline);
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.threadCard:hover { opacity: 0.85; }
+
+.threadCardInert {
+  opacity: 0.5;
+  cursor: default;
+}
+.threadCard:disabled { opacity: 0.5; cursor: default; }
+
+.threadCardRow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.threadDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.threadTitle {
+  flex: 1;
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 300;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+.threadChevron {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: rgba(0,0,0,.42);
+  flex-shrink: 0;
+}
+
+.threadStat {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: rgba(0,0,0,.42);
+  line-height: 1.3;
+}
+
+/* Thread read */
+@keyframes threadReadIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.threadRead {
+  margin-top: 9px;
+  background: var(--card);
+  border: 0.5px solid rgba(0,0,0,.1);
+  border-radius: 18px;
+  padding: 16px 16px 6px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .threadRead {
+    animation: threadReadIn 180ms ease-out both;
+  }
+}
+
+.threadReadHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.threadReadTitle {
+  font-family: var(--font-serif);
+  font-size: 19px;
+  font-weight: 300;
+  color: var(--ink);
+  line-height: 1.2;
+  flex: 1;
+}
+
+.threadReadCloseBtn {
+  height: 26px;
+  padding: 0 11px;
+  border: 0.5px solid rgba(0,0,0,.2);
+  border-radius: 13px;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: rgba(0,0,0,.5);
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.threadReadCloseBtn:hover { opacity: 0.7; }
+
+.threadReadIntro {
+  font-family: var(--font-serif);
+  font-size: 13px;
+  font-weight: 300;
+  font-style: italic;
+  color: rgba(0,0,0,.55);
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+
+.threadReadEntry {
+  padding: 12px 0;
+  border-top: 0.5px solid rgba(0,0,0,.07);
+}
+
+.threadReadEntryDate {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(0,0,0,.42);
+  margin-bottom: 6px;
+}
+
+.threadReadEntryDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.threadReadEntryBody {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  font-weight: 300;
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+.threadInterpretive {
+  margin-top: 14px;
+  font-family: var(--font-serif);
+  font-size: 12px;
+  font-weight: 300;
+  color: rgba(0,0,0,.6);
+  line-height: 1.5;
+}
+
 /* ── Archive section ── */
 .archiveSection {
   margin-top: 20px;
