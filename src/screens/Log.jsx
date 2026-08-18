@@ -90,10 +90,9 @@ const MODE_DOT_TOKEN = {
 }
 const ARCHIVE_SLOTS = ['morning', 'midday', 'evening']
 const ARCHIVE_STATES = [...BUILTIN_NATURE_TYPES, ...BUILTIN_PEAK_TYPES].map(t => t.name)
-const ARCHIVE_DATE_RANGES = [
-  { key: '30d',  label: 'last 30 days' },
-  { key: '90d',  label: 'last 90 days' },
-  { key: 'year', label: 'this year' },
+const ARCHIVE_DATE_PRESETS = [
+  { key: '30d', label: 'last 30 days' },
+  { key: '90d', label: 'last 90 days' },
 ]
 const ARCHIVE_PAGE_SIZE = 15
 
@@ -107,8 +106,20 @@ function formatEntryTime(createdAt) {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
-function archiveHeaderText(filteredEntries, total, filterSlot, filterNeed, filterState, filterDate) {
-  if (!filterSlot && !filterNeed && !filterState && !filterDate) {
+function formatRangeDateStr(dateKey) {
+  const [y, m, d] = dateKey.split('-').map(Number)
+  const mo = MONTHS_SHORT[m - 1]
+  return y !== new Date().getFullYear() ? `${mo} ${d} ${y}` : `${mo} ${d}`
+}
+
+function formatRangeLabel(start, end) {
+  if (!start) return null
+  if (!end || end === start) return formatRangeDateStr(start)
+  return `${formatRangeDateStr(start)} – ${formatRangeDateStr(end)}`
+}
+
+function archiveHeaderText(filteredEntries, total, filterSlot, filterNeed, filterState, filterDate, rangeLabel) {
+  if (!filterSlot && !filterNeed && !filterState && !filterDate && !rangeLabel) {
     return `all ${total} ${total === 1 ? 'entry' : 'entries'}, newest first.`
   }
   const n = filteredEntries.length
@@ -117,9 +128,9 @@ function archiveHeaderText(filteredEntries, total, filterSlot, filterNeed, filte
   const topState = Object.entries(stateCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || null
   let text = `${n} ${n === 1 ? 'entry' : 'entries'}`
   if (topState) text += ` · mostly ${topState}`
-  if (filterDate === '30d') text += ' · in the last 30 days'
+  if (rangeLabel) text += ` · ${rangeLabel}`
+  else if (filterDate === '30d') text += ' · in the last 30 days'
   else if (filterDate === '90d') text += ' · in the last 90 days'
-  else if (filterDate === 'year') text += ' · this year'
   else if (n > 0) {
     const oldest = filteredEntries[filteredEntries.length - 1]
     const today = new Date(); today.setHours(12, 0, 0, 0)
@@ -136,11 +147,12 @@ function ritualMetaLine(cadence) {
   return `${WDAYS[first.getDay()]} ${first.getDate()} — ${WDAYS[last.getDay()]} ${last.getDate()} ${MONTHS_LONG[last.getMonth()]} · ~8 min`
 }
 
-function matchesPredicate(e, pred, afterKey) {
+function matchesPredicate(e, pred, afterKey, beforeKey) {
   if (pred.slot  && e.slot    !== pred.slot)  return false
   if (pred.need  && e.need_id !== pred.need)  return false
   if (pred.state && e.state   !== pred.state) return false
   if (afterKey   && e.date_key < afterKey)    return false
+  if (beforeKey  && e.date_key > beforeKey)   return false
   return true
 }
 
@@ -550,6 +562,12 @@ export default function Log({ state }) {
   const [filterNeed, setFilterNeed] = useState(null)
   const [filterState, setFilterState] = useState(null)
   const [filterDate, setFilterDate] = useState(null)
+  const [rangeStart, setRangeStart] = useState(null)
+  const [rangeEnd, setRangeEnd] = useState(null)
+  const [pickAnchor, setPickAnchor] = useState(null)
+  const [datePickerOpen, setDatePickerOpen] = useState(false)
+  const [pickerYear, setPickerYear] = useState(() => new Date().getFullYear())
+  const [pickerMonth, setPickerMonth] = useState(() => new Date().getMonth())
   const [openThreadId, setOpenThreadId] = useState(null)
   const [archiveVisible, setArchiveVisible] = useState(ARCHIVE_PAGE_SIZE)
   const [expandedEntries, setExpandedEntries] = useState(new Set())
@@ -1044,19 +1062,23 @@ export default function Log({ state }) {
           const slotCounts = Object.fromEntries(ARCHIVE_SLOTS.map(s => [s, archiveEntries.filter(e => e.slot === s).length]))
           const needCounts = Object.fromEntries(canvasNeeds.map(n => [n.id, archiveEntries.filter(e => e.need_id === n.id).length]))
           const stateCounts = Object.fromEntries(ARCHIVE_STATES.map(s => [s, archiveEntries.filter(e => e.state === s).length]))
+          const allJournalDays = new Set(archiveEntries.map(e => e.date_key))
           const today = new Date(); today.setHours(12, 0, 0, 0)
           let filterAfterKey = null
-          if (filterDate === '30d') {
+          let filterBeforeKey = null
+          if (rangeStart) {
+            filterAfterKey = rangeStart
+            filterBeforeKey = rangeEnd || rangeStart
+          } else if (filterDate === '30d') {
             const d = new Date(today); d.setDate(d.getDate() - 30)
             filterAfterKey = dateKeyFor(d)
           } else if (filterDate === '90d') {
             const d = new Date(today); d.setDate(d.getDate() - 90)
             filterAfterKey = dateKeyFor(d)
-          } else if (filterDate === 'year') {
-            filterAfterKey = `${today.getFullYear()}-01-01`
           }
-          const filtered = archiveEntries.filter(e => matchesPredicate(e, { slot: filterSlot, need: filterNeed, state: filterState }, filterAfterKey))
-          const anyFilter = filterSlot || filterNeed || filterState || filterDate
+          const rangeLabel = rangeStart ? formatRangeLabel(rangeStart, rangeEnd) : null
+          const filtered = archiveEntries.filter(e => matchesPredicate(e, { slot: filterSlot, need: filterNeed, state: filterState }, filterAfterKey, filterBeforeKey))
+          const anyFilter = filterSlot || filterNeed || filterState || filterDate || rangeStart
           const visible = filtered.slice(0, archiveVisible)
 
           return (
@@ -1068,16 +1090,114 @@ export default function Log({ state }) {
                 <div className={styles.facetGroup}>
                   <div className={styles.facetGroupLabel}>WHEN</div>
                   <div className={styles.facetRow}>
-                    {ARCHIVE_DATE_RANGES.map(r => (
+                    {ARCHIVE_DATE_PRESETS.map(r => (
                       <button
                         key={r.key}
                         className={`${styles.facetChip} ${filterDate === r.key ? styles.facetChipActive : ''}`}
-                        onClick={() => { setFilterDate(v => v === r.key ? null : r.key); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}
+                        onClick={() => {
+                          setFilterDate(v => v === r.key ? null : r.key)
+                          setRangeStart(null); setRangeEnd(null); setPickAnchor(null); setDatePickerOpen(false)
+                          setArchiveVisible(ARCHIVE_PAGE_SIZE)
+                        }}
                       >
                         {r.label}
                       </button>
                     ))}
+                    <button
+                      className={`${styles.facetChip} ${rangeStart || datePickerOpen ? styles.facetChipActive : ''}`}
+                      onClick={() => {
+                        setFilterDate(null)
+                        if (datePickerOpen) { setDatePickerOpen(false); setPickAnchor(null) }
+                        else setDatePickerOpen(true)
+                        setArchiveVisible(ARCHIVE_PAGE_SIZE)
+                      }}
+                    >
+                      {rangeStart ? rangeLabel : 'date range'}
+                    </button>
                   </div>
+                  {datePickerOpen && (() => {
+                    const pickerPrefix = `${pickerYear}-${String(pickerMonth + 1).padStart(2, '0')}-`
+                    const daysInPicker = new Date(pickerYear, pickerMonth + 1, 0).getDate()
+                    const firstDow = (new Date(pickerYear, pickerMonth, 1).getDay() + 6) % 7
+                    const todayKey = dateKeyFor(today)
+                    const earliestKey = archiveEntries.length > 0 ? archiveEntries[archiveEntries.length - 1].date_key : null
+                    const minY = earliestKey ? parseInt(earliestKey.slice(0, 4)) : pickerYear
+                    const minM = earliestKey ? parseInt(earliestKey.slice(5, 7)) - 1 : pickerMonth
+                    const isPickerCurMonth = pickerYear === today.getFullYear() && pickerMonth === today.getMonth()
+                    const isPickerMinMonth = pickerYear === minY && pickerMonth === minM
+                    const appliedEnd = rangeEnd || rangeStart
+                    return (
+                      <div className={styles.datePicker}>
+                        <div className={styles.datePickerNav}>
+                          <button
+                            className={styles.calNavBtn}
+                            disabled={isPickerMinMonth}
+                            onClick={() => {
+                              if (pickerMonth === 0) { setPickerYear(y => y - 1); setPickerMonth(11) }
+                              else setPickerMonth(m => m - 1)
+                            }}
+                            aria-label="previous month"
+                          >‹</button>
+                          <span className={styles.calNavMonthLabel}>{MONTHS_LONG[pickerMonth]} {pickerYear}</span>
+                          <button
+                            className={styles.calNavBtn}
+                            disabled={isPickerCurMonth}
+                            onClick={() => {
+                              if (pickerMonth === 11) { setPickerYear(y => y + 1); setPickerMonth(0) }
+                              else setPickerMonth(m => m + 1)
+                            }}
+                            aria-label="next month"
+                          >›</button>
+                        </div>
+                        <div className={styles.calDayLabels}>
+                          {['M','T','W','T','F','S','S'].map((dl, i) => <span key={i} className={styles.calDayLabel}>{dl}</span>)}
+                        </div>
+                        <div className={styles.calGrid}>
+                          {Array.from({ length: firstDow }, (_, i) => <div key={`pb-${i}`} className={styles.calDayBlank} />)}
+                          {Array.from({ length: daysInPicker }, (_, i) => {
+                            const day = i + 1
+                            const dk = `${pickerPrefix}${String(day).padStart(2, '0')}`
+                            const isFuture = dk > todayKey
+                            const hasJ = allJournalDays.has(dk)
+                            const isSelected = dk === pickAnchor || (!pickAnchor && rangeStart && (dk === rangeStart || dk === appliedEnd))
+                            const isInRange = !pickAnchor && rangeStart && appliedEnd && rangeStart !== appliedEnd && dk > rangeStart && dk < appliedEnd
+                            if (isFuture) return (
+                              <div key={dk} className={`${styles.calDay} ${styles.calDayFuture}`}>
+                                <span className={styles.calDayNum}>{day}</span>
+                              </div>
+                            )
+                            return (
+                              <button
+                                key={dk}
+                                className={`${styles.calDay}${isSelected ? ` ${styles.pickerDaySelected}` : ''}${isInRange ? ` ${styles.pickerDayInRange}` : ''}`}
+                                onClick={() => {
+                                  if (!pickAnchor) {
+                                    setPickAnchor(dk)
+                                    setRangeStart(null); setRangeEnd(null)
+                                    setFilterDate(null)
+                                  } else {
+                                    const [a, b] = pickAnchor <= dk ? [pickAnchor, dk] : [dk, pickAnchor]
+                                    setRangeStart(a); setRangeEnd(b)
+                                    setPickAnchor(null)
+                                    setFilterDate(null)
+                                    setArchiveVisible(ARCHIVE_PAGE_SIZE)
+                                  }
+                                }}
+                              >
+                                <span className={`${styles.calDayNum}${isSelected ? ` ${styles.pickerDayNum}` : ''}`}>{day}</span>
+                                {hasJ && (
+                                  <div className={styles.calDayDots}>
+                                    <span className={styles.calDayDot} style={{ background: isSelected ? 'rgba(255,255,255,.55)' : 'var(--exploration)' }} />
+                                  </div>
+                                )}
+                              </button>
+                            )
+                          })}
+                        </div>
+                        <button className={styles.datePickerCloseBtn} onClick={() => { setDatePickerOpen(false); setPickAnchor(null) }}>close</button>
+                      </div>
+                    )
+                  })()}
                 </div>
                 {/* slot group */}
                 <div className={styles.facetGroup}>
@@ -1134,10 +1254,10 @@ export default function Log({ state }) {
                 <span className={styles.archiveHeaderText}>
                   {archiveEntries.length === 0
                     ? 'no entries yet.'
-                    : archiveHeaderText(filtered, archiveEntries.length, filterSlot, filterNeed, filterState, filterDate)}
+                    : archiveHeaderText(filtered, archiveEntries.length, filterSlot, filterNeed, filterState, filterDate, rangeLabel)}
                 </span>
                 {anyFilter && (
-                  <button className={styles.archiveClearBtn} onClick={() => { setFilterSlot(null); setFilterNeed(null); setFilterState(null); setFilterDate(null); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}>clear</button>
+                  <button className={styles.archiveClearBtn} onClick={() => { setFilterSlot(null); setFilterNeed(null); setFilterState(null); setFilterDate(null); setRangeStart(null); setRangeEnd(null); setPickAnchor(null); setDatePickerOpen(false); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}>clear</button>
                 )}
               </div>
 

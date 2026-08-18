@@ -836,6 +836,51 @@
 }
 .archiveLoadMore:hover { background: rgba(0,0,0,.02); }
 
+/* ── Date picker (inline) ── */
+.datePicker {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 0.5px solid rgba(0,0,0,.1);
+}
+
+.datePickerNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.pickerDaySelected {
+  background: var(--exploration);
+}
+.pickerDaySelected:hover { background: var(--exploration); }
+
+.pickerDayNum {
+  color: var(--paper);
+}
+
+.pickerDayInRange {
+  background: rgba(27,58,45,.10);
+}
+.pickerDayInRange:hover { background: rgba(27,58,45,.13); }
+
+.datePickerCloseBtn {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 9px;
+  border: 0.5px solid var(--hairline);
+  border-radius: 999px;
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: rgba(0,0,0,.45);
+  cursor: pointer;
+  text-align: center;
+  -webkit-tap-highlight-color: transparent;
+}
+.datePickerCloseBtn:hover { background: rgba(0,0,0,.03); }
+
 /* ── Calendar ── */
 .calSection {
   margin-top: 20px;
