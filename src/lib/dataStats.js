@@ -301,7 +301,13 @@ export function createDataStats({ canvas, checkins, moods, practices, practicesD
   }
 
   function getNeedMoodLinks() {
-    const days = dayRange(30, 0)
+    // Full history: derive range from earliest data point to today
+    const allKeys = [...new Set([...Object.keys(checkins), ...moods.map(m => m.date_key)])].sort()
+    if (!allKeys.length) return []
+    const earliest = new Date(allKeys[0] + 'T12:00:00')
+    const n = Math.ceil((new Date() - earliest) / 86400000) + 1
+    const days = dayRange(n, 0)
+
     const dayInfo = days.map(day => ({
       day,
       hasMood: moods.some(m => m.date_key === day),
@@ -338,17 +344,17 @@ export function createDataStats({ canvas, checkins, moods, practices, practicesD
 
         if (unmetGood > 0) {
           const ratio = metGood / unmetGood
-          if (ratio >= 1.5) candidates.push({ need, daypart, direction: 'met', ratio })
+          if (ratio >= 1.5) candidates.push({ need, daypart, direction: 'met', ratio, metCount: metDays.length, unmetCount: unmetDays.length })
         }
         if (metBad > 0) {
           const ratio = unmetBad / metBad
-          if (ratio >= 1.5) candidates.push({ need, daypart, direction: 'unmet', ratio })
+          if (ratio >= 1.5) candidates.push({ need, daypart, direction: 'unmet', ratio, metCount: metDays.length, unmetCount: unmetDays.length })
         }
       }
     }
 
     candidates.sort((a, b) => b.ratio - a.ratio)
-    return candidates.slice(0, 3)
+    return candidates
   }
 
   function getTimeOfDaySummary(moodByPeriod) {

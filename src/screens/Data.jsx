@@ -618,17 +618,7 @@ function GoneQuietSection({ canvas, checkins, practicesDB, archivePractice }) {
   )
 }
 
-function buildInsightCopy(link, checkins, moods) {
-  const days30 = buildWindowKeys(30, 0)
-  const validDays = days30.filter(dk =>
-    moods.some(m => m.date_key === dk) && (checkins[dk] || []).length > 0
-  )
-  const metDays = validDays.filter(dk =>
-    (checkins[dk] || []).some(e => e.need_id === link.need.id)
-  )
-  const unmetDays = validDays.filter(dk =>
-    !(checkins[dk] || []).some(e => e.need_id === link.need.id)
-  )
+function buildInsightCopy(link) {
   const r = link.ratio
   const mult = r < 2 ? `~${r.toFixed(1)}×` : `${r.toFixed(1)}×`
   const n = link.need.name
@@ -644,7 +634,7 @@ function buildInsightCopy(link, checkins, moods) {
   }
   return {
     finding,
-    basis: `based on ${metDays.length} days with ${n} logged vs ${unmetDays.length} without.`,
+    basis: `based on ${link.metCount} days with ${n} logged vs ${link.unmetCount} without.`,
   }
 }
 
@@ -654,10 +644,9 @@ function InsightsCard({ stats, checkins, moods }) {
   const advance = useCallback(() => setIdx(i => (i + 1) % links.length), [links.length])
 
   if (!links.length) {
-    const validCount = buildWindowKeys(30, 0).filter(dk =>
-      moods.some(m => m.date_key === dk) && (checkins[dk] || []).length > 0
-    ).length
-    const needed = Math.max(0, 14 - validCount)
+    const allValidCount = [...new Set(moods.map(m => m.date_key))]
+      .filter(dk => (checkins[dk] || []).length > 0).length
+    const needed = Math.max(0, 14 - allValidCount)
     return (
       <div className={styles.insightCard}>
         <div className={styles.insightLabel}>YOUR INSIGHTS</div>
@@ -670,7 +659,7 @@ function InsightsCard({ stats, checkins, moods }) {
     )
   }
   const link = links[idx % links.length]
-  const { finding, basis } = buildInsightCopy(link, checkins, moods)
+  const { finding, basis } = buildInsightCopy(link)
 
   return (
     <div className={styles.insightCard}>
@@ -678,7 +667,7 @@ function InsightsCard({ stats, checkins, moods }) {
       <p className={styles.insightFinding}>{finding}</p>
       <p className={styles.insightBasis}>{basis}</p>
       {links.length > 1 && (
-        <button className={styles.insightNext} onClick={advance}>next insight</button>
+        <button className={styles.insightNext} onClick={advance}>show another</button>
       )}
     </div>
   )
