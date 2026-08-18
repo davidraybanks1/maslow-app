@@ -114,7 +114,7 @@ export default function SignIn() {
     <div className={styles.screen}>
       <div className={styles.top}>
         <Logo />
-        <div className={styles.wordmark}>maslow.</div>
+        <div className={styles.wordmark}>maslow<span className={styles.wordmarkDot}>.</span></div>
       </div>
 
       <div className={styles.body}>
