@@ -24,17 +24,11 @@ Evidence codes: `SQL` = Supabase query result · `CODE` = file:line · `MANUAL` 
 
 ## Section A — Truth Audit
 
-### A1 · P0 · Moods table: no UNIQUE constraint → duplicate rows → calendar lies
+### A1 · CORRECTED · Moods table: grouping-error query / UNIQUE constraint applied
 
-**Evidence (SQL):** Q6 — multiple `(date_key, prompt_time, mood)` combos return `cnt = 2`. On 2026-08-12, midday has rows for both `bad` and `fine`; morning has rows for both `fine` and `good`. Dates 2026-08-11 through 2026-08-16 show systematic duplication across all three slots.
+**Correction (post-audit):** The audit SQL grouped by `(date_key, prompt_time, mood)` without `user_id`, which aggregated rows across all users. The apparent "duplicates" (cnt = 2) were two different users logging the same mood in the same slot on the same date — not one user writing the same record twice. A correctly-scoped query confirms per-user data was clean: no account had multiple rows for the same `(user_id, date_key, prompt_time)`.
 
-**Root cause:** `logMood` in `store.js:552` upserts with `onConflict: 'user_id,date_key,prompt_time'`. Supabase's upsert-on-conflict only works when a database-level `UNIQUE` constraint exists on those columns. No such constraint exists in the DB, so every call silently falls back to `INSERT`, accumulating rows.
-
-**Lie produced:** The read path (`state.moods.find(m => m.date_key === d && m.prompt_time === slot)`) is non-deterministic when multiple rows exist for the same slot — the calendar wash colour, mood pip state, and retro-slot mood all depend on whichever row the DB returns first. The 2026-08-12 midday shows both `bad` and `fine` in the DB; which one the user sees is undefined.
-
-**Repro:** `SELECT date_key, prompt_time, mood, COUNT(*) FROM moods WHERE date_key >= (CURRENT_DATE - INTERVAL '60 days')::text GROUP BY date_key, prompt_time, mood HAVING COUNT(*) > 1;`
-
-**Proposed fix scope:** `ALTER TABLE moods ADD CONSTRAINT moods_user_slot_unique UNIQUE (user_id, date_key, prompt_time);` + a cleanup migration to deduplicate existing rows (keep latest `created_at`, delete others). One migration, low risk.
+**Resolution:** A `UNIQUE (user_id, date_key, prompt_time)` constraint was applied directly as a preventive measure and to make the `onConflict` upsert in `store.js:552` semantically correct going forward. No data cleanup migration was required.
 
 ---
 
