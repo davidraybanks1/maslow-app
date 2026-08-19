@@ -2,9 +2,8 @@
 .screen { display: flex; flex-direction: column; min-height: 100vh; background: var(--bg2); }
 
 /* ── Content ── */
-.content { flex: 1; overflow-y: auto; padding: 0 16px 32px; }
+.content { flex: 1; overflow-y: auto; padding: 0 16px; }
 .content::-webkit-scrollbar { display: none; }
-@media (max-width: 899px) { .content { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); } }
 
 /* ── Empty state ── */
 .emptyState { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink4); padding: 24px 0; }
@@ -1147,9 +1146,8 @@
 .reviewProgressBar { height: 1px; background: var(--hairline); flex-shrink: 0; }
 .reviewProgressFill { height: 100%; background: var(--ink); transition: width var(--motion-progress) ease; }
 
-.reviewContent { flex: 1; overflow-y: auto; padding: 24px 16px 8px; }
+.reviewContent { flex: 1; overflow-y: auto; padding: 24px 16px 16px; }
 .reviewContent::-webkit-scrollbar { display: none; }
-@media (max-width: 899px) { .reviewContent { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); } }
 
 .reviewBackBtn {
   font-family: var(--font-mono);
