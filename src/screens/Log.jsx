@@ -176,31 +176,76 @@ function formatDayDetailDate(dateKey) {
   return `${WDAYS[d.getDay()]}, ${MONTHS_LONG[d.getMonth()]} ${d.getDate()}`
 }
 
-const THREADS = [
-  { id: 'community', title: 'community',              predicate: { need: 'community' }, intro: 'entries where community came up — people, belonging, and the texture of connection.' },
-  { id: 'frenetic',  title: 'frenetic days',           predicate: { state: 'frenetic' }, intro: 'the days tagged frenetic — scattered, reactive, out of rhythm.' },
-  { id: 'mornings',  title: 'what mornings sound like', predicate: { slot: 'morning' },  intro: 'morning entries only — your first thoughts before the day takes over.' },
-  { id: 'money',     title: 'the money thread',        predicate: { need: 'money' },     intro: 'entries where money surfaced — scarcity, abundance, and what it means to you.' },
-]
+function computeActiveThreads(archiveEntries, canvas, customTags) {
+  const today = new Date(); today.setHours(12, 0, 0, 0)
+  const cutoff = new Date(today); cutoff.setDate(cutoff.getDate() - 30)
+  const afterKey = dateKeyFor(cutoff)
+
+  const canvasNeeds = NEEDS.filter(n => canvas?.[n.id])
+
+  const candidates = [
+    ...ARCHIVE_SLOTS.map(s => ({
+      id: `slot:${s}`,
+      predicate: { slot: s },
+      title: `what ${s}s sound like`,
+      intro: `everything you've written in the ${s}`,
+      dim: 'slot',
+    })),
+    ...ARCHIVE_STATES.map(s => ({
+      id: `state:${s}`,
+      predicate: { state: s },
+      title: `${s} days`,
+      intro: `days that felt ${s}`,
+      dim: 'state',
+    })),
+    ...canvasNeeds.map(n => ({
+      id: `need:${n.id}`,
+      predicate: { need: n.id },
+      title: n.name,
+      intro: `everything you've written about ${n.name}`,
+      dim: 'need',
+      needId: n.id,
+    })),
+    ...(customTags || []).map(t => ({
+      id: `custom:${t.label}`,
+      predicate: { custom: t.label },
+      title: `the ${t.label} thread`,
+      intro: `everything you've written about ${t.label}`,
+      dim: 'custom',
+    })),
+  ]
+
+  const scored = candidates
+    .map(c => {
+      const windowCount = archiveEntries.filter(e => matchesPredicate(e, c.predicate, afterKey)).length
+      const lastDate = archiveEntries.find(e => matchesPredicate(e, c.predicate))?.date_key || '0000-00-00'
+      return { ...c, windowCount, lastDate }
+    })
+    .filter(c => c.windowCount >= 2)
+    .sort((a, b) => b.windowCount - a.windowCount || b.lastDate.localeCompare(a.lastDate))
+
+  return scored.slice(0, 4)
+}
 
 function threadsInterpretiveLine(threads, archiveEntries) {
   const countFor = t => archiveEntries.filter(e => matchesPredicate(e, t.predicate)).length
   const parts = []
-  const thinDims = []
-  for (const dim of ['slot', 'need', 'state']) {
-    const dimThreads = threads.filter(t => t.predicate[dim])
+  for (const dim of ['slot', 'need', 'state', 'custom']) {
+    const dimThreads = threads.filter(t => t.dim === dim)
     if (!dimThreads.length) continue
     const richOnes = dimThreads.filter(t => countFor(t) >= 8)
-    if (richOnes.length > 0) {
-      if (dim === 'slot') parts.push('mornings run deep')
-      else if (dim === 'need') parts.push(richOnes.length === 1 ? `${richOnes[0].title} is building` : 'needs are building')
-      else parts.push(richOnes.length === 1 ? `${richOnes[0].title} has real shape` : 'states are taking shape')
-    } else if (dim !== 'slot') {
-      thinDims.push(dim === 'need' ? 'needs' : 'states')
+    if (!richOnes.length) continue
+    if (dim === 'slot') {
+      parts.push(`${richOnes[0].predicate.slot}s run deep`)
+    } else if (dim === 'need') {
+      parts.push(richOnes.length === 1 ? `${richOnes[0].title} is building` : 'needs are building')
+    } else if (dim === 'state') {
+      parts.push(richOnes.length === 1 ? `${richOnes[0].title} has real shape` : 'states are taking shape')
+    } else {
+      parts.push(richOnes.length === 1 ? `${richOnes[0].title} is a real thread` : 'custom threads are active')
     }
   }
-  if (thinDims.length) parts.push(`${thinDims.join(' and ')} ${thinDims.length > 1 ? 'are' : 'is'} still filling in`)
-  return parts.length ? parts.join('; ') + '.' : 'threads are growing — keep writing.'
+  return parts.length ? parts.join('; ') + '.' : 'keep writing — threads deepen over time.'
 }
 
 // Monday-indexed (0=Mon..6=Sun) review day -> the matching JS Date.getDay() value (0=Sun..6=Sat)
@@ -991,46 +1036,43 @@ export default function Log({ state }) {
 
         {/* ── Threads ── */}
         {archiveLoaded && (() => {
-          const taggedCount = archiveEntries.filter(e => e.need_id || e.state).length
-          const showGrowingMeta = archiveEntries.length > 0 && taggedCount < archiveEntries.length / 2
-          const openThread = THREADS.find(t => t.id === openThreadId) || null
+          const activeThreads = computeActiveThreads(archiveEntries, state.canvas, customTags)
+          const openThread = activeThreads.find(t => t.id === openThreadId) || null
           return (
             <div className={styles.threadSection}>
               <div className={styles.threadSectionHeader}>
-                <span className={styles.threadSectionLabel}>threads</span>
-                {showGrowingMeta && <span className={styles.threadSectionMeta}>growing as you tag</span>}
+                <span className={styles.threadSectionLabel}>your most active threads</span>
+                <span className={styles.threadSectionMeta}>from the last 30 days</span>
               </div>
-              <div className={styles.threadListCard}>
-                {THREADS.map(thread => {
-                  const matches = archiveEntries.filter(e => matchesPredicate(e, thread.predicate))
-                  const distinctWeeks = new Set(matches.map(e => isoYearWeek(e.date_key))).size
-                  const isThin = matches.length > 0 && matches.length < 8
-                  const isEmpty = matches.length === 0
-                  const modeName = thread.predicate.need ? (state.canvas?.[thread.predicate.need] || null) : null
-                  const dotColor = modeName ? (MODE_DOT_TOKEN[modeName] || 'var(--ink)') : 'var(--ink)'
-                  return (
-                    <button
-                      key={thread.id}
-                      className={`${styles.threadListRow}${isEmpty ? ` ${styles.threadListRowEmpty}` : ''}`}
-                      onClick={() => setOpenThreadId(id => id === thread.id ? null : thread.id)}
-                    >
-                      <div className={styles.threadCardRow}>
-                        <span className={styles.threadDot} style={{ background: dotColor }} />
-                        <span className={isEmpty ? styles.threadTitleEmpty : styles.threadTitle}>{thread.title}</span>
-                        <span className={styles.threadChevron} aria-hidden="true">›</span>
-                      </div>
-                      <div className={isEmpty ? styles.threadStatEmpty : styles.threadStat}>
-                        {isEmpty
-                          ? '0 entries'
-                          : `${matches.length} ${matches.length === 1 ? 'entry' : 'entries'} across ${distinctWeeks} ${distinctWeeks === 1 ? 'week' : 'weeks'}${isThin ? ' · thread is thin — keep tagging' : ''}`}
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
+              {activeThreads.length === 0 ? (
+                <p className={styles.threadInterpretive} style={{ fontStyle: 'italic' }}>threads appear as you write — entries from the last 30 days shape this list.</p>
+              ) : (
+                <div className={styles.threadListCard}>
+                  {activeThreads.map(thread => {
+                    const allMatches = archiveEntries.filter(e => matchesPredicate(e, thread.predicate))
+                    const modeName = thread.dim === 'need' ? (state.canvas?.[thread.needId] || null) : null
+                    const dotColor = modeName ? (MODE_DOT_TOKEN[modeName] || 'var(--ink)') : 'var(--ink)'
+                    return (
+                      <button
+                        key={thread.id}
+                        className={styles.threadListRow}
+                        onClick={() => setOpenThreadId(id => id === thread.id ? null : thread.id)}
+                      >
+                        <div className={styles.threadCardRow}>
+                          <span className={styles.threadDot} style={{ background: dotColor }} />
+                          <span className={styles.threadTitle}>{thread.title}</span>
+                          <span className={styles.threadChevron} aria-hidden="true">›</span>
+                        </div>
+                        <div className={styles.threadStat}>
+                          {thread.windowCount} {thread.windowCount === 1 ? 'entry' : 'entries'} in the last 30 days · {allMatches.length} overall
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
               {openThread && (() => {
                 const openMatches = archiveEntries.filter(e => matchesPredicate(e, openThread.predicate))
-                const emptyDimension = Object.values(openThread.predicate)[0]
                 return (
                   <div key={openThread.id} className={styles.threadRead}>
                     <div className={styles.threadReadHeader}>
@@ -1039,7 +1081,7 @@ export default function Log({ state }) {
                     </div>
                     <p className={styles.threadReadIntro}>{openThread.intro}</p>
                     {openMatches.length === 0 ? (
-                      <p className={styles.threadReadEmpty}>nothing here yet — tag an entry with {emptyDimension} and it will appear.</p>
+                      <p className={styles.threadReadEmpty}>nothing here yet.</p>
                     ) : (
                       openMatches.slice().reverse().map(e => {
                         const slotMood = e.slot && !e.state
@@ -1067,7 +1109,7 @@ export default function Log({ state }) {
                   </div>
                 )
               })()}
-              <p className={styles.threadInterpretive}>{threadsInterpretiveLine(THREADS, archiveEntries)}</p>
+              {activeThreads.length > 0 && <p className={styles.threadInterpretive}>{threadsInterpretiveLine(activeThreads, archiveEntries)}</p>}
             </div>
           )
         })()}
