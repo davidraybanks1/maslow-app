@@ -946,10 +946,8 @@ export default function Log({ state }) {
           </div>
         )}
 
-        <div className={styles.pageTitle}>review.</div>
-        <div className={styles.pageSubhead}>
-          {entryCount} {entryCount === 1 ? 'entry' : 'entries'} · {needCount} tagged with a need, {stateCount} with a state
-        </div>
+        <div className={styles.pageTitle}>reflect.</div>
+        <div className={styles.pageSubhead}>the conversations you've been having with yourself.</div>
 
         {ritualDue ? (
           <div className={styles.ritualDueCard}>

@@ -24,22 +24,23 @@ function DataIcon({ active }) {
   )
 }
 
-function ReviewIcon({ active }) {
+function ReflectIcon({ active }) {
   return (
     <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-      <path d="M15 9A6 6 0 1 1 11.4 3.6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
       {active
-        ? <polygon points="11,1.5 14.5,4.5 11,6" fill="currentColor"/>
-        : <path d="M11 1.5L14.5 4.5L11 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        ? <circle cx="9" cy="9" r="1.5" fill="currentColor"/>
+        : <circle cx="9" cy="9" r="1.5" stroke="currentColor" strokeWidth="1.5"/>
       }
+      <path d="M5.5 11.5 A5 5 0 0 1 12.5 11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+      <path d="M2.5 14 A9 9 0 0 1 15.5 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
     </svg>
   )
 }
 
 const TABS = [
-  { to: '/today',  label: 'today',  Icon: TodayIcon },
-  { to: '/data',   label: 'data',   Icon: DataIcon },
-  { to: '/log',    label: 'review', Icon: ReviewIcon },
+  { to: '/today',  label: 'today',   Icon: TodayIcon },
+  { to: '/data',   label: 'data',    Icon: DataIcon },
+  { to: '/log',    label: 'reflect', Icon: ReflectIcon },
 ]
 
 export default function TabBar() {
