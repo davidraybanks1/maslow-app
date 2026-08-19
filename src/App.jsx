@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, Component } from 'react'
 import { HeaderSlotContext } from './lib/headerSlot'
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, useNavigationType } from 'react-router-dom'
-import { useAppState } from './lib/store'
+import { useAppState, loadCustomTags } from './lib/store'
 import { hideSplash, scheduleReminders } from './lib/native'
 import LoadingScreen from './components/LoadingScreen'
 import DiagnosticFlow from './screens/Onboarding/DiagnosticFlow'
@@ -80,6 +80,12 @@ function AppInner() {
     () => navigate('/today')
   )
 
+  const [customTagCount, setCustomTagCount] = useState(0)
+  useEffect(() => {
+    if (!state.userId) return
+    loadCustomTags(state.userId).then(tags => setCustomTagCount(tags.length))
+  }, [state.userId])
+
   // Dismiss once the ritual timer elapses. A cached session is enough to enter
   // the app — we never make a returning user wait on the auth round-trip.
   const hasCachedSession = state.onboarded && !!state.userId
@@ -108,18 +114,18 @@ function AppInner() {
   return (
     <HeaderSlotContext.Provider value={setHeaderSlot}>
     <div className={styles.shell}>
-      {state.onboarded && <DesktopNav name={state.profile.name} email={state.email} showNoteToSelf={state.showNoteToSelf} updateShowNoteToSelf={updateShowNoteToSelf} reviewCadence={state.reviewCadence} updateReviewCadence={updateReviewCadence} reviewDay={state.reviewDay} reviewTime={state.reviewTime} updateReviewSchedule={updateReviewSchedule} noteDeckCount={(state.noteDeck || []).length} />}
+      {state.onboarded && <DesktopNav name={state.profile.name} email={state.email} showNoteToSelf={state.showNoteToSelf} updateShowNoteToSelf={updateShowNoteToSelf} reviewCadence={state.reviewCadence} updateReviewCadence={updateReviewCadence} reviewDay={state.reviewDay} reviewTime={state.reviewTime} updateReviewSchedule={updateReviewSchedule} noteDeckCount={(state.noteDeck || []).length} customTagCount={customTagCount} />}
       <div className={styles.column}>
       {state.onboarded && (
         <div className={styles.appHeader}>
-          <AppHeader slot={headerSlot} name={state.profile.name} email={state.email} showNoteToSelf={state.showNoteToSelf} updateShowNoteToSelf={updateShowNoteToSelf} reviewCadence={state.reviewCadence} updateReviewCadence={updateReviewCadence} reviewDay={state.reviewDay} reviewTime={state.reviewTime} updateReviewSchedule={updateReviewSchedule} noteDeckCount={(state.noteDeck || []).length} />
+          <AppHeader slot={headerSlot} name={state.profile.name} email={state.email} showNoteToSelf={state.showNoteToSelf} updateShowNoteToSelf={updateShowNoteToSelf} reviewCadence={state.reviewCadence} updateReviewCadence={updateReviewCadence} reviewDay={state.reviewDay} reviewTime={state.reviewTime} updateReviewSchedule={updateReviewSchedule} noteDeckCount={(state.noteDeck || []).length} customTagCount={customTagCount} />
         </div>
       )}
       <div className={styles.content} ref={contentRef}>
         <Routes>
           <Route path="/" element={state.onboarded ? <Navigate to="/today" replace /> : <Navigate to="/onboarding" replace />} />
           <Route path="/onboarding" element={state.onboarded ? <Navigate to="/today" replace /> : <DiagnosticFlow updateCanvas={updateCanvas} completeOnboarding={completeOnboarding} />} />
-          <Route path="/today" element={<Protected onboarded={state.onboarded} userId={state.userId}><Today state={state} checkIn={checkIn} removeCheckin={removeCheckin} clearPracticeCheckins={clearPracticeCheckins} incrementCheckinCount={incrementCheckinCount} logMood={logMood} onActiveDeckChanged={updateNoteDeck} /></Protected>} />
+          <Route path="/today" element={<Protected onboarded={state.onboarded} userId={state.userId}><Today state={state} checkIn={checkIn} removeCheckin={removeCheckin} clearPracticeCheckins={clearPracticeCheckins} incrementCheckinCount={incrementCheckinCount} logMood={logMood} onActiveDeckChanged={updateNoteDeck} onCustomTagsChanged={setCustomTagCount} /></Protected>} />
           <Route path="/practices" element={<Navigate to="/canvas" replace />} />
           <Route path="/data" element={<Protected onboarded={state.onboarded} userId={state.userId}><Data state={state} archivePractice={archivePractice} /></Protected>} />
           <Route path="/log" element={<Protected onboarded={state.onboarded} userId={state.userId}><Log state={state} /></Protected>} />

@@ -32,6 +32,7 @@ export default function ProfileMenu({
   reviewCadence, updateReviewCadence,
   reviewDay, reviewTime, updateReviewSchedule,
   noteDeckCount = 0,
+  customTagCount = 0,
 }) {
   const [phase, setPhase] = useState(null) // null | 'open' | 'closing'
   const [cadenceOpen, setCadenceOpen] = useState(false)
@@ -142,6 +143,17 @@ export default function ProfileMenu({
                   <div className={styles.rowTitle}>your note deck</div>
                   <div className={`${styles.rowSub} ${noteDeckCount > 5 ? styles.rowSubOver : ''}`}>
                     {noteDeckCount}/5 on your today screen
+                  </div>
+                </div>
+              </button>
+              <button
+                className={styles.row}
+                onClick={() => { close(); navigate('/today', { state: { openTags: true } }) }}
+              >
+                <div className={styles.rowContent}>
+                  <div className={styles.rowTitle}>your tags</div>
+                  <div className={styles.rowSub}>
+                    {customTagCount} custom tag{customTagCount !== 1 ? 's' : ''}
                   </div>
                 </div>
               </button>

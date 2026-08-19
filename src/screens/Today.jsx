@@ -2,12 +2,13 @@ import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { NEEDS, MODES, MODE_ORDER, MODE_MAX_BUBBLES, MODE_WEIGHTS, JOURNAL_TRUNCATE } from '../lib/constants'
 import { currentSlot, precedingSlots, SLOT_NOUN } from '../lib/slots'
-import { todayKey, loadJournalEntries, addJournalEntry, deleteJournalEntry, loadNoteDeck } from '../lib/store'
+import { todayKey, loadJournalEntries, addJournalEntry, deleteJournalEntry, loadNoteDeck, loadCustomTags } from '../lib/store'
 import { BUILTIN_NATURE_TYPES, BUILTIN_PEAK_TYPES } from '../lib/debriefTypes'
 import { createDataStats, getCanvasGuidance } from '../lib/dataStats'
 import { hapticTick } from '../lib/native'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import ManageDeck from '../components/ManageDeck'
+import ManageTags from '../components/ManageTags'
 import styles from './Today.module.css'
 
 const MOODS = ['good', 'fine', 'bad']
@@ -125,7 +126,7 @@ const STREAK_LINES = {
   365: 'a year of showing up.',
 }
 
-export default function Today({ state, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood, onActiveDeckChanged }) {
+export default function Today({ state, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood, onActiveDeckChanged, onCustomTagsChanged }) {
   const navigate = useNavigate()
   const location = useLocation()
   const today = todayKey()
@@ -197,11 +198,21 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
 
   const [lightboxImage, setLightboxImage] = useState(null)
   const [manageDeckOpen, setManageDeckOpen] = useState(false)
+  const [manageTagsOpen, setManageTagsOpen] = useState(false)
+  const [customTags, setCustomTags] = useState([])
 
-  // Open manage deck when navigated here from profile sheet
+  useEffect(() => {
+    if (!state.userId) return
+    loadCustomTags(state.userId).then(setCustomTags)
+  }, [state.userId])
+
+  // Open manage deck / tags when navigated here from profile sheet
   useEffect(() => {
     if (location.state?.openDeck) {
       openManageDeck()
+      navigate(location.pathname, { replace: true, state: {} })
+    } else if (location.state?.openTags) {
+      setManageTagsOpen(true)
       navigate(location.pathname, { replace: true, state: {} })
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -798,6 +809,17 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
           userId={state.userId}
           onClose={() => { setManageDeckOpen(false); loadDeck() }}
           onDeckChanged={deck => { setNoteDeck(deck); onActiveDeckChanged?.(deck) }}
+        />
+      )}
+
+      {manageTagsOpen && (
+        <ManageTags
+          userId={state.userId}
+          onClose={updatedTags => {
+            setManageTagsOpen(false)
+            setCustomTags(updatedTags)
+            onCustomTagsChanged?.(updatedTags.length)
+          }}
         />
       )}
 

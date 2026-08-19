@@ -2,7 +2,7 @@ import styles from './AppHeader.module.css'
 import BrandMark from './BrandMark'
 import ProfileMenu from './ProfileMenu'
 
-export default function AppHeader({ slot, name, email, showNoteToSelf, updateShowNoteToSelf, reviewCadence, updateReviewCadence, reviewDay, reviewTime, updateReviewSchedule, noteDeckCount }) {
+export default function AppHeader({ slot, name, email, showNoteToSelf, updateShowNoteToSelf, reviewCadence, updateReviewCadence, reviewDay, reviewTime, updateReviewSchedule, noteDeckCount, customTagCount }) {
   return (
     <header className={styles.header}>
       <div className={styles.left}>
@@ -16,6 +16,7 @@ export default function AppHeader({ slot, name, email, showNoteToSelf, updateSho
           reviewCadence={reviewCadence} updateReviewCadence={updateReviewCadence}
           reviewDay={reviewDay} reviewTime={reviewTime} updateReviewSchedule={updateReviewSchedule}
           noteDeckCount={noteDeckCount}
+          customTagCount={customTagCount}
         />
       </div>
     </header>

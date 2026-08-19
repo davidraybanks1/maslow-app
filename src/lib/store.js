@@ -735,6 +735,49 @@ export async function updateJournalEntryTags(id, { needId, stateName }) {
   return { error }
 }
 
+// ── Custom tags ─────────────────────────────────────────────────────────────
+
+export async function loadCustomTags(userId) {
+  const { data } = await supabase
+    .from('custom_tags')
+    .select('id, label, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: true })
+  return data || []
+}
+
+export async function createCustomTag(userId, label) {
+  const { data, error } = await supabase
+    .from('custom_tags')
+    .insert({ user_id: userId, label })
+    .select('id, label, created_at')
+    .single()
+  if (error) logSupabaseError('createCustomTag', error)
+  return { data, error }
+}
+
+export async function deleteCustomTag(id) {
+  const { error } = await supabase
+    .from('custom_tags')
+    .delete()
+    .eq('id', id)
+  if (error) logSupabaseError('deleteCustomTag', error)
+  return { error }
+}
+
+export async function loadCustomTagUsageCounts(userId) {
+  const { data } = await supabase
+    .from('journal')
+    .select('custom')
+    .eq('user_id', userId)
+    .not('custom', 'is', null)
+  const counts = {}
+  for (const row of data || []) {
+    if (row.custom) counts[row.custom] = (counts[row.custom] || 0) + 1
+  }
+  return counts
+}
+
 export async function deleteJournalEntry(id) {
   const { error } = await supabase
     .from('journal')

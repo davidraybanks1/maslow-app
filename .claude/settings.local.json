@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(grep -n \"{detail &&\\\\|{newStep\\\\|detail, debriefTypes\\\\|onClose.*setDetail\\\\|setDetail\\(null\\)\\\\|setNewStep\\(null\\)\" /Users/davidbanks/Desktop/maslow-app/src/screens/Debriefs.jsx)"
+      "Bash(grep -n \"{detail &&\\\\|{newStep\\\\|detail, debriefTypes\\\\|onClose.*setDetail\\\\|setDetail\\(null\\)\\\\|setNewStep\\(null\\)\" /Users/davidbanks/Desktop/maslow-app/src/screens/Debriefs.jsx)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(rm /Users/davidbanks/Desktop/maslow-app/.git/index.lock)"
     ]
   }
 }
