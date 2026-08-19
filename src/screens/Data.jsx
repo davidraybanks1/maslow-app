@@ -281,15 +281,15 @@ function RhythmSection({ stats, canvas, checkins, moods }) {
   )
 }
 
-// 34 weeks ending this week, oldest first. Each entry = 7 date-key strings Mon–Sun.
-function buildLongViewWeeks() {
+// Up to 34 weeks ending this week (floor 12), oldest first. Each entry = 7 date-key strings Mon–Sun.
+function buildLongViewWeeks(len = 34) {
   const today = new Date()
   const mondayOffset = (today.getDay() + 6) % 7
   const thisMonday = new Date(today)
   thisMonday.setDate(today.getDate() - mondayOffset)
-  return Array.from({ length: 34 }, (_, wi) => {
+  return Array.from({ length: len }, (_, wi) => {
     const weekMonday = new Date(thisMonday)
-    weekMonday.setDate(thisMonday.getDate() - (33 - wi) * 7)
+    weekMonday.setDate(thisMonday.getDate() - (len - 1 - wi) * 7)
     return Array.from({ length: 7 }, (_, di) => {
       const d = new Date(weekMonday)
       d.setDate(weekMonday.getDate() + di)
@@ -308,7 +308,7 @@ function practicesColor(pct) {
 const MOOD_LENS_COLOR = { good: '#1B3A2D', fine: '#9DB394', bad: '#D93B1C' }
 const EMPTY_CELL = 'rgba(0,0,0,.06)'
 
-function LongViewSection({ canvas, checkins, moods, stats, weeks }) {
+function LongViewSection({ canvas, checkins, moods, stats, weeks, windowLen = 34 }) {
   const [lens, setLens] = useState('practices')
   const todayKey = buildWindowKeys(1, 0)[0]
 
@@ -336,7 +336,7 @@ function LongViewSection({ canvas, checkins, moods, stats, weeks }) {
     wk.some(dk => (checkins[dk] || []).length > 0 || moods.some(m => m.date_key === dk))
   ).length
 
-  const readFallback = `${activeWeeks} of 34 weeks with data.`
+  const readFallback = `${activeWeeks} of ${windowLen} weeks with data.`
 
   return (
     <section className={styles.section}>
@@ -442,7 +442,7 @@ function practiceClosingLine(allCount, activeCount) {
   return `${activeCount} of ${allCount} practices still run. The need looks alive because ${word} practices carry it.`
 }
 
-function RibbonsSection({ canvas, checkins, practicesDB, weeks }) {
+function RibbonsSection({ canvas, checkins, practicesDB, weeks, windowLen = 34 }) {
   const [openNeed, setOpenNeed] = useState(null)
   const recent30 = useMemo(() => buildWindowKeys(30, 0), [])
   const todayKey = buildWindowKeys(1, 0)[0]
@@ -498,7 +498,7 @@ function RibbonsSection({ canvas, checkins, practicesDB, weeks }) {
                     {sinceMonth ? `nothing logged since ${sinceMonth}` : 'nothing logged'}
                   </span>
                 ) : (
-                  <span className={styles.ribbonStat}>{weeksActive} of 34 weeks</span>
+                  <span className={styles.ribbonStat}>{weeksActive} of {windowLen} weeks</span>
                 )}
                 <span className={styles.ribbonChevron}>{isOpen ? '▴' : '▾'}</span>
               </button>
@@ -813,7 +813,16 @@ export default function Data({ state, archivePractice }) {
     [canvas, checkins, moods, practices, practicesDB]
   )
 
-  const longViewWeeks = useMemo(() => buildLongViewWeeks(), [])
+  const ribbonLen = useMemo(() => {
+    const keys = Object.keys(checkins)
+    if (!keys.length) return 12
+    const first = keys.sort()[0]
+    const today = new Date(); today.setHours(12, 0, 0, 0)
+    const weeks = Math.ceil((today - new Date(first + 'T12:00:00')) / (7 * 24 * 60 * 60 * 1000))
+    return Math.max(12, Math.min(34, weeks))
+  }, [checkins])
+
+  const longViewWeeks = useMemo(() => buildLongViewWeeks(ribbonLen), [ribbonLen])
   const hasCanvas = Object.keys(canvas).length > 0
 
   return (
@@ -846,8 +855,8 @@ export default function Data({ state, archivePractice }) {
             <InsightsCard stats={stats} checkins={checkins} moods={moods} />
             <WhatChanged period={period} canvas={canvas} checkins={checkins} />
             <RhythmSection stats={stats} canvas={canvas} checkins={checkins} moods={moods} />
-            <LongViewSection canvas={canvas} checkins={checkins} moods={moods} stats={stats} weeks={longViewWeeks} />
-            <RibbonsSection canvas={canvas} checkins={checkins} practicesDB={practicesDB} weeks={longViewWeeks} />
+            <LongViewSection canvas={canvas} checkins={checkins} moods={moods} stats={stats} weeks={longViewWeeks} windowLen={ribbonLen} />
+            <RibbonsSection canvas={canvas} checkins={checkins} practicesDB={practicesDB} weeks={longViewWeeks} windowLen={ribbonLen} />
             <GoneQuietSection canvas={canvas} checkins={checkins} practicesDB={practicesDB} archivePractice={archivePractice} />
             <AllNumbersSection period={period} canvas={canvas} checkins={checkins} />
           </>
