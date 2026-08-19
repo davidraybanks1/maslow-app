@@ -129,9 +129,17 @@ const STREAK_LINES = {
 export default function Today({ state, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood, onActiveDeckChanged, onCustomTagsChanged }) {
   const navigate = useNavigate()
   const location = useLocation()
-  const today = todayKey()
+  const [today, setToday] = useState(() => todayKey())
+  const [slot, setSlot] = useState(() => currentSlot())
   const checked = state.checkins[today] || []
-  const slot = currentSlot()
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setToday(todayKey())
+      setSlot(currentSlot())
+    }, 60_000)
+    return () => clearInterval(id)
+  }, [])
 
   // Completion ring: segments pack contiguously from 12 o'clock in mode order.
   const ringArcs = []
