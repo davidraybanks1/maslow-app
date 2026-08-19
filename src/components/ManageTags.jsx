@@ -138,12 +138,14 @@ export default function ManageTags({ userId, onClose }) {
               <div key={tag.id} className={styles.tagRow}>
                 <span className={styles.tagLabel}>{tag.label}</span>
                 <span className={styles.tagMeta}>{count} {count === 1 ? 'entry' : 'entries'}</span>
-                <button
-                  className={isConfirming ? styles.deleteBtnConfirm : styles.deleteBtn}
-                  onClick={() => handleDelete(tag.id)}
-                >
-                  {isConfirming ? 'confirm' : 'delete'}
-                </button>
+                {isConfirming ? (
+                  <>
+                    <button className={styles.deleteBtn} onClick={() => setDeleteConfirmId(null)}>cancel</button>
+                    <button className={styles.deleteBtnConfirm} onClick={() => handleDelete(tag.id)}>confirm</button>
+                  </>
+                ) : (
+                  <button className={styles.deleteBtn} onClick={() => handleDelete(tag.id)}>delete</button>
+                )}
               </div>
             )
           })}
