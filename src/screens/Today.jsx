@@ -337,13 +337,15 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   }, [state.moods])
 
   async function handleMoodSelect(promptTime, mood) {
+    const prior = moodSelections[promptTime]
     setMoodSelections(prev => ({ ...prev, [promptTime]: mood }))
     if (!logMood) return
     const { error } = await logMood(state.userId, promptTime, mood, moodNotes[promptTime] || null, today)
     if (error) {
       setMoodSelections(prev => {
         const next = { ...prev }
-        if (next[promptTime] === mood) delete next[promptTime]
+        if (next[promptTime] !== mood) return next
+        if (prior !== undefined) { next[promptTime] = prior } else { delete next[promptTime] }
         return next
       })
       setMoodNotes(prev => ({ ...prev, [promptTime]: '' }))
