@@ -206,7 +206,10 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     loadCustomTags(state.userId).then(setCustomTags)
   }, [state.userId])
 
-  // Open manage deck / tags when navigated here from profile sheet
+  // Open manage deck / tags when navigated here from profile sheet.
+  // Dep on location.state (not []) so this re-fires when profile pushes the same
+  // /today route while Today is already mounted — without it the state change is
+  // invisible because useEffect([]) only runs on initial mount.
   useEffect(() => {
     if (location.state?.openDeck) {
       openManageDeck()
@@ -215,7 +218,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
       setManageTagsOpen(true)
       navigate(location.pathname, { replace: true, state: {} })
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [location.state]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function loadDeck() {
     if (!state.userId) { console.error('[loadDeck] called without userId — session may be invalid'); return }

@@ -58,12 +58,13 @@ export default function ProfileMenu({
     setPhase('open')
   }
 
-  function close() {
+  function close(onDone) {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     if (reduced) {
       setPhase(null)
       setCadenceOpen(false)
       setConfirmSignOut(false)
+      onDone?.()
       return
     }
     const mobile = !window.matchMedia('(min-width: 900px)').matches
@@ -73,6 +74,7 @@ export default function ProfileMenu({
       setPhase(null)
       setCadenceOpen(false)
       setConfirmSignOut(false)
+      onDone?.()
     }, duration)
   }
 
@@ -140,7 +142,7 @@ export default function ProfileMenu({
               </NavLink>
               <button
                 className={styles.row}
-                onClick={() => { close(); navigate('/today', { state: { openDeck: true } }) }}
+                onClick={() => close(() => navigate('/today', { state: { openDeck: true } }))}
               >
                 <div className={styles.rowContent}>
                   <div className={styles.rowTitle}>your note deck</div>
@@ -151,7 +153,7 @@ export default function ProfileMenu({
               </button>
               <button
                 className={styles.row}
-                onClick={() => { close(); navigate('/today', { state: { openTags: true } }) }}
+                onClick={() => close(() => navigate('/today', { state: { openTags: true } }))}
               >
                 <div className={styles.rowContent}>
                   <div className={styles.rowTitle}>your tags</div>
