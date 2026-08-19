@@ -23,7 +23,7 @@
 }
 .avatarOpen {
   background: var(--ink);
-  color: var(--paper);
+  color: var(--card);
   border-color: var(--ink);
 }
 
@@ -290,7 +290,7 @@
 }
 .cadenceBtnActive {
   background: var(--ink);
-  color: var(--paper);
+  color: var(--card);
   border-color: var(--ink);
 }
 

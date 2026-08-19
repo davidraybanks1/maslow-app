@@ -548,7 +548,7 @@
   width: 100%;
   padding: 12px;
   background: var(--exploration);
-  color: var(--paper);
+  color: var(--card);
   border: none;
   border-radius: 999px;
   font-family: var(--font-mono);
@@ -1082,7 +1082,7 @@
   height: 34px;
   padding: 0 18px;
   background: var(--ink);
-  color: var(--paper);
+  color: var(--card);
   border: none;
   border-radius: 999px;
   font-family: var(--font-mono);
@@ -1102,7 +1102,7 @@
   height: 34px;
   padding: 0 18px;
   background: var(--ink);
-  color: var(--paper);
+  color: var(--card);
   border: none;
   border-radius: 999px;
   font-family: var(--font-mono);
@@ -1508,7 +1508,7 @@
   /* enabled: solid ink fill, paper text */
   .journalAddBtn:not(:disabled) {
     background: var(--ink);
-    color: var(--paper);
+    color: var(--card);
     border-color: var(--ink);
     cursor: pointer;
   }

@@ -23,7 +23,7 @@ button { touch-action: manipulation; }
 :root {
   /* Paper stack */
   --paper:  #EFEADD;        /* main screen background */
-  --card:   #FFFFFF;        /* card surfaces */ /* TEMP: true-white experiment — revert to #FCFAF4 or commit by decision */
+  --card:   #FFFFFF;        /* card surfaces */
 
   /* Backward-compat aliases */
   --bg:  var(--paper);

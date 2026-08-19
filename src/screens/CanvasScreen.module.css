@@ -41,7 +41,7 @@
 
 .guidePillActive {
   background: #1B3A2D;
-  color: #FCFAF4;
+  color: var(--card);
   border-color: #1B3A2D;
 }
 .guidePillActive:hover { opacity: .88; }
@@ -363,7 +363,7 @@
   border-radius: 20px;
   border: none;
   background: #1B3A2D;
-  color: #FCFAF4;
+  color: var(--card);
   font-family: var(--font-mono);
   font-size: 11.5px;
   cursor: pointer;
@@ -400,7 +400,7 @@
 
 .removeBtnConfirm {
   background: #C4381F;
-  color: #FCFAF4;
+  color: var(--card);
   border-color: #C4381F;
 }
 
@@ -765,7 +765,7 @@
 
 .addBtnActive {
   background: #1B3A2D;
-  color: #FCFAF4;
+  color: var(--card);
   border-color: #1B3A2D;
   cursor: pointer;
 }
