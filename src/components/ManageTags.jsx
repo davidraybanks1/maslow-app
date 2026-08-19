@@ -34,11 +34,11 @@ export default function ManageTags({ userId, onClose }) {
   }
 
   async function handleAdd() {
-    const trimmed = draft.replace(/\s+/g, ' ').trim()
-    if (!trimmed) return
-    const isDupe = tags.some(t => t.label.toLowerCase() === trimmed.toLowerCase())
+    const normalized = draft.replace(/\s+/g, ' ').trim().toLowerCase()
+    if (!normalized) return
+    const isDupe = tags.some(t => t.label === normalized)
     if (isDupe) { setDupeError(true); return }
-    const { data, error } = await createCustomTag(userId, trimmed)
+    const { data, error } = await createCustomTag(userId, normalized)
     if (error) {
       if (error.code === '23505') { setDupeError(true); return }
       setSaveError('save failed — try again')
@@ -98,6 +98,9 @@ export default function ManageTags({ userId, onClose }) {
             onChange={handleDraftChange}
             onKeyDown={handleKeyDown}
             maxLength={40}
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
           />
           <button
             className={styles.addBtn}
