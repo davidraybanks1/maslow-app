@@ -489,6 +489,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
             </div>
           )}
         </div>
+        <div className={styles.moodDivider} />
 
         {/* ── Needs & Practices ── */}
         <div className={styles.practicesCard}>

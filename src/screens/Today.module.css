@@ -969,7 +969,12 @@
 }
 
 
-.moodDivider { display: none; }
+.moodDivider {
+  border: none;
+  border-top: 1px solid var(--hairline);
+  margin: 18px 0;
+}
+@media (min-width: 900px) { .moodDivider { display: none; } }
 
 /* ── Journal entry cards ── */
 .journalMobileEntries {
@@ -1269,7 +1274,6 @@
 .guidanceSlot { display: block; }
 .moodCard {
   margin-top: 18px;
-  margin-bottom: 18px;
 }
 
 .moodEyebrow {
