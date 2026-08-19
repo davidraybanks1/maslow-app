@@ -33,30 +33,56 @@ export default function ProfileMenu({
   reviewDay, reviewTime, updateReviewSchedule,
   noteDeckCount = 0,
 }) {
-  const [open, setOpen] = useState(false)
+  const [phase, setPhase] = useState(null) // null | 'open' | 'closing'
   const [cadenceOpen, setCadenceOpen] = useState(false)
   const [confirmSignOut, setConfirmSignOut] = useState(false)
   const navigate = useNavigate()
   const wrapperRef = useRef(null)
+  const closeTimerRef = useRef(null)
+
+  const mounted = phase !== null
+  const isOpen = phase === 'open'
 
   const initial = ((name || email || '').trim()[0] || '?').toUpperCase()
   const cadence = reviewCadence || 'weekly'
   const builtAt = formatBuildTime(BUILD_TIME)
 
-  function close() {
-    setOpen(false)
+  // Cleanup timer on unmount
+  useEffect(() => () => { if (closeTimerRef.current) clearTimeout(closeTimerRef.current) }, [])
+
+  function openMenu() {
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
     setCadenceOpen(false)
     setConfirmSignOut(false)
+    setPhase('open')
+  }
+
+  function close() {
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (reduced) {
+      setPhase(null)
+      setCadenceOpen(false)
+      setConfirmSignOut(false)
+      return
+    }
+    const mobile = !window.matchMedia('(min-width: 900px)').matches
+    const duration = mobile ? 220 : 150
+    setPhase('closing')
+    closeTimerRef.current = setTimeout(() => {
+      setPhase(null)
+      setCadenceOpen(false)
+      setConfirmSignOut(false)
+    }, duration)
   }
 
   async function handleSignOut() {
-    setOpen(false)
+    close()
     await supabase.auth.signOut()
     navigate('/signin')
   }
 
   useEffect(() => {
-    if (!open) { setCadenceOpen(false); setConfirmSignOut(false); return }
+    if (!mounted) return
     function onOutside(e) {
       if (!wrapperRef.current?.contains(e.target)) close()
     }
@@ -69,23 +95,26 @@ export default function ProfileMenu({
       document.removeEventListener('touchstart', onOutside)
       document.removeEventListener('keydown', onKey)
     }
-  }, [open])
+  }, [mounted])
 
   return (
     <div ref={wrapperRef} className={styles.wrapper}>
       <button
-        className={`${styles.avatar} ${open ? styles.avatarOpen : ''}`}
-        onClick={() => setOpen(o => !o)}
+        className={`${styles.avatar} ${isOpen ? styles.avatarOpen : ''}`}
+        onClick={() => (phase === 'open' ? close() : openMenu())}
         aria-label="Account menu"
-        aria-expanded={open}
+        aria-expanded={isOpen}
       >
         {initial}
       </button>
 
-      {open && (
+      {mounted && (
         <>
-          <div className={styles.scrim} onClick={close} />
-          <div className={`${styles.menu} ${dropUp ? styles.menuDropUp : ''}`}>
+          <div
+            className={`${styles.scrim} ${phase === 'closing' ? styles.scrimClosing : ''}`}
+            onClick={close}
+          />
+          <div className={`${styles.menu} ${phase === 'closing' ? styles.menuClosing : ''} ${dropUp ? styles.menuDropUp : ''}`}>
 
             {/* ── Drag handle (mobile sheet only) ── */}
             <div className={styles.dragHandle} />

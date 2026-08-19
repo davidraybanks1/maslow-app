@@ -27,13 +27,23 @@
   border-color: var(--ink);
 }
 
+/* ── Keyframes ── */
+@keyframes sheetIn  { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes sheetOut { from { transform: translateY(0); } to { transform: translateY(100%); } }
+@keyframes scrimIn  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scrimOut { from { opacity: 1; } to { opacity: 0; } }
+@keyframes dropdownIn  { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes dropdownOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-4px); } }
+
 /* ── Mobile scrim ── */
 .scrim {
   position: fixed;
   inset: 0;
   z-index: 150;
   background: rgba(20,18,12,.28);
+  animation: scrimIn 200ms ease both;
 }
+.scrimClosing { animation: scrimOut 220ms ease both; }
 @media (min-width: 900px) { .scrim { display: none; } }
 
 /* ── Mobile: bottom sheet ── */
@@ -43,7 +53,7 @@
   left: 0;
   right: 0;
   z-index: 151;
-  background: var(--paper);
+  background: var(--card);
   border-radius: 26px 26px 0 0;
   padding-top: 0;
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 80px);
@@ -52,7 +62,9 @@
   max-height: 90vh;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  animation: sheetIn 300ms cubic-bezier(0.32, 0.72, 0.28, 1) both;
 }
+.menuClosing { animation: sheetOut 220ms cubic-bezier(0.32, 0.72, 0.28, 1) both; }
 
 /* ── Desktop: dropdown ── */
 @media (min-width: 900px) {
@@ -69,11 +81,18 @@
     z-index: 10;
     max-height: 80vh;
     overflow-y: auto;
+    animation: dropdownIn 150ms ease both;
   }
+  .menuClosing { animation: dropdownOut 150ms ease both; }
   .menuDropUp {
     top: auto;
     bottom: calc(100% + 8px);
   }
+}
+
+/* ── Reduced motion: instant both ways ── */
+@media (prefers-reduced-motion: reduce) {
+  .menu, .menuClosing, .scrim, .scrimClosing { animation: none !important; }
 }
 
 /* ── Drag handle (mobile sheet only) ── */
