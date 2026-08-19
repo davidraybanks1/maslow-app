@@ -943,10 +943,10 @@ export default function Log({ state }) {
           const [ey, em, ed] = entry.date_key.split('-').map(Number)
           const entryDateStr = new Date(ey, em - 1, ed).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })
           const entryTags = [
-            entry.slot || null,
-            entry.state || null,
-            entry.need_id ? (NEEDS.find(n => n.id === entry.need_id)?.name || null) : null,
-          ].filter(Boolean)
+            entry.slot ? { label: entry.slot, isState: false } : null,
+            entry.state ? { label: entry.state, isState: true } : null,
+            entry.need_id ? { label: NEEDS.find(n => n.id === entry.need_id)?.name || null, isState: false } : null,
+          ].filter(t => t && t.label)
           const todayStateSlots = {}
           for (const e of archiveEntries) {
             if (e.date_key === todayKey && e.state && e.slot && !todayStateSlots[e.state]) {
@@ -963,7 +963,9 @@ export default function Log({ state }) {
                   <span className={styles.resurfaceDate}>{entryDateStr}</span>
                   {entryTags.length > 0 && (
                     <span className={styles.resurfaceTagRow}>
-                      {entryTags.map(t => <span key={t} className={styles.resurfaceTag}>{t}</span>)}
+                      {entryTags.map(t => (
+                        <span key={t.label} className={`${styles.resurfaceTag} ${t.isState ? styles.resurfaceTagState : ''}`}>{t.label}</span>
+                      ))}
                     </span>
                   )}
                 </div>
@@ -1044,6 +1046,12 @@ export default function Log({ state }) {
                               {moodDotColor && <span className={styles.threadReadEntryDot} style={{ background: moodDotColor }} />}
                               {formatThreadDate(e.date_key, e.slot)}
                             </div>
+                            {(e.state || e.need_id) && (
+                              <div className={styles.threadReadEntryTags}>
+                                {e.state && <span className={`${styles.threadReadTag} ${styles.threadReadTagState}`}>{e.state}</span>}
+                                {e.need_id && <span className={styles.threadReadTag}>{NEEDS.find(n => n.id === e.need_id)?.name || e.need_id}</span>}
+                              </div>
+                            )}
                             <p className={styles.threadReadEntryBody}>{e.entry}</p>
                           </div>
                         )
@@ -1333,8 +1341,8 @@ export default function Log({ state }) {
                           )}
                         </button>
                         <span className={styles.archiveCardTags}>
+                          {e.state && <span className={`${styles.archiveTag} ${styles.archiveTagState}`}>{e.state}</span>}
                           {needName && <span className={styles.archiveTag}>{needName}</span>}
-                          {e.state && <span className={styles.archiveTag}>{e.state}</span>}
                           {(canAddNeed || canAddState) && (
                             <button
                               className={`${styles.archiveTagBtn} ${isTagging ? styles.archiveTagBtnOpen : ''}`}
@@ -1550,8 +1558,8 @@ export default function Log({ state }) {
                         <p className={styles.calDetailJournalBody}>{e.entry}</p>
                         {(needName || e.state) && (
                           <div className={styles.calDetailJournalTags}>
+                            {e.state && <span className={`${styles.calDetailJournalTag} ${styles.calDetailJournalTagState}`}>{e.state}</span>}
                             {needName && <span className={styles.calDetailJournalTag}>{needName}</span>}
-                            {e.state && <span className={styles.calDetailJournalTag}>{e.state}</span>}
                           </div>
                         )}
                       </div>

@@ -56,13 +56,6 @@ function formatEntryTime(ts) {
   return `${h}:${m}${ampm}`
 }
 
-function entryStateStyle(name) {
-  const nature = BUILTIN_NATURE_TYPES.find(t => t.name === name)
-  if (nature) return { background: nature.bg, color: nature.text }
-  const peak = BUILTIN_PEAK_TYPES.find(t => t.name === name)
-  if (peak) return { background: peak.bg, color: peak.text }
-  return { background: '#9A9690', color: '#fff' }
-}
 
 function formatScore(v) {
   return Number.isInteger(v) ? String(v) : `${Math.floor(v)}½`
@@ -644,9 +637,9 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 ) : journalEntries.map(e => (
                   <div key={e.id} className={styles.journalEntryCard}>
                     <div className={styles.journalEntryMeta}>
-                      {e.slot && <span className={styles.journalSlotChip}>{e.slot}</span>}
                       <span className={styles.journalEntryTime}>{formatEntryTime(e.created_at)}</span>
-                      {e.state && <span className={styles.journalStateTag} style={entryStateStyle(e.state)}>{e.state}</span>}
+                      {e.slot && <span className={styles.journalSlotChip}>{e.slot}</span>}
+                      {e.state && <span className={styles.journalStateTag}>{e.state}</span>}
                       {e.need_id && <span className={styles.journalNeedTag}>{e.need_id}</span>}
                       <button className={styles.journalEntryDelete} onClick={() => handleDeleteEntry(e.id)} aria-label="delete entry">×</button>
                     </div>
@@ -675,7 +668,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                     <button className={styles.composerTagBtn} onClick={() => { setNeedPickerOpen(o => !o); setStatePickerOpen(false) }}>+ need</button>
                   )}
                   {draftState ? (
-                    <button className={styles.composerTagActive} style={entryStateStyle(draftState)} onClick={() => setDraftState(null)}>{draftState} ×</button>
+                    <button className={`${styles.composerTagActive} ${styles.composerTagActiveState}`} onClick={() => setDraftState(null)}>{draftState} ×</button>
                   ) : (
                     <button className={styles.composerTagBtn} onClick={() => { setStatePickerOpen(o => !o); setNeedPickerOpen(false) }}>+ state</button>
                   )}
@@ -718,9 +711,9 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                   {journalEntries.map(e => (
                     <div key={e.id} className={styles.journalEntryCard}>
                       <div className={styles.journalEntryMeta}>
-                        {e.slot && <span className={styles.journalSlotChip}>{e.slot}</span>}
                         <span className={styles.journalEntryTime}>{formatEntryTime(e.created_at)}</span>
-                        {e.state && <span className={styles.journalStateTag} style={entryStateStyle(e.state)}>{e.state}</span>}
+                        {e.slot && <span className={styles.journalSlotChip}>{e.slot}</span>}
+                        {e.state && <span className={styles.journalStateTag}>{e.state}</span>}
                         {e.need_id && <span className={styles.journalNeedTag}>{e.need_id}</span>}
                         <button className={styles.journalEntryDelete} onClick={() => handleDeleteEntry(e.id)} aria-label="delete entry">×</button>
                       </div>
@@ -755,7 +748,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                       <button className={styles.composerTagBtn} onClick={() => { setNeedPickerOpen(o => !o); setStatePickerOpen(false) }}>+ need</button>
                     )}
                     {draftState ? (
-                      <button className={styles.composerTagActive} style={entryStateStyle(draftState)} onClick={() => setDraftState(null)}>{draftState} ×</button>
+                      <button className={`${styles.composerTagActive} ${styles.composerTagActiveState}`} onClick={() => setDraftState(null)}>{draftState} ×</button>
                     ) : (
                       <button className={styles.composerTagBtn} onClick={() => { setStatePickerOpen(o => !o); setNeedPickerOpen(false) }}>+ state</button>
                     )}

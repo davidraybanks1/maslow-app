@@ -292,15 +292,17 @@
 }
 
 .resurfaceTag {
-  height: 24px;
-  display: inline-flex;
-  align-items: center;
-  padding: 0 10px;
-  border-radius: 12px;
-  border: 1px solid var(--ink3);
-  color: var(--ink3);
   font-family: var(--font-mono);
   font-size: 10px;
+  color: rgba(0,0,0,.60);
+  border: 1px solid rgba(0,0,0,.22);
+  border-radius: 999px;
+  padding: 3.5px 11px;
+}
+.resurfaceTagState {
+  background: var(--ink);
+  color: var(--card);
+  border-color: var(--ink);
 }
 
 .resurfaceBody {
@@ -533,7 +535,27 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: rgba(0,0,0,.42);
+  margin-bottom: 4px;
+}
+
+.threadReadEntryTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
   margin-bottom: 6px;
+}
+.threadReadTag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: rgba(0,0,0,.60);
+  border: 1px solid rgba(0,0,0,.22);
+  border-radius: 999px;
+  padding: 3.5px 11px;
+}
+.threadReadTagState {
+  background: var(--ink);
+  color: var(--card);
+  border-color: var(--ink);
 }
 
 .threadReadEntryDot {
@@ -755,15 +777,17 @@
 }
 
 .archiveTag {
-  height: 24px;
-  display: inline-flex;
-  align-items: center;
-  padding: 0 10px;
-  border-radius: 12px;
-  border: 1px solid var(--ink3);
-  color: var(--ink3);
   font-family: var(--font-mono);
   font-size: 10px;
+  color: rgba(0,0,0,.60);
+  border: 1px solid rgba(0,0,0,.22);
+  border-radius: 999px;
+  padding: 3.5px 11px;
+}
+.archiveTagState {
+  background: var(--ink);
+  color: var(--card);
+  border-color: var(--ink);
 }
 
 .archiveTagBtn {
@@ -1111,10 +1135,15 @@
 .calDetailJournalTag {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: rgba(0,0,0,.5);
-  border: 0.5px solid rgba(0,0,0,.2);
-  border-radius: 10px;
-  padding: 2px 8px;
+  color: rgba(0,0,0,.60);
+  border: 1px solid rgba(0,0,0,.22);
+  border-radius: 999px;
+  padding: 3.5px 11px;
+}
+.calDetailJournalTagState {
+  background: var(--ink);
+  color: var(--card);
+  border-color: var(--ink);
 }
 
 .calDetailEmpty {
