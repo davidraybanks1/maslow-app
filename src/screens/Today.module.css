@@ -1129,16 +1129,16 @@
 .composerTagBtn {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: var(--ink4);
+  color: rgba(0,0,0,.40);
   background: none;
-  border: 0.5px solid var(--hairline);
-  border-radius: 4px;
-  padding: 3px 7px;
+  border: 1px dashed rgba(0,0,0,.22);
+  border-radius: 999px;
+  padding: 3.5px 11px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: border-color var(--motion-hover), color var(--motion-hover);
 }
-.composerTagBtn:hover { border-color: var(--ink3); color: var(--ink3); }
+.composerTagBtn:hover { border-color: rgba(0,0,0,.40); color: rgba(0,0,0,.55); }
 
 .composerTagActive {
   font-family: var(--font-mono);
@@ -1167,11 +1167,11 @@
 .composerPickerItem {
   font-family: var(--font-mono);
   font-size: 10px;
-  padding: 4px 9px;
-  border-radius: 12px;
-  border: 1px solid var(--ink3);
+  padding: 3.5px 11px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,.22);
   background: transparent;
-  color: var(--ink3);
+  color: rgba(0,0,0,.60);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: opacity var(--motion-hover);
