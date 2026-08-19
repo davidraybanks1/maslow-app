@@ -126,6 +126,9 @@ export default function ProfileMenu({
               <button className={styles.closeBtn} onClick={close}>✕</button>
             </div>
 
+            {/* ── Scrollable content (rows dissolve through the bottom fade) ── */}
+            <div className={styles.scrollBody}>
+
             {/* ── PERSONALIZE ── */}
             <div className={styles.sectionLabel}>PERSONALIZE</div>
             <div className={styles.section}>
@@ -260,6 +263,8 @@ export default function ProfileMenu({
               <span>v1.0</span>
               {builtAt && <span>· built {builtAt}</span>}
             </div>
+
+            </div>{/* end .scrollBody */}
 
           </div>
         </>
