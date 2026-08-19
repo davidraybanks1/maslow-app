@@ -964,7 +964,7 @@ export default function Log({ state }) {
                   {entryTags.length > 0 && (
                     <span className={styles.resurfaceTagRow}>
                       {entryTags.map(t => (
-                        <span key={t.label} className={`${styles.resurfaceTag} ${t.isState ? styles.resurfaceTagState : ''}`}>{t.label}</span>
+                        <span key={t.label} className={styles.resurfaceTag}>{t.label}</span>
                       ))}
                     </span>
                   )}
@@ -1048,7 +1048,7 @@ export default function Log({ state }) {
                             </div>
                             {(e.state || e.need_id) && (
                               <div className={styles.threadReadEntryTags}>
-                                {e.state && <span className={`${styles.threadReadTag} ${styles.threadReadTagState}`}>{e.state}</span>}
+                                {e.state && <span className={styles.threadReadTag}>{e.state}</span>}
                                 {e.need_id && <span className={styles.threadReadTag}>{NEEDS.find(n => n.id === e.need_id)?.name || e.need_id}</span>}
                               </div>
                             )}
@@ -1341,7 +1341,7 @@ export default function Log({ state }) {
                           )}
                         </button>
                         <span className={styles.archiveCardTags}>
-                          {e.state && <span className={`${styles.archiveTag} ${styles.archiveTagState}`}>{e.state}</span>}
+                          {e.state && <span className={styles.archiveTag}>{e.state}</span>}
                           {needName && <span className={styles.archiveTag}>{needName}</span>}
                           {(canAddNeed || canAddState) && (
                             <button
@@ -1558,7 +1558,7 @@ export default function Log({ state }) {
                         <p className={styles.calDetailJournalBody}>{e.entry}</p>
                         {(needName || e.state) && (
                           <div className={styles.calDetailJournalTags}>
-                            {e.state && <span className={`${styles.calDetailJournalTag} ${styles.calDetailJournalTagState}`}>{e.state}</span>}
+                            {e.state && <span className={styles.calDetailJournalTag}>{e.state}</span>}
                             {needName && <span className={styles.calDetailJournalTag}>{needName}</span>}
                           </div>
                         )}

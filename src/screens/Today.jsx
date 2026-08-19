@@ -668,7 +668,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                     <button className={styles.composerTagBtn} onClick={() => { setNeedPickerOpen(o => !o); setStatePickerOpen(false) }}>+ need</button>
                   )}
                   {draftState ? (
-                    <button className={`${styles.composerTagActive} ${styles.composerTagActiveState}`} onClick={() => setDraftState(null)}>{draftState} ×</button>
+                    <button className={styles.composerTagActive} onClick={() => setDraftState(null)}>{draftState} ×</button>
                   ) : (
                     <button className={styles.composerTagBtn} onClick={() => { setStatePickerOpen(o => !o); setNeedPickerOpen(false) }}>+ state</button>
                   )}
@@ -748,7 +748,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                       <button className={styles.composerTagBtn} onClick={() => { setNeedPickerOpen(o => !o); setStatePickerOpen(false) }}>+ need</button>
                     )}
                     {draftState ? (
-                      <button className={`${styles.composerTagActive} ${styles.composerTagActiveState}`} onClick={() => setDraftState(null)}>{draftState} ×</button>
+                      <button className={styles.composerTagActive} onClick={() => setDraftState(null)}>{draftState} ×</button>
                     ) : (
                       <button className={styles.composerTagBtn} onClick={() => { setStatePickerOpen(o => !o); setNeedPickerOpen(false) }}>+ state</button>
                     )}

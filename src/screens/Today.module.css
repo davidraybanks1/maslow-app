@@ -1010,11 +1010,10 @@
 .journalStateTag {
   font-family: var(--font-mono);
   font-size: 10px;
+  color: rgba(0,0,0,.60);
+  border: 1px solid rgba(0,0,0,.22);
   border-radius: 999px;
   padding: 3.5px 11px;
-  background: var(--ink);
-  color: var(--card);
-  border: 1px solid var(--ink);
 }
 
 .journalNeedTag {
@@ -1150,11 +1149,6 @@
   cursor: pointer;
   color: rgba(0,0,0,.60);
   -webkit-tap-highlight-color: transparent;
-}
-.composerTagActiveState {
-  background: var(--ink);
-  color: var(--card);
-  border-color: var(--ink);
 }
 
 .composerPicker {

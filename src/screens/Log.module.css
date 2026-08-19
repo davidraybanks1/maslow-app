@@ -299,11 +299,7 @@
   border-radius: 999px;
   padding: 3.5px 11px;
 }
-.resurfaceTagState {
-  background: var(--ink);
-  color: var(--card);
-  border-color: var(--ink);
-}
+
 
 .resurfaceBody {
   margin: 11px 0 0;
@@ -552,11 +548,7 @@
   border-radius: 999px;
   padding: 3.5px 11px;
 }
-.threadReadTagState {
-  background: var(--ink);
-  color: var(--card);
-  border-color: var(--ink);
-}
+
 
 .threadReadEntryDot {
   width: 5px;
@@ -784,11 +776,7 @@
   border-radius: 999px;
   padding: 3.5px 11px;
 }
-.archiveTagState {
-  background: var(--ink);
-  color: var(--card);
-  border-color: var(--ink);
-}
+
 
 .archiveTagBtn {
   padding: 3.5px 11px;
@@ -1135,11 +1123,7 @@
   border-radius: 999px;
   padding: 3.5px 11px;
 }
-.calDetailJournalTagState {
-  background: var(--ink);
-  color: var(--card);
-  border-color: var(--ink);
-}
+
 
 .calDetailEmpty {
   font-family: var(--font-serif);
