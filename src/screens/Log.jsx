@@ -118,8 +118,8 @@ function formatRangeLabel(start, end) {
   return `${formatRangeDateStr(start)} – ${formatRangeDateStr(end)}`
 }
 
-function archiveHeaderText(filteredEntries, total, filterSlot, filterNeed, filterState, filterDate, rangeLabel) {
-  if (!filterSlot && !filterNeed && !filterState && !filterDate && !rangeLabel) {
+function archiveHeaderText(filteredEntries, total, filterSlot, filterNeed, filterState, filterCustom, filterDate, rangeLabel) {
+  if (!filterSlot && !filterNeed && !filterState && !filterCustom && !filterDate && !rangeLabel) {
     return `all ${total} ${total === 1 ? 'entry' : 'entries'}, newest first.`
   }
   const n = filteredEntries.length
@@ -148,11 +148,12 @@ function ritualMetaLine(cadence) {
 }
 
 function matchesPredicate(e, pred, afterKey, beforeKey) {
-  if (pred.slot  && e.slot    !== pred.slot)  return false
-  if (pred.need  && e.need_id !== pred.need)  return false
-  if (pred.state && e.state   !== pred.state) return false
-  if (afterKey   && e.date_key < afterKey)    return false
-  if (beforeKey  && e.date_key > beforeKey)   return false
+  if (pred.slot   && e.slot    !== pred.slot)   return false
+  if (pred.need   && e.need_id !== pred.need)   return false
+  if (pred.state  && e.state   !== pred.state)  return false
+  if (pred.custom && e.custom  !== pred.custom) return false
+  if (afterKey    && e.date_key < afterKey)     return false
+  if (beforeKey   && e.date_key > beforeKey)    return false
   return true
 }
 
@@ -562,6 +563,7 @@ export default function Log({ state }) {
   const [filterSlot, setFilterSlot] = useState(null)
   const [filterNeed, setFilterNeed] = useState(null)
   const [filterState, setFilterState] = useState(null)
+  const [filterCustom, setFilterCustom] = useState(null)
   const [filterDate, setFilterDate] = useState(null)
   const [rangeStart, setRangeStart] = useState(null)
   const [rangeEnd, setRangeEnd] = useState(null)
@@ -949,6 +951,7 @@ export default function Log({ state }) {
             entry.slot ? { label: entry.slot, isState: false } : null,
             entry.state ? { label: entry.state, isState: true } : null,
             entry.need_id ? { label: NEEDS.find(n => n.id === entry.need_id)?.name || null, isState: false } : null,
+            entry.custom ? { label: entry.custom, isState: false } : null,
           ].filter(t => t && t.label)
           const todayStateSlots = {}
           for (const e of archiveEntries) {
@@ -1049,10 +1052,11 @@ export default function Log({ state }) {
                               {moodDotColor && <span className={styles.threadReadEntryDot} style={{ background: moodDotColor }} />}
                               {formatThreadDate(e.date_key, e.slot)}
                             </div>
-                            {(e.state || e.need_id) && (
+                            {(e.state || e.need_id || e.custom) && (
                               <div className={styles.threadReadEntryTags}>
                                 {e.state && <span className={styles.threadReadTag}>{e.state}</span>}
                                 {e.need_id && <span className={styles.threadReadTag}>{NEEDS.find(n => n.id === e.need_id)?.name || e.need_id}</span>}
+                                {e.custom && <span className={styles.threadReadTag}>{e.custom}</span>}
                               </div>
                             )}
                             <p className={styles.threadReadEntryBody}>{e.entry}</p>
@@ -1086,22 +1090,29 @@ export default function Log({ state }) {
             filterAfterKey = dateKeyFor(d)
           }
           const rangeLabel = rangeStart ? formatRangeLabel(rangeStart, rangeEnd) : null
-          const filtered = archiveEntries.filter(e => matchesPredicate(e, { slot: filterSlot, need: filterNeed, state: filterState }, filterAfterKey, filterBeforeKey))
-          const anyFilter = filterSlot || filterNeed || filterState || filterDate || rangeStart
+          const filtered = archiveEntries.filter(e => matchesPredicate(e, { slot: filterSlot, need: filterNeed, state: filterState, custom: filterCustom }, filterAfterKey, filterBeforeKey))
+          const anyFilter = filterSlot || filterNeed || filterState || filterCustom || filterDate || rangeStart
           const visible = filtered.slice(0, archiveVisible)
           // Conditional counts: each chip's value substituted for its own dim, all other dims + date held fixed.
           const slotCounts = Object.fromEntries(ARCHIVE_SLOTS.map(s => [s,
-            archiveEntries.filter(e => matchesPredicate(e, { slot: s, need: filterNeed, state: filterState }, filterAfterKey, filterBeforeKey)).length
+            archiveEntries.filter(e => matchesPredicate(e, { slot: s, need: filterNeed, state: filterState, custom: filterCustom }, filterAfterKey, filterBeforeKey)).length
           ]))
           const needCounts = Object.fromEntries(canvasNeeds.map(n => [n.id,
-            archiveEntries.filter(e => matchesPredicate(e, { slot: filterSlot, need: n.id, state: filterState }, filterAfterKey, filterBeforeKey)).length
+            archiveEntries.filter(e => matchesPredicate(e, { slot: filterSlot, need: n.id, state: filterState, custom: filterCustom }, filterAfterKey, filterBeforeKey)).length
           ]))
           const stateCounts = Object.fromEntries(ARCHIVE_STATES.map(s => [s,
-            archiveEntries.filter(e => matchesPredicate(e, { slot: filterSlot, need: filterNeed, state: s }, filterAfterKey, filterBeforeKey)).length
+            archiveEntries.filter(e => matchesPredicate(e, { slot: filterSlot, need: filterNeed, state: s, custom: filterCustom }, filterAfterKey, filterBeforeKey)).length
+          ]))
+          // CUSTOM: vocabulary union distinct stored values — orphaned historical tags remain filterable
+          const archiveCustomValues = [...new Set(archiveEntries.map(e => e.custom).filter(Boolean))]
+          const vocabLabels = customTags.map(t => t.label)
+          const allCustomLabels = [...new Set([...vocabLabels, ...archiveCustomValues])]
+          const customCounts = Object.fromEntries(allCustomLabels.map(label => [label,
+            archiveEntries.filter(e => matchesPredicate(e, { slot: filterSlot, need: filterNeed, state: filterState, custom: label }, filterAfterKey, filterBeforeKey)).length
           ]))
           const presetCounts = Object.fromEntries(ARCHIVE_DATE_PRESETS.map(r => {
             const d = new Date(today); d.setDate(d.getDate() - (r.key === '30d' ? 30 : 90))
-            return [r.key, archiveEntries.filter(e => matchesPredicate(e, { slot: filterSlot, need: filterNeed, state: filterState }, dateKeyFor(d), null)).length]
+            return [r.key, archiveEntries.filter(e => matchesPredicate(e, { slot: filterSlot, need: filterNeed, state: filterState, custom: filterCustom }, dateKeyFor(d), null)).length]
           }))
 
           return (
@@ -1293,16 +1304,39 @@ export default function Log({ state }) {
                     })}
                   </div>
                 </div>
+                {/* custom group — vocabulary union distinct stored values */}
+                {allCustomLabels.length > 0 && (
+                  <div className={styles.facetGroup}>
+                    <div className={styles.facetGroupLabel}>CUSTOM</div>
+                    <div className={styles.facetRow}>
+                      {allCustomLabels.map(label => {
+                        const cnt = customCounts[label]
+                        const isInert = cnt === 0 && filterCustom !== label
+                        return (
+                          <button
+                            key={label}
+                            className={`${styles.facetChip} ${filterCustom === label ? styles.facetChipActive : ''}`}
+                            style={isInert ? { opacity: 0.4 } : undefined}
+                            disabled={isInert}
+                            onClick={() => { setFilterCustom(v => v === label ? null : label); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}
+                          >
+                            {label}<span className={styles.facetCount}>{cnt}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className={styles.archiveHeader}>
                 <span className={styles.archiveHeaderText}>
                   {archiveEntries.length === 0
                     ? 'no entries yet.'
-                    : archiveHeaderText(filtered, archiveEntries.length, filterSlot, filterNeed, filterState, filterDate, rangeLabel)}
+                    : archiveHeaderText(filtered, archiveEntries.length, filterSlot, filterNeed, filterState, filterCustom, filterDate, rangeLabel)}
                 </span>
                 {anyFilter && (
-                  <button className={styles.archiveClearBtn} onClick={() => { setFilterSlot(null); setFilterNeed(null); setFilterState(null); setFilterDate(null); setRangeStart(null); setRangeEnd(null); setPickAnchor(null); setDatePickerOpen(false); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}>clear</button>
+                  <button className={styles.archiveClearBtn} onClick={() => { setFilterSlot(null); setFilterNeed(null); setFilterState(null); setFilterCustom(null); setFilterDate(null); setRangeStart(null); setRangeEnd(null); setPickAnchor(null); setDatePickerOpen(false); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}>clear</button>
                 )}
               </div>
 
@@ -1568,10 +1602,11 @@ export default function Log({ state }) {
                           <span>{timeStr}</span>
                         </div>
                         <p className={styles.calDetailJournalBody}>{e.entry}</p>
-                        {(needName || e.state) && (
+                        {(needName || e.state || e.custom) && (
                           <div className={styles.calDetailJournalTags}>
                             {e.state && <span className={styles.calDetailJournalTag}>{e.state}</span>}
                             {needName && <span className={styles.calDetailJournalTag}>{needName}</span>}
+                            {e.custom && <span className={styles.calDetailJournalTag}>{e.custom}</span>}
                           </div>
                         )}
                       </div>
