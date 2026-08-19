@@ -1,7 +1,7 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { NEEDS, MODES, MODE_ORDER, MODE_MAX_BUBBLES, MODE_WEIGHTS, JOURNAL_TRUNCATE } from '../lib/constants'
-import { currentSlot, precedingSlots, SLOT_NOUN } from '../lib/slots'
+import { currentSlot, precedingSlots, SLOT_NOUN, SLOT_GREETING } from '../lib/slots'
 import { todayKey, loadJournalEntries, addJournalEntry, deleteJournalEntry, loadNoteDeck, loadCustomTags } from '../lib/store'
 import { BUILTIN_NATURE_TYPES, BUILTIN_PEAK_TYPES } from '../lib/debriefTypes'
 import { createDataStats, getCanvasGuidance } from '../lib/dataStats'
@@ -391,7 +391,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         <div className={styles.headerRow}>
           <div className={styles.headerLeft}>
             <div className={styles.dateLabel}>{dateLabel}</div>
-            <div className={styles.greeting}>good {slot}.</div>
+            <div className={styles.greeting}>good {SLOT_GREETING[slot]}.</div>
             {STREAK_LINES[streak] && <div className={styles.milestoneLine}>{STREAK_LINES[streak]}</div>}
           </div>
           <div className={styles.headerRight}>
