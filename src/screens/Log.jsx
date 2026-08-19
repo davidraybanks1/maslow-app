@@ -80,7 +80,7 @@ const MONTHS_LONG = ['january','february','march','april','may','june','july','a
 const MONTHS_SHORT = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec']
 
 const MOOD_DOT_COLOR = { good: 'var(--exploration)', fine: '#9DB394', bad: 'var(--survival)' }
-const MOOD_WASH = { good: 'rgba(27,58,45,.10)', fine: 'rgba(157,179,148,.20)', bad: 'rgba(217,59,28,.13)' }
+const MOOD_WASH = { good: 'rgba(27,58,45,.10)', fine: 'rgba(232,184,31,.16)', bad: 'rgba(217,59,28,.13)' }
 const SLOT_ORDER = { morning: 0, midday: 1, evening: 2 }
 const MODE_DOT_TOKEN = {
   exploration:  'var(--exploration)',
@@ -1418,8 +1418,8 @@ export default function Log({ state }) {
 
           return (
             <div className={styles.calSection}>
-              <div className={styles.calSectionHeader}>
-                <span className={styles.calSectionLabel}>calendar</span>
+              <span className={styles.calSectionLabel}>calendar</span>
+              <div className={styles.calCard}>
                 <div className={styles.calNavRow}>
                   <button
                     className={styles.calNavBtn}
@@ -1442,52 +1442,52 @@ export default function Log({ state }) {
                     aria-label="next month"
                   >›</button>
                 </div>
-              </div>
 
-              <div className={styles.calDayLabels}>
-                {['M','T','W','T','F','S','S'].map((d, i) => (
-                  <span key={i} className={styles.calDayLabel}>{d}</span>
-                ))}
-              </div>
+                <div className={styles.calDayLabels}>
+                  {['m','t','w','t','f','s','s'].map((d, i) => (
+                    <span key={i} className={styles.calDayLabel}>{d}</span>
+                  ))}
+                </div>
 
-              <div className={styles.calGrid}>
-                {Array.from({ length: firstDayOfWeek }, (_, i) => (
-                  <div key={`blank-${i}`} className={styles.calDayBlank} />
-                ))}
-                {Array.from({ length: daysInMonth }, (_, i) => {
-                  const day = i + 1
-                  const dateKey = `${monthPrefix}${String(day).padStart(2, '0')}`
-                  const isFuture = dateKey > todayKey
-                  const moodEntry = monthMoodIndex[dateKey]
-                  const moodWash = moodEntry ? MOOD_WASH[moodEntry.mood] : null
-                  const hasJournal = monthHasJournal.has(dateKey)
-                  const hasData = !!(moodEntry || hasJournal)
-                  const isSelected = selectedDayKey === dateKey
+                <div className={styles.calGrid}>
+                  {Array.from({ length: firstDayOfWeek }, (_, i) => (
+                    <div key={`blank-${i}`} className={styles.calDayBlank} />
+                  ))}
+                  {Array.from({ length: daysInMonth }, (_, i) => {
+                    const day = i + 1
+                    const dateKey = `${monthPrefix}${String(day).padStart(2, '0')}`
+                    const isFuture = dateKey > todayKey
+                    const moodEntry = monthMoodIndex[dateKey]
+                    const moodWash = moodEntry ? MOOD_WASH[moodEntry.mood] : null
+                    const hasJournal = monthHasJournal.has(dateKey)
+                    const hasData = !!(moodEntry || hasJournal)
+                    const isSelected = selectedDayKey === dateKey
 
-                  if (isFuture) {
-                    return (
-                      <div key={dateKey} className={`${styles.calDay} ${styles.calDayFuture}`}>
-                        <span className={styles.calDayNum}>{day}</span>
-                      </div>
-                    )
-                  }
-
-                  return (
-                    <button
-                      key={dateKey}
-                      className={`${styles.calDay}${isSelected ? ` ${styles.calDaySelected}` : ''}`}
-                      style={moodWash ? { background: moodWash } : undefined}
-                      onClick={() => selectDay(dateKey)}
-                    >
-                      <span className={`${styles.calDayNum}${!hasData ? ` ${styles.calDayNumMuted}` : ''}`}>{day}</span>
-                      {hasJournal && (
-                        <div className={styles.calDayDots}>
-                          <span className={styles.calDayDot} style={{ background: 'var(--exploration)' }} />
+                    if (isFuture) {
+                      return (
+                        <div key={dateKey} className={`${styles.calDay} ${styles.calDayFuture}`}>
+                          <span className={styles.calDayNum}>{day}</span>
                         </div>
-                      )}
-                    </button>
-                  )
-                })}
+                      )
+                    }
+
+                    return (
+                      <button
+                        key={dateKey}
+                        className={`${styles.calDay}${isSelected ? ` ${styles.calDaySelected}` : ''}`}
+                        style={moodWash ? { background: moodWash } : undefined}
+                        onClick={() => selectDay(dateKey)}
+                      >
+                        <span className={`${styles.calDayNum}${!hasData ? ` ${styles.calDayNumMuted}` : ''}`}>{day}</span>
+                        {hasJournal && (
+                          <div className={styles.calDayDots}>
+                            <span className={styles.calDayDot} style={{ background: 'var(--exploration)' }} />
+                          </div>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
 
               {selectedDayKey && (
