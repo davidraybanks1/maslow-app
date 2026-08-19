@@ -9,7 +9,7 @@
     left: 0;
     right: 0;
     z-index: 50;
-    padding: 18px 22px calc(24px + env(safe-area-inset-bottom, 0px));
+    padding: 12px 12px calc(10px + env(safe-area-inset-bottom, 0px));
     pointer-events: none;
   }
 }
