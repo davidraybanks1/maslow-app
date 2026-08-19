@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, Component } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef, Component } from 'react'
 import { HeaderSlotContext } from './lib/headerSlot'
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, useNavigationType } from 'react-router-dom'
 import { useAppState, loadCustomTags } from './lib/store'
@@ -54,8 +54,10 @@ function AppInner() {
   const [headerSlot, setHeaderSlot] = useState(null)
 
   // Reset scroll on every PUSH navigation (tab taps, in-app links).
+  // useLayoutEffect fires synchronously after DOM mutations and before paint,
+  // eliminating the one-frame flash of the incoming screen at the old position.
   // POP (browser back/forward) is left alone so position can restore naturally.
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (navType !== 'POP' && contentRef.current) {
       contentRef.current.scrollTop = 0
     }

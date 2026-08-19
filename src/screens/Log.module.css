@@ -2,8 +2,7 @@
 .screen { display: flex; flex-direction: column; min-height: 100vh; background: var(--paper); }
 
 /* ── Content ── */
-.content { flex: 1; overflow-y: auto; padding: 14px 22px; }
-.content::-webkit-scrollbar { display: none; }
+.content { padding: 14px 22px; }
 
 /* ── Empty state ── */
 .emptyState { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink4); padding: 24px 0; }
@@ -1147,8 +1146,7 @@
 .reviewProgressBar { height: 1px; background: var(--hairline); flex-shrink: 0; }
 .reviewProgressFill { height: 100%; background: var(--ink); transition: width var(--motion-progress) ease; }
 
-.reviewContent { flex: 1; overflow-y: auto; padding: 24px 16px 16px; }
-.reviewContent::-webkit-scrollbar { display: none; }
+.reviewContent { padding: 24px 16px 16px; }
 
 .reviewBackBtn {
   font-family: var(--font-mono);

@@ -105,7 +105,12 @@ button { touch-action: manipulation; }
   --motion-step:        150ms;
 }
 
-html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  height: 100%;
+  overflow: hidden;
+}
 
 /* iOS Safari zooms when focused input font-size < 16px */
 input, textarea, select { font-size: 16px; }
@@ -114,7 +119,13 @@ body {
   font-family: var(--font-sans);
   background: var(--paper);
   color: var(--ink);
-  min-height: 100vh;
+  height: 100%;
+  overflow: hidden;
+}
+
+#root {
+  height: 100%;
+  overflow: hidden;
 }
 
 /* Scrollbar */

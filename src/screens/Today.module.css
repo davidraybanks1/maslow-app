@@ -585,8 +585,7 @@
 .guidanceSecondary:hover { color: var(--ink2); }
 
 /* ── List ── */
-.list { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
-.list::-webkit-scrollbar { display: none; }
+.list { display: flex; flex-direction: column; }
 
 /* ── Needs & Practices section header ── */
 .tierSectionHeader {
