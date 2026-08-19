@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { NEEDS, MODE_MAX_BUBBLES, JOURNAL_TRUNCATE } from '../lib/constants'
-import { weekKey, loadJournalEntry, loadDebriefs, loadDebriefTypes, addNoteDeckCard, saveWeeklyReview, loadAllJournalMeta, loadJournalArchive, updateJournalEntryTags, loadDayCheckins } from '../lib/store'
+import { weekKey, loadJournalEntry, loadDebriefs, loadDebriefTypes, addNoteDeckCard, saveWeeklyReview, loadAllJournalMeta, loadJournalArchive, updateJournalEntryTags, loadDayCheckins, loadCustomTags } from '../lib/store'
 import { createDataStats } from '../lib/dataStats'
 import { BUILTIN_NATURE_TYPES, BUILTIN_PEAK_TYPES, natureTagStyle, peakTagStyle, ENVIRONMENT_TAG_STYLE, parseDebriefEntry } from '../lib/debriefTypes'
 import LiveCanvasCard from '../components/LiveCanvasCard'
@@ -558,6 +558,7 @@ export default function Log({ state }) {
 
   const [archiveEntries, setArchiveEntries] = useState([])
   const [archiveLoaded, setArchiveLoaded] = useState(false)
+  const [customTags, setCustomTags] = useState([])
   const [filterSlot, setFilterSlot] = useState(null)
   const [filterNeed, setFilterNeed] = useState(null)
   const [filterState, setFilterState] = useState(null)
@@ -589,6 +590,7 @@ export default function Log({ state }) {
       setArchiveEntries(data)
       setArchiveLoaded(true)
     })
+    loadCustomTags(state.userId).then(setCustomTags)
   }, [state.userId])
 
   useEffect(() => {
@@ -623,13 +625,14 @@ export default function Log({ state }) {
     setResurfaceIdx(0)
   }, [archiveEntries, archiveLoaded])
 
-  async function handleRetroTag(entryId, { needId, stateName }) {
-    const { error } = await updateJournalEntryTags(entryId, { needId, stateName })
+  async function handleRetroTag(entryId, { needId, stateName, customLabel }) {
+    const { error } = await updateJournalEntryTags(entryId, { needId, stateName, customLabel })
     if (!error) {
       const patch = e => e.id !== entryId ? e : {
         ...e,
         need_id: needId !== undefined ? needId : e.need_id,
         state: stateName !== undefined ? stateName : e.state,
+        custom: customLabel !== undefined ? customLabel : e.custom,
       }
       setArchiveEntries(prev => prev.map(patch))
       setJournalMeta(prev => prev.map(patch))
@@ -1316,16 +1319,19 @@ export default function Log({ state }) {
                     const needName = e.need_id ? (NEEDS.find(n => n.id === e.need_id)?.name || e.need_id) : null
                     const canAddNeed = !e.need_id && canvasNeeds.length > 0
                     const canAddState = !e.state
+                    const canAddCustom = !e.custom && customTags.length > 0
                     const isTagging = taggingEntryId === e.id
                     const toggleExpand = () => setExpandedEntries(prev => {
                       const next = new Set(prev)
                       next.has(e.id) ? next.delete(e.id) : next.add(e.id)
                       return next
                     })
-                    const panelLabel = canAddNeed && canAddState
-                      ? 'add a tag — this entry has no need or state yet'
+                    const missingCount = (canAddNeed ? 1 : 0) + (canAddState ? 1 : 0) + (canAddCustom ? 1 : 0)
+                    const panelLabel = missingCount > 1
+                      ? 'add a tag to this entry'
                       : canAddNeed ? 'add a need to this entry'
-                      : 'add a state to this entry'
+                      : canAddState ? 'add a state to this entry'
+                      : 'add a custom tag to this entry'
 
                     return (
                       <div key={e.id} className={`${styles.archiveRow}${isTagging ? ` ${styles.archiveRowOpen}` : ''}`}>
@@ -1343,7 +1349,8 @@ export default function Log({ state }) {
                         <span className={styles.archiveCardTags}>
                           {e.state && <span className={styles.archiveTag}>{e.state}</span>}
                           {needName && <span className={styles.archiveTag}>{needName}</span>}
-                          {(canAddNeed || canAddState) && (
+                          {e.custom && <span className={styles.archiveTag}>{e.custom}</span>}
+                          {(canAddNeed || canAddState || canAddCustom) && (
                             <button
                               className={`${styles.archiveTagBtn} ${isTagging ? styles.archiveTagBtnOpen : ''}`}
                               onClick={() => setTaggingEntryId(id => id === e.id ? null : e.id)}
@@ -1362,6 +1369,11 @@ export default function Log({ state }) {
                               {canAddState && [...BUILTIN_NATURE_TYPES, ...BUILTIN_PEAK_TYPES].map(t => (
                                 <button key={t.name} className={styles.retroTagOption} onClick={() => handleRetroTag(e.id, { stateName: t.name })}>
                                   {t.name}
+                                </button>
+                              ))}
+                              {canAddCustom && customTags.map(t => (
+                                <button key={t.id} className={styles.retroTagOption} onClick={() => handleRetroTag(e.id, { customLabel: t.label })}>
+                                  {t.label}
                                 </button>
                               ))}
                             </div>

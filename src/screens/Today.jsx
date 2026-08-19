@@ -249,9 +249,11 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   const [draftText, setDraftText] = useState('')
   const [draftNeedId, setDraftNeedId] = useState(null)
   const [draftState, setDraftState] = useState(null)
+  const [draftCustom, setDraftCustom] = useState(null)
   const [composerOpen, setComposerOpen] = useState(false)
   const [needPickerOpen, setNeedPickerOpen] = useState(false)
   const [statePickerOpen, setStatePickerOpen] = useState(false)
+  const [customPickerOpen, setCustomPickerOpen] = useState(false)
   const journalEntriesRef = useRef(null)
 
   useEffect(() => {
@@ -267,15 +269,18 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
       slot: currentSlot(),
       needId: draftNeedId,
       state: draftState,
+      custom: draftCustom,
     })
     if (error) { setJournalSaveError('save failed — try again'); return }
     setJournalEntries(prev => [...prev, data])
     setDraftText('')
     setDraftNeedId(null)
     setDraftState(null)
+    setDraftCustom(null)
     setJournalSaveError(null)
     setNeedPickerOpen(false)
     setStatePickerOpen(false)
+    setCustomPickerOpen(false)
   }
 
   function handleComposerKeyDown(e) {
@@ -653,6 +658,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                       {e.slot && <span className={styles.journalSlotChip}>{e.slot}</span>}
                       {e.state && <span className={styles.journalStateTag}>{e.state}</span>}
                       {e.need_id && <span className={styles.journalNeedTag}>{e.need_id}</span>}
+                      {e.custom && <span className={styles.journalNeedTag}>{e.custom}</span>}
                       <button className={styles.journalEntryDelete} onClick={() => handleDeleteEntry(e.id)} aria-label="delete entry">×</button>
                     </div>
                     {(() => {
@@ -677,13 +683,18 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                   {draftNeedId ? (
                     <button className={styles.composerTagActive} onClick={() => setDraftNeedId(null)}>{draftNeedId} ×</button>
                   ) : (
-                    <button className={styles.composerTagBtn} onClick={() => { setNeedPickerOpen(o => !o); setStatePickerOpen(false) }}>+ need</button>
+                    <button className={styles.composerTagBtn} onClick={() => { setNeedPickerOpen(o => !o); setStatePickerOpen(false); setCustomPickerOpen(false) }}>+ need</button>
                   )}
                   {draftState ? (
                     <button className={styles.composerTagActive} onClick={() => setDraftState(null)}>{draftState} ×</button>
                   ) : (
-                    <button className={styles.composerTagBtn} onClick={() => { setStatePickerOpen(o => !o); setNeedPickerOpen(false) }}>+ state</button>
+                    <button className={styles.composerTagBtn} onClick={() => { setStatePickerOpen(o => !o); setNeedPickerOpen(false); setCustomPickerOpen(false) }}>+ state</button>
                   )}
+                  {customTags.length > 0 && (draftCustom ? (
+                    <button className={styles.composerTagActive} onClick={() => setDraftCustom(null)}>{draftCustom} ×</button>
+                  ) : (
+                    <button className={styles.composerTagBtn} onClick={() => { setCustomPickerOpen(o => !o); setNeedPickerOpen(false); setStatePickerOpen(false) }}>+ custom</button>
+                  ))}
                 </div>
                 {needPickerOpen && activeNeeds.length > 0 && (
                   <div className={styles.composerPicker}>
@@ -696,6 +707,13 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                   <div className={styles.composerPicker}>
                     {[...BUILTIN_NATURE_TYPES, ...BUILTIN_PEAK_TYPES].map(t => (
                       <button key={t.name} className={styles.composerPickerItem} onClick={() => { setDraftState(t.name); setStatePickerOpen(false) }}>{t.name}</button>
+                    ))}
+                  </div>
+                )}
+                {customPickerOpen && customTags.length > 0 && (
+                  <div className={styles.composerPicker}>
+                    {customTags.map(t => (
+                      <button key={t.id} className={styles.composerPickerItem} onClick={() => { setDraftCustom(t.label); setCustomPickerOpen(false) }}>{t.label}</button>
                     ))}
                   </div>
                 )}
@@ -757,13 +775,18 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                     {draftNeedId ? (
                       <button className={styles.composerTagActive} onClick={() => setDraftNeedId(null)}>{draftNeedId} ×</button>
                     ) : (
-                      <button className={styles.composerTagBtn} onClick={() => { setNeedPickerOpen(o => !o); setStatePickerOpen(false) }}>+ need</button>
+                      <button className={styles.composerTagBtn} onClick={() => { setNeedPickerOpen(o => !o); setStatePickerOpen(false); setCustomPickerOpen(false) }}>+ need</button>
                     )}
                     {draftState ? (
                       <button className={styles.composerTagActive} onClick={() => setDraftState(null)}>{draftState} ×</button>
                     ) : (
-                      <button className={styles.composerTagBtn} onClick={() => { setStatePickerOpen(o => !o); setNeedPickerOpen(false) }}>+ state</button>
+                      <button className={styles.composerTagBtn} onClick={() => { setStatePickerOpen(o => !o); setNeedPickerOpen(false); setCustomPickerOpen(false) }}>+ state</button>
                     )}
+                    {customTags.length > 0 && (draftCustom ? (
+                      <button className={styles.composerTagActive} onClick={() => setDraftCustom(null)}>{draftCustom} ×</button>
+                    ) : (
+                      <button className={styles.composerTagBtn} onClick={() => { setCustomPickerOpen(o => !o); setNeedPickerOpen(false); setStatePickerOpen(false) }}>+ custom</button>
+                    ))}
                   </div>
                   {needPickerOpen && activeNeeds.length > 0 && (
                     <div className={styles.composerPicker}>
@@ -779,6 +802,13 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                       ))}
                     </div>
                   )}
+                  {customPickerOpen && customTags.length > 0 && (
+                    <div className={styles.composerPicker}>
+                      {customTags.map(t => (
+                        <button key={t.id} className={styles.composerPickerItem} onClick={() => { setDraftCustom(t.label); setCustomPickerOpen(false) }}>{t.label}</button>
+                      ))}
+                    </div>
+                  )}
                   <textarea
                     autoFocus
                     className={styles.journalInput}
@@ -789,7 +819,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                     rows={4}
                   />
                   <div className={styles.composerMobileFooter}>
-                    <button className={styles.composerCancelBtn} onClick={() => { setComposerOpen(false); setNeedPickerOpen(false); setStatePickerOpen(false) }}>cancel</button>
+                    <button className={styles.composerCancelBtn} onClick={() => { setComposerOpen(false); setNeedPickerOpen(false); setStatePickerOpen(false); setCustomPickerOpen(false) }}>cancel</button>
                     <button className={styles.journalAddBtn} onClick={handleAddEntry} disabled={!draftText.trim()}>add</button>
                   </div>
                   {journalSaveError && <div className={styles.journalSaveError}>{journalSaveError}</div>}

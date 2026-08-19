@@ -675,18 +675,18 @@ export async function signInWithPassword(email, password) {
 export async function loadJournalEntries(userId, dateKey) {
   const { data } = await supabase
     .from('journal')
-    .select('id, entry, slot, need_id, state, created_at')
+    .select('id, entry, slot, need_id, state, custom, created_at')
     .eq('user_id', userId)
     .eq('date_key', dateKey)
     .order('created_at', { ascending: true })
   return data || []
 }
 
-export async function addJournalEntry(userId, dateKey, { entry, slot, needId, state }) {
+export async function addJournalEntry(userId, dateKey, { entry, slot, needId, state, custom }) {
   const { data, error } = await supabase
     .from('journal')
-    .insert({ user_id: userId, date_key: dateKey, entry, slot: slot || null, need_id: needId || null, state: state || null })
-    .select('id, entry, slot, need_id, state, created_at')
+    .insert({ user_id: userId, date_key: dateKey, entry, slot: slot || null, need_id: needId || null, state: state || null, custom: custom || null })
+    .select('id, entry, slot, need_id, state, custom, created_at')
     .single()
   if (error) logSupabaseError('addJournalEntry', error)
   return { data, error }
@@ -695,7 +695,7 @@ export async function addJournalEntry(userId, dateKey, { entry, slot, needId, st
 export async function loadAllJournalMeta(userId) {
   const { data } = await supabase
     .from('journal')
-    .select('id, need_id, state')
+    .select('id, need_id, state, custom')
     .eq('user_id', userId)
   return data || []
 }
@@ -726,10 +726,11 @@ export async function loadDayCheckins(userId, dateKey) {
   }))
 }
 
-export async function updateJournalEntryTags(id, { needId, stateName }) {
+export async function updateJournalEntryTags(id, { needId, stateName, customLabel }) {
   const updates = {}
   if (needId !== undefined) updates.need_id = needId
   if (stateName !== undefined) updates.state = stateName
+  if (customLabel !== undefined) updates.custom = customLabel
   const { error } = await supabase.from('journal').update(updates).eq('id', id)
   if (error) logSupabaseError('updateJournalEntryTags', error)
   return { error }
