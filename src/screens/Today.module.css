@@ -588,7 +588,7 @@
 /* ── List ── */
 .list { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
 .list::-webkit-scrollbar { display: none; }
-@media (max-width: 899px) { .list { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); } }
+@media (max-width: 899px) { .list { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); } }
 
 /* ── Needs & Practices section header ── */
 .tierSectionHeader {

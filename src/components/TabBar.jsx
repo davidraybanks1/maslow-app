@@ -45,20 +45,22 @@ const TABS = [
 export default function TabBar() {
   return (
     <nav className={styles.bar} aria-label="Primary">
-      {TABS.map(({ to, label, Icon }) => (
-        <NavLink
-          key={to}
-          to={to}
-          className={({ isActive }) => `${styles.tab} ${isActive ? styles.tabActive : ''}`}
-        >
-          {({ isActive }) => (
-            <>
-              <Icon active={isActive} />
-              <span className={styles.label}>{label}</span>
-            </>
-          )}
-        </NavLink>
-      ))}
+      <div className={styles.capsule}>
+        {TABS.map(({ to, label, Icon }) => (
+          <NavLink
+            key={to}
+            to={to}
+            className={({ isActive }) => `${styles.tab} ${isActive ? styles.tabActive : ''}`}
+          >
+            {({ isActive }) => (
+              <>
+                <Icon active={isActive} />
+                <span className={styles.label}>{label}</span>
+              </>
+            )}
+          </NavLink>
+        ))}
+      </div>
     </nav>
   )
 }
