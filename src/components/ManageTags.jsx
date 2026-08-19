@@ -80,7 +80,7 @@ export default function ManageTags({ userId, onClose }) {
       </div>
 
       <div className={styles.subhead}>
-        tag journal entries with words that are yours — not just needs and states.
+        tag journal entries with your own words.
       </div>
 
       <div className={styles.body}>
@@ -93,7 +93,7 @@ export default function ManageTags({ userId, onClose }) {
             ref={inputRef}
             className={`${styles.createInput} ${dupeError ? styles.createInputError : ''}`}
             type="text"
-            placeholder="new tag…"
+            placeholder="add a tag — e.g. kids, work, travel…"
             value={draft}
             onChange={handleDraftChange}
             onKeyDown={handleKeyDown}
@@ -109,10 +109,25 @@ export default function ManageTags({ userId, onClose }) {
           <div className={styles.dupeError}>you already have that tag</div>
         )}
 
+        {/* ── Teaching illustration: caption + facsimile entry card ── */}
+        <div className={styles.illustration} aria-hidden="true">
+          <p className={styles.illustrationCaption}>
+            your tags appear on journal entries alongside time, state, and need — and become filters in your review archive.
+          </p>
+          <div className={styles.facsimile}>
+            <div className={styles.facsimileMeta}>
+              <span className={styles.facsimileTime}>9:40am</span>
+              <span className={`${styles.facsimilePill} ${styles.facsimilePillDim}`}>morning</span>
+              <span className={`${styles.facsimilePill} ${styles.facsimilePillDim}`}>confident</span>
+              <span className={styles.facsimilePill}>kids</span>
+            </div>
+            <p className={styles.facsimileBody}>
+              Drop off went better than expected — she was happy and confident walking in. Felt steady the whole morning, more like myself.
+            </p>
+          </div>
+        </div>
+
         <div className={styles.tagList}>
-          {tags.length === 0 && (
-            <div className={styles.emptyHint}>no tags yet — create one above.</div>
-          )}
           {tags.map(tag => {
             const count = usageCounts[tag.label] || 0
             const isConfirming = deleteConfirmId === tag.id
