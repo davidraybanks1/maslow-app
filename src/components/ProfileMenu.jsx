@@ -141,7 +141,7 @@ export default function ProfileMenu({
             <div className={styles.scrollBody}>
 
             {/* ── PERSONALIZE ── */}
-            <div className={styles.sectionLabel}>PERSONALIZE</div>
+            <div className={styles.sectionLabel}><span className={styles.sectionLabelPersonalize}>PERSONALIZE</span></div>
             <div className={styles.section}>
               <button
                 className={styles.row}
@@ -231,7 +231,7 @@ export default function ProfileMenu({
             </div>
 
             {/* ── ACCOUNT ── */}
-            <div className={styles.sectionLabel}>ACCOUNT</div>
+            <div className={styles.sectionLabel}><span className={styles.sectionLabelAccount}>ACCOUNT</span></div>
             <div className={styles.section}>
               <div className={`${styles.row} ${styles.rowEmail}`}>{email}</div>
               <button
@@ -249,7 +249,7 @@ export default function ProfileMenu({
             </div>
 
             {/* ── ABOUT ── */}
-            <div className={styles.sectionLabel}>ABOUT</div>
+            <div className={styles.sectionLabel}><span className={styles.sectionLabelAbout}>ABOUT</span></div>
             <div className={styles.section}>
               <a
                 href={`mailto:${FEEDBACK_EMAIL}?subject=maslow%20feedback`}

@@ -170,14 +170,8 @@
 }
 .closeBtn:hover { background: var(--track); }
 
-/* ── Section label ── */
+/* ── Section label wrapper — owns gutter and vertical rhythm only ── */
 .sectionLabel {
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  font-variant: small-caps;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(0,0,0,.40);
   padding: 0 20px;
   margin-top: 16px;
   margin-bottom: 5px;
@@ -187,6 +181,24 @@
   .sectionLabel { padding: 0 14px; margin-top: 12px; }
   .sectionLabel:first-of-type { margin-top: 4px; }
 }
+
+/* ── Highlighter pills — inline-block so they hug the word, not full-width bars ── */
+.sectionLabelPersonalize,
+.sectionLabelAccount,
+.sectionLabelAbout {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 5px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  font-variant: small-caps;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.sectionLabelPersonalize { background: rgba(232,184,31,.35); color: var(--ink); }
+.sectionLabelAccount     { background: var(--exploration);   color: #ffffff; }
+.sectionLabelAbout       { background: var(--appreciation);  color: var(--ink); }
 
 /* ── Section container (no card borders) ── */
 .section {
