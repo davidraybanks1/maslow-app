@@ -119,7 +119,7 @@ export default function ManageTags({ userId, onClose }) {
               <span className={styles.facsimileTime}>9:40am</span>
               <span className={`${styles.facsimilePill} ${styles.facsimilePillDim}`}>morning</span>
               <span className={`${styles.facsimilePill} ${styles.facsimilePillDim}`}>confident</span>
-              <span className={styles.facsimilePill}>kids</span>
+              <span className={styles.facsimilePill}>custom</span>
             </div>
             <p className={styles.facsimileBody}>
               Drop off went better than expected — she was happy and confident walking in. Felt steady the whole morning, more like myself.
