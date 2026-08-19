@@ -2,7 +2,7 @@
 .screen { display: flex; flex-direction: column; min-height: 100vh; background: var(--paper); }
 
 /* ── Content ── */
-.content { flex: 1; overflow-y: auto; padding: 14px 16px; }
+.content { flex: 1; overflow-y: auto; padding: 14px 22px; }
 .content::-webkit-scrollbar { display: none; }
 
 /* ── Empty state ── */
@@ -116,7 +116,7 @@
   line-height: 1.5;
 }
 
-.reviewTitle {
+.pageTitle {
   font-family: var(--font-serif);
   font-size: 30px;
   font-weight: 300;
@@ -126,7 +126,7 @@
   margin: 0 0 4px;
 }
 
-.reviewSubtitle {
+.pageSubhead {
   font-family: var(--font-mono);
   font-size: 11.5px;
   font-weight: 300;
@@ -1461,7 +1461,7 @@
 .noteCard:hover { background: var(--paper); }
 
 
-/* desktop tier: center the screen at a comfortable reading width */
-@media (min-width: 1024px) {
-  .screen { max-width: 680px; margin: 0 auto; width: 100%; background: transparent; }
+/* desktop tier: center the scroll content at a comfortable reading width (matches data) */
+@media (min-width: 900px) {
+  .content { max-width: 680px; margin: 0 auto; width: 100%; }
 }

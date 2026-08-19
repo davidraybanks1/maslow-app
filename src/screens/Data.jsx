@@ -833,7 +833,7 @@ export default function Data({ state, archivePractice }) {
       </div>
 
       <div className={styles.scrollArea}>
-        <h1 className={styles.pageTitle}>data</h1>
+        <h1 className={styles.pageTitle}>data.</h1>
         <p className={styles.pageSubhead}>{buildSubhead(period)}</p>
 
         {!hasCanvas && (

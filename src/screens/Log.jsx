@@ -901,8 +901,8 @@ export default function Log({ state }) {
           </div>
         )}
 
-        <div className={styles.reviewTitle}>review.</div>
-        <div className={styles.reviewSubtitle}>
+        <div className={styles.pageTitle}>review.</div>
+        <div className={styles.pageSubhead}>
           {entryCount} {entryCount === 1 ? 'entry' : 'entries'} · {needCount} tagged with a need, {stateCount} with a state
         </div>
 
