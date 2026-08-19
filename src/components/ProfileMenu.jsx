@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import styles from './ProfileMenu.module.css'
 
@@ -38,6 +38,7 @@ export default function ProfileMenu({
   const [cadenceOpen, setCadenceOpen] = useState(false)
   const [confirmSignOut, setConfirmSignOut] = useState(false)
   const navigate = useNavigate()
+  const location = useLocation()
   const wrapperRef = useRef(null)
   const closeTimerRef = useRef(null)
 
@@ -50,6 +51,14 @@ export default function ProfileMenu({
 
   // Cleanup timer on unmount
   useEffect(() => () => { if (closeTimerRef.current) clearTimeout(closeTimerRef.current) }, [])
+
+  // Re-open profile sheet when returning from a profile sub-page (canvas/deck/tags).
+  // The navigate state { openProfile: true } is set by the sub-page's ✕ button.
+  useEffect(() => {
+    if (!location.state?.openProfile) return
+    openMenu()
+    navigate(location.pathname, { replace: true, state: {} })
+  }, [location.state]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function openMenu() {
     if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
@@ -134,15 +143,18 @@ export default function ProfileMenu({
             {/* ── PERSONALIZE ── */}
             <div className={styles.sectionLabel}>PERSONALIZE</div>
             <div className={styles.section}>
-              <NavLink to="/canvas" className={styles.row} onClick={close}>
+              <button
+                className={styles.row}
+                onClick={() => close(() => navigate('/canvas', { state: { fromProfile: true, returnTo: location.pathname } }))}
+              >
                 <div className={styles.rowContent}>
                   <div className={styles.rowTitle}>your canvas</div>
                   <div className={styles.rowSub}>needs, modes &amp; practices</div>
                 </div>
-              </NavLink>
+              </button>
               <button
                 className={styles.row}
-                onClick={() => close(() => navigate('/today', { state: { openDeck: true } }))}
+                onClick={() => close(() => navigate('/today', { state: { openDeck: true, fromProfile: true, returnTo: location.pathname } }))}
               >
                 <div className={styles.rowContent}>
                   <div className={styles.rowTitle}>your note deck</div>
@@ -153,7 +165,7 @@ export default function ProfileMenu({
               </button>
               <button
                 className={styles.row}
-                onClick={() => close(() => navigate('/today', { state: { openTags: true } }))}
+                onClick={() => close(() => navigate('/today', { state: { openTags: true, fromProfile: true, returnTo: location.pathname } }))}
               >
                 <div className={styles.rowContent}>
                   <div className={styles.rowTitle}>your tags</div>

@@ -200,6 +200,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   const [manageDeckOpen, setManageDeckOpen] = useState(false)
   const [manageTagsOpen, setManageTagsOpen] = useState(false)
   const [customTags, setCustomTags] = useState([])
+  const [profileReturnTo, setProfileReturnTo] = useState(null)
 
   useEffect(() => {
     if (!state.userId) return
@@ -211,10 +212,12 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   // /today route while Today is already mounted — without it the state change is
   // invisible because useEffect([]) only runs on initial mount.
   useEffect(() => {
-    if (location.state?.openDeck) {
+    const { openDeck, openTags, fromProfile, returnTo } = location.state || {}
+    if (fromProfile && returnTo) setProfileReturnTo(returnTo)
+    if (openDeck) {
       openManageDeck()
       navigate(location.pathname, { replace: true, state: {} })
-    } else if (location.state?.openTags) {
+    } else if (openTags) {
       setManageTagsOpen(true)
       navigate(location.pathname, { replace: true, state: {} })
     }
@@ -840,7 +843,14 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
       {manageDeckOpen && (
         <ManageDeck
           userId={state.userId}
-          onClose={() => { setManageDeckOpen(false); loadDeck() }}
+          onClose={() => {
+            setManageDeckOpen(false)
+            loadDeck()
+            if (profileReturnTo) {
+              navigate(profileReturnTo, { state: { openProfile: true } })
+              setProfileReturnTo(null)
+            }
+          }}
           onDeckChanged={deck => { setNoteDeck(deck); onActiveDeckChanged?.(deck) }}
         />
       )}
@@ -852,6 +862,10 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
             setManageTagsOpen(false)
             setCustomTags(updatedTags)
             onCustomTagsChanged?.(updatedTags.length)
+            if (profileReturnTo) {
+              navigate(profileReturnTo, { state: { openProfile: true } })
+              setProfileReturnTo(null)
+            }
           }}
         />
       )}

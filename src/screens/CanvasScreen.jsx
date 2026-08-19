@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useContext } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { HeaderSlotContext } from '../lib/headerSlot'
 import { NEEDS, MODE_ORDER, MODES } from '../lib/constants'
 import { createDataStats, formatLastDone } from '../lib/dataStats'
@@ -24,6 +24,12 @@ const GUIDE_KEY = 'maslow_canvas_guide_seen'
 
 export default function CanvasScreen({ state, updateCanvas, addPractice, renamePractice, archivePractice }) {
   const navigate = useNavigate()
+  const location = useLocation()
+
+  function handleClose() {
+    navigate(location.state?.returnTo || '/today', { state: { openProfile: true } })
+  }
+
   const [guideOpen, setGuideOpen] = useState(() => {
     try { return !localStorage.getItem(GUIDE_KEY) } catch { return true }
   })
@@ -215,7 +221,10 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
         )}
 
         <div className={styles.titleBlock}>
-          <h1 className={styles.pageTitle}>your canvas.</h1>
+          <div className={styles.titleRow}>
+            <h1 className={styles.pageTitle}>your canvas.</h1>
+            <button className={styles.closeBtn} onClick={handleClose} aria-label="close canvas">✕</button>
+          </div>
           <p className={styles.pageSubhead}>
             {needCount} {needCount === 1 ? 'need' : 'needs'} placed · {practiceCount} {practiceCount === 1 ? 'practice' : 'practices'} · {openSlotPhrase}
           </p>

@@ -87,6 +87,32 @@
   padding: 14px 0 12px;
 }
 
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.closeBtn {
+  width: 30px;
+  height: 30px;
+  border-radius: 15px;
+  border: 1px solid rgba(0,0,0,.14);
+  background: transparent;
+  color: rgba(0,0,0,.5);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.closeBtn:hover { background: var(--track); }
+
 .pageTitle {
   font-family: var(--font-serif);
   font-size: 30px;
