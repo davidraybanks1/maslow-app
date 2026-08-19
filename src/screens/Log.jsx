@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { NEEDS, MODE_MAX_BUBBLES, JOURNAL_TRUNCATE } from '../lib/constants'
 import { weekKey, loadJournalEntry, loadDebriefs, loadDebriefTypes, addNoteDeckCard, saveWeeklyReview, loadAllJournalMeta, loadJournalArchive, updateJournalEntryTags, loadDayCheckins, loadCustomTags } from '../lib/store'
@@ -626,6 +626,69 @@ export default function Log({ state }) {
 
   const stats = createDataStats({ canvas: state.canvas || {}, checkins: state.checkins || {}, moods: state.moods || [], practices: state.practices || {} })
 
+  // ── Memoised archive computations ──────────────────────────────────────────
+  const activeThreads = useMemo(
+    () => computeActiveThreads(archiveEntries, state.canvas, customTags),
+    [archiveEntries, state.canvas, customTags]
+  )
+
+  const archiveAllJournalDays = useMemo(
+    () => new Set(archiveEntries.map(e => e.date_key)),
+    [archiveEntries]
+  )
+
+  const archiveDateRange = useMemo(() => {
+    const today = new Date(); today.setHours(12, 0, 0, 0)
+    let filterAfterKey = null
+    let filterBeforeKey = null
+    if (rangeStart) {
+      filterAfterKey = rangeStart
+      filterBeforeKey = rangeEnd || rangeStart
+    } else if (filterDate === '30d') {
+      const d = new Date(today); d.setDate(d.getDate() - 30)
+      filterAfterKey = dateKeyFor(d)
+    } else if (filterDate === '90d') {
+      const d = new Date(today); d.setDate(d.getDate() - 90)
+      filterAfterKey = dateKeyFor(d)
+    }
+    return { filterAfterKey, filterBeforeKey }
+  }, [rangeStart, rangeEnd, filterDate])
+
+  const archiveFiltered = useMemo(
+    () => archiveEntries.filter(e => matchesPredicate(e,
+      { slot: filterSlot, need: filterNeed, state: filterState, custom: filterCustom },
+      archiveDateRange.filterAfterKey, archiveDateRange.filterBeforeKey
+    )),
+    [archiveEntries, filterSlot, filterNeed, filterState, filterCustom, archiveDateRange]
+  )
+
+  const archiveCounts = useMemo(() => {
+    const { filterAfterKey, filterBeforeKey } = archiveDateRange
+    const canvasNeeds = NEEDS.filter(n => state.canvas?.[n.id])
+    const slotCounts = Object.fromEntries(ARCHIVE_SLOTS.map(s => [s,
+      archiveEntries.filter(e => matchesPredicate(e, { slot: s, need: filterNeed, state: filterState, custom: filterCustom }, filterAfterKey, filterBeforeKey)).length
+    ]))
+    const needCounts = Object.fromEntries(canvasNeeds.map(n => [n.id,
+      archiveEntries.filter(e => matchesPredicate(e, { slot: filterSlot, need: n.id, state: filterState, custom: filterCustom }, filterAfterKey, filterBeforeKey)).length
+    ]))
+    const stateCounts = Object.fromEntries(ARCHIVE_STATES.map(s => [s,
+      archiveEntries.filter(e => matchesPredicate(e, { slot: filterSlot, need: filterNeed, state: s, custom: filterCustom }, filterAfterKey, filterBeforeKey)).length
+    ]))
+    const archiveCustomValues = [...new Set(archiveEntries.map(e => e.custom).filter(Boolean))]
+    const vocabLabels = customTags.map(t => t.label)
+    const allCustomLabels = [...new Set([...vocabLabels, ...archiveCustomValues])]
+    const customCounts = Object.fromEntries(allCustomLabels.map(label => [label,
+      archiveEntries.filter(e => matchesPredicate(e, { slot: filterSlot, need: filterNeed, state: filterState, custom: label }, filterAfterKey, filterBeforeKey)).length
+    ]))
+    const today = new Date(); today.setHours(12, 0, 0, 0)
+    const presetCounts = Object.fromEntries(ARCHIVE_DATE_PRESETS.map(r => {
+      const d = new Date(today); d.setDate(d.getDate() - (r.key === '30d' ? 30 : 90))
+      return [r.key, archiveEntries.filter(e => matchesPredicate(e, { slot: filterSlot, need: filterNeed, state: filterState, custom: filterCustom }, dateKeyFor(d), null)).length]
+    }))
+    return { canvasNeeds, slotCounts, needCounts, stateCounts, allCustomLabels, customCounts, presetCounts }
+  }, [archiveEntries, filterSlot, filterNeed, filterState, filterCustom, archiveDateRange, state.canvas, customTags])
+  // ───────────────────────────────────────────────────────────────────────────
+
   useEffect(() => {
     if (!state.userId) return
     loadAllJournalMeta(state.userId).then(setJournalMeta)
@@ -1034,7 +1097,6 @@ export default function Log({ state }) {
 
         {/* ── Threads ── */}
         {archiveLoaded && (() => {
-          const activeThreads = computeActiveThreads(archiveEntries, state.canvas, customTags)
           const openThread = activeThreads.find(t => t.id === openThreadId) || null
           return (
             <div className={styles.threadSection}>
@@ -1114,46 +1176,12 @@ export default function Log({ state }) {
 
         {/* ── Archive ── */}
         {(() => {
-          const canvasNeeds = NEEDS.filter(n => state.canvas?.[n.id])
-          const allJournalDays = new Set(archiveEntries.map(e => e.date_key))
-          const today = new Date(); today.setHours(12, 0, 0, 0)
-          let filterAfterKey = null
-          let filterBeforeKey = null
-          if (rangeStart) {
-            filterAfterKey = rangeStart
-            filterBeforeKey = rangeEnd || rangeStart
-          } else if (filterDate === '30d') {
-            const d = new Date(today); d.setDate(d.getDate() - 30)
-            filterAfterKey = dateKeyFor(d)
-          } else if (filterDate === '90d') {
-            const d = new Date(today); d.setDate(d.getDate() - 90)
-            filterAfterKey = dateKeyFor(d)
-          }
+          const { canvasNeeds, slotCounts, needCounts, stateCounts, allCustomLabels, customCounts, presetCounts } = archiveCounts
+          const allJournalDays = archiveAllJournalDays
           const rangeLabel = rangeStart ? formatRangeLabel(rangeStart, rangeEnd) : null
-          const filtered = archiveEntries.filter(e => matchesPredicate(e, { slot: filterSlot, need: filterNeed, state: filterState, custom: filterCustom }, filterAfterKey, filterBeforeKey))
+          const filtered = archiveFiltered
           const anyFilter = filterSlot || filterNeed || filterState || filterCustom || filterDate || rangeStart
           const visible = filtered.slice(0, archiveVisible)
-          // Conditional counts: each chip's value substituted for its own dim, all other dims + date held fixed.
-          const slotCounts = Object.fromEntries(ARCHIVE_SLOTS.map(s => [s,
-            archiveEntries.filter(e => matchesPredicate(e, { slot: s, need: filterNeed, state: filterState, custom: filterCustom }, filterAfterKey, filterBeforeKey)).length
-          ]))
-          const needCounts = Object.fromEntries(canvasNeeds.map(n => [n.id,
-            archiveEntries.filter(e => matchesPredicate(e, { slot: filterSlot, need: n.id, state: filterState, custom: filterCustom }, filterAfterKey, filterBeforeKey)).length
-          ]))
-          const stateCounts = Object.fromEntries(ARCHIVE_STATES.map(s => [s,
-            archiveEntries.filter(e => matchesPredicate(e, { slot: filterSlot, need: filterNeed, state: s, custom: filterCustom }, filterAfterKey, filterBeforeKey)).length
-          ]))
-          // CUSTOM: vocabulary union distinct stored values — orphaned historical tags remain filterable
-          const archiveCustomValues = [...new Set(archiveEntries.map(e => e.custom).filter(Boolean))]
-          const vocabLabels = customTags.map(t => t.label)
-          const allCustomLabels = [...new Set([...vocabLabels, ...archiveCustomValues])]
-          const customCounts = Object.fromEntries(allCustomLabels.map(label => [label,
-            archiveEntries.filter(e => matchesPredicate(e, { slot: filterSlot, need: filterNeed, state: filterState, custom: label }, filterAfterKey, filterBeforeKey)).length
-          ]))
-          const presetCounts = Object.fromEntries(ARCHIVE_DATE_PRESETS.map(r => {
-            const d = new Date(today); d.setDate(d.getDate() - (r.key === '30d' ? 30 : 90))
-            return [r.key, archiveEntries.filter(e => matchesPredicate(e, { slot: filterSlot, need: filterNeed, state: filterState, custom: filterCustom }, dateKeyFor(d), null)).length]
-          }))
 
           return (
             <div className={styles.archiveSection}>
