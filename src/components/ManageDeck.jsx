@@ -32,6 +32,7 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
   const [composerDraft, setComposerDraft] = useState('')
   const [composerImage, setComposerImage] = useState(null)
   const [uploadingTarget, setUploadingTarget] = useState(null)
+  const [capErrorId, setCapErrorId] = useState(null)
   const [errorMsg, setErrorMsg] = useState(null)
   const [closing, setClosing] = useState(false)
   const fileRef = useRef(null)
@@ -49,12 +50,17 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
     setTimeout(() => onClose(), 200)
   }
 
-  // ── Reorder ──────────────────────────────────────────────────────────────
-  function handleMove(index, dir) {
-    const j = index + dir
+  function clearCap() {
+    if (capErrorId !== null) setCapErrorId(null)
+  }
+
+  // ── Reorder within deck ────────────────────────────────────────────────────
+  function handleMove(deckIndex, dir) {
+    clearCap()
+    const j = deckIndex + dir
     if (j < 0 || j >= deck.length) return
     const next = [...deck]
-    ;[next[index], next[j]] = [next[j], next[index]]
+    ;[next[deckIndex], next[j]] = [next[j], next[deckIndex]]
     setDeck(next)
     onDeckChanged?.(next)
     reorderNoteDeck(next).catch(() => {
@@ -63,51 +69,58 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
     })
   }
 
-  // ── Archive (✕ on deck card → library) ───────────────────────────────────
-  async function handleArchive(id) {
-    setErrorMsg(null)
-    const card = deck.find(c => c.id === id)
-    if (!card) return
-    if (editingId === id) setEditingId(null)
-    const newDeck = deck.filter(c => c.id !== id)
-    const archived = { ...card, archived_at: new Date().toISOString() }
-    setDeck(newDeck)
-    setLibrary(prev => [archived, ...prev])
-    onDeckChanged?.(newDeck)
-    const { error } = await archiveNoteDeckCard(id)
-    if (error) {
-      setDeck(deck)
-      setLibrary(prev => prev.filter(c => c.id !== id))
-      onDeckChanged?.(deck)
-      setErrorMsg('failed to remove — try again')
+  // ── Toggle switch (archive ↔ restore) ─────────────────────────────────────
+  async function handleToggle(id) {
+    const deckCard = deck.find(c => c.id === id)
+    if (deckCard) {
+      // ON → OFF: archive
+      clearCap()
+      if (editingId === id) setEditingId(null)
+      setDeleteConfirmId(null)
+      const newDeck = deck.filter(c => c.id !== id)
+      const archived = { ...deckCard, archived_at: new Date().toISOString() }
+      setDeck(newDeck)
+      setLibrary(prev => [archived, ...prev])
+      onDeckChanged?.(newDeck)
+      const { error } = await archiveNoteDeckCard(id)
+      if (error) {
+        setDeck(deck)
+        setLibrary(prev => prev.filter(c => c.id !== id))
+        onDeckChanged?.(deck)
+        setErrorMsg('failed to remove — try again')
+      }
+    } else {
+      // OFF → ON: cap check first
+      if (deck.length >= DECK_MAX) {
+        setCapErrorId(id)
+        return
+      }
+      clearCap()
+      const libCard = library.find(c => c.id === id)
+      if (!libCard) return
+      const newLibrary = library.filter(c => c.id !== id)
+      const newDeck = [...deck, { ...libCard, archived_at: null }]
+      setDeck(newDeck)
+      setLibrary(newLibrary)
+      onDeckChanged?.(newDeck)
+      const { error } = await restoreNoteDeckCard(userId, id)
+      if (error) {
+        setDeck(deck)
+        setLibrary(library)
+        onDeckChanged?.(deck)
+        setCapErrorId(id)
+        setErrorMsg(
+          error.message?.toLowerCase().includes('full')
+            ? 'deck is full — turn one off first (race condition)'
+            : 'failed to add — try again'
+        )
+      }
     }
   }
 
-  // ── Restore (+ add to deck) ───────────────────────────────────────────────
-  async function handleRestore(id) {
-    setErrorMsg(null)
-    const card = library.find(c => c.id === id)
-    if (!card) return
-    const newLibrary = library.filter(c => c.id !== id)
-    const newDeck = [...deck, { ...card, archived_at: null }]
-    setDeck(newDeck)
-    setLibrary(newLibrary)
-    onDeckChanged?.(newDeck)
-    const { error } = await restoreNoteDeckCard(userId, id)
-    if (error) {
-      setDeck(deck)
-      setLibrary(library)
-      onDeckChanged?.(deck)
-      setErrorMsg(
-        error.message?.toLowerCase().includes('full')
-          ? 'deck is full — remove a card first'
-          : 'failed to add — try again'
-      )
-    }
-  }
-
-  // ── Edit open/close ────────────────────────────────────────────────────────
+  // ── Edit panel open/close ──────────────────────────────────────────────────
   function handleEditOpen(id, text, imageUrl) {
+    clearCap()
     if (editingId === id) {
       setEditingId(null)
       setDeleteConfirmId(null)
@@ -121,21 +134,22 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
   }
 
   function handleCancelEdit() {
+    clearCap()
     setEditingId(null)
     setDeleteConfirmId(null)
   }
 
   // ── Save edit ──────────────────────────────────────────────────────────────
-  async function handleSaveEdit(id, isDeck) {
+  async function handleSaveEdit(id) {
+    clearCap()
     const text = (drafts[id] || '').trim()
     if (!text) return
-    const all = isDeck ? deck : library
-    const card = all.find(c => c.id === id)
+    const card = [...deck, ...library].find(c => c.id === id)
     const imageUrl = imageDrafts[id] !== undefined ? imageDrafts[id] : (card?.image_url || null)
     const { error } = await updateNoteDeckCard(id, { text, imageUrl, userId, previousText: card?.text })
     if (error) { setErrorMsg('failed to save — try again'); return }
     const updater = c => c.id === id ? { ...c, text, image_url: imageUrl } : c
-    if (isDeck) {
+    if (deck.find(c => c.id === id)) {
       const updated = deck.map(updater)
       setDeck(updated)
       onDeckChanged?.(updated)
@@ -145,12 +159,19 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
     setEditingId(null)
   }
 
-  // ── Delete (library only, two-step) ──────────────────────────────────────
+  // ── Delete (all notes, two-step) ───────────────────────────────────────────
   function handleDeleteTap(id) {
+    clearCap()
     if (deleteConfirmId === id) {
-      const card = library.find(c => c.id === id)
+      const card = [...deck, ...library].find(c => c.id === id)
       if (!card) return
-      setLibrary(prev => prev.filter(c => c.id !== id))
+      if (deck.find(c => c.id === id)) {
+        const newDeck = deck.filter(c => c.id !== id)
+        setDeck(newDeck)
+        onDeckChanged?.(newDeck)
+      } else {
+        setLibrary(prev => prev.filter(c => c.id !== id))
+      }
       setEditingId(null)
       setDeleteConfirmId(null)
       deleteNoteDeckCard(id, userId, card.text, card.image_url)
@@ -161,6 +182,7 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
 
   // ── Composer ───────────────────────────────────────────────────────────────
   function handleComposerToggle() {
+    clearCap()
     if (composerOpen) {
       setComposerOpen(false)
       setComposerDraft('')
@@ -210,8 +232,7 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
     fileRef.current?.click()
   }
 
-  const deckFull = deck.length >= DECK_MAX
-  const slotsLeft = DECK_MAX - deck.length
+  const allNotes = [...deck, ...library]
 
   return (
     <div className={`${styles.overlay} ${closing ? styles.overlayClosing : ''}`}>
@@ -221,103 +242,21 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
         <button className={styles.closeBtn} onClick={handleClose}>✕</button>
       </div>
 
+      {/* ── Subhead (not scrollable) ── */}
+      <div className={styles.subhead}>
+        create and select the notes that show up on your today screen.{' '}
+        <span className={deck.length > DECK_MAX ? styles.subheadCountOver : ''}>
+          ({deck.length}/5)
+        </span>
+      </div>
+
       {/* ── Scrollable body ── */}
       <div className={styles.body}>
         {errorMsg && (
           <div className={styles.errorBanner} onClick={() => setErrorMsg(null)}>{errorMsg}</div>
         )}
 
-        {/* ── ON YOUR TODAY SCREEN ── */}
-        <div className={styles.sectionRow}>
-          <span className={styles.sectionLabel}>ON YOUR TODAY SCREEN</span>
-          <span className={
-            deck.length > DECK_MAX ? styles.metaDestructive
-            : deck.length === DECK_MAX ? styles.metaMuted
-            : styles.metaAmber
-          }>{deck.length} of 5</span>
-        </div>
-        <div className={styles.sectionSubhead}>these are what greet you on the today screen, in this order.</div>
-
-        <div className={styles.deckList}>
-          {deck.map((card, i) => {
-            const isEditing = editingId === card.id
-            const editText = drafts[card.id] ?? card.text
-            const editImage = imageDrafts[card.id] !== undefined ? imageDrafts[card.id] : (card.image_url || null)
-            return (
-              <div key={card.id} className={styles.deckCard}>
-                <div className={styles.cardRow}>
-                  <div className={styles.reorderCol}>
-                    <button
-                      className={styles.reorderBtn}
-                      style={{ color: i === 0 ? 'rgba(0,0,0,.15)' : 'rgba(0,0,0,.45)' }}
-                      onClick={() => handleMove(i, -1)}
-                      disabled={i === 0}
-                      aria-label="move up"
-                    >▲</button>
-                    <button
-                      className={styles.reorderBtn}
-                      style={{ color: i === deck.length - 1 ? 'rgba(0,0,0,.15)' : 'rgba(0,0,0,.45)' }}
-                      onClick={() => handleMove(i, 1)}
-                      disabled={i === deck.length - 1}
-                      aria-label="move down"
-                    >▼</button>
-                  </div>
-                  {card.image_url && (
-                    <img src={card.image_url} className={styles.thumb44} alt="" />
-                  )}
-                  <p className={styles.noteTextDeck}>{card.text}</p>
-                  <button className={styles.iconBtn} onClick={() => handleEditOpen(card.id, card.text, card.image_url)} aria-label="edit">✎</button>
-                  <button className={styles.iconBtn} onClick={() => handleArchive(card.id)} aria-label="remove">✕</button>
-                </div>
-                {isEditing && (
-                  <div className={styles.editPanel}>
-                    <textarea
-                      className={styles.noteTextarea}
-                      value={editText}
-                      onChange={e => setDrafts(prev => ({ ...prev, [card.id]: e.target.value }))}
-                      autoFocus
-                    />
-                    <div className={styles.photoRow}>
-                      <PhotoPill
-                        image={editImage}
-                        isUploading={uploadingTarget === card.id}
-                        onTap={() => handlePhotoTap(card.id)}
-                      />
-                    </div>
-                    <div className={styles.editActions}>
-                      <button className={styles.savePrimaryBtn} onClick={() => handleSaveEdit(card.id, true)}>save</button>
-                      <button className={styles.cancelBtn} onClick={handleCancelEdit}>cancel</button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )
-          })}
-
-          {/* Slots open / over-cap message */}
-          {deck.length < DECK_MAX ? (
-            <div className={styles.slotsHint}>
-              {slotsLeft} more slot{slotsLeft === 1 ? '' : 's'} open — add from your library below
-            </div>
-          ) : deck.length > DECK_MAX ? (
-            <div className={styles.slotsHint}>
-              one over — remove a card to get back to five.
-            </div>
-          ) : null}
-        </div>
-
-        {/* ── YOUR LIBRARY ── */}
-        <div className={styles.librarySectionRow}>
-          <span className={styles.sectionLabel}>YOUR LIBRARY</span>
-          <span className={styles.metaMuted}>{library.length} {library.length === 1 ? 'note' : 'notes'}</span>
-        </div>
-
-        {deckFull && (
-          <div className={styles.deckFullNote}>
-            your deck is full — remove a card above, or add this one and something will need to make room.
-          </div>
-        )}
-
+        {/* ── Composer opener ── */}
         <button className={styles.newNoteBtn} onClick={handleComposerToggle}>
           <span className={styles.newNotePlus}>+</span>
           <span className={styles.newNoteLabel}>write a new note to self</span>
@@ -344,35 +283,68 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
                 className={`${styles.savePrimaryBtn} ${!composerDraft.trim() ? styles.savePrimaryBtnDim : ''}`}
                 onClick={handleSaveNew}
                 disabled={!composerDraft.trim()}
-              >save to library</button>
+              >save</button>
             </div>
           </div>
         )}
 
-        <div className={styles.libraryList}>
-          {library.map(card => {
+        {/* ── Unified note list ── */}
+        <div className={styles.noteList}>
+          {allNotes.map(card => {
+            const isOn = card.archived_at === null
+            const deckIndex = isOn ? deck.findIndex(c => c.id === card.id) : -1
+            const pos = isOn ? deckIndex + 1 : null
             const isEditing = editingId === card.id
             const isConfirming = deleteConfirmId === card.id
+            const showCapError = capErrorId === card.id
             const editText = drafts[card.id] ?? card.text
-            const editImage = imageDrafts[card.id] !== undefined ? imageDrafts[card.id] : (card.image_url || null)
-            const canAdd = !deckFull
+            const editImage = imageDrafts[card.id] !== undefined
+              ? imageDrafts[card.id]
+              : (card.image_url || null)
 
             return (
-              <div key={card.id} className={styles.libCard}>
+              <div key={card.id} className={isOn ? styles.noteRowOn : styles.noteRowOff}>
                 <div className={styles.cardRow}>
+                  {isOn && <span className={styles.badge}>{pos}</span>}
                   {card.image_url && (
-                    <img src={card.image_url} className={styles.thumb40} alt="" />
+                    <img src={card.image_url} className={styles.thumb34} alt="" />
                   )}
-                  <p className={styles.noteTextLib}>{card.text}</p>
-                  <button className={styles.iconBtnLib} onClick={() => handleEditOpen(card.id, card.text, card.image_url)} aria-label="edit">✎</button>
+                  <p className={isOn ? styles.noteTextOn : styles.noteTextOff}>{card.text}</p>
                   <button
-                    className={canAdd ? styles.addPillRoom : styles.addPillFull}
-                    onClick={canAdd ? () => handleRestore(card.id) : undefined}
-                    disabled={!canAdd}
-                  >{canAdd ? '+ add to deck' : 'deck full'}</button>
+                    className={styles.editPill}
+                    onClick={() => handleEditOpen(card.id, card.text, card.image_url)}
+                  >edit</button>
+                  <button
+                    className={`${styles.switch} ${isOn ? styles.switchOn : styles.switchOff}`}
+                    onClick={() => handleToggle(card.id)}
+                    aria-label={isOn ? 'remove from today' : 'add to today'}
+                  >
+                    <span className={styles.switchKnob} style={{ left: isOn ? '21px' : '2px' }} />
+                  </button>
                 </div>
+
+                {showCapError && (
+                  <div className={styles.capError}>
+                    your today screen is full — turn one off first.
+                  </div>
+                )}
+
                 {isEditing && (
                   <div className={styles.editPanel}>
+                    {isOn && (
+                      <div className={styles.moveRow}>
+                        <button
+                          className={`${styles.movePill} ${deckIndex === 0 ? styles.movePillDim : ''}`}
+                          onClick={() => handleMove(deckIndex, -1)}
+                          disabled={deckIndex === 0}
+                        >move earlier</button>
+                        <button
+                          className={`${styles.movePill} ${deckIndex === deck.length - 1 ? styles.movePillDim : ''}`}
+                          onClick={() => handleMove(deckIndex, 1)}
+                          disabled={deckIndex === deck.length - 1}
+                        >move later</button>
+                      </div>
+                    )}
                     <textarea
                       className={styles.noteTextarea}
                       value={editText}
@@ -387,12 +359,12 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
                       />
                     </div>
                     <div className={styles.editActions}>
-                      <button className={styles.savePrimaryBtn} onClick={() => handleSaveEdit(card.id, false)}>save</button>
+                      <button className={styles.savePrimaryBtn} onClick={() => handleSaveEdit(card.id)}>save</button>
                       <button className={styles.cancelBtn} onClick={handleCancelEdit}>cancel</button>
                       <button
                         className={isConfirming ? styles.deleteBtnConfirm : styles.deleteBtn}
                         onClick={() => handleDeleteTap(card.id)}
-                      >{isConfirming ? 'confirm delete' : 'delete'}</button>
+                      >{isConfirming ? 'confirm' : 'delete'}</button>
                     </div>
                   </div>
                 )}
