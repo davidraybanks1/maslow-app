@@ -12,9 +12,9 @@ import styles from './Today.module.css'
 
 const MOODS = ['good', 'fine', 'bad']
 const MOOD_FILL = {
-  good: { background: 'var(--exploration)',    borderColor: 'var(--exploration)',    color: 'var(--paper)' },
-  fine: { background: 'var(--card)',           borderColor: 'rgba(26,26,24,.35)',    color: 'var(--ink)'   },
-  bad:  { background: 'var(--survival)',       borderColor: 'var(--survival)',       color: 'var(--paper)' },
+  good: { background: 'var(--exploration)',  borderColor: 'var(--exploration)',  color: 'var(--paper)' },
+  fine: { background: 'var(--appreciation)', borderColor: 'var(--appreciation)', color: 'var(--ink)'   },
+  bad:  { background: 'var(--survival)',     borderColor: 'var(--survival)',     color: 'var(--paper)' },
 }
 
 function buildRingGradient(arcs) {
