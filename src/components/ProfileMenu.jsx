@@ -31,9 +31,11 @@ export default function ProfileMenu({
   showNoteToSelf, updateShowNoteToSelf,
   reviewCadence, updateReviewCadence,
   reviewDay, reviewTime, updateReviewSchedule,
+  noteDeckCount = 0,
 }) {
   const [open, setOpen] = useState(false)
   const [cadenceOpen, setCadenceOpen] = useState(false)
+  const [confirmSignOut, setConfirmSignOut] = useState(false)
   const navigate = useNavigate()
   const wrapperRef = useRef(null)
 
@@ -41,20 +43,24 @@ export default function ProfileMenu({
   const cadence = reviewCadence || 'weekly'
   const builtAt = formatBuildTime(BUILD_TIME)
 
+  function close() {
+    setOpen(false)
+    setCadenceOpen(false)
+    setConfirmSignOut(false)
+  }
+
   async function handleSignOut() {
     setOpen(false)
     await supabase.auth.signOut()
     navigate('/signin')
   }
 
-  function close() { setOpen(false) }
-
   useEffect(() => {
-    if (!open) { setCadenceOpen(false); return }
+    if (!open) { setCadenceOpen(false); setConfirmSignOut(false); return }
     function onOutside(e) {
-      if (!wrapperRef.current?.contains(e.target)) setOpen(false)
+      if (!wrapperRef.current?.contains(e.target)) close()
     }
-    function onKey(e) { if (e.key === 'Escape') setOpen(false) }
+    function onKey(e) { if (e.key === 'Escape') close() }
     document.addEventListener('mousedown', onOutside)
     document.addEventListener('touchstart', onOutside)
     document.addEventListener('keydown', onKey)
@@ -81,12 +87,21 @@ export default function ProfileMenu({
           <div className={styles.scrim} onClick={close} />
           <div className={`${styles.menu} ${dropUp ? styles.menuDropUp : ''}`}>
 
+            {/* ── Drag handle (mobile sheet only) ── */}
+            <div className={styles.dragHandle} />
+
+            {/* ── Sheet header (mobile only) ── */}
+            <div className={styles.sheetHeader}>
+              <span className={styles.sheetTitle}>profile.</span>
+              <button className={styles.closeBtn} onClick={close}>✕</button>
+            </div>
+
             {/* ── PERSONALIZE ── */}
             <div className={styles.sectionLabel}>PERSONALIZE</div>
             <div className={styles.section}>
               <NavLink to="/canvas" className={styles.row} onClick={close}>
-                <div>
-                  <div className={styles.rowLabel}>your canvas</div>
+                <div className={styles.rowContent}>
+                  <div className={styles.rowTitle}>your canvas</div>
                   <div className={styles.rowSub}>needs, modes &amp; practices</div>
                 </div>
               </NavLink>
@@ -94,24 +109,29 @@ export default function ProfileMenu({
                 className={styles.row}
                 onClick={() => { close(); navigate('/today', { state: { openDeck: true } }) }}
               >
-                <span className={styles.rowLabel}>your note deck</span>
-              </button>
-              <button
-                className={styles.row}
-                onClick={() => updateShowNoteToSelf?.(!showNoteToSelf)}
-              >
-                <span className={styles.rowLabel}>show note to self</span>
-                <div className={styles.toggleSwitch}>
-                  <div className={`${styles.toggleTrack} ${showNoteToSelf ? styles.toggleTrackOn : ''}`}>
-                    <div className={`${styles.toggleThumb} ${showNoteToSelf ? styles.toggleThumbOn : ''}`} />
+                <div className={styles.rowContent}>
+                  <div className={styles.rowTitle}>your note deck</div>
+                  <div className={`${styles.rowSub} ${noteDeckCount > 5 ? styles.rowSubOver : ''}`}>
+                    {noteDeckCount}/5 on your today screen
                   </div>
                 </div>
               </button>
               <button
                 className={styles.row}
-                onClick={() => setCadenceOpen(o => !o)}
+                onClick={() => { setConfirmSignOut(false); updateShowNoteToSelf?.(!showNoteToSelf) }}
               >
-                <span className={styles.rowLabel}>review cadence</span>
+                <span className={styles.rowTitle}>show note to self</span>
+                <div className={styles.toggleSwitch}>
+                  <div className={`${styles.toggleTrack} ${showNoteToSelf ? styles.toggleTrackOn : ''}`}>
+                    <span className={`${styles.toggleKnob} ${showNoteToSelf ? styles.toggleKnobOn : ''}`} />
+                  </div>
+                </div>
+              </button>
+              <button
+                className={styles.row}
+                onClick={() => { setConfirmSignOut(false); setCadenceOpen(o => !o) }}
+              >
+                <span className={styles.rowTitle}>review cadence</span>
                 <span className={styles.rowMeta}>&nbsp;· {cadence}</span>
                 <span className={styles.rowChevron}>›</span>
               </button>
@@ -156,7 +176,18 @@ export default function ProfileMenu({
             <div className={styles.sectionLabel}>ACCOUNT</div>
             <div className={styles.section}>
               <div className={`${styles.row} ${styles.rowEmail}`}>{email}</div>
-              <button className={styles.row} onClick={handleSignOut}>sign out</button>
+              <button
+                className={`${styles.row} ${confirmSignOut ? styles.rowSignOutConfirm : styles.rowSignOut}`}
+                onClick={() => {
+                  if (confirmSignOut) {
+                    handleSignOut()
+                  } else {
+                    setConfirmSignOut(true)
+                  }
+                }}
+              >
+                {confirmSignOut ? 'confirm sign out' : 'sign out'}
+              </button>
             </div>
 
             {/* ── ABOUT ── */}
@@ -165,21 +196,21 @@ export default function ProfileMenu({
               <a
                 href={`mailto:${FEEDBACK_EMAIL}?subject=maslow%20feedback`}
                 className={styles.row}
-                onClick={close}
+                onClick={() => { setConfirmSignOut(false); close() }}
               >suggest something</a>
               <a
                 href="https://mymaslow.com/privacy"
                 target="_blank"
                 rel="noopener noreferrer"
                 className={styles.row}
-                onClick={close}
+                onClick={() => { setConfirmSignOut(false); close() }}
               >privacy</a>
               <a
                 href="https://mymaslow.com/terms"
                 target="_blank"
                 rel="noopener noreferrer"
                 className={styles.row}
-                onClick={close}
+                onClick={() => { setConfirmSignOut(false); close() }}
               >terms</a>
             </div>
 

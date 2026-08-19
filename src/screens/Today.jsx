@@ -132,7 +132,7 @@ const STREAK_LINES = {
   365: 'a year of showing up.',
 }
 
-export default function Today({ state, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood }) {
+export default function Today({ state, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood, onActiveDeckChanged }) {
   const navigate = useNavigate()
   const location = useLocation()
   const today = todayKey()
@@ -215,7 +215,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
 
   function loadDeck() {
     if (!state.userId) { console.error('[loadDeck] called without userId — session may be invalid'); return }
-    loadNoteDeck(state.userId).then(setNoteDeck)
+    loadNoteDeck(state.userId).then(deck => { setNoteDeck(deck); onActiveDeckChanged?.(deck) })
   }
 
   // Sync local deck state whenever restoreFromSupabase pushes a fresh noteDeck
@@ -803,7 +803,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         <ManageDeck
           userId={state.userId}
           onClose={() => { setManageDeckOpen(false); loadDeck() }}
-          onDeckChanged={setNoteDeck}
+          onDeckChanged={deck => { setNoteDeck(deck); onActiveDeckChanged?.(deck) }}
         />
       )}
 

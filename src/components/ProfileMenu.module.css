@@ -21,23 +21,22 @@
   transition: background var(--motion-hover), color var(--motion-hover), border-color var(--motion-hover);
   -webkit-tap-highlight-color: transparent;
 }
-
 .avatarOpen {
   background: var(--ink);
   color: var(--paper);
   border-color: var(--ink);
 }
 
-/* Mobile scrim */
+/* ── Mobile scrim ── */
 .scrim {
   position: fixed;
   inset: 0;
   z-index: 150;
-  background: rgba(0, 0, 0, 0.12);
+  background: rgba(20,18,12,.28);
 }
 @media (min-width: 900px) { .scrim { display: none; } }
 
-/* Mobile: scrollable bottom sheet */
+/* ── Mobile: bottom sheet ── */
 .menu {
   position: fixed;
   bottom: 0;
@@ -45,8 +44,9 @@
   right: 0;
   z-index: 151;
   background: var(--paper);
-  border-top: 0.5px solid var(--hairline);
-  padding: 20px 0 max(env(safe-area-inset-bottom, 0px), 24px);
+  border-radius: 26px 26px 0 0;
+  padding-top: 0;
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 80px);
   display: flex;
   flex-direction: column;
   max-height: 90vh;
@@ -54,7 +54,7 @@
   -webkit-overflow-scrolling: touch;
 }
 
-/* Desktop: dropdown */
+/* ── Desktop: dropdown ── */
 @media (min-width: 900px) {
   .menu {
     position: absolute;
@@ -62,21 +62,67 @@
     right: 0;
     bottom: auto;
     left: auto;
-    width: 260px;
+    width: 272px;
     border: 0.5px solid var(--hairline);
-    border-radius: 12px;
-    padding: 12px 0 10px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border-radius: 14px;
+    padding: 10px 0 10px;
     z-index: 10;
     max-height: 80vh;
     overflow-y: auto;
   }
-
   .menuDropUp {
     top: auto;
     bottom: calc(100% + 8px);
   }
 }
+
+/* ── Drag handle (mobile sheet only) ── */
+.dragHandle {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(0,0,0,.15);
+  margin: 12px auto 0;
+  flex-shrink: 0;
+}
+@media (min-width: 900px) { .dragHandle { display: none; } }
+
+/* ── Sheet header (mobile only) ── */
+.sheetHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px 6px;
+  flex-shrink: 0;
+}
+@media (min-width: 900px) { .sheetHeader { display: none; } }
+
+.sheetTitle {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.closeBtn {
+  width: 30px;
+  height: 30px;
+  border-radius: 15px;
+  border: 1px solid rgba(0,0,0,.14);
+  background: transparent;
+  color: rgba(0,0,0,.5);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.closeBtn:hover { background: var(--track); }
 
 /* ── Section label ── */
 .sectionLabel {
@@ -85,20 +131,21 @@
   font-variant: small-caps;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(0,0,0,.38);
+  color: rgba(0,0,0,.40);
   padding: 0 20px;
-  margin-top: 14px;
-  margin-bottom: 4px;
+  margin-top: 16px;
+  margin-bottom: 5px;
 }
-.sectionLabel:first-child { margin-top: 0; }
+.sectionLabel:first-of-type { margin-top: 8px; }
 @media (min-width: 900px) {
-  .sectionLabel { padding: 0 14px; }
+  .sectionLabel { padding: 0 14px; margin-top: 12px; }
+  .sectionLabel:first-of-type { margin-top: 4px; }
 }
 
-/* ── Section (row group) ── */
+/* ── Section container (no card borders) ── */
 .section {
-  border-top: 0.5px solid var(--hairline);
-  border-bottom: 0.5px solid var(--hairline);
+  display: flex;
+  flex-direction: column;
 }
 
 /* ── Row ── */
@@ -107,13 +154,14 @@
   align-items: center;
   min-height: 46px;
   padding: 10px 20px;
-  font-family: var(--font-mono);
-  font-size: 13px;
+  font-family: var(--font-serif);
+  font-weight: 300;
+  font-size: 16px;
   color: var(--ink);
   text-decoration: none;
   background: none;
   border: none;
-  border-top: 0.5px solid rgba(0,0,0,.07);
+  border-top: 0.5px solid rgba(0,0,0,.09);
   cursor: pointer;
   text-align: left;
   width: 100%;
@@ -121,24 +169,44 @@
   -webkit-tap-highlight-color: transparent;
 }
 .row:first-child { border-top: none; }
-.row:hover { background: rgba(26, 26, 26, 0.04); }
+.row:hover { background: rgba(26,26,26,.03); }
 @media (min-width: 900px) {
-  .row { padding: 8px 14px; font-size: 12px; min-height: 40px; }
+  .row { padding: 8px 14px; font-size: 15px; min-height: 38px; }
 }
 
-.rowLabel { flex: 1; }
-
+/* ── Row content wrapper (for rows with title + sub) ── */
+.rowContent {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+.rowTitle {
+  flex: 1;
+}
 .rowSub {
   font-family: var(--font-mono);
   font-size: 9.5px;
   color: rgba(0,0,0,.38);
-  margin-top: 3px;
+  margin-top: 2px;
+}
+.rowSubOver { color: var(--destructive); }
+
+.rowMeta {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: rgba(0,0,0,.45);
+}
+.rowChevron {
+  font-family: var(--font-mono);
+  color: rgba(0,0,0,.35);
+  margin-left: 4px;
+  font-size: 16px;
+  line-height: 1;
 }
 
-.rowMeta { color: rgba(0,0,0,.45); }
-.rowChevron { color: rgba(0,0,0,.35); margin-left: 4px; font-size: 16px; line-height: 1; }
-
 .rowEmail {
+  font-family: var(--font-mono);
   font-size: 11px;
   color: rgba(0,0,0,.38);
   cursor: default;
@@ -146,32 +214,51 @@
 }
 .rowEmail:hover { background: none; }
 
-/* ── Toggle switch (note to self) ── */
+/* Sign out — default state: serif, --destructive color */
+.rowSignOut {
+  color: var(--destructive);
+}
+/* Sign out — confirm state: destructive fill */
+.rowSignOutConfirm {
+  background: var(--destructive);
+  color: var(--card);
+}
+.rowSignOutConfirm:hover { background: var(--destructive); opacity: .9; }
+
+/* ── Toggle switch (show note to self) — 42×24, accent track ── */
 .toggleSwitch {
   flex-shrink: 0;
-  pointer-events: none; /* row button handles the tap */
+  pointer-events: none;
 }
 .toggleTrack {
-  width: 38px;
-  height: 22px;
-  border-radius: 11px;
-  background: rgba(0,0,0,.12);
+  width: 42px;
+  height: 24px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,.14);
+  background: rgba(0,0,0,.08);
   position: relative;
-  transition: background 0.15s ease;
+  transition: background 150ms ease-out, border-color 150ms ease-out;
 }
-.toggleTrackOn { background: var(--ink); }
-.toggleThumb {
+.toggleTrackOn {
+  background: var(--exploration);
+  border-color: var(--exploration);
+}
+.toggleKnob {
   position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 1px 3px rgba(0,0,0,.25);
-  transition: transform 0.15s ease;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  background: white;
+  transition: left 150ms ease-out;
+  display: block;
 }
-.toggleThumbOn { transform: translateX(16px); }
+.toggleKnobOn { left: 21px; }
+@media (prefers-reduced-motion: reduce) {
+  .toggleTrack { transition: none; }
+  .toggleKnob  { transition: none; }
+}
 
 /* ── Cadence picker (inline expansion) ── */
 .cadencePicker {
@@ -253,10 +340,10 @@
   font-family: var(--font-mono);
   font-size: 10px;
   color: rgba(0,0,0,.32);
-  padding: 10px 20px 0;
+  padding: 12px 20px 0;
   display: flex;
   gap: 6px;
 }
 @media (min-width: 900px) {
-  .footer { padding: 8px 14px 0; }
+  .footer { padding: 10px 14px 0; }
 }
