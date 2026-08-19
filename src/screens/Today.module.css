@@ -924,7 +924,7 @@
 
 .moodQuestion {
   font-family: var(--font-serif);
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 300;
   line-height: 1.15;
   color: var(--ink);
@@ -969,6 +969,7 @@
 
 
 .moodDivider {
+  order: 4;
   border: none;
   border-top: 1px solid var(--hairline);
   margin: 18px 0;
