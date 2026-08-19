@@ -64,6 +64,7 @@ button { touch-action: manipulation; }
   --anxiety: #2C2820;
   --appreciation-strong: #5A7A70;
   --appreciation-deep:   #9DB394; /* small marks <12px only — sage fails at 7px, this doesn't */
+  --nourishment-deep:    #C9930C; /* amber — small marks/counts only, same rule as appreciation-deep */
 
   /* Semantic data tokens */
   --positive:         #2C6E49;

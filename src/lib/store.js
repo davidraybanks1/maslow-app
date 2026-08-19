@@ -750,14 +750,14 @@ export async function saveJournalEntry(userId, dateKey, entry) {
   return addJournalEntry(userId, dateKey, { entry, slot: null, needId: null, state: null })
 }
 
-// Loads every note_deck card for a user, ordered for the swipe deck. If the user has no
-// deck cards yet but has a legacy single note_to_self value, lazily migrates it into the
-// deck (position 0) so existing notes aren't lost by the move to the deck model.
+// Loads active (archived_at null) note_deck cards ordered for the swipe deck.
+// Lazily migrates a legacy note_to_self value if no rows exist yet.
 export async function loadNoteDeck(userId) {
   const { data } = await supabase
     .from('note_deck')
     .select('*')
     .eq('user_id', userId)
+    .is('archived_at', null)
     .order('position', { ascending: true })
 
   if (data && data.length > 0) return data
@@ -771,6 +771,56 @@ export async function loadNoteDeck(userId) {
     .select()
   if (error) { logSupabaseError('loadNoteDeck (legacy migration)', error); return [] }
   return inserted || []
+}
+
+// Loads archived (library) note_deck cards, newest first.
+export async function loadNoteLibrary(userId) {
+  const { data } = await supabase
+    .from('note_deck')
+    .select('*')
+    .eq('user_id', userId)
+    .not('archived_at', 'is', null)
+    .order('archived_at', { ascending: false })
+  return data || []
+}
+
+// Saves a brand-new note directly to the library (archived_at = now).
+export async function addNoteToLibrary(userId, { text, imageUrl }) {
+  const { data, error } = await supabase
+    .from('note_deck')
+    .insert({ user_id: userId, text, image_url: imageUrl || null, position: 0, archived_at: new Date().toISOString() })
+    .select()
+    .single()
+  if (error) logSupabaseError('addNoteToLibrary', error)
+  return { data, error }
+}
+
+// Moves a deck card into the library by setting archived_at.
+export async function archiveNoteDeckCard(id) {
+  const { error } = await supabase
+    .from('note_deck')
+    .update({ archived_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) logSupabaseError('archiveNoteDeckCard', error)
+  return { error }
+}
+
+// Restores a library card to the deck end; DB trigger rejects if deck already has 5 active.
+export async function restoreNoteDeckCard(userId, id) {
+  const { data: existing } = await supabase
+    .from('note_deck')
+    .select('position')
+    .eq('user_id', userId)
+    .is('archived_at', null)
+    .order('position', { ascending: false })
+    .limit(1)
+  const nextPosition = existing?.[0] ? existing[0].position + 1 : 0
+  const { error } = await supabase
+    .from('note_deck')
+    .update({ archived_at: null, position: nextPosition })
+    .eq('id', id)
+  if (error) logSupabaseError('restoreNoteDeckCard', error)
+  return { error }
 }
 
 export async function addNoteDeckCard(userId, { text, imageUrl }) {
@@ -815,8 +865,12 @@ export async function updateNoteDeckCard(id, { text, imageUrl, userId, previousT
   return { data, error }
 }
 
-export async function deleteNoteDeckCard(id, userId, text) {
+export async function deleteNoteDeckCard(id, userId, text, imageUrl) {
   await appendNoteHistory(userId, text)
+  if (imageUrl) {
+    const parts = imageUrl.split('/storage/v1/object/public/note-images/')
+    if (parts[1]) supabase.storage.from('note-images').remove([parts[1]])
+  }
   const { error } = await supabase.from('note_deck').delete().eq('id', id)
   if (error) logSupabaseError('deleteNoteDeckCard', error)
   return { error }
