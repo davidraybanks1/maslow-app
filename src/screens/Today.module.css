@@ -654,12 +654,8 @@
   border-radius: 10px;
   border: 0.5px solid var(--hairline);
   background: var(--card);
-  overflow: hidden;
+  position: relative;
   transition: border-color 150ms ease;
-}
-
-.tierOpen {
-  border-color: rgba(26,26,26,.2);
 }
 
 .tierHeader {
@@ -736,130 +732,11 @@
   .tierBarFill { transition: none; }
 }
 
-/* Tier expanded content */
-.tierContent {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.25s ease;
-}
-
-.tierContentOpen { max-height: 1200px; }
-
-@media (prefers-reduced-motion: reduce) {
-  .tierContent { transition: none; }
-}
-
-.tierContentInner {
-  padding: 0 14px 12px;
-}
-
-/* ── Need group (sub-header + practice rows) ── */
-.needGroup {
-  padding-top: 10px;
-}
-
-.needGroup + .needGroup {
-  border-top: 0.5px solid var(--track);
-  margin-top: 6px;
-}
-
-.needSubHeader {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 2px;
-}
-
-.needSubName {
-  font-family: var(--font-serif);
-  font-size: 14px;
-  font-weight: 300;
-  color: var(--ink);
-  text-transform: lowercase;
-}
-
-.needSubCount {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--ink4);
-}
-
-.noPractice { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink4); margin-top: 4px; margin-bottom: 4px; }
-.noPracticeLink { color: var(--ink2); text-decoration: underline; cursor: pointer; }
-
 .chipRow { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 4px; }
 .practiceChip { padding: 4px 10px; border-radius: 20px; border: 0.5px solid var(--border2); font-family: var(--font-mono); font-size: 11px; font-weight: 200; color: var(--ink2); background: var(--bg); cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent; transition: background 100ms ease, color 100ms ease, border-color 100ms ease; text-transform: lowercase; }
 .practiceChip:hover { background: var(--bg2); }
 .practiceChip:active { background: var(--bg2); }
 .chipCount { font-size: 9px; font-style: normal; margin-left: 2px; vertical-align: super; opacity: 0.85; }
-
-/* ── Practice rows (46px tall) ── */
-.practiceRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 46px;
-  padding: 0 2px;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: background 80ms ease;
-  border-radius: 6px;
-  margin: 0 -2px;
-}
-.practiceRow:hover { background: rgba(26,26,26,.04); }
-.practiceRow:active { background: rgba(26,26,26,.07); }
-
-.practiceLabel {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 200;
-  color: var(--ink);
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.practiceMeta {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
-.practiceX2 {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  font-weight: 500;
-  color: var(--ink3);
-}
-
-.practiceStamp {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--ink4);
-  white-space: nowrap;
-}
-
-.practiceCheck {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 1.5px solid;
-  flex-shrink: 0;
-  box-sizing: border-box;
-  transition: background 80ms ease, border-color 80ms ease;
-}
-.practiceCheckFilled { }
-.practiceCheckX2 {
-  font-family: var(--font-mono);
-  font-size: 8px;
-  font-weight: 600;
-  color: #fff;
-  line-height: 1;
-  letter-spacing: -0.02em;
-}
 
 /* ── Mood & section headers ── */
 .sectionHeader {

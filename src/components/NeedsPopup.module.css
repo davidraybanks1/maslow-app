@@ -1,0 +1,236 @@
+/* ── Keyframes ── */
+@keyframes popupIn  { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes popupOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-4px); } }
+@keyframes sheetIn  { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes sheetOut { from { transform: translateY(0); } to { transform: translateY(100%); } }
+@keyframes scrimIn  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scrimOut { from { opacity: 1; } to { opacity: 0; } }
+
+/* ── Desktop popup — absolutely anchored beneath the tier card ── */
+.popup {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 100%;
+  z-index: 100;
+  background: #FFFFFF;
+  border: 0.5px solid rgba(0,0,0,.1);
+  border-radius: 12px;
+  animation: popupIn 150ms ease both;
+  outline: none;
+}
+.popupClosing { animation: popupOut 150ms ease both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .popup, .popupClosing { animation: none !important; }
+}
+
+/* ── Mobile scrim ── */
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  background: rgba(20,18,12,.28);
+  animation: scrimIn 200ms ease both;
+}
+.scrimClosing { animation: scrimOut 220ms ease both; }
+
+/* ── Mobile bottom sheet ── */
+.sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 151;
+  background: var(--card);
+  border-radius: 26px 26px 0 0;
+  display: flex;
+  flex-direction: column;
+  max-height: 88vh;
+  animation: sheetIn 300ms cubic-bezier(0.32, 0.72, 0.28, 1) both;
+  outline: none;
+}
+.sheetClosing { animation: sheetOut 220ms cubic-bezier(0.32, 0.72, 0.28, 1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet, .sheetClosing, .scrim, .scrimClosing { animation: none !important; }
+}
+
+/* ── Drag handle (mobile sheet only) ── */
+.dragHandle {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(0,0,0,.15);
+  margin: 12px auto 0;
+  flex-shrink: 0;
+}
+
+/* ── Popup header ── */
+.popupHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px 8px;
+  flex-shrink: 0;
+}
+
+.sheet .popupHeader {
+  padding: 14px 20px 10px;
+}
+
+.popupHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.popupDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.popupModeName {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink3);
+}
+
+.popupClose {
+  width: 26px;
+  height: 26px;
+  border-radius: 13px;
+  border: 0.5px solid var(--hairline);
+  background: none;
+  color: var(--ink3);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.popupClose:hover { background: var(--track); }
+
+/* ── Scrollable content area ── */
+.popupContent {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 14px 12px;
+}
+
+.sheet .popupContent {
+  padding: 0 20px calc(env(safe-area-inset-bottom, 0px) + 32px);
+}
+
+/* ── Need groups ── */
+.needGroup { padding-top: 10px; }
+.needGroup + .needGroup {
+  border-top: 0.5px solid var(--track);
+  margin-top: 6px;
+}
+
+.needSubHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.needSubName {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-weight: 300;
+  color: var(--ink);
+  text-transform: lowercase;
+}
+
+.needSubCount {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink4);
+}
+
+.noPractice {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 200;
+  color: var(--ink4);
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+.noPracticeLink { color: var(--ink2); text-decoration: underline; cursor: pointer; }
+
+/* ── Practice rows ── */
+.practiceRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 0 2px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 80ms ease;
+  border-radius: 6px;
+  margin: 0 -2px;
+}
+.practiceRow:hover { background: rgba(0,0,0,.04); }
+.practiceRow:active { background: rgba(0,0,0,.07); }
+
+@media (prefers-reduced-motion: reduce) {
+  .practiceRow { transition: none; }
+}
+
+.practiceLabel {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 200;
+  color: var(--ink);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.practiceMeta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.practiceX2 {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--ink3);
+}
+
+.practiceStamp {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink4);
+  white-space: nowrap;
+}
+
+.practiceCheck {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  transition: background 80ms ease, border-color 80ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .practiceCheck { transition: none; }
+}

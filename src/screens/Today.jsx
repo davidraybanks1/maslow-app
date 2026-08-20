@@ -9,6 +9,7 @@ import { hapticTick } from '../lib/native'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import ManageDeck from '../components/ManageDeck'
 import ManageTags from '../components/ManageTags'
+import NeedsPopup from '../components/NeedsPopup'
 import styles from './Today.module.css'
 
 const MOODS = ['good', 'fine', 'bad']
@@ -340,7 +341,9 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
 
   const isDesktop = useIsDesktop()
   const [justTapped, setJustTapped] = useState(null)
-  const [openTier, setOpenTier] = useState(null)
+  const [popupMode, setPopupMode] = useState(null)
+  const tierElems = useRef({})
+  const tierBtnElems = useRef({})
   const [openRetroSlot, setOpenRetroSlot] = useState(null)
 
   const [moodSelections, setMoodSelections] = useState(() => {
@@ -563,7 +566,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         <div className={styles.practicesCard}>
           <div className={styles.tierSectionHeader}>
             <span className={styles.tierSectionLabel}>NEEDS & PRACTICES</span>
-            <span className={styles.tierSectionHint}>tap a tier to fill it</span>
+            <span className={styles.tierSectionHint}>tap a mode to fill it</span>
           </div>
           <div className={styles.tierList}>
             {MODE_ORDER.map(mode => {
@@ -580,14 +583,21 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 )
               }
               const progressPct = totalPossible > 0 ? Math.round((modeDone / totalPossible) * 100) : 0
-              const isOpen = openTier === mode
+              const isPopupOpen = popupMode === mode
 
               return (
-                <div key={mode} className={`${styles.tier} ${isOpen ? styles.tierOpen : ''}`}>
+                <div
+                  key={mode}
+                  className={styles.tier}
+                  ref={el => { tierElems.current[mode] = el }}
+                >
                   <button
                     className={styles.tierHeader}
-                    onClick={() => setOpenTier(prev => prev === mode ? null : mode)}
-                    aria-expanded={isOpen}
+                    onClick={() => setPopupMode(mode)}
+                    aria-haspopup="dialog"
+                    aria-expanded={isPopupOpen}
+                    aria-controls={`needs-popup-${mode}`}
+                    ref={el => { tierBtnElems.current[mode] = el }}
                   >
                     <div className={styles.tierHeaderTop}>
                       <div className={styles.tierDot} style={{ background: pip }} />
@@ -600,85 +610,27 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                         style={{ width: `${progressPct}%`, background: pip }}
                       />
                     </div>
-                    {!isOpen && (
-                      <div className={styles.tierNeedLabels}>
-                        {modeNeeds.map(n => n.name).join(', ')}
-                      </div>
-                    )}
-                  </button>
-
-                  <div className={`${styles.tierContent} ${isOpen ? styles.tierContentOpen : ''}`}>
-                    <div className={styles.tierContentInner}>
-                      {modeNeeds.map(n => {
-                        const pool = (state.practicesDB && state.practicesDB.length > 0)
-                          ? state.practicesDB.filter(p => p.need_id === n.id && !p.archived_at)
-                          : (state.practices[n.id] || []).map(label => ({ id: null, label }))
-
-                        const needDone = Math.min(
-                          checked.filter(e => e.need_id === n.id).reduce((s, e) => s + (e.count || 1), 0),
-                          maxBubbles
-                        )
-
-                        function getPracticeCount(practice) {
-                          return checked
-                            .filter(e => {
-                              if (e.need_id !== n.id) return false
-                              if (practice.id && e.practice_id) return e.practice_id === practice.id
-                              return e.practice_text === practice.label
-                            })
-                            .reduce((s, e) => s + (e.count || 1), 0)
-                        }
-
-                        const sorted = [...pool].sort((a, b) => getPracticeCount(a) - getPracticeCount(b))
-
-                        return (
-                          <div key={n.id} className={styles.needGroup}>
-                            <div className={styles.needSubHeader}>
-                              <span className={styles.needSubName}>{n.name}</span>
-                              <span className={styles.needSubCount}>{needDone}/{maxBubbles}</span>
-                            </div>
-                            {pool.length === 0 ? (
-                              <div className={styles.noPractice}>
-                                no practices — <span className={styles.noPracticeLink} onClick={() => navigate('/canvas')}>add some</span>
-                              </div>
-                            ) : sorted.map(practice => {
-                              const practiceKey = practice.id || `${n.id}_${practice.label}`
-                              const count = getPracticeCount(practice)
-                              const isJustNow = justTapped === practiceKey
-                              const lastDays = lastDoneMap.get(practiceKey) ?? null
-                              const isX2 = count >= 2
-
-                              const meta = isJustNow
-                                ? 'just now'
-                                : count >= 1
-                                  ? 'today'
-                                  : lastDays !== null && lastDays > 0
-                                    ? `${lastDays}d ago`
-                                    : ''
-
-                              return (
-                                <div
-                                  key={practiceKey}
-                                  className={styles.practiceRow}
-                                  onClick={e => { e.stopPropagation(); handlePracticeTap(n.id, mode, practice.label, practice.id) }}
-                                >
-                                  <div
-                                    className={`${styles.practiceCheck} ${count > 0 ? styles.practiceCheckFilled : ''}`}
-                                    style={count > 0 ? { background: pip, borderColor: pip } : { borderColor: pip }}
-                                  />
-                                  <span className={styles.practiceLabel}>{practice.label}</span>
-                                  <div className={styles.practiceMeta}>
-                                    {isX2 && <span className={styles.practiceX2}>×2</span>}
-                                    {meta && <span className={styles.practiceStamp}>{meta}</span>}
-                                  </div>
-                                </div>
-                              )
-                            })}
-                          </div>
-                        )
-                      })}
+                    <div className={styles.tierNeedLabels}>
+                      {modeNeeds.map(n => n.name).join(', ')}
                     </div>
-                  </div>
+                  </button>
+                  {isPopupOpen && (
+                    <NeedsPopup
+                      mode={mode}
+                      pip={pip}
+                      modeNeeds={modeNeeds}
+                      maxBubbles={maxBubbles}
+                      checked={checked}
+                      justTapped={justTapped}
+                      lastDoneMap={lastDoneMap}
+                      state={state}
+                      handlePracticeTap={handlePracticeTap}
+                      navigate={navigate}
+                      tierEl={tierElems.current[mode]}
+                      triggerEl={tierBtnElems.current[mode]}
+                      onClose={() => setPopupMode(null)}
+                    />
+                  )}
                 </div>
               )
             })}
