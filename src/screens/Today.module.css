@@ -1279,7 +1279,7 @@
   /* ── Four-band grid — colLeft/colRight transparent, children placed explicitly ── */
   .list {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     column-gap: 18px;
     row-gap: 14px;
     align-items: stretch;
@@ -1446,6 +1446,7 @@
     grid-template-columns: 1fr auto;
     grid-template-rows: auto 1fr;
     gap: 0;
+    min-width: 0;
   }
   .noteDeckEyebrow {
     grid-area: eyebrow;
