@@ -185,7 +185,7 @@ function WhatChanged({ period, canvas, checkins }) {
     : null
 
   return (
-    <section className={styles.section}>
+    <section className={`${styles.section} ${styles.sectionCard}`}>
       <div className={styles.sectionHeader}>
         <span className={styles.sectionLabel}>WHAT CHANGED</span>
         <span className={styles.sectionMeta}>biggest movers</span>
@@ -249,7 +249,7 @@ function RhythmSection({ stats, canvas, checkins, moods }) {
   const closingRead = stats.getWeekdaySummary(moodByWeekday) ?? stats.getTimeOfDaySummary(moodByPeriod)
 
   return (
-    <section className={styles.section}>
+    <section className={`${styles.section} ${styles.sectionCard}`}>
       <div className={styles.sectionHeader}>
         <span className={styles.sectionLabel}>YOUR RHYTHM</span>
         <span className={styles.sectionMeta}>bar = practices met · dot = mood</span>
@@ -340,7 +340,7 @@ function LongViewSection({ canvas, checkins, moods, stats, weeks, windowLen = 34
   const readFallback = `${activeWeeks} of ${windowLen} weeks with data.`
 
   return (
-    <section className={styles.section}>
+    <section className={`${styles.section} ${styles.sectionCard}`}>
       <div className={styles.sectionHeader}>
         <span className={styles.sectionLabel}>THE LONG VIEW</span>
         <div className={styles.lensPills}>
