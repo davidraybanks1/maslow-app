@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { HeaderSlotContext } from '../lib/headerSlot'
 import { NEEDS, MODE_ORDER } from '../lib/constants'
 import { createDataStats } from '../lib/dataStats'
+import { useIsDesktop } from '../lib/useIsDesktop'
 import styles from './Data.module.css'
 
 const PERIODS = [
@@ -575,9 +576,14 @@ const QUIET_GROUPS = [
   { key: '2to3w',   label: 'two to three weeks',  min: 14,  max: 20 },
 ]
 
-function GoneQuietSection({ canvas, checkins, practicesDB, archivePractice }) {
-  const [openGroup, setOpenGroup] = useState('month+')
+function GoneQuietSection({ canvas, checkins, practicesDB, archivePractice, isDesktop }) {
+  const [openGroups, setOpenGroups] = useState(() => new Set(['month+']))
   const [retireConfirm, setRetireConfirm] = useState(null)
+  const toggleGroup = key => setOpenGroups(prev => {
+    const next = new Set(prev)
+    next.has(key) ? next.delete(key) : next.add(key)
+    return next
+  })
   const navigate = useNavigate()
 
   const recent90 = useMemo(() => buildWindowKeys(90, 0), [])
@@ -623,42 +629,50 @@ function GoneQuietSection({ canvas, checkins, practicesDB, archivePractice }) {
         <span className={styles.sectionMeta}>{total} practice{total !== 1 ? 's' : ''}</span>
       </div>
 
-      {QUIET_GROUPS.map(grp => {
-        const rows = quietPractices.filter(p => p.daysSince >= grp.min && p.daysSince <= grp.max)
-        if (rows.length === 0) return null
-        const isOpen = openGroup === grp.key
-        return (
-          <div key={grp.key} className={styles.quietCard}>
-            <button
-              className={styles.quietCardHeader}
-              onClick={() => setOpenGroup(isOpen ? null : grp.key)}
-            >
-              <span className={styles.quietCardTitle}>{grp.label}</span>
-              <span className={styles.quietCardCount}>{rows.length}</span>
-              <span className={styles.ribbonChevron}>{isOpen ? '▴' : '▾'}</span>
-            </button>
-            {isOpen && rows.map(({ need, mode, practice }) => (
-              <div key={practice.id ?? practice.label} className={styles.quietRow}>
-                <span className={styles.moverDot} style={{ background: TIER_DOT[mode] }} />
-                <span className={styles.quietPracticeName}>{practice.label}</span>
-                <div className={styles.quietActions}>
-                  <button className={styles.quietBtn} onClick={() => navigate('/today')}>log</button>
-                  {archivePractice && practice.id && (
-                    retireConfirm === practice.id ? (
-                      <button
-                        className={`${styles.quietBtn} ${styles.quietBtnConfirm}`}
-                        onClick={() => { archivePractice(practice.id); setRetireConfirm(null) }}
-                      >confirm retire</button>
-                    ) : (
-                      <button className={styles.quietBtn} onClick={() => setRetireConfirm(practice.id)}>retire</button>
-                    )
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )
-      })}
+      <div className={styles.quietGroups}>
+        {QUIET_GROUPS.map(grp => {
+          const rows = quietPractices.filter(p => p.daysSince >= grp.min && p.daysSince <= grp.max)
+          if (!isDesktop && rows.length === 0) return null
+          const isOpen = openGroups.has(grp.key)
+          return (
+            <div key={grp.key} className={styles.quietCard}>
+              <button
+                className={styles.quietCardHeader}
+                onClick={() => toggleGroup(grp.key)}
+              >
+                <span className={styles.quietCardTitle}>{grp.label}</span>
+                <span className={styles.quietCardCount}>{rows.length}</span>
+                <span className={styles.ribbonChevron}>{isOpen ? '▴' : '▾'}</span>
+              </button>
+              {isOpen && (
+                rows.length === 0 ? (
+                  <p className={styles.quietEmpty}>nothing in this range.</p>
+                ) : (
+                  rows.map(({ need, mode, practice }) => (
+                    <div key={practice.id ?? practice.label} className={styles.quietRow}>
+                      <span className={styles.moverDot} style={{ background: TIER_DOT[mode] }} />
+                      <span className={styles.quietPracticeName}>{practice.label}</span>
+                      <div className={styles.quietActions}>
+                        <button className={styles.quietBtn} onClick={() => navigate('/today')}>log</button>
+                        {archivePractice && practice.id && (
+                          retireConfirm === practice.id ? (
+                            <button
+                              className={`${styles.quietBtn} ${styles.quietBtnConfirm}`}
+                              onClick={() => { archivePractice(practice.id); setRetireConfirm(null) }}
+                            >confirm retire</button>
+                          ) : (
+                            <button className={styles.quietBtn} onClick={() => setRetireConfirm(practice.id)}>retire</button>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )
+              )}
+            </div>
+          )
+        })}
+      </div>
       <p className={styles.sectionRead}>{closingRead}</p>
     </section>
   )
@@ -752,28 +766,30 @@ function AllNumbersSection({ period, canvas, checkins }) {
 
       {open && (
         <>
-          {modeData.map(({ mode, modePct, needRows }) => (
-            <div key={mode} className={styles.allNumsCard}>
-              <div className={styles.allNumsModeHeader}>
-                <span className={styles.moverDot} style={{ background: TIER_DOT[mode] }} />
-                <span className={styles.allNumsModeName}>{mode}</span>
-                <span className={styles.allNumsModeValue}>{modePct}%</span>
-              </div>
-              <div className={styles.allNumsBarWrap}>
-                <div className={styles.allNumsBarTrack}>
-                  <div className={styles.allNumsBarFill} style={{ width: `${modePct}%`, background: TIER_BAR[mode] }} />
+          <div className={styles.allNumsCards}>
+            {modeData.map(({ mode, modePct, needRows }) => (
+              <div key={mode} className={styles.allNumsCard}>
+                <div className={styles.allNumsModeHeader}>
+                  <span className={styles.moverDot} style={{ background: TIER_DOT[mode] }} />
+                  <span className={styles.allNumsModeName}>{mode}</span>
+                  <span className={styles.allNumsModeValue}>{modePct}%</span>
                 </div>
-                <div className={styles.allNumsPaceTick} style={{ left: `${MODE_THRESHOLDS[mode]}%` }} />
-              </div>
-              {needRows.map(({ need, met, total, pct }) => (
-                <div key={need.id} className={styles.allNumsNeedRow}>
-                  <span className={styles.allNumsNeedName}>{need.name}</span>
-                  <span className={styles.allNumsFraction}>{met} of {total}</span>
-                  <span className={styles.allNumsPct}>{pct}%</span>
+                <div className={styles.allNumsBarWrap}>
+                  <div className={styles.allNumsBarTrack}>
+                    <div className={styles.allNumsBarFill} style={{ width: `${modePct}%`, background: TIER_BAR[mode] }} />
+                  </div>
+                  <div className={styles.allNumsPaceTick} style={{ left: `${MODE_THRESHOLDS[mode]}%` }} />
                 </div>
-              ))}
-            </div>
-          ))}
+                {needRows.map(({ need, met, total, pct }) => (
+                  <div key={need.id} className={styles.allNumsNeedRow}>
+                    <span className={styles.allNumsNeedName}>{need.name}</span>
+                    <span className={styles.allNumsFraction}>{met} of {total}</span>
+                    <span className={styles.allNumsPct}>{pct}%</span>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
           <p className={styles.allNumsFooter}>
             tick marks are the pace your canvas implies. Percentages are practices met out of practices possible in the window.
           </p>
@@ -785,6 +801,7 @@ function AllNumbersSection({ period, canvas, checkins }) {
 
 export default function Data({ state, archivePractice }) {
   const [period, setPeriod] = useState(7)
+  const isDesktop = useIsDesktop()
 
   const setHeaderSlot = useContext(HeaderSlotContext)
   useEffect(() => {
@@ -825,25 +842,28 @@ export default function Data({ state, archivePractice }) {
   const longViewWeeks = useMemo(() => buildLongViewWeeks(ribbonLen), [ribbonLen])
   const hasCanvas = Object.keys(canvas).length > 0
 
+  const periodToggleEl = (
+    <div className={styles.periodToggle}>
+      {PERIODS.map(p => (
+        <button
+          key={p.days}
+          className={`${styles.periodPill}${period === p.days ? ` ${styles.periodPillActive}` : ''}`}
+          onClick={() => setPeriod(p.days)}
+        >{p.label}</button>
+      ))}
+    </div>
+  )
+
   return (
     <div className={styles.screen}>
-      <div className={styles.appBar}>
-        <div className={styles.periodToggle}>
-          {PERIODS.map(p => (
-            <button
-              key={p.days}
-              className={`${styles.periodPill}${period === p.days ? ` ${styles.periodPillActive}` : ''}`}
-              onClick={() => setPeriod(p.days)}
-            >
-              {p.label}
-            </button>
-          ))}
+      <div className={styles.desktopWrap}>
+        <div className={styles.pageHeaderRow}>
+          <div className={styles.pageTitleBlock}>
+            <h1 className={styles.pageTitle}>data.</h1>
+            <p className={styles.pageSubhead}>{buildSubhead(period)}</p>
+          </div>
+          <div className={styles.deskToggle}>{periodToggleEl}</div>
         </div>
-      </div>
-
-      <div className={styles.scrollArea}>
-        <h1 className={styles.pageTitle}>data.</h1>
-        <p className={styles.pageSubhead}>{buildSubhead(period)}</p>
 
         {!hasCanvas && (
           <p className={styles.emptyState}>set up your canvas to see your data.</p>
@@ -851,18 +871,20 @@ export default function Data({ state, archivePractice }) {
 
         {hasCanvas && (
           <>
-            <HeadlineCard period={period} stats={stats} canvas={canvas} checkins={checkins} />
-            <InsightsCard stats={stats} checkins={checkins} moods={moods} />
-            <WhatChanged period={period} canvas={canvas} checkins={checkins} />
-            <RhythmSection stats={stats} canvas={canvas} checkins={checkins} moods={moods} />
+            <div className={styles.dRow2}>
+              <HeadlineCard period={period} stats={stats} canvas={canvas} checkins={checkins} />
+              <InsightsCard stats={stats} checkins={checkins} moods={moods} />
+            </div>
+            <div className={styles.dRow3}>
+              <WhatChanged period={period} canvas={canvas} checkins={checkins} />
+              <RhythmSection stats={stats} canvas={canvas} checkins={checkins} moods={moods} />
+            </div>
             <LongViewSection canvas={canvas} checkins={checkins} moods={moods} stats={stats} weeks={longViewWeeks} windowLen={ribbonLen} />
             <RibbonsSection canvas={canvas} checkins={checkins} practicesDB={practicesDB} weeks={longViewWeeks} windowLen={ribbonLen} />
-            <GoneQuietSection canvas={canvas} checkins={checkins} practicesDB={practicesDB} archivePractice={archivePractice} />
+            <GoneQuietSection canvas={canvas} checkins={checkins} practicesDB={practicesDB} archivePractice={archivePractice} isDesktop={isDesktop} />
             <AllNumbersSection period={period} canvas={canvas} checkins={checkins} />
           </>
         )}
-
-        {/* sections 3–9 added in later stages */}
       </div>
     </div>
   )
