@@ -26,14 +26,22 @@
   color: var(--card);
   border-color: var(--ink);
 }
+.avatar:focus-visible {
+  outline: 2px solid rgba(26,26,26,.3);
+  outline-offset: 3px;
+}
 
 /* ── Keyframes ── */
 @keyframes sheetIn  { from { transform: translateY(100%); } to { transform: translateY(0); } }
 @keyframes sheetOut { from { transform: translateY(0); } to { transform: translateY(100%); } }
 @keyframes scrimIn  { from { opacity: 0; } to { opacity: 1; } }
 @keyframes scrimOut { from { opacity: 1; } to { opacity: 0; } }
+/* Dropdown that opens downward (header, small-screen): settles down from above */
 @keyframes dropdownIn  { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes dropdownOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-4px); } }
+/* Rail dropdown that opens upward: settles up from slightly below */
+@keyframes dropUpIn  { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes dropUpOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(4px); } }
 
 /* ── Mobile scrim ── */
 .scrim {
@@ -105,16 +113,20 @@
     border: 0.5px solid var(--hairline);
     border-radius: 14px;
     padding: 10px 0 10px;
-    z-index: 10;
+    z-index: 200;
     max-height: 80vh;
     overflow-y: auto;
     animation: dropdownIn 150ms ease both;
   }
   .menuClosing { animation: dropdownOut 150ms ease both; }
+
+  /* Rail dropdown: JS applies position:fixed+bottom+left; CSS sets size, shape, animation. */
   .menuDropUp {
-    top: auto;
-    bottom: calc(100% + 8px);
+    width: 320px;
+    border-radius: 16px;
+    animation: dropUpIn 150ms ease both;
   }
+  .menuDropUp.menuClosing { animation: dropUpOut 150ms ease both; }
 }
 
 /* ── Reduced motion: instant both ways ── */

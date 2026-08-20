@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import styles from './ProfileMenu.module.css'
@@ -37,9 +37,11 @@ export default function ProfileMenu({
   const [phase, setPhase] = useState(null) // null | 'open' | 'closing'
   const [cadenceOpen, setCadenceOpen] = useState(false)
   const [confirmSignOut, setConfirmSignOut] = useState(false)
+  const [menuStyle, setMenuStyle] = useState({})
   const navigate = useNavigate()
   const location = useLocation()
   const wrapperRef = useRef(null)
+  const avatarRef = useRef(null)
   const closeTimerRef = useRef(null)
 
   const mounted = phase !== null
@@ -51,6 +53,25 @@ export default function ProfileMenu({
 
   // Cleanup timer on unmount
   useEffect(() => () => { if (closeTimerRef.current) clearTimeout(closeTimerRef.current) }, [])
+
+  // Desktop rail: compute fixed position anchored to the profile square.
+  // Runs synchronously before paint so there is no visible flash.
+  useLayoutEffect(() => {
+    if (!mounted || !dropUp || !window.matchMedia('(min-width: 900px)').matches) {
+      setMenuStyle({})
+      return
+    }
+    const rect = avatarRef.current?.getBoundingClientRect()
+    if (!rect) return
+    // Bottom anchors to avatar top (panel grows upward); left hugs the rail's right edge.
+    const nav = wrapperRef.current?.closest('aside')
+    const left = nav ? nav.getBoundingClientRect().right + 8 : rect.right + 8
+    setMenuStyle({
+      position: 'fixed',
+      bottom: window.innerHeight - rect.top + 8,
+      left,
+    })
+  }, [mounted, dropUp])
 
   // Re-open profile sheet when returning from a profile sub-page (canvas/deck/tags).
   // The navigate state { openProfile: true } is set by the sub-page's ✕ button.
@@ -73,6 +94,7 @@ export default function ProfileMenu({
       setPhase(null)
       setCadenceOpen(false)
       setConfirmSignOut(false)
+      if (!onDone) avatarRef.current?.focus()
       onDone?.()
       return
     }
@@ -83,6 +105,7 @@ export default function ProfileMenu({
       setPhase(null)
       setCadenceOpen(false)
       setConfirmSignOut(false)
+      if (!onDone) avatarRef.current?.focus()
       onDone?.()
     }, duration)
   }
@@ -112,6 +135,7 @@ export default function ProfileMenu({
   return (
     <div ref={wrapperRef} className={styles.wrapper}>
       <button
+        ref={avatarRef}
         className={`${styles.avatar} ${isOpen ? styles.avatarOpen : ''}`}
         onClick={() => (phase === 'open' ? close() : openMenu())}
         aria-label="Account menu"
@@ -126,7 +150,10 @@ export default function ProfileMenu({
             className={`${styles.scrim} ${phase === 'closing' ? styles.scrimClosing : ''}`}
             onClick={close}
           />
-          <div className={`${styles.menu} ${phase === 'closing' ? styles.menuClosing : ''} ${dropUp ? styles.menuDropUp : ''}`}>
+          <div
+            className={`${styles.menu} ${phase === 'closing' ? styles.menuClosing : ''} ${dropUp ? styles.menuDropUp : ''}`}
+            style={menuStyle}
+          >
 
             {/* ── Drag handle (mobile sheet only) ── */}
             <div className={styles.dragHandle} />
