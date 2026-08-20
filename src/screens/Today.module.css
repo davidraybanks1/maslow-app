@@ -1557,7 +1557,7 @@
   .deckArrow:hover { background: var(--track); }
 
   /* ── Mood: shared layout, desktop max-width keeps circles close ── */
-  .moodCard { max-width: 560px; }
+  .moodCard { max-width: 560px; order: -1; }
   .moodDivider { order: 0; margin: 0; }
 
   /* ── Journal section (desktop) — entries on paper, white-card composer ── */
