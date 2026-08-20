@@ -426,7 +426,7 @@ function RibbonsSection({ canvas, checkins, practicesDB, days, windowLen }) {
   }, [canvas, checkins, days, recent30, recent90])
 
   return (
-    <section className={styles.section}>
+    <section className={`${styles.section} ${styles.sectionCard}`}>
       <div className={styles.sectionHeader}>
         <span className={styles.sectionLabel}>EACH NEED, DAY BY DAY</span>
         <span className={styles.sectionMeta}>held ▸ faded</span>
