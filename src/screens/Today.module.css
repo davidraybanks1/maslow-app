@@ -734,8 +734,6 @@
 
 .chipRow { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 4px; }
 .practiceChip { padding: 4px 10px; border-radius: 20px; border: 0.5px solid var(--border2); font-family: var(--font-mono); font-size: 11px; font-weight: 200; color: var(--ink2); background: var(--bg); cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent; transition: background 100ms ease, color 100ms ease, border-color 100ms ease; text-transform: lowercase; }
-.practiceChip:hover { background: var(--bg2); }
-.practiceChip:active { background: var(--bg2); }
 .chipCount { font-size: 9px; font-style: normal; margin-left: 2px; vertical-align: super; opacity: 0.85; }
 
 /* ── Mood & section headers ── */
@@ -1483,25 +1481,6 @@
     margin-top: 10px;
   }
 
-  /* ── Hover states on interactive elements ── */
-  .moodBtn:not(.moodBtnGood):not(.moodBtnFine):not(.moodBtnBad):hover {
-    background: rgba(26,26,26,.06);
-    border-color: rgba(26,26,26,.2);
-    color: var(--ink2);
-  }
-  .moodBtnGood:hover  { opacity: 0.85; }
-  .moodBtnFine:hover  { opacity: 0.85; }
-  .moodBtnBad:hover   { opacity: 0.85; }
-
-  .needToggle:hover { background: rgba(26,26,26,.04); border-radius: 6px; }
-
-  .practiceChip:hover { background: rgba(26,26,26,.06); border-color: rgba(26,26,26,.2); color: var(--ink); }
-
-  .donePill:hover { opacity: 0.82; }
-
-  @media (prefers-reduced-motion: reduce) {
-    .moodBtn, .needToggle, .practiceChip, .donePill { transition: none; }
-  }
 
   .journalEntryCount {
     font-family: var(--font-mono);
