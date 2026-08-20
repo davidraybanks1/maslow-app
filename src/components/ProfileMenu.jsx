@@ -68,6 +68,8 @@ export default function ProfileMenu({
     const left = nav ? nav.getBoundingClientRect().right + 8 : rect.right + 8
     setMenuStyle({
       position: 'fixed',
+      top: 'auto',   // clear CSS 'top: calc(100% + 8px)' — for fixed elements 100% = viewport height → off-screen
+      right: 'auto', // clear CSS 'right: 0' so width: 320px from .menuDropUp is authoritative
       bottom: window.innerHeight - rect.top + 8,
       left,
     })
