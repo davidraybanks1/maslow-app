@@ -230,7 +230,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     loadCustomTags(state.userId).then(setCustomTags)
   }, [state.userId])
 
-  // Open manage deck / tags when navigated here from profile sheet.
+  // Open edit / tags when navigated here from profile sheet.
   // Dep on location.state (not []) so this re-fires when profile pushes the same
   // /today route while Today is already mounted — without it the state change is
   // invisible because useEffect([]) only runs on initial mount.
@@ -409,11 +409,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   const journalEntryCount = journalEntries.length
   const activeNeeds = NEEDS.filter(n => state.canvas[n.id])
 
-  useEffect(() => {
-    if (isDesktop && journalEntriesRef.current) {
-      journalEntriesRef.current.scrollTop = journalEntriesRef.current.scrollHeight
-    }
-  }, [journalEntries, isDesktop])
 
   return (
     <div className={styles.screen}>
@@ -476,7 +471,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                               <button className={styles.deckArrow} onClick={() => advanceDeckCard(1)} aria-label="next card">›</button>
                             )}
                           </div>
-                          <button className={styles.noteEditPill} onClick={openManageDeck}>manage deck</button>
+                          <button className={styles.noteEditPill} onClick={openManageDeck}>edit</button>
                         </div>
                       </div>
                     ))}
@@ -490,7 +485,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                   </div>
                   <div className={styles.noteDeckFooter}>
                     <span />
-                    <button className={styles.noteEditPill} onClick={openManageDeck}>manage deck</button>
+                    <button className={styles.noteEditPill} onClick={openManageDeck}>edit</button>
                   </div>
                 </div>
               ) : (

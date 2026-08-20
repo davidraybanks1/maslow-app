@@ -1333,11 +1333,9 @@
 /* ── Desktop two-column layout ── */
 @media (min-width: 900px) {
 
-  /* ── Viewport lock + surface vars ── */
+  /* ── Desktop surface vars ── */
   .screen {
     padding: 0;
-    height: 100vh;
-    overflow: hidden;
     background: var(--paper);
     --card-bg: #fff;
     --card-bg-warm: #FAF8F1;
@@ -1348,18 +1346,15 @@
     --timer-bar-shadow: 0 1px 2px rgba(26,26,26,.04), 0 4px 14px rgba(26,26,26,.05);
   }
 
-  /* Desktop container: flex column filling the viewport.
-     Left-anchored after the nav rail — max-width caps the right, no centering. */
+  /* Desktop container: left-anchored after the nav rail — max-width caps the right. */
   .desktopWrap {
     display: flex;
     flex-direction: column;
-    height: 100%;
     max-width: 1280px;
     margin: 0;
     width: 100%;
     padding: 0 32px;
     box-sizing: border-box;
-    overflow: hidden;
   }
 
   .header { flex-shrink: 0; padding: 16px 0; }
@@ -1388,34 +1383,25 @@
     box-shadow: var(--card-shadow, 0 1px 2px rgba(26,26,26,.04), 0 4px 14px rgba(26,26,26,.05));
   }
 
-  /* ── Fixed-height two-column grid ── */
+  /* ── Two-column grid — natural height, page scrolls as one ── */
   .list {
     display: grid;
     grid-template-columns: 2fr 3fr;
     column-gap: 18px;
-    align-items: stretch;
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
+    align-items: start;
   }
 
-  /* Left rail: internal scroll when practices run long */
   .colLeft {
     display: flex;
     flex-direction: column;
     gap: 14px;
-    overflow-y: auto;
     padding: 0 0 32px 0;
-    scrollbar-width: none;
   }
-  .colLeft::-webkit-scrollbar { display: none; }
 
-  /* Right panel: no scroll — journal card manages its own overflow */
   .colRight {
     display: flex;
     flex-direction: column;
-    overflow: hidden;
-    padding: 0;
+    padding: 0 0 32px 0;
   }
 
   /* Ensure first children have no stray top margin */
@@ -1441,18 +1427,12 @@
     margin-bottom: 0;
   }
 
-  /* ── Desktop journal: scroll container holds entries + composer together ── */
+  /* ── Desktop journal: entries in normal flow, page scrolls ── */
   .journalScroll {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
     max-width: 640px;
     width: 100%;
-    padding-bottom: 24px;
     box-sizing: border-box;
-    scrollbar-width: none;
   }
-  .journalScroll::-webkit-scrollbar { display: none; }
 
   /* Entries: natural height inside the scroll container */
   .journalEntries {
@@ -1586,9 +1566,6 @@
 
   /* ── Journal section (desktop) — entries on paper, white-card composer ── */
   .journalSection {
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
     display: flex;
     flex-direction: column;
   }
@@ -1613,15 +1590,8 @@
     color: var(--ink3);
   }
 
-  /* Entries-only scroll area */
-  .journalScroll {
-    flex: 1;
-    min-height: 0;
-  }
-
-  /* Always-visible bottom area: chips + pickers + white composer card */
+  /* Chips + pickers + composer card in normal flow below entries */
   .journalBottom {
-    flex-shrink: 0;
     max-width: 640px;
     margin-top: 8px;
   }
@@ -1631,12 +1601,11 @@
   .journalBottom .composerTagBtn   { background: #fff; }
   .journalBottom .composerTagActive { background: #fff; }
 
-  /* White card composer */
+  /* White card composer — elevation via surface + hairline, no shadow */
   .journalComposerCard {
     background: var(--card-bg, #fff);
     border: var(--card-border, 0.5px solid rgba(26,26,26,.12));
-    box-shadow: var(--card-shadow, 0 1px 2px rgba(26,26,26,.04), 0 4px 14px rgba(26,26,26,.05));
-    border-radius: 12px;
+    border-radius: 16px;
     padding: 14px 16px;
     margin-top: 10px;
   }
