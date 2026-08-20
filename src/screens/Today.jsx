@@ -18,23 +18,24 @@ const MOOD_FILL = {
   bad:  { background: 'var(--survival)',     borderColor: 'var(--survival)',     color: 'var(--card)' },
 }
 
-function buildRingGradient(arcs) {
-  // Contiguous fill: segments pack from 12 o'clock in mode order.
-  // Each mode contributes up to 25% of the ring; filled segments are adjacent,
-  // then a single track-colored remainder closes the arc.
-  const stops = []
+// Shared math: each mode owns ≤25% of total; returns [{color, from, to}] in percent
+function buildProgressSegments(arcs) {
+  const segs = []
   let cursor = 0
   for (const { color, fill } of arcs) {
     const segPct = fill * 25
     if (segPct > 0.001) {
-      stops.push(`${color} ${cursor.toFixed(2)}%`, `${color} ${(cursor + segPct).toFixed(2)}%`)
+      segs.push({ color, from: cursor, to: cursor + segPct })
       cursor += segPct
     }
   }
-  if (cursor < 99.999) {
-    stops.push(`var(--track) ${cursor.toFixed(2)}%`, `var(--track) 100%`)
-  }
-  if (!stops.length) return `conic-gradient(var(--track) 0% 100%)`
+  segs.push({ color: 'var(--track)', from: cursor, to: 100 })
+  return segs
+}
+
+function buildRingGradient(arcs) {
+  const segs = buildProgressSegments(arcs)
+  const stops = segs.flatMap(s => [`${s.color} ${s.from.toFixed(2)}%`, `${s.color} ${s.to.toFixed(2)}%`])
   return `conic-gradient(from -90deg, ${stops.join(', ')})`
 }
 
@@ -45,6 +46,20 @@ function CompletionRing({ arcs, pct }) {
       <div className={styles.ringInner}>
         <span className={styles.ringPct}>{pct}<span className={styles.ringPctSign}>%</span></span>
       </div>
+    </div>
+  )
+}
+
+function CompletionBar({ arcs, pct }) {
+  const segs = buildProgressSegments(arcs)
+  return (
+    <div className={styles.progressBarOuter} aria-label={`${pct}% complete today`} role="img">
+      <div className={styles.progressBarTrack}>
+        {segs.map((s, i) => (
+          <div key={i} className={styles.progressBarSeg} style={{ width: `${s.to - s.from}%`, background: s.color }} />
+        ))}
+      </div>
+      <span className={styles.progressBarPct}>{pct}<span className={styles.progressBarPctSign}>%</span></span>
     </div>
   )
 }
@@ -257,6 +272,14 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     setManageDeckOpen(true)
   }
 
+  function advanceDeckCard(dir) {
+    if (!noteDeck.length) return
+    const next = (activeCardIndex + dir + noteDeck.length) % noteDeck.length
+    setActiveCardIndex(next)
+    const wrapper = deckWrapperRef.current
+    if (wrapper) wrapper.scrollTo({ left: next * wrapper.clientWidth, behavior: 'smooth' })
+  }
+
   const [journalEntries, setJournalEntries] = useState([])
   const [journalSaveError, setJournalSaveError] = useState(null)
   const [expandedTodayEntries, setExpandedTodayEntries] = useState(() => new Set())
@@ -404,8 +427,11 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
             <div className={styles.greeting}>good {SLOT_GREETING[slot]}.</div>
             {STREAK_LINES[streak] && <div className={styles.milestoneLine}>{STREAK_LINES[streak]}</div>}
           </div>
-          <div className={styles.headerRight}>
+          <div className={styles.headerRingWrap}>
             <CompletionRing arcs={ringArcs} pct={ringPct} />
+          </div>
+          <div className={styles.headerBarWrap}>
+            <CompletionBar arcs={ringArcs} pct={ringPct} />
           </div>
         </div>
       </div>
@@ -441,8 +467,16 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                           )}
                         </div>
                         <div className={styles.noteDeckFooter}>
-                          <span className={styles.noteDeckCounter}>{activeCardIndex + 1}/{noteDeck.length}</span>
-                          <button className={styles.noteEditPill} onClick={openManageDeck}>edit</button>
+                          <div className={styles.deckControls}>
+                            {noteDeck.length > 1 && (
+                              <button className={styles.deckArrow} onClick={() => advanceDeckCard(-1)} aria-label="previous card">‹</button>
+                            )}
+                            <span className={styles.noteDeckCounter}>{activeCardIndex + 1}/{noteDeck.length}</span>
+                            {noteDeck.length > 1 && (
+                              <button className={styles.deckArrow} onClick={() => advanceDeckCard(1)} aria-label="next card">›</button>
+                            )}
+                          </div>
+                          <button className={styles.noteEditPill} onClick={openManageDeck}>manage deck</button>
                         </div>
                       </div>
                     ))}
@@ -456,7 +490,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                   </div>
                   <div className={styles.noteDeckFooter}>
                     <span />
-                    <button className={styles.noteEditPill} onClick={openManageDeck}>edit</button>
+                    <button className={styles.noteEditPill} onClick={openManageDeck}>manage deck</button>
                   </div>
                 </div>
               ) : (
@@ -480,33 +514,63 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         {/* ── Mood section ── */}
         <div className={styles.moodCard}>
           <div className={styles.moodEyebrow}>MOOD CHECK</div>
-          {/* Stable two-column row — never reflows on selection */}
-          <div className={styles.moodRow}>
-            <div className={styles.moodLeft}>
-              <div className={styles.moodQuestion}>how's the {SLOT_NOUN[slot]}?</div>
-              {precedingSlots(slot).length > 0 && (
-                <div className={styles.moodPipRow}>
-                  {precedingSlots(slot).map(prevSlot => (
-                    <button key={prevSlot} className={styles.moodPip} aria-expanded={openRetroSlot === prevSlot}
-                      onClick={() => setOpenRetroSlot(o => o === prevSlot ? null : prevSlot)}>
-                      <span className={`${styles.moodPipDot} ${moodSelections[prevSlot] ? styles.moodPipDotFilled : ''}`} />
-                      <span className={styles.moodPipLabel}>{prevSlot}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
+          {isDesktop ? (
+            /* Desktop: question + pips inline; circles below */
+            <>
+              <div className={styles.moodDesktopRow}>
+                <div className={styles.moodQuestion}>how's the {SLOT_NOUN[slot]}?</div>
+                {precedingSlots(slot).length > 0 && (
+                  <div className={styles.moodPipRow}>
+                    {precedingSlots(slot).map(prevSlot => (
+                      <button key={prevSlot} className={styles.moodPip} aria-expanded={openRetroSlot === prevSlot}
+                        onClick={() => setOpenRetroSlot(o => o === prevSlot ? null : prevSlot)}>
+                        <span className={`${styles.moodPipDot} ${moodSelections[prevSlot] ? styles.moodPipDotFilled : ''}`} />
+                        <span className={styles.moodPipLabel}>{prevSlot}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className={styles.moodCircles}>
+                {MOODS.map(mood => (
+                  <button
+                    key={mood}
+                    className={`${styles.moodCircle} ${moodSelections[slot] === mood ? styles.moodCircleSelected : ''}`}
+                    style={moodSelections[slot] === mood ? MOOD_FILL[mood] : undefined}
+                    onClick={() => handleMoodSelect(slot, mood)}
+                  >{mood}</button>
+                ))}
+              </div>
+            </>
+          ) : (
+            /* Mobile: question + pips left, circles right */
+            <div className={styles.moodRow}>
+              <div className={styles.moodLeft}>
+                <div className={styles.moodQuestion}>how's the {SLOT_NOUN[slot]}?</div>
+                {precedingSlots(slot).length > 0 && (
+                  <div className={styles.moodPipRow}>
+                    {precedingSlots(slot).map(prevSlot => (
+                      <button key={prevSlot} className={styles.moodPip} aria-expanded={openRetroSlot === prevSlot}
+                        onClick={() => setOpenRetroSlot(o => o === prevSlot ? null : prevSlot)}>
+                        <span className={`${styles.moodPipDot} ${moodSelections[prevSlot] ? styles.moodPipDotFilled : ''}`} />
+                        <span className={styles.moodPipLabel}>{prevSlot}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className={styles.moodCircles}>
+                {MOODS.map(mood => (
+                  <button
+                    key={mood}
+                    className={`${styles.moodCircle} ${moodSelections[slot] === mood ? styles.moodCircleSelected : ''}`}
+                    style={moodSelections[slot] === mood ? MOOD_FILL[mood] : undefined}
+                    onClick={() => handleMoodSelect(slot, mood)}
+                  >{mood}</button>
+                ))}
+              </div>
             </div>
-            <div className={styles.moodCircles}>
-              {MOODS.map(mood => (
-                <button
-                  key={mood}
-                  className={`${styles.moodCircle} ${moodSelections[slot] === mood ? styles.moodCircleSelected : ''}`}
-                  style={moodSelections[slot] === mood ? MOOD_FILL[mood] : undefined}
-                  onClick={() => handleMoodSelect(slot, mood)}
-                >{mood}</button>
-              ))}
-            </div>
-          </div>
+          )}
           {/* Retro slot detail */}
           {openRetroSlot && (
             <div className={styles.retroRow}>
@@ -653,16 +717,15 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
 
         <div className={styles.colRight}>
 
-        {/* ── Journal card (hero on desktop) ── */}
-        <div className={styles.cardJournal}>
-          <div className={styles.sectionHeader}>
-            <span className={styles.sectionLabel}>journal</span>
-            <span className={styles.journalEntryCount}>
-              {journalEntryCount > 0 ? `${journalEntryCount} ${journalEntryCount === 1 ? 'entry' : 'entries'} today` : ''}
-            </span>
-          </div>
-
-          {isDesktop ? (
+        {/* ── Journal ── */}
+        {isDesktop ? (
+          <div className={styles.journalSection}>
+            <div className={styles.journalDeskHeader}>
+              <span className={styles.journalDeskLabel}>JOURNAL</span>
+              {journalEntryCount > 0 && (
+                <span className={styles.journalDeskCount}> / {journalEntryCount} {journalEntryCount === 1 ? 'entry' : 'entries'} today</span>
+              )}
+            </div>
             <div className={styles.journalScroll} ref={journalEntriesRef}>
               <div className={styles.journalEntries}>
                 {journalEntries.length === 0 ? (
@@ -693,46 +756,48 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                   </div>
                 ))}
               </div>
-              <div className={styles.journalComposer}>
-                <div className={styles.composerChips}>
-                  <span className={styles.composerSlotChip}>{slot}</span>
-                  {draftNeedId ? (
-                    <button className={styles.composerTagActive} onClick={() => setDraftNeedId(null)}>{draftNeedId} ×</button>
-                  ) : (
-                    <button className={styles.composerTagBtn} onClick={() => { setNeedPickerOpen(o => !o); setStatePickerOpen(false); setCustomPickerOpen(false) }}>+ need</button>
-                  )}
-                  {draftState ? (
-                    <button className={styles.composerTagActive} onClick={() => setDraftState(null)}>{draftState} ×</button>
-                  ) : (
-                    <button className={styles.composerTagBtn} onClick={() => { setStatePickerOpen(o => !o); setNeedPickerOpen(false); setCustomPickerOpen(false) }}>+ state</button>
-                  )}
-                  {customTags.length > 0 && (draftCustom ? (
-                    <button className={styles.composerTagActive} onClick={() => setDraftCustom(null)}>{draftCustom} ×</button>
-                  ) : (
-                    <button className={styles.composerTagBtn} onClick={() => { setCustomPickerOpen(o => !o); setNeedPickerOpen(false); setStatePickerOpen(false) }}>+ custom</button>
+            </div>
+            <div className={styles.journalBottom}>
+              <div className={styles.composerChips}>
+                <span className={styles.composerSlotChip}>{slot}</span>
+                {draftNeedId ? (
+                  <button className={styles.composerTagActive} onClick={() => setDraftNeedId(null)}>{draftNeedId} ×</button>
+                ) : (
+                  <button className={styles.composerTagBtn} onClick={() => { setNeedPickerOpen(o => !o); setStatePickerOpen(false); setCustomPickerOpen(false) }}>+ need</button>
+                )}
+                {draftState ? (
+                  <button className={styles.composerTagActive} onClick={() => setDraftState(null)}>{draftState} ×</button>
+                ) : (
+                  <button className={styles.composerTagBtn} onClick={() => { setStatePickerOpen(o => !o); setNeedPickerOpen(false); setCustomPickerOpen(false) }}>+ state</button>
+                )}
+                {customTags.length > 0 && (draftCustom ? (
+                  <button className={styles.composerTagActive} onClick={() => setDraftCustom(null)}>{draftCustom} ×</button>
+                ) : (
+                  <button className={styles.composerTagBtn} onClick={() => { setCustomPickerOpen(o => !o); setNeedPickerOpen(false); setStatePickerOpen(false) }}>+ custom</button>
+                ))}
+              </div>
+              {needPickerOpen && activeNeeds.length > 0 && (
+                <div className={styles.composerPicker}>
+                  {activeNeeds.map(n => (
+                    <button key={n.id} className={styles.composerPickerItem} onClick={() => { setDraftNeedId(n.id); setNeedPickerOpen(false) }}>{n.name}</button>
                   ))}
                 </div>
-                {needPickerOpen && activeNeeds.length > 0 && (
-                  <div className={styles.composerPicker}>
-                    {activeNeeds.map(n => (
-                      <button key={n.id} className={styles.composerPickerItem} onClick={() => { setDraftNeedId(n.id); setNeedPickerOpen(false) }}>{n.name}</button>
-                    ))}
-                  </div>
-                )}
-                {statePickerOpen && (
-                  <div className={styles.composerPicker}>
-                    {[...BUILTIN_NATURE_TYPES, ...BUILTIN_PEAK_TYPES].map(t => (
-                      <button key={t.name} className={styles.composerPickerItem} onClick={() => { setDraftState(t.name); setStatePickerOpen(false) }}>{t.name}</button>
-                    ))}
-                  </div>
-                )}
-                {customPickerOpen && customTags.length > 0 && (
-                  <div className={styles.composerPicker}>
-                    {customTags.map(t => (
-                      <button key={t.id} className={styles.composerPickerItem} onClick={() => { setDraftCustom(t.label); setCustomPickerOpen(false) }}>{t.label}</button>
-                    ))}
-                  </div>
-                )}
+              )}
+              {statePickerOpen && (
+                <div className={styles.composerPicker}>
+                  {[...BUILTIN_NATURE_TYPES, ...BUILTIN_PEAK_TYPES].map(t => (
+                    <button key={t.name} className={styles.composerPickerItem} onClick={() => { setDraftState(t.name); setStatePickerOpen(false) }}>{t.name}</button>
+                  ))}
+                </div>
+              )}
+              {customPickerOpen && customTags.length > 0 && (
+                <div className={styles.composerPicker}>
+                  {customTags.map(t => (
+                    <button key={t.id} className={styles.composerPickerItem} onClick={() => { setDraftCustom(t.label); setCustomPickerOpen(false) }}>{t.label}</button>
+                  ))}
+                </div>
+              )}
+              <div className={styles.journalComposerCard}>
                 <div className={styles.journalComposerWrap}>
                   <textarea
                     className={styles.journalComposerInput}
@@ -750,7 +815,15 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 {journalSaveError && <div className={styles.journalSaveError}>{journalSaveError}</div>}
               </div>
             </div>
-          ) : (
+          </div>
+        ) : (
+          <div className={styles.cardJournal}>
+            <div className={styles.sectionHeader}>
+              <span className={styles.sectionLabel}>journal</span>
+              <span className={styles.journalEntryCount}>
+                {journalEntryCount > 0 ? `${journalEntryCount} ${journalEntryCount === 1 ? 'entry' : 'entries'} today` : ''}
+              </span>
+            </div>
             <>
               {journalEntries.length > 0 && (
                 <div className={styles.journalMobileEntries}>
@@ -842,8 +915,8 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 </div>
               )}
             </>
-          )}
-        </div>
+          </div>
+        )}
 
         </div>{/* /colRight */}
 
