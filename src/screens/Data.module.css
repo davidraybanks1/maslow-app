@@ -856,14 +856,24 @@
   .headlineCard { margin-bottom: 0; }
   .insightCard { margin-bottom: 0; }
 
-  /* Row 3: what-changed ~50% / rhythm ~50% */
+  /* Row 3: what-changed ~50% / rhythm ~50% — stretch so bottoms align */
   .dRow3 {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
     gap: 12px;
-    align-items: start;
   }
   .dRow3 > .section { margin-top: 0; }
+
+  /* Rhythm card: flex column so the bar chart absorbs extra height */
+  .rhythmCard {
+    display: flex;
+    flex-direction: column;
+  }
+  .rhythmCard .rhythmGrid {
+    flex: 1;
+    height: auto;
+    min-height: 118px;
+  }
 
   /* Row 5: ribbons — single column; 90 day-cells need full width to stay legible */
   .ribbonStack {

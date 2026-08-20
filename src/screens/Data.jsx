@@ -249,7 +249,7 @@ function RhythmSection({ stats, canvas, checkins, moods }) {
   const closingRead = stats.getWeekdaySummary(moodByWeekday) ?? stats.getTimeOfDaySummary(moodByPeriod)
 
   return (
-    <section className={`${styles.section} ${styles.sectionCard}`}>
+    <section className={`${styles.section} ${styles.sectionCard} ${styles.rhythmCard}`}>
       <div className={styles.sectionHeader}>
         <span className={styles.sectionLabel}>YOUR RHYTHM</span>
         <span className={styles.sectionMeta}>bar = practices met · dot = mood</span>
