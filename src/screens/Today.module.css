@@ -1303,6 +1303,11 @@
   /* Band 4 — journal full width */
   .journalSection { grid-column: 1 / -1; grid-row: 4; }
 
+  /* Reset mobile margins that leak into the grid — row-gap:14px is the sole spacer */
+  .reflectiveSection { margin-bottom: 0; }
+  .moodCard          { margin-top: 0; }
+  .practicesCard     { margin-bottom: 0; }
+
   /* No-note variant: mood spans full width */
   .listNoNote .moodCard { grid-column: 1 / -1; }
 
