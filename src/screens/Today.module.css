@@ -1282,7 +1282,7 @@
     grid-template-columns: 1fr 1fr;
     column-gap: 18px;
     row-gap: 14px;
-    align-items: start;
+    align-items: stretch;
     padding-bottom: 32px;
   }
 
