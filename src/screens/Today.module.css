@@ -556,7 +556,7 @@
   font-size: 10px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #854F0B;
+  color: var(--nourishment-deep);
   margin-bottom: 8px;
 }
 .guidanceHeadline {
@@ -718,7 +718,7 @@
 .tierNeedLabels {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: rgba(26,26,26,.45);
+  color: var(--ink3);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -743,7 +743,7 @@
   align-items: baseline;
   margin-bottom: 24px;
 }
-.sectionLabel { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(26,26,26,.45); }
+.sectionLabel { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink3); }
 
 .journalTimestampBtn {
   font-family: var(--font-mono);
@@ -975,7 +975,7 @@
 .journalEntryCount {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: rgba(26,26,26,.45);
+  color: var(--ink3);
   letter-spacing: 0.06em;
 }
 
@@ -1151,7 +1151,7 @@
   min-width: 0;
   transition: flex-grow var(--motion-progress) cubic-bezier(0.3, 0.8, 0.3, 1);
 }
-.spaceSegAnxiety { background: rgba(26,26,26,.12); }
+.spaceSegAnxiety { background: rgba(0,0,0,.12); }
 .spaceBarComplete { animation: spaceSweep 0.7s ease; }
 @keyframes spaceSweep {
   0%   { filter: brightness(1); }
@@ -1212,11 +1212,9 @@
     background: var(--paper);
     --card-bg: #fff;
     --card-bg-warm: #FAF8F1;
-    --card-border: 0.5px solid rgba(26,26,26,.12);
-    --card-shadow: 0 1px 2px rgba(26,26,26,.04), 0 4px 14px rgba(26,26,26,.05);
+    --card-border: 0.5px solid var(--hairline);
     --timer-bar-bg: #fff;
-    --timer-bar-border: 0.5px solid rgba(26,26,26,.12);
-    --timer-bar-shadow: 0 1px 2px rgba(26,26,26,.04), 0 4px 14px rgba(26,26,26,.05);
+    --timer-bar-border: 0.5px solid var(--hairline);
   }
 
   /* Desktop container: left-anchored after the nav rail — max-width caps the right. */
@@ -1239,66 +1237,50 @@
   .headerBarWrap { display: flex; flex: 1; min-width: 0; align-items: center; }
   .spaceBar { max-width: none; }
 
-  /* Reset mobile order values — columns own the layout now */
-  .reflectiveSection, .timerSlot, .guidanceSlot,
-  .moodCard, .practicesCard, .cardJournal { order: 0; }
+  /* Reset mobile order values */
+  .reflectiveSection, .guidanceSlot,
+  .moodCard, .practicesCard { order: 0; }
 
-  /* Cards: white surface, hairline border, soft shadow */
+  /* Cards: white surface, hairline border, no shadow */
   .card {
     background: var(--card-bg, #fff);
-    border: var(--card-border, 0.5px solid rgba(26,26,26,.12));
-    box-shadow: var(--card-shadow, 0 1px 2px rgba(26,26,26,.04), 0 4px 14px rgba(26,26,26,.05));
+    border: var(--card-border);
   }
 
-  /* Note-to-self keeps warm cream; update border/shadow to match card family */
+  /* Note-to-self: hairline border to match card family */
   .reflectiveSection {
-    border: var(--card-border, 0.5px solid rgba(26,26,26,.12));
-    box-shadow: var(--card-shadow, 0 1px 2px rgba(26,26,26,.04), 0 4px 14px rgba(26,26,26,.05));
+    border: var(--card-border);
   }
 
-  /* ── Two-column grid — natural height, page scrolls as one ── */
+  /* ── Four-band grid — colLeft/colRight transparent, children placed explicitly ── */
   .list {
     display: grid;
-    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    grid-template-columns: 1fr 1fr;
     column-gap: 18px;
+    row-gap: 14px;
     align-items: start;
+    padding-bottom: 32px;
   }
 
-  .colLeft {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    padding: 0 0 32px 0;
-  }
+  .colLeft  { display: contents; }
+  .colRight { display: contents; }
 
-  .colRight {
-    display: flex;
-    flex-direction: column;
-    padding: 0 0 32px 0;
-  }
+  /* Band 2 — note (col 1) and mood (col 2) side by side */
+  .reflectiveSection { grid-column: 1; grid-row: 1; align-self: start; }
+  .moodCard          { grid-column: 2; grid-row: 1; align-self: start; }
+  .moodDivider       { display: none; }
 
-  /* Ensure first children have no stray top margin */
-  .colLeft > *:first-child,
-  .colRight > *:first-child { margin-top: 0; }
+  /* Guidance banner sits between bands 2 and 3; empty = zero height, gap absorbed */
+  .guidanceSlot { grid-column: 1 / -1; grid-row: 2; }
 
-  /* Slot wrappers */
-  .timerSlot   { display: block; }
-  .guidanceSlot { display: block; }
+  /* Band 3 — tier cards full width */
+  .practicesCard { grid-column: 1 / -1; grid-row: 3; }
 
-  /* Journal card: hero — fills the full right column */
-  .cardJournal {
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    padding: 20px 24px;
-    background: var(--card-bg, #fff);
-    border: var(--card-border, 0.5px solid rgba(26,26,26,.12));
-    box-shadow: var(--card-shadow, 0 1px 2px rgba(26,26,26,.04), 0 4px 14px rgba(26,26,26,.05));
-    border-radius: 12px;
-    margin-bottom: 0;
-  }
+  /* Band 4 — journal full width */
+  .journalSection { grid-column: 1 / -1; grid-row: 4; }
+
+  /* No-note variant: mood spans full width */
+  .listNoNote .moodCard { grid-column: 1 / -1; }
 
   /* ── Desktop journal: entries in normal flow, page scrolls ── */
   .journalScroll {
@@ -1333,7 +1315,7 @@
 
   .journalComposer {
     margin-top: 24px;
-    border-top: 0.5px solid rgba(26,26,26,.08);
+    border-top: 0.5px solid rgba(0,0,0,.08);
     padding-top: 14px;
     width: 100%;
     box-sizing: border-box;
@@ -1355,7 +1337,7 @@
     outline: none;
     transition: border-color var(--motion-hover);
   }
-  .journalComposerInput:focus { border-color: rgba(26,26,26,.10); }
+  .journalComposerInput:focus { border-color: var(--hairline); }
   .journalComposerInput::placeholder { color: var(--ink4); }
 
   /* Add button docked inside the textarea, bottom-right */
@@ -1386,8 +1368,8 @@
     border-radius: 6px;
     /* disabled/empty: ghost — muted border, faint text */
     background: transparent;
-    color: rgba(26,26,26,.35);
-    border: 0.5px solid rgba(26,26,26,.18);
+    color: rgba(0,0,0,.35);
+    border: 0.5px solid rgba(0,0,0,.18);
     font-family: var(--font-mono);
     font-size: 11px;
     letter-spacing: 0.04em;
@@ -1431,9 +1413,7 @@
   }
   .deckArrow:hover { background: var(--track); }
 
-  /* ── Mood: shared layout, desktop max-width keeps circles close ── */
-  .moodCard { max-width: 560px; order: -1; }
-  .moodDivider { order: 0; margin: 0; }
+  /* .moodCard and .moodDivider are placed via grid rules above */
 
   /* ── Journal section (desktop) — entries on paper, white-card composer ── */
   .journalSection {
@@ -1475,7 +1455,7 @@
   /* White card composer — elevation via surface + hairline, no shadow */
   .journalComposerCard {
     background: var(--card-bg, #fff);
-    border: var(--card-border, 0.5px solid rgba(26,26,26,.12));
+    border: var(--card-border);
     border-radius: 16px;
     padding: 14px 16px;
     margin-top: 10px;
@@ -1490,16 +1470,13 @@
   }
 
   /* Unowned space-bar remainder: quiet on desktop so mode colors pop */
-  .spaceSegAnxiety { background: rgba(26,26,26,.12); }
+  .spaceSegAnxiety { background: rgba(0,0,0,.12); }
 
-  /* Practices card: no max-height cap — left rail scrolls as a whole */
+  /* Practices card: no max-height cap — page scrolls as a whole */
   .practicesCard {
     max-height: none;
     overflow-y: visible;
     padding-bottom: 0;
     box-sizing: border-box;
   }
-
-  /* Gap handles spacing inside columns — cancel per-card margin-bottom */
-  .colLeft > *, .colRight > * { margin-bottom: 0; }
 }
