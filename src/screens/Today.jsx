@@ -443,7 +443,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 <>
                   <div
                     className={styles.noteDeckWrapper}
-                    style={deckHeight ? { height: deckHeight } : undefined}
+                    style={!isDesktop && deckHeight ? { height: deckHeight } : undefined}
                     ref={deckWrapperRef}
                     onScroll={handleDeckScroll}
                   >

@@ -1386,7 +1386,7 @@
   /* ── Two-column grid — natural height, page scrolls as one ── */
   .list {
     display: grid;
-    grid-template-columns: 2fr 3fr;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
     column-gap: 18px;
     align-items: start;
   }
@@ -1470,9 +1470,9 @@
     width: 100%;
     box-sizing: border-box;
     padding: 10px 12px;
-    border: 0.5px solid rgba(26,26,26,.12);
+    border: 0.5px solid transparent;
     border-radius: 8px;
-    background: var(--bg2, #f5f2ea);
+    background: transparent;
     font-family: var(--font-mono);
     font-size: 14px;
     font-weight: 200;
@@ -1482,7 +1482,7 @@
     outline: none;
     transition: border-color var(--motion-hover);
   }
-  .journalComposerInput:focus { border-color: var(--ink2); }
+  .journalComposerInput:focus { border-color: rgba(26,26,26,.10); }
   .journalComposerInput::placeholder { color: var(--ink4); }
 
   /* Add button docked inside the textarea, bottom-right */
@@ -1533,6 +1533,11 @@
   @media (prefers-reduced-motion: reduce) {
     .journalAddBtn { transition: none; }
   }
+
+  /* Note card: size to content — no deckHeight inflation on desktop */
+  .noteDeckWrapper { align-items: flex-start; }
+  .noteDeckBody { flex: 0 0 auto; }
+  .noteDeckFooter { margin-top: 10px; }
 
   /* ── Deck arrows ── */
   .deckArrow {

@@ -35,11 +35,11 @@
     transition: color var(--motion-hover), background var(--motion-hover);
   }
   .item:hover { color: var(--ink); background: rgba(26,26,26,.06); }
+  .item:focus-visible { outline: 2px solid rgba(26,26,26,.3); outline-offset: 2px; }
   .itemActive {
     color: var(--ink);
     font-weight: 500;
     text-decoration: underline;
-    text-decoration-color: var(--nourishment);
     text-decoration-thickness: 2px;
     text-underline-offset: 5px;
   }
