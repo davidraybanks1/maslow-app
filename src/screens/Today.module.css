@@ -936,6 +936,14 @@
   padding: 3.5px 11px;
 }
 
+.journalMoodDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
 .journalEntryDelete {
   margin-left: auto;
   background: none;
@@ -948,6 +956,15 @@
   -webkit-tap-highlight-color: transparent;
 }
 .journalEntryDelete:hover { color: var(--ink2); }
+.journalEntryDeletePending {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--survival);
+  border: 0.5px solid var(--survival);
+  border-radius: 4px;
+  padding: 2px 6px;
+  background: none;
+}
 
 .journalEntryText {
   font-family: var(--font-serif);
@@ -1025,6 +1042,12 @@
   flex-wrap: wrap;
   gap: 6px;
   margin-bottom: 8px;
+}
+
+.composerTimeChip {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink3);
 }
 
 .composerSlotChip {
@@ -1306,6 +1329,9 @@
     font-weight: 200;
     color: var(--ink3);
   }
+
+  /* ── Desktop journal: composer before entries via flex order ── */
+  .journalScroll { order: 1; }
 
   /* ── Desktop journal: entries in normal flow, page scrolls ── */
   .journalScroll {

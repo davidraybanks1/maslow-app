@@ -307,6 +307,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
 
   const [journalEntries, setJournalEntries] = useState([])
   const [journalSaveError, setJournalSaveError] = useState(null)
+  const [pendingDeleteId, setPendingDeleteId] = useState(null)
   const [expandedTodayEntries, setExpandedTodayEntries] = useState(() => new Set())
   const [draftText, setDraftText] = useState('')
   const [draftNeedId, setDraftNeedId] = useState(null)
@@ -352,10 +353,21 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     }
   }
 
+  useEffect(() => {
+    if (!pendingDeleteId) return
+    function onDocMouseDown() { setPendingDeleteId(null) }
+    document.addEventListener('mousedown', onDocMouseDown)
+    return () => document.removeEventListener('mousedown', onDocMouseDown)
+  }, [pendingDeleteId])
+
   async function handleDeleteEntry(id) {
-    if (!window.confirm('delete this entry?')) return
-    setJournalEntries(prev => prev.filter(e => e.id !== id))
-    await deleteJournalEntry(id)
+    if (pendingDeleteId === id) {
+      setPendingDeleteId(null)
+      setJournalEntries(prev => prev.filter(e => e.id !== id))
+      await deleteJournalEntry(id)
+    } else {
+      setPendingDeleteId(id)
+    }
   }
 
   const isDesktop = useIsDesktop()
@@ -685,15 +697,23 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               <div className={styles.journalEntries}>
                 {journalEntries.length === 0 ? (
                   <span className={styles.journalEntriesEmpty}>nothing written yet — start typing below</span>
-                ) : journalEntries.map(e => (
+                ) : journalEntries.map(e => {
+                  const entryMoodKey = !e.state && e.slot ? moodSelections[e.slot] : null
+                  return (
                   <div key={e.id} className={styles.journalEntryCard}>
                     <div className={styles.journalEntryMeta}>
+                      {entryMoodKey && <span className={styles.journalMoodDot} style={{ background: MOOD_PIP_COLOR[entryMoodKey] }} />}
                       <span className={styles.journalEntryTime}>{formatEntryTime(e.created_at)}</span>
                       {e.slot && <span className={styles.journalSlotChip}>{e.slot}</span>}
                       {e.state && <span className={styles.journalStateTag}>{e.state}</span>}
                       {e.need_id && <span className={styles.journalNeedTag}>{e.need_id}</span>}
                       {e.custom && <span className={styles.journalNeedTag}>{e.custom}</span>}
-                      <button className={styles.journalEntryDelete} onClick={() => handleDeleteEntry(e.id)} aria-label="delete entry">×</button>
+                      <button
+                        className={`${styles.journalEntryDelete}${pendingDeleteId === e.id ? ` ${styles.journalEntryDeletePending}` : ''}`}
+                        onMouseDown={ev => ev.stopPropagation()}
+                        onClick={() => handleDeleteEntry(e.id)}
+                        aria-label={pendingDeleteId === e.id ? 'confirm delete' : 'delete entry'}
+                      >{pendingDeleteId === e.id ? 'delete?' : '×'}</button>
                     </div>
                     {(() => {
                       const body = e.entry || ''
@@ -709,21 +729,23 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                       )
                     })()}
                   </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
             <div className={styles.journalBottom}>
               <div className={styles.composerChips}>
+                <span className={styles.composerTimeChip}>{formatEntryTime(new Date().toISOString())}</span>
                 <span className={styles.composerSlotChip}>{slot}</span>
-                {draftNeedId ? (
-                  <button className={styles.composerTagActive} onClick={() => setDraftNeedId(null)}>{draftNeedId} ×</button>
-                ) : (
-                  <button className={styles.composerTagBtn} onClick={() => { setNeedPickerOpen(o => !o); setStatePickerOpen(false); setCustomPickerOpen(false) }}>+ need</button>
-                )}
                 {draftState ? (
                   <button className={styles.composerTagActive} onClick={() => setDraftState(null)}>{draftState} ×</button>
                 ) : (
                   <button className={styles.composerTagBtn} onClick={() => { setStatePickerOpen(o => !o); setNeedPickerOpen(false); setCustomPickerOpen(false) }}>+ state</button>
+                )}
+                {draftNeedId ? (
+                  <button className={styles.composerTagActive} onClick={() => setDraftNeedId(null)}>{draftNeedId} ×</button>
+                ) : (
+                  <button className={styles.composerTagBtn} onClick={() => { setNeedPickerOpen(o => !o); setStatePickerOpen(false); setCustomPickerOpen(false) }}>+ need</button>
                 )}
                 {customTags.length > 0 && (draftCustom ? (
                   <button className={styles.composerTagActive} onClick={() => setDraftCustom(null)}>{draftCustom} ×</button>
@@ -782,14 +804,22 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
             <>
               {journalEntries.length > 0 && (
                 <div className={styles.journalMobileEntries}>
-                  {journalEntries.map(e => (
+                  {journalEntries.map(e => {
+                    const entryMoodKey = !e.state && e.slot ? moodSelections[e.slot] : null
+                    return (
                     <div key={e.id} className={styles.journalEntryCard}>
                       <div className={styles.journalEntryMeta}>
+                        {entryMoodKey && <span className={styles.journalMoodDot} style={{ background: MOOD_PIP_COLOR[entryMoodKey] }} />}
                         <span className={styles.journalEntryTime}>{formatEntryTime(e.created_at)}</span>
                         {e.slot && <span className={styles.journalSlotChip}>{e.slot}</span>}
                         {e.state && <span className={styles.journalStateTag}>{e.state}</span>}
                         {e.need_id && <span className={styles.journalNeedTag}>{e.need_id}</span>}
-                        <button className={styles.journalEntryDelete} onClick={() => handleDeleteEntry(e.id)} aria-label="delete entry">×</button>
+                        <button
+                          className={`${styles.journalEntryDelete}${pendingDeleteId === e.id ? ` ${styles.journalEntryDeletePending}` : ''}`}
+                          onMouseDown={ev => ev.stopPropagation()}
+                          onClick={() => handleDeleteEntry(e.id)}
+                          aria-label={pendingDeleteId === e.id ? 'confirm delete' : 'delete entry'}
+                        >{pendingDeleteId === e.id ? 'delete?' : '×'}</button>
                       </div>
                       {(() => {
                       const body = e.entry || ''
@@ -805,7 +835,8 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                       )
                     })()}
                     </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
               {!composerOpen ? (
