@@ -1006,7 +1006,6 @@
   border-top: 1px solid var(--hairline);
   margin: 18px 0;
 }
-@media (min-width: 900px) { .moodDivider { display: none; } }
 
 /* ── Journal entry cards ── */
 .journalMobileEntries {
@@ -1560,6 +1559,7 @@
 
   /* ── Mood: shared layout, desktop max-width keeps circles close ── */
   .moodCard { max-width: 560px; }
+  .moodDivider { order: 0; margin: 0; }
 
   /* ── Journal section (desktop) — entries on paper, white-card composer ── */
   .journalSection {
