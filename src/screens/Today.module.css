@@ -1558,16 +1558,8 @@
   }
   .deckArrow:hover { background: var(--track); }
 
-  /* ── Mood desktop layout ── */
-  .moodDesktopRow {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    margin-bottom: 12px;
-  }
-  .moodQuestion { font-size: 26px; }
-  .moodPipRow { margin-top: 0; }
+  /* ── Mood: shared layout, desktop max-width keeps circles close ── */
+  .moodCard { max-width: 560px; }
 
   /* ── Journal section (desktop) — entries on paper, white-card composer ── */
   .journalSection {

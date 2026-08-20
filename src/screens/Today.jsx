@@ -509,63 +509,32 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         {/* ── Mood section ── */}
         <div className={styles.moodCard}>
           <div className={styles.moodEyebrow}>MOOD CHECK</div>
-          {isDesktop ? (
-            /* Desktop: question + pips inline; circles below */
-            <>
-              <div className={styles.moodDesktopRow}>
-                <div className={styles.moodQuestion}>how's the {SLOT_NOUN[slot]}?</div>
-                {precedingSlots(slot).length > 0 && (
-                  <div className={styles.moodPipRow}>
-                    {precedingSlots(slot).map(prevSlot => (
-                      <button key={prevSlot} className={styles.moodPip} aria-expanded={openRetroSlot === prevSlot}
-                        onClick={() => setOpenRetroSlot(o => o === prevSlot ? null : prevSlot)}>
-                        <span className={`${styles.moodPipDot} ${moodSelections[prevSlot] ? styles.moodPipDotFilled : ''}`} />
-                        <span className={styles.moodPipLabel}>{prevSlot}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div className={styles.moodCircles}>
-                {MOODS.map(mood => (
-                  <button
-                    key={mood}
-                    className={`${styles.moodCircle} ${moodSelections[slot] === mood ? styles.moodCircleSelected : ''}`}
-                    style={moodSelections[slot] === mood ? MOOD_FILL[mood] : undefined}
-                    onClick={() => handleMoodSelect(slot, mood)}
-                  >{mood}</button>
-                ))}
-              </div>
-            </>
-          ) : (
-            /* Mobile: question + pips left, circles right */
-            <div className={styles.moodRow}>
-              <div className={styles.moodLeft}>
-                <div className={styles.moodQuestion}>how's the {SLOT_NOUN[slot]}?</div>
-                {precedingSlots(slot).length > 0 && (
-                  <div className={styles.moodPipRow}>
-                    {precedingSlots(slot).map(prevSlot => (
-                      <button key={prevSlot} className={styles.moodPip} aria-expanded={openRetroSlot === prevSlot}
-                        onClick={() => setOpenRetroSlot(o => o === prevSlot ? null : prevSlot)}>
-                        <span className={`${styles.moodPipDot} ${moodSelections[prevSlot] ? styles.moodPipDotFilled : ''}`} />
-                        <span className={styles.moodPipLabel}>{prevSlot}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div className={styles.moodCircles}>
-                {MOODS.map(mood => (
-                  <button
-                    key={mood}
-                    className={`${styles.moodCircle} ${moodSelections[slot] === mood ? styles.moodCircleSelected : ''}`}
-                    style={moodSelections[slot] === mood ? MOOD_FILL[mood] : undefined}
-                    onClick={() => handleMoodSelect(slot, mood)}
-                  >{mood}</button>
-                ))}
-              </div>
+          <div className={styles.moodRow}>
+            <div className={styles.moodLeft}>
+              <div className={styles.moodQuestion}>how's the {SLOT_NOUN[slot]}?</div>
+              {precedingSlots(slot).length > 0 && (
+                <div className={styles.moodPipRow}>
+                  {precedingSlots(slot).map(prevSlot => (
+                    <button key={prevSlot} className={styles.moodPip} aria-expanded={openRetroSlot === prevSlot}
+                      onClick={() => setOpenRetroSlot(o => o === prevSlot ? null : prevSlot)}>
+                      <span className={`${styles.moodPipDot} ${moodSelections[prevSlot] ? styles.moodPipDotFilled : ''}`} />
+                      <span className={styles.moodPipLabel}>{prevSlot}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
+            <div className={styles.moodCircles}>
+              {MOODS.map(mood => (
+                <button
+                  key={mood}
+                  className={`${styles.moodCircle} ${moodSelections[slot] === mood ? styles.moodCircleSelected : ''}`}
+                  style={moodSelections[slot] === mood ? MOOD_FILL[mood] : undefined}
+                  onClick={() => handleMoodSelect(slot, mood)}
+                >{mood}</button>
+              ))}
+            </div>
+          </div>
           {/* Retro slot detail */}
           {openRetroSlot && (
             <div className={styles.retroRow}>
