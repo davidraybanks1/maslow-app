@@ -1461,7 +1461,13 @@
   }
   .deckArrow:hover { background: var(--track); }
 
-  /* .moodCard and .moodDivider are placed via grid rules above */
+  /* Mood card: white surface matching the note card beside it */
+  .moodCard {
+    background: var(--card);
+    border: var(--card-border);
+    border-radius: 16px;
+    padding: 14px 16px;
+  }
 
   /* ── Journal section (desktop) — entries on paper, white-card composer ── */
   .journalSection {
