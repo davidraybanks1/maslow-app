@@ -912,8 +912,7 @@
   display: block;
 }
 .moodPipDotFilled {
-  background: var(--exploration);
-  border-color: var(--exploration);
+  /* color applied via inline style keyed to the logged mood */
 }
 
 .moodPipLabel {

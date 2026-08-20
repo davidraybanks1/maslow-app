@@ -17,6 +17,11 @@ const MOOD_FILL = {
   fine: { background: 'var(--appreciation)', borderColor: 'var(--appreciation)', color: 'var(--ink)'  },
   bad:  { background: 'var(--survival)',     borderColor: 'var(--survival)',     color: 'var(--card)' },
 }
+const MOOD_PIP_COLOR = {
+  good: 'var(--exploration)',
+  fine: 'var(--appreciation-deep)',
+  bad:  'var(--survival)',
+}
 
 // Shared math: each mode owns ≤25% of total; returns [{color, from, to}] in percent
 function buildProgressSegments(arcs) {
@@ -517,7 +522,10 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                   {precedingSlots(slot).map(prevSlot => (
                     <button key={prevSlot} className={styles.moodPip} aria-expanded={openRetroSlot === prevSlot}
                       onClick={() => setOpenRetroSlot(o => o === prevSlot ? null : prevSlot)}>
-                      <span className={`${styles.moodPipDot} ${moodSelections[prevSlot] ? styles.moodPipDotFilled : ''}`} />
+                      <span
+                        className={`${styles.moodPipDot} ${moodSelections[prevSlot] ? styles.moodPipDotFilled : ''}`}
+                        style={moodSelections[prevSlot] ? { background: MOOD_PIP_COLOR[moodSelections[prevSlot]], borderColor: MOOD_PIP_COLOR[moodSelections[prevSlot]] } : undefined}
+                      />
                       <span className={styles.moodPipLabel}>{prevSlot}</span>
                     </button>
                   ))}
