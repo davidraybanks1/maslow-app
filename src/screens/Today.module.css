@@ -1330,12 +1330,9 @@
     color: var(--ink3);
   }
 
-  /* ── Desktop journal: composer before entries via flex order ── */
-  .journalScroll { order: 1; }
-
-  /* ── Desktop journal: entries in normal flow, page scrolls ── */
+  /* ── Desktop journal: entries in normal flow, page scrolls; composer above via order ── */
   .journalScroll {
-    max-width: 640px;
+    order: 1;
     width: 100%;
     box-sizing: border-box;
   }
@@ -1494,7 +1491,6 @@
 
   /* Chips + pickers + composer card in normal flow below entries */
   .journalBottom {
-    max-width: 640px;
     margin-top: 8px;
   }
 
