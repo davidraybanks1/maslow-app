@@ -595,7 +595,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                     className={styles.tierHeader}
                     onClick={() => setPopupMode(mode)}
                     aria-haspopup="dialog"
-                    aria-expanded={isPopupOpen}
                     aria-controls={`needs-popup-${mode}`}
                     ref={el => { tierBtnElems.current[mode] = el }}
                   >
