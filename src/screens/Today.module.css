@@ -1437,10 +1437,32 @@
     .journalAddBtn { transition: none; }
   }
 
-  /* Note card: size to content — no deckHeight inflation on desktop */
+  /* Note card: label row = eyebrow + controls on one line; body below */
   .noteDeckWrapper { align-items: flex-start; }
-  .noteDeckBody { flex: 0 0 auto; }
-  .noteDeckFooter { margin-top: 10px; }
+  .noteDeckCard {
+    display: grid;
+    grid-template-areas: "eyebrow footer" "body body";
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto 1fr;
+    gap: 0;
+  }
+  .noteDeckEyebrow {
+    grid-area: eyebrow;
+    margin-bottom: 0;
+    align-self: center;
+  }
+  .noteDeckBody {
+    grid-area: body;
+    padding-top: 10px;
+  }
+  .noteDeckFooter {
+    grid-area: footer;
+    margin-top: 0;
+    padding-top: 0;
+    justify-content: flex-end;
+    gap: 8px;
+    align-self: center;
+  }
 
   /* ── Deck arrows ── */
   .deckArrow {
