@@ -1288,9 +1288,9 @@
   .colLeft  { display: contents; }
   .colRight { display: contents; }
 
-  /* Band 2 — note (col 1) and mood (col 2) side by side */
-  .reflectiveSection { grid-column: 1; grid-row: 1; align-self: start; }
-  .moodCard          { grid-column: 2; grid-row: 1; align-self: start; }
+  /* Band 2 — note (col 1) and mood (col 2) side by side, equal height */
+  .reflectiveSection { grid-column: 1; grid-row: 1; }
+  .moodCard          { grid-column: 2; grid-row: 1; }
   .moodDivider       { display: none; }
 
   /* Guidance banner sits between bands 2 and 3; empty = zero height, gap absorbed */
