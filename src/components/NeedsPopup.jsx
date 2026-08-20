@@ -24,7 +24,7 @@ function buildSortedPools(modeNeeds, state, checked) {
 export default function NeedsPopup({
   mode, pip, modeNeeds, maxBubbles, checked, justTapped,
   lastDoneMap, state, handlePracticeTap, navigate,
-  tierEl, triggerEl, onClose,
+  tierEl, triggerEl, onClose, flipEdge,
 }) {
   const isDesktop = useIsDesktop()
   const [phase, setPhase] = useState('open')
@@ -181,7 +181,7 @@ export default function NeedsPopup({
       aria-label={mode}
       tabIndex={-1}
       ref={containerRef}
-      className={`${styles.popup} ${isClosing ? styles.popupClosing : ''}`}
+      className={`${styles.popup} ${isClosing ? styles.popupClosing : ''} ${flipEdge ? styles.popupFlip : ''}`}
     >
       {header}
       {needsList}

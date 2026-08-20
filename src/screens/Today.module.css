@@ -1282,6 +1282,31 @@
   /* No-note variant: mood spans full width */
   .listNoNote .moodCard { grid-column: 1 / -1; }
 
+  /* Band 3: four tier cards in a horizontal row */
+  .tierList { flex-direction: row; gap: 12px; }
+  .tier { flex: 1; min-width: 0; }
+
+  /* Read-out sentence below the tier row */
+  .tierReadOut {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    margin-top: 14px;
+  }
+  .tierReadOutPct {
+    font-family: var(--font-serif);
+    font-size: 28px;
+    font-weight: 300;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .tierReadOutText {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 200;
+    color: var(--ink3);
+  }
+
   /* ── Desktop journal: entries in normal flow, page scrolls ── */
   .journalScroll {
     max-width: 640px;

@@ -12,6 +12,7 @@
   top: calc(100% + 4px);
   left: 0;
   width: 100%;
+  min-width: 280px;
   z-index: 100;
   background: #FFFFFF;
   border: 0.5px solid rgba(0,0,0,.1);
@@ -20,6 +21,8 @@
   outline: none;
 }
 .popupClosing { animation: popupOut 150ms ease both; }
+/* Flip to right-anchor when card is at the right edge of the tier row */
+.popupFlip { left: auto; right: 0; }
 
 @media (prefers-reduced-motion: reduce) {
   .popup, .popupClosing { animation: none !important; }
