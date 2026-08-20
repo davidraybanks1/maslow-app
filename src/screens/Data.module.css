@@ -335,7 +335,9 @@
 }
 
 .longViewCell {
-  height: 8px;
+  flex: 1;
+  min-width: 0;
+  height: 12px;
   border-radius: 2px;
 }
 
@@ -863,14 +865,11 @@
   }
   .dRow3 > .section { margin-top: 0; }
 
-  /* Row 4: long view — taller cells */
-  .longViewCell { height: 10px; border-radius: 3px; }
-
-  /* Row 5: ribbons — two-column grid */
+  /* Row 5: ribbons — single column; 90 day-cells need full width to stay legible */
   .ribbonStack {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 9px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
   }
 
   /* Row 6: gone quiet — three side-by-side cards */

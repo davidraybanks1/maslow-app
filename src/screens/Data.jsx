@@ -282,22 +282,6 @@ function RhythmSection({ stats, canvas, checkins, moods }) {
   )
 }
 
-// Up to 34 weeks ending this week (floor 12), oldest first. Each entry = 7 date-key strings Mon–Sun.
-function buildLongViewWeeks(len = 34) {
-  const today = new Date()
-  const mondayOffset = (today.getDay() + 6) % 7
-  const thisMonday = new Date(today)
-  thisMonday.setDate(today.getDate() - mondayOffset)
-  return Array.from({ length: len }, (_, wi) => {
-    const weekMonday = new Date(thisMonday)
-    weekMonday.setDate(thisMonday.getDate() - (len - 1 - wi) * 7)
-    return Array.from({ length: 7 }, (_, di) => {
-      const d = new Date(weekMonday)
-      d.setDate(weekMonday.getDate() + di)
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-    })
-  })
-}
 
 function practicesColor(pct) {
   if (pct < 30) return 'rgba(28,58,46,.14)'
@@ -309,15 +293,17 @@ function practicesColor(pct) {
 const MOOD_LENS_COLOR = { good: '#1B3A2D', fine: '#9DB394', bad: '#D93B1C' }
 const EMPTY_CELL = 'rgba(0,0,0,.06)'
 
-function LongViewSection({ canvas, checkins, moods, stats, weeks, windowLen = 34 }) {
+const MOBILE_WINDOW = 30
+const DESKTOP_WINDOW = 90
+
+function LongViewSection({ canvas, checkins, moods, stats, days, windowLen }) {
   const [lens, setLens] = useState('practices')
   const todayKey = buildWindowKeys(1, 0)[0]
 
-  // Month labels: group weeks by the month of their Monday
   const monthGroups = useMemo(() => {
     const groups = []
-    weeks.forEach(wk => {
-      const mon = wk[0].slice(0, 7)
+    days.forEach(dk => {
+      const mon = dk.slice(0, 7)
       if (!groups.length || groups[groups.length - 1].key !== mon) {
         groups.push({ key: mon, span: 1 })
       } else {
@@ -328,16 +314,16 @@ function LongViewSection({ canvas, checkins, moods, stats, weeks, windowLen = 34
       label: new Date(g.key + '-15').toLocaleDateString('en-GB', { month: 'short' }).toLowerCase(),
       span: g.span,
     }))
-  }, [weeks])
+  }, [days])
 
   const moodByPeriod = useMemo(() => stats.getMoodByPeriod(30), [stats])
   const closingRead = stats.getTimeOfDaySummary(moodByPeriod)
 
-  const activeWeeks = weeks.filter(wk =>
-    wk.some(dk => (checkins[dk] || []).length > 0 || moods.some(m => m.date_key === dk))
+  const activeDays = days.filter(dk =>
+    (checkins[dk] || []).length > 0 || moods.some(m => m.date_key === dk)
   ).length
 
-  const readFallback = `${activeWeeks} of ${windowLen} weeks with data.`
+  const readFallback = `${activeDays} of ${windowLen} days with data.`
 
   return (
     <section className={`${styles.section} ${styles.sectionCard}`}>
@@ -354,36 +340,29 @@ function LongViewSection({ canvas, checkins, moods, stats, weeks, windowLen = 34
         </div>
       </div>
 
-      {/* Month labels */}
+      {/* Month labels — span proportional to day count per month */}
       <div className={styles.monthRow}>
         {monthGroups.map(g => (
           <span key={g.key} className={styles.monthLabel} style={{ flex: g.span }}>{g.label}</span>
         ))}
       </div>
 
-      {/* Grid */}
+      {/* One cell per day */}
       <div className={styles.longViewGrid}>
-        {weeks.map((wk, wi) => {
-          const isCurrentWeek = wk.includes(todayKey)
-          return (
-            <div key={wi} className={`${styles.weekCol}${isCurrentWeek ? ` ${styles.weekColSelected}` : ''}`}>
-              {wk.map(dk => {
-                const isFuture = dk > todayKey
-                let color = EMPTY_CELL
-                if (!isFuture) {
-                  if (lens === 'practices') {
-                    const hasPractice = (checkins[dk] || []).length > 0
-                    color = hasPractice ? practicesColor(dayCompPct(canvas, checkins, dk)) : EMPTY_CELL
-                  } else {
-                    const hasMood = moods.some(m => m.date_key === dk)
-                    const mood = hasMood ? dominantMoodFor(moods, dk) : null
-                    color = mood ? MOOD_LENS_COLOR[mood] : EMPTY_CELL
-                  }
-                }
-                return <div key={dk} className={styles.longViewCell} style={{ background: color }} />
-              })}
-            </div>
-          )
+        {days.map(dk => {
+          const isFuture = dk > todayKey
+          let color = EMPTY_CELL
+          if (!isFuture) {
+            if (lens === 'practices') {
+              color = (checkins[dk] || []).length > 0
+                ? practicesColor(dayCompPct(canvas, checkins, dk))
+                : EMPTY_CELL
+            } else {
+              const mood = dominantMoodFor(moods, dk)
+              color = mood ? MOOD_LENS_COLOR[mood] : EMPTY_CELL
+            }
+          }
+          return <div key={dk} className={styles.longViewCell} style={{ background: color }} />
         })}
       </div>
 
@@ -415,63 +394,45 @@ function LongViewSection({ canvas, checkins, moods, stats, weeks, windowLen = 34
   )
 }
 
-function weekNeedDays(checkins, needId, week) {
-  return week.filter(dk => (checkins[dk] || []).some(e => e.need_id === needId)).length
-}
-
-function ribbonNeedColor(days, mode) {
-  if (days === 0) return 'rgba(0,0,0,.05)'
-  if (days < 4) return 'rgba(0,0,0,.12)'
-  return TIER_BAR[mode]
-}
-
-function weekPracticeDone(checkins, needId, practiceId, practiceLabel, week) {
-  return week.some(dk =>
-    (checkins[dk] || []).some(e =>
-      e.need_id === needId &&
-      (practiceId && e.practice_id ? e.practice_id === practiceId : e.practice_text === practiceLabel)
-    )
-  )
-}
 
 function practiceClosingLine(allCount, activeCount) {
   if (allCount === 0) return null
   if (activeCount === allCount) return `All ${allCount} practice${allCount === 1 ? '' : 's'} are still running.`
-  if (activeCount === 1) return 'One practice is the whole need — worth adding a second so a bad week does not empty it.'
+  if (activeCount === 1) return 'One practice is the whole need — worth adding a second so a bad stretch does not empty it.'
   if (activeCount === 0) return 'No practices have run recently — consider retiring or restarting them.'
   const word = activeCount === 2 ? 'two' : activeCount === 3 ? 'three' : `${activeCount}`
   return `${activeCount} of ${allCount} practices still run. The need looks alive because ${word} practices carry it.`
 }
 
-function RibbonsSection({ canvas, checkins, practicesDB, weeks, windowLen = 34 }) {
+function RibbonsSection({ canvas, checkins, practicesDB, days, windowLen }) {
   const [openNeed, setOpenNeed] = useState(null)
   const recent30 = useMemo(() => buildWindowKeys(30, 0), [])
+  const recent90 = useMemo(() => buildWindowKeys(90, 0), [])
   const todayKey = buildWindowKeys(1, 0)[0]
 
   const needRows = useMemo(() => {
     return NEEDS.filter(n => canvas[n.id]).map(need => {
       const mode = canvas[need.id]
-      const weekActivity = weeks.map(wk => weekNeedDays(checkins, need.id, wk))
-      const weeksActive = weekActivity.filter(d => d > 0).length
+      const daysActive = days.filter(dk => (checkins[dk] || []).some(e => e.need_id === need.id)).length
       const isDormant = !recent30.some(dk => (checkins[dk] || []).some(e => e.need_id === need.id))
-      const lastLoggedDk = weeks.flat().reverse().find(dk =>
+      const lastLoggedDk = recent90.slice().reverse().find(dk =>
         (checkins[dk] || []).some(e => e.need_id === need.id)
       ) ?? null
       const sinceMonth = lastLoggedDk
         ? new Date(lastLoggedDk + 'T12:00:00').toLocaleDateString('en-GB', { month: 'long' }).toLowerCase()
         : null
-      return { need, mode, weekActivity, weeksActive, isDormant, sinceMonth }
-    }).sort((a, b) => b.weeksActive - a.weeksActive)
-  }, [canvas, checkins, weeks, recent30])
+      return { need, mode, daysActive, isDormant, sinceMonth }
+    }).sort((a, b) => b.daysActive - a.daysActive)
+  }, [canvas, checkins, days, recent30, recent90])
 
   return (
     <section className={styles.section}>
       <div className={styles.sectionHeader}>
-        <span className={styles.sectionLabel}>EACH NEED, WEEK BY WEEK</span>
+        <span className={styles.sectionLabel}>EACH NEED, DAY BY DAY</span>
         <span className={styles.sectionMeta}>held ▸ faded</span>
       </div>
       <div className={styles.ribbonStack}>
-        {needRows.map(({ need, mode, weekActivity, weeksActive, isDormant, sinceMonth }) => {
+        {needRows.map(({ need, mode, daysActive, isDormant, sinceMonth }) => {
           const isOpen = openNeed === need.id
           const practices = practicesDB.filter(p => p.need_id === need.id)
           const activePractices = practices.filter(p =>
@@ -499,18 +460,22 @@ function RibbonsSection({ canvas, checkins, practicesDB, weeks, windowLen = 34 }
                     {sinceMonth ? `nothing logged since ${sinceMonth}` : 'nothing logged'}
                   </span>
                 ) : (
-                  <span className={styles.ribbonStat}>{weeksActive} of {windowLen} weeks</span>
+                  <span className={styles.ribbonStat}>{daysActive} of {windowLen} days</span>
                 )}
                 <span className={styles.ribbonChevron}>{isOpen ? '▴' : '▾'}</span>
               </button>
 
-              {/* Need band — 34 weekly cells */}
+              {/* Need band — one cell per day */}
               <div className={styles.ribbonBand}>
-                {weekActivity.map((days, wi) => (
+                {days.map(dk => (
                   <div
-                    key={wi}
+                    key={dk}
                     className={styles.ribbonCell}
-                    style={{ background: ribbonNeedColor(days, mode) }}
+                    style={{
+                      background: (checkins[dk] || []).some(e => e.need_id === need.id)
+                        ? TIER_BAR[mode]
+                        : EMPTY_CELL,
+                    }}
                   />
                 ))}
               </div>
@@ -523,11 +488,14 @@ function RibbonsSection({ canvas, checkins, practicesDB, weeks, windowLen = 34 }
                   ) : (
                     <>
                       {practices.map(p => {
-                        const practiceWeeks = weeks.map(wk =>
-                          weekPracticeDone(checkins, need.id, p.id, p.label, wk)
+                        const practiceDays = days.map(dk =>
+                          (checkins[dk] || []).some(e =>
+                            e.need_id === need.id &&
+                            (p.id && e.practice_id ? e.practice_id === p.id : e.practice_text === p.label)
+                          )
                         )
-                        const weeksP = practiceWeeks.filter(Boolean).length
-                        const lastDk = weeks.flat().reverse().find(dk =>
+                        const daysP = practiceDays.filter(Boolean).length
+                        const lastDk = days.slice().reverse().find(dk =>
                           (checkins[dk] || []).some(e =>
                             e.need_id === need.id &&
                             (p.id && e.practice_id ? e.practice_id === p.id : e.practice_text === p.label)
@@ -542,15 +510,15 @@ function RibbonsSection({ canvas, checkins, practicesDB, weeks, windowLen = 34 }
                             <div className={styles.practiceRowTop}>
                               <span className={styles.practiceName}>{p.label}</span>
                               <span className={`${styles.practiceStat}${isQuiet ? ` ${styles.practiceStatQuiet}` : ''}`}>
-                                {isQuiet ? `${daysSince ?? '∞'}d quiet` : `${weeksP}/34`}
+                                {isQuiet ? `${daysSince ?? '∞'}d quiet` : `${daysP}/${windowLen}`}
                               </span>
                             </div>
                             <div className={styles.practiceBand}>
-                              {practiceWeeks.map((done, wi) => (
+                              {practiceDays.map((done, i) => (
                                 <div
-                                  key={wi}
+                                  key={i}
                                   className={styles.practiceBandCell}
-                                  style={{ background: done ? TIER_BAR[mode] : 'rgba(0,0,0,.05)' }}
+                                  style={{ background: done ? TIER_BAR[mode] : EMPTY_CELL }}
                                 />
                               ))}
                             </div>
@@ -830,16 +798,8 @@ export default function Data({ state, archivePractice }) {
     [canvas, checkins, moods, practices, practicesDB]
   )
 
-  const ribbonLen = useMemo(() => {
-    const keys = Object.keys(checkins)
-    if (!keys.length) return 12
-    const first = keys.sort()[0]
-    const today = new Date(); today.setHours(12, 0, 0, 0)
-    const weeks = Math.ceil((today - new Date(first + 'T12:00:00')) / (7 * 24 * 60 * 60 * 1000))
-    return Math.max(12, Math.min(34, weeks))
-  }, [checkins])
-
-  const longViewWeeks = useMemo(() => buildLongViewWeeks(ribbonLen), [ribbonLen])
+  const windowLen = isDesktop ? DESKTOP_WINDOW : MOBILE_WINDOW
+  const dayKeys = useMemo(() => buildWindowKeys(windowLen, 0), [windowLen])
   const hasCanvas = Object.keys(canvas).length > 0
 
   const periodToggleEl = (
@@ -879,8 +839,8 @@ export default function Data({ state, archivePractice }) {
               <WhatChanged period={period} canvas={canvas} checkins={checkins} />
               <RhythmSection stats={stats} canvas={canvas} checkins={checkins} moods={moods} />
             </div>
-            <LongViewSection canvas={canvas} checkins={checkins} moods={moods} stats={stats} weeks={longViewWeeks} windowLen={ribbonLen} />
-            <RibbonsSection canvas={canvas} checkins={checkins} practicesDB={practicesDB} weeks={longViewWeeks} windowLen={ribbonLen} />
+            <LongViewSection canvas={canvas} checkins={checkins} moods={moods} stats={stats} days={dayKeys} windowLen={windowLen} />
+            <RibbonsSection canvas={canvas} checkins={checkins} practicesDB={practicesDB} days={dayKeys} windowLen={windowLen} />
             <GoneQuietSection canvas={canvas} checkins={checkins} practicesDB={practicesDB} archivePractice={archivePractice} isDesktop={isDesktop} />
             <AllNumbersSection period={period} canvas={canvas} checkins={checkins} />
           </>
