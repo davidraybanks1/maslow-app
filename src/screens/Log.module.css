@@ -1053,6 +1053,39 @@
 }
 .calDetailCloseBtn:hover { opacity: 0.7; }
 
+.calDetailHeaderBtns {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.calDetailEditBtnActive {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.calDetailEditBtnActive:hover { opacity: 1; }
+
+.calDetailEditHint {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: rgba(0,0,0,.38);
+  margin-bottom: 4px;
+}
+
+.calDetailPracticeRowEditable {
+  cursor: pointer;
+  background: none;
+  border: none;
+  border-top: 0.5px solid rgba(0,0,0,.06);
+  width: 100%;
+  padding: 0;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+}
+.calDetailPracticeRowEditable:active { opacity: 0.55; }
+
 .calDetailMoodRow {
   display: flex;
   align-items: center;

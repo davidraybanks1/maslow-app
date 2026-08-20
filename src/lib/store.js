@@ -639,7 +639,13 @@ export function useAppState(onSignIn) {
     setState(prev => ({ ...prev, noteDeck: deck }))
   }
 
-  return { state, authLoading, updateCanvas, replaceCanvas, addPractice, renamePractice, archivePractice, removePractice, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule, updateReviewCadence, updateNoteDeck }
+  function syncCheckinDay(date, dayCheckins) {
+    const newCheckins = { ...checkinsRef.current, [date]: dayCheckins }
+    checkinsRef.current = newCheckins
+    setState(prev => ({ ...prev, checkins: newCheckins }))
+  }
+
+  return { state, authLoading, updateCanvas, replaceCanvas, addPractice, renamePractice, archivePractice, removePractice, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule, updateReviewCadence, updateNoteDeck, syncCheckinDay }
 }
 
 export function todayKey() {

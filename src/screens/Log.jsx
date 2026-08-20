@@ -5,6 +5,7 @@ import { weekKey, loadJournalEntry, loadDebriefs, loadDebriefTypes, addNoteDeckC
 import { createDataStats } from '../lib/dataStats'
 import { BUILTIN_NATURE_TYPES, BUILTIN_PEAK_TYPES, natureTagStyle, peakTagStyle, ENVIRONMENT_TAG_STYLE, parseDebriefEntry } from '../lib/debriefTypes'
 import LiveCanvasCard from '../components/LiveCanvasCard'
+import { supabase } from '../lib/supabase'
 import styles from './Log.module.css'
 
 const MOOD_PILL = {
@@ -570,7 +571,7 @@ function FullLogAccordion({ state }) {
   )
 }
 
-export default function Log({ state }) {
+export default function Log({ state, syncCheckinDay }) {
   const navigate = useNavigate()
 
   const [showFullLog, setShowFullLog] = useState(false)
@@ -595,7 +596,9 @@ export default function Log({ state }) {
   const [selectedDayKey, setSelectedDayKey] = useState(null)
   const [detailCheckins, setDetailCheckins] = useState([])
   const [detailLoading, setDetailLoading] = useState(false)
+  const [editMode, setEditMode] = useState(false)
   const calCheckinCache = useRef({})
+  useEffect(() => { setEditMode(false) }, [selectedDayKey])
 
   const [journalMeta, setJournalMeta] = useState([])
   const [ritualDismissed, setRitualDismissed] = useState(() => {
@@ -848,6 +851,58 @@ export default function Log({ state }) {
     calCheckinCache.current[dateKey] = data
     setDetailCheckins(data)
     setDetailLoading(false)
+  }
+
+  async function handlePracticeTap(p) {
+    if (!editMode || !selectedDayKey) return
+    const currentCheckins = detailCheckins
+    const checkin = currentCheckins.find(c =>
+      (c.practice_id && c.practice_id === p.id) ||
+      (!c.practice_id && c.practice_text === p.label && c.need_id === p.need_id)
+    )
+    if (!checkin) {
+      const modeName = state.canvas?.[p.need_id] || null
+      const tempId = `pending_${Date.now()}_${Math.random()}`
+      const completedAt = new Date().toISOString()
+      const newEntry = { id: tempId, need_id: p.need_id, practice_text: p.label, practice_id: p.id || null, mode: modeName, completed_at: completedAt, count: 1 }
+      const nextCheckins = [...currentCheckins, newEntry]
+      setDetailCheckins(nextCheckins)
+      calCheckinCache.current[selectedDayKey] = nextCheckins
+      const { data, error } = await supabase.from('checkins')
+        .insert({ user_id: state.userId, date_key: selectedDayKey, need_id: p.need_id, practice_text: p.label, practice_id: p.id || null, mode: modeName, completed_at: completedAt, count: 1 })
+        .select('id').single()
+      if (error) {
+        setDetailCheckins(currentCheckins)
+        calCheckinCache.current[selectedDayKey] = currentCheckins
+      } else if (data) {
+        const finalCheckins = nextCheckins.map(c => c.id === tempId ? { ...c, id: data.id } : c)
+        setDetailCheckins(finalCheckins)
+        calCheckinCache.current[selectedDayKey] = finalCheckins
+        syncCheckinDay?.(selectedDayKey, finalCheckins)
+      }
+    } else if (checkin.count === 1) {
+      const nextCheckins = currentCheckins.map(c => c.id === checkin.id ? { ...c, count: 2 } : c)
+      setDetailCheckins(nextCheckins)
+      calCheckinCache.current[selectedDayKey] = nextCheckins
+      const { error } = await supabase.from('checkins').update({ count: 2 }).eq('id', checkin.id)
+      if (error) {
+        setDetailCheckins(currentCheckins)
+        calCheckinCache.current[selectedDayKey] = currentCheckins
+      } else {
+        syncCheckinDay?.(selectedDayKey, nextCheckins)
+      }
+    } else {
+      const nextCheckins = currentCheckins.filter(c => c.id !== checkin.id)
+      setDetailCheckins(nextCheckins)
+      calCheckinCache.current[selectedDayKey] = nextCheckins
+      const { error } = await supabase.from('checkins').delete().eq('id', checkin.id)
+      if (error) {
+        setDetailCheckins(currentCheckins)
+        calCheckinCache.current[selectedDayKey] = currentCheckins
+      } else {
+        syncCheckinDay?.(selectedDayKey, nextCheckins)
+      }
+    }
   }
 
   // ── Step 1: Last week's log ───────────────────────────────────────────────
@@ -1608,7 +1663,15 @@ export default function Log({ state }) {
                 <div key={selectedDayKey} className={styles.calDetail}>
                   <div className={styles.calDetailHeader}>
                     <span className={styles.calDetailDate}>{formatDayDetailDate(selectedDayKey)}</span>
-                    <button className={styles.calDetailCloseBtn} onClick={() => setSelectedDayKey(null)}>close</button>
+                    <div className={styles.calDetailHeaderBtns}>
+                      {selectedDayKey < todayKey && (
+                        <button
+                          className={`${styles.calDetailCloseBtn}${editMode ? ` ${styles.calDetailEditBtnActive}` : ''}`}
+                          onClick={() => setEditMode(e => !e)}
+                        >{editMode ? 'done' : 'edit'}</button>
+                      )}
+                      <button className={styles.calDetailCloseBtn} onClick={() => setSelectedDayKey(null)}>close</button>
+                    </div>
                   </div>
 
                   {detailMoods.length > 0 && (
@@ -1632,13 +1695,19 @@ export default function Log({ state }) {
                       <div className={styles.calDetailSectionLabel}>
                         practices · {detailLoading ? '…' : `${metCount} of ${activePractices.length} met`}
                       </div>
+                      {editMode && <div className={styles.calDetailEditHint}>tap a practice to log or correct it.</div>}
                       {!detailLoading && activePractices.map(p => {
                         const checkin = findCheckin(p)
                         const isMet = !!checkin
                         const count = checkin?.count || 0
                         const modeName = state.canvas?.[p.need_id] || null
+                        const Tag = editMode ? 'button' : 'div'
                         return (
-                          <div key={p.id} className={styles.calDetailPracticeRow}>
+                          <Tag
+                            key={p.id}
+                            className={`${styles.calDetailPracticeRow}${editMode ? ` ${styles.calDetailPracticeRowEditable}` : ''}`}
+                            onClick={editMode ? () => handlePracticeTap(p) : undefined}
+                          >
                             <span
                               className={styles.calDetailPracticeRing}
                               style={isMet
@@ -1649,7 +1718,7 @@ export default function Log({ state }) {
                             <span className={styles.calDetailPracticeName}>
                               {p.label}{count > 1 ? ` ×${count}` : ''}
                             </span>
-                          </div>
+                          </Tag>
                         )
                       })}
                     </div>
