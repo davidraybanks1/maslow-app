@@ -1249,9 +1249,10 @@
     width: 100%;
     padding: 0 32px;
     box-sizing: border-box;
+    gap: 14px;
   }
 
-  .header { flex-shrink: 0; padding: 16px 0; }
+  .header { flex-shrink: 0; padding: 16px 0 0; }
   .headerRow { align-items: center; gap: 40px; }
   .headerLeft { flex: 0 0 auto; }
   .greeting { font-size: 40px; }
