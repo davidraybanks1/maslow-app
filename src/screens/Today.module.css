@@ -1491,6 +1491,25 @@
     padding: 14px 16px;
   }
 
+  /* Mood card internals: question+dots on one row, pills stacked below */
+  .moodRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .moodLeft {
+    display: flex;
+    width: 100%;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .moodPipRow { margin-top: 0; }
+  .moodCircles {
+    flex-shrink: 0;
+    align-self: flex-start;
+  }
+
   /* ── Journal section (desktop) — entries on paper, white-card composer ── */
   .journalSection {
     display: flex;
