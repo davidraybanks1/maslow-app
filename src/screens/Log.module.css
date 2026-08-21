@@ -1603,4 +1603,9 @@
      from the entries card. margin-bottom:24px collapses with archiveCards
      margin-top:12px → max(24,12) = 24px rendered gap. */
   .facetRows { margin-bottom: 24px; }
+
+  /* Right-align the quiet weekly-review group. spacer removed from flow so
+     both elements sit together at the right edge with the gap between them. */
+  .ritualQuiet { justify-content: flex-end; }
+  .ritualQuietSpacer { display: none; }
 }
