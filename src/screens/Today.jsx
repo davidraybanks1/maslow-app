@@ -376,6 +376,8 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   const [popupMode, setPopupMode] = useState(null)
   const tierElems = useRef({})
   const tierBtnElems = useRef({})
+  // Frozen sort order per mode — set at open, cleared at close so re-open re-sorts
+  const accordionSnapshots = useRef({})
   const [openRetroSlot, setOpenRetroSlot] = useState(null)
 
   const [moodSelections, setMoodSelections] = useState(() => {
@@ -674,7 +676,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 )
               }
 
-              // Mobile: inline accordion, sorts once per open
+              // Mobile: inline accordion with frozen sort order
               const isOpen = openTier === mode
               function getPracticeCount(n, practice) {
                 return checked
@@ -685,12 +687,19 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                   })
                   .reduce((s, e) => s + (e.count || 1), 0)
               }
-              const pools = modeNeeds.map(n => {
-                const pool = (state.practicesDB && state.practicesDB.length > 0)
-                  ? state.practicesDB.filter(p => p.need_id === n.id && !p.archived_at)
-                  : (state.practices[n.id] || []).map(label => ({ id: null, label }))
-                return { need: n, sorted: [...pool].sort((a, b) => getPracticeCount(n, a) - getPracticeCount(n, b)) }
-              })
+
+              // Snapshot: sort order is captured at open and held for the accordion's life.
+              // Tapping a practice updates counts but rows do not reorder mid-session.
+              // Closing clears the snapshot; reopening re-sorts at the current counts.
+              if (isOpen && !accordionSnapshots.current[mode]) {
+                accordionSnapshots.current[mode] = modeNeeds.map(n => {
+                  const pool = (state.practicesDB && state.practicesDB.length > 0)
+                    ? state.practicesDB.filter(p => p.need_id === n.id && !p.archived_at)
+                    : (state.practices[n.id] || []).map(label => ({ id: null, label }))
+                  return { need: n, sorted: [...pool].sort((a, b) => getPracticeCount(n, a) - getPracticeCount(n, b)) }
+                })
+              }
+              const pools = isOpen ? accordionSnapshots.current[mode] : []
 
               return (
                 <div
@@ -699,7 +708,15 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 >
                   <button
                     className={styles.tierHeader}
-                    onClick={() => setOpenTier(prev => prev === mode ? null : mode)}
+                    onClick={() => {
+                      if (openTier === mode) {
+                        delete accordionSnapshots.current[mode]
+                        setOpenTier(null)
+                      } else {
+                        delete accordionSnapshots.current[mode]
+                        setOpenTier(mode)
+                      }
+                    }}
                     aria-expanded={isOpen}
                   >
                     <div className={styles.tierHeaderTop}>
