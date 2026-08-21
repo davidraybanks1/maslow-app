@@ -1492,7 +1492,10 @@
 .noteCard:hover { background: var(--paper); }
 
 
-/* desktop tier: center the scroll content at a comfortable reading width (matches data) */
+.headerBlock { display: contents; }
+.colLeft { display: contents; }
+
+/* desktop grid */
 @media (min-width: 900px) {
   .content { max-width: 680px; margin: 0 auto; width: 100%; }
 }

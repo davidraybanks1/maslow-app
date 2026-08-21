@@ -1056,6 +1056,7 @@ export default function Log({ state, syncCheckinDay }) {
   return (
     <div className={styles.screen}>
       <div className={styles.content}>
+        <div className={styles.headerBlock}>
         {justFinished && (
           <div className={styles.completeBanner}>
             {cadence === 'daily'
@@ -1094,7 +1095,8 @@ export default function Log({ state, syncCheckinDay }) {
             <span className={styles.ritualQuietStart}>start early →</span>
           </button>
         )}
-
+        </div>
+        <div className={styles.colLeft}>
         {/* ── Resurfacing ── */}
         {archiveLoaded && archiveEntries.length > 0 && archiveEntries.length < 10 && (
           <div className={styles.resurfaceSection}>
@@ -1228,6 +1230,7 @@ export default function Log({ state, syncCheckinDay }) {
             </div>
           )
         })()}
+        </div>
 
         {/* ── Archive ── */}
         {(() => {
