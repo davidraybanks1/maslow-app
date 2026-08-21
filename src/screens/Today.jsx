@@ -27,14 +27,6 @@ const MOOD_PIP_COLOR = {
   bad:  'var(--survival)',
 }
 
-function buildTodaySentence(pct, target) {
-  if (pct === 0) return 'Start by tapping a mode below.'
-  const gap = pct - target
-  if (gap >= 10)  return "You're ahead of pace."
-  if (gap >= 0)   return "You're on track."
-  if (gap >= -15) return "A little behind — keep going."
-  return 'Room to grow today.'
-}
 
 // Shared math: each mode owns ≤25% of total; returns [{color, from, to}] in percent
 function buildProgressSegments(arcs) {
@@ -194,11 +186,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   }
   const ringPct = Math.round(totalRingFraction * 100)
 
-  // Desktop read-out: headline % vs canvas target
-  const activeNeedsForTarget = NEEDS.filter(n => state.canvas[n.id])
-  const canvasTarget = activeNeedsForTarget.length > 0
-    ? Math.round(activeNeedsForTarget.reduce((sum, n) => sum + (MODE_THRESHOLDS[state.canvas[n.id]] || 0), 0) / activeNeedsForTarget.length)
-    : 60
   const lastModeWithNeeds = [...MODE_ORDER].reverse().find(m => NEEDS.some(n => state.canvas[n.id] === m))
 
   // Space-owned: kept for Data/Log screens (not shown on Today any more)
@@ -787,12 +774,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               )
             })}
           </div>
-          {isDesktop && activeNeedsForTarget.length > 0 && (
-            <div className={styles.tierReadOut}>
-              <span className={styles.tierReadOutPct}>{ringPct}%</span>
-              <span className={styles.tierReadOutText}>of needs met today. {buildTodaySentence(ringPct, canvasTarget)}</span>
-            </div>
-          )}
         </div>
 
         </div>{/* /colLeft */}
