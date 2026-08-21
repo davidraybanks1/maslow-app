@@ -186,8 +186,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   }
   const ringPct = Math.round(totalRingFraction * 100)
 
-  const lastModeWithNeeds = [...MODE_ORDER].reverse().find(m => NEEDS.some(n => state.canvas[n.id] === m))
-
   // Space-owned: kept for Data/Log screens (not shown on Today any more)
   const spaceByMode = {}
   let spaceMax = 0
@@ -621,8 +619,8 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                   >
                     <button
                       className={styles.tierHeader}
-                      onClick={() => setPopupMode(mode)}
-                      aria-haspopup="dialog"
+                      onClick={() => setPopupMode(isPopupOpen ? null : mode)}
+                      aria-expanded={isPopupOpen}
                       aria-controls={`needs-popup-${mode}`}
                       ref={el => { tierBtnElems.current[mode] = el }}
                     >
@@ -771,10 +769,8 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 state={state}
                 handlePracticeTap={handlePracticeTap}
                 navigate={navigate}
-                tierEl={null}
                 triggerEl={tierBtnElems.current[popupMode]}
                 onClose={() => setPopupMode(null)}
-                flipEdge={false}
               />
             )
           })()}

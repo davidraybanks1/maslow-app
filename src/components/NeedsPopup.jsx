@@ -24,7 +24,7 @@ function buildSortedPools(modeNeeds, state, checked) {
 export default function NeedsPopup({
   mode, pip, modeNeeds, maxBubbles, checked, justTapped,
   lastDoneMap, state, handlePracticeTap, navigate,
-  tierEl, triggerEl, onClose, flipEdge,
+  tierEl, triggerEl, onClose,
 }) {
   const isDesktop = useIsDesktop()
   const [phase, setPhase] = useState('open')
@@ -61,19 +61,10 @@ export default function NeedsPopup({
   }
 
   useEffect(() => {
-    function onOutside(e) {
-      if (tierEl && !tierEl.contains(e.target)) closeRef.current()
-    }
     function onKey(e) { if (e.key === 'Escape') closeRef.current() }
-    document.addEventListener('mousedown', onOutside)
-    document.addEventListener('touchstart', onOutside, { passive: true })
     document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('mousedown', onOutside)
-      document.removeEventListener('touchstart', onOutside)
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [tierEl])
+    return () => document.removeEventListener('keydown', onKey)
+  }, [])
 
   const isClosing = phase === 'closing'
 
@@ -130,7 +121,7 @@ export default function NeedsPopup({
                 <div
                   key={practiceKey}
                   className={styles.practiceRow}
-                  onClick={e => { e.stopPropagation(); handlePracticeTap(n.id, mode, practice.label, practice.id) }}
+                  onClick={() => handlePracticeTap(n.id, mode, practice.label, practice.id)}
                 >
                   <div
                     className={`${styles.practiceCheck} ${count > 0 ? styles.practiceCheckFilled : ''}`}
@@ -181,7 +172,7 @@ export default function NeedsPopup({
       aria-label={mode}
       tabIndex={-1}
       ref={containerRef}
-      className={`${styles.popup} ${isClosing ? styles.popupClosing : ''} ${flipEdge ? styles.popupFlip : ''}`}
+      className={`${styles.popup} ${isClosing ? styles.popupClosing : ''}`}
     >
       {header}
       {needsList}
