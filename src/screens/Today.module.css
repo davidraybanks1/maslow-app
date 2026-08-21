@@ -1642,6 +1642,8 @@
     box-sizing: border-box;
     padding-top: 14px;
     grid-template-columns: calc(50% - var(--tier-gap) / 2) minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    align-content: start;
     column-gap: var(--journal-gutter);
   }
 
@@ -1668,7 +1670,6 @@
   }
 
   .journalBottom {
-    margin-top: 8px;
     grid-column: 1;
     grid-row: 2;
     display: flex;
