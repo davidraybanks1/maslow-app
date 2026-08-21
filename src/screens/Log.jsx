@@ -1451,7 +1451,14 @@ export default function Log({ state, syncCheckinDay }) {
 
           return (
             <div className={styles.archiveSection}>
-              <div className={styles.archiveSectionLabel}>the archive</div>
+              <div className={styles.archiveSectionHeader}>
+                <span className={styles.archiveSectionLabel}>the archive</span>
+                <span className={styles.archiveSectionMeta}>
+                  {archiveEntries.length === 0
+                    ? 'no entries yet.'
+                    : archiveHeaderText(filtered, archiveEntries.length, filterSlot, filterNeed, filterState, filterCustom, filterDate, rangeLabel)}
+                </span>
+              </div>
 
               <div className={styles.facetCard}>
               <div className={styles.facetRows}>
@@ -1665,16 +1672,11 @@ export default function Log({ state, syncCheckinDay }) {
               </div>
               </div>
 
-              <div className={styles.archiveHeader}>
-                <span className={styles.archiveHeaderText}>
-                  {archiveEntries.length === 0
-                    ? 'no entries yet.'
-                    : archiveHeaderText(filtered, archiveEntries.length, filterSlot, filterNeed, filterState, filterCustom, filterDate, rangeLabel)}
-                </span>
-                {anyFilter && (
+              {anyFilter && (
+                <div className={styles.archiveHeader}>
                   <button className={styles.archiveClearBtn} onClick={() => { setFilterSlot(null); setFilterNeed(null); setFilterState(null); setFilterCustom(null); setFilterDate(null); setRangeStart(null); setRangeEnd(null); setPickAnchor(null); setDatePickerOpen(false); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}>clear</button>
-                )}
-              </div>
+                </div>
+              )}
 
               <div className={styles.archiveCards}>
                 {visible.map(e => {

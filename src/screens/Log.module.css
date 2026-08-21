@@ -581,6 +581,12 @@
   margin-bottom: 20px;
 }
 
+.archiveSectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .archiveSectionLabel {
   font-family: var(--font-mono);
   font-size: 9.5px;
@@ -588,6 +594,12 @@
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: rgba(0,0,0,.42);
+}
+
+.archiveSectionMeta {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: rgba(0,0,0,.35);
 }
 
 .facetCard { display: contents; }
@@ -1572,7 +1584,7 @@
   }
 
   /* Paired right-hand meta — one step quieter than the label. */
-  .threadSectionMeta { font-size: 12px; }
+  .threadSectionMeta, .archiveSectionMeta { font-size: 12px; }
 
   /* Facet GROUP labels (WHEN / TIME OF DAY / NEED / HOW IT FELT / CUSTOM)
      are subordinate to the "the archive" section label, so one step quieter. */
