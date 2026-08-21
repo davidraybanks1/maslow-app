@@ -1535,6 +1535,15 @@
     grid-column: 1;
   }
 
+  /* The first section in colLeft (peek or threads) carries mobile
+     top-spacing (margin-top:20px border-top padding-top:18px) that drops
+     its label below the archive label. Strip it so both column tops align. */
+  .colLeft > :first-child {
+    margin-top: 0;
+    border-top: 0;
+    padding-top: 0;
+  }
+
   /* calSection is now a child of colLeft — no grid placement needed.
      base margin-top: 20px provides the gap below threads. Zero the bottom
      margin so .content padding-bottom handles the page end. */
