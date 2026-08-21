@@ -106,8 +106,11 @@
 }
 .popupClose:hover { background: var(--track); }
 
-/* ── Content area ── */
+/* ── Content area: need groups as auto-fill columns ── */
 .popupContent {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0 16px;
   padding: 0 14px 14px;
 }
 
@@ -117,10 +120,7 @@
 
 /* ── Need groups ── */
 .needGroup { padding-top: 10px; }
-.needGroup + .needGroup {
-  border-top: 0.5px solid var(--track);
-  margin-top: 6px;
-}
+/* No border between groups — grid gap + padding provide the visual rhythm */
 
 .needSubHeader {
   display: flex;
@@ -180,9 +180,6 @@
   color: var(--ink);
   flex: 1;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .practiceMeta {
