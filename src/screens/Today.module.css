@@ -734,7 +734,10 @@
 
 /* ── Mobile-only accordion (<900px) ── */
 @media (max-width: 899px) {
-  /* .tier overflow:hidden is added separately in the next commit (item 2) */
+  /* overflow:hidden clips the max-height accordion and round-corner borders.
+     Must be absent at ≥900px so the NeedsPopup (position:absolute) can escape
+     the card bounds. */
+  .tier { overflow: hidden; }
 
   .tierOpen {
     border-color: rgba(0,0,0,.2);
