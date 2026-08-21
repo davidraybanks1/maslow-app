@@ -1530,6 +1530,7 @@
     row-gap: 24px;
     align-items: start;
     max-width: 1280px;
+    width: 100%;
     padding: 0 32px 32px;
     box-sizing: border-box;
     margin: 0;
