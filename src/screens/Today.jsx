@@ -700,6 +700,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                   <button
                     className={styles.tierHeader}
                     onClick={() => setOpenTier(prev => prev === mode ? null : mode)}
+                    aria-expanded={isOpen}
                   >
                     <div className={styles.tierHeaderTop}>
                       <div className={styles.tierDot} style={{ background: pip }} />
