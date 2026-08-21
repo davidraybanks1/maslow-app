@@ -590,6 +590,8 @@
   color: rgba(0,0,0,.42);
 }
 
+.facetCard { display: contents; }
+
 .facetRows {
   display: flex;
   flex-direction: column;
@@ -683,7 +685,6 @@
   background: var(--card);
   border: 0.5px solid var(--hairline);
   border-radius: 16px;
-  overflow: hidden;
   margin-top: 12px;
 }
 
@@ -1558,4 +1559,17 @@
   /* Facet GROUP labels (WHEN / TIME OF DAY / NEED / HOW IT FELT / CUSTOM)
      are subordinate to the "the archive" section label, so one step quieter. */
   .facetGroupLabel { font-size: 11px; }
+
+  /* At half viewport width the chip rows wrap into a loose pile — group
+     them inside a single white card. display:contents on mobile keeps
+     the chip rows flowing inline with the section, no wrapper visible. */
+  .facetCard {
+    display: block;
+    background: #FFFFFF;
+    border: 0.5px solid rgba(0,0,0,.1);
+    border-radius: 16px;
+    padding: 4px 16px 14px;
+    margin-top: 11px;
+  }
+  .facetCard .facetRows { margin-top: 0; }
 }

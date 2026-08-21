@@ -1245,6 +1245,7 @@ export default function Log({ state, syncCheckinDay }) {
             <div className={styles.archiveSection}>
               <div className={styles.archiveSectionLabel}>the archive</div>
 
+              <div className={styles.facetCard}>
               <div className={styles.facetRows}>
                 {/* date group */}
                 <div className={styles.facetGroup}>
@@ -1453,6 +1454,7 @@ export default function Log({ state, syncCheckinDay }) {
                     </div>
                   </div>
                 )}
+              </div>
               </div>
 
               <div className={styles.archiveHeader}>
