@@ -100,24 +100,20 @@
   .scrollBody { overflow: visible; padding-bottom: 0; }
 }
 
-/* ── Desktop: dropdown ── */
+/* ── Desktop: rail dropdown ── */
 @media (min-width: 900px) {
+  /* position:absolute clears mobile fixed/bottom:0/left:0; JS overrides to
+     fixed+bottom+left via inline style for the rail anchor. */
   .menu {
     position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
     bottom: auto;
     left: auto;
-    width: 272px;
     border: 0.5px solid var(--hairline);
-    border-radius: 14px;
     padding: 10px 0 10px;
     z-index: 200;
     max-height: 80vh;
     overflow-y: auto;
-    animation: dropdownIn 150ms ease both;
   }
-  .menuClosing { animation: dropdownOut 150ms ease both; }
 
   /* Rail dropdown: JS applies position:fixed+bottom+left; CSS sets size, shape, animation. */
   .menuDropUp {
