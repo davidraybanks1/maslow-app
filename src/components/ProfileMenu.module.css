@@ -207,9 +207,9 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
-.sectionLabelPersonalize { background: rgba(232,184,31,.35); color: var(--ink); }
-.sectionLabelAccount     { background: var(--exploration);   color: #ffffff; }
-.sectionLabelAbout       { background: var(--appreciation);  color: var(--ink); }
+.sectionLabelPersonalize { background: rgba(232,184,31,.35);  color: var(--ink); }
+.sectionLabelAccount     { background: rgba(27,58,45,.35);   color: var(--ink); }
+.sectionLabelAbout       { background: rgba(184,195,177,.35); color: var(--ink); }
 
 /* ── Section container (no card borders) ── */
 .section {
