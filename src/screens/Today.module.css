@@ -1450,6 +1450,8 @@
   .journalScroll {
     grid-column: 2;
     grid-row: 2;
+    align-self: start;
+    margin-top: 8px;
     width: 100%;
     box-sizing: border-box;
   }
