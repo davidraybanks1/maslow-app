@@ -1370,6 +1370,7 @@
   .desktopWrap {
     display: flex;
     flex-direction: column;
+    min-height: 100vh;
     max-width: 1280px;
     margin: 0;
     width: 100%;
@@ -1406,7 +1407,9 @@
   /* ── Four-band grid — colLeft/colRight transparent, children placed explicitly ── */
   .list {
     display: grid;
+    flex: 1;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto auto auto 1fr;
     column-gap: 18px;
     row-gap: 14px;
     align-items: stretch;
@@ -1502,9 +1505,14 @@
   .journalComposerInput::placeholder { color: var(--ink4); }
 
   /* Add button docked inside the textarea, bottom-right */
-  .journalComposerWrap { position: relative; }
+  .journalComposerWrap {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
 
-  .journalComposerInput { padding-bottom: 34px; }
+  .journalComposerInput { padding-bottom: 34px; flex: 1; }
 
   .journalComposerFooter {
     position: absolute;
@@ -1627,6 +1635,7 @@
   /* ── Journal section (desktop) — left col: chips+composer; right col: entries ── */
   .journalSection {
     display: grid;
+    height: 100%;
     grid-template-columns: calc(50% - var(--tier-gap) / 2) minmax(0, 1fr);
     column-gap: var(--tier-gap);
   }
@@ -1657,6 +1666,8 @@
     margin-top: 8px;
     grid-column: 1;
     grid-row: 2;
+    display: flex;
+    flex-direction: column;
   }
 
   /* Chips on paper get white fill so they lift off the paper surface */
@@ -1670,6 +1681,9 @@
     border-radius: 16px;
     padding: 14px 16px;
     margin-top: 10px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
   }
 
 
