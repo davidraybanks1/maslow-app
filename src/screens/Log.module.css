@@ -1591,16 +1591,7 @@
      are subordinate to the "the archive" section label, so one step quieter. */
   .facetGroupLabel { font-size: 11px; }
 
-  /* At half viewport width the chip rows wrap into a loose pile — group
-     them inside a single white card. display:contents on mobile keeps
-     the chip rows flowing inline with the section, no wrapper visible. */
-  .facetCard {
-    display: block;
-    background: #FFFFFF;
-    border: 0.5px solid rgba(0,0,0,.1);
-    border-radius: 16px;
-    padding: 4px 16px 14px;
-    margin-top: 11px;
-  }
-  .facetCard .facetRows { margin-top: 0; }
+  /* Without a card container the facet block needs spatial separation
+     from the entries card. 12px here + 12px archiveCards margin-top = 24px. */
+  .facetRows { margin-bottom: 12px; }
 }
