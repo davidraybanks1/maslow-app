@@ -641,24 +641,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                         {modeNeeds.map(n => n.name).join(', ')}
                       </div>
                     </button>
-                    {isPopupOpen && (
-                      <NeedsPopup
-                        mode={mode}
-                        pip={pip}
-                        modeNeeds={modeNeeds}
-                        maxBubbles={maxBubbles}
-                        checked={checked}
-                        justTapped={justTapped}
-                        lastDoneMap={lastDoneMap}
-                        state={state}
-                        handlePracticeTap={handlePracticeTap}
-                        navigate={navigate}
-                        tierEl={tierElems.current[mode]}
-                        triggerEl={tierBtnElems.current[mode]}
-                        onClose={() => setPopupMode(null)}
-                        flipEdge={mode === lastModeWithNeeds}
-                      />
-                    )}
                   </div>
                 )
               }
@@ -774,6 +756,28 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               )
             })}
           </div>
+          {isDesktop && popupMode && (() => {
+            const pNeeds = NEEDS.filter(n => state.canvas[n.id] === popupMode)
+            return (
+              <NeedsPopup
+                key={popupMode}
+                mode={popupMode}
+                pip={MODES[popupMode]?.pip}
+                modeNeeds={pNeeds}
+                maxBubbles={MODE_MAX_BUBBLES[popupMode] || 0}
+                checked={checked}
+                justTapped={justTapped}
+                lastDoneMap={lastDoneMap}
+                state={state}
+                handlePracticeTap={handlePracticeTap}
+                navigate={navigate}
+                tierEl={null}
+                triggerEl={tierBtnElems.current[popupMode]}
+                onClose={() => setPopupMode(null)}
+                flipEdge={false}
+              />
+            )
+          })()}
         </div>
 
         </div>{/* /colLeft */}

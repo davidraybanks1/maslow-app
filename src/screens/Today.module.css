@@ -654,7 +654,6 @@
   border-radius: 10px;
   border: 0.5px solid var(--hairline);
   background: var(--card);
-  position: relative;
   transition: border-color 150ms ease;
 }
 
@@ -734,9 +733,7 @@
 
 /* ── Mobile-only accordion (<900px) ── */
 @media (max-width: 899px) {
-  /* overflow:hidden clips the max-height accordion and round-corner borders.
-     Must be absent at ≥900px so the NeedsPopup (position:absolute) can escape
-     the card bounds. */
+  /* overflow:hidden clips the max-height accordion transition and rounds corners cleanly. */
   .tier { overflow: hidden; }
 
   .tierOpen {

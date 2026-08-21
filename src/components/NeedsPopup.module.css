@@ -1,31 +1,15 @@
-/* ── Keyframes ── */
-@keyframes popupIn  { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes popupOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-4px); } }
 @keyframes sheetIn  { from { transform: translateY(100%); } to { transform: translateY(0); } }
 @keyframes sheetOut { from { transform: translateY(0); } to { transform: translateY(100%); } }
 @keyframes scrimIn  { from { opacity: 0; } to { opacity: 1; } }
 @keyframes scrimOut { from { opacity: 1; } to { opacity: 0; } }
 
-/* ── Desktop popup — absolutely anchored beneath the tier card ── */
+/* ── Desktop drawer — in-flow, below the tier row ── */
 .popup {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  width: 100%;
-  min-width: 280px;
-  z-index: 100;
+  margin-top: 10px;
   background: #FFFFFF;
   border: 0.5px solid rgba(0,0,0,.1);
-  border-radius: 12px;
-  animation: popupIn 150ms ease both;
+  border-radius: 16px;
   outline: none;
-}
-.popupClosing { animation: popupOut 150ms ease both; }
-/* Flip to right-anchor when card is at the right edge of the tier row */
-.popupFlip { left: auto; right: 0; }
-
-@media (prefers-reduced-motion: reduce) {
-  .popup, .popupClosing { animation: none !important; }
 }
 
 /* ── Mobile scrim ── */
@@ -122,11 +106,9 @@
 }
 .popupClose:hover { background: var(--track); }
 
-/* ── Scrollable content area ── */
+/* ── Content area ── */
 .popupContent {
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  padding: 0 14px 12px;
+  padding: 0 14px 14px;
 }
 
 .sheet .popupContent {
