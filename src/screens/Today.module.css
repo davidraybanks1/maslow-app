@@ -1638,6 +1638,8 @@
   .journalSection {
     display: grid;
     height: 100%;
+    box-sizing: border-box;
+    padding-top: 14px;
     grid-template-columns: calc(50% - var(--tier-gap) / 2) minmax(0, 1fr);
     column-gap: var(--tier-gap);
   }
