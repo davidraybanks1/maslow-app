@@ -1496,6 +1496,17 @@
 .headerBlock { display: contents; }
 .colLeft { display: contents; }
 
+/* mobile reorder: calendar moves inside colLeft in DOM (before archive),
+   so restoring mobile order (archive before calendar) requires flex + order.
+   Margins that previously collapsed between siblings would sum in flex —
+   zero the sending side on each affected pair to keep 20px gaps unchanged. */
+@media (max-width: 899px) {
+  .content { display: flex; flex-direction: column; }
+  .calSection { order: 1; margin-top: 0; }
+  .ritualDueCard { margin-bottom: 0; }
+  .ritualQuiet { margin-bottom: 0; }
+}
+
 /* desktop grid */
 @media (min-width: 900px) {
   /* Two-column grid, left-anchored. max-width + padding match Today's
@@ -1522,21 +1533,19 @@
   .colLeft {
     display: block;
     grid-column: 1;
-    grid-row: 2;
   }
 
+  /* calSection is now a child of colLeft — no grid placement needed.
+     base margin-top: 20px provides the gap below threads. Zero the bottom
+     margin so .content padding-bottom handles the page end. */
   .calSection {
-    grid-column: 1;
-    grid-row: 3;
-    margin-top: 0;
-    margin-bottom: 32px;
+    margin-bottom: 0;
   }
 
-  /* Archive spans right column across both content rows. Strip the mobile
-     border-top / margin / padding — the grid gap handles vertical rhythm. */
+  /* Archive is the sole item in column 2. Strip the mobile border-top /
+     margin / padding — the grid gap handles vertical rhythm. */
   .archiveSection {
     grid-column: 2;
-    grid-row: 2 / span 2;
     margin-top: 0;
     border-top: 0;
     padding-top: 0;

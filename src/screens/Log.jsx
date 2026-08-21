@@ -1230,6 +1230,214 @@ export default function Log({ state, syncCheckinDay }) {
             </div>
           )
         })()}
+
+        {/* ── Calendar ── */}
+        {archiveLoaded && (() => {
+          const today = new Date(); today.setHours(12, 0, 0, 0)
+          const todayKey = dateKeyFor(today)
+          const isCurrentMonth = calYear === today.getFullYear() && calMonth === today.getMonth()
+          const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate()
+          const firstDayOfWeek = (new Date(calYear, calMonth, 1).getDay() + 6) % 7
+          const monthPrefix = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-`
+
+          // Mood grid index: first match wins (state.moods ordered created_at DESC)
+          const monthMoodIndex = {}
+          for (const m of (state.moods || [])) {
+            if (m.date_key.startsWith(monthPrefix) && !monthMoodIndex[m.date_key]) {
+              monthMoodIndex[m.date_key] = m
+            }
+          }
+          const monthHasJournal = new Set(
+            archiveEntries.filter(e => e.date_key.startsWith(monthPrefix)).map(e => e.date_key)
+          )
+
+          // Day detail derived data
+          const detailMoods = selectedDayKey
+            ? (state.moods || []).filter(m => m.date_key === selectedDayKey)
+                .sort((a, b) => (SLOT_ORDER[a.prompt_time] || 0) - (SLOT_ORDER[b.prompt_time] || 0))
+            : []
+          const detailJournals = selectedDayKey
+            ? archiveEntries.filter(e => e.date_key === selectedDayKey).slice().reverse()
+            : []
+          const canvasNeedIds = new Set(Object.keys(state.canvas || {}).filter(id => state.canvas[id]))
+          const activePractices = (state.practicesDB || []).filter(p => !p.archived_at && canvasNeedIds.has(p.need_id))
+          const findCheckin = p => detailCheckins.find(c =>
+            (c.practice_id && c.practice_id === p.id) ||
+            (!c.practice_id && c.practice_text === p.label && c.need_id === p.need_id)
+          )
+          const metCount = activePractices.filter(p => findCheckin(p)).length
+
+          return (
+            <div className={styles.calSection}>
+              <span className={styles.calSectionLabel}>calendar</span>
+              <div className={styles.calCard}>
+                <div className={styles.calNavRow}>
+                  <button
+                    className={styles.calNavBtn}
+                    onClick={() => {
+                      if (calMonth === 0) { setCalYear(y => y - 1); setCalMonth(11) }
+                      else setCalMonth(m => m - 1)
+                      setSelectedDayKey(null)
+                    }}
+                    aria-label="previous month"
+                  >‹</button>
+                  <span className={styles.calNavMonthLabel}>{MONTHS_LONG[calMonth]} {calYear}</span>
+                  <button
+                    className={`${styles.calNavBtn}${isCurrentMonth ? ` ${styles.calNavBtnDisabled}` : ''}`}
+                    disabled={isCurrentMonth}
+                    onClick={() => {
+                      if (calMonth === 11) { setCalYear(y => y + 1); setCalMonth(0) }
+                      else setCalMonth(m => m + 1)
+                      setSelectedDayKey(null)
+                    }}
+                    aria-label="next month"
+                  >›</button>
+                </div>
+
+                <div className={styles.calDayLabels}>
+                  {['m','t','w','t','f','s','s'].map((d, i) => (
+                    <span key={i} className={styles.calDayLabel}>{d}</span>
+                  ))}
+                </div>
+
+                <div className={styles.calGrid}>
+                  {Array.from({ length: firstDayOfWeek }, (_, i) => (
+                    <div key={`blank-${i}`} className={styles.calDayBlank} />
+                  ))}
+                  {Array.from({ length: daysInMonth }, (_, i) => {
+                    const day = i + 1
+                    const dateKey = `${monthPrefix}${String(day).padStart(2, '0')}`
+                    const isFuture = dateKey > todayKey
+                    const moodEntry = monthMoodIndex[dateKey]
+                    const moodWash = moodEntry ? MOOD_WASH[moodEntry.mood] : null
+                    const hasJournal = monthHasJournal.has(dateKey)
+                    const hasData = !!(moodEntry || hasJournal)
+                    const isSelected = selectedDayKey === dateKey
+
+                    if (isFuture) {
+                      return (
+                        <div key={dateKey} className={`${styles.calDay} ${styles.calDayFuture}`}>
+                          <span className={styles.calDayNum}>{day}</span>
+                        </div>
+                      )
+                    }
+
+                    return (
+                      <button
+                        key={dateKey}
+                        className={`${styles.calDay}${isSelected ? ` ${styles.calDaySelected}` : ''}`}
+                        style={moodWash ? { background: moodWash } : undefined}
+                        onClick={() => selectDay(dateKey)}
+                      >
+                        <span className={`${styles.calDayNum}${!hasData ? ` ${styles.calDayNumMuted}` : ''}`}>{day}</span>
+                        {hasJournal && (
+                          <div className={styles.calDayDots}>
+                            <span className={styles.calDayDot} style={{ background: 'var(--exploration)' }} />
+                          </div>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {selectedDayKey && (
+                <div key={selectedDayKey} className={styles.calDetail}>
+                  <div className={styles.calDetailHeader}>
+                    <span className={styles.calDetailDate}>{formatDayDetailDate(selectedDayKey)}</span>
+                    <div className={styles.calDetailHeaderBtns}>
+                      {selectedDayKey < todayKey && (
+                        <button
+                          className={`${styles.calDetailCloseBtn}${editMode ? ` ${styles.calDetailEditBtnActive}` : ''}`}
+                          onClick={() => setEditMode(e => !e)}
+                        >{editMode ? 'done' : 'edit'}</button>
+                      )}
+                      <button className={styles.calDetailCloseBtn} onClick={() => setSelectedDayKey(null)}>close</button>
+                    </div>
+                  </div>
+
+                  {detailMoods.length > 0 && (
+                    <div className={styles.calDetailMoodRow}>
+                      {detailMoods.flatMap((m, i) => {
+                        const pair = (
+                          <span key={`pair-${m.prompt_time}`} className={styles.calDetailMoodPair}>
+                            <span className={styles.calDetailMoodDot} style={{ background: MOOD_DOT_COLOR[m.mood] }} />
+                            <span className={styles.calDetailMoodLabel}>{m.prompt_time} {m.mood}</span>
+                          </span>
+                        )
+                        return i === 0
+                          ? [pair]
+                          : [<span key={`sep-${i}`} className={styles.calDetailMoodSep} aria-hidden="true">·</span>, pair]
+                      })}
+                    </div>
+                  )}
+
+                  {activePractices.length > 0 && (
+                    <div>
+                      <div className={styles.calDetailSectionLabel}>
+                        practices · {detailLoading ? '…' : `${metCount} of ${activePractices.length} met`}
+                      </div>
+                      {editMode && <div className={styles.calDetailEditHint}>tap a practice to log or correct it.</div>}
+                      {!detailLoading && activePractices.map(p => {
+                        const checkin = findCheckin(p)
+                        const isMet = !!checkin
+                        const count = checkin?.count || 0
+                        const modeName = state.canvas?.[p.need_id] || null
+                        const Tag = editMode ? 'button' : 'div'
+                        return (
+                          <Tag
+                            key={p.id}
+                            className={`${styles.calDetailPracticeRow}${editMode ? ` ${styles.calDetailPracticeRowEditable}` : ''}`}
+                            onClick={editMode ? () => handlePracticeTap(p) : undefined}
+                          >
+                            <span
+                              className={styles.calDetailPracticeRing}
+                              style={isMet
+                                ? { background: modeName ? `var(--${modeName})` : 'var(--ink3)' }
+                                : { border: '1px solid rgba(0,0,0,.25)', background: 'transparent' }
+                              }
+                            />
+                            <span className={styles.calDetailPracticeName}>
+                              {p.label}{count > 1 ? ` ×${count}` : ''}
+                            </span>
+                          </Tag>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  <div className={styles.calDetailSectionLabel}>journal</div>
+                  {detailJournals.length > 0 ? detailJournals.map(e => {
+                    const timeStr = `${e.slot ? `${e.slot} · ` : ''}${formatEntryTime(e.created_at)}`
+                    const slotMood = e.slot && !e.state
+                      ? (detailMoods.find(m => m.prompt_time === e.slot)?.mood || null)
+                      : null
+                    const entryMoodDotColor = slotMood ? MOOD_DOT_COLOR[slotMood] : null
+                    const needName = e.need_id ? (NEEDS.find(n => n.id === e.need_id)?.name || e.need_id) : null
+                    return (
+                      <div key={e.id} className={styles.calDetailJournalEntry}>
+                        <div className={styles.calDetailJournalMeta}>
+                          {entryMoodDotColor && <span className={styles.calDetailJournalDot} style={{ background: entryMoodDotColor }} />}
+                          <span>{timeStr}</span>
+                        </div>
+                        <p className={styles.calDetailJournalBody}>{e.entry}</p>
+                        {(needName || e.state || e.custom) && (
+                          <div className={styles.calDetailJournalTags}>
+                            {e.state && <span className={styles.calDetailJournalTag}>{e.state}</span>}
+                            {needName && <span className={styles.calDetailJournalTag}>{needName}</span>}
+                            {e.custom && <span className={styles.calDetailJournalTag}>{e.custom}</span>}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  }) : (
+                    <p className={styles.calDetailEmpty}>nothing written this day.</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )
+        })()}
         </div>
 
         {/* ── Archive ── */}
@@ -1554,213 +1762,6 @@ export default function Log({ state, syncCheckinDay }) {
           )
         })()}
 
-        {/* ── Calendar ── */}
-        {archiveLoaded && (() => {
-          const today = new Date(); today.setHours(12, 0, 0, 0)
-          const todayKey = dateKeyFor(today)
-          const isCurrentMonth = calYear === today.getFullYear() && calMonth === today.getMonth()
-          const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate()
-          const firstDayOfWeek = (new Date(calYear, calMonth, 1).getDay() + 6) % 7
-          const monthPrefix = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-`
-
-          // Mood grid index: first match wins (state.moods ordered created_at DESC)
-          const monthMoodIndex = {}
-          for (const m of (state.moods || [])) {
-            if (m.date_key.startsWith(monthPrefix) && !monthMoodIndex[m.date_key]) {
-              monthMoodIndex[m.date_key] = m
-            }
-          }
-          const monthHasJournal = new Set(
-            archiveEntries.filter(e => e.date_key.startsWith(monthPrefix)).map(e => e.date_key)
-          )
-
-          // Day detail derived data
-          const detailMoods = selectedDayKey
-            ? (state.moods || []).filter(m => m.date_key === selectedDayKey)
-                .sort((a, b) => (SLOT_ORDER[a.prompt_time] || 0) - (SLOT_ORDER[b.prompt_time] || 0))
-            : []
-          const detailJournals = selectedDayKey
-            ? archiveEntries.filter(e => e.date_key === selectedDayKey).slice().reverse()
-            : []
-          const canvasNeedIds = new Set(Object.keys(state.canvas || {}).filter(id => state.canvas[id]))
-          const activePractices = (state.practicesDB || []).filter(p => !p.archived_at && canvasNeedIds.has(p.need_id))
-          const findCheckin = p => detailCheckins.find(c =>
-            (c.practice_id && c.practice_id === p.id) ||
-            (!c.practice_id && c.practice_text === p.label && c.need_id === p.need_id)
-          )
-          const metCount = activePractices.filter(p => findCheckin(p)).length
-
-          return (
-            <div className={styles.calSection}>
-              <span className={styles.calSectionLabel}>calendar</span>
-              <div className={styles.calCard}>
-                <div className={styles.calNavRow}>
-                  <button
-                    className={styles.calNavBtn}
-                    onClick={() => {
-                      if (calMonth === 0) { setCalYear(y => y - 1); setCalMonth(11) }
-                      else setCalMonth(m => m - 1)
-                      setSelectedDayKey(null)
-                    }}
-                    aria-label="previous month"
-                  >‹</button>
-                  <span className={styles.calNavMonthLabel}>{MONTHS_LONG[calMonth]} {calYear}</span>
-                  <button
-                    className={`${styles.calNavBtn}${isCurrentMonth ? ` ${styles.calNavBtnDisabled}` : ''}`}
-                    disabled={isCurrentMonth}
-                    onClick={() => {
-                      if (calMonth === 11) { setCalYear(y => y + 1); setCalMonth(0) }
-                      else setCalMonth(m => m + 1)
-                      setSelectedDayKey(null)
-                    }}
-                    aria-label="next month"
-                  >›</button>
-                </div>
-
-                <div className={styles.calDayLabels}>
-                  {['m','t','w','t','f','s','s'].map((d, i) => (
-                    <span key={i} className={styles.calDayLabel}>{d}</span>
-                  ))}
-                </div>
-
-                <div className={styles.calGrid}>
-                  {Array.from({ length: firstDayOfWeek }, (_, i) => (
-                    <div key={`blank-${i}`} className={styles.calDayBlank} />
-                  ))}
-                  {Array.from({ length: daysInMonth }, (_, i) => {
-                    const day = i + 1
-                    const dateKey = `${monthPrefix}${String(day).padStart(2, '0')}`
-                    const isFuture = dateKey > todayKey
-                    const moodEntry = monthMoodIndex[dateKey]
-                    const moodWash = moodEntry ? MOOD_WASH[moodEntry.mood] : null
-                    const hasJournal = monthHasJournal.has(dateKey)
-                    const hasData = !!(moodEntry || hasJournal)
-                    const isSelected = selectedDayKey === dateKey
-
-                    if (isFuture) {
-                      return (
-                        <div key={dateKey} className={`${styles.calDay} ${styles.calDayFuture}`}>
-                          <span className={styles.calDayNum}>{day}</span>
-                        </div>
-                      )
-                    }
-
-                    return (
-                      <button
-                        key={dateKey}
-                        className={`${styles.calDay}${isSelected ? ` ${styles.calDaySelected}` : ''}`}
-                        style={moodWash ? { background: moodWash } : undefined}
-                        onClick={() => selectDay(dateKey)}
-                      >
-                        <span className={`${styles.calDayNum}${!hasData ? ` ${styles.calDayNumMuted}` : ''}`}>{day}</span>
-                        {hasJournal && (
-                          <div className={styles.calDayDots}>
-                            <span className={styles.calDayDot} style={{ background: 'var(--exploration)' }} />
-                          </div>
-                        )}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {selectedDayKey && (
-                <div key={selectedDayKey} className={styles.calDetail}>
-                  <div className={styles.calDetailHeader}>
-                    <span className={styles.calDetailDate}>{formatDayDetailDate(selectedDayKey)}</span>
-                    <div className={styles.calDetailHeaderBtns}>
-                      {selectedDayKey < todayKey && (
-                        <button
-                          className={`${styles.calDetailCloseBtn}${editMode ? ` ${styles.calDetailEditBtnActive}` : ''}`}
-                          onClick={() => setEditMode(e => !e)}
-                        >{editMode ? 'done' : 'edit'}</button>
-                      )}
-                      <button className={styles.calDetailCloseBtn} onClick={() => setSelectedDayKey(null)}>close</button>
-                    </div>
-                  </div>
-
-                  {detailMoods.length > 0 && (
-                    <div className={styles.calDetailMoodRow}>
-                      {detailMoods.flatMap((m, i) => {
-                        const pair = (
-                          <span key={`pair-${m.prompt_time}`} className={styles.calDetailMoodPair}>
-                            <span className={styles.calDetailMoodDot} style={{ background: MOOD_DOT_COLOR[m.mood] }} />
-                            <span className={styles.calDetailMoodLabel}>{m.prompt_time} {m.mood}</span>
-                          </span>
-                        )
-                        return i === 0
-                          ? [pair]
-                          : [<span key={`sep-${i}`} className={styles.calDetailMoodSep} aria-hidden="true">·</span>, pair]
-                      })}
-                    </div>
-                  )}
-
-                  {activePractices.length > 0 && (
-                    <div>
-                      <div className={styles.calDetailSectionLabel}>
-                        practices · {detailLoading ? '…' : `${metCount} of ${activePractices.length} met`}
-                      </div>
-                      {editMode && <div className={styles.calDetailEditHint}>tap a practice to log or correct it.</div>}
-                      {!detailLoading && activePractices.map(p => {
-                        const checkin = findCheckin(p)
-                        const isMet = !!checkin
-                        const count = checkin?.count || 0
-                        const modeName = state.canvas?.[p.need_id] || null
-                        const Tag = editMode ? 'button' : 'div'
-                        return (
-                          <Tag
-                            key={p.id}
-                            className={`${styles.calDetailPracticeRow}${editMode ? ` ${styles.calDetailPracticeRowEditable}` : ''}`}
-                            onClick={editMode ? () => handlePracticeTap(p) : undefined}
-                          >
-                            <span
-                              className={styles.calDetailPracticeRing}
-                              style={isMet
-                                ? { background: modeName ? `var(--${modeName})` : 'var(--ink3)' }
-                                : { border: '1px solid rgba(0,0,0,.25)', background: 'transparent' }
-                              }
-                            />
-                            <span className={styles.calDetailPracticeName}>
-                              {p.label}{count > 1 ? ` ×${count}` : ''}
-                            </span>
-                          </Tag>
-                        )
-                      })}
-                    </div>
-                  )}
-
-                  <div className={styles.calDetailSectionLabel}>journal</div>
-                  {detailJournals.length > 0 ? detailJournals.map(e => {
-                    const timeStr = `${e.slot ? `${e.slot} · ` : ''}${formatEntryTime(e.created_at)}`
-                    const slotMood = e.slot && !e.state
-                      ? (detailMoods.find(m => m.prompt_time === e.slot)?.mood || null)
-                      : null
-                    const entryMoodDotColor = slotMood ? MOOD_DOT_COLOR[slotMood] : null
-                    const needName = e.need_id ? (NEEDS.find(n => n.id === e.need_id)?.name || e.need_id) : null
-                    return (
-                      <div key={e.id} className={styles.calDetailJournalEntry}>
-                        <div className={styles.calDetailJournalMeta}>
-                          {entryMoodDotColor && <span className={styles.calDetailJournalDot} style={{ background: entryMoodDotColor }} />}
-                          <span>{timeStr}</span>
-                        </div>
-                        <p className={styles.calDetailJournalBody}>{e.entry}</p>
-                        {(needName || e.state || e.custom) && (
-                          <div className={styles.calDetailJournalTags}>
-                            {e.state && <span className={styles.calDetailJournalTag}>{e.state}</span>}
-                            {needName && <span className={styles.calDetailJournalTag}>{needName}</span>}
-                            {e.custom && <span className={styles.calDetailJournalTag}>{e.custom}</span>}
-                          </div>
-                        )}
-                      </div>
-                    )
-                  }) : (
-                    <p className={styles.calDetailEmpty}>nothing written this day.</p>
-                  )}
-                </div>
-              )}
-            </div>
-          )
-        })()}
       </div>
     </div>
   )
