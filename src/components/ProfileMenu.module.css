@@ -52,7 +52,6 @@
   animation: scrimIn 200ms ease both;
 }
 .scrimClosing { animation: scrimOut 220ms ease both; }
-@media (min-width: 900px) { .scrim { display: none; } }
 
 /* ── Mobile: bottom sheet ── */
 .menu {
