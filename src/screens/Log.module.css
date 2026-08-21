@@ -1541,4 +1541,21 @@
     padding-top: 0;
     margin-bottom: 0;
   }
+
+  /* Section labels: 13px mono / .16em / uppercase / var(--ink3).
+     Matches the pass just landed on Today and Data. */
+  .archiveSectionLabel,
+  .calSectionLabel,
+  .resurfaceSectionLabel,
+  .threadSectionLabel {
+    font-size: 13px;
+    letter-spacing: 0.16em;
+  }
+
+  /* Paired right-hand meta — one step quieter than the label. */
+  .threadSectionMeta { font-size: 12px; }
+
+  /* Facet GROUP labels (WHEN / TIME OF DAY / NEED / HOW IT FELT / CUSTOM)
+     are subordinate to the "the archive" section label, so one step quieter. */
+  .facetGroupLabel { font-size: 11px; }
 }
