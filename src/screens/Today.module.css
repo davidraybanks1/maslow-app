@@ -733,31 +733,40 @@
 
 /* ── Mobile-only accordion (<900px) ── */
 @media (max-width: 899px) {
-  /* overflow:hidden clips the max-height accordion transition and rounds corners cleanly. */
+  /* overflow:hidden on .tier rounds corners cleanly when the accordion opens. */
   .tier { overflow: hidden; }
 
   .tierOpen {
     border-color: rgba(0,0,0,.2);
   }
 
+  /* Animated grid row — traverses the content's actual height, no magic number. */
   .tierContent {
-    max-height: 0;
+    display: grid;
+    grid-template-rows: 0fr;
     overflow: hidden;
-    transition: max-height 0.25s ease;
+    transition: grid-template-rows 260ms cubic-bezier(.32,.72,.28,1);
   }
 
-  .tierContentOpen { max-height: 1200px; }
+  .tierContentOpen { grid-template-rows: 1fr; }
 
+  /* transition:none disables the grid-template-rows transition — still correct. */
   @media (prefers-reduced-motion: reduce) {
     .tierContent { transition: none; }
   }
 
   .tierContentInner {
-    padding: 0 14px 12px;
+    min-height: 0;       /* load-bearing: allows the grid item to collapse to 0 */
+    overflow: hidden;
+    padding: 0 14px 0;  /* bottom padding lives on last child — keeps 0fr track at true 0 */
   }
 
   .needGroup {
     padding-top: 10px;
+  }
+
+  .needGroup:last-child {
+    padding-bottom: 12px;
   }
 
   .needGroup + .needGroup {
