@@ -1497,5 +1497,48 @@
 
 /* desktop grid */
 @media (min-width: 900px) {
-  .content { max-width: 680px; margin: 0 auto; width: 100%; }
+  /* Two-column grid, left-anchored. max-width + padding match Today's
+     .desktopWrap so content edges align at every viewport width. */
+  .content {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 24px;
+    row-gap: 24px;
+    align-items: start;
+    max-width: 1280px;
+    padding: 0 32px 32px;
+    box-sizing: border-box;
+    margin: 0;
+  }
+
+  .headerBlock {
+    display: block;
+    grid-column: 1 / -1;
+    grid-row: 1;
+    padding-top: 32px;
+  }
+
+  .colLeft {
+    display: block;
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .calSection {
+    grid-column: 1;
+    grid-row: 3;
+    margin-top: 0;
+    margin-bottom: 32px;
+  }
+
+  /* Archive spans right column across both content rows. Strip the mobile
+     border-top / margin / padding — the grid gap handles vertical rhythm. */
+  .archiveSection {
+    grid-column: 2;
+    grid-row: 2 / span 2;
+    margin-top: 0;
+    border-top: 0;
+    padding-top: 0;
+    margin-bottom: 0;
+  }
 }
