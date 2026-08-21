@@ -1379,6 +1379,7 @@
     padding: 0 32px;
     box-sizing: border-box;
     gap: 14px;
+    --tier-gap: 12px;
   }
 
   .header { flex-shrink: 0; padding: 40px 0 0; }
@@ -1441,7 +1442,7 @@
   .listNoNote .moodCard { grid-column: 1 / -1; }
 
   /* Band 3: four tier cards in a horizontal row */
-  .tierList { flex-direction: row; gap: 12px; }
+  .tierList { flex-direction: row; gap: var(--tier-gap); }
   .tier { flex: 1; min-width: 0; }
 
   /* ── Desktop journal: entries in normal flow, page scrolls; composer above via order ── */
@@ -1662,12 +1663,15 @@
   .journalBottom .composerTagActive { background: #fff; }
 
   /* White card composer — elevation via surface + hairline, no shadow */
+  /* max-width aligns right edge with third tier card: 3/4 of content width minus one gap quarter */
   .journalComposerCard {
     background: var(--card-bg, #fff);
     border: var(--card-border);
     border-radius: 16px;
     padding: 14px 16px;
     margin-top: 10px;
+    max-width: calc(75% - var(--tier-gap) / 4);
+    margin-right: auto;
   }
 
 
