@@ -1380,6 +1380,7 @@
     box-sizing: border-box;
     gap: 14px;
     --tier-gap: 12px;
+    --journal-width: calc(75% - var(--tier-gap) / 4);
   }
 
   .header { flex-shrink: 0; padding: 40px 0 0; }
@@ -1457,6 +1458,8 @@
   /* Entries: natural height inside the scroll container */
   .journalEntries {
     width: 100%;
+    max-width: var(--journal-width);
+    margin-right: auto;
   }
 
   .journalEntriesText {
@@ -1672,7 +1675,7 @@
     border-radius: 16px;
     padding: 14px 16px;
     margin-top: 10px;
-    max-width: calc(75% - var(--tier-gap) / 4);
+    max-width: var(--journal-width);
     margin-right: auto;
   }
 
