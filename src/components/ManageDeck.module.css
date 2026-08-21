@@ -441,4 +441,5 @@
   .newNoteBtn, .composerBox, .noteRowOn, .noteRowOff { max-width: var(--page-measure); }
   .title { font-size: 42px; }
   .subhead { font-size: 11.5px; }
+  .header { max-width: var(--page-measure); }
 }
