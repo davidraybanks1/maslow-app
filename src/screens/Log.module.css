@@ -638,16 +638,16 @@
   gap: 6px;
   padding: 0 12px;
   border-radius: 16px;
-  border: 1px solid rgba(0,0,0,.14);
+  border: 1px solid rgba(0,0,0,.28);
   background: transparent;
-  color: rgba(0,0,0,.55);
+  color: var(--ink);
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 300;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.facetChip:hover { border-color: rgba(0,0,0,.3); }
+.facetChip:hover { border-color: rgba(0,0,0,.45); }
 .facetChip:disabled { cursor: default; }
 
 .facetChipActive {
