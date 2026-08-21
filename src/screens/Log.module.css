@@ -1592,6 +1592,7 @@
   .facetGroupLabel { font-size: 11px; }
 
   /* Without a card container the facet block needs spatial separation
-     from the entries card. 12px here + 12px archiveCards margin-top = 24px. */
-  .facetRows { margin-bottom: 12px; }
+     from the entries card. margin-bottom:24px collapses with archiveCards
+     margin-top:12px → max(24,12) = 24px rendered gap. */
+  .facetRows { margin-bottom: 24px; }
 }
