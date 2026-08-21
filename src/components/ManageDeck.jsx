@@ -236,6 +236,7 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
 
   return (
     <div className={`${styles.overlay} ${closing ? styles.overlayClosing : ''}`}>
+      <div className={styles.inner}>
       {/* ── App bar ── */}
       <div className={styles.header}>
         <span className={styles.title}>notes to self.</span>
@@ -372,6 +373,7 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
             )
           })}
         </div>
+      </div>
       </div>
 
       <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFilePick} />

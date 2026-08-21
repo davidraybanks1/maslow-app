@@ -20,6 +20,14 @@
   to   { transform: translateY(100%); }
 }
 
+/* ── Content container (flex pass-through on mobile, container on desktop) ── */
+.inner {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
 /* ── Header ── */
 .header {
   display: flex;
@@ -256,4 +264,18 @@
   color: rgba(0,0,0,.38);
   margin-top: 12px;
   line-height: 1.5;
+}
+
+/* ── Desktop container ── */
+@media (min-width: 900px) {
+  .inner {
+    max-width: 1280px;
+    width: 100%;
+    padding: 0 32px;
+    box-sizing: border-box;
+    margin: 0;
+  }
+  .header { padding-left: 0; padding-right: 0; }
+  .subhead { padding-left: 0; padding-right: 0; }
+  .body { padding-left: 0; padding-right: 0; }
 }

@@ -74,6 +74,7 @@ export default function ManageTags({ userId, onClose }) {
 
   return (
     <div className={`${styles.overlay} ${closing ? styles.overlayClosing : ''}`}>
+      <div className={styles.inner}>
       <div className={styles.header}>
         <span className={styles.title}>your tags.</span>
         <button className={styles.closeBtn} onClick={handleClose}>✕</button>
@@ -156,6 +157,7 @@ export default function ManageTags({ userId, onClose }) {
             entries keep this tag — it just won't be offered again.
           </div>
         )}
+      </div>
       </div>
     </div>
   )
