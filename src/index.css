@@ -92,6 +92,7 @@ button { touch-action: manipulation; }
   --radius:    14px;
   --radius-lg: 18px;
   --gap: 4px;
+  --page-measure: 760px;  /* readable row measure for profile sub-pages */
 
   /* Motion scale */
   --motion-micro:       100ms;
