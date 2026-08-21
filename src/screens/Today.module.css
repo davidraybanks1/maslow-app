@@ -1378,6 +1378,7 @@
     box-sizing: border-box;
     gap: 14px;
     --tier-gap: 12px;
+    --journal-gutter: 32px;
   }
 
   .header { flex-shrink: 0; padding: 40px 0 0; }
@@ -1641,7 +1642,7 @@
     box-sizing: border-box;
     padding-top: 14px;
     grid-template-columns: calc(50% - var(--tier-gap) / 2) minmax(0, 1fr);
-    column-gap: var(--tier-gap);
+    column-gap: var(--journal-gutter);
   }
 
   .journalDeskHeader {
