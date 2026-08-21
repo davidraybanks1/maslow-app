@@ -1377,7 +1377,6 @@
     box-sizing: border-box;
     gap: 14px;
     --tier-gap: 12px;
-    --journal-width: calc(75% - var(--tier-gap) / 4);
   }
 
   .header { flex-shrink: 0; padding: 40px 0 0; }
@@ -1445,18 +1444,15 @@
   .tierSectionLabel { font-size: 13px; }
   .tierSectionHint  { font-size: 12px; }
 
-  /* ── Desktop journal: entries in normal flow, page scrolls; composer above via order ── */
   .journalScroll {
-    order: 1;
+    grid-column: 2;
+    grid-row: 2;
     width: 100%;
     box-sizing: border-box;
   }
 
-  /* Entries: natural height inside the scroll container */
   .journalEntries {
     width: 100%;
-    max-width: var(--journal-width);
-    margin-right: auto;
   }
 
   .journalEntriesText {
@@ -1628,10 +1624,11 @@
     align-self: flex-start;
   }
 
-  /* ── Journal section (desktop) — entries on paper, white-card composer ── */
+  /* ── Journal section (desktop) — left col: chips+composer; right col: entries ── */
   .journalSection {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: calc(50% - var(--tier-gap) / 2) minmax(0, 1fr);
+    column-gap: var(--tier-gap);
   }
 
   .journalDeskHeader {
@@ -1640,6 +1637,8 @@
     gap: 6px;
     margin-bottom: 12px;
     flex-shrink: 0;
+    grid-column: 1 / -1;
+    grid-row: 1;
   }
   .journalDeskLabel {
     font-family: var(--font-mono);
@@ -1654,9 +1653,10 @@
     color: var(--ink3);
   }
 
-  /* Chips + pickers + composer card in normal flow below entries */
   .journalBottom {
     margin-top: 8px;
+    grid-column: 1;
+    grid-row: 2;
   }
 
   /* Chips on paper get white fill so they lift off the paper surface */
@@ -1664,16 +1664,12 @@
   .journalBottom .composerTagBtn   { background: #fff; }
   .journalBottom .composerTagActive { background: #fff; }
 
-  /* White card composer — elevation via surface + hairline, no shadow */
-  /* max-width aligns right edge with third tier card: 3/4 of content width minus one gap quarter */
   .journalComposerCard {
     background: var(--card-bg, #fff);
     border: var(--card-border);
     border-radius: 16px;
     padding: 14px 16px;
     margin-top: 10px;
-    max-width: var(--journal-width);
-    margin-right: auto;
   }
 
 
