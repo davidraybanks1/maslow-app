@@ -438,4 +438,5 @@
   .header { padding-left: 0; padding-right: 0; }
   .subhead { padding-left: 0; padding-right: 0; }
   .body { padding-left: 0; padding-right: 0; }
+  .newNoteBtn, .composerBox, .noteRowOn, .noteRowOff { max-width: var(--page-measure); }
 }
