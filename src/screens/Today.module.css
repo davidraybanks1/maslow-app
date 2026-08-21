@@ -1444,6 +1444,8 @@
   /* Band 3: four tier cards in a horizontal row */
   .tierList { flex-direction: row; gap: var(--tier-gap); }
   .tier { flex: 1; min-width: 0; }
+  .tierSectionLabel { font-size: 13px; }
+  .tierSectionHint  { font-size: 12px; }
 
   /* ── Desktop journal: entries in normal flow, page scrolls; composer above via order ── */
   .journalScroll {
@@ -1641,14 +1643,14 @@
   }
   .journalDeskLabel {
     font-family: var(--font-mono);
-    font-size: 10px;
+    font-size: 13px;
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--ink3);
   }
   .journalDeskCount {
     font-family: var(--font-mono);
-    font-size: 10px;
+    font-size: 12px;
     color: var(--ink3);
   }
 
