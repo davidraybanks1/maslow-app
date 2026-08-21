@@ -1381,7 +1381,7 @@
     gap: 14px;
   }
 
-  .header { flex-shrink: 0; padding: 16px 0 0; }
+  .header { flex-shrink: 0; padding: 40px 0 0; }
   .headerRow { align-items: center; gap: 40px; }
   .headerLeft { flex: 0 0 auto; }
   .greeting { font-size: 40px; }
