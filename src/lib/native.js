@@ -100,16 +100,20 @@ export async function scheduleReminders({
 
     const reviewNotifs = []
     if (reviewReminderEnabled) {
-      const [h, m] = (reviewTime || '10:00').split(':').map(n => parseInt(n, 10) || 0)
-      const on = reviewCadence === 'daily'
-        ? { hour: h, minute: m }
-        : { weekday: ((reviewDay + 1) % 7) + 1, hour: h, minute: m }
-      reviewNotifs.push({
-        id: 1004,
-        title: reviewCadence === 'daily' ? 'daily review' : 'weekly review',
-        body: reviewCadence === 'daily' ? 'your day is ready to look at.' : 'your week is ready to look at.',
-        schedule: { on },
-      })
+      if (!TIME_RE.test(reviewTime)) {
+        console.warn(`[native] skipping review reminder — invalid time: ${JSON.stringify(reviewTime)}`)
+      } else {
+        const [h, m] = reviewTime.split(':').map(n => parseInt(n, 10))
+        const on = reviewCadence === 'daily'
+          ? { hour: h, minute: m }
+          : { weekday: ((reviewDay + 1) % 7) + 1, hour: h, minute: m }
+        reviewNotifs.push({
+          id: 1004,
+          title: reviewCadence === 'daily' ? 'daily review' : 'weekly review',
+          body: reviewCadence === 'daily' ? 'your day is ready to look at.' : 'your week is ready to look at.',
+          schedule: { on },
+        })
+      }
     }
 
     const notifications = [...moodNotifs, ...reviewNotifs]
