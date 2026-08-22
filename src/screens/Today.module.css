@@ -1685,11 +1685,6 @@
     flex-direction: column;
   }
 
-  /* Chips on paper get white fill so they lift off the paper surface */
-  .journalBottom .composerSlotChip { background: #fff; }
-  .journalBottom .composerTagBtn   { background: #fff; }
-  .journalBottom .composerTagActive { background: #fff; }
-
   .journalComposerCard {
     background: var(--card-bg, #fff);
     border: var(--card-border);
