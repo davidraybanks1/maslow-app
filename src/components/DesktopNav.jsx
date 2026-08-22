@@ -11,10 +11,10 @@ const ITEMS = [
   ['/log', 'reflect'],
 ]
 
-export default function DesktopNav({ name, email, showNoteToSelf, updateShowNoteToSelf, reviewCadence, updateReviewCadence, reviewDay, reviewTime, updateReviewSchedule, remindersEnabled, updateRemindersEnabled, reviewReminderEnabled, updateReviewReminderEnabled, moodReminders, updateMoodReminder, noteDeckCount, customTagCount }) {
+export default function DesktopNav({ name, email, showNoteToSelf, updateShowNoteToSelf, reviewCadence, updateReviewCadence, reviewDay, reviewTime, updateReviewSchedule, remindersEnabled, updateRemindersEnabled, reviewReminderEnabled, updateReviewReminderEnabled, moodReminders, updateMoodReminder, noteDeckCount, customTagCount, resetTour }) {
   const linkClass = ({ isActive }) => `${styles.item} ${isActive ? styles.itemActive : ''}`
   return (
-    <aside className={styles.nav} aria-label="Primary">
+    <aside className={styles.nav} aria-label="Primary" data-tour="nav">
       <div className={styles.brand}>
         <BrandMark size={17} />
       </div>
@@ -34,6 +34,7 @@ export default function DesktopNav({ name, email, showNoteToSelf, updateShowNote
           moodReminders={moodReminders} updateMoodReminder={updateMoodReminder}
           noteDeckCount={noteDeckCount}
           customTagCount={customTagCount}
+          resetTour={resetTour}
           dropUp
         />
       </div>

@@ -443,7 +443,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
 
       {/* ── Greeting ── */}
       <div className={styles.header}>
-        <div className={styles.headerRow}>
+        <div className={styles.headerRow} data-tour="space">
           <div className={styles.headerLeft}>
             <div className={styles.dateLabel}>{dateLabel}</div>
             <div className={styles.greeting}>good {SLOT_GREETING[slot]}.</div>
@@ -464,7 +464,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
 
         {/* ── Note to self deck ── */}
         {state.showNoteToSelf && (
-          <div className={styles.reflectiveSection}>
+          <div className={styles.reflectiveSection} data-tour="note">
             <div className={styles.noteDeckSection}>
               {noteDeck.length > 0 ? (
                 <>
@@ -540,7 +540,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         </div>
 
         {/* ── Mood section ── */}
-        <div className={styles.moodCard}>
+        <div className={styles.moodCard} data-tour="mood">
           <div className={styles.moodEyebrow}>MOOD CHECK</div>
           <div className={styles.moodRow}>
             <div className={styles.moodLeft}>
@@ -588,7 +588,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         <div className={styles.moodDivider} />
 
         {/* ── Needs & Practices ── */}
-        <div className={styles.practicesCard}>
+        <div className={styles.practicesCard} data-tour="modes">
           <div className={styles.tierSectionHeader}>
             <span className={styles.tierSectionLabel}>NEEDS & PRACTICES</span>
             <span className={styles.tierSectionHint}>tap a mode to fill it</span>
@@ -830,7 +830,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               </div>
             </div>
             <div className={styles.journalBottom}>
-              <div className={styles.journalComposerCard}>
+              <div className={styles.journalComposerCard} data-tour="journal">
                 <div className={styles.composerChips}>
                   <span className={styles.composerTimeChip}>{formatEntryTime(new Date().toISOString())}</span>
                   <span className={styles.composerSlotChip}>{slot}</span>
