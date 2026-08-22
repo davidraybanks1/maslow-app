@@ -10,6 +10,11 @@
     position: sticky;
     top: 0;
     height: 100vh;
+    /* position:sticky always creates a stacking context. Without z-index the
+       context participates at z-index:auto in root — later DOM siblings
+       (page content in .column) paint on top of the profile menu. z-index:10
+       moves this context to the positive-z-index layer, above page content. */
+    z-index: 10;
     background: var(--paper);
     border-right: none;
     padding: 22px 16px 20px;
