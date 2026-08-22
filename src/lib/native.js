@@ -49,6 +49,7 @@ export async function requestNotifPermission() {
 }
 
 const REMINDER_IDS = [1001, 1002, 1003, 1004]
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/
 
 const DEFAULT_MOOD_REMINDERS = {
   morning: { on: true, time: '09:00' },
@@ -84,8 +85,16 @@ export async function scheduleReminders({
 
     const moodNotifs = MOOD_SLOTS
       .filter(s => moodReminders[s.slot]?.on)
+      .filter(s => {
+        const t = moodReminders[s.slot]?.time
+        if (!TIME_RE.test(t)) {
+          console.warn(`[native] skipping ${s.slot} reminder — invalid time: ${JSON.stringify(t)}`)
+          return false
+        }
+        return true
+      })
       .map(s => {
-        const [h, m] = (moodReminders[s.slot].time || '09:00').split(':').map(n => parseInt(n, 10) || 0)
+        const [h, m] = moodReminders[s.slot].time.split(':').map(n => parseInt(n, 10))
         return { id: s.id, title: 'mood', body: s.body, schedule: { on: { hour: h, minute: m } } }
       })
 
