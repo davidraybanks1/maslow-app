@@ -830,47 +830,47 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               </div>
             </div>
             <div className={styles.journalBottom}>
-              <div className={styles.composerChips}>
-                <span className={styles.composerTimeChip}>{formatEntryTime(new Date().toISOString())}</span>
-                <span className={styles.composerSlotChip}>{slot}</span>
-                {draftState ? (
-                  <button className={styles.composerTagActive} onClick={() => setDraftState(null)}>{draftState} ×</button>
-                ) : (
-                  <button className={styles.composerTagBtn} onClick={() => { setStatePickerOpen(o => !o); setNeedPickerOpen(false); setCustomPickerOpen(false) }}>+ state</button>
-                )}
-                {draftNeedId ? (
-                  <button className={styles.composerTagActive} onClick={() => setDraftNeedId(null)}>{draftNeedId} ×</button>
-                ) : (
-                  <button className={styles.composerTagBtn} onClick={() => { setNeedPickerOpen(o => !o); setStatePickerOpen(false); setCustomPickerOpen(false) }}>+ need</button>
-                )}
-                {customTags.length > 0 && (draftCustom ? (
-                  <button className={styles.composerTagActive} onClick={() => setDraftCustom(null)}>{draftCustom} ×</button>
-                ) : (
-                  <button className={styles.composerTagBtn} onClick={() => { setCustomPickerOpen(o => !o); setNeedPickerOpen(false); setStatePickerOpen(false) }}>+ custom</button>
-                ))}
-              </div>
-              {needPickerOpen && activeNeeds.length > 0 && (
-                <div className={styles.composerPicker}>
-                  {activeNeeds.map(n => (
-                    <button key={n.id} className={styles.composerPickerItem} onClick={() => { setDraftNeedId(n.id); setNeedPickerOpen(false) }}>{n.name}</button>
-                  ))}
-                </div>
-              )}
-              {statePickerOpen && (
-                <div className={styles.composerPicker}>
-                  {[...BUILTIN_NATURE_TYPES, ...BUILTIN_PEAK_TYPES].map(t => (
-                    <button key={t.name} className={styles.composerPickerItem} onClick={() => { setDraftState(t.name); setStatePickerOpen(false) }}>{t.name}</button>
-                  ))}
-                </div>
-              )}
-              {customPickerOpen && customTags.length > 0 && (
-                <div className={styles.composerPicker}>
-                  {customTags.map(t => (
-                    <button key={t.id} className={styles.composerPickerItem} onClick={() => { setDraftCustom(t.label); setCustomPickerOpen(false) }}>{t.label}</button>
-                  ))}
-                </div>
-              )}
               <div className={styles.journalComposerCard}>
+                <div className={styles.composerChips}>
+                  <span className={styles.composerTimeChip}>{formatEntryTime(new Date().toISOString())}</span>
+                  <span className={styles.composerSlotChip}>{slot}</span>
+                  {draftState ? (
+                    <button className={styles.composerTagActive} onClick={() => setDraftState(null)}>{draftState} ×</button>
+                  ) : (
+                    <button className={styles.composerTagBtn} onClick={() => { setStatePickerOpen(o => !o); setNeedPickerOpen(false); setCustomPickerOpen(false) }}>+ state</button>
+                  )}
+                  {draftNeedId ? (
+                    <button className={styles.composerTagActive} onClick={() => setDraftNeedId(null)}>{draftNeedId} ×</button>
+                  ) : (
+                    <button className={styles.composerTagBtn} onClick={() => { setNeedPickerOpen(o => !o); setStatePickerOpen(false); setCustomPickerOpen(false) }}>+ need</button>
+                  )}
+                  {customTags.length > 0 && (draftCustom ? (
+                    <button className={styles.composerTagActive} onClick={() => setDraftCustom(null)}>{draftCustom} ×</button>
+                  ) : (
+                    <button className={styles.composerTagBtn} onClick={() => { setCustomPickerOpen(o => !o); setNeedPickerOpen(false); setStatePickerOpen(false) }}>+ custom</button>
+                  ))}
+                </div>
+                {needPickerOpen && activeNeeds.length > 0 && (
+                  <div className={styles.composerPicker}>
+                    {activeNeeds.map(n => (
+                      <button key={n.id} className={styles.composerPickerItem} onClick={() => { setDraftNeedId(n.id); setNeedPickerOpen(false) }}>{n.name}</button>
+                    ))}
+                  </div>
+                )}
+                {statePickerOpen && (
+                  <div className={styles.composerPicker}>
+                    {[...BUILTIN_NATURE_TYPES, ...BUILTIN_PEAK_TYPES].map(t => (
+                      <button key={t.name} className={styles.composerPickerItem} onClick={() => { setDraftState(t.name); setStatePickerOpen(false) }}>{t.name}</button>
+                    ))}
+                  </div>
+                )}
+                {customPickerOpen && customTags.length > 0 && (
+                  <div className={styles.composerPicker}>
+                    {customTags.map(t => (
+                      <button key={t.id} className={styles.composerPickerItem} onClick={() => { setDraftCustom(t.label); setCustomPickerOpen(false) }}>{t.label}</button>
+                    ))}
+                  </div>
+                )}
                 <div className={styles.journalComposerWrap}>
                   <textarea
                     className={styles.journalComposerInput}
