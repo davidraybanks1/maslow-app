@@ -41,6 +41,7 @@ export default function ProfileMenu({
   moodReminders, updateMoodReminder,
   noteDeckCount = 0,
   customTagCount = 0,
+  resetTour,
 }) {
   const [phase, setPhase] = useState(null) // null | 'open' | 'closing'
   const [cadenceOpen, setCadenceOpen] = useState(false)
@@ -244,6 +245,16 @@ export default function ProfileMenu({
                   </div>
                 </div>
               </button>
+              {resetTour && (
+                <button
+                  className={styles.row}
+                  onClick={() => { resetTour(); close() }}
+                >
+                  <div className={styles.rowContent}>
+                    <div className={styles.rowTitle}>show hints again</div>
+                  </div>
+                </button>
+              )}
               <button
                 className={styles.row}
                 onClick={() => { setConfirmSignOut(false); updateShowNoteToSelf?.(!showNoteToSelf) }}
