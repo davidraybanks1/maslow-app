@@ -133,9 +133,13 @@ export default function ProfileMenu({
 
   async function handleMasterNotifToggle() {
     setConfirmSignOut(false)
-    if (!isNative()) return
     if (remindersEnabled) {
       updateRemindersEnabled?.(false)
+      return
+    }
+    if (!isNative()) {
+      // On web: no OS permission to request; record the setting for the iOS app
+      updateRemindersEnabled?.(true)
       return
     }
     let p = notifPermission
@@ -301,13 +305,6 @@ export default function ProfileMenu({
                   </div>
                 </div>
               </button>
-              {!isNative() && (
-                <div className={`${styles.row} ${styles.rowStatic}`}>
-                  <div className={styles.rowContent}>
-                    <div className={styles.rowSub}>reminders arrive in the ios app.</div>
-                  </div>
-                </div>
-              )}
               {isNative() && notifPermission === 'denied' && !remindersEnabled && (
                 <div className={`${styles.row} ${styles.rowStatic}`}>
                   <div className={styles.rowContent}>
@@ -315,7 +312,7 @@ export default function ProfileMenu({
                   </div>
                 </div>
               )}
-              {isNative() && remindersEnabled && (
+              {remindersEnabled && (
                 <>
                   {['morning', 'midday', 'evening'].map(slot => {
                     const slotData = moodReminders?.[slot] || { on: true, time: DEFAULT_SLOT_TIMES[slot] }
@@ -359,6 +356,13 @@ export default function ProfileMenu({
                     </div>
                   </button>
                 </>
+              )}
+              {!isNative() && (
+                <div className={`${styles.row} ${styles.rowStatic}`}>
+                  <div className={styles.rowContent}>
+                    <div className={styles.rowSub}>reminders arrive in the ios app.</div>
+                  </div>
+                </div>
               )}
             </div>
 

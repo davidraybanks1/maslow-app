@@ -98,7 +98,7 @@ export async function scheduleReminders({
       reviewNotifs.push({
         id: 1004,
         title: reviewCadence === 'daily' ? 'daily review' : 'weekly review',
-        body: 'your week is ready to look at.',
+        body: reviewCadence === 'daily' ? 'your day is ready to look at.' : 'your week is ready to look at.',
         schedule: { on },
       })
     }

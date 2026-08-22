@@ -117,6 +117,7 @@ function AppInner() {
         })
       }, 600)
     }
+    return () => clearTimeout(scheduleTimerRef.current)
   }, [state.onboarded, state.userId, state.remindersEnabled, state.moodReminders, state.reviewReminderEnabled, state.reviewCadence, state.reviewDay, state.reviewTime])
 
   if (showLoader) {
