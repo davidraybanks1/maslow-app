@@ -293,8 +293,18 @@ export default function ProfileMenu({
                   <input
                     type="time"
                     className={styles.cadenceTimeInput}
-                    value={reviewTime || '10:00'}
-                    onChange={e => updateReviewSchedule?.(reviewDay ?? 0, e.target.value)}
+                    value={'review' in draftTimes ? draftTimes.review : (reviewTime || '10:00')}
+                    onChange={e => setDraftTimes(prev => ({ ...prev, review: e.target.value }))}
+                    onBlur={() => {
+                      const draft = draftTimes.review
+                      if (draft !== undefined) {
+                        const persisted = reviewTime || '10:00'
+                        if (TIME_RE.test(draft) && draft !== persisted) {
+                          updateReviewSchedule?.(reviewDay ?? 0, draft)
+                        }
+                        setDraftTimes(prev => { const n = { ...prev }; delete n.review; return n })
+                      }
+                    }}
                   />
                 </div>
               )}
