@@ -1707,6 +1707,11 @@
     padding-left: 12px;
   }
 
+  /* Open picker: same 12px inset so picker chips align with the chips row above. */
+  .journalComposerCard .composerPicker {
+    padding-left: 12px;
+  }
+
 
   .journalEntryCount {
     font-family: var(--font-mono);
