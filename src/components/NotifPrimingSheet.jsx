@@ -3,13 +3,14 @@ import styles from './NotifPrimingSheet.module.css'
 
 export default function NotifPrimingSheet({ updateRemindersEnabled, markNotifPrimed }) {
   async function handleTurnOn() {
-    const result = await requestNotifPermission()
-    if (result === 'granted') {
-      updateRemindersEnabled(true)
-    } else {
+    try {
+      const result = await requestNotifPermission()
+      updateRemindersEnabled(result === 'granted')
+    } catch {
       updateRemindersEnabled(false)
+    } finally {
+      markNotifPrimed()
     }
-    markNotifPrimed()
   }
 
   function handleNotNow() {
