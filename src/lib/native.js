@@ -1,6 +1,7 @@
 // Native-shell helpers (Capacitor). Every function is a safe no-op on the web,
 // so the PWA keeps today's behavior and the iOS app gets the native extras.
 import { Capacitor } from '@capacitor/core'
+import { TIME_RE } from './constants'
 
 export function isNative() {
   return Capacitor.isNativePlatform()
@@ -49,7 +50,6 @@ export async function requestNotifPermission() {
 }
 
 const REMINDER_IDS = [1001, 1002, 1003, 1004]
-const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/
 
 const DEFAULT_MOOD_REMINDERS = {
   morning: { on: true, time: '09:00' },

@@ -2,11 +2,11 @@ import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { isNative, checkNotifPermission, requestNotifPermission } from '../lib/native'
+import { TIME_RE } from '../lib/constants'
 import styles from './ProfileMenu.module.css'
 
 const MOOD_SLOT_LABELS = { morning: 'morning', midday: 'midday', evening: 'evening' }
 const DEFAULT_SLOT_TIMES = { morning: '09:00', midday: '13:00', evening: '19:00' }
-const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/
 
 const FEEDBACK_EMAIL = 'hello@mymaslow.com'
 const BUILD_TIME = import.meta.env.VITE_BUILD_TIME
