@@ -69,6 +69,7 @@ function migrateState(saved) {
     if (saved.remindersEnabled === undefined) saved.remindersEnabled = null
     if (saved.reviewReminderEnabled === undefined) saved.reviewReminderEnabled = true
     if (saved.notifPrimedAt === undefined) saved.notifPrimedAt = null
+    if (saved.tourSeenAt === undefined) saved.tourSeenAt = null
     if (!saved.moodReminders) saved.moodReminders = { morning: { on: true, time: '09:00' }, midday: { on: true, time: '13:00' }, evening: { on: true, time: '19:00' } }
     saved.canvas = sanitizeCanvas(saved.canvas)
 
@@ -128,6 +129,7 @@ export function initialState() {
     remindersEnabled: null,
     reviewReminderEnabled: true,
     notifPrimedAt: null,
+    tourSeenAt: null,
     moodReminders: { morning: { on: true, time: '09:00' }, midday: { on: true, time: '13:00' }, evening: { on: true, time: '19:00' } },
   }
 }
@@ -195,6 +197,7 @@ async function restoreFromSupabase(userId, email) {
       remindersEnabled: user.reminders_enabled ?? null,
       reviewReminderEnabled: user.review_reminder_enabled !== false,
       notifPrimedAt: user.notif_primed_at || null,
+      tourSeenAt: user.tour_seen_at || null,
       moodReminders: user.mood_reminders || { morning: { on: true, time: '09:00' }, midday: { on: true, time: '13:00' }, evening: { on: true, time: '19:00' } },
     }
   } catch (e) {
@@ -670,6 +673,29 @@ export function useAppState(onSignIn) {
     })
   }
 
+  function markTourSeen() {
+    const now = new Date().toISOString()
+    setState(prev => {
+      if (prev.userId) {
+        supabase.from('users').update({ tour_seen_at: now }).eq('id', prev.userId).then(({ error }) => {
+          if (error) logSupabaseError('markTourSeen', error)
+        })
+      }
+      return { ...prev, tourSeenAt: now }
+    })
+  }
+
+  function resetTour() {
+    setState(prev => {
+      if (prev.userId) {
+        supabase.from('users').update({ tour_seen_at: null }).eq('id', prev.userId).then(({ error }) => {
+          if (error) logSupabaseError('resetTour', error)
+        })
+      }
+      return { ...prev, tourSeenAt: null }
+    })
+  }
+
   function replaceCanvas(fullCanvas) {
     return new Promise((resolve, reject) => {
       setState(prev => {
@@ -703,7 +729,7 @@ export function useAppState(onSignIn) {
     setState(prev => ({ ...prev, checkins: newCheckins }))
   }
 
-  return { state, authLoading, updateCanvas, replaceCanvas, addPractice, renamePractice, archivePractice, removePractice, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule, updateReviewCadence, updateRemindersEnabled, updateReviewReminderEnabled, updateMoodReminder, markNotifPrimed, updateNoteDeck, syncCheckinDay }
+  return { state, authLoading, updateCanvas, replaceCanvas, addPractice, renamePractice, archivePractice, removePractice, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule, updateReviewCadence, updateRemindersEnabled, updateReviewReminderEnabled, updateMoodReminder, markNotifPrimed, markTourSeen, resetTour, updateNoteDeck, syncCheckinDay }
 }
 
 export function todayKey() {
