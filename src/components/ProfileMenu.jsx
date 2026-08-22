@@ -101,6 +101,10 @@ export default function ProfileMenu({
   }
 
   function close(onDone) {
+    // Blur any focused element synchronously so onBlur can flush a pending
+    // draft before the menu unmounts. Escape and navigation never move focus
+    // on their own, so the React onBlur handler would be gone by unmount.
+    document.activeElement?.blur()
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     if (reduced) {
       setPhase(null)
