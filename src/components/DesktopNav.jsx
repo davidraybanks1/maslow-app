@@ -11,7 +11,7 @@ const ITEMS = [
   ['/log', 'reflect'],
 ]
 
-export default function DesktopNav({ name, email, showNoteToSelf, updateShowNoteToSelf, reviewCadence, updateReviewCadence, reviewDay, reviewTime, updateReviewSchedule, noteDeckCount, customTagCount }) {
+export default function DesktopNav({ name, email, showNoteToSelf, updateShowNoteToSelf, reviewCadence, updateReviewCadence, reviewDay, reviewTime, updateReviewSchedule, remindersEnabled, updateRemindersEnabled, reviewReminderEnabled, updateReviewReminderEnabled, moodReminders, updateMoodReminder, noteDeckCount, customTagCount }) {
   const linkClass = ({ isActive }) => `${styles.item} ${isActive ? styles.itemActive : ''}`
   return (
     <aside className={styles.nav} aria-label="Primary">
@@ -29,6 +29,9 @@ export default function DesktopNav({ name, email, showNoteToSelf, updateShowNote
           showNoteToSelf={showNoteToSelf} updateShowNoteToSelf={updateShowNoteToSelf}
           reviewCadence={reviewCadence} updateReviewCadence={updateReviewCadence}
           reviewDay={reviewDay} reviewTime={reviewTime} updateReviewSchedule={updateReviewSchedule}
+          remindersEnabled={remindersEnabled} updateRemindersEnabled={updateRemindersEnabled}
+          reviewReminderEnabled={reviewReminderEnabled} updateReviewReminderEnabled={updateReviewReminderEnabled}
+          moodReminders={moodReminders} updateMoodReminder={updateMoodReminder}
           noteDeckCount={noteDeckCount}
           customTagCount={customTagCount}
           dropUp

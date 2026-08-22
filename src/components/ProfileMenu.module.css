@@ -191,6 +191,7 @@
 
 /* ── Highlighter pills — inline-block so they hug the word, not full-width bars ── */
 .sectionLabelPersonalize,
+.sectionLabelNotifications,
 .sectionLabelAccount,
 .sectionLabelAbout {
   display: inline-block;
@@ -203,9 +204,10 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
-.sectionLabelPersonalize { background: rgba(232,184,31,.35);  color: var(--ink); }
-.sectionLabelAccount     { background: rgba(27,58,45,.35);   color: var(--ink); }
-.sectionLabelAbout       { background: rgba(184,195,177,.35); color: var(--ink); }
+.sectionLabelPersonalize    { background: rgba(232,184,31,.35);  color: var(--ink); }
+.sectionLabelNotifications  { background: rgba(90,130,180,.25);  color: var(--ink); }
+.sectionLabelAccount        { background: rgba(27,58,45,.35);    color: var(--ink); }
+.sectionLabelAbout          { background: rgba(184,195,177,.35); color: var(--ink); }
 
 /* ── Section container (no card borders) ── */
 .section {
@@ -269,6 +271,12 @@
   font-size: 16px;
   line-height: 1;
 }
+
+.rowStatic {
+  cursor: default;
+  pointer-events: none;
+}
+.rowStatic:hover { background: none; }
 
 .rowEmail {
   font-family: var(--font-mono);

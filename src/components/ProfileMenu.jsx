@@ -1,7 +1,11 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { isNative, checkNotifPermission, requestNotifPermission } from '../lib/native'
 import styles from './ProfileMenu.module.css'
+
+const MOOD_SLOT_LABELS = { morning: 'morning', midday: 'midday', evening: 'evening' }
+const DEFAULT_SLOT_TIMES = { morning: '09:00', midday: '13:00', evening: '19:00' }
 
 const FEEDBACK_EMAIL = 'hello@mymaslow.com'
 const BUILD_TIME = import.meta.env.VITE_BUILD_TIME
@@ -31,12 +35,16 @@ export default function ProfileMenu({
   showNoteToSelf, updateShowNoteToSelf,
   reviewCadence, updateReviewCadence,
   reviewDay, reviewTime, updateReviewSchedule,
+  remindersEnabled, updateRemindersEnabled,
+  reviewReminderEnabled, updateReviewReminderEnabled,
+  moodReminders, updateMoodReminder,
   noteDeckCount = 0,
   customTagCount = 0,
 }) {
   const [phase, setPhase] = useState(null) // null | 'open' | 'closing'
   const [cadenceOpen, setCadenceOpen] = useState(false)
   const [confirmSignOut, setConfirmSignOut] = useState(false)
+  const [notifPermission, setNotifPermission] = useState('prompt')
   const [menuStyle, setMenuStyle] = useState({})
   const navigate = useNavigate()
   const location = useLocation()
@@ -116,6 +124,29 @@ export default function ProfileMenu({
     close()
     await supabase.auth.signOut()
     navigate('/signin')
+  }
+
+  useEffect(() => {
+    if (!isNative()) return
+    checkNotifPermission().then(p => setNotifPermission(p))
+  }, [])
+
+  async function handleMasterNotifToggle() {
+    setConfirmSignOut(false)
+    if (!isNative()) return
+    if (remindersEnabled) {
+      updateRemindersEnabled?.(false)
+      return
+    }
+    let p = notifPermission
+    if (p === 'prompt') {
+      p = await requestNotifPermission()
+      setNotifPermission(p)
+    }
+    if (p === 'granted') {
+      updateRemindersEnabled?.(true)
+    }
+    // if 'denied': don't flip — the rowSub message is shown instead
   }
 
   useEffect(() => {
@@ -256,6 +287,78 @@ export default function ProfileMenu({
                     onChange={e => updateReviewSchedule?.(reviewDay ?? 0, e.target.value)}
                   />
                 </div>
+              )}
+            </div>
+
+            {/* ── NOTIFICATIONS ── */}
+            <div className={styles.sectionLabel}><span className={styles.sectionLabelNotifications}>NOTIFICATIONS</span></div>
+            <div className={styles.section}>
+              <button className={styles.row} onClick={handleMasterNotifToggle}>
+                <span className={styles.rowTitle}>reminders</span>
+                <div className={styles.toggleSwitch}>
+                  <div className={`${styles.toggleTrack} ${remindersEnabled ? styles.toggleTrackOn : ''}`}>
+                    <span className={`${styles.toggleKnob} ${remindersEnabled ? styles.toggleKnobOn : ''}`} />
+                  </div>
+                </div>
+              </button>
+              {!isNative() && (
+                <div className={`${styles.row} ${styles.rowStatic}`}>
+                  <div className={styles.rowContent}>
+                    <div className={styles.rowSub}>reminders arrive in the ios app.</div>
+                  </div>
+                </div>
+              )}
+              {isNative() && notifPermission === 'denied' && !remindersEnabled && (
+                <div className={`${styles.row} ${styles.rowStatic}`}>
+                  <div className={styles.rowContent}>
+                    <div className={styles.rowSub}>turn on notifications for maslow in your ios settings.</div>
+                  </div>
+                </div>
+              )}
+              {isNative() && remindersEnabled && (
+                <>
+                  {['morning', 'midday', 'evening'].map(slot => {
+                    const slotData = moodReminders?.[slot] || { on: true, time: DEFAULT_SLOT_TIMES[slot] }
+                    return (
+                      <div key={slot}>
+                        <button
+                          className={styles.row}
+                          onClick={() => updateMoodReminder?.(slot, { on: !slotData.on, time: slotData.time || DEFAULT_SLOT_TIMES[slot] })}
+                        >
+                          <span className={styles.rowTitle}>{MOOD_SLOT_LABELS[slot]}</span>
+                          {slotData.on && <span className={styles.rowMeta}>&nbsp;· {slotData.time}</span>}
+                          <div className={styles.toggleSwitch}>
+                            <div className={`${styles.toggleTrack} ${slotData.on ? styles.toggleTrackOn : ''}`}>
+                              <span className={`${styles.toggleKnob} ${slotData.on ? styles.toggleKnobOn : ''}`} />
+                            </div>
+                          </div>
+                        </button>
+                        {slotData.on && (
+                          <div className={styles.cadencePicker}>
+                            <input
+                              type="time"
+                              className={styles.cadenceTimeInput}
+                              value={slotData.time || DEFAULT_SLOT_TIMES[slot]}
+                              onChange={e => updateMoodReminder?.(slot, { on: true, time: e.target.value })}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                  <button
+                    className={styles.row}
+                    onClick={() => updateReviewReminderEnabled?.(!reviewReminderEnabled)}
+                  >
+                    <span className={styles.rowTitle}>{reviewCadence === 'daily' ? 'daily review' : 'weekly review'}</span>
+                    {reviewReminderEnabled && <span className={styles.rowMeta}>&nbsp;· {reviewTime}</span>}
+                    <div className={styles.toggleSwitch}>
+                      <div className={`${styles.toggleTrack} ${reviewReminderEnabled ? styles.toggleTrackOn : ''}`}>
+                        <span className={`${styles.toggleKnob} ${reviewReminderEnabled ? styles.toggleKnobOn : ''}`} />
+                      </div>
+                    </div>
+                  </button>
+                </>
               )}
             </div>
 

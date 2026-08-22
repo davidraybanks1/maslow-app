@@ -127,11 +127,11 @@ function AppInner() {
   return (
     <HeaderSlotContext.Provider value={setHeaderSlot}>
     <div className={styles.shell}>
-      {state.onboarded && <DesktopNav name={state.profile.name} email={state.email} showNoteToSelf={state.showNoteToSelf} updateShowNoteToSelf={updateShowNoteToSelf} reviewCadence={state.reviewCadence} updateReviewCadence={updateReviewCadence} reviewDay={state.reviewDay} reviewTime={state.reviewTime} updateReviewSchedule={updateReviewSchedule} noteDeckCount={(state.noteDeck || []).length} customTagCount={customTagCount} />}
+      {state.onboarded && <DesktopNav name={state.profile.name} email={state.email} showNoteToSelf={state.showNoteToSelf} updateShowNoteToSelf={updateShowNoteToSelf} reviewCadence={state.reviewCadence} updateReviewCadence={updateReviewCadence} reviewDay={state.reviewDay} reviewTime={state.reviewTime} updateReviewSchedule={updateReviewSchedule} remindersEnabled={state.remindersEnabled} updateRemindersEnabled={updateRemindersEnabled} reviewReminderEnabled={state.reviewReminderEnabled} updateReviewReminderEnabled={updateReviewReminderEnabled} moodReminders={state.moodReminders} updateMoodReminder={updateMoodReminder} noteDeckCount={(state.noteDeck || []).length} customTagCount={customTagCount} />}
       <div className={styles.column}>
       {state.onboarded && (
         <div className={styles.appHeader}>
-          <AppHeader slot={headerSlot} name={state.profile.name} email={state.email} showNoteToSelf={state.showNoteToSelf} updateShowNoteToSelf={updateShowNoteToSelf} reviewCadence={state.reviewCadence} updateReviewCadence={updateReviewCadence} reviewDay={state.reviewDay} reviewTime={state.reviewTime} updateReviewSchedule={updateReviewSchedule} noteDeckCount={(state.noteDeck || []).length} customTagCount={customTagCount} />
+          <AppHeader slot={headerSlot} name={state.profile.name} email={state.email} showNoteToSelf={state.showNoteToSelf} updateShowNoteToSelf={updateShowNoteToSelf} reviewCadence={state.reviewCadence} updateReviewCadence={updateReviewCadence} reviewDay={state.reviewDay} reviewTime={state.reviewTime} updateReviewSchedule={updateReviewSchedule} remindersEnabled={state.remindersEnabled} updateRemindersEnabled={updateRemindersEnabled} reviewReminderEnabled={state.reviewReminderEnabled} updateReviewReminderEnabled={updateReviewReminderEnabled} moodReminders={state.moodReminders} updateMoodReminder={updateMoodReminder} noteDeckCount={(state.noteDeck || []).length} customTagCount={customTagCount} />
         </div>
       )}
       <div className={styles.content} ref={contentRef}>
