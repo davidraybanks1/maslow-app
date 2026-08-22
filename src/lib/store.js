@@ -66,6 +66,10 @@ function migrateState(saved) {
     if (saved.reviewDay === undefined) saved.reviewDay = 0
     if (saved.reviewTime === undefined) saved.reviewTime = '10:00'
     if (saved.reviewCadence === undefined) saved.reviewCadence = 'weekly'
+    if (saved.remindersEnabled === undefined) saved.remindersEnabled = null
+    if (saved.reviewReminderEnabled === undefined) saved.reviewReminderEnabled = true
+    if (saved.notifPrimedAt === undefined) saved.notifPrimedAt = null
+    if (!saved.moodReminders) saved.moodReminders = { morning: { on: true, time: '09:00' }, midday: { on: true, time: '13:00' }, evening: { on: true, time: '19:00' } }
     saved.canvas = sanitizeCanvas(saved.canvas)
 
     // Migrate old checkin format (string array like 'movement_go for a run')
@@ -121,6 +125,10 @@ export function initialState() {
     reviewDay: 0,
     reviewTime: '10:00',
     reviewCadence: 'weekly',
+    remindersEnabled: null,
+    reviewReminderEnabled: true,
+    notifPrimedAt: null,
+    moodReminders: { morning: { on: true, time: '09:00' }, midday: { on: true, time: '13:00' }, evening: { on: true, time: '19:00' } },
   }
 }
 
@@ -184,6 +192,10 @@ async function restoreFromSupabase(userId, email) {
       reviewDay: user.review_day ?? 0,
       reviewTime: user.review_time || '10:00',
       reviewCadence: user.review_cadence || 'weekly',
+      remindersEnabled: user.reminders_enabled ?? null,
+      reviewReminderEnabled: user.review_reminder_enabled !== false,
+      notifPrimedAt: user.notif_primed_at || null,
+      moodReminders: user.mood_reminders || { morning: { on: true, time: '09:00' }, midday: { on: true, time: '13:00' }, evening: { on: true, time: '19:00' } },
     }
   } catch (e) {
     console.error('restoreFromSupabase error', e)
@@ -612,6 +624,52 @@ export function useAppState(onSignIn) {
     })
   }
 
+  function updateRemindersEnabled(value) {
+    setState(prev => {
+      if (prev.userId) {
+        supabase.from('users').update({ reminders_enabled: value }).eq('id', prev.userId).then(({ error }) => {
+          if (error) logSupabaseError('updateRemindersEnabled', error)
+        })
+      }
+      return { ...prev, remindersEnabled: value }
+    })
+  }
+
+  function updateReviewReminderEnabled(value) {
+    setState(prev => {
+      if (prev.userId) {
+        supabase.from('users').update({ review_reminder_enabled: value }).eq('id', prev.userId).then(({ error }) => {
+          if (error) logSupabaseError('updateReviewReminderEnabled', error)
+        })
+      }
+      return { ...prev, reviewReminderEnabled: value }
+    })
+  }
+
+  function updateMoodReminder(slot, { on, time }) {
+    setState(prev => {
+      const updated = { ...prev.moodReminders, [slot]: { on, time } }
+      if (prev.userId) {
+        supabase.from('users').update({ mood_reminders: updated }).eq('id', prev.userId).then(({ error }) => {
+          if (error) logSupabaseError('updateMoodReminder', error)
+        })
+      }
+      return { ...prev, moodReminders: updated }
+    })
+  }
+
+  function markNotifPrimed() {
+    const now = new Date().toISOString()
+    setState(prev => {
+      if (prev.userId) {
+        supabase.from('users').update({ notif_primed_at: now }).eq('id', prev.userId).then(({ error }) => {
+          if (error) logSupabaseError('markNotifPrimed', error)
+        })
+      }
+      return { ...prev, notifPrimedAt: now }
+    })
+  }
+
   function replaceCanvas(fullCanvas) {
     return new Promise((resolve, reject) => {
       setState(prev => {
@@ -645,7 +703,7 @@ export function useAppState(onSignIn) {
     setState(prev => ({ ...prev, checkins: newCheckins }))
   }
 
-  return { state, authLoading, updateCanvas, replaceCanvas, addPractice, renamePractice, archivePractice, removePractice, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule, updateReviewCadence, updateNoteDeck, syncCheckinDay }
+  return { state, authLoading, updateCanvas, replaceCanvas, addPractice, renamePractice, archivePractice, removePractice, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule, updateReviewCadence, updateRemindersEnabled, updateReviewReminderEnabled, updateMoodReminder, markNotifPrimed, updateNoteDeck, syncCheckinDay }
 }
 
 export function todayKey() {
