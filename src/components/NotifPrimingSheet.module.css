@@ -1,0 +1,69 @@
+/* ── Priming sheet — shown once over the Today screen on native ── */
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(20, 18, 12, .32);
+}
+
+.sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 301;
+  background: var(--card);
+  border-radius: 26px 26px 0 0;
+  padding: 32px 24px calc(env(safe-area-inset-bottom, 0px) + 40px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.heading {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  font-size: 26px;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.body {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink2);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.btnPrimary {
+  width: 100%;
+  padding: 14px;
+  border-radius: 999px;
+  border: none;
+  background: var(--ink);
+  color: var(--card);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btnSecondary {
+  width: 100%;
+  padding: 14px;
+  border-radius: 999px;
+  border: 0.5px solid var(--hairline);
+  background: transparent;
+  color: var(--ink2);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}

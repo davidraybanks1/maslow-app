@@ -3,6 +3,7 @@ import { HeaderSlotContext } from './lib/headerSlot'
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, useNavigationType } from 'react-router-dom'
 import { useAppState, loadCustomTags } from './lib/store'
 import { hideSplash, scheduleReminders, isNative } from './lib/native'
+import NotifPrimingSheet from './components/NotifPrimingSheet'
 import LoadingScreen from './components/LoadingScreen'
 import DiagnosticFlow from './screens/Onboarding/DiagnosticFlow'
 import Today from './screens/Today'
@@ -149,6 +150,9 @@ function AppInner() {
       </div>
       </div>
       {state.onboarded && <TabBar />}
+      {isNative() && state.onboarded && state.userId && state.notifPrimedAt == null && (
+        <NotifPrimingSheet updateRemindersEnabled={updateRemindersEnabled} markNotifPrimed={markNotifPrimed} />
+      )}
     </div>
     </HeaderSlotContext.Provider>
   )
