@@ -331,12 +331,17 @@ export default function ProfileMenu({
                             className={styles.notifTimeInput}
                             value={slot in draftTimes ? draftTimes[slot] : (slotData.time || DEFAULT_SLOT_TIMES[slot])}
                             onClick={e => e.stopPropagation()}
-                            onChange={e => {
-                              const v = e.target.value
-                              setDraftTimes(prev => ({ ...prev, [slot]: v }))
-                              if (TIME_RE.test(v)) updateMoodReminder?.(slot, { on: true, time: v })
+                            onChange={e => setDraftTimes(prev => ({ ...prev, [slot]: e.target.value }))}
+                            onBlur={() => {
+                              const draft = draftTimes[slot]
+                              if (draft !== undefined) {
+                                const persisted = slotData.time || DEFAULT_SLOT_TIMES[slot]
+                                if (TIME_RE.test(draft) && draft !== persisted) {
+                                  updateMoodReminder?.(slot, { on: true, time: draft })
+                                }
+                                setDraftTimes(prev => { const n = { ...prev }; delete n[slot]; return n })
+                              }
                             }}
-                            onBlur={() => setDraftTimes(prev => { const n = { ...prev }; delete n[slot]; return n })}
                           />
                         )}
                         <div className={styles.toggleSwitch}>
