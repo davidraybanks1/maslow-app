@@ -1701,6 +1701,12 @@
     flex-direction: column;
   }
 
+  /* Chips row: 12px left inset aligns time chip text with textarea text-start.
+     Card padding-left=16px + textarea padding-left=12px → chips need 12px indent. */
+  .journalComposerCard .composerChips {
+    padding-left: 12px;
+  }
+
 
   .journalEntryCount {
     font-family: var(--font-mono);
