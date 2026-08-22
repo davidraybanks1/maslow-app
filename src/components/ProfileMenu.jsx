@@ -6,6 +6,7 @@ import styles from './ProfileMenu.module.css'
 
 const MOOD_SLOT_LABELS = { morning: 'morning', midday: 'midday', evening: 'evening' }
 const DEFAULT_SLOT_TIMES = { morning: '09:00', midday: '13:00', evening: '19:00' }
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/
 
 const FEEDBACK_EMAIL = 'hello@mymaslow.com'
 const BUILD_TIME = import.meta.env.VITE_BUILD_TIME
@@ -45,6 +46,7 @@ export default function ProfileMenu({
   const [cadenceOpen, setCadenceOpen] = useState(false)
   const [confirmSignOut, setConfirmSignOut] = useState(false)
   const [notifPermission, setNotifPermission] = useState('prompt')
+  const [draftTimes, setDraftTimes] = useState({})
   const [menuStyle, setMenuStyle] = useState({})
   const navigate = useNavigate()
   const location = useLocation()
@@ -327,9 +329,14 @@ export default function ProfileMenu({
                           <input
                             type="time"
                             className={styles.notifTimeInput}
-                            value={slotData.time || DEFAULT_SLOT_TIMES[slot]}
+                            value={slot in draftTimes ? draftTimes[slot] : (slotData.time || DEFAULT_SLOT_TIMES[slot])}
                             onClick={e => e.stopPropagation()}
-                            onChange={e => updateMoodReminder?.(slot, { on: true, time: e.target.value })}
+                            onChange={e => {
+                              const v = e.target.value
+                              setDraftTimes(prev => ({ ...prev, [slot]: v }))
+                              if (TIME_RE.test(v)) updateMoodReminder?.(slot, { on: true, time: v })
+                            }}
+                            onBlur={() => setDraftTimes(prev => { const n = { ...prev }; delete n[slot]; return n })}
                           />
                         )}
                         <div className={styles.toggleSwitch}>
