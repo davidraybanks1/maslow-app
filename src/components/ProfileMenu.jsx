@@ -317,29 +317,26 @@ export default function ProfileMenu({
                   {['morning', 'midday', 'evening'].map(slot => {
                     const slotData = moodReminders?.[slot] || { on: true, time: DEFAULT_SLOT_TIMES[slot] }
                     return (
-                      <div key={slot}>
-                        <button
-                          className={styles.row}
-                          onClick={() => updateMoodReminder?.(slot, { on: !slotData.on, time: slotData.time || DEFAULT_SLOT_TIMES[slot] })}
-                        >
-                          <span className={styles.rowTitle}>{MOOD_SLOT_LABELS[slot]}</span>
-                          {slotData.on && <span className={styles.rowMeta}>&nbsp;· {slotData.time}</span>}
-                          <div className={styles.toggleSwitch}>
-                            <div className={`${styles.toggleTrack} ${slotData.on ? styles.toggleTrackOn : ''}`}>
-                              <span className={`${styles.toggleKnob} ${slotData.on ? styles.toggleKnobOn : ''}`} />
-                            </div>
-                          </div>
-                        </button>
+                      <div
+                        key={slot}
+                        className={styles.row}
+                        onClick={() => updateMoodReminder?.(slot, { on: !slotData.on, time: slotData.time || DEFAULT_SLOT_TIMES[slot] })}
+                      >
+                        <span className={styles.rowTitle}>{MOOD_SLOT_LABELS[slot]}</span>
                         {slotData.on && (
-                          <div className={styles.cadencePicker}>
-                            <input
-                              type="time"
-                              className={styles.cadenceTimeInput}
-                              value={slotData.time || DEFAULT_SLOT_TIMES[slot]}
-                              onChange={e => updateMoodReminder?.(slot, { on: true, time: e.target.value })}
-                            />
-                          </div>
+                          <input
+                            type="time"
+                            className={styles.notifTimeInput}
+                            value={slotData.time || DEFAULT_SLOT_TIMES[slot]}
+                            onClick={e => e.stopPropagation()}
+                            onChange={e => updateMoodReminder?.(slot, { on: true, time: e.target.value })}
+                          />
                         )}
+                        <div className={styles.toggleSwitch}>
+                          <div className={`${styles.toggleTrack} ${slotData.on ? styles.toggleTrackOn : ''}`}>
+                            <span className={`${styles.toggleKnob} ${slotData.on ? styles.toggleKnobOn : ''}`} />
+                          </div>
+                        </div>
                       </div>
                     )
                   })}
