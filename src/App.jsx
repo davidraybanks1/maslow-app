@@ -2,7 +2,7 @@ import { useState, useEffect, useLayoutEffect, useRef, Component } from 'react'
 import { HeaderSlotContext } from './lib/headerSlot'
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, useNavigationType } from 'react-router-dom'
 import { useAppState, loadCustomTags } from './lib/store'
-import { hideSplash, scheduleReminders } from './lib/native'
+import { hideSplash, scheduleReminders, isNative } from './lib/native'
 import LoadingScreen from './components/LoadingScreen'
 import DiagnosticFlow from './screens/Onboarding/DiagnosticFlow'
 import Today from './screens/Today'
@@ -10,7 +10,6 @@ import CanvasScreen from './screens/CanvasScreen'
 import Data from './screens/Data'
 import Log from './screens/Log'
 import SignIn from './screens/SignIn'
-import ComingSoon from './screens/ComingSoon'
 import UpdatePassword from './screens/UpdatePassword'
 import AppHeader from './components/AppHeader'
 import DesktopNav from './components/DesktopNav'
@@ -78,7 +77,7 @@ function AppInner() {
     try { return localStorage.getItem('maslow_last_ritual') !== new Date().toDateString() } catch { return true }
   })
 
-  const { state, authLoading, updateCanvas, replaceCanvas, addPractice, renamePractice, archivePractice, removePractice, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule, updateReviewCadence, updateNoteDeck, syncCheckinDay } = useAppState(
+  const { state, authLoading, updateCanvas, replaceCanvas, addPractice, renamePractice, archivePractice, removePractice, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule, updateReviewCadence, updateRemindersEnabled, updateReviewReminderEnabled, updateMoodReminder, markNotifPrimed, updateNoteDeck, syncCheckinDay } = useAppState(
     () => navigate('/today')
   )
 
@@ -102,11 +101,22 @@ function AppInner() {
   // Native shell: dismiss the iOS splash once we're rendering (loader or app),
   // and keep the local reminder schedule in sync with the review settings.
   useEffect(() => { hideSplash() }, [])
+  const scheduleTimerRef = useRef(null)
   useEffect(() => {
     if (state.onboarded && state.userId) {
-      scheduleReminders({ reviewDay: state.reviewDay ?? 0, reviewTime: state.reviewTime || '10:00' })
+      clearTimeout(scheduleTimerRef.current)
+      scheduleTimerRef.current = setTimeout(() => {
+        scheduleReminders({
+          remindersEnabled: state.remindersEnabled,
+          moodReminders: state.moodReminders,
+          reviewReminderEnabled: state.reviewReminderEnabled,
+          reviewCadence: state.reviewCadence,
+          reviewDay: state.reviewDay ?? 0,
+          reviewTime: state.reviewTime || '10:00',
+        })
+      }, 600)
     }
-  }, [state.onboarded, state.userId, state.reviewDay, state.reviewTime])
+  }, [state.onboarded, state.userId, state.remindersEnabled, state.moodReminders, state.reviewReminderEnabled, state.reviewCadence, state.reviewDay, state.reviewTime])
 
   if (showLoader) {
     const firstName = (state.profile?.name || '').trim().split(' ')[0]
@@ -134,7 +144,6 @@ function AppInner() {
           <Route path="/canvas" element={<Protected onboarded={state.onboarded} userId={state.userId}><CanvasScreen state={state} updateCanvas={updateCanvas} addPractice={addPractice} renamePractice={renamePractice} archivePractice={archivePractice} /></Protected>} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/password" element={<Protected onboarded={state.onboarded} userId={state.userId}><UpdatePassword /></Protected>} />
-          <Route path="/notifications" element={<Protected onboarded={state.onboarded} userId={state.userId}><ComingSoon title="Notifications" /></Protected>} />
           <Route path="/settings" element={<Navigate to="/today" replace />} />
         </Routes>
       </div>
