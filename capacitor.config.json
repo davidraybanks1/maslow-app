@@ -8,7 +8,7 @@
   "plugins": {
     "SplashScreen": {
       "launchAutoHide": false,
-      "backgroundColor": "#FFFFFF"
+      "backgroundColor": "#EFEADD"
     }
   }
 }
