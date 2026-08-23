@@ -8,5 +8,4 @@ dist
 ios/App/Pods/
 ios/App/output/
 ios/DerivedData/
-assets/
 .claude/worktrees/
