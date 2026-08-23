@@ -18,12 +18,16 @@
 .hairline { height: 0.5px; background: var(--hairline); }
 .secondaryLink {
   display: block;
+  width: 100%;
   padding: 13px 0;
+  background: none;
+  border: none;
   font-family: var(--font-mono);
   font-size: 12px;
   color: var(--ink3);
   cursor: pointer;
   letter-spacing: 0.02em;
+  text-align: left;
 }
 .secondaryLink:hover { color: var(--ink); }
 .secondaryConfirm { color: var(--exploration); cursor: default; }

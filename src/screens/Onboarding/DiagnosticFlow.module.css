@@ -305,12 +305,16 @@
 .authHairline { height: 0.5px; background: var(--border); }
 .authSecondaryLink {
   display: block;
+  width: 100%;
   padding: 13px 0;
+  background: none;
+  border: none;
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 200;
   color: var(--ink2);
   cursor: pointer;
+  text-align: left;
   -webkit-tap-highlight-color: transparent;
 }
 .authSecondaryLink:hover { color: var(--ink); }

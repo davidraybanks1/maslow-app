@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { signInNavRef } from '../../lib/store'
 import { hapticTick } from '../../lib/native'
-import OtpSignInBlock from '../../components/OtpSignInBlock'
+import OtpDisclosure from '../../components/OtpDisclosure'
 import styles from './DiagnosticFlow.module.css'
 import BrandMark from '../../components/BrandMark'
 
@@ -706,11 +706,12 @@ function OnboardingAccount({ destination, recommendation, updateCanvas, onDone, 
         {error && <div className={styles.formError}>{error}</div>}
 
         <div className={styles.authSecondarySection}>
-          <div className={styles.authHairline} />
-          <OtpSignInBlock initialEmail={siEmail} />
-          <div className={styles.authHairline} />
-          <OtpSignInBlock initialEmail={siEmail} type="recovery" onSuccess={() => navigate('/password')} />
-          <div className={styles.authHairline} />
+          <OtpDisclosure
+            email={siEmail}
+            onSuccess={() => navigate('/password')}
+            linkClass={styles.authSecondaryLink}
+            hairlineClass={styles.authHairline}
+          />
         </div>
       </div>
 

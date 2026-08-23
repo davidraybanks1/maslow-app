@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import OtpSignInBlock from '../components/OtpSignInBlock'
+import OtpDisclosure from '../components/OtpDisclosure'
 import styles from './SignIn.module.css'
 
 function Logo() {
@@ -124,11 +124,12 @@ export default function SignIn() {
         </form>
 
         <div className={styles.secondary}>
-          <div className={styles.hairline} />
-          <OtpSignInBlock initialEmail={email} />
-          <div className={styles.hairline} />
-          <OtpSignInBlock initialEmail={email} type="recovery" onSuccess={() => navigate('/password')} />
-          <div className={styles.hairline} />
+          <OtpDisclosure
+            email={email}
+            onSuccess={() => navigate('/password')}
+            linkClass={styles.secondaryLink}
+            hairlineClass={styles.hairline}
+          />
         </div>
       </div>
 
