@@ -82,8 +82,17 @@ function AppInner() {
 
   const isDesktop = useIsDesktop()
 
+  // Updated every render so the SIGNED_IN handler always reads the current pathname
+  // rather than the one captured at mount. Without this, password-reset flows would
+  // land on /password (via onSuccess), then get bounced to /today when the deferred
+  // SIGNED_IN event fired with a stale /signin check.
+  const onSignInRef = useRef(null)
+  onSignInRef.current = () => {
+    if (['/', '/signin', '/onboarding'].includes(location.pathname)) navigate('/today')
+  }
+
   const { state, authLoading, updateCanvas, replaceCanvas, addPractice, renamePractice, archivePractice, removePractice, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule, updateReviewCadence, updateRemindersEnabled, updateReviewReminderEnabled, updateMoodReminder, markNotifPrimed, markTourSeen, resetTour, updateNoteDeck, syncCheckinDay } = useAppState(
-    () => navigate('/today')
+    () => onSignInRef.current?.()
   )
 
   const [customTagCount, setCustomTagCount] = useState(0)

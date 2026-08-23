@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { signInNavRef } from '../lib/store'
 import styles from './OtpSignInBlock.module.css'
 
 export default function OtpSignInBlock({ initialEmail = '', type = 'email', onSuccess }) {
@@ -37,7 +36,6 @@ export default function OtpSignInBlock({ initialEmail = '', type = 'email', onSu
     e.preventDefault()
     setLoading(true)
     setError(null)
-    if (type === 'recovery') signInNavRef.suppressNav = true
     const { error: err } = await supabase.auth.verifyOtp({
       email: email.trim().toLowerCase(),
       token: token.trim(),
@@ -45,8 +43,6 @@ export default function OtpSignInBlock({ initialEmail = '', type = 'email', onSu
     })
     setLoading(false)
     if (err) {
-      // Clean up the flag if verifyOtp failed (store's SIGNED_IN never fired, so it won't).
-      if (type === 'recovery') signInNavRef.suppressNav = false
       setError(err.message)
     } else {
       onSuccess?.()

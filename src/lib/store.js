@@ -256,8 +256,6 @@ export function useAppState(onSignIn) {
         // Capture both flags synchronously before yielding to the event loop.
         const shouldSkip = signInNavRef.skip
         signInNavRef.skip = false
-        const shouldSuppressNav = signInNavRef.suppressNav
-        signInNavRef.suppressNav = false
         const { id, email } = session.user
         setTimeout(() => {
           restoreFromSupabase(id, email)
@@ -266,7 +264,7 @@ export function useAppState(onSignIn) {
               if (!shouldSkip) {
                 setState(restored)
                 saveState(restored)
-                if (!shouldSuppressNav) onSignIn?.()
+                onSignIn?.()
               } else {
                 // Onboarding path: persist to disk but don't overwrite the state
                 // that completeOnboarding is building in memory.
