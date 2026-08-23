@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { signInNavRef } from '../../lib/store'
 import { hapticTick } from '../../lib/native'
+import OtpSignInBlock from '../../components/OtpSignInBlock'
 import styles from './DiagnosticFlow.module.css'
 import BrandMark from '../../components/BrandMark'
 
@@ -537,7 +538,6 @@ function OnboardingAccount({ destination, recommendation, updateCanvas, onDone, 
   // Sign-in form
   const [siEmail, setSiEmail]       = useState('')
   const [siPassword, setSiPassword] = useState('')
-  const [magicSent, setMagicSent]   = useState(false)
   const [resetSent, setResetSent]   = useState(false)
 
   const [loading, setLoading]       = useState(false)
@@ -606,17 +606,6 @@ function OnboardingAccount({ destination, recommendation, updateCanvas, onDone, 
 
     setLoading(false)
     // onAuthStateChange in store restores state and navigates to /today
-  }
-
-  async function handleMagicLink() {
-    if (!siEmail.trim()) { setError('enter your email first'); return }
-    setError(null)
-    const { error: err } = await supabase.auth.signInWithOtp({
-      email: siEmail.trim().toLowerCase(),
-      options: { emailRedirectTo: 'https://app.mymaslow.com' },
-    })
-    if (err) setError(err.message)
-    else setMagicSent(true)
   }
 
   async function handleForgotPassword() {
@@ -729,12 +718,7 @@ function OnboardingAccount({ destination, recommendation, updateCanvas, onDone, 
 
         <div className={styles.authSecondarySection}>
           <div className={styles.authHairline} />
-          <div
-            className={`${styles.authSecondaryLink} ${magicSent ? styles.authSecondaryConfirm : ''}`}
-            onClick={!magicSent ? handleMagicLink : undefined}
-          >
-            {magicSent ? '✓ check your email for a sign-in link' : 'send a magic link instead'}
-          </div>
+          <OtpSignInBlock initialEmail={siEmail} />
           <div className={styles.authHairline} />
           <div
             className={`${styles.authSecondaryLink} ${resetSent ? styles.authSecondaryConfirm : ''}`}
