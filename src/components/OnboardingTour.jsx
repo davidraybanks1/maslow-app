@@ -111,20 +111,40 @@ export default function OnboardingTour({ markTourSeen }) {
 
   const vw = window.innerWidth
   const vh = window.innerHeight
-  let cardLeft, cardTop
+  const isMobile = vw < 900
+  const DESKTOP_W = 320
 
-  const spRight = spot.left + spot.width
-  const spTop = spot.top
+  let cardStyle
 
-  if (spRight + CARD_MARGIN + CARD_W <= vw) {
-    cardLeft = spRight + CARD_MARGIN
-    cardTop = Math.max(8, Math.min(spTop, vh - 8 - 300))
-  } else if (spot.left - CARD_MARGIN - CARD_W >= 0) {
-    cardLeft = spot.left - CARD_MARGIN - CARD_W
-    cardTop = Math.max(8, Math.min(spTop, vh - 8 - 300))
+  if (isMobile) {
+    const cardW = Math.min(380, vw - 32)
+    const cardX = Math.max(16, (vw - cardW) / 2)
+    const spCenterY = spot.top + spot.height / 2
+    if (spCenterY > vh / 2) {
+      // target in bottom half (e.g. TabBar) — place card above spotlight
+      cardStyle = {
+        left: cardX,
+        width: cardW,
+        bottom: Math.max(16, vh - spot.top + CARD_MARGIN),
+      }
+    } else {
+      // target in top half — place card below spotlight
+      cardStyle = {
+        left: cardX,
+        width: cardW,
+        top: Math.max(16, spot.top + spot.height + CARD_MARGIN),
+      }
+    }
   } else {
-    cardLeft = Math.max(8, Math.min(vw - CARD_W - 8, (vw - CARD_W) / 2))
-    cardTop = spot.top + spot.height + CARD_MARGIN
+    const spRight = spot.left + spot.width
+    const spTop = spot.top
+    if (spRight + CARD_MARGIN + DESKTOP_W <= vw) {
+      cardStyle = { left: spRight + CARD_MARGIN, top: Math.max(8, Math.min(spTop, vh - 8 - 300)), width: DESKTOP_W }
+    } else if (spot.left - CARD_MARGIN - DESKTOP_W >= 0) {
+      cardStyle = { left: spot.left - CARD_MARGIN - DESKTOP_W, top: Math.max(8, Math.min(spTop, vh - 8 - 300)), width: DESKTOP_W }
+    } else {
+      cardStyle = { left: Math.max(8, Math.min(vw - DESKTOP_W - 8, (vw - DESKTOP_W) / 2)), top: spot.top + spot.height + CARD_MARGIN, width: DESKTOP_W }
+    }
   }
 
   return (
@@ -133,7 +153,7 @@ export default function OnboardingTour({ markTourSeen }) {
         className={styles.spotlight}
         style={{ left: spot.left, top: spot.top, width: spot.width, height: spot.height }}
       />
-      <div className={styles.card} style={{ left: cardLeft, top: cardTop }}>
+      <div className={styles.card} style={cardStyle}>
         <div className={styles.header}>{step.header}</div>
         {step.body1 ? (
           <div className={styles.bodyTwo}>

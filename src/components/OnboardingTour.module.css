@@ -16,7 +16,6 @@
 
 .card {
   position: absolute;
-  width: 320px;
   background: #ffffff;
   border-radius: 18px;
   box-shadow: 0 18px 40px rgba(26, 26, 24, 0.22);
