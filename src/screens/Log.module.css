@@ -1608,4 +1608,12 @@
      both elements sit together at the right edge with the gap between them. */
   .ritualQuiet { justify-content: flex-end; }
   .ritualQuietSpacer { display: none; }
+
+  /* Constrain review cards to the left-column width so they don't stretch
+     across the full two-column grid. 24px matches column-gap above. */
+  .ritualDueCard,
+  .ritualQuiet,
+  .completeBanner {
+    max-width: calc((100% - 24px) / 2);
+  }
 }
