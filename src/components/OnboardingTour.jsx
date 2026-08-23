@@ -35,8 +35,20 @@ const ALL_STEPS = [
   },
 ]
 
-const CARD_W = 320
 const CARD_MARGIN = 16
+
+// Returns the first [data-tour="X"] element with a non-zero painted rect.
+// Handles duplicate attribute names across mutually-exclusive branches
+// (e.g. DesktopNav + TabBar both use data-tour="nav"; only the visible one
+// has a live rect).
+function findLiveEl(target) {
+  const els = document.querySelectorAll(`[data-tour="${target}"]`)
+  for (const el of els) {
+    const r = el.getBoundingClientRect()
+    if (r.width > 0 && r.height > 0) return { el, rect: r }
+  }
+  return null
+}
 
 export default function OnboardingTour({ markTourSeen }) {
   const [steps, setSteps] = useState([])
@@ -47,13 +59,13 @@ export default function OnboardingTour({ markTourSeen }) {
   function measureStep(idx, stps) {
     const step = (stps || steps)[idx]
     if (!step) return
-    const el = document.querySelector(`[data-tour="${step.target}"]`)
-    if (!el) return
-    setSpotRect(el.getBoundingClientRect())
+    const match = findLiveEl(step.target)
+    if (!match) return
+    setSpotRect(match.rect)
   }
 
   useEffect(() => {
-    const available = ALL_STEPS.filter(s => !!document.querySelector(`[data-tour="${s.target}"]`))
+    const available = ALL_STEPS.filter(s => !!findLiveEl(s.target))
     setSteps(available)
     measureStep(0, available)
   }, [])
