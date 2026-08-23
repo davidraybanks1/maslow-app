@@ -37,18 +37,16 @@ export default function OtpSignInBlock({ initialEmail = '', type = 'email', onSu
     e.preventDefault()
     setLoading(true)
     setError(null)
-    // For recovery: suppress the store's /today navigation so we can go to /password instead.
-    // signInNavRef.suppressNav is read synchronously in the SIGNED_IN handler (before setTimeout),
-    // so setting it here — before verifyOtp resolves — is sufficient.
     if (type === 'recovery') signInNavRef.suppressNav = true
     const { error: err } = await supabase.auth.verifyOtp({
       email: email.trim().toLowerCase(),
       token: token.trim(),
       type,
     })
-    if (type === 'recovery') signInNavRef.suppressNav = false
     setLoading(false)
     if (err) {
+      // Clean up the flag if verifyOtp failed (store's SIGNED_IN never fired, so it won't).
+      if (type === 'recovery') signInNavRef.suppressNav = false
       setError(err.message)
     } else {
       onSuccess?.()

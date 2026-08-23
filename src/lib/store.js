@@ -746,14 +746,6 @@ export function weekKey(date = new Date()) {
   return d.toLocaleDateString('en-CA')
 }
 
-export async function sendMagicLink(email) {
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: { shouldCreateUser: false },
-  })
-  return { error }
-}
-
 export async function signUpWithPassword(email, password) {
   const { data, error } = await supabase.auth.signUp({ email, password })
   return { data, error }
