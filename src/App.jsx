@@ -172,7 +172,7 @@ export default function App() {
       <AppErrorBoundary>
         <AppInner />
       </AppErrorBoundary>
-      <UpdateToast />
+      {!isNative() && <UpdateToast />}
     </BrowserRouter>
   )
 }
