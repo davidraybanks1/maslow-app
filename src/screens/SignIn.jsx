@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import OtpSignInBlock from '../components/OtpSignInBlock'
 import styles from './SignIn.module.css'
 
 function Logo() {
@@ -26,7 +27,6 @@ export default function SignIn() {
   const [password, setPassword]     = useState('')
   const [loading, setLoading]       = useState(false)
   const [error, setError]           = useState(null)
-  const [magicSent, setMagicSent]   = useState(false)
   const [resetSent, setResetSent]   = useState(false)
   // Tracks whether a sign-in request is still in flight after the timeout fired.
   // Prevents a second submit from racing the first and blocks the retry button
@@ -86,17 +86,6 @@ export default function SignIn() {
     // on success the session is delivered via onAuthStateChange in store, which navigates to /today
   }
 
-  async function handleMagicLink() {
-    if (!email.trim()) { setError('enter your email first'); return }
-    setError(null)
-    const { error: err } = await supabase.auth.signInWithOtp({
-      email: email.trim().toLowerCase(),
-      options: { emailRedirectTo: 'https://app.mymaslow.com' },
-    })
-    if (err) setError(err.message)
-    else setMagicSent(true)
-  }
-
   async function handleForgotPassword() {
     if (!email.trim()) { setError('enter your email first'); return }
     setError(null)
@@ -148,12 +137,7 @@ export default function SignIn() {
 
         <div className={styles.secondary}>
           <div className={styles.hairline} />
-          <div
-            className={`${styles.secondaryLink} ${magicSent ? styles.secondaryConfirm : ''}`}
-            onClick={!magicSent ? handleMagicLink : undefined}
-          >
-            {magicSent ? '✓ check your email for a sign-in link' : 'send a magic link instead'}
-          </div>
+          <OtpSignInBlock initialEmail={email} />
           <div className={styles.hairline} />
           <div
             className={`${styles.secondaryLink} ${resetSent ? styles.secondaryConfirm : ''}`}
