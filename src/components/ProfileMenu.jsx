@@ -403,6 +403,7 @@ export default function ProfileMenu({
             {/* ── ACCOUNT ── */}
             <div className={styles.sectionLabel}><span className={styles.sectionLabelAccount}>ACCOUNT</span></div>
             <div className={styles.section}>
+              <button className={styles.row} onClick={() => close(() => navigate('/password'))}>change password</button>
               <div className={`${styles.row} ${styles.rowEmail}`}>{email}</div>
               <button
                 className={`${styles.row} ${confirmSignOut ? styles.rowSignOutConfirm : styles.rowSignOut}`}
