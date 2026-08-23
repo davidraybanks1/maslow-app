@@ -890,7 +890,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
             </div>
           </div>
         ) : (
-          <div className={styles.cardJournal}>
+          <div className={styles.cardJournal} data-tour="journal">
             <div className={styles.sectionHeader}>
               <span className={styles.sectionLabel}>journal</span>
               <span className={styles.journalEntryCount}>

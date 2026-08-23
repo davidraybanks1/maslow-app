@@ -45,7 +45,7 @@ const TABS = [
 
 export default function TabBar() {
   return (
-    <nav className={styles.bar} aria-label="Primary">
+    <nav className={styles.bar} aria-label="Primary" data-tour="nav">
       {TABS.map(({ to, label, Icon }) => (
         <NavLink
           key={to}
