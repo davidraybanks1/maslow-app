@@ -749,7 +749,7 @@ export function weekKey(date = new Date()) {
 export async function sendMagicLink(email) {
   const { error } = await supabase.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: 'https://app.mymaslow.com' },
+    options: { shouldCreateUser: false },
   })
   return { error }
 }
