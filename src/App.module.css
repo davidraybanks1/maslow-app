@@ -14,7 +14,7 @@
   height: 100%;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 900px) {
   .shell { max-width: none; margin: 0; }
   .appHeader { display: none; }
 }

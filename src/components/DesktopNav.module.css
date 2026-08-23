@@ -1,7 +1,7 @@
 /* Hidden on mobile — desktop-only chrome */
 .nav { display: none; }
 
-@media (min-width: 1024px) {
+@media (min-width: 900px) {
   .nav {
     display: flex;
     flex-direction: column;
