@@ -158,7 +158,7 @@ function AppInner() {
       {isNative() && state.onboarded && state.userId && state.notifPrimedAt == null && !(isDesktop && state.tourSeenAt == null) && (
         <NotifPrimingSheet updateRemindersEnabled={updateRemindersEnabled} markNotifPrimed={markNotifPrimed} />
       )}
-      {isDesktop && state.onboarded && state.userId && state.tourSeenAt == null && (
+      {location.pathname === '/today' && state.onboarded && state.userId && state.tourSeenAt == null && (
         <OnboardingTour markTourSeen={markTourSeen} />
       )}
     </div>
