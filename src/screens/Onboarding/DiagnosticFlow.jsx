@@ -529,6 +529,7 @@ function ModeDropdown({ id, currentMode, modes, onSelect, isOpen, onToggle }) {
 // ─── Account screen (final step) ─────────────────────────────────────────────
 
 function OnboardingAccount({ destination, recommendation, updateCanvas, onDone, onBack }) {
+  const navigate = useNavigate()
   const [mode, setMode]             = useState('create')
 
   // Create form
@@ -538,7 +539,6 @@ function OnboardingAccount({ destination, recommendation, updateCanvas, onDone, 
   // Sign-in form
   const [siEmail, setSiEmail]       = useState('')
   const [siPassword, setSiPassword] = useState('')
-  const [resetSent, setResetSent]   = useState(false)
 
   const [loading, setLoading]       = useState(false)
   const [error, setError]           = useState(null)
@@ -606,17 +606,6 @@ function OnboardingAccount({ destination, recommendation, updateCanvas, onDone, 
 
     setLoading(false)
     // onAuthStateChange in store restores state and navigates to /today
-  }
-
-  async function handleForgotPassword() {
-    if (!siEmail.trim()) { setError('enter your email first'); return }
-    setError(null)
-    const { error: err } = await supabase.auth.resetPasswordForEmail(
-      siEmail.trim().toLowerCase(),
-      { redirectTo: 'https://app.mymaslow.com/password' }
-    )
-    if (err) setError(err.message)
-    else setResetSent(true)
   }
 
   if (mode === 'create') {
@@ -720,12 +709,7 @@ function OnboardingAccount({ destination, recommendation, updateCanvas, onDone, 
           <div className={styles.authHairline} />
           <OtpSignInBlock initialEmail={siEmail} />
           <div className={styles.authHairline} />
-          <div
-            className={`${styles.authSecondaryLink} ${resetSent ? styles.authSecondaryConfirm : ''}`}
-            onClick={!resetSent ? handleForgotPassword : undefined}
-          >
-            {resetSent ? '✓ check your email to reset your password' : 'forgot password?'}
-          </div>
+          <OtpSignInBlock initialEmail={siEmail} type="recovery" onSuccess={() => navigate('/password')} />
           <div className={styles.authHairline} />
         </div>
       </div>

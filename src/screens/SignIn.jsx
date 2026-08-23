@@ -27,7 +27,6 @@ export default function SignIn() {
   const [password, setPassword]     = useState('')
   const [loading, setLoading]       = useState(false)
   const [error, setError]           = useState(null)
-  const [resetSent, setResetSent]   = useState(false)
   // Tracks whether a sign-in request is still in flight after the timeout fired.
   // Prevents a second submit from racing the first and blocks the retry button
   // while the original request is still pending.
@@ -86,17 +85,6 @@ export default function SignIn() {
     // on success the session is delivered via onAuthStateChange in store, which navigates to /today
   }
 
-  async function handleForgotPassword() {
-    if (!email.trim()) { setError('enter your email first'); return }
-    setError(null)
-    const { error: err } = await supabase.auth.resetPasswordForEmail(
-      email.trim().toLowerCase(),
-      { redirectTo: 'https://app.mymaslow.com/password' }
-    )
-    if (err) setError(err.message)
-    else setResetSent(true)
-  }
-
   const canSubmit = email.trim() && password.length > 0
 
   return (
@@ -139,12 +127,7 @@ export default function SignIn() {
           <div className={styles.hairline} />
           <OtpSignInBlock initialEmail={email} />
           <div className={styles.hairline} />
-          <div
-            className={`${styles.secondaryLink} ${resetSent ? styles.secondaryConfirm : ''}`}
-            onClick={!resetSent ? handleForgotPassword : undefined}
-          >
-            {resetSent ? '✓ check your email to reset your password' : 'forgot password?'}
-          </div>
+          <OtpSignInBlock initialEmail={email} type="recovery" onSuccess={() => navigate('/password')} />
           <div className={styles.hairline} />
         </div>
       </div>

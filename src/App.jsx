@@ -149,7 +149,7 @@ function AppInner() {
           <Route path="/log" element={<Protected onboarded={state.onboarded} userId={state.userId}><Log state={state} syncCheckinDay={syncCheckinDay} /></Protected>} />
           <Route path="/canvas" element={<Protected onboarded={state.onboarded} userId={state.userId}><CanvasScreen state={state} updateCanvas={updateCanvas} addPractice={addPractice} renamePractice={renamePractice} archivePractice={archivePractice} /></Protected>} />
           <Route path="/signin" element={<SignIn />} />
-          <Route path="/password" element={<Protected onboarded={state.onboarded} userId={state.userId}><UpdatePassword /></Protected>} />
+          <Route path="/password" element={<UpdatePassword />} />
           <Route path="/settings" element={<Navigate to="/today" replace />} />
         </Routes>
       </div>

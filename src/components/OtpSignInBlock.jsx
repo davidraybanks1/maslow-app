@@ -1,23 +1,29 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { signInNavRef } from '../lib/store'
 import styles from './OtpSignInBlock.module.css'
 
-export default function OtpSignInBlock({ initialEmail = '' }) {
+export default function OtpSignInBlock({ initialEmail = '', type = 'email', onSuccess }) {
   const [step, setStep] = useState('email')
   const [email, setEmail] = useState(initialEmail)
   const [token, setToken] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
+  const sendLabel = type === 'recovery' ? 'send reset code' : 'email me a code'
+  const verifyLabel = type === 'recovery' ? 'set new password →' : 'verify →'
+
   async function sendCode(e) {
     e?.preventDefault()
     if (!email.trim()) return
     setLoading(true)
     setError(null)
-    const { error: err } = await supabase.auth.signInWithOtp({
-      email: email.trim().toLowerCase(),
-      options: { shouldCreateUser: false },
-    })
+    const { error: err } = type === 'recovery'
+      ? await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase())
+      : await supabase.auth.signInWithOtp({
+          email: email.trim().toLowerCase(),
+          options: { shouldCreateUser: false },
+        })
     setLoading(false)
     if (err) {
       const msg = err.message || ''
@@ -31,14 +37,23 @@ export default function OtpSignInBlock({ initialEmail = '' }) {
     e.preventDefault()
     setLoading(true)
     setError(null)
+    // For recovery: suppress the store's /today navigation so we can go to /password instead.
+    // signInNavRef.suppressNav is read synchronously in the SIGNED_IN handler (before setTimeout),
+    // so setting it here — before verifyOtp resolves — is sufficient.
+    if (type === 'recovery') signInNavRef.suppressNav = true
     const { error: err } = await supabase.auth.verifyOtp({
       email: email.trim().toLowerCase(),
       token: token.trim(),
-      type: 'email',
+      type,
     })
+    if (type === 'recovery') signInNavRef.suppressNav = false
     setLoading(false)
-    if (err) setError(err.message)
-    // success: onAuthStateChange in store handles navigation
+    if (err) {
+      setError(err.message)
+    } else {
+      onSuccess?.()
+      // For email type with no onSuccess: onAuthStateChange in store handles navigation.
+    }
   }
 
   if (step === 'code') {
@@ -59,7 +74,7 @@ export default function OtpSignInBlock({ initialEmail = '' }) {
           />
           {error && <p className={styles.error}>{error}</p>}
           <button className="btn-primary" style={{ width: '100%' }} type="submit" disabled={loading || token.length !== 6}>
-            {loading ? 'verifying…' : 'verify →'}
+            {loading ? 'verifying…' : verifyLabel}
           </button>
         </form>
         <div className={styles.links}>
@@ -83,7 +98,7 @@ export default function OtpSignInBlock({ initialEmail = '' }) {
       />
       {error && <p className={styles.error}>{error}</p>}
       <button className="btn-primary" style={{ width: '100%' }} type="submit" disabled={loading || !email.trim()}>
-        {loading ? 'sending…' : 'email me a code'}
+        {loading ? 'sending…' : sendLabel}
       </button>
     </form>
   )

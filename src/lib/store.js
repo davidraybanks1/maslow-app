@@ -253,9 +253,11 @@ export function useAppState(onSignIn) {
       // NEVER await a Supabase call inside this callback — it holds the auth lock
       // and any nested Supabase call will deadlock. Defer all async work via setTimeout.
       if (event === 'SIGNED_IN' && session?.user) {
-        // Capture skip flag synchronously before yielding to the event loop.
+        // Capture both flags synchronously before yielding to the event loop.
         const shouldSkip = signInNavRef.skip
         signInNavRef.skip = false
+        const shouldSuppressNav = signInNavRef.suppressNav
+        signInNavRef.suppressNav = false
         const { id, email } = session.user
         setTimeout(() => {
           restoreFromSupabase(id, email)
@@ -264,7 +266,7 @@ export function useAppState(onSignIn) {
               if (!shouldSkip) {
                 setState(restored)
                 saveState(restored)
-                onSignIn?.()
+                if (!shouldSuppressNav) onSignIn?.()
               } else {
                 // Onboarding path: persist to disk but don't overwrite the state
                 // that completeOnboarding is building in memory.

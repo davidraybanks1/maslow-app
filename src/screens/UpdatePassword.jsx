@@ -9,7 +9,6 @@ export default function UpdatePassword() {
   const [confirm, setConfirm] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [success, setSuccess] = useState(false)
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -28,7 +27,7 @@ export default function UpdatePassword() {
     if (err) {
       setError(err.message || 'Something went wrong. Please try again.')
     } else {
-      setSuccess(true)
+      navigate('/today')
     }
   }
 
@@ -38,51 +37,43 @@ export default function UpdatePassword() {
         <div className={styles.qNum}>Account</div>
         <div className={styles.qText}>Update your password.</div>
 
-        {success ? (
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#1B3A2D', marginTop: 24 }}>
-            Password updated.
+        <form onSubmit={handleSubmit}>
+          <div className={styles.inputGroup}>
+            <label className={styles.inputLabel}>New password</label>
+            <input
+              className={styles.input}
+              type="password"
+              placeholder="New password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              autoFocus
+              required
+            />
           </div>
-        ) : (
-          <form onSubmit={handleSubmit}>
-            <div className={styles.inputGroup}>
-              <label className={styles.inputLabel}>New password</label>
-              <input
-                className={styles.input}
-                type="password"
-                placeholder="New password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                autoFocus
-                required
-              />
-            </div>
-            <div className={styles.inputGroup}>
-              <label className={styles.inputLabel}>Confirm new password</label>
-              <input
-                className={styles.input}
-                type="password"
-                placeholder="Confirm new password"
-                value={confirm}
-                onChange={e => setConfirm(e.target.value)}
-                required
-              />
-            </div>
-            {error && <div className={styles.error}>{error}</div>}
-            {/* Submit inside form so Enter key works */}
-            <button
-              type="submit"
-              className="btn-primary"
-              style={{ marginTop: 8 }}
-              disabled={loading || !password || !confirm}
-            >
-              {loading ? 'Updating…' : 'Update password →'}
-            </button>
-          </form>
-        )}
+          <div className={styles.inputGroup}>
+            <label className={styles.inputLabel}>Confirm new password</label>
+            <input
+              className={styles.input}
+              type="password"
+              placeholder="Confirm new password"
+              value={confirm}
+              onChange={e => setConfirm(e.target.value)}
+              required
+            />
+          </div>
+          {error && <div className={styles.error}>{error}</div>}
+          <button
+            type="submit"
+            className="btn-primary"
+            style={{ marginTop: 8 }}
+            disabled={loading || !password || !confirm}
+          >
+            {loading ? 'Updating…' : 'Update password →'}
+          </button>
+        </form>
       </div>
 
       <div className={styles.qFooter}>
-        {!success && null /* button moved inside form above */}
         <button className="btn-ghost" style={{ marginTop: 8 }} onClick={() => navigate(-1)}>
           ← back
         </button>
