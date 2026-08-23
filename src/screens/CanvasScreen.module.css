@@ -944,7 +944,7 @@
   }
 }
 
-/* ≥1024px: shell AppHeader hides; screen appBar shows with guide pill only */
-@media (min-width: 1024px) {
+/* ≥900px: shell AppHeader hides; screen appBar shows with guide pill only */
+@media (min-width: 900px) {
   .appBar { display: flex; }
 }

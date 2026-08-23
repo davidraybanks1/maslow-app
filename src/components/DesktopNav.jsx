@@ -3,7 +3,7 @@ import styles from './DesktopNav.module.css'
 import BrandMark from './BrandMark'
 import ProfileMenu from './ProfileMenu'
 
-/* Persistent sidebar for ≥1024px viewports. */
+/* Persistent sidebar for ≥900px viewports. */
 
 const ITEMS = [
   ['/today', 'today'],
