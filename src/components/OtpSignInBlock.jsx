@@ -2,6 +2,21 @@ import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import styles from './OtpSignInBlock.module.css'
 
+const ERROR_MAP = [
+  [/signups not allowed for otp/i,  "we couldn't find an account with that email."],
+  [/only request this/i,            'hold on a moment before asking for another code.'],
+  [/rate/i,                         'too many requests — try again in a few minutes.'],
+  [/token has expired|is invalid/i, 'that code is wrong or expired. check it, or send a new one.'],
+  [/invalid login credentials/i,    'that code is wrong or expired. check it, or send a new one.'],
+]
+
+function mapError(msg) {
+  for (const [re, friendly] of ERROR_MAP) {
+    if (re.test(msg || '')) return friendly
+  }
+  return 'something went wrong. try again.'
+}
+
 export default function OtpSignInBlock({ initialEmail = '', type = 'email', onSuccess }) {
   const [step, setStep] = useState('email')
   const [email, setEmail] = useState(initialEmail)
@@ -25,8 +40,7 @@ export default function OtpSignInBlock({ initialEmail = '', type = 'email', onSu
         })
     setLoading(false)
     if (err) {
-      const msg = err.message || ''
-      setError(msg.toLowerCase().includes('rate') ? 'too many requests — try again shortly' : msg)
+      setError(mapError(err.message))
     } else {
       setStep('code')
     }
@@ -43,7 +57,7 @@ export default function OtpSignInBlock({ initialEmail = '', type = 'email', onSu
     })
     setLoading(false)
     if (err) {
-      setError(err.message)
+      setError(mapError(err.message))
     } else {
       onSuccess?.()
       // For email type with no onSuccess: onAuthStateChange in store handles navigation.
