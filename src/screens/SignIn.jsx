@@ -1,25 +1,9 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import BrandMark from '../components/BrandMark'
 import OtpDisclosure from '../components/OtpDisclosure'
 import styles from './SignIn.module.css'
-
-function Logo() {
-  return (
-    <svg width="72" height="72" viewBox="0 0 72 72" fill="none">
-      <circle cx="36" cy="14" r="4" fill="#E8B81F"/>
-      <circle cx="29" cy="28" r="4" fill="currentColor"/>
-      <circle cx="43" cy="28" r="4" fill="currentColor"/>
-      <circle cx="22" cy="42" r="4" fill="currentColor"/>
-      <circle cx="36" cy="42" r="4" fill="currentColor"/>
-      <circle cx="50" cy="42" r="4" fill="currentColor"/>
-      <circle cx="15" cy="56" r="4" fill="currentColor"/>
-      <circle cx="29" cy="56" r="4" fill="currentColor"/>
-      <circle cx="43" cy="56" r="4" fill="currentColor"/>
-      <circle cx="57" cy="56" r="4" fill="currentColor"/>
-    </svg>
-  )
-}
 
 export default function SignIn() {
   const navigate = useNavigate()
@@ -90,7 +74,7 @@ export default function SignIn() {
   return (
     <div className={styles.screen}>
       <div className={styles.top}>
-        <Logo />
+        <BrandMark size={56} />
         <div className={styles.wordmark}>maslow<span className={styles.wordmarkDot}>.</span></div>
       </div>
 
