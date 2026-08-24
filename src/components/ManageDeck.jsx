@@ -1,42 +1,25 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import {
   loadNoteDeck, loadNoteLibrary,
   addNoteToLibrary, updateNoteDeckCard, deleteNoteDeckCard,
   archiveNoteDeckCard, restoreNoteDeckCard,
-  reorderNoteDeck, uploadNoteImage,
+  reorderNoteDeck,
 } from '../lib/store'
 import styles from './ManageDeck.module.css'
 
 const DECK_MAX = 5
-
-function PhotoPill({ image, isUploading, onTap }) {
-  return (
-    <button className={styles.photoPill} onClick={onTap} disabled={isUploading}>
-      {isUploading
-        ? 'uploading…'
-        : image
-          ? <><img src={image} className={styles.photoPillThumb} alt="" />photo added ✓</>
-          : '+ add a photo'}
-    </button>
-  )
-}
 
 export default function ManageDeck({ userId, onClose, onDeckChanged }) {
   const [deck, setDeck] = useState([])
   const [library, setLibrary] = useState([])
   const [editingId, setEditingId] = useState(null)
   const [drafts, setDrafts] = useState({})
-  const [imageDrafts, setImageDrafts] = useState({})
   const [deleteConfirmId, setDeleteConfirmId] = useState(null)
   const [composerOpen, setComposerOpen] = useState(false)
   const [composerDraft, setComposerDraft] = useState('')
-  const [composerImage, setComposerImage] = useState(null)
-  const [uploadingTarget, setUploadingTarget] = useState(null)
   const [capErrorId, setCapErrorId] = useState(null)
   const [errorMsg, setErrorMsg] = useState(null)
   const [closing, setClosing] = useState(false)
-  const fileRef = useRef(null)
-  const pendingTarget = useRef(null)
 
   useEffect(() => {
     Promise.all([loadNoteDeck(userId), loadNoteLibrary(userId)]).then(([d, l]) => {
@@ -119,7 +102,7 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
   }
 
   // ── Edit panel open/close ──────────────────────────────────────────────────
-  function handleEditOpen(id, text, imageUrl) {
+  function handleEditOpen(id, text) {
     clearCap()
     if (editingId === id) {
       setEditingId(null)
@@ -127,7 +110,6 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
     } else {
       setEditingId(id)
       setDrafts(prev => ({ ...prev, [id]: text }))
-      setImageDrafts(prev => ({ ...prev, [id]: imageUrl || null }))
       setDeleteConfirmId(null)
       setComposerOpen(false)
     }
@@ -145,7 +127,7 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
     const text = (drafts[id] || '').trim()
     if (!text) return
     const card = [...deck, ...library].find(c => c.id === id)
-    const imageUrl = imageDrafts[id] !== undefined ? imageDrafts[id] : (card?.image_url || null)
+    const imageUrl = card?.image_url || null
     const { error } = await updateNoteDeckCard(id, { text, imageUrl, userId, previousText: card?.text })
     if (error) { setErrorMsg('failed to save — try again'); return }
     const updater = c => c.id === id ? { ...c, text, image_url: imageUrl } : c
@@ -186,11 +168,9 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
     if (composerOpen) {
       setComposerOpen(false)
       setComposerDraft('')
-      setComposerImage(null)
     } else {
       setComposerOpen(true)
       setComposerDraft('')
-      setComposerImage(null)
       setEditingId(null)
       setDeleteConfirmId(null)
     }
@@ -199,37 +179,11 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
   async function handleSaveNew() {
     const text = composerDraft.trim()
     if (!text) return
-    const { data, error } = await addNoteToLibrary(userId, { text, imageUrl: composerImage })
+    const { data, error } = await addNoteToLibrary(userId, { text, imageUrl: null })
     if (error) { setErrorMsg('failed to save — try again'); return }
     setLibrary(prev => [data, ...prev])
     setComposerOpen(false)
     setComposerDraft('')
-    setComposerImage(null)
-  }
-
-  // ── Photo ──────────────────────────────────────────────────────────────────
-  async function handleFilePick(e) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const target = pendingTarget.current
-    setUploadingTarget(target)
-    const { url } = await uploadNoteImage(userId, file)
-    if (url) {
-      if (target === 'composer') setComposerImage(url)
-      else setImageDrafts(prev => ({ ...prev, [target]: url }))
-    }
-    setUploadingTarget(null)
-    e.target.value = ''
-  }
-
-  function handlePhotoTap(target) {
-    if (target === 'composer') {
-      if (composerImage) { setComposerImage(null); return }
-    } else {
-      if (imageDrafts[target]) { setImageDrafts(prev => ({ ...prev, [target]: null })); return }
-    }
-    pendingTarget.current = target
-    fileRef.current?.click()
   }
 
   const allNotes = [...deck, ...library]
@@ -273,11 +227,6 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
               autoFocus
             />
             <div className={styles.composerActions}>
-              <PhotoPill
-                image={composerImage}
-                isUploading={uploadingTarget === 'composer'}
-                onTap={() => handlePhotoTap('composer')}
-              />
               <span className={styles.spacer} />
               <button className={styles.cancelBtn} onClick={handleComposerToggle}>cancel</button>
               <button
@@ -299,9 +248,6 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
             const isConfirming = deleteConfirmId === card.id
             const showCapError = capErrorId === card.id
             const editText = drafts[card.id] ?? card.text
-            const editImage = imageDrafts[card.id] !== undefined
-              ? imageDrafts[card.id]
-              : (card.image_url || null)
 
             return (
               <div key={card.id} className={isOn ? styles.noteRowOn : styles.noteRowOff}>
@@ -313,7 +259,7 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
                   <p className={isOn ? styles.noteTextOn : styles.noteTextOff}>{card.text}</p>
                   <button
                     className={styles.editPill}
-                    onClick={() => handleEditOpen(card.id, card.text, card.image_url)}
+                    onClick={() => handleEditOpen(card.id, card.text)}
                   >edit</button>
                   <button
                     className={`${styles.switch} ${isOn ? styles.switchOn : styles.switchOff}`}
@@ -352,13 +298,6 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
                       onChange={e => setDrafts(prev => ({ ...prev, [card.id]: e.target.value }))}
                       autoFocus
                     />
-                    <div className={styles.photoRow}>
-                      <PhotoPill
-                        image={editImage}
-                        isUploading={uploadingTarget === card.id}
-                        onTap={() => handlePhotoTap(card.id)}
-                      />
-                    </div>
                     <div className={styles.editActions}>
                       <button className={styles.savePrimaryBtn} onClick={() => handleSaveEdit(card.id)}>save</button>
                       <button className={styles.cancelBtn} onClick={handleCancelEdit}>cancel</button>
@@ -375,8 +314,6 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
         </div>
       </div>
       </div>
-
-      <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFilePick} />
     </div>
   )
 }
