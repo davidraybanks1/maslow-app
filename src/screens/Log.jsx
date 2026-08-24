@@ -1103,13 +1103,11 @@ export default function Log({ state, syncCheckinDay }) {
             </div>
           </div>
         ) : (
-          <button className={styles.ritualQuiet} onClick={startReview}>
+          <div className={styles.ritualQuiet}>
             <span className={styles.ritualQuietNext}>
               {cadence === 'daily' ? 'next daily review: tomorrow' : `next weekly review: ${REVIEW_DAY_LABELS[state.reviewDay ?? 0]}`}
             </span>
-            <span className={styles.ritualQuietSpacer} />
-            <span className={styles.ritualQuietStart}>start early →</span>
-          </button>
+          </div>
         )}
         </div>
         <div className={styles.colLeft}>

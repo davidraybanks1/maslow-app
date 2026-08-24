@@ -208,15 +208,9 @@
   display: flex;
   width: 100%;
   align-items: center;
-  gap: 12px;
-  border: none;
   border-top: 1px solid rgba(0,0,0,.1);
-  background: none;
   padding: 14px 0 0;
-  cursor: pointer;
-  text-align: left;
   margin-bottom: 20px;
-  -webkit-tap-highlight-color: transparent;
 }
 
 .ritualQuietNext {
@@ -225,23 +219,6 @@
   font-style: italic;
   color: var(--ink2);
 }
-
-.ritualQuietSpacer { flex: 1; }
-
-.ritualQuietStart {
-  height: 32px;
-  display: inline-flex;
-  align-items: center;
-  padding: 0 14px;
-  border-radius: 16px;
-  border: 1px solid rgba(0,0,0,.28);
-  background: transparent;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--ink);
-  flex-shrink: 0;
-}
-.ritualQuietStart:hover { border-color: rgba(0,0,0,.45); }
 
 /* ── Resurfacing ── */
 .resurfaceSection {
@@ -1603,11 +1580,6 @@
      from the entries card. margin-bottom:24px collapses with archiveCards
      margin-top:12px → max(24,12) = 24px rendered gap. */
   .facetRows { margin-bottom: 24px; }
-
-  /* Right-align the quiet weekly-review group. spacer removed from flow so
-     both elements sit together at the right edge with the gap between them. */
-  .ritualQuiet { justify-content: flex-end; }
-  .ritualQuietSpacer { display: none; }
 
   /* Constrain review cards to the left-column width so they don't stretch
      across the full two-column grid. 24px matches column-gap above. */
