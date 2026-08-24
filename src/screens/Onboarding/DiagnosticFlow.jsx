@@ -827,7 +827,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
     try { sessionStorage.removeItem(SS_KEY) } catch {}
     // Pass canvas explicitly so it survives any restoreFromSupabase race in the SIGNED_IN handler.
     if (completeOnboarding) completeOnboarding(canvas || null, null, userId ? { userId } : undefined)
-    navigate(dest)
+    navigate('/today')
   }
 
   const energyMapValid = Object.values(energyMap).includes('gives') && Object.values(energyMap).includes('drains')
