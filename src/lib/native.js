@@ -51,13 +51,17 @@ export async function requestNotifPermission() {
 
 const REMINDER_IDS = [1001, 1002, 1003, 1004]
 
+// Slot written by the localNotificationActionPerformed listener; consumed by
+// Today.jsx on mount (cold launch) or scrolled to immediately (app running).
+export const pendingNotifSlot = { value: null }
+
 const DEFAULT_MOOD_REMINDERS = {
   morning: { on: true, time: '09:00' },
   midday:  { on: true, time: '13:00' },
   evening: { on: true, time: '19:00' },
 }
 
-const MOOD_SLOTS = [
+export const MOOD_SLOTS = [
   { slot: 'morning', id: 1001, body: 'morning — how are you feeling?' },
   { slot: 'midday',  id: 1002, body: 'midday — how are you feeling?' },
   { slot: 'evening', id: 1003, body: 'evening — how did today feel?' },

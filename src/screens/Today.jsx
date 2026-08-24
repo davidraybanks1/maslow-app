@@ -5,7 +5,7 @@ import { currentSlot, precedingSlots, SLOT_NOUN, SLOT_GREETING } from '../lib/sl
 import { todayKey, loadJournalEntries, addJournalEntry, deleteJournalEntry, loadNoteDeck, loadCustomTags } from '../lib/store'
 import { BUILTIN_NATURE_TYPES, BUILTIN_PEAK_TYPES } from '../lib/debriefTypes'
 import { createDataStats, getCanvasGuidance } from '../lib/dataStats'
-import { hapticTick } from '../lib/native'
+import { hapticTick, isNative, pendingNotifSlot } from '../lib/native'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import ManageDeck from '../components/ManageDeck'
 import ManageTags from '../components/ManageTags'
@@ -164,6 +164,17 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
       setSlot(currentSlot())
     }, 60_000)
     return () => clearInterval(id)
+  }, [])
+
+  // Cold-launch: mood reminder tapped while app was closed. App.jsx registers
+  // the listener and stores the slot in pendingNotifSlot; Today.jsx consumes it
+  // on mount so the scroll runs once Today's DOM is ready.
+  useEffect(() => {
+    if (!isNative() || !pendingNotifSlot.value) return
+    pendingNotifSlot.value = null
+    setTimeout(() => {
+      try { document.querySelector('[data-tour="mood"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) } catch {}
+    }, 300)
   }, [])
 
   // Completion ring: segments pack contiguously from 12 o'clock in mode order.

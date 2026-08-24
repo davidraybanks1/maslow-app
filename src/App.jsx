@@ -3,7 +3,7 @@ import { HeaderSlotContext } from './lib/headerSlot'
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, useNavigationType } from 'react-router-dom'
 import { useAppState, loadCustomTags } from './lib/store'
 import { useIsDesktop } from './lib/useIsDesktop'
-import { hideSplash, scheduleReminders, isNative } from './lib/native'
+import { hideSplash, scheduleReminders, isNative, pendingNotifSlot, MOOD_SLOTS } from './lib/native'
 import NotifPrimingSheet from './components/NotifPrimingSheet'
 import OnboardingTour from './components/OnboardingTour'
 import LoadingScreen from './components/LoadingScreen'
@@ -115,6 +115,35 @@ function AppInner() {
   // Native shell: dismiss the iOS splash once we're rendering (loader or app),
   // and keep the local reminder schedule in sync with the review settings.
   useEffect(() => { hideSplash() }, [])
+
+  // Mood reminder tap → navigate to Today and scroll the mood card into view.
+  // Registered here (AppInner has navigate) so Capacitor can deliver the action
+  // on cold launch once the listener is registered — no earlier race is possible
+  // because addListener runs synchronously during the first useEffect pass.
+  // Cold launch: pendingNotifSlot.value is set here; Today.jsx mount consumes it.
+  // App already running: navigate('/today') + setTimeout scroll handles it
+  // (Today may already be mounted and won't remount from a same-path navigate).
+  useEffect(() => {
+    if (!isNative()) return
+    let plugin
+    async function register() {
+      try {
+        const { LocalNotifications } = await import('@capacitor/local-notifications')
+        plugin = LocalNotifications
+        await LocalNotifications.addListener('localNotificationActionPerformed', ev => {
+          const slot = MOOD_SLOTS.find(s => s.id === ev.notification.id)?.slot
+          if (!slot) return
+          pendingNotifSlot.value = slot
+          navigate('/today')
+          setTimeout(() => {
+            try { document.querySelector('[data-tour="mood"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) } catch {}
+          }, 200)
+        })
+      } catch (e) { console.warn('[native] notif listener:', e) }
+    }
+    register()
+    return () => { try { plugin?.removeAllListeners?.() } catch {} }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
   const scheduleTimerRef = useRef(null)
   useEffect(() => {
     if (state.onboarded && state.userId) {
