@@ -2,7 +2,7 @@ import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { NEEDS, MODES, MODE_ORDER, MODE_MAX_BUBBLES, MODE_WEIGHTS, JOURNAL_TRUNCATE } from '../lib/constants'
 import { currentSlot, precedingSlots, SLOT_NOUN, SLOT_GREETING } from '../lib/slots'
-import { todayKey, loadJournalEntries, addJournalEntry, deleteJournalEntry, loadNoteDeck, loadCustomTags } from '../lib/store'
+import { todayKey, loadJournalEntries, addJournalEntry, deleteJournalEntry, loadNoteDeck, loadCustomTags, uploadNoteImage } from '../lib/store'
 import { BUILTIN_NATURE_TYPES, BUILTIN_PEAK_TYPES } from '../lib/debriefTypes'
 import { createDataStats, getCanvasGuidance } from '../lib/dataStats'
 import { hapticTick, isNative, pendingNotifSlot } from '../lib/native'
@@ -325,11 +325,14 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   const [draftNeedId, setDraftNeedId] = useState(null)
   const [draftState, setDraftState] = useState(null)
   const [draftCustom, setDraftCustom] = useState(null)
+  const [draftImage, setDraftImage] = useState(null)
+  const [uploadingJournalImage, setUploadingJournalImage] = useState(false)
   const [composerOpen, setComposerOpen] = useState(false)
   const [needPickerOpen, setNeedPickerOpen] = useState(false)
   const [statePickerOpen, setStatePickerOpen] = useState(false)
   const [customPickerOpen, setCustomPickerOpen] = useState(false)
   const journalEntriesRef = useRef(null)
+  const journalFileRef = useRef(null)
 
   useEffect(() => {
     if (!state.userId) return
@@ -345,6 +348,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
       needId: draftNeedId,
       state: draftState,
       custom: draftCustom,
+      imageUrl: draftImage,
     })
     if (error) { setJournalSaveError('save failed — try again'); return }
     setJournalEntries(prev => [...prev, data])
@@ -352,10 +356,21 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     setDraftNeedId(null)
     setDraftState(null)
     setDraftCustom(null)
+    setDraftImage(null)
     setJournalSaveError(null)
     setNeedPickerOpen(false)
     setStatePickerOpen(false)
     setCustomPickerOpen(false)
+  }
+
+  async function handleJournalFilePick(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingJournalImage(true)
+    const { url } = await uploadNoteImage(state.userId, file)
+    if (url) setDraftImage(url)
+    setUploadingJournalImage(false)
+    e.target.value = ''
   }
 
   function handleComposerKeyDown(e) {
@@ -375,8 +390,9 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   async function handleDeleteEntry(id) {
     if (pendingDeleteId === id) {
       setPendingDeleteId(null)
+      const entry = journalEntries.find(e => e.id === id)
       setJournalEntries(prev => prev.filter(e => e.id !== id))
-      await deleteJournalEntry(id)
+      await deleteJournalEntry(id, entry?.image_url)
     } else {
       setPendingDeleteId(id)
     }
@@ -885,6 +901,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                         <>
                           <div className={styles.journalEntryText}>{display}</div>
                           {!isExp && trunc && <button className={styles.journalReadMore} onClick={toggle}>read more</button>}
+                          {e.image_url && <img src={e.image_url} className={styles.journalEntryImage} alt="" />}
                         </>
                       )
                     })()}
@@ -913,6 +930,17 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                   ) : (
                     <button className={styles.composerTagBtn} onClick={() => { setCustomPickerOpen(o => !o); setNeedPickerOpen(false); setStatePickerOpen(false) }}>+ custom</button>
                   ))}
+                  {draftImage ? (
+                    <button className={styles.composerTagActive} onClick={() => setDraftImage(null)}>
+                      <img src={draftImage} className={styles.composerThumb} alt="" /> × photo
+                    </button>
+                  ) : (
+                    <button
+                      className={styles.composerTagBtn}
+                      onClick={() => journalFileRef.current?.click()}
+                      disabled={uploadingJournalImage}
+                    >{uploadingJournalImage ? 'uploading…' : '+ photo'}</button>
+                  )}
                 </div>
                 {needPickerOpen && activeNeeds.length > 0 && (
                   <div className={styles.composerPicker}>
@@ -991,6 +1019,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                         <>
                           <div className={styles.journalEntryText}>{display}</div>
                           {!isExp && trunc && <button className={styles.journalReadMore} onClick={toggle}>read more</button>}
+                          {e.image_url && <img src={e.image_url} className={styles.journalEntryImage} alt="" />}
                         </>
                       )
                     })()}
@@ -1022,6 +1051,17 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                     ) : (
                       <button className={styles.composerTagBtn} onClick={() => { setCustomPickerOpen(o => !o); setNeedPickerOpen(false); setStatePickerOpen(false) }}>+ custom</button>
                     ))}
+                    {draftImage ? (
+                      <button className={styles.composerTagActive} onClick={() => setDraftImage(null)}>
+                        <img src={draftImage} className={styles.composerThumb} alt="" /> × photo
+                      </button>
+                    ) : (
+                      <button
+                        className={styles.composerTagBtn}
+                        onClick={() => journalFileRef.current?.click()}
+                        disabled={uploadingJournalImage}
+                      >{uploadingJournalImage ? 'uploading…' : '+ photo'}</button>
+                    )}
                   </div>
                   {needPickerOpen && activeNeeds.length > 0 && (
                     <div className={styles.composerPicker}>
@@ -1105,6 +1145,8 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
           <img src={lightboxImage} alt="" className={styles.lightboxImage} onClick={e => e.stopPropagation()} />
         </div>
       )}
+
+      <input ref={journalFileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleJournalFilePick} />
 
       <TimerCard
         hideBar

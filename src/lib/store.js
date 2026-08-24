@@ -757,18 +757,18 @@ export async function signInWithPassword(email, password) {
 export async function loadJournalEntries(userId, dateKey) {
   const { data } = await supabase
     .from('journal')
-    .select('id, entry, slot, need_id, state, custom, created_at')
+    .select('id, entry, slot, need_id, state, custom, image_url, created_at')
     .eq('user_id', userId)
     .eq('date_key', dateKey)
     .order('created_at', { ascending: true })
   return data || []
 }
 
-export async function addJournalEntry(userId, dateKey, { entry, slot, needId, state, custom }) {
+export async function addJournalEntry(userId, dateKey, { entry, slot, needId, state, custom, imageUrl }) {
   const { data, error } = await supabase
     .from('journal')
-    .insert({ user_id: userId, date_key: dateKey, entry, slot: slot || null, need_id: needId || null, state: state || null, custom: custom || null })
-    .select('id, entry, slot, need_id, state, custom, created_at')
+    .insert({ user_id: userId, date_key: dateKey, entry, slot: slot || null, need_id: needId || null, state: state || null, custom: custom || null, image_url: imageUrl || null })
+    .select('id, entry, slot, need_id, state, custom, image_url, created_at')
     .single()
   if (error) logSupabaseError('addJournalEntry', error)
   return { data, error }
@@ -785,7 +785,7 @@ export async function loadAllJournalMeta(userId) {
 export async function loadJournalArchive(userId) {
   const { data } = await supabase
     .from('journal')
-    .select('id, date_key, entry, slot, need_id, state, custom, created_at')
+    .select('id, date_key, entry, slot, need_id, state, custom, image_url, created_at')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
   return data || []
@@ -861,7 +861,8 @@ export async function loadCustomTagUsageCounts(userId) {
   return counts
 }
 
-export async function deleteJournalEntry(id) {
+export async function deleteJournalEntry(id, imageUrl) {
+  removeStorageImage(imageUrl)
   const { error } = await supabase
     .from('journal')
     .delete()
@@ -995,12 +996,15 @@ export async function updateNoteDeckCard(id, { text, imageUrl, userId, previousT
   return { data, error }
 }
 
+function removeStorageImage(imageUrl) {
+  if (!imageUrl) return
+  const parts = imageUrl.split('/storage/v1/object/public/note-images/')
+  if (parts[1]) supabase.storage.from('note-images').remove([parts[1]])
+}
+
 export async function deleteNoteDeckCard(id, userId, text, imageUrl) {
   await appendNoteHistory(userId, text)
-  if (imageUrl) {
-    const parts = imageUrl.split('/storage/v1/object/public/note-images/')
-    if (parts[1]) supabase.storage.from('note-images').remove([parts[1]])
-  }
+  removeStorageImage(imageUrl)
   const { error } = await supabase.from('note_deck').delete().eq('id', id)
   if (error) logSupabaseError('deleteNoteDeckCard', error)
   return { error }

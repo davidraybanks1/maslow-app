@@ -1731,6 +1731,7 @@ export default function Log({ state, syncCheckinDay }) {
                           {!isExpanded && isTruncatable && (
                             <span className={styles.archiveCardReadMore}>read more</span>
                           )}
+                          {e.image_url && <img src={e.image_url} className={styles.archiveEntryImage} alt="" />}
                         </button>
                         <span className={styles.archiveCardTags}>
                           {e.state && <span className={styles.archiveTag}>{e.state}</span>}
