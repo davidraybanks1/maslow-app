@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { NEEDS, MODE_MAX_BUBBLES, JOURNAL_TRUNCATE } from '../lib/constants'
-import { weekKey, todayKey, loadWeeklyReviews, loadJournalEntry, loadDebriefs, loadDebriefTypes, addNoteDeckCard, saveWeeklyReview, loadAllJournalMeta, loadJournalArchive, updateJournalEntryTags, loadDayCheckins, loadCustomTags } from '../lib/store'
+import { weekKey, todayKey, loadWeeklyReviews, loadJournalEntry, loadDebriefs, loadDebriefTypes, addNoteDeckCard, saveWeeklyReview, loadAllJournalMeta, loadJournalArchive, updateJournalEntryTags, toggleJournalFavorite, loadDayCheckins, loadCustomTags } from '../lib/store'
 import { createDataStats } from '../lib/dataStats'
 import { BUILTIN_NATURE_TYPES, BUILTIN_PEAK_TYPES, natureTagStyle, peakTagStyle, ENVIRONMENT_TAG_STYLE, parseDebriefEntry } from '../lib/debriefTypes'
 import LiveCanvasCard from '../components/LiveCanvasCard'
@@ -131,8 +131,8 @@ function formatRangeLabel(start, end) {
   return `${formatRangeDateStr(start)} – ${formatRangeDateStr(end)}`
 }
 
-function archiveHeaderText(filteredEntries, total, filterSlot, filterNeed, filterState, filterCustom, filterDate, rangeLabel) {
-  if (!filterSlot && !filterNeed && !filterState && !filterCustom && !filterDate && !rangeLabel) {
+function archiveHeaderText(filteredEntries, total, filterSlot, filterNeed, filterState, filterCustom, filterDate, rangeLabel, filterFav) {
+  if (!filterSlot && !filterNeed && !filterState && !filterCustom && !filterDate && !rangeLabel && !filterFav) {
     return `all ${total} ${total === 1 ? 'entry' : 'entries'}, newest first.`
   }
   const n = filteredEntries.length
@@ -140,6 +140,7 @@ function archiveHeaderText(filteredEntries, total, filterSlot, filterNeed, filte
   for (const e of filteredEntries) if (e.state) stateCounts[e.state] = (stateCounts[e.state] || 0) + 1
   const topState = Object.entries(stateCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || null
   let text = `${n} ${n === 1 ? 'entry' : 'entries'}`
+  if (filterFav) text += ' · ★ saved'
   if (topState) text += ` · mostly ${topState}`
   if (rangeLabel) text += ` · ${rangeLabel}`
   else if (filterDate === '30d') text += ' · in the last 30 days'
@@ -161,6 +162,7 @@ function ritualMetaLine(cadence) {
 }
 
 function matchesPredicate(e, pred, afterKey, beforeKey) {
+  if (pred.fav    && !e.favorite)               return false
   if (pred.slot   && e.slot    !== pred.slot)   return false
   if (pred.need   && e.need_id !== pred.need)   return false
   if (pred.state  && e.state   !== pred.state)  return false
@@ -625,6 +627,7 @@ export default function Log({ state, syncCheckinDay }) {
   const [filterNeed, setFilterNeed] = useState(null)
   const [filterState, setFilterState] = useState(null)
   const [filterCustom, setFilterCustom] = useState(null)
+  const [filterFav, setFilterFav] = useState(false)
   const [filterDate, setFilterDate] = useState(null)
   const [rangeStart, setRangeStart] = useState(null)
   const [rangeEnd, setRangeEnd] = useState(null)
@@ -672,37 +675,38 @@ export default function Log({ state, syncCheckinDay }) {
 
   const archiveFiltered = useMemo(
     () => archiveEntries.filter(e => matchesPredicate(e,
-      { slot: filterSlot, need: filterNeed, state: filterState, custom: filterCustom },
+      { fav: filterFav, slot: filterSlot, need: filterNeed, state: filterState, custom: filterCustom },
       archiveDateRange.filterAfterKey, archiveDateRange.filterBeforeKey
     )),
-    [archiveEntries, filterSlot, filterNeed, filterState, filterCustom, archiveDateRange]
+    [archiveEntries, filterFav, filterSlot, filterNeed, filterState, filterCustom, archiveDateRange]
   )
 
   const archiveCounts = useMemo(() => {
     const { filterAfterKey, filterBeforeKey } = archiveDateRange
     const canvasNeeds = NEEDS.filter(n => state.canvas?.[n.id])
     const slotCounts = Object.fromEntries(ARCHIVE_SLOTS.map(s => [s,
-      archiveEntries.filter(e => matchesPredicate(e, { slot: s, need: filterNeed, state: filterState, custom: filterCustom }, filterAfterKey, filterBeforeKey)).length
+      archiveEntries.filter(e => matchesPredicate(e, { fav: filterFav, slot: s, need: filterNeed, state: filterState, custom: filterCustom }, filterAfterKey, filterBeforeKey)).length
     ]))
     const needCounts = Object.fromEntries(canvasNeeds.map(n => [n.id,
-      archiveEntries.filter(e => matchesPredicate(e, { slot: filterSlot, need: n.id, state: filterState, custom: filterCustom }, filterAfterKey, filterBeforeKey)).length
+      archiveEntries.filter(e => matchesPredicate(e, { fav: filterFav, slot: filterSlot, need: n.id, state: filterState, custom: filterCustom }, filterAfterKey, filterBeforeKey)).length
     ]))
     const stateCounts = Object.fromEntries(ARCHIVE_STATES.map(s => [s,
-      archiveEntries.filter(e => matchesPredicate(e, { slot: filterSlot, need: filterNeed, state: s, custom: filterCustom }, filterAfterKey, filterBeforeKey)).length
+      archiveEntries.filter(e => matchesPredicate(e, { fav: filterFav, slot: filterSlot, need: filterNeed, state: s, custom: filterCustom }, filterAfterKey, filterBeforeKey)).length
     ]))
     const archiveCustomValues = [...new Set(archiveEntries.map(e => e.custom).filter(Boolean))]
     const vocabLabels = customTags.map(t => t.label)
     const allCustomLabels = [...new Set([...vocabLabels, ...archiveCustomValues])]
     const customCounts = Object.fromEntries(allCustomLabels.map(label => [label,
-      archiveEntries.filter(e => matchesPredicate(e, { slot: filterSlot, need: filterNeed, state: filterState, custom: label }, filterAfterKey, filterBeforeKey)).length
+      archiveEntries.filter(e => matchesPredicate(e, { fav: filterFav, slot: filterSlot, need: filterNeed, state: filterState, custom: label }, filterAfterKey, filterBeforeKey)).length
     ]))
     const today = new Date(); today.setHours(12, 0, 0, 0)
     const presetCounts = Object.fromEntries(ARCHIVE_DATE_PRESETS.map(r => {
       const d = new Date(today); d.setDate(d.getDate() - (r.key === '30d' ? 30 : 90))
-      return [r.key, archiveEntries.filter(e => matchesPredicate(e, { slot: filterSlot, need: filterNeed, state: filterState, custom: filterCustom }, dateKeyFor(d), null)).length]
+      return [r.key, archiveEntries.filter(e => matchesPredicate(e, { fav: filterFav, slot: filterSlot, need: filterNeed, state: filterState, custom: filterCustom }, dateKeyFor(d), null)).length]
     }))
-    return { canvasNeeds, slotCounts, needCounts, stateCounts, allCustomLabels, customCounts, presetCounts }
-  }, [archiveEntries, filterSlot, filterNeed, filterState, filterCustom, archiveDateRange, state.canvas, customTags])
+    const favCount = archiveEntries.filter(e => matchesPredicate(e, { fav: true, slot: filterSlot, need: filterNeed, state: filterState, custom: filterCustom }, filterAfterKey, filterBeforeKey)).length
+    return { canvasNeeds, slotCounts, needCounts, stateCounts, allCustomLabels, customCounts, presetCounts, favCount }
+  }, [archiveEntries, filterFav, filterSlot, filterNeed, filterState, filterCustom, archiveDateRange, state.canvas, customTags])
   // ───────────────────────────────────────────────────────────────────────────
 
   useEffect(() => {
@@ -765,6 +769,13 @@ export default function Log({ state, syncCheckinDay }) {
       setJournalMeta(prev => prev.map(patch))
       setTaggingEntryId(null)
     }
+  }
+
+  async function handleToggleFav(id, currentFav) {
+    const newFav = !currentFav
+    setArchiveEntries(prev => prev.map(e => e.id === id ? { ...e, favorite: newFav } : e))
+    const { error } = await toggleJournalFavorite(id, newFav)
+    if (error) setArchiveEntries(prev => prev.map(e => e.id === id ? { ...e, favorite: currentFav } : e))
   }
 
   async function startReview() {
@@ -1460,7 +1471,7 @@ export default function Log({ state, syncCheckinDay }) {
           const allJournalDays = archiveAllJournalDays
           const rangeLabel = rangeStart ? formatRangeLabel(rangeStart, rangeEnd) : null
           const filtered = archiveFiltered
-          const anyFilter = filterSlot || filterNeed || filterState || filterCustom || filterDate || rangeStart
+          const anyFilter = filterFav || filterSlot || filterNeed || filterState || filterCustom || filterDate || rangeStart
           const visible = filtered.slice(0, archiveVisible)
 
           return (
@@ -1470,12 +1481,26 @@ export default function Log({ state, syncCheckinDay }) {
                 <span className={styles.archiveSectionMeta}>
                   {archiveEntries.length === 0
                     ? 'no entries yet.'
-                    : archiveHeaderText(filtered, archiveEntries.length, filterSlot, filterNeed, filterState, filterCustom, filterDate, rangeLabel)}
+                    : archiveHeaderText(filtered, archiveEntries.length, filterSlot, filterNeed, filterState, filterCustom, filterDate, rangeLabel, filterFav)}
                 </span>
               </div>
 
               <div className={styles.facetCard}>
               <div className={styles.facetRows}>
+                {/* saved group */}
+                <div className={styles.facetGroup}>
+                  <div className={styles.facetGroupLabel}>SAVED</div>
+                  <div className={styles.facetRow}>
+                    <button
+                      className={`${styles.facetChip} ${filterFav ? styles.facetChipActive : ''}`}
+                      style={favCount === 0 && !filterFav ? { opacity: 0.4 } : undefined}
+                      disabled={favCount === 0 && !filterFav}
+                      onClick={() => { setFilterFav(v => !v); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}
+                    >
+                      ★ saved<span className={styles.facetCount}>{favCount}</span>
+                    </button>
+                  </div>
+                </div>
                 {/* date group */}
                 <div className={styles.facetGroup}>
                   <div className={styles.facetGroupLabel}>WHEN</div>
@@ -1688,7 +1713,7 @@ export default function Log({ state, syncCheckinDay }) {
 
               {anyFilter && (
                 <div className={styles.archiveHeader}>
-                  <button className={styles.archiveClearBtn} onClick={() => { setFilterSlot(null); setFilterNeed(null); setFilterState(null); setFilterCustom(null); setFilterDate(null); setRangeStart(null); setRangeEnd(null); setPickAnchor(null); setDatePickerOpen(false); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}>clear</button>
+                  <button className={styles.archiveClearBtn} onClick={() => { setFilterFav(false); setFilterSlot(null); setFilterNeed(null); setFilterState(null); setFilterCustom(null); setFilterDate(null); setRangeStart(null); setRangeEnd(null); setPickAnchor(null); setDatePickerOpen(false); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}>clear</button>
                 </div>
               )}
 
@@ -1743,6 +1768,10 @@ export default function Log({ state, syncCheckinDay }) {
                               onClick={() => setTaggingEntryId(id => id === e.id ? null : e.id)}
                             >+ tag</button>
                           )}
+                          <button
+                            className={`${styles.archiveFavBtn}${e.favorite ? ` ${styles.archiveFavBtnActive}` : ''}`}
+                            onClick={() => handleToggleFav(e.id, e.favorite)}
+                          >{e.favorite ? '★' : '☆'}</button>
                         </span>
                         {isTagging && (
                           <div className={styles.retroTagPanel}>
