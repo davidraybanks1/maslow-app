@@ -733,7 +733,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
   const navigate = useNavigate()
   const [saved] = useState(loadSavedAnswers)
   const [step, setStep]                     = useState(() => saved.step ?? 0)
-  const [destination, setDestination]       = useState('/practices')
+  const [destination, setDestination]       = useState('/today')
 
   const [anxietyLevel, setAnxietyLevel]     = useState(saved.anxietyLevel ?? null)
   const [anxietyType, setAnxietyType]       = useState(saved.anxietyType ?? null)
@@ -827,7 +827,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
     try { sessionStorage.removeItem(SS_KEY) } catch {}
     // Pass canvas explicitly so it survives any restoreFromSupabase race in the SIGNED_IN handler.
     if (completeOnboarding) completeOnboarding(canvas || null, null, userId ? { userId } : undefined)
-    navigate('/today')
+    navigate(dest)
   }
 
   const energyMapValid = Object.values(energyMap).includes('gives') && Object.values(energyMap).includes('drains')
@@ -1225,7 +1225,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
         <div className={styles.footer}>
           <button
             className="btn-primary"
-            onClick={() => { saveCanvas(); setDestination('/practices'); setStep(9) }}
+            onClick={() => { saveCanvas(); setDestination('/today'); setStep(9) }}
           >
             this feels right →
           </button>
