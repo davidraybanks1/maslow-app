@@ -1752,6 +1752,12 @@ export default function Log({ state, syncCheckinDay }) {
                             <span className={styles.archiveCardDateSlot}>{formatArchiveDate(e.date_key)}{e.slot ? ` · ${e.slot}` : ''}</span>
                             <span className={styles.archiveCardTime}>{formatEntryTime(e.created_at)}</span>
                           </span>
+                          {e.quoted_text && (
+                            <span className={styles.archiveQuoteBlock}>
+                              <span className={styles.archiveQuoteLabel}>↩ {formatArchiveDate(e.quoted_date)}</span>
+                              <span className={styles.archiveQuoteText}>{e.quoted_text.length > 160 ? e.quoted_text.slice(0, 160) + '…' : e.quoted_text}</span>
+                            </span>
+                          )}
                           <span className={styles.archiveCardBody}>{displayBody}</span>
                           {!isExpanded && isTruncatable && (
                             <span className={styles.archiveCardReadMore}>read more</span>

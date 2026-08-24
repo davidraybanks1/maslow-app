@@ -1804,3 +1804,134 @@
     box-sizing: border-box;
   }
 }
+
+/* ── Phase 3: Quote block (entry list) ──────────────────────── */
+
+.journalQuoteBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 7px;
+  padding: 7px 10px;
+  background: rgba(0,0,0,.04);
+  border-left: 2px solid rgba(0,0,0,.14);
+  border-radius: 0 4px 4px 0;
+}
+.journalQuoteDate {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: rgba(0,0,0,.4);
+}
+.journalQuoteText {
+  font-family: var(--font-serif);
+  font-size: 13px;
+  font-weight: 300;
+  line-height: 1.45;
+  color: rgba(0,0,0,.55);
+  font-style: italic;
+}
+
+/* ── Phase 3: Quote picker overlay ──────────────────────────── */
+
+.quotePicker {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(0,0,0,.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.quotePickerPanel {
+  background: var(--surface);
+  border-radius: 12px;
+  width: min(520px, 94vw);
+  max-height: min(80vh, 640px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,.22);
+}
+.quotePickerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid rgba(0,0,0,.08);
+}
+.quotePickerTitle {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(0,0,0,.5);
+}
+.quotePickerClose {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: rgba(0,0,0,.4);
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 2px;
+}
+.quotePickerClose:hover { color: rgba(0,0,0,.7); }
+.quotePickerSearch {
+  margin: 10px 16px;
+  padding: 8px 10px;
+  border: 1px solid rgba(0,0,0,.15);
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  outline: none;
+  background: transparent;
+  color: var(--ink1);
+}
+.quotePickerSearch:focus { border-color: rgba(0,0,0,.35); }
+.quotePickerList {
+  overflow-y: auto;
+  flex: 1;
+  padding: 0 8px 12px;
+}
+.quotePickerEmpty {
+  padding: 24px 12px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: rgba(0,0,0,.35);
+}
+.quotePickerItem {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 10px;
+  cursor: pointer;
+  position: relative;
+}
+.quotePickerItem:hover { background: rgba(0,0,0,.05); }
+.quotePickerFavMark {
+  position: absolute;
+  top: 9px;
+  right: 10px;
+  font-size: 12px;
+  color: #c8a227;
+}
+.quotePickerItemDate {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  color: rgba(0,0,0,.4);
+}
+.quotePickerItemText {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-weight: 300;
+  line-height: 1.45;
+  color: var(--ink1);
+}

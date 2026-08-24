@@ -2,7 +2,7 @@ import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { NEEDS, MODES, MODE_ORDER, MODE_MAX_BUBBLES, MODE_WEIGHTS, JOURNAL_TRUNCATE } from '../lib/constants'
 import { currentSlot, precedingSlots, SLOT_NOUN, SLOT_GREETING } from '../lib/slots'
-import { todayKey, loadJournalEntries, addJournalEntry, deleteJournalEntry, loadNoteDeck, loadCustomTags, uploadNoteImage } from '../lib/store'
+import { todayKey, loadJournalEntries, addJournalEntry, deleteJournalEntry, loadNoteDeck, loadCustomTags, uploadNoteImage, loadJournalArchive } from '../lib/store'
 import { BUILTIN_NATURE_TYPES, BUILTIN_PEAK_TYPES } from '../lib/debriefTypes'
 import { createDataStats, getCanvasGuidance } from '../lib/dataStats'
 import { hapticTick, isNative, pendingNotifSlot } from '../lib/native'
@@ -74,6 +74,12 @@ function CompletionBar({ arcs, pct }) {
       <span className={styles.progressBarPct}>{pct}<span className={styles.progressBarPctSign}>%</span></span>
     </div>
   )
+}
+
+function formatQuoteDate(dateKey) {
+  if (!dateKey) return ''
+  const d = new Date(dateKey + 'T12:00:00')
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toLowerCase()
 }
 
 function formatEntryTime(ts) {
@@ -327,6 +333,12 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   const [draftCustom, setDraftCustom] = useState(null)
   const [draftImage, setDraftImage] = useState(null)
   const [uploadingJournalImage, setUploadingJournalImage] = useState(false)
+  const [quotedText, setQuotedText] = useState(null)
+  const [quotedDate, setQuotedDate] = useState(null)
+  const [quotePicker, setQuotePicker] = useState(false)
+  const [quoteSearch, setQuoteSearch] = useState('')
+  const [quoteEntries, setQuoteEntries] = useState(null)
+  const [quoteLoading, setQuoteLoading] = useState(false)
   const [composerOpen, setComposerOpen] = useState(false)
   const [needPickerOpen, setNeedPickerOpen] = useState(false)
   const [statePickerOpen, setStatePickerOpen] = useState(false)
@@ -349,6 +361,8 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
       state: draftState,
       custom: draftCustom,
       imageUrl: draftImage,
+      quotedText,
+      quotedDate,
     })
     if (error) { setJournalSaveError('save failed — try again'); return }
     setJournalEntries(prev => [...prev, data])
@@ -357,6 +371,8 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     setDraftState(null)
     setDraftCustom(null)
     setDraftImage(null)
+    setQuotedText(null)
+    setQuotedDate(null)
     setJournalSaveError(null)
     setNeedPickerOpen(false)
     setStatePickerOpen(false)
@@ -371,6 +387,17 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     if (url) setDraftImage(url)
     setUploadingJournalImage(false)
     e.target.value = ''
+  }
+
+  async function openQuotePicker() {
+    setQuotePicker(true)
+    setQuoteSearch('')
+    if (quoteEntries === null && state.userId) {
+      setQuoteLoading(true)
+      const all = await loadJournalArchive(state.userId)
+      setQuoteEntries(all.filter(e => e.date_key !== today))
+      setQuoteLoading(false)
+    }
   }
 
   function handleComposerKeyDown(e) {
@@ -479,6 +506,11 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   const journalEntryCount = journalEntries.length
   const activeNeeds = NEEDS.filter(n => state.canvas[n.id])
 
+  const sortedPickerEntries = (() => {
+    const q = quoteSearch.trim().toLowerCase()
+    const pool = (quoteEntries || []).filter(e => !q || (e.entry || '').toLowerCase().includes(q))
+    return [...pool].sort((a, b) => (b.favorite ? 1 : 0) - (a.favorite ? 1 : 0))
+  })()
 
   return (
     <div className={styles.screen}>
@@ -899,6 +931,12 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                       const toggle = () => setExpandedTodayEntries(prev => { const s = new Set(prev); isExp ? s.delete(e.id) : s.add(e.id); return s })
                       return (
                         <>
+                          {e.quoted_text && (
+                            <span className={styles.journalQuoteBlock}>
+                              <span className={styles.journalQuoteDate}>↩ {formatQuoteDate(e.quoted_date)}</span>
+                              <span className={styles.journalQuoteText}>{e.quoted_text.length > 160 ? e.quoted_text.slice(0, 160) + '…' : e.quoted_text}</span>
+                            </span>
+                          )}
                           <div className={styles.journalEntryText}>{display}</div>
                           {!isExp && trunc && <button className={styles.journalReadMore} onClick={toggle}>read more</button>}
                           {e.image_url && <img src={e.image_url} className={styles.journalEntryImage} alt="" />}
@@ -940,6 +978,13 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                       onClick={() => journalFileRef.current?.click()}
                       disabled={uploadingJournalImage}
                     >{uploadingJournalImage ? 'uploading…' : '+ photo'}</button>
+                  )}
+                  {quotedText ? (
+                    <button className={styles.composerTagActive} onClick={() => { setQuotedText(null); setQuotedDate(null) }}>
+                      ↩ {formatQuoteDate(quotedDate)} ×
+                    </button>
+                  ) : (
+                    <button className={styles.composerTagBtn} onClick={openQuotePicker}>+ quote</button>
                   )}
                 </div>
                 {needPickerOpen && activeNeeds.length > 0 && (
@@ -1017,6 +1062,12 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                       const toggle = () => setExpandedTodayEntries(prev => { const s = new Set(prev); isExp ? s.delete(e.id) : s.add(e.id); return s })
                       return (
                         <>
+                          {e.quoted_text && (
+                            <span className={styles.journalQuoteBlock}>
+                              <span className={styles.journalQuoteDate}>↩ {formatQuoteDate(e.quoted_date)}</span>
+                              <span className={styles.journalQuoteText}>{e.quoted_text.length > 160 ? e.quoted_text.slice(0, 160) + '…' : e.quoted_text}</span>
+                            </span>
+                          )}
                           <div className={styles.journalEntryText}>{display}</div>
                           {!isExp && trunc && <button className={styles.journalReadMore} onClick={toggle}>read more</button>}
                           {e.image_url && <img src={e.image_url} className={styles.journalEntryImage} alt="" />}
@@ -1061,6 +1112,13 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                         onClick={() => journalFileRef.current?.click()}
                         disabled={uploadingJournalImage}
                       >{uploadingJournalImage ? 'uploading…' : '+ photo'}</button>
+                    )}
+                    {quotedText ? (
+                      <button className={styles.composerTagActive} onClick={() => { setQuotedText(null); setQuotedDate(null) }}>
+                        ↩ {formatQuoteDate(quotedDate)} ×
+                      </button>
+                    ) : (
+                      <button className={styles.composerTagBtn} onClick={openQuotePicker}>+ quote</button>
                     )}
                   </div>
                   {needPickerOpen && activeNeeds.length > 0 && (
@@ -1137,6 +1195,46 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
             }
           }}
         />
+      )}
+
+      {quotePicker && (
+        <div className={styles.quotePicker} onClick={() => setQuotePicker(false)}>
+          <div className={styles.quotePickerPanel} onClick={e => e.stopPropagation()}>
+            <div className={styles.quotePickerHeader}>
+              <span className={styles.quotePickerTitle}>quote a past entry</span>
+              <button className={styles.quotePickerClose} onClick={() => setQuotePicker(false)}>×</button>
+            </div>
+            <input
+              className={styles.quotePickerSearch}
+              placeholder="search…"
+              value={quoteSearch}
+              onChange={e => setQuoteSearch(e.target.value)}
+              autoFocus
+            />
+            <div className={styles.quotePickerList}>
+              {quoteLoading && <div className={styles.quotePickerEmpty}>loading…</div>}
+              {!quoteLoading && sortedPickerEntries.length === 0 && (
+                <div className={styles.quotePickerEmpty}>no past entries</div>
+              )}
+              {!quoteLoading && sortedPickerEntries.map(e => (
+                <button
+                  key={e.id}
+                  className={styles.quotePickerItem}
+                  onClick={() => {
+                    setQuotedText(e.entry)
+                    setQuotedDate(e.date_key)
+                    setQuotePicker(false)
+                    setQuoteSearch('')
+                  }}
+                >
+                  {e.favorite && <span className={styles.quotePickerFavMark}>★</span>}
+                  <span className={styles.quotePickerItemDate}>{formatQuoteDate(e.date_key)}</span>
+                  <span className={styles.quotePickerItemText}>{(e.entry || '').length > 120 ? (e.entry || '').slice(0, 120) + '…' : (e.entry || '')}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       )}
 
       {lightboxImage && (

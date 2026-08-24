@@ -1614,3 +1614,28 @@
 .archiveFavBtn:hover { color: rgba(0,0,0,.5); }
 .archiveFavBtnActive { color: #c8a227; }
 .archiveFavBtnActive:hover { color: #a8841a; }
+
+.archiveQuoteBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: rgba(0,0,0,.04);
+  border-left: 2px solid rgba(0,0,0,.14);
+  border-radius: 0 4px 4px 0;
+}
+.archiveQuoteLabel {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  color: rgba(0,0,0,.4);
+}
+.archiveQuoteText {
+  font-family: var(--font-serif);
+  font-size: 13px;
+  font-weight: 300;
+  line-height: 1.45;
+  color: rgba(0,0,0,.55);
+  font-style: italic;
+}
