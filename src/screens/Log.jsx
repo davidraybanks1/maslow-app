@@ -5,6 +5,7 @@ import { weekKey, todayKey, loadWeeklyReviews, loadJournalEntry, loadDebriefs, l
 import { createDataStats } from '../lib/dataStats'
 import { BUILTIN_NATURE_TYPES, BUILTIN_PEAK_TYPES, natureTagStyle, peakTagStyle, ENVIRONMENT_TAG_STYLE, parseDebriefEntry } from '../lib/debriefTypes'
 import LiveCanvasCard from '../components/LiveCanvasCard'
+import JournalQuote from '../components/JournalQuote'
 import { supabase } from '../lib/supabase'
 import styles from './Log.module.css'
 
@@ -1753,10 +1754,14 @@ export default function Log({ state, syncCheckinDay }) {
                             <span className={styles.archiveCardTime}>{formatEntryTime(e.created_at)}</span>
                           </span>
                           {e.quoted_text && (
-                            <span className={styles.archiveQuoteBlock}>
-                              <span className={styles.archiveQuoteLabel}>↩ {formatArchiveDate(e.quoted_date)}</span>
-                              <span className={styles.archiveQuoteText}>{e.quoted_text.length > 160 ? e.quoted_text.slice(0, 160) + '…' : e.quoted_text}</span>
-                            </span>
+                            <JournalQuote
+                              text={e.quoted_text}
+                              dateLabel={formatArchiveDate(e.quoted_date)}
+                              blockClass={styles.archiveQuoteBlock}
+                              dateClass={styles.archiveQuoteLabel}
+                              textClass={styles.archiveQuoteText}
+                              readMoreClass={styles.archiveQuoteReadMore}
+                            />
                           )}
                           <span className={styles.archiveCardBody}>{displayBody}</span>
                           {!isExpanded && isTruncatable && (

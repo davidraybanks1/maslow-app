@@ -1639,3 +1639,10 @@
   color: rgba(0,0,0,.55);
   font-style: italic;
 }
+.archiveQuoteReadMore {
+  display: block;
+  margin-top: 5px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: rgba(0,0,0,.4);
+}

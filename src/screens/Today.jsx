@@ -9,6 +9,7 @@ import { hapticTick, isNative, pendingNotifSlot } from '../lib/native'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import { useTimer, formatTimerTime, DURATION_OPTIONS } from '../lib/useTimer'
 import TimerCard from '../components/TimerCard'
+import JournalQuote from '../components/JournalQuote'
 import ManageDeck from '../components/ManageDeck'
 import ManageTags from '../components/ManageTags'
 import NeedsPopup from '../components/NeedsPopup'
@@ -932,10 +933,14 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                       return (
                         <>
                           {e.quoted_text && (
-                            <span className={styles.journalQuoteBlock}>
-                              <span className={styles.journalQuoteDate}>↩ {formatQuoteDate(e.quoted_date)}</span>
-                              <span className={styles.journalQuoteText}>{e.quoted_text.length > 160 ? e.quoted_text.slice(0, 160) + '…' : e.quoted_text}</span>
-                            </span>
+                            <JournalQuote
+                              text={e.quoted_text}
+                              dateLabel={formatQuoteDate(e.quoted_date)}
+                              blockClass={styles.journalQuoteBlock}
+                              dateClass={styles.journalQuoteDate}
+                              textClass={styles.journalQuoteText}
+                              readMoreClass={styles.journalQuoteReadMore}
+                            />
                           )}
                           <div className={styles.journalEntryText}>{display}</div>
                           {!isExp && trunc && <button className={styles.journalReadMore} onClick={toggle}>read more</button>}
@@ -1063,10 +1068,14 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                       return (
                         <>
                           {e.quoted_text && (
-                            <span className={styles.journalQuoteBlock}>
-                              <span className={styles.journalQuoteDate}>↩ {formatQuoteDate(e.quoted_date)}</span>
-                              <span className={styles.journalQuoteText}>{e.quoted_text.length > 160 ? e.quoted_text.slice(0, 160) + '…' : e.quoted_text}</span>
-                            </span>
+                            <JournalQuote
+                              text={e.quoted_text}
+                              dateLabel={formatQuoteDate(e.quoted_date)}
+                              blockClass={styles.journalQuoteBlock}
+                              dateClass={styles.journalQuoteDate}
+                              textClass={styles.journalQuoteText}
+                              readMoreClass={styles.journalQuoteReadMore}
+                            />
                           )}
                           <div className={styles.journalEntryText}>{display}</div>
                           {!isExp && trunc && <button className={styles.journalReadMore} onClick={toggle}>read more</button>}

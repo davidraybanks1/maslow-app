@@ -1831,6 +1831,13 @@
   color: rgba(0,0,0,.55);
   font-style: italic;
 }
+.journalQuoteReadMore {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--ink3);
+}
 
 /* ── Phase 3: Quote picker overlay ──────────────────────────── */
 
