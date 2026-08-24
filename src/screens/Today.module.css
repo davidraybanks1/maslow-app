@@ -1361,6 +1361,68 @@
 .practicesCard     { order: 5; }
 .cardJournal       { order: 6; }
 
+/* ── Header clock ── */
+.headerClockWrap {
+  flex-shrink: 0;
+  position: relative;
+}
+.headerClock {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 0.5px solid var(--border);
+  background: none;
+  color: var(--ink3);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  padding: 0;
+}
+.headerClock:hover { color: var(--ink); }
+.headerClockPicker {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--card);
+  border: 0.5px solid var(--hairline);
+  border-radius: 10px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 100;
+  min-width: 68px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.08);
+}
+.headerClockPill {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink);
+  background: none;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  text-align: center;
+  -webkit-tap-highlight-color: transparent;
+}
+.headerClockPill:hover { background: var(--track); }
+.headerClockCountdown {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink);
+  background: none;
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  padding: 5px 10px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+}
+.headerClockCountdown:hover { background: var(--track); }
+
 /* ── Desktop two-column layout ── */
 @media (min-width: 900px) {
 

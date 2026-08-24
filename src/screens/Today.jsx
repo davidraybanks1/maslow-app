@@ -7,6 +7,8 @@ import { BUILTIN_NATURE_TYPES, BUILTIN_PEAK_TYPES } from '../lib/debriefTypes'
 import { createDataStats, getCanvasGuidance } from '../lib/dataStats'
 import { hapticTick, isNative, pendingNotifSlot } from '../lib/native'
 import { useIsDesktop } from '../lib/useIsDesktop'
+import { useTimer, formatTimerTime, DURATION_OPTIONS } from '../lib/useTimer'
+import TimerCard from '../components/TimerCard'
 import ManageDeck from '../components/ManageDeck'
 import ManageTags from '../components/ManageTags'
 import NeedsPopup from '../components/NeedsPopup'
@@ -156,6 +158,9 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   const location = useLocation()
   const [today, setToday] = useState(() => todayKey())
   const [slot, setSlot] = useState(() => currentSlot())
+  const { timer, fullScreen, setFullScreen, isDone, remaining, isPaused, startTimer, pauseTimer, resumeTimer, endTimer, dismissModal } = useTimer()
+  const [clockPickerOpen, setClockPickerOpen] = useState(false)
+  const clockWrapRef = useRef(null)
   const checked = state.checkins[today] || []
 
   useEffect(() => {
@@ -176,6 +181,17 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
       try { document.querySelector('[data-tour="mood"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) } catch {}
     }, 300)
   }, [])
+
+  useEffect(() => {
+    if (!clockPickerOpen) return
+    function onDocMouseDown(e) {
+      if (clockWrapRef.current && !clockWrapRef.current.contains(e.target)) {
+        setClockPickerOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', onDocMouseDown)
+    return () => document.removeEventListener('mousedown', onDocMouseDown)
+  }, [clockPickerOpen])
 
   // Completion ring: segments pack contiguously from 12 o'clock in mode order.
   const ringArcs = []
@@ -465,6 +481,43 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
           </div>
           <div className={styles.headerBarWrap}>
             <CompletionBar arcs={ringArcs} pct={ringPct} />
+          </div>
+          <div className={styles.headerClockWrap} ref={clockWrapRef}>
+            {timer ? (
+              <button
+                className={styles.headerClockCountdown}
+                onClick={() => setFullScreen(true)}
+                aria-label="open timer"
+              >
+                {isDone ? 'done' : formatTimerTime(remaining)}
+              </button>
+            ) : (
+              <>
+                <button
+                  className={styles.headerClock}
+                  onClick={() => setClockPickerOpen(o => !o)}
+                  aria-label="set a timer"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                </button>
+                {clockPickerOpen && (
+                  <div className={styles.headerClockPicker}>
+                    {DURATION_OPTIONS.map(m => (
+                      <button
+                        key={m}
+                        className={styles.headerClockPill}
+                        onClick={() => { startTimer(m); setClockPickerOpen(false) }}
+                      >
+                        {m}m
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -1052,6 +1105,21 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
           <img src={lightboxImage} alt="" className={styles.lightboxImage} onClick={e => e.stopPropagation()} />
         </div>
       )}
+
+      <TimerCard
+        hideBar
+        timer={timer}
+        fullScreen={fullScreen}
+        setFullScreen={setFullScreen}
+        isDone={isDone}
+        remaining={remaining}
+        isPaused={isPaused}
+        startTimer={startTimer}
+        pauseTimer={pauseTimer}
+        resumeTimer={resumeTimer}
+        endTimer={endTimer}
+        dismissModal={dismissModal}
+      />
     </div>
   )
 }
