@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { NEEDS, MODE_MAX_BUBBLES, JOURNAL_TRUNCATE } from '../lib/constants'
-import { weekKey, loadJournalEntry, loadDebriefs, loadDebriefTypes, addNoteDeckCard, saveWeeklyReview, loadAllJournalMeta, loadJournalArchive, updateJournalEntryTags, loadDayCheckins, loadCustomTags } from '../lib/store'
+import { weekKey, todayKey, loadWeeklyReviews, loadJournalEntry, loadDebriefs, loadDebriefTypes, addNoteDeckCard, saveWeeklyReview, loadAllJournalMeta, loadJournalArchive, updateJournalEntryTags, loadDayCheckins, loadCustomTags } from '../lib/store'
 import { createDataStats } from '../lib/dataStats'
 import { BUILTIN_NATURE_TYPES, BUILTIN_PEAK_TYPES, natureTagStyle, peakTagStyle, ENVIRONMENT_TAG_STYLE, parseDebriefEntry } from '../lib/debriefTypes'
 import LiveCanvasCard from '../components/LiveCanvasCard'
@@ -68,6 +68,18 @@ function reviewWindowKeys(cadence) {
 
 function todayWeekdayMonday() {
   return (new Date().getDay() + 6) % 7
+}
+
+// The key stored as week_starting when a review is saved for the current period.
+// weekly: Monday of the current calendar week (matches weekKey()).
+// daily: 6 days ago — the oldest day in the rolling 7-day window (matches reviewWindowKeys('daily')[0]).
+function periodKey(cadence) {
+  if (cadence === 'daily') {
+    const d = new Date()
+    d.setDate(d.getDate() - 6)
+    return dateKeyFor(d)
+  }
+  return weekKey()
 }
 
 function formatCardDate(dateKey) {
@@ -604,6 +616,7 @@ export default function Log({ state, syncCheckinDay }) {
   const [ritualDismissed, setRitualDismissed] = useState(() => {
     try { return localStorage.getItem('maslow_ritual_dismissed') === new Date().toDateString() } catch { return false }
   })
+  const [weeklyReviews, setWeeklyReviews] = useState([])
 
   const [archiveEntries, setArchiveEntries] = useState([])
   const [archiveLoaded, setArchiveLoaded] = useState(false)
@@ -695,6 +708,7 @@ export default function Log({ state, syncCheckinDay }) {
   useEffect(() => {
     if (!state.userId) return
     loadAllJournalMeta(state.userId).then(setJournalMeta)
+    loadWeeklyReviews(state.userId, 5).then(setWeeklyReviews)
   }, [state.userId])
 
   useEffect(() => {
@@ -832,6 +846,7 @@ export default function Log({ state, syncCheckinDay }) {
       reviewDate: new Date().toLocaleDateString('en-CA'),
       cadence,
     })
+    setWeeklyReviews(prev => [...prev.filter(r => r.week_starting !== windowStart), { week_starting: windowStart, cadence }])
     setFinishing(false)
     setReviewStep(null)
     setJustFinished(true)
@@ -1047,7 +1062,8 @@ export default function Log({ state, syncCheckinDay }) {
   // ── Default state ─────────────────────────────────────────────────────────
   const cadence = state.reviewCadence || 'weekly'
   const isScheduledDay = cadence === 'daily' || todayWeekdayMonday() === (state.reviewDay ?? 0)
-  const ritualDue = isScheduledDay && !ritualDismissed
+  const periodAlreadyReviewed = weeklyReviews.some(r => r.week_starting === periodKey(cadence))
+  const ritualDue = isScheduledDay && !ritualDismissed && !periodAlreadyReviewed && state.onboardedAt !== todayKey()
 
   const entryCount = journalMeta.length
   const needCount = journalMeta.filter(e => e.need_id).length
