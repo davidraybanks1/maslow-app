@@ -703,7 +703,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         {/* ── Needs & Practices ── */}
         <div className={styles.practicesCard} data-tour="modes">
           <div className={styles.tierSectionHeader}>
-            <span className={styles.tierSectionLabel}>NEEDS & PRACTICES</span>
+            <span className={styles.tierSectionLabel}>CANVAS</span>
             <span className={styles.tierSectionHint}>tap a mode to fill it</span>
           </div>
           <div className={styles.tierList}>
