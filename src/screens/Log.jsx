@@ -1799,15 +1799,18 @@ export default function Log({ state, syncCheckinDay }) {
                               onClick={() => setTaggingEntryId(id => id === e.id ? null : e.id)}
                             >+ tag</button>
                           )}
-                          <button
-                            className={`${styles.archiveRevisitBtn}${e.revisit ? ` ${styles.archiveRevisitBtnActive}` : ''}`}
-                            onClick={() => handleToggleRevisit(e.id, e.revisit)}
-                            aria-label={e.revisit ? 'remove from revisit queue' : 'add to revisit queue'}
-                          >↩</button>
-                          <button
-                            className={`${styles.archiveFavBtn}${e.favorite ? ` ${styles.archiveFavBtnActive}` : ''}`}
-                            onClick={() => handleToggleFav(e.id, e.favorite)}
-                          >{e.favorite ? '★' : '☆'}</button>
+                          <span className={styles.archiveCardMarks}>
+                            <button
+                              className={`${styles.archiveRevisitBtn}${e.revisit ? ` ${styles.archiveRevisitBtnActive}` : ''}`}
+                              onClick={() => handleToggleRevisit(e.id, e.revisit)}
+                              aria-pressed={e.revisit}
+                            >↩ revisit</button>
+                            <button
+                              className={`${styles.archiveFavBtn}${e.favorite ? ` ${styles.archiveFavBtnActive}` : ''}`}
+                              onClick={() => handleToggleFav(e.id, e.favorite)}
+                              aria-pressed={e.favorite}
+                            >{e.favorite ? '★' : '☆'} saved</button>
+                          </span>
                         </span>
                         {isTagging && (
                           <div className={styles.retroTagPanel}>
