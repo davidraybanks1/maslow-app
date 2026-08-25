@@ -50,6 +50,19 @@ function findLiveEl(target) {
   return null
 }
 
+// Walk up the DOM to find the nearest scrollable ancestor.
+// scrollend fires on the scrolling element (it doesn't bubble), so we need
+// the actual container — not document — to listen on.
+function findScrollParent(el) {
+  let node = el.parentElement
+  while (node && node !== document.documentElement) {
+    const s = getComputedStyle(node)
+    if (/(auto|scroll)/.test(s.overflow + s.overflowY)) return node
+    node = node.parentElement
+  }
+  return window
+}
+
 export default function OnboardingTour({ markTourSeen }) {
   const [steps, setSteps] = useState([])
   const [index, setIndex] = useState(0)
@@ -76,9 +89,50 @@ export default function OnboardingTour({ markTourSeen }) {
     if (!step) return
     const match = findLiveEl(step.target)
     if (!match) return
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const { top, bottom, left, right } = match.rect
+    const alreadyInView = top >= 0 && bottom <= window.innerHeight && left >= 0 && right <= window.innerWidth
+
+    // No scroll needed, or user prefers instant jumps — measure right away.
+    // For reduceMotion-not-in-view: scrollIntoView with 'auto' is synchronous,
+    // so getBoundingClientRect() in measureStep immediately reflects the new position.
+    if (alreadyInView || reduceMotion) {
+      if (!alreadyInView) match.el.scrollIntoView({ behavior: 'auto', block: 'nearest' })
+      measureStep(index, steps)
+      return
+    }
+
     match.el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-    clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => measureStep(index, steps), 300)
+
+    // scrollend fires on the scrolling element (no bubbling), so listen there.
+    // Also listen on window to catch document-level scroll (scrollend on Document
+    // is accessible via window). 700ms fallback covers engines where scrollend
+    // never fires (shouldn't happen on Chrome 114+ / Safari 17+, but safe to keep).
+    const scroller = findScrollParent(match.el)
+    let settled = false
+
+    function settle() {
+      if (settled) return
+      settled = true
+      clearTimeout(debounceRef.current)
+      scroller.removeEventListener('scrollend', settle)
+      if (scroller !== window) window.removeEventListener('scrollend', settle)
+      measureStep(index, steps)
+    }
+
+    if ('onscrollend' in window) {
+      scroller.addEventListener('scrollend', settle, { once: true })
+      if (scroller !== window) window.addEventListener('scrollend', settle, { once: true })
+    }
+    debounceRef.current = setTimeout(settle, 700)
+
+    return () => {
+      settled = true
+      clearTimeout(debounceRef.current)
+      scroller.removeEventListener('scrollend', settle)
+      if (scroller !== window) window.removeEventListener('scrollend', settle)
+    }
   }, [index, steps])
 
   useEffect(() => {
