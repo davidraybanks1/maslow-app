@@ -72,7 +72,13 @@ export default function OnboardingTour({ markTourSeen }) {
 
   useEffect(() => {
     if (!steps.length) return
-    measureStep(index, steps)
+    const step = steps[index]
+    if (!step) return
+    const match = findLiveEl(step.target)
+    if (!match) return
+    match.el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => measureStep(index, steps), 300)
   }, [index, steps])
 
   useEffect(() => {
