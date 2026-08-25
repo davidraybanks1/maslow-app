@@ -328,8 +328,10 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   const [needPickerOpen, setNeedPickerOpen] = useState(false)
   const [statePickerOpen, setStatePickerOpen] = useState(false)
   const [customPickerOpen, setCustomPickerOpen] = useState(false)
+  const [attachMenuOpen, setAttachMenuOpen] = useState(false)
   const journalEntriesRef = useRef(null)
   const journalFileRef = useRef(null)
+  const attachMenuRef = useRef(null)
 
   useEffect(() => {
     if (!state.userId) return
@@ -362,6 +364,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     setNeedPickerOpen(false)
     setStatePickerOpen(false)
     setCustomPickerOpen(false)
+    setAttachMenuOpen(false)
   }
 
   async function handleJournalFilePick(e) {
@@ -390,6 +393,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
       e.preventDefault()
       handleAddEntry()
     }
+    if (e.key === 'Escape') setAttachMenuOpen(false)
   }
 
   useEffect(() => {
@@ -398,6 +402,17 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     document.addEventListener('mousedown', onDocMouseDown)
     return () => document.removeEventListener('mousedown', onDocMouseDown)
   }, [pendingDeleteId])
+
+  useEffect(() => {
+    if (!attachMenuOpen) return
+    function onDown(e) {
+      if (attachMenuRef.current && !attachMenuRef.current.contains(e.target)) {
+        setAttachMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [attachMenuOpen])
 
   async function handleDeleteEntry(id) {
     if (pendingDeleteId === id) {
@@ -496,6 +511,50 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     const pool = (quoteEntries || []).filter(e => !q || (e.entry || '').toLowerCase().includes(q))
     return [...pool].sort((a, b) => (b.favorite ? 1 : 0) - (a.favorite ? 1 : 0))
   })()
+
+  const renderAttachControl = () => {
+    const hasPhoto = !!draftImage
+    const hasQuote = !!quotedText
+    const offerPhoto = !hasPhoto
+    const offerQuote = !hasQuote
+    const noItems = !offerPhoto && !offerQuote
+    return (
+      <div className={styles.attachWrap} ref={attachMenuRef}>
+        {attachMenuOpen && !noItems && (
+          <div className={styles.attachMenu}>
+            {offerPhoto && (
+              <button
+                className={styles.attachMenuItem}
+                onClick={() => { journalFileRef.current?.click(); setAttachMenuOpen(false) }}
+              >{uploadingJournalImage ? 'uploading…' : 'photo'}</button>
+            )}
+            {offerQuote && (
+              <button
+                className={styles.attachMenuItem}
+                onClick={() => { openQuotePicker(); setAttachMenuOpen(false) }}
+              >quote</button>
+            )}
+          </div>
+        )}
+        <button
+          className={styles.attachBtn}
+          onClick={() => !noItems && setAttachMenuOpen(o => !o)}
+          aria-label="attach photo or quote"
+          disabled={noItems}
+        >⊕</button>
+        {hasPhoto && (
+          <button className={styles.attachChip} onClick={() => setDraftImage(null)}>
+            <img src={draftImage} className={styles.attachThumb} alt="" />×
+          </button>
+        )}
+        {hasQuote && (
+          <button className={styles.attachChip} onClick={() => { setQuotedText(null); setQuotedDate(null) }}>
+            ↩ {formatQuoteDate(quotedDate)} ×
+          </button>
+        )}
+      </div>
+    )
+  }
 
   return (
     <div className={styles.screen}>
@@ -920,24 +979,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                   ) : (
                     <button className={styles.composerTagBtn} onClick={() => { setCustomPickerOpen(o => !o); setNeedPickerOpen(false); setStatePickerOpen(false) }}>+ custom</button>
                   ))}
-                  {draftImage ? (
-                    <button className={styles.composerTagActive} onClick={() => setDraftImage(null)}>
-                      <img src={draftImage} className={styles.composerThumb} alt="" /> × photo
-                    </button>
-                  ) : (
-                    <button
-                      className={styles.composerTagBtn}
-                      onClick={() => journalFileRef.current?.click()}
-                      disabled={uploadingJournalImage}
-                    >{uploadingJournalImage ? 'uploading…' : '+ photo'}</button>
-                  )}
-                  {quotedText ? (
-                    <button className={styles.composerTagActive} onClick={() => { setQuotedText(null); setQuotedDate(null) }}>
-                      ↩ {formatQuoteDate(quotedDate)} ×
-                    </button>
-                  ) : (
-                    <button className={styles.composerTagBtn} onClick={openQuotePicker}>+ quote</button>
-                  )}
                 </div>
                 {needPickerOpen && activeNeeds.length > 0 && (
                   <div className={styles.composerPicker}>
@@ -970,6 +1011,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                     rows={3}
                   />
                   <div className={styles.journalComposerFooter}>
+                    {renderAttachControl()}
                     <span className={styles.journalHint}>⌘↵</span>
                     <button className={styles.journalAddBtn} onClick={handleAddEntry} disabled={!draftText.trim()}>add</button>
                   </div>
@@ -1058,24 +1100,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                     ) : (
                       <button className={styles.composerTagBtn} onClick={() => { setCustomPickerOpen(o => !o); setNeedPickerOpen(false); setStatePickerOpen(false) }}>+ custom</button>
                     ))}
-                    {draftImage ? (
-                      <button className={styles.composerTagActive} onClick={() => setDraftImage(null)}>
-                        <img src={draftImage} className={styles.composerThumb} alt="" /> × photo
-                      </button>
-                    ) : (
-                      <button
-                        className={styles.composerTagBtn}
-                        onClick={() => journalFileRef.current?.click()}
-                        disabled={uploadingJournalImage}
-                      >{uploadingJournalImage ? 'uploading…' : '+ photo'}</button>
-                    )}
-                    {quotedText ? (
-                      <button className={styles.composerTagActive} onClick={() => { setQuotedText(null); setQuotedDate(null) }}>
-                        ↩ {formatQuoteDate(quotedDate)} ×
-                      </button>
-                    ) : (
-                      <button className={styles.composerTagBtn} onClick={openQuotePicker}>+ quote</button>
-                    )}
                   </div>
                   {needPickerOpen && activeNeeds.length > 0 && (
                     <div className={styles.composerPicker}>
@@ -1108,7 +1132,8 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                     rows={4}
                   />
                   <div className={styles.composerMobileFooter}>
-                    <button className={styles.composerCancelBtn} onClick={() => { setComposerOpen(false); setNeedPickerOpen(false); setStatePickerOpen(false); setCustomPickerOpen(false) }}>cancel</button>
+                    {renderAttachControl()}
+                    <button className={styles.composerCancelBtn} onClick={() => { setComposerOpen(false); setNeedPickerOpen(false); setStatePickerOpen(false); setCustomPickerOpen(false); setAttachMenuOpen(false) }}>cancel</button>
                     <button className={styles.journalAddBtn} onClick={handleAddEntry} disabled={!draftText.trim()}>add</button>
                   </div>
                   {journalSaveError && <div className={styles.journalSaveError}>{journalSaveError}</div>}
