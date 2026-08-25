@@ -1040,14 +1040,44 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
     )
   }
 
-  // ── Screen 5: Flexibility ────────────────────────────────────────────────────
+  // ── Screen 5: Hidden gem (what puts you in flow) ────────────────────────────
   if (step === 5) {
     return (
       <div className={styles.screen}>
         <ProgressBar pct={PROGRESS[4]} />
         <div className={styles.content} ref={contentRef}>
           <button className={styles.backBtn} onClick={() => setStep(4)}>← back</button>
-          <div className={styles.eyebrow}>STEP 5 OF 7 — FLEXIBILITY</div>
+          <div className={styles.eyebrow}>STEP 5 OF 7 — WHAT PUTS YOU IN FLOW</div>
+          <div className={styles.headline}>what's your hidden gem?</div>
+          <div className={styles.sub}>not the thing you'd rank first — the thing you lose an afternoon to. it becomes your exploration need, the one that earns the deepest daily commitment. choose one.</div>
+          <div className={styles.twoColGrid}>
+            {ALWAYS_MATTERS_OPTIONS.map(opt => (
+              <div
+                key={opt.id}
+                className={`${styles.needGridCard} ${alwaysMatters === opt.id ? styles.needGridCardSelected : ''}`}
+                onClick={() => { hapticTick(); setAlwaysMatters(opt.id) }}
+              >
+                <div className={styles.needGridName}>{opt.name}</div>
+                <div className={styles.needGridDesc}>{opt.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className={styles.footer}>
+          <button className="btn-primary" onClick={() => setStep(6)} disabled={!alwaysMatters}>continue →</button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Screen 6: Flexibility ────────────────────────────────────────────────────
+  if (step === 6) {
+    return (
+      <div className={styles.screen}>
+        <ProgressBar pct={PROGRESS[5]} />
+        <div className={styles.content} ref={contentRef}>
+          <button className={styles.backBtn} onClick={() => setStep(5)}>← back</button>
+          <div className={styles.eyebrow}>STEP 6 OF 7 — FLEXIBILITY</div>
           <div className={styles.headline}>how much room do you have to make change right now?</div>
           <div className={styles.sub}>this determines how many practices to start with. starting too many at once is its own form of overwhelm.</div>
           <div className={styles.options}>
@@ -1065,37 +1095,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
           </div>
         </div>
         <div className={styles.footer}>
-          <button className="btn-primary" onClick={() => setStep(6)} disabled={!flexibility}>continue →</button>
-        </div>
-      </div>
-    )
-  }
-
-  // ── Screen 6: Always matters ─────────────────────────────────────────────────
-  if (step === 6) {
-    return (
-      <div className={styles.screen}>
-        <ProgressBar pct={PROGRESS[5]} />
-        <div className={styles.content} ref={contentRef}>
-          <button className={styles.backBtn} onClick={() => setStep(5)}>← back</button>
-          <div className={styles.eyebrow}>STEP 6 OF 7 — WHAT PUTS YOU IN FLOW</div>
-          <div className={styles.headline}>what's your hidden gem?</div>
-          <div className={styles.sub}>not the thing you'd rank first — the thing you lose an afternoon to. it becomes your exploration need, the one that earns the deepest daily commitment. choose one.</div>
-          <div className={styles.twoColGrid}>
-            {ALWAYS_MATTERS_OPTIONS.map(opt => (
-              <div
-                key={opt.id}
-                className={`${styles.needGridCard} ${alwaysMatters === opt.id ? styles.needGridCardSelected : ''}`}
-                onClick={() => { hapticTick(); setAlwaysMatters(opt.id) }}
-              >
-                <div className={styles.needGridName}>{opt.name}</div>
-                <div className={styles.needGridDesc}>{opt.desc}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className={styles.footer}>
-          <button className="btn-primary" onClick={() => setStep(7)} disabled={!alwaysMatters}>continue →</button>
+          <button className="btn-primary" onClick={() => setStep(7)} disabled={!flexibility}>continue →</button>
         </div>
       </div>
     )
