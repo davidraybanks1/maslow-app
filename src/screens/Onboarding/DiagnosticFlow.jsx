@@ -1078,9 +1078,9 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
         <ProgressBar pct={PROGRESS[5]} />
         <div className={styles.content} ref={contentRef}>
           <button className={styles.backBtn} onClick={() => setStep(5)}>← back</button>
-          <div className={styles.eyebrow}>STEP 6 OF 7 — WHAT ALWAYS MATTERS</div>
-          <div className={styles.headline}>no matter the season — what's non-negotiable?</div>
-          <div className={styles.sub}>this becomes the exploration need. the one thing that gets the deepest daily commitment. choose one.</div>
+          <div className={styles.eyebrow}>STEP 6 OF 7 — WHAT PUTS YOU IN FLOW</div>
+          <div className={styles.headline}>what's your hidden gem?</div>
+          <div className={styles.sub}>not the thing you'd rank first — the thing you lose an afternoon to. it becomes your exploration need, the one that earns the deepest daily commitment. choose one.</div>
           <div className={styles.twoColGrid}>
             {ALWAYS_MATTERS_OPTIONS.map(opt => (
               <div
