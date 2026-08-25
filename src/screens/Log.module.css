@@ -7,6 +7,9 @@
 /* ── Empty state ── */
 .emptyState { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink4); padding: 24px 0; }
 
+/* ── Intro note ── */
+.introNote { font-family: var(--font-mono); font-size: 12px; font-weight: 300; color: var(--ink3); margin: 16px 0 0; }
+
 /* ── Shared day-card expanded content (review step 1 + full log accordion) ── */
 .detailLabel {
   font-family: var(--font-mono);
