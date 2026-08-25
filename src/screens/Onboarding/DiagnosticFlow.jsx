@@ -747,6 +747,9 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
   const [openDropdownId, setOpenDropdownId] = useState(null)
   const [revealCount, setRevealCount]       = useState(0)
 
+  const contentRef = useRef(null)
+  useEffect(() => { if (contentRef.current) contentRef.current.scrollTop = 0 }, [step])
+
   // Persist answers as they're given — five minutes of honesty shouldn't die on a refresh.
   useEffect(() => {
     try {
@@ -869,7 +872,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
     return (
       <div className={styles.screen}>
         <ProgressBar pct={PROGRESS[0]} />
-        <div className={styles.content}>
+        <div className={styles.content} ref={contentRef}>
           <button className={styles.backBtn} onClick={() => setStep(0)}>← back</button>
           <div className={styles.eyebrow}>STEP 1 OF 7 — ANXIETY</div>
           <div className={styles.headline}>what's your relationship with anxiety?</div>
@@ -899,7 +902,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
     return (
       <div className={styles.screen}>
         <ProgressBar pct={PROGRESS[1]} />
-        <div className={styles.content}>
+        <div className={styles.content} ref={contentRef}>
           <button className={styles.backBtn} onClick={() => setStep(1)}>← back</button>
           <div className={styles.eyebrow}>STEP 2 OF 7 — ANXIETY TYPE</div>
           <div className={styles.headline}>how does anxiety tend to show up?</div>
@@ -945,7 +948,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
     return (
       <div className={styles.screen}>
         <ProgressBar pct={PROGRESS[2]} />
-        <div className={styles.content}>
+        <div className={styles.content} ref={contentRef}>
           <button className={styles.backBtn} onClick={() => setStep(2)}>← back</button>
           <div className={styles.eyebrow}>STEP 3 OF 7 — ENERGY MAP</div>
           <div className={styles.headline}>what creates energy and what drains it?</div>
@@ -989,7 +992,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
     return (
       <div className={styles.screen}>
         <ProgressBar pct={PROGRESS[3]} />
-        <div className={styles.content}>
+        <div className={styles.content} ref={contentRef}>
           <button className={styles.backBtn} onClick={() => setStep(3)}>← back</button>
           <div className={styles.eyebrow}>STEP 4 OF 7 — YOUR SEASON</div>
           <div className={styles.headline}>what does life look like right now?</div>
@@ -1018,7 +1021,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
     return (
       <div className={styles.screen}>
         <ProgressBar pct={PROGRESS[4]} />
-        <div className={styles.content}>
+        <div className={styles.content} ref={contentRef}>
           <button className={styles.backBtn} onClick={() => setStep(4)}>← back</button>
           <div className={styles.eyebrow}>STEP 5 OF 7 — FLEXIBILITY</div>
           <div className={styles.headline}>how much room do you have to make change right now?</div>
@@ -1049,7 +1052,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
     return (
       <div className={styles.screen}>
         <ProgressBar pct={PROGRESS[5]} />
-        <div className={styles.content}>
+        <div className={styles.content} ref={contentRef}>
           <button className={styles.backBtn} onClick={() => setStep(5)}>← back</button>
           <div className={styles.eyebrow}>STEP 6 OF 7 — WHAT ALWAYS MATTERS</div>
           <div className={styles.headline}>no matter the season — what's non-negotiable?</div>
@@ -1079,7 +1082,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
     return (
       <div className={styles.screen}>
         <ProgressBar pct={PROGRESS[6]} />
-        <div className={styles.content}>
+        <div className={styles.content} ref={contentRef}>
           <button className={styles.backBtn} onClick={() => setStep(6)}>← back</button>
           <div className={styles.eyebrow}>STEP 7 OF 7 — WHAT CAN WAIT</div>
           <div className={styles.headline}>what doesn't need attention right now?</div>
@@ -1115,7 +1118,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
     return (
       <div className={styles.screen}>
         <ProgressBar pct={PROGRESS[6]} />
-        <div className={styles.content}>
+        <div className={styles.content} ref={contentRef}>
           <button className={styles.backBtn} onClick={() => setStep(7)}>← back</button>
           <div className={styles.eyebrow}>YOUR CANVAS</div>
           <div className={styles.headline}>here's what we're working with.</div>
