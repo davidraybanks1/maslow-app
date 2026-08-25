@@ -276,25 +276,30 @@ function buildRecommendation({ anxietyLevel, anxietyType, energyGives, energyDra
     }
   }
 
-  if (season === 'career building') {
-    if (!personal.information) personal.information = 'nourishment'
-    if (!personal.reflection)  personal.reflection  = anxietyType === 'frenetic' ? 'appreciation' : 'nourishment'
-  } else if (season === 'family first') {
-    if (!personal.community || modeRank(personal.community) < modeRank('appreciation')) personal.community = 'appreciation'
-  } else if (season === 'health focus') {
-    if (modeRank(universal.movement) < modeRank('appreciation')) universal.movement = 'appreciation'
-  } else if (season === 'in transition' || season === 'rebuilding') {
-    if (!personal.reflection) personal.reflection = 'nourishment'
-    if (!personal.money)      personal.money      = 'survival'
-    if (!personal.dwelling)   personal.dwelling   = 'survival'
-  } else if (season === 'creative pursuit') {
-    if (!personal.beauty || modeRank(personal.beauty) < modeRank('appreciation')) personal.beauty = 'appreciation'
-  } else if (season === 'caregiving') {
-    if (modeRank(universal.rest) < modeRank('nourishment')) universal.rest = 'nourishment'
-    if (!personal.community) personal.community = 'nourishment'
-  } else if (season === 'finding direction') {
-    if (!personal.reflection) personal.reflection = 'nourishment'
+  function applySeason(name) {
+    if (name === 'career building') {
+      if (!personal.information) personal.information = 'nourishment'
+      if (!personal.reflection)  personal.reflection  = anxietyType === 'frenetic' ? 'appreciation' : 'nourishment'
+    } else if (name === 'family first') {
+      if (!personal.community || modeRank(personal.community) < modeRank('appreciation')) personal.community = 'appreciation'
+    } else if (name === 'health focus') {
+      if (modeRank(universal.movement) < modeRank('appreciation')) universal.movement = 'appreciation'
+    } else if (name === 'in transition' || name === 'rebuilding') {
+      if (!personal.reflection) personal.reflection = 'nourishment'
+      if (!personal.money)      personal.money      = 'survival'
+      if (!personal.dwelling)   personal.dwelling   = 'survival'
+    } else if (name === 'creative pursuit') {
+      if (!personal.beauty || modeRank(personal.beauty) < modeRank('appreciation')) personal.beauty = 'appreciation'
+    } else if (name === 'caregiving') {
+      if (modeRank(universal.rest) < modeRank('nourishment')) universal.rest = 'nourishment'
+      if (!personal.community) personal.community = 'nourishment'
+    } else if (name === 'finding direction') {
+      if (!personal.reflection) personal.reflection = 'nourishment'
+    }
   }
+  // Primary season first so its signals win; secondary only fills what primary left open.
+  const seasons = Array.isArray(season) ? season : (season ? [season] : [])
+  seasons.forEach(s => applySeason(s))
 
   if (energyGives.includes('creative output')) {
     if (!personal.beauty || modeRank(personal.beauty) < modeRank('appreciation')) personal.beauty = 'appreciation'
@@ -738,7 +743,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
   const [anxietyLevel, setAnxietyLevel]     = useState(saved.anxietyLevel ?? null)
   const [anxietyType, setAnxietyType]       = useState(saved.anxietyType ?? null)
   const [energyMap, setEnergyMap]           = useState(saved.energyMap ?? {})
-  const [season, setSeason]                 = useState(saved.season ?? null)
+  const [season, setSeason]                 = useState(() => { const s = saved.season ?? null; return typeof s === 'string' ? [s] : s })
   const [flexibility, setFlexibility]       = useState(saved.flexibility ?? null)
   const [alwaysMatters, setAlwaysMatters]   = useState(saved.alwaysMatters ?? null)
   const [canWait, setCanWait]               = useState(saved.canWait ?? [])
@@ -785,6 +790,20 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
       const next = { ...prev }
       delete next[s]
       return next
+    })
+  }
+
+  function toggleSeason(s) {
+    hapticTick()
+    setSeason(prev => {
+      if (!prev) return [s]
+      const idx = prev.indexOf(s)
+      if (idx !== -1) {
+        const next = prev.filter(x => x !== s)
+        return next.length === 0 ? null : next
+      }
+      if (prev.length < 2) return [...prev, s]
+      return [prev[0], s]
     })
   }
 
@@ -996,21 +1015,26 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
           <button className={styles.backBtn} onClick={() => setStep(3)}>← back</button>
           <div className={styles.eyebrow}>STEP 4 OF 7 — YOUR SEASON</div>
           <div className={styles.headline}>what does life look like right now?</div>
-          <div className={styles.sub}>seasons change. the canvas should reflect where things actually are, not where they'd ideally be.</div>
+          <div className={styles.sub}>seasons change. goals evolve. choose two — your first matters most.</div>
           <div className={styles.twoColGrid}>
-            {SEASON_OPTIONS.map(s => (
-              <div
-                key={s}
-                className={`${styles.gridCard} ${season === s ? styles.gridCardSelected : ''}`}
-                onClick={() => { hapticTick(); setSeason(s) }}
-              >
-                {s}
-              </div>
-            ))}
+            {SEASON_OPTIONS.map(s => {
+              const posIdx = season ? season.indexOf(s) : -1
+              const posNum = posIdx !== -1 ? posIdx + 1 : null
+              return (
+                <div
+                  key={s}
+                  className={`${styles.gridCard} ${posNum !== null ? styles.gridCardSelectedNum : ''}`}
+                  onClick={() => toggleSeason(s)}
+                >
+                  {posNum !== null && <span className={styles.seasonBadge}>{posNum}</span>}
+                  {s}
+                </div>
+              )
+            })}
           </div>
         </div>
         <div className={styles.footer}>
-          <button className="btn-primary" onClick={() => setStep(5)} disabled={!season}>continue →</button>
+          <button className="btn-primary" onClick={() => setStep(5)} disabled={!season || season.length !== 2}>continue →</button>
         </div>
       </div>
     )

@@ -248,6 +248,26 @@
 .gridCardSelected { border: 2px solid var(--nourishment); background: rgba(232,184,31,0.10); }
 .gridCardSelected::after { content: ''; position: absolute; top: 10px; right: 10px; width: 10px; height: 10px; border-radius: 50%; background: var(--nourishment); }
 
+/* Season: multi-select with numbered badges — no ::after dot */
+.gridCardSelectedNum { border: 2px solid var(--nourishment); background: rgba(232,184,31,0.10); }
+.seasonBadge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--nourishment);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 500;
+  color: #854F0B;
+  line-height: 1;
+}
+
 /* ── Screens 5 & 6: Need grid cards ── */
 
 .needGridCard {
