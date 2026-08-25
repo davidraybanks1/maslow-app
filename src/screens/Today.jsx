@@ -2,7 +2,7 @@ import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { NEEDS, MODES, MODE_ORDER, MODE_MAX_BUBBLES, MODE_WEIGHTS, JOURNAL_TRUNCATE } from '../lib/constants'
 import { currentSlot, precedingSlots, SLOT_NOUN, SLOT_GREETING } from '../lib/slots'
-import { todayKey, loadJournalEntries, addJournalEntry, deleteJournalEntry, loadNoteDeck, loadCustomTags, uploadNoteImage, loadJournalArchive } from '../lib/store'
+import { todayKey, loadJournalEntries, addJournalEntry, deleteJournalEntry, loadNoteDeck, loadCustomTags, uploadNoteImage, loadRevisitQueue } from '../lib/store'
 import { BUILTIN_NATURE_TYPES, BUILTIN_PEAK_TYPES } from '../lib/debriefTypes'
 import { createDataStats, getCanvasGuidance } from '../lib/dataStats'
 import { hapticTick, isNative, pendingNotifSlot } from '../lib/native'
@@ -321,8 +321,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   const [quotedText, setQuotedText] = useState(null)
   const [quotedDate, setQuotedDate] = useState(null)
   const [quotePicker, setQuotePicker] = useState(false)
-  const [quoteSearch, setQuoteSearch] = useState('')
-  const [quoteEntries, setQuoteEntries] = useState(null)
+  const [quoteEntries, setQuoteEntries] = useState([])
   const [quoteLoading, setQuoteLoading] = useState(false)
   const [composerOpen, setComposerOpen] = useState(false)
   const [needPickerOpen, setNeedPickerOpen] = useState(false)
@@ -379,11 +378,9 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
 
   async function openQuotePicker() {
     setQuotePicker(true)
-    setQuoteSearch('')
-    if (quoteEntries === null && state.userId) {
+    if (state.userId) {
       setQuoteLoading(true)
-      const all = await loadJournalArchive(state.userId)
-      setQuoteEntries(all.filter(e => e.date_key !== today))
+      setQuoteEntries(await loadRevisitQueue(state.userId))
       setQuoteLoading(false)
     }
   }
@@ -506,11 +503,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   const journalEntryCount = journalEntries.length
   const activeNeeds = NEEDS.filter(n => state.canvas[n.id])
 
-  const sortedPickerEntries = (() => {
-    const q = quoteSearch.trim().toLowerCase()
-    const pool = (quoteEntries || []).filter(e => !q || (e.entry || '').toLowerCase().includes(q))
-    return [...pool].sort((a, b) => (b.favorite ? 1 : 0) - (a.favorite ? 1 : 0))
-  })()
 
   const renderAttachControl = () => {
     const hasPhoto = !!draftImage
@@ -532,7 +524,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               <button
                 className={styles.attachMenuItem}
                 onClick={() => { openQuotePicker(); setAttachMenuOpen(false) }}
-              >quote</button>
+              >revisit</button>
             )}
           </div>
         )}
@@ -1182,22 +1174,15 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         <div className={styles.quotePicker} onClick={() => setQuotePicker(false)}>
           <div className={styles.quotePickerPanel} onClick={e => e.stopPropagation()}>
             <div className={styles.quotePickerHeader}>
-              <span className={styles.quotePickerTitle}>quote a past entry</span>
+              <span className={styles.quotePickerTitle}>revisit queue</span>
               <button className={styles.quotePickerClose} onClick={() => setQuotePicker(false)}>×</button>
             </div>
-            <input
-              className={styles.quotePickerSearch}
-              placeholder="search…"
-              value={quoteSearch}
-              onChange={e => setQuoteSearch(e.target.value)}
-              autoFocus
-            />
             <div className={styles.quotePickerList}>
               {quoteLoading && <div className={styles.quotePickerEmpty}>loading…</div>}
-              {!quoteLoading && sortedPickerEntries.length === 0 && (
-                <div className={styles.quotePickerEmpty}>no past entries</div>
+              {!quoteLoading && quoteEntries.length === 0 && (
+                <div className={styles.quotePickerEmpty}>mark entries ↩ on Reflect to queue them here</div>
               )}
-              {!quoteLoading && sortedPickerEntries.map(e => (
+              {!quoteLoading && quoteEntries.map(e => (
                 <button
                   key={e.id}
                   className={styles.quotePickerItem}
@@ -1205,10 +1190,8 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                     setQuotedText(e.entry)
                     setQuotedDate(e.date_key)
                     setQuotePicker(false)
-                    setQuoteSearch('')
                   }}
                 >
-                  {e.favorite && <span className={styles.quotePickerFavMark}>★</span>}
                   <span className={styles.quotePickerItemDate}>{formatQuoteDate(e.date_key)}</span>
                   <span className={styles.quotePickerItemText}>{(e.entry || '').length > 120 ? (e.entry || '').slice(0, 120) + '…' : (e.entry || '')}</span>
                 </button>

@@ -757,7 +757,7 @@ export async function signInWithPassword(email, password) {
 export async function loadJournalEntries(userId, dateKey) {
   const { data } = await supabase
     .from('journal')
-    .select('id, entry, slot, need_id, state, custom, image_url, favorite, quoted_text, quoted_date, created_at')
+    .select('id, entry, slot, need_id, state, custom, image_url, favorite, revisit, quoted_text, quoted_date, created_at')
     .eq('user_id', userId)
     .eq('date_key', dateKey)
     .order('created_at', { ascending: true })
@@ -768,7 +768,7 @@ export async function addJournalEntry(userId, dateKey, { entry, slot, needId, st
   const { data, error } = await supabase
     .from('journal')
     .insert({ user_id: userId, date_key: dateKey, entry, slot: slot || null, need_id: needId || null, state: state || null, custom: custom || null, image_url: imageUrl || null, quoted_text: quotedText || null, quoted_date: quotedDate || null })
-    .select('id, entry, slot, need_id, state, custom, image_url, favorite, quoted_text, quoted_date, created_at')
+    .select('id, entry, slot, need_id, state, custom, image_url, favorite, revisit, quoted_text, quoted_date, created_at')
     .single()
   if (error) logSupabaseError('addJournalEntry', error)
   return { data, error }
@@ -785,7 +785,7 @@ export async function loadAllJournalMeta(userId) {
 export async function loadJournalArchive(userId) {
   const { data } = await supabase
     .from('journal')
-    .select('id, date_key, entry, slot, need_id, state, custom, image_url, favorite, quoted_text, quoted_date, created_at')
+    .select('id, date_key, entry, slot, need_id, state, custom, image_url, favorite, revisit, quoted_text, quoted_date, created_at')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
   return data || []
@@ -795,6 +795,22 @@ export async function toggleJournalFavorite(id, favorite) {
   const { error } = await supabase.from('journal').update({ favorite }).eq('id', id)
   if (error) logSupabaseError('toggleJournalFavorite', error)
   return { error }
+}
+
+export async function toggleJournalRevisit(id, revisit) {
+  const { error } = await supabase.from('journal').update({ revisit }).eq('id', id)
+  if (error) logSupabaseError('toggleJournalRevisit', error)
+  return { error }
+}
+
+export async function loadRevisitQueue(userId) {
+  const { data } = await supabase
+    .from('journal')
+    .select('id, date_key, entry, favorite, created_at')
+    .eq('user_id', userId)
+    .eq('revisit', true)
+    .order('created_at', { ascending: false })
+  return data || []
 }
 
 export async function loadDayCheckins(userId, dateKey) {

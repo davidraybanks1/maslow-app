@@ -1618,6 +1618,20 @@
 .archiveFavBtnActive { color: #c8a227; }
 .archiveFavBtnActive:hover { color: #a8841a; }
 
+.archiveRevisitBtn {
+  background: none;
+  border: none;
+  padding: 0 2px;
+  cursor: pointer;
+  font-size: 14px;
+  color: rgba(0,0,0,.25);
+  line-height: 1;
+  transition: color 0.15s;
+}
+.archiveRevisitBtn:hover { color: rgba(0,0,0,.5); }
+.archiveRevisitBtnActive { color: var(--exploration); }
+.archiveRevisitBtnActive:hover { color: var(--exploration); opacity: 0.8; }
+
 .archiveQuoteBlock {
   display: flex;
   flex-direction: column;
