@@ -141,7 +141,7 @@ function archiveHeaderText(filteredEntries, total, filterSlot, filterNeed, filte
   for (const e of filteredEntries) if (e.state) stateCounts[e.state] = (stateCounts[e.state] || 0) + 1
   const topState = Object.entries(stateCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || null
   let text = `${n} ${n === 1 ? 'entry' : 'entries'}`
-  if (filterFav) text += ' · ★ saved'
+  if (filterFav) text += ' · ★ favorite'
   if (filterRevisit) text += ' · ↩ revisit'
   if (topState) text += ` · mostly ${topState}`
   if (rangeLabel) text += ` · ${rangeLabel}`
@@ -660,6 +660,14 @@ export default function Log({ state, syncCheckinDay }) {
     [archiveEntries]
   )
 
+  // Stable key that changes only when entries are added/removed, not when
+  // fields (favorite, revisit) change — used to gate the resurface pool effect
+  // so toggling a mark doesn't reshuffle the card.
+  const archiveIdsKey = useMemo(
+    () => archiveEntries.map(e => e.id).join('|'),
+    [archiveEntries]
+  )
+
   const archiveDateRange = useMemo(() => {
     const today = new Date(); today.setHours(12, 0, 0, 0)
     let filterAfterKey = null
@@ -755,11 +763,11 @@ export default function Log({ state, syncCheckinDay }) {
     const matches = eligible.filter(e => e.state && todayStates.has(e.state))
     const others = eligible.filter(e => !e.state || !todayStates.has(e.state))
     setResurfacePool([
-      ...shuffle(matches).map(e => ({ ...e, _isMatch: true })),
-      ...shuffle(others).map(e => ({ ...e, _isMatch: false })),
+      ...shuffle(matches).map(e => ({ id: e.id, isMatch: true })),
+      ...shuffle(others).map(e => ({ id: e.id, isMatch: false })),
     ])
     setResurfaceIdx(0)
-  }, [archiveEntries, archiveLoaded])
+  }, [archiveIdsKey, archiveLoaded])
 
   async function handleRetroTag(entryId, { needId, stateName, customLabel }) {
     const { error } = await updateJournalEntryTags(entryId, { needId, stateName, customLabel })
@@ -1143,7 +1151,9 @@ export default function Log({ state, syncCheckinDay }) {
           </div>
         )}
         {archiveLoaded && resurfacePool.length > 0 && (() => {
-          const entry = resurfacePool[resurfaceIdx % resurfacePool.length]
+          const poolItem = resurfacePool[resurfaceIdx % resurfacePool.length]
+          const entry = archiveEntries.find(e => e.id === poolItem.id)
+          if (!entry) return null
           const today = new Date(); today.setHours(12, 0, 0, 0)
           const todayKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`
           const [ey, em, ed] = entry.date_key.split('-').map(Number)
@@ -1160,7 +1170,7 @@ export default function Log({ state, syncCheckinDay }) {
               todayStateSlots[e.state] = e.slot
             }
           }
-          const matchSlot = entry._isMatch && entry.state ? todayStateSlots[entry.state] : null
+          const matchSlot = poolItem.isMatch && entry.state ? todayStateSlots[entry.state] : null
           const reasonText = matchSlot ? `matched to this ${matchSlot}` : 'a day at random'
           return (
             <div className={styles.resurfaceSection}>
@@ -1177,6 +1187,18 @@ export default function Log({ state, syncCheckinDay }) {
                   )}
                 </div>
                 <p className={styles.resurfaceBody}>{entry.entry}</p>
+                <div className={styles.resurfaceMarks}>
+                  <button
+                    className={`${styles.archiveRevisitBtn}${entry.revisit ? ` ${styles.archiveRevisitBtnActive}` : ''}`}
+                    onClick={() => handleToggleRevisit(entry.id, entry.revisit)}
+                    aria-pressed={entry.revisit}
+                  >↩ revisit</button>
+                  <button
+                    className={`${styles.archiveFavBtn}${entry.favorite ? ` ${styles.archiveFavBtnActive}` : ''}`}
+                    onClick={() => handleToggleFav(entry.id, entry.favorite)}
+                    aria-pressed={entry.favorite}
+                  >{entry.favorite ? '★' : '☆'} favorite</button>
+                </div>
                 <div className={styles.resurfaceFooter}>
                   <button
                     className={styles.resurfaceAnotherBtn}
@@ -1249,13 +1271,23 @@ export default function Log({ state, syncCheckinDay }) {
                               {moodDotColor && <span className={styles.threadReadEntryDot} style={{ background: moodDotColor }} />}
                               {formatThreadDate(e.date_key, e.slot)}
                             </div>
-                            {(e.state || e.need_id || e.custom) && (
-                              <div className={styles.threadReadEntryTags}>
-                                {e.state && <span className={styles.threadReadTag}>{e.state}</span>}
-                                {e.need_id && <span className={styles.threadReadTag}>{NEEDS.find(n => n.id === e.need_id)?.name || e.need_id}</span>}
-                                {e.custom && <span className={styles.threadReadTag}>{e.custom}</span>}
-                              </div>
-                            )}
+                            <div className={styles.threadReadEntryTags}>
+                              {e.state && <span className={styles.threadReadTag}>{e.state}</span>}
+                              {e.need_id && <span className={styles.threadReadTag}>{NEEDS.find(n => n.id === e.need_id)?.name || e.need_id}</span>}
+                              {e.custom && <span className={styles.threadReadTag}>{e.custom}</span>}
+                              <span className={styles.archiveCardMarks}>
+                                <button
+                                  className={`${styles.archiveRevisitBtn}${e.revisit ? ` ${styles.archiveRevisitBtnActive}` : ''}`}
+                                  onClick={() => handleToggleRevisit(e.id, e.revisit)}
+                                  aria-pressed={e.revisit}
+                                >↩ revisit</button>
+                                <button
+                                  className={`${styles.archiveFavBtn}${e.favorite ? ` ${styles.archiveFavBtnActive}` : ''}`}
+                                  onClick={() => handleToggleFav(e.id, e.favorite)}
+                                  aria-pressed={e.favorite}
+                                >{e.favorite ? '★' : '☆'} favorite</button>
+                              </span>
+                            </div>
                             <p className={styles.threadReadEntryBody}>{e.entry}</p>
                           </div>
                         )
@@ -1500,7 +1532,7 @@ export default function Log({ state, syncCheckinDay }) {
 
               <div className={styles.facetCard}>
               <div className={styles.facetRows}>
-                {/* marked group (saved + revisit) */}
+                {/* marked group (favorite + revisit) */}
                 <div className={styles.facetGroup}>
                   <div className={styles.facetGroupLabel}>MARKED</div>
                   <div className={styles.facetRow}>
@@ -1510,7 +1542,7 @@ export default function Log({ state, syncCheckinDay }) {
                       disabled={favCount === 0 && !filterFav}
                       onClick={() => { setFilterFav(v => !v); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}
                     >
-                      ★ saved<span className={styles.facetCount}>{favCount}</span>
+                      ★ favorite<span className={styles.facetCount}>{favCount}</span>
                     </button>
                     <button
                       className={`${styles.facetChip} ${filterRevisit ? styles.facetChipActive : ''}`}
@@ -1809,7 +1841,7 @@ export default function Log({ state, syncCheckinDay }) {
                               className={`${styles.archiveFavBtn}${e.favorite ? ` ${styles.archiveFavBtnActive}` : ''}`}
                               onClick={() => handleToggleFav(e.id, e.favorite)}
                               aria-pressed={e.favorite}
-                            >{e.favorite ? '★' : '☆'} saved</button>
+                            >{e.favorite ? '★' : '☆'} favorite</button>
                           </span>
                         </span>
                         {isTagging && (

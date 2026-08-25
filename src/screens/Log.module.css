@@ -297,6 +297,12 @@
   color: #2A2A28;
 }
 
+.resurfaceMarks {
+  display: flex;
+  gap: 5px;
+  margin-top: 12px;
+}
+
 .resurfaceFooter {
   display: flex;
   align-items: center;
