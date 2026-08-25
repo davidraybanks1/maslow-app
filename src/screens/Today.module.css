@@ -1789,7 +1789,7 @@
   justify-content: center;
 }
 .quotePickerPanel {
-  background: var(--surface);
+  background: var(--card);
   border-radius: 12px;
   width: min(520px, 94vw);
   max-height: min(80vh, 640px);
@@ -1831,7 +1831,7 @@
   font-size: 14px;
   outline: none;
   background: transparent;
-  color: var(--ink1);
+  color: var(--ink);
 }
 .quotePickerSearch:focus { border-color: rgba(0,0,0,.35); }
 .quotePickerList {
@@ -1858,6 +1858,7 @@
   padding: 9px 10px;
   cursor: pointer;
   position: relative;
+  color: var(--ink);
 }
 .quotePickerItem:hover { background: rgba(0,0,0,.05); }
 .quotePickerFavMark {
@@ -1878,5 +1879,5 @@
   font-size: 14px;
   font-weight: 300;
   line-height: 1.45;
-  color: var(--ink1);
+  color: var(--ink);
 }
