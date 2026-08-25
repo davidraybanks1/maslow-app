@@ -1049,7 +1049,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
           <button className={styles.backBtn} onClick={() => setStep(4)}>← back</button>
           <div className={styles.eyebrow}>STEP 5 OF 7 — FLEXIBILITY</div>
           <div className={styles.headline}>how much room do you have to make change right now?</div>
-          <div className={styles.sub}>this determines how many practices to start with. starting too many at once is its own form of overwhelm. becoming more of yourself is a marathon, not a sprint.</div>
+          <div className={styles.sub}>this determines how many practices to start with. starting too many at once is its own form of overwhelm.</div>
           <div className={styles.options}>
             {FLEXIBILITY_OPTIONS.map(opt => (
               <div
