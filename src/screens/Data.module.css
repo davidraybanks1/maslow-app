@@ -807,6 +807,55 @@
   text-align: center;
 }
 
+.historyNote {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--ink3);
+  line-height: 1.6;
+  margin: 0 0 16px;
+}
+
+.dateHint {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink3);
+  text-align: center;
+  padding: 4px 0;
+  min-height: 18px;
+}
+
+.weekNav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.weekNavBtn {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1;
+  color: var(--ink3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 5px;
+  border-radius: 3px;
+}
+
+.weekNavBtn:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.weekNavNow {
+  font-size: 9px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: 2px 4px;
+}
+
 /* ── New wrapper classes (mobile base — transparent wrappers) ─────────────── */
 .desktopWrap { padding: 14px 22px; }
 .pageHeaderRow { }

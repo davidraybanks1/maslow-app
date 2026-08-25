@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useContext, useEffect } from 'react'
+import { useState, useMemo, useCallback, useContext, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { HeaderSlotContext } from '../lib/headerSlot'
 import { NEEDS, MODE_ORDER } from '../lib/constants'
@@ -223,6 +223,30 @@ function currentWeekKeys() {
   })
 }
 
+function weekKeysAt(offsetWeeks) {
+  const today = new Date()
+  const mondayOffset = (today.getDay() + 6) % 7
+  const monday = new Date(today)
+  monday.setDate(today.getDate() - mondayOffset - offsetWeeks * 7)
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday)
+    d.setDate(monday.getDate() + i)
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  })
+}
+
+function weekRangeLabel(weekKeys) {
+  const [fy, fm, fd] = weekKeys[0].split('-').map(Number)
+  const [ly, lm, ld] = weekKeys[6].split('-').map(Number)
+  const fmt = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return `${fmt(new Date(fy, fm - 1, fd))} – ${fmt(new Date(ly, lm - 1, ld))}`
+}
+
+function formatDkLabel(dk) {
+  const [y, m, d] = dk.split('-').map(Number)
+  return new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+}
+
 function dayCompPct(canvas, checkins, dk) {
   const active = NEEDS.filter(n => canvas[n.id])
   if (!active.length) return 0
@@ -241,8 +265,20 @@ function dominantMoodFor(moods, dk) {
 const RHYTHM_MOOD_DOT = { good: '#1B3A2D', fine: '#9DB394', bad: '#D93B1C' }
 
 function RhythmSection({ stats, canvas, checkins, moods }) {
-  const weekKeys = useMemo(() => currentWeekKeys(), [])
+  const [weekOffset, setWeekOffset] = useState(0)
+  const weekKeys = useMemo(() => weekKeysAt(weekOffset), [weekOffset])
   const todayKey = buildWindowKeys(1, 0)[0]
+
+  const earliestDk = useMemo(() => {
+    const dks = [
+      ...Object.keys(checkins).filter(dk => (checkins[dk] || []).length > 0),
+      ...moods.map(m => m.date_key),
+    ].sort()
+    return dks[0] ?? null
+  }, [checkins, moods])
+
+  const canGoBack = !!earliestDk && earliestDk < weekKeys[0]
+  const isCurrentWeek = weekOffset === 0
 
   const moodByWeekday = useMemo(() => stats.getMoodByWeekday(), [stats])
   const moodByPeriod  = useMemo(() => stats.getMoodByPeriod(30), [stats])
@@ -252,7 +288,26 @@ function RhythmSection({ stats, canvas, checkins, moods }) {
     <section className={`${styles.section} ${styles.sectionCard} ${styles.rhythmCard}`}>
       <div className={styles.sectionHeader}>
         <span className={styles.sectionLabel}>YOUR RHYTHM</span>
-        <span className={styles.sectionMeta}>bar = practices met · dot = mood</span>
+        <span className={styles.sectionMeta}>
+          {weekOffset > 0 ? weekRangeLabel(weekKeys) : 'bar = practices met · dot = mood'}
+        </span>
+        <div className={styles.weekNav}>
+          <button
+            className={styles.weekNavBtn}
+            onClick={() => setWeekOffset(o => o + 1)}
+            disabled={!canGoBack}
+            aria-label="previous week"
+          >‹</button>
+          {!isCurrentWeek && (
+            <button className={`${styles.weekNavBtn} ${styles.weekNavNow}`} onClick={() => setWeekOffset(0)}>now</button>
+          )}
+          <button
+            className={styles.weekNavBtn}
+            onClick={() => setWeekOffset(o => o - 1)}
+            disabled={isCurrentWeek}
+            aria-label="next week"
+          >›</button>
+        </div>
       </div>
       <div className={styles.rhythmGrid}>
         {weekKeys.map((dk, i) => {
@@ -298,7 +353,16 @@ const DESKTOP_WINDOW = 90
 
 function LongViewSection({ canvas, checkins, moods, stats, days, windowLen }) {
   const [lens, setLens] = useState('practices')
+  const [tooltipDk, setTooltipDk] = useState(null)
+  const tooltipTimerRef = useRef(null)
   const todayKey = buildWindowKeys(1, 0)[0]
+
+  function showDateTooltip(dk) {
+    setTooltipDk(dk)
+    clearTimeout(tooltipTimerRef.current)
+    tooltipTimerRef.current = setTimeout(() => setTooltipDk(null), 2500)
+  }
+  useEffect(() => () => clearTimeout(tooltipTimerRef.current), [])
 
   const monthGroups = useMemo(() => {
     const groups = []
@@ -362,9 +426,19 @@ function LongViewSection({ canvas, checkins, moods, stats, days, windowLen }) {
               color = mood ? MOOD_LENS_COLOR[mood] : EMPTY_CELL
             }
           }
-          return <div key={dk} className={styles.longViewCell} style={{ background: color }} />
+          return (
+            <div
+              key={dk}
+              className={styles.longViewCell}
+              style={{ background: color }}
+              title={formatDkLabel(dk)}
+              onClick={() => showDateTooltip(dk)}
+            />
+          )
         })}
       </div>
+
+      {tooltipDk && <div className={styles.dateHint}>{formatDkLabel(tooltipDk)}</div>}
 
       {/* Legend */}
       {lens === 'practices' ? (
@@ -406,6 +480,8 @@ function practiceClosingLine(allCount, activeCount) {
 
 function RibbonsSection({ canvas, checkins, practicesDB, days, windowLen }) {
   const [openNeed, setOpenNeed] = useState(null)
+  const [tooltipInfo, setTooltipInfo] = useState(null)
+  const ribbonTimerRef = useRef(null)
   const recent30 = useMemo(() => buildWindowKeys(30, 0), [])
   const recent90 = useMemo(() => buildWindowKeys(90, 0), [])
   const todayKey = buildWindowKeys(1, 0)[0]
@@ -424,6 +500,13 @@ function RibbonsSection({ canvas, checkins, practicesDB, days, windowLen }) {
       return { need, mode, daysActive, isDormant, sinceMonth }
     }).sort((a, b) => b.daysActive - a.daysActive)
   }, [canvas, checkins, days, recent30, recent90])
+
+  function showRibbonTooltip(needId, dk) {
+    setTooltipInfo({ needId, dk })
+    clearTimeout(ribbonTimerRef.current)
+    ribbonTimerRef.current = setTimeout(() => setTooltipInfo(null), 2500)
+  }
+  useEffect(() => () => clearTimeout(ribbonTimerRef.current), [])
 
   return (
     <section className={`${styles.section} ${styles.sectionCard}`}>
@@ -471,6 +554,8 @@ function RibbonsSection({ canvas, checkins, practicesDB, days, windowLen }) {
                   <div
                     key={dk}
                     className={styles.ribbonCell}
+                    title={formatDkLabel(dk)}
+                    onClick={() => showRibbonTooltip(need.id, dk)}
                     style={{
                       background: (checkins[dk] || []).some(e => e.need_id === need.id)
                         ? TIER_BAR[mode]
@@ -479,6 +564,9 @@ function RibbonsSection({ canvas, checkins, practicesDB, days, windowLen }) {
                   />
                 ))}
               </div>
+              {tooltipInfo?.needId === need.id && (
+                <div className={styles.dateHint}>{formatDkLabel(tooltipInfo.dk)}</div>
+              )}
 
               {/* Practice expansion */}
               {isOpen && (
@@ -801,6 +889,7 @@ export default function Data({ state, archivePractice }) {
   const windowLen = isDesktop ? DESKTOP_WINDOW : MOBILE_WINDOW
   const dayKeys = useMemo(() => buildWindowKeys(windowLen, 0), [windowLen])
   const hasCanvas = Object.keys(canvas).length > 0
+  const totalCheckinDays = useMemo(() => Object.keys(checkins).filter(dk => (checkins[dk] || []).length > 0).length, [checkins])
 
   const periodToggleEl = (
     <div className={styles.periodToggle}>
@@ -829,11 +918,15 @@ export default function Data({ state, archivePractice }) {
           <p className={styles.emptyState}>set up your canvas to see your data.</p>
         )}
 
+        {hasCanvas && totalCheckinDays < 7 && (
+          <p className={styles.historyNote}>as you complete your practices and mood check-ins, your data starts filling in. it takes about a week before the patterns get interesting.</p>
+        )}
+
         {hasCanvas && (
           <>
             <div className={styles.dRow2}>
               <HeadlineCard period={period} stats={stats} canvas={canvas} checkins={checkins} />
-              <InsightsCard stats={stats} checkins={checkins} moods={moods} />
+              {totalCheckinDays >= 7 && <InsightsCard stats={stats} checkins={checkins} moods={moods} />}
             </div>
             <div className={styles.dRow3}>
               <WhatChanged period={period} canvas={canvas} checkins={checkins} />
