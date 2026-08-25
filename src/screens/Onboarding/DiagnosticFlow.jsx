@@ -75,17 +75,17 @@ const ANXIETY_TYPE_OPTIONS = [
   {
     id: 'frenetic',
     name: 'frenetic',
-    desc: "too much going on to focus on anything in particular. busy but not sure what's actually worth working on. clarity is needed more than more to-dos.",
+    desc: 'everything feels urgent at once; you move fast and land nowhere.',
   },
   {
     id: 'overwhelm',
-    name: 'overwhelm',
-    desc: "there are big things that don't feel manageable. regular proof of competence is what's needed — small wins, every day.",
+    name: 'overwhelmed',
+    desc: "big and small things can become the single focus of a day, even though you know they shouldn't.",
   },
   {
     id: 'apathy',
-    name: 'apathy',
-    desc: "bored, disconnected, can't see the point. more discipline isn't the answer — feeling something again is.",
+    name: 'apathetic',
+    desc: 'the volume drops; caring about any of it feels like more than you have.',
   },
 ]
 
@@ -905,7 +905,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
         <div className={styles.content} ref={contentRef}>
           <button className={styles.backBtn} onClick={() => setStep(1)}>← back</button>
           <div className={styles.eyebrow}>STEP 2 OF 7 — ANXIETY TYPE</div>
-          <div className={styles.headline}>how does anxiety tend to show up?</div>
+          <div className={styles.headline}>how does anxiety usually make you feel?</div>
           <div className={styles.sub}>one of these is probably more familiar than the others.</div>
           <div className={styles.options}>
             {ANXIETY_TYPE_OPTIONS.map(opt => (
