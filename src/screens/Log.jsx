@@ -1469,7 +1469,7 @@ export default function Log({ state, syncCheckinDay }) {
 
         {/* ── Archive ── */}
         {(() => {
-          const { canvasNeeds, slotCounts, needCounts, stateCounts, allCustomLabels, customCounts, presetCounts } = archiveCounts
+          const { canvasNeeds, slotCounts, needCounts, stateCounts, allCustomLabels, customCounts, presetCounts, favCount } = archiveCounts
           const allJournalDays = archiveAllJournalDays
           const rangeLabel = rangeStart ? formatRangeLabel(rangeStart, rangeEnd) : null
           const filtered = archiveFiltered
