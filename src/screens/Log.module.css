@@ -1628,7 +1628,7 @@
   /* inactive state */
   background: rgba(0,0,0,.05);
   border: 1px solid transparent;
-  color: rgba(0,0,0,.40);
+  color: rgba(0,0,0,.58);
 }
 .archiveFavBtn:focus,
 .archiveRevisitBtn:focus { outline: none; }
@@ -1639,13 +1639,13 @@
 
 /* active: saved (gold) */
 .archiveFavBtnActive {
-  background: rgba(200,162,39,.12);
-  border-color: rgba(200,162,39,.4);
-  color: #c8a227;
+  background: rgba(200,162,39,.14);
+  border-color: rgba(200,162,39,.55);
+  color: #7a5f10;
 }
 .archiveFavBtnActive:hover {
-  background: rgba(200,162,39,.19);
-  color: #a8841a;
+  background: rgba(200,162,39,.21);
+  color: #6a5010;
 }
 
 /* active: revisit (exploration green) */

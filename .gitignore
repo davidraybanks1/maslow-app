@@ -6,6 +6,7 @@ dist
 
 # Capacitor iOS
 ios/App/Pods/
+ios/App/App/public/
 ios/App/output/
 ios/DerivedData/
 .claude/worktrees/
