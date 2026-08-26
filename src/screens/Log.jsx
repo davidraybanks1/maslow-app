@@ -1590,6 +1590,7 @@ export default function Log({ state, syncCheckinDay }) {
                     </button>
                   </div>
                   {datePickerOpen && (() => {
+                    const today = new Date(); today.setHours(12, 0, 0, 0)
                     const pickerPrefix = `${pickerYear}-${String(pickerMonth + 1).padStart(2, '0')}-`
                     const daysInPicker = new Date(pickerYear, pickerMonth + 1, 0).getDate()
                     const firstDow = (new Date(pickerYear, pickerMonth, 1).getDay() + 6) % 7
