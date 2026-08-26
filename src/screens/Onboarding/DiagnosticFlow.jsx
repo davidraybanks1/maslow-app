@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { signInNavRef } from '../../lib/store'
+import { signInNavRef, seedStarterContent } from '../../lib/store'
 import { hapticTick } from '../../lib/native'
 import OtpDisclosure from '../../components/OtpDisclosure'
 import styles from './DiagnosticFlow.module.css'
@@ -586,6 +586,7 @@ function OnboardingAccount({ destination, recommendation, updateCanvas, onDone, 
         onboarded: true,
         onboarded_at: new Date().toLocaleDateString('en-CA'),
       }, { onConflict: 'id' })
+      await seedStarterContent(userId, canvasObj)
     }
 
     setLoading(false)

@@ -199,7 +199,7 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
 
       {/* ── Subhead (not scrollable) ── */}
       <div className={styles.subhead}>
-        create and select the notes that show up on your today screen.{' '}
+        the phrases, mantras and quotes that put you in the right headspace. pick up to five to show on your today screen.{' '}
         <span className={deck.length > DECK_MAX ? styles.subheadCountOver : ''}>
           ({deck.length}/5)
         </span>

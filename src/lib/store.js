@@ -798,7 +798,10 @@ export async function toggleJournalFavorite(id, favorite) {
 }
 
 export async function toggleJournalRevisit(id, revisit) {
-  const { error } = await supabase.from('journal').update({ revisit }).eq('id', id)
+  const patch = revisit
+    ? { revisit: true, revisit_marked_at: new Date().toISOString() }
+    : { revisit: false, revisit_marked_at: null }
+  const { error } = await supabase.from('journal').update(patch).eq('id', id)
   if (error) logSupabaseError('toggleJournalRevisit', error)
   return { error }
 }
@@ -806,9 +809,10 @@ export async function toggleJournalRevisit(id, revisit) {
 export async function loadRevisitQueue(userId) {
   const { data } = await supabase
     .from('journal')
-    .select('id, date_key, entry, favorite, created_at')
+    .select('id, date_key, entry, favorite, created_at, revisit_marked_at')
     .eq('user_id', userId)
     .eq('revisit', true)
+    .order('revisit_marked_at', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false })
   return data || []
 }
@@ -1175,4 +1179,56 @@ export async function deleteDebriefType(userId, { category, name }) {
     .eq('name', name)
   if (error) logSupabaseError('deleteDebriefType', error)
   return { error }
+}
+
+export async function seedStarterContent(userId, canvasObj) {
+  try {
+    const { STARTER_PRACTICES, STARTER_NOTES } = await import('./starterContent.js')
+
+    // Idempotent guard
+    const { data: existing } = await supabase
+      .from('practices')
+      .select('id')
+      .eq('user_id', userId)
+      .limit(1)
+    if (existing && existing.length > 0) return
+
+    // Only seed needs present on the canvas
+    const canvasNeedIds = Object.keys(canvasObj || {})
+    const practicesJsonb = {}
+    const practicesRows = []
+
+    for (const needId of canvasNeedIds) {
+      const labels = STARTER_PRACTICES[needId]
+      if (!labels) continue
+      practicesJsonb[needId] = labels
+      for (const label of labels) {
+        practicesRows.push({ user_id: userId, label, need_id: needId })
+      }
+    }
+
+    if (practicesRows.length > 0) {
+      const { error: pErr } = await supabase.from('practices').insert(practicesRows)
+      if (pErr) {
+        logSupabaseError('seedStarterContent:practices', pErr)
+        return
+      }
+      const { error: uErr } = await supabase
+        .from('users')
+        .update({ practices: practicesJsonb })
+        .eq('id', userId)
+      if (uErr) logSupabaseError('seedStarterContent:users.practices', uErr)
+    }
+
+    const noteRows = STARTER_NOTES.map((text, position) => ({
+      user_id: userId,
+      text,
+      position,
+      archived_at: null,
+    }))
+    const { error: nErr } = await supabase.from('note_deck').insert(noteRows)
+    if (nErr) logSupabaseError('seedStarterContent:note_deck', nErr)
+  } catch (err) {
+    logSupabaseError('seedStarterContent', err)
+  }
 }
