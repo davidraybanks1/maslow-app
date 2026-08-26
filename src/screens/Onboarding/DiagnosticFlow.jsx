@@ -586,13 +586,16 @@ function OnboardingAccount({ destination, recommendation, updateCanvas, onDone, 
         onboarded: true,
         onboarded_at: new Date().toLocaleDateString('en-CA'),
       }, { onConflict: 'id' })
-      await seedStarterContent(userId, canvasObj)
+      const seeded = await seedStarterContent(userId, canvasObj)
+      setLoading(false)
+      // Pass canvasObj and seeded rows so handleAccountDone can populate both
+      // canvas and practicesDB in completeOnboarding before navigating.
+      onDone(destination, userId, canvasObj, seeded)
+      return
     }
 
     setLoading(false)
-    // Pass canvasObj so handleAccountDone can set it explicitly in completeOnboarding,
-    // preventing the SIGNED_IN → restoreFromSupabase race from clobbering the canvas.
-    onDone(destination, userId, canvasObj)
+    onDone(destination, userId, canvasObj, null)
   }
 
   async function handleSignIn() {
@@ -846,10 +849,16 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
     for (const [needId, mode] of Object.entries(recommendation.personal))  updateCanvas(needId, mode)
   }
 
-  function handleAccountDone(dest, userId, canvas) {
+  function handleAccountDone(dest, userId, canvas, seeded) {
     try { sessionStorage.removeItem(SS_KEY) } catch {}
-    // Pass canvas explicitly so it survives any restoreFromSupabase race in the SIGNED_IN handler.
-    if (completeOnboarding) completeOnboarding(canvas || null, null, userId ? { userId } : undefined)
+    // Pass canvas and seeded practicesDB so state is fully populated before navigation,
+    // without waiting for a reload or the SIGNED_IN restoreFromSupabase path.
+    if (completeOnboarding) completeOnboarding(
+      canvas || null,
+      seeded?.practices || null,
+      userId ? { userId } : undefined,
+      seeded?.practicesDB || null,
+    )
     navigate(dest)
   }
 

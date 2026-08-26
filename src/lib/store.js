@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from './supabase'
+import { STARTER_PRACTICES, STARTER_NOTES } from './starterContent.js'
 
 const STORAGE_KEY = 'maslow_state'
 const STATE_VERSION = 2
@@ -580,7 +581,7 @@ export function useAppState(onSignIn) {
     return { error }
   }
 
-  function completeOnboarding(canvas, practices, profile) {
+  function completeOnboarding(canvas, practices, profile, seededRows) {
     const { userId, ...profileData } = profile || {}
     setState(prev => ({
       ...prev,
@@ -588,6 +589,7 @@ export function useAppState(onSignIn) {
       onboardedAt: todayKey(),
       canvas: canvas || prev.canvas,
       practices: practices || prev.practices,
+      practicesDB: seededRows || prev.practicesDB,
       // Only update profile if caller actually passed profile fields beyond userId.
       profile: Object.keys(profileData).length > 0 ? profileData : prev.profile,
       userId: userId || prev.userId,
@@ -1182,53 +1184,66 @@ export async function deleteDebriefType(userId, { category, name }) {
 }
 
 export async function seedStarterContent(userId, canvasObj) {
+  async function doSeed() {
+    // Practices: idempotency guard is separate from notes guard
+    const { data: existingPractices } = await supabase
+      .from('practices').select('id').eq('user_id', userId).limit(1)
+
+    let practices = null
+    let practicesDB = null
+
+    if (!existingPractices || existingPractices.length === 0) {
+      const canvasNeedIds = Object.keys(canvasObj || {})
+      const practicesJsonb = {}
+      const practicesRows = []
+      for (const needId of canvasNeedIds) {
+        const labels = STARTER_PRACTICES[needId]
+        if (!labels) continue
+        practicesJsonb[needId] = labels
+        for (const label of labels) {
+          practicesRows.push({ user_id: userId, label, need_id: needId })
+        }
+      }
+      if (practicesRows.length > 0) {
+        const { data: inserted, error: pErr } = await supabase
+          .from('practices')
+          .insert(practicesRows)
+          .select('id, label, need_id, created_at, archived_at')
+        if (pErr) {
+          logSupabaseError('seedStarterContent:practices', pErr)
+          return null
+        }
+        const { error: uErr } = await supabase
+          .from('users').update({ practices: practicesJsonb }).eq('id', userId)
+        if (uErr) logSupabaseError('seedStarterContent:users.practices', uErr)
+        practices = practicesJsonb
+        practicesDB = inserted || []
+      }
+    }
+
+    // Notes: checked separately so a prior failed note insert can be retried
+    const { data: existingNotes } = await supabase
+      .from('note_deck').select('id').eq('user_id', userId).limit(1)
+    if (!existingNotes || existingNotes.length === 0) {
+      const noteRows = STARTER_NOTES.map((text, position) => ({
+        user_id: userId, text, position, archived_at: null,
+      }))
+      const { error: nErr } = await supabase.from('note_deck').insert(noteRows)
+      if (nErr) logSupabaseError('seedStarterContent:note_deck', nErr)
+    }
+
+    return { practices, practicesDB }
+  }
+
   try {
-    const { STARTER_PRACTICES, STARTER_NOTES } = await import('./starterContent.js')
-
-    // Idempotent guard
-    const { data: existing } = await supabase
-      .from('practices')
-      .select('id')
-      .eq('user_id', userId)
-      .limit(1)
-    if (existing && existing.length > 0) return
-
-    // Only seed needs present on the canvas
-    const canvasNeedIds = Object.keys(canvasObj || {})
-    const practicesJsonb = {}
-    const practicesRows = []
-
-    for (const needId of canvasNeedIds) {
-      const labels = STARTER_PRACTICES[needId]
-      if (!labels) continue
-      practicesJsonb[needId] = labels
-      for (const label of labels) {
-        practicesRows.push({ user_id: userId, label, need_id: needId })
-      }
-    }
-
-    if (practicesRows.length > 0) {
-      const { error: pErr } = await supabase.from('practices').insert(practicesRows)
-      if (pErr) {
-        logSupabaseError('seedStarterContent:practices', pErr)
-        return
-      }
-      const { error: uErr } = await supabase
-        .from('users')
-        .update({ practices: practicesJsonb })
-        .eq('id', userId)
-      if (uErr) logSupabaseError('seedStarterContent:users.practices', uErr)
-    }
-
-    const noteRows = STARTER_NOTES.map((text, position) => ({
-      user_id: userId,
-      text,
-      position,
-      archived_at: null,
-    }))
-    const { error: nErr } = await supabase.from('note_deck').insert(noteRows)
-    if (nErr) logSupabaseError('seedStarterContent:note_deck', nErr)
+    return await Promise.race([
+      doSeed(),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('seedStarterContent: timed out after 5s')), 5000)
+      ),
+    ])
   } catch (err) {
     logSupabaseError('seedStarterContent', err)
+    return null
   }
 }
