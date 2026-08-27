@@ -180,6 +180,7 @@ export default function ProfileMenu({
     <div ref={wrapperRef} className={styles.wrapper}>
       <button
         ref={avatarRef}
+        data-tour="profile"
         className={`${styles.avatar} ${isOpen ? styles.avatarOpen : ''}`}
         onClick={() => (phase === 'open' ? close() : openMenu())}
         aria-label="Account menu"
