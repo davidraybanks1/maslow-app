@@ -581,7 +581,7 @@ export function useAppState(onSignIn) {
     return { error }
   }
 
-  function completeOnboarding(canvas, practices, profile, seededRows) {
+  function completeOnboarding(canvas, practices, profile, seededRows, seededNotes) {
     const { userId, ...profileData } = profile || {}
     setState(prev => ({
       ...prev,
@@ -590,6 +590,7 @@ export function useAppState(onSignIn) {
       canvas: canvas || prev.canvas,
       practices: practices || prev.practices,
       practicesDB: seededRows || prev.practicesDB,
+      noteDeck: seededNotes || prev.noteDeck,
       // Only update profile if caller actually passed profile fields beyond userId.
       profile: Object.keys(profileData).length > 0 ? profileData : prev.profile,
       userId: userId || prev.userId,
@@ -1222,17 +1223,20 @@ export async function seedStarterContent(userId, canvasObj) {
     }
 
     // Notes: checked separately so a prior failed note insert can be retried
+    let noteDeck = null
     const { data: existingNotes } = await supabase
       .from('note_deck').select('id').eq('user_id', userId).limit(1)
     if (!existingNotes || existingNotes.length === 0) {
       const noteRows = STARTER_NOTES.map((text, position) => ({
         user_id: userId, text, position, archived_at: null,
       }))
-      const { error: nErr } = await supabase.from('note_deck').insert(noteRows)
+      const { data: insertedNotes, error: nErr } = await supabase
+        .from('note_deck').insert(noteRows).select('*')
       if (nErr) logSupabaseError('seedStarterContent:note_deck', nErr)
+      else noteDeck = insertedNotes || []
     }
 
-    return { practices, practicesDB }
+    return { practices, practicesDB, noteDeck }
   }
 
   try {

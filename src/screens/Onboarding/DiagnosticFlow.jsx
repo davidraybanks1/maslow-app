@@ -906,6 +906,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
       seeded?.practices || null,
       userId ? { userId } : undefined,
       seeded?.practicesDB || null,
+      seeded?.noteDeck || null,
     )
     navigate(dest)
   }

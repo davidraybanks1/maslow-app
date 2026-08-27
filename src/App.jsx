@@ -114,7 +114,10 @@ function AppInner() {
 
   // Native shell: dismiss the iOS splash once we're rendering (loader or app),
   // and keep the local reminder schedule in sync with the review settings.
-  useEffect(() => { hideSplash() }, [])
+  useEffect(() => {
+    hideSplash()
+    if (isNative()) document.documentElement.classList.add('native')
+  }, [])
 
   // Mood reminder tap → navigate to Today and scroll the mood card into view.
   // Registered here (AppInner has navigate) so Capacitor can deliver the action
