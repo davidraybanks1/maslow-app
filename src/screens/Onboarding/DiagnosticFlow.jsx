@@ -159,7 +159,7 @@ const FLEXIBILITY_OPTIONS = [
     id: 'low',
     name: 'very little',
     desc: 'life is full and margins are thin. too much change at once will create more stress.',
-    tag: 'start with 5–6 practices · no exploration',
+    tag: 'start with 6–8 practices',
     tagBg: 'rgba(217,59,28,0.08)',
     tagColor: '#993C1D',
   },
@@ -167,7 +167,7 @@ const FLEXIBILITY_OPTIONS = [
     id: 'mid',
     name: 'some',
     desc: "there's room for intentional change but it has to stay realistic and sustainable.",
-    tag: 'start with 7–8 practices · exploration optional',
+    tag: 'start with 7–8 practices',
     tagBg: 'rgba(232,184,31,0.12)',
     tagColor: '#854F0B',
   },
@@ -206,7 +206,7 @@ function nextMode(needId, mode) {
 // Daily practice count per mode (for canvas budget estimation — distinct from
 // the scoring weights in constants.js which use equal weights for all modes).
 const MODE_DAILY_PRACTICES = { exploration: 3, appreciation: 2, nourishment: 1, survival: 0.5 }
-const FLEX_MAX = { low: 6, mid: 8, high: 10 }
+const FLEX_MAX = { low: 8, mid: 8, high: 10 }
 const DROP_ORDER = ['money', 'dwelling', 'thrill', 'touch', 'intimacy', 'play', 'information', 'beauty', 'reflection', 'community']
 
 function practiceWeight(canvasObj) {
@@ -238,17 +238,38 @@ function ensureAppreciation(universal, personal, alwaysNeedId) {
   return null
 }
 
-function capPersonalNeeds(universal, personal, maxTotal, protectedId) {
+function capPersonalNeeds(universal, personal, maxTotal, protectedId, alsoProtectedId) {
   const budget = maxTotal - practiceWeight(universal)
   let total = practiceWeight(personal)
   for (const id of DROP_ORDER) {
     if (total <= budget) break
-    if (id === protectedId) continue
+    if (id === protectedId || id === alsoProtectedId) continue
     if (personal[id]) {
       total -= MODE_DAILY_PRACTICES[personal[id]] || 0
       delete personal[id]
     }
   }
+}
+
+// When alwaysNeedId is 'rest' (which can never be exploration), pick the best
+// personal need from the user's energyGives signals, then fall back to whatever
+// is already in personal, then fall back to the first FILL_ORDER slot available.
+function fallbackExploration(personal, energyGives) {
+  const candidates = []
+  if (energyGives.includes('creative output'))        candidates.push('beauty')
+  if (energyGives.includes('learning something new')) candidates.push('information')
+  if (energyGives.includes('deep 1:1 conversations')) candidates.push('community')
+  for (const id of candidates) {
+    personal[id] = 'exploration'
+    return id
+  }
+  for (const id of FILL_ORDER) {
+    if (personal[id]) { personal[id] = 'exploration'; return id }
+  }
+  for (const id of FILL_ORDER) {
+    if (!personal[id]) { personal[id] = 'exploration'; return id }
+  }
+  return null
 }
 
 function buildRecommendation({ anxietyLevel, anxietyType, energyGives, energyDrains, season, alwaysNeedId, canWait, flexibility }) {
@@ -339,37 +360,47 @@ function buildRecommendation({ anxietyLevel, anxietyType, energyGives, energyDra
 
   const isUniversalAlways = alwaysNeedId === 'movement' || alwaysNeedId === 'nutrition'
 
+  // Exploration is mandatory for every flexibility level. rest can never be exploration
+  // (enforced above at line ~338), so we pick the best personal fallback instead.
+  let explorationPersonalId = null
   if (alwaysNeedId) {
     if (alwaysNeedId === 'rest') {
       universal.rest = 'nourishment'
-    } else if (flexibility === 'low') {
-      // low flexibility never assigns exploration — the non-negotiable need lands in appreciation instead.
-      if (isUniversalAlways) universal[alwaysNeedId] = 'appreciation'
-      else personal[alwaysNeedId] = 'appreciation'
+      explorationPersonalId = fallbackExploration(personal, energyGives)
+    } else if (isUniversalAlways) {
+      universal[alwaysNeedId] = 'exploration'
     } else {
-      if (isUniversalAlways) universal[alwaysNeedId] = 'exploration'
-      else personal[alwaysNeedId] = 'exploration'
+      personal[alwaysNeedId] = 'exploration'
+      explorationPersonalId = alwaysNeedId
     }
   }
 
+  // De-duplicate: if another pathway (e.g. frenetic) already set a personal need to exploration,
+  // demote it so there is exactly one exploration need on the canvas.
+  if (alwaysNeedId) {
+    for (const id of Object.keys(personal)) {
+      if (personal[id] === 'exploration' && id !== explorationPersonalId) {
+        personal[id] = 'appreciation'
+      }
+    }
+  }
+
+  // canWait deletions — never remove the need holding exploration.
+  const skipFromCanWait = explorationPersonalId ?? alwaysNeedId
   for (const needId of (canWait || [])) {
-    if (needId !== alwaysNeedId) delete personal[needId]
+    if (needId !== skipFromCanWait) delete personal[needId]
   }
 
   const maxTotal = FLEX_MAX[flexibility] || FLEX_MAX.high
 
-  // mid: exploration is optional — drop back to appreciation if it would blow the practice budget.
-  if (flexibility === 'mid' && alwaysNeedId && alwaysNeedId !== 'rest' && practiceCount(universal, personal) > maxTotal) {
-    if (isUniversalAlways) universal[alwaysNeedId] = 'appreciation'
-    else personal[alwaysNeedId] = 'appreciation'
-  }
-
-  let protectedId = alwaysNeedId
+  // Ensure at least one appreciation need survives; protect both it and the exploration need
+  // so capPersonalNeeds cannot silently remove either.
+  let appreciationId = null
   if (flexibility === 'low' || flexibility === 'mid') {
-    protectedId = ensureAppreciation(universal, personal, alwaysNeedId) || alwaysNeedId
+    appreciationId = ensureAppreciation(universal, personal, explorationPersonalId ?? alwaysNeedId)
   }
 
-  capPersonalNeeds(universal, personal, maxTotal, protectedId)
+  capPersonalNeeds(universal, personal, maxTotal, explorationPersonalId, appreciationId)
 
   return { universal, personal }
 }
