@@ -400,7 +400,7 @@ export function createDataStats({ canvas, checkins, moods, practices, practicesD
     if (qualifying.length === 0 || qualifying.length >= 3) return null
 
     const names = qualifying.map(d => `${WEEKDAY_NAMES[d.weekday]}s`)
-    return `${names.join(' and ')} run harder than the rest of your week.`
+    return `${names.join(' and ')} tend to feel a bit harder than the rest of your week.`
   }
 
   function getPracticeStats(rangeDays = 30) {
@@ -633,28 +633,32 @@ export function createDataStats({ canvas, checkins, moods, practices, practicesD
 
     // family 'neglect' (priority 8) — canvas need with <=1 check-in over 30 days
     {
-      let neglectNeed = null
-      let neglectCount = 2
-      for (const need of NEEDS) {
-        if (!canvas[need.id]) continue
-        let count = 0
-        for (const day of days30) {
-          if (completedFor(checkins, need.id, day) > 0) count++
+      const daysWithAnyData = days30.filter(d => (checkins[d] || []).length > 0).length
+      if (daysWithAnyData >= 14) {
+        let neglectNeed = null
+        let neglectCount = 2
+        for (const need of NEEDS) {
+          if (!canvas[need.id]) continue
+          let count = 0
+          for (const day of days30) {
+            if (completedFor(checkins, need.id, day) > 0) count++
+          }
+          if (count <= 1 && (neglectNeed === null || count < neglectCount)) {
+            neglectNeed = need
+            neglectCount = count
+          }
         }
-        if (count <= 1 && (neglectNeed === null || count < neglectCount)) {
-          neglectNeed = need
-          neglectCount = count
+        if (neglectNeed) {
+          const span = daysWithAnyData < 30 ? `${daysWithAnyData} days` : '30 days'
+          const countStr = neglectCount === 0 ? 'no check-ins' : '1 check-in'
+          candidates.push({
+            id: `neglect-${neglectNeed.id}`,
+            family: 'neglect',
+            priority: 8,
+            finding: `${neglectNeed.name} has had ${countStr} in the last ${span}.`,
+            basis: `based on ${daysWithAnyData} days of data`,
+          })
         }
-      }
-      if (neglectNeed) {
-        const countStr = neglectCount === 0 ? 'no check-ins' : '1 check-in'
-        candidates.push({
-          id: `neglect-${neglectNeed.id}`,
-          family: 'neglect',
-          priority: 8,
-          finding: `${neglectNeed.name} has had ${countStr} in the last 30 days.`,
-          basis: 'based on 30 days of data',
-        })
       }
     }
 
@@ -676,8 +680,8 @@ export function createDataStats({ canvas, checkins, moods, practices, practicesD
       if (weekdaySummary) {
         candidates.push({
           id: 'rhythm-weekday',
-          family: 'rhythm',
-          priority: 7,
+          family: 'weekday',
+          priority: 5,
           finding: weekdaySummary,
           basis: 'based on 30 days of mood data',
         })
@@ -687,7 +691,9 @@ export function createDataStats({ canvas, checkins, moods, practices, practicesD
     // family 'trend' (priority 7) — last 7 days vs 7 before, gap >= 10 points
     {
       const curr = getCompletion(7)
-      if (Math.abs(curr.delta) >= 10) {
+      const priorDays = dayRange(7, 7)
+      const priorDaysWithData = priorDays.filter(d => (checkins[d] || []).length > 0).length
+      if (priorDaysWithData >= 4 && Math.abs(curr.delta) >= 10) {
         const up = curr.delta > 0
         candidates.push({
           id: 'trend',
