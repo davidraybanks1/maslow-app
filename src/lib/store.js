@@ -20,7 +20,7 @@ function saveState(state) {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)) } catch {}
 }
 
-function logSupabaseError(fn, error) {
+export function logSupabaseError(fn, error) {
   console.error(`[${fn}] supabase error`, error)
 }
 

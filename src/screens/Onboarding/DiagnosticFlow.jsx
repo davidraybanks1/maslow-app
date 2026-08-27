@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { signInNavRef, seedStarterContent } from '../../lib/store'
+import { signInNavRef, seedStarterContent, logSupabaseError } from '../../lib/store'
 import { hapticTick } from '../../lib/native'
 import OtpDisclosure from '../../components/OtpDisclosure'
 import styles from './DiagnosticFlow.module.css'
@@ -555,7 +555,9 @@ function OnboardingAccount({ destination, recommendation, updateCanvas, onDone, 
     setDuplicateAccount(false)
     signInNavRef.skip = true
 
-    const { error: authErr } = await supabase.auth.signUp({
+    // Step 1: sign up — take user and session from the response directly.
+    // A separate getUser() call can race before the new session is attached.
+    const { data: signUpData, error: authErr } = await supabase.auth.signUp({
       email: email.trim().toLowerCase(),
       password,
     })
@@ -573,19 +575,50 @@ function OnboardingAccount({ destination, recommendation, updateCanvas, onDone, 
       return
     }
 
-    const { data: { user } } = await supabase.auth.getUser()
-    const userId = user?.id
+    // Step 2: email confirmation is enabled — no session, nothing authenticated can run.
+    if (!signUpData.session) {
+      signInNavRef.skip = false
+      setLoading(false)
+      setError('check your email to confirm your account, then sign in.')
+      return
+    }
+
+    const userId = signUpData.user?.id
     let canvasObj = null
+
     if (userId && recommendation) {
       canvasObj = { ...recommendation.universal, ...recommendation.personal }
-      await supabase.from('users').upsert({
+      const profileRow = {
         id: userId,
         email: email.trim().toLowerCase(),
         name: name.trim() || null,
         canvas: canvasObj,
         onboarded: true,
         onboarded_at: new Date().toLocaleDateString('en-CA'),
-      }, { onConflict: 'id' })
+      }
+
+      // Step 3: upsert the profile row; retry once on failure (session propagation lag).
+      let { error: upsertErr } = await supabase.from('users').upsert(profileRow, { onConflict: 'id' })
+      if (upsertErr) {
+        logSupabaseError('handleSignUp upsert attempt 1', upsertErr)
+        await new Promise(r => setTimeout(r, 400))
+        const retry = await supabase.from('users').upsert(profileRow, { onConflict: 'id' })
+        upsertErr = retry.error
+        if (upsertErr) logSupabaseError('handleSignUp upsert attempt 2', upsertErr)
+      }
+
+      // Step 4: read the row back to confirm the write landed.
+      const { data: confirmRow } = await supabase.from('users').select('id').eq('id', userId).maybeSingle()
+
+      // Step 5: abort visibly if the profile row isn't there — a ghost account
+      // that works on this device only is worse than a visible failure.
+      if (!confirmRow) {
+        signInNavRef.skip = false
+        setLoading(false)
+        setError('account setup didn\'t complete — please try again.')
+        return
+      }
+
       const seeded = await seedStarterContent(userId, canvasObj)
       setLoading(false)
       // Pass canvasObj and seeded rows so handleAccountDone can populate both
