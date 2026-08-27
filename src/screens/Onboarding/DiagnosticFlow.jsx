@@ -800,9 +800,10 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
       sessionStorage.setItem(SS_KEY, JSON.stringify({
         step: typeof step === 'number' ? step : 3,
         anxietyLevel, anxietyType, energyMap, season, flexibility, alwaysMatters, canWait,
+        canvasIntroSeen,
       }))
     } catch {}
-  }, [step, anxietyLevel, anxietyType, energyMap, season, flexibility, alwaysMatters, canWait])
+  }, [step, anxietyLevel, anxietyType, energyMap, season, flexibility, alwaysMatters, canWait, canvasIntroSeen])
 
   // Staged reveal: canvas rows land one at a time when the reveal opens.
   const totalRevealRows = recommendation
@@ -822,19 +823,15 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
 
   function dismissCanvasIntro() {
     setCanvasIntroSeen(true)
-    try {
-      const existing = JSON.parse(sessionStorage.getItem(SS_KEY)) || {}
-      sessionStorage.setItem(SS_KEY, JSON.stringify({ ...existing, canvasIntroSeen: true }))
-    } catch {}
   }
 
   useEffect(() => {
-    if (canvasIntroSeen) return
+    if (step !== 8 || canvasIntroSeen) return
     function onKey(e) { if (e.key === 'Escape') dismissCanvasIntro() }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canvasIntroSeen])
+  }, [step, canvasIntroSeen])
 
   function cycleSituation(s) {
     hapticTick()
