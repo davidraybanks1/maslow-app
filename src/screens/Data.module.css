@@ -185,13 +185,47 @@
 }
 
 /* ── Insights card ──────────────────────────────────────────────────────── */
+/* ── Insights deck ──────────────────────────────────────────────────────── */
+.insightDeck { display: flex; flex-direction: column; }
+
+.insightDeckWrapper {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+.insightDeckWrapper::-webkit-scrollbar { display: none; }
+
 .insightCard {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+  box-sizing: border-box;
   background: var(--card);
   border: 1px solid rgba(0,0,0,.09);
   border-radius: 16px;
   padding: 15px 16px;
-  margin-bottom: 8px;
 }
+
+.insightDeckFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 2px 0;
+}
+
+.insightDeckCounter {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink3);
+  letter-spacing: 0.04em;
+}
+
+.insightDeckNav { display: flex; gap: 6px; }
+
+/* arrows hidden on mobile (swipe works); shown on desktop */
+.insightDeckArrow { display: none; }
 
 .insightLabel {
   font-family: var(--font-mono);
@@ -218,23 +252,8 @@
   font-weight: 300;
   line-height: 1.5;
   color: var(--ink3);
-  margin: 0 0 14px;
+  margin: 0;
 }
-
-.insightNext {
-  height: 44px;
-  padding: 0 18px;
-  border-radius: 22px;
-  border: 1px solid rgba(0,0,0,.14);
-  background: transparent;
-  font-family: var(--font-mono);
-  font-size: 11.5px;
-  color: var(--ink);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-}
-.insightNext:active { opacity: 0.65; }
 
 /* ── Shared section chrome ──────────────────────────────────────────────── */
 .section {
@@ -903,7 +922,23 @@
     align-items: stretch;
   }
   .headlineCard { margin-bottom: 0; }
-  .insightCard { margin-bottom: 0; }
+  .insightDeckArrow {
+    display: flex;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 0.5px solid var(--hairline);
+    background: none;
+    font-size: 14px;
+    color: var(--ink2);
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+    transition: background var(--motion-hover);
+  }
+  .insightDeckArrow:hover { background: var(--track); }
 
   /* Row 3: what-changed ~50% / rhythm ~50% — stretch so bottoms align */
   .dRow3 {

@@ -734,56 +734,52 @@ function GoneQuietSection({ canvas, checkins, practicesDB, archivePractice, isDe
   )
 }
 
-function buildInsightCopy(link) {
-  const r = link.ratio
-  const mult = r < 2 ? `~${r.toFixed(1)}×` : `${r.toFixed(1)}×`
-  const n = link.need.name
-  let finding
-  if (link.direction === 'met') {
-    finding = link.daypart === 'morning'
-      ? `On days you log ${n}, the next morning feels good ${mult} more often.`
-      : `On days you log ${n}, your evening mood feels good ${mult} more often.`
-  } else {
-    finding = link.daypart === 'morning'
-      ? `On days ${n} goes unmet, the next morning feels bad ${mult} more often.`
-      : `On days ${n} goes unmet, your evening mood feels bad ${mult} more often.`
-  }
-  return {
-    finding,
-    basis: `based on ${link.metCount} days with ${n} logged vs ${link.unmetCount} without.`,
-  }
-}
+function InsightsCard({ stats }) {
+  const insights = useMemo(() => stats.getInsights(), [stats])
+  const [activeIdx, setActiveIdx] = useState(0)
+  const wrapperRef = useRef(null)
 
-function InsightsCard({ stats, checkins, moods }) {
-  const [idx, setIdx] = useState(0)
-  const links = useMemo(() => stats.getNeedMoodLinks(), [stats])
-  const advance = useCallback(() => setIdx(i => (i + 1) % links.length), [links.length])
-
-  if (!links.length) {
-    const allValidCount = [...new Set(moods.map(m => m.date_key))]
-      .filter(dk => (checkins[dk] || []).length > 0).length
-    const needed = Math.max(0, 14 - allValidCount)
-    return (
-      <div className={styles.insightCard}>
-        <div className={styles.insightLabel}>YOUR INSIGHTS</div>
-        <p className={styles.insightFinding}>
-          {needed > 0
-            ? `log ${needed} more day${needed === 1 ? '' : 's'} with mood and practices checked in to unlock insights.`
-            : 'keep going — insights appear once a need has 10 or more days on each side.'}
-        </p>
-      </div>
-    )
+  function handleScroll() {
+    const w = wrapperRef.current
+    if (!w || w.clientWidth === 0) return
+    setActiveIdx(Math.round(w.scrollLeft / w.clientWidth))
   }
-  const link = links[idx % links.length]
-  const { finding, basis } = buildInsightCopy(link)
+
+  function advance(dir) {
+    if (!insights.length) return
+    const next = (activeIdx + dir + insights.length) % insights.length
+    setActiveIdx(next)
+    const w = wrapperRef.current
+    if (w) w.scrollTo({ left: next * w.clientWidth, behavior: 'smooth' })
+  }
+
+  const cards = insights.length > 0 ? insights : [null]
 
   return (
-    <div className={styles.insightCard}>
-      <div className={styles.insightLabel}>YOUR INSIGHTS</div>
-      <p className={styles.insightFinding}>{finding}</p>
-      <p className={styles.insightBasis}>{basis}</p>
-      {links.length > 1 && (
-        <button className={styles.insightNext} onClick={advance}>show another</button>
+    <div className={styles.insightDeck}>
+      <div ref={wrapperRef} className={styles.insightDeckWrapper} onScroll={handleScroll}>
+        {cards.map((insight, i) => (
+          <div key={insight ? insight.id : 'empty'} className={styles.insightCard}>
+            <div className={styles.insightLabel}>YOUR INSIGHTS</div>
+            {insight ? (
+              <>
+                <p className={styles.insightFinding}>{insight.finding}</p>
+                <p className={styles.insightBasis}>{insight.basis}</p>
+              </>
+            ) : (
+              <p className={styles.insightFinding}>log moods and practices for a few more days — patterns take a little time to emerge.</p>
+            )}
+          </div>
+        ))}
+      </div>
+      {insights.length > 1 && (
+        <div className={styles.insightDeckFooter}>
+          <span className={styles.insightDeckCounter}>{activeIdx + 1}/{insights.length}</span>
+          <div className={styles.insightDeckNav}>
+            <button className={styles.insightDeckArrow} onClick={() => advance(-1)} aria-label="previous insight">‹</button>
+            <button className={styles.insightDeckArrow} onClick={() => advance(1)} aria-label="next insight">›</button>
+          </div>
+        </div>
       )}
     </div>
   )
@@ -926,7 +922,7 @@ export default function Data({ state, archivePractice }) {
           <>
             <div className={styles.dRow2}>
               <HeadlineCard period={period} stats={stats} canvas={canvas} checkins={checkins} />
-              {totalCheckinDays >= 7 && <InsightsCard stats={stats} checkins={checkins} moods={moods} />}
+              {totalCheckinDays >= 7 && <InsightsCard stats={stats} />}
             </div>
             <div className={styles.dRow3}>
               <WhatChanged period={period} canvas={canvas} checkins={checkins} />

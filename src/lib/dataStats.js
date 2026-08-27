@@ -1,6 +1,28 @@
 import { NEEDS, MODES, MODE_ORDER } from './constants'
 import { parseDebriefEntry } from './debriefTypes'
 
+// Formats the finding + basis strings for a mood-link result.
+// Lives here so the copy stays with the computation.
+function buildInsightCopy(link) {
+  const r = link.ratio
+  const mult = r < 2 ? `~${r.toFixed(1)}×` : `${r.toFixed(1)}×`
+  const n = link.need.name
+  let finding
+  if (link.direction === 'met') {
+    finding = link.daypart === 'morning'
+      ? `On days you log ${n}, the next morning feels good ${mult} more often.`
+      : `On days you log ${n}, your evening mood feels good ${mult} more often.`
+  } else {
+    finding = link.daypart === 'morning'
+      ? `On days ${n} goes unmet, the next morning feels bad ${mult} more often.`
+      : `On days ${n} goes unmet, your evening mood feels bad ${mult} more often.`
+  }
+  return {
+    finding,
+    basis: `based on ${link.metCount} days with ${n} logged vs ${link.unmetCount} without.`,
+  }
+}
+
 const MOOD_RANK = { bad: 1, fine: 2, good: 3 }
 
 export const DEBRIEF_NATURE_COLORS = { frenetic: '#C47B3A', overwhelm: '#7A8FA6', apathy: '#9E7B5A' }
@@ -475,7 +497,8 @@ export function createDataStats({ canvas, checkins, moods, practices, practicesD
       return { weekday, pct, sampleCount }
     })
 
-    if (result.some(r => r.sampleCount < 3)) return null
+    const totalSampled = result.reduce((s, r) => s + r.sampleCount, 0)
+    if (result.some(r => r.sampleCount < 2) || totalSampled < 20) return null
     return result
   }
 
@@ -567,6 +590,178 @@ export function createDataStats({ canvas, checkins, moods, practices, practicesD
     return { overallPace, canvasTarget, needRows, survivalNeeds: [] }
   }
 
+  function getInsights() {
+    const days30 = dayRange(30, 0)
+    const candidates = []
+
+    // family 'mood-link' (priority 10)
+    const links = getNeedMoodLinks()
+    if (links.length > 0) {
+      const { finding, basis } = buildInsightCopy(links[0])
+      candidates.push({ id: `mood-link-${links[0].need.id}`, family: 'mood-link', priority: 10, finding, basis })
+    }
+
+    // family 'consistency' (priority 8) — need with highest met-day % >= 70%
+    {
+      let bestNeed = null
+      let bestRatio = 0
+      let bestMetDays = 0
+      for (const need of NEEDS) {
+        if (!canvas[need.id]) continue
+        let metDays = 0
+        for (const day of days30) {
+          if (completedFor(checkins, need.id, day) > 0) metDays++
+        }
+        const ratio = metDays / days30.length
+        if (ratio >= 0.7 && ratio > bestRatio) {
+          bestRatio = ratio
+          bestNeed = need
+          bestMetDays = metDays
+        }
+      }
+      if (bestNeed) {
+        const pct = Math.round(bestRatio * 100)
+        candidates.push({
+          id: `consistency-${bestNeed.id}`,
+          family: 'consistency',
+          priority: 8,
+          finding: `you've logged ${bestNeed.name} on ${pct}% of days this month.`,
+          basis: `based on ${bestMetDays} of 30 days`,
+        })
+      }
+    }
+
+    // family 'neglect' (priority 8) — canvas need with <=1 check-in over 30 days
+    {
+      let neglectNeed = null
+      let neglectCount = 2
+      for (const need of NEEDS) {
+        if (!canvas[need.id]) continue
+        let count = 0
+        for (const day of days30) {
+          if (completedFor(checkins, need.id, day) > 0) count++
+        }
+        if (count <= 1 && (neglectNeed === null || count < neglectCount)) {
+          neglectNeed = need
+          neglectCount = count
+        }
+      }
+      if (neglectNeed) {
+        const countStr = neglectCount === 0 ? 'no check-ins' : '1 check-in'
+        candidates.push({
+          id: `neglect-${neglectNeed.id}`,
+          family: 'neglect',
+          priority: 8,
+          finding: `${neglectNeed.name} has had ${countStr} in the last 30 days.`,
+          basis: 'based on 30 days of data',
+        })
+      }
+    }
+
+    // family 'rhythm' (priority 7) — time-of-day first, weekday as fallback
+    {
+      const moodByPeriod = getMoodByPeriod(30)
+      const timeSummary = getTimeOfDaySummary(moodByPeriod)
+      if (timeSummary) {
+        candidates.push({
+          id: 'rhythm-time',
+          family: 'rhythm',
+          priority: 7,
+          finding: timeSummary,
+          basis: 'based on your morning and evening mood logs',
+        })
+      }
+      const moodByWeekday = getMoodByWeekday()
+      const weekdaySummary = getWeekdaySummary(moodByWeekday)
+      if (weekdaySummary) {
+        candidates.push({
+          id: 'rhythm-weekday',
+          family: 'rhythm',
+          priority: 7,
+          finding: weekdaySummary,
+          basis: 'based on 30 days of mood data',
+        })
+      }
+    }
+
+    // family 'trend' (priority 7) — last 7 days vs 7 before, gap >= 10 points
+    {
+      const curr = getCompletion(7)
+      if (Math.abs(curr.delta) >= 10) {
+        const up = curr.delta > 0
+        candidates.push({
+          id: 'trend',
+          family: 'trend',
+          priority: 7,
+          finding: up
+            ? `your completion is up ${curr.delta} points over the last week.`
+            : `your completion is down ${Math.abs(curr.delta)} points this week.`,
+          basis: 'compared to the previous 7 days',
+        })
+      }
+    }
+
+    // family 'weekday' (priority 6) — strongest vs weakest day, gap >= 15 points
+    {
+      const weekdayData = getCompletionByWeekday()
+      if (weekdayData) {
+        const sorted = [...weekdayData].sort((a, b) => b.pct - a.pct)
+        const best = sorted[0]
+        const worst = sorted[sorted.length - 1]
+        if (best.pct - worst.pct >= 15) {
+          candidates.push({
+            id: `weekday-${best.weekday}-${worst.weekday}`,
+            family: 'weekday',
+            priority: 6,
+            finding: `${WEEKDAY_NAMES[best.weekday]}s are your strongest day. ${WEEKDAY_NAMES[worst.weekday]}s are the hardest.`,
+            basis: 'based on 30 days of practice data',
+          })
+        }
+      }
+    }
+
+    // family 'practice' (priority 5) — top practice by completion
+    {
+      const going = getGoingWell()
+      if (going && going.length > 0) {
+        const top = going[0]
+        candidates.push({
+          id: `practice-${top.text}`,
+          family: 'practice',
+          priority: 5,
+          finding: `'${top.text}' is your most consistent practice at ${top.completionPct}%.`,
+          basis: 'based on 30 days',
+        })
+      }
+    }
+
+    // family 'streak' (priority 3) — only when streak >= 3
+    {
+      const streak = getStreak()
+      if (streak >= 3) {
+        candidates.push({
+          id: `streak-${streak}`,
+          family: 'streak',
+          priority: 3,
+          finding: `you're on a ${streak}-day streak.`,
+          basis: 'at least half your canvas met each day',
+        })
+      }
+    }
+
+    // Sort by priority desc, take at most one per family, cap at 4
+    candidates.sort((a, b) => b.priority - a.priority)
+    const seen = new Set()
+    const result = []
+    for (const c of candidates) {
+      if (seen.has(c.family)) continue
+      seen.add(c.family)
+      result.push(c)
+      if (result.length >= 4) break
+    }
+    return result
+  }
+
   return {
     isNeedMet,
     isDayHit,
@@ -586,5 +781,6 @@ export function createDataStats({ canvas, checkins, moods, practices, practicesD
     getCompletionByWeekday,
     getDebriefStats,
     getLiveCanvas,
+    getInsights,
   }
 }
