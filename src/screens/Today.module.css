@@ -260,7 +260,7 @@
 }
 .lightboxClose {
   position: absolute;
-  top: 12px;
+  top: calc(12px + env(safe-area-inset-top, 0px));
   right: 12px;
   font-family: var(--font-mono);
   font-size: 22px;
@@ -280,6 +280,7 @@
   z-index: 200;
   display: flex;
   flex-direction: column;
+  padding-top: env(safe-area-inset-top, 0px);
   animation: noteSlideUp var(--motion-overlay-in) ease-out;
 }
 .noteOverlayClosing {
