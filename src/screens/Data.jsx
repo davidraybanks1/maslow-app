@@ -612,11 +612,9 @@ function RibbonsSection({ canvas, checkins, practicesDB, days, windowLen, isDesk
                             (p.id && e.practice_id ? e.practice_id === p.id : e.practice_text === p.label)
                           )
                         ) ?? null
-                        const daysSince = lastDk
-                          ? Math.round((new Date(todayKey + 'T12:00:00') - new Date(lastDk + 'T12:00:00')) / 86400000)
-                          : null
-                        const isQuiet = daysSince === null || daysSince > 30
-                        const practiceRun = !isQuiet ? computeRun(days, checkins, dk =>
+                        const neverLogged = lastDk === null
+                        // daysSince > 30 is unreachable with a 30-day window (lastDk is always within days)
+                        const practiceRun = !neverLogged ? computeRun(days, checkins, dk =>
                           (checkins[dk] || []).some(e =>
                             e.need_id === need.id &&
                             (p.id && e.practice_id ? e.practice_id === p.id : e.practice_text === p.label)
@@ -626,9 +624,9 @@ function RibbonsSection({ canvas, checkins, practicesDB, days, windowLen, isDesk
                           <div key={p.id ?? p.label} className={styles.practiceRow}>
                             <div className={styles.practiceRowTop}>
                               <span className={styles.practiceName}>{p.label}</span>
-                              <span className={`${styles.practiceStat}${isQuiet ? ` ${styles.practiceStatQuiet}` : ''}`}>
-                                {isQuiet
-                                  ? `${daysSince ?? '∞'}d quiet`
+                              <span className={styles.practiceStat}>
+                                {neverLogged
+                                  ? 'not yet logged'
                                   : practiceRun
                                     ? `${daysP}/${windowLen} · ${practiceRun.count}${practiceRun.atEdge ? '+' : ''}d ${practiceRun.isStreak ? 'streak' : 'quiet'}`
                                     : `${daysP}/${windowLen}`
