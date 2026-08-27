@@ -1141,7 +1141,6 @@ export default function Log({ state, syncCheckinDay }) {
           </div>
         )}
         </div>
-        <p className={styles.introNote}>this is where all your journal entries live.</p>
         <div className={styles.colLeft}>
         {/* ── Resurfacing ── */}
         {archiveLoaded && archiveEntries.length > 0 && archiveEntries.length < 10 && (
