@@ -29,6 +29,13 @@ export const NEEDS = [
 export const UNIVERSAL_NEEDS = ['movement', 'nutrition', 'rest']
 
 export const MODE_MAX_BUBBLES = { exploration: 3, appreciation: 2, nourishment: 1, survival: 1 }
+export const MODE_NEED_CAP    = { exploration: 1, appreciation: 2, nourishment: 3, survival: 4 }
+export const MODE_DESCS = {
+  exploration:  'the one need that feels like a passion',
+  appreciation: 'needs that bring enjoyment to your life',
+  nourishment:  'needs that keep you from feeling drained',
+  survival:     'needs you just check the box on',
+}
 export const JOURNAL_TRUNCATE = 150
 export const MODE_WEIGHTS     = { exploration: 1, appreciation: 1, nourishment: 1, survival: 0.5 }
 

@@ -6,6 +6,7 @@ import { hapticTick } from '../../lib/native'
 import OtpDisclosure from '../../components/OtpDisclosure'
 import styles from './DiagnosticFlow.module.css'
 import BrandMark from '../../components/BrandMark'
+import { MODE_NEED_CAP, MODE_DESCS } from '../../lib/constants'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -788,6 +789,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
   const [recommendation, setRecommendation] = useState(() => ((saved.step ?? 0) >= 8 ? rebuildFromSaved(saved) : null))
   const [openDropdownId, setOpenDropdownId] = useState(null)
   const [revealCount, setRevealCount]       = useState(0)
+  const [canvasIntroSeen, setCanvasIntroSeen] = useState(() => !!(loadSavedAnswers().canvasIntroSeen))
 
   const contentRef = useRef(null)
   useEffect(() => { if (contentRef.current) contentRef.current.scrollTop = 0 }, [step])
@@ -817,6 +819,22 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
     }, 140)
     return () => clearInterval(t)
   }, [step]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function dismissCanvasIntro() {
+    setCanvasIntroSeen(true)
+    try {
+      const existing = JSON.parse(sessionStorage.getItem(SS_KEY)) || {}
+      sessionStorage.setItem(SS_KEY, JSON.stringify({ ...existing, canvasIntroSeen: true }))
+    } catch {}
+  }
+
+  useEffect(() => {
+    if (canvasIntroSeen) return
+    function onKey(e) { if (e.key === 'Escape') dismissCanvasIntro() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canvasIntroSeen])
 
   function cycleSituation(s) {
     hapticTick()
@@ -1221,9 +1239,18 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
             const hasNeeds = universalInMode.length > 0 || personalInMode.length > 0
 
             return (
-              <div key={mode} className={styles.modeCard} style={{ borderLeft: `3px solid ${color}` }}>
+              <div key={mode} className={styles.modeCard}>
                 <div className={styles.modeCardHeader}>
+                  <span className={styles.modeCardDot} style={{ background: color }} />
                   <span className={styles.modeCardName}>{mode}</span>
+                  <span className={styles.modeCardCount}>{universalInMode.length + personalInMode.length} of {MODE_NEED_CAP[mode]}</span>
+                </div>
+                <p className={styles.modeCardBlurb}>{MODE_DESCS[mode]}</p>
+                <div className={styles.modeCardTrack}>
+                  <div className={styles.modeCardFill} style={{
+                    width: MODE_NEED_CAP[mode] > 0 ? `${((universalInMode.length + personalInMode.length) / MODE_NEED_CAP[mode]) * 100}%` : '0%',
+                    background: color,
+                  }} />
                 </div>
                 {hasNeeds && (
                   <div className={styles.needsList}>
@@ -1306,6 +1333,21 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
             i want to adjust this
           </button>
         </div>
+
+        {!canvasIntroSeen && (
+          <>
+            <div className={styles.canvasIntroScrim} onClick={dismissCanvasIntro} />
+            <div className={styles.canvasIntroSheet} role="dialog" aria-modal="true">
+              <p className={styles.canvasIntroHeading}>your canvas.</p>
+              <div className={styles.canvasIntroBody}>
+                <p>thirteen needs make up a life. these are the ones that matter most to you right now — and how much of each one you&apos;re choosing to give.</p>
+                <p>exploration is the one you&apos;d call a passion. survival is the one you just check the box on. most people sit somewhere in between.</p>
+                <p>nothing here is fixed. tap any mode to change it.</p>
+              </div>
+              <button className={styles.canvasIntroDismiss} onClick={dismissCanvasIntro}>got it</button>
+            </div>
+          </>
+        )}
       </div>
     )
   }

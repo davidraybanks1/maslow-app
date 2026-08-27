@@ -1,19 +1,10 @@
 import { useState, useEffect, useRef, useContext } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { HeaderSlotContext } from '../lib/headerSlot'
-import { NEEDS, MODE_ORDER, MODES } from '../lib/constants'
+import { NEEDS, MODE_ORDER, MODES, MODE_NEED_CAP, MODE_DESCS } from '../lib/constants'
 import { createDataStats, formatLastDone } from '../lib/dataStats'
 import styles from './CanvasScreen.module.css'
 
-// Capacity: how many needs each mode can hold
-const MODE_NEED_CAP = { exploration: 1, appreciation: 2, nourishment: 3, survival: 4 }
-
-const MODE_DESCS = {
-  exploration:  'the one need that feels like a passion',
-  appreciation: 'needs that bring enjoyment to your life',
-  nourishment:  'needs that keep you from feeling drained',
-  survival:     'needs you just check the box on',
-}
 
 const MODE_ABBR = { exploration: 'explr', appreciation: 'apprc', nourishment: 'nrsh', survival: 'srvl' }
 
