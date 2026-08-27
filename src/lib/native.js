@@ -62,9 +62,9 @@ const DEFAULT_MOOD_REMINDERS = {
 }
 
 export const MOOD_SLOTS = [
-  { slot: 'morning', id: 1001, body: 'morning — how are you feeling?' },
-  { slot: 'midday',  id: 1002, body: 'midday — how are you feeling?' },
-  { slot: 'evening', id: 1003, body: 'evening — how did today feel?' },
+  { slot: 'morning', id: 1001, body: 'Good morning. How are you feeling right at this moment?' },
+  { slot: 'midday',  id: 1002, body: 'Good afternoon. How are you feeling right at this moment?' },
+  { slot: 'evening', id: 1003, body: 'Good evening. How are you feeling right at this moment?' },
 ]
 
 /* Daily mood prompts + the weekly/daily review reminder.
@@ -99,7 +99,7 @@ export async function scheduleReminders({
       })
       .map(s => {
         const [h, m] = moodReminders[s.slot].time.split(':').map(n => parseInt(n, 10))
-        return { id: s.id, title: 'mood', body: s.body, schedule: { on: { hour: h, minute: m } } }
+        return { id: s.id, title: 'Mood Check', body: s.body, schedule: { on: { hour: h, minute: m } } }
       })
 
     const reviewNotifs = []

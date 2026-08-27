@@ -1624,10 +1624,18 @@
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 22px;
+  box-sizing: border-box;
   /* inactive state */
   background: rgba(0,0,0,.05);
   border: 1px solid transparent;
   color: rgba(0,0,0,.58);
+}
+.archiveFavBtn {
+  min-width: 44px;
 }
 .archiveFavBtn:focus,
 .archiveRevisitBtn:focus { outline: none; }

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { IconHeart, IconHeartFilled } from '@tabler/icons-react'
 import { NEEDS, MODE_MAX_BUBBLES, JOURNAL_TRUNCATE } from '../lib/constants'
 import { weekKey, todayKey, loadWeeklyReviews, loadJournalEntry, loadDebriefs, loadDebriefTypes, addNoteDeckCard, saveWeeklyReview, loadAllJournalMeta, loadJournalArchive, updateJournalEntryTags, toggleJournalFavorite, toggleJournalRevisit, loadDayCheckins, loadCustomTags } from '../lib/store'
 import { createDataStats } from '../lib/dataStats'
@@ -141,7 +142,7 @@ function archiveHeaderText(filteredEntries, total, filterSlot, filterNeed, filte
   for (const e of filteredEntries) if (e.state) stateCounts[e.state] = (stateCounts[e.state] || 0) + 1
   const topState = Object.entries(stateCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || null
   let text = `${n} ${n === 1 ? 'entry' : 'entries'}`
-  if (filterFav) text += ' · ★ favorite'
+  if (filterFav) text += ' · favorite'
   if (filterRevisit) text += ' · ↩ revisit'
   if (topState) text += ` · mostly ${topState}`
   if (rangeLabel) text += ` · ${rangeLabel}`
@@ -1196,7 +1197,8 @@ export default function Log({ state, syncCheckinDay }) {
                     className={`${styles.archiveFavBtn}${entry.favorite ? ` ${styles.archiveFavBtnActive}` : ''}`}
                     onClick={() => handleToggleFav(entry.id, entry.favorite)}
                     aria-pressed={entry.favorite}
-                  >{entry.favorite ? '★' : '☆'} favorite</button>
+                    aria-label={entry.favorite ? 'remove from favorites' : 'add to favorites'}
+                  >{entry.favorite ? <IconHeartFilled size={15} stroke={1.5} /> : <IconHeart size={15} stroke={1.5} />}</button>
                 </div>
                 <div className={styles.resurfaceFooter}>
                   <button
@@ -1284,7 +1286,8 @@ export default function Log({ state, syncCheckinDay }) {
                                   className={`${styles.archiveFavBtn}${e.favorite ? ` ${styles.archiveFavBtnActive}` : ''}`}
                                   onClick={() => handleToggleFav(e.id, e.favorite)}
                                   aria-pressed={e.favorite}
-                                >{e.favorite ? '★' : '☆'} favorite</button>
+                                  aria-label={e.favorite ? 'remove from favorites' : 'add to favorites'}
+                                >{e.favorite ? <IconHeartFilled size={15} stroke={1.5} /> : <IconHeart size={15} stroke={1.5} />}</button>
                               </span>
                             </div>
                             <p className={styles.threadReadEntryBody}>{e.entry}</p>
@@ -1541,7 +1544,7 @@ export default function Log({ state, syncCheckinDay }) {
                       disabled={favCount === 0 && !filterFav}
                       onClick={() => { setFilterFav(v => !v); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}
                     >
-                      ★ favorite<span className={styles.facetCount}>{favCount}</span>
+                      <IconHeartFilled size={12} stroke={1.5} style={{ verticalAlign: 'middle', marginRight: 4 }} />favorite<span className={styles.facetCount}>{favCount}</span>
                     </button>
                     <button
                       className={`${styles.facetChip} ${filterRevisit ? styles.facetChipActive : ''}`}
@@ -1841,7 +1844,8 @@ export default function Log({ state, syncCheckinDay }) {
                               className={`${styles.archiveFavBtn}${e.favorite ? ` ${styles.archiveFavBtnActive}` : ''}`}
                               onClick={() => handleToggleFav(e.id, e.favorite)}
                               aria-pressed={e.favorite}
-                            >{e.favorite ? '★' : '☆'} favorite</button>
+                              aria-label={e.favorite ? 'remove from favorites' : 'add to favorites'}
+                            >{e.favorite ? <IconHeartFilled size={15} stroke={1.5} /> : <IconHeart size={15} stroke={1.5} />}</button>
                           </span>
                         </span>
                         {isTagging && (
