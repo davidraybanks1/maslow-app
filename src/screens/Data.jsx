@@ -38,6 +38,24 @@ function buildWindowKeys(n, offset = 0) {
   })
 }
 
+// Returns { count, isStreak, atEdge } or null if run < 3.
+// Mirrors getStreak(): if today has no check-in data at all, start from yesterday.
+function computeRun(days, checkins, testFn) {
+  const todayDk = days[days.length - 1]
+  const todayHasAnyData = (checkins[todayDk] || []).length > 0
+  const startIdx = todayHasAnyData ? days.length - 1 : days.length - 2
+  if (startIdx < 0) return null
+  const startMet = testFn(days[startIdx])
+  let count = 0, atEdge = false
+  for (let i = startIdx; i >= 0; i--) {
+    if (testFn(days[i]) !== startMet) break
+    count++
+    if (i === 0) atEdge = true
+  }
+  if (count < 3) return null
+  return { count, isStreak: startMet, atEdge }
+}
+
 function buildSubhead(period) {
   const today = new Date()
   if (period === 30) return 'last 30 days · compared with the 30 before'
@@ -349,7 +367,8 @@ const MOOD_LENS_COLOR = { good: '#1B3A2D', fine: '#9DB394', bad: '#D93B1C' }
 const EMPTY_CELL = 'rgba(0,0,0,.06)'
 
 const MOBILE_WINDOW = 30
-const DESKTOP_WINDOW = 90
+// Clamped to store's 30-day checkins fetch; raise both together when that widens.
+const DESKTOP_WINDOW = 30
 
 function LongViewSection({ canvas, checkins, moods, stats, days, windowLen }) {
   const [lens, setLens] = useState('practices')
@@ -478,7 +497,7 @@ function practiceClosingLine(allCount, activeCount) {
   return `${activeCount} of ${allCount} practices still run. The need looks alive because ${word} practices carry it.`
 }
 
-function RibbonsSection({ canvas, checkins, practicesDB, days, windowLen }) {
+function RibbonsSection({ canvas, checkins, practicesDB, days, windowLen, isDesktop }) {
   const [openNeed, setOpenNeed] = useState(null)
   const [tooltipInfo, setTooltipInfo] = useState(null)
   const ribbonTimerRef = useRef(null)
@@ -497,7 +516,8 @@ function RibbonsSection({ canvas, checkins, practicesDB, days, windowLen }) {
       const sinceMonth = lastLoggedDk
         ? new Date(lastLoggedDk + 'T12:00:00').toLocaleDateString('en-GB', { month: 'long' }).toLowerCase()
         : null
-      return { need, mode, daysActive, isDormant, sinceMonth }
+      const run = isDormant ? null : computeRun(days, checkins, dk => (checkins[dk] || []).some(e => e.need_id === need.id))
+      return { need, mode, daysActive, isDormant, sinceMonth, run }
     }).sort((a, b) => b.daysActive - a.daysActive)
   }, [canvas, checkins, days, recent30, recent90])
 
@@ -515,7 +535,7 @@ function RibbonsSection({ canvas, checkins, practicesDB, days, windowLen }) {
         <span className={styles.sectionMeta}>held ▸ faded</span>
       </div>
       <div className={styles.ribbonStack}>
-        {needRows.map(({ need, mode, daysActive, isDormant, sinceMonth }) => {
+        {needRows.map(({ need, mode, daysActive, isDormant, sinceMonth, run }) => {
           const isOpen = openNeed === need.id
           const practices = practicesDB.filter(p => p.need_id === need.id)
           const activePractices = practices.filter(p =>
@@ -543,7 +563,10 @@ function RibbonsSection({ canvas, checkins, practicesDB, days, windowLen }) {
                     {sinceMonth ? `nothing logged since ${sinceMonth}` : 'nothing logged'}
                   </span>
                 ) : (
-                  <span className={styles.ribbonStat}>{daysActive} of {windowLen} days</span>
+                  <span className={styles.ribbonStat}>
+                    {daysActive} of {windowLen} days
+                    {run && ` · ${run.count}${run.atEdge ? '+' : ''} ${run.isStreak ? 'day streak' : 'days quiet'}`}
+                  </span>
                 )}
                 <span className={styles.ribbonChevron}>{isOpen ? '▴' : '▾'}</span>
               </button>
@@ -553,9 +576,9 @@ function RibbonsSection({ canvas, checkins, practicesDB, days, windowLen }) {
                 {days.map(dk => (
                   <div
                     key={dk}
-                    className={styles.ribbonCell}
+                    className={`${styles.ribbonCell}${isDesktop ? ` ${styles.ribbonCellClickable}` : ''}`}
                     title={formatDkLabel(dk)}
-                    onClick={() => showRibbonTooltip(need.id, dk)}
+                    onClick={isDesktop ? () => showRibbonTooltip(need.id, dk) : undefined}
                     style={{
                       background: (checkins[dk] || []).some(e => e.need_id === need.id)
                         ? TIER_BAR[mode]
@@ -564,7 +587,7 @@ function RibbonsSection({ canvas, checkins, practicesDB, days, windowLen }) {
                   />
                 ))}
               </div>
-              {tooltipInfo?.needId === need.id && (
+              {isDesktop && tooltipInfo?.needId === need.id && (
                 <div className={styles.dateHint}>{formatDkLabel(tooltipInfo.dk)}</div>
               )}
 
@@ -593,12 +616,23 @@ function RibbonsSection({ canvas, checkins, practicesDB, days, windowLen }) {
                           ? Math.round((new Date(todayKey + 'T12:00:00') - new Date(lastDk + 'T12:00:00')) / 86400000)
                           : null
                         const isQuiet = daysSince === null || daysSince > 30
+                        const practiceRun = !isQuiet ? computeRun(days, checkins, dk =>
+                          (checkins[dk] || []).some(e =>
+                            e.need_id === need.id &&
+                            (p.id && e.practice_id ? e.practice_id === p.id : e.practice_text === p.label)
+                          )
+                        ) : null
                         return (
                           <div key={p.id ?? p.label} className={styles.practiceRow}>
                             <div className={styles.practiceRowTop}>
                               <span className={styles.practiceName}>{p.label}</span>
                               <span className={`${styles.practiceStat}${isQuiet ? ` ${styles.practiceStatQuiet}` : ''}`}>
-                                {isQuiet ? `${daysSince ?? '∞'}d quiet` : `${daysP}/${windowLen}`}
+                                {isQuiet
+                                  ? `${daysSince ?? '∞'}d quiet`
+                                  : practiceRun
+                                    ? `${daysP}/${windowLen} · ${practiceRun.count}${practiceRun.atEdge ? '+' : ''}d ${practiceRun.isStreak ? 'streak' : 'quiet'}`
+                                    : `${daysP}/${windowLen}`
+                                }
                               </span>
                             </div>
                             <div className={styles.practiceBand}>
@@ -775,6 +809,7 @@ function InsightsCard({ stats }) {
       {insights.length > 1 && (
         <div className={styles.insightDeckFooter}>
           <span className={styles.insightDeckCounter}>{activeIdx + 1}/{insights.length}</span>
+          <button className={styles.insightSeeAnother} onClick={() => advance(1)}>see another</button>
           <div className={styles.insightDeckNav}>
             <button className={styles.insightDeckArrow} onClick={() => advance(-1)} aria-label="previous insight">‹</button>
             <button className={styles.insightDeckArrow} onClick={() => advance(1)} aria-label="next insight">›</button>
@@ -929,7 +964,7 @@ export default function Data({ state, archivePractice }) {
               <RhythmSection stats={stats} canvas={canvas} checkins={checkins} moods={moods} />
             </div>
             <LongViewSection canvas={canvas} checkins={checkins} moods={moods} stats={stats} days={dayKeys} windowLen={windowLen} />
-            <RibbonsSection canvas={canvas} checkins={checkins} practicesDB={practicesDB} days={dayKeys} windowLen={windowLen} />
+            <RibbonsSection canvas={canvas} checkins={checkins} practicesDB={practicesDB} days={dayKeys} windowLen={windowLen} isDesktop={isDesktop} />
             <GoneQuietSection canvas={canvas} checkins={checkins} practicesDB={practicesDB} archivePractice={archivePractice} isDesktop={isDesktop} />
             <AllNumbersSection period={period} canvas={canvas} checkins={checkins} />
           </>
