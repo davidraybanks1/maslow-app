@@ -90,7 +90,7 @@ const ANXIETY_TYPE_OPTIONS = [
   {
     id: 'apathy',
     name: 'apathetic',
-    desc: 'You just feel bored and question why the things you do matter.',
+    desc: 'you just feel bored and question why the things you do matter.',
   },
 ]
 
@@ -1087,7 +1087,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
           <button className={styles.backBtn} onClick={() => setStep(4)}>← back</button>
           <div className={styles.eyebrow}>STEP 5 OF 6 — FLOW STATE</div>
           <div className={styles.headline}>what makes you feel most yourself?</div>
-          <div className={styles.sub}>What puts you in your most natural state, after which you feel recharged.</div>
+          <div className={styles.sub}>what puts you in your most natural state, after which you feel recharged.</div>
           <div className={styles.twoColGrid}>
             {ALWAYS_MATTERS_OPTIONS.map(opt => (
               <div
