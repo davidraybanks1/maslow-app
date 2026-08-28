@@ -35,7 +35,7 @@
 }
 
 @media (max-width: 899px) {
-  .content {
+  .shell[data-tabbar] .content {
     padding-bottom: calc(96px + var(--safe-bottom));
   }
 }
