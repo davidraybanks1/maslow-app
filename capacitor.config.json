@@ -3,7 +3,8 @@
   "appName": "MyMaslow",
   "webDir": "dist",
   "ios": {
-    "contentInset": "automatic"
+    "contentInset": "automatic",
+    "backgroundColor": "#EFEADD"
   },
   "plugins": {
     "SplashScreen": {
