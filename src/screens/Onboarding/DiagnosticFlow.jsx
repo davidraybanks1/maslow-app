@@ -1221,7 +1221,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
             <div className={styles.canvasIntroSheet} role="dialog" aria-modal="true">
               <p className={styles.canvasIntroHeading}>your canvas.</p>
               <div className={styles.canvasIntroBody}>
-                <p>your canvas creates the right shape for your days. each need sits in a mode, and the mode determines how many daily practices it gets.</p>
+                <p>Your canvas creates the right shape for your days. Each need sits in a mode, and the mode determines how many daily practices it gets.</p>
                 <div className={styles.canvasIntroLegend}>
                   {CARD_MODE_ORDER.map(m => (
                     <div key={m} className={styles.canvasIntroLegendRow}>
@@ -1233,7 +1233,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
                     </div>
                   ))}
                 </div>
-                <p>you can tweak your canvas now, or at any time.</p>
+                <p>You can tweak your canvas now, or at any time.</p>
               </div>
               <button className={styles.canvasIntroDismiss} onClick={dismissCanvasIntro}>got it</button>
             </div>

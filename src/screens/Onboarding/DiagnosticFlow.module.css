@@ -400,9 +400,9 @@
 
 .canvasIntroBody p {
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 14.5px;
   font-weight: 300;
-  line-height: 1.55;
+  line-height: 1.6;
   color: var(--ink2);
   margin: 0;
 }
@@ -418,8 +418,8 @@
   align-items: flex-start;
   gap: 8px;
   font-family: var(--font-mono);
-  font-size: 12px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.55;
   color: var(--ink2);
 }
 
@@ -428,7 +428,7 @@
   height: 6px;
   border-radius: 3px;
   flex-shrink: 0;
-  margin-top: 6px;
+  margin-top: 7px;
 }
 
 .canvasIntroModeName {
