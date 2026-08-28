@@ -465,9 +465,9 @@ function rebuildFromSaved(s) {
 const NEED_NAMES = Object.fromEntries([...UNIVERSAL_NEEDS, ...PERSONAL_NEEDS].map(n => [n.id, n.name.toLowerCase()]))
 
 const BECAUSE_TYPE = {
-  frenetic:  'Because frenetic is how anxiety presents itself, your canvas gives reflection the deepest commitment — clarity before more to-dos.',
+  frenetic:  'Because frenetic is how anxiety presents itself, your canvas leans on fewer things done deeply — clarity before more to-dos.',
   overwhelm: 'Because overwhelm is how anxiety presents itself, your canvas focuses on small, steady, provable wins.',
-  apathy:    'Because apathy is how anxiety presents itself, beauty and play carry extra weight — feeling something comes first.',
+  apathy:    'Because apathy is how anxiety presents itself, your canvas leans toward what you can actually feel — enjoyment before obligation.',
 }
 
 function becauseLines({ anxietyType, alwaysNeedId, flexibility }) {
@@ -1174,7 +1174,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
           </>}
           banner={lines.length > 0 && (
             <div className={styles.becauseCard}>
-              <div className={styles.becauseEyebrow}>WHY THIS SHAPE</div>
+              <div className={styles.becauseEyebrow}>WHY THIS CANVAS</div>
               {lines.map(line => <div key={line} className={styles.becauseLine}>{line}</div>)}
             </div>
           )}
