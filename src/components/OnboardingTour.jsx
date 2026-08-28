@@ -16,7 +16,7 @@ const ALL_STEPS = [
   },
 ]
 
-const CARD_MARGIN = 60
+const CARD_MARGIN = 28
 
 // Returns the first [data-tour="X"] element with a non-zero painted rect.
 // Handles duplicate attribute names across mutually-exclusive branches
@@ -171,8 +171,8 @@ export default function OnboardingTour({ markTourSeen }) {
       }
     }
 
-    // Stubby arcs read as glitches; adjacency already points.
-    if (gap < 40) { setArrowPath(null); return }
+    // Suppress only when card and target overlap or nearly touch.
+    if (gap < 12) { setArrowPath(null); return }
 
     const dx = ex - sx, dy = ey - sy
     const len = Math.sqrt(dx * dx + dy * dy)
