@@ -258,6 +258,39 @@ function capPersonalNeeds(universal, personal, maxTotal, protectedId, alsoProtec
   }
 }
 
+// Demote overflowing needs to the nearest mode that still has room.
+// capPersonalNeeds removes whole needs to hit the practice budget; it does not
+// enforce per-mode head counts. Seasons and energy signals can independently
+// push nourishment (cap 3) above its limit. Exploration is excluded — it is
+// capped at 1 by construction and never overflows. rest is never promoted to
+// appreciation — the generator already forces it to nourishment or below.
+function rebalanceToCaps(universal, personal) {
+  const countIn = mode =>
+    Object.values({ ...universal, ...personal }).filter(v => v === mode).length
+  const setMode = (id, mode) => {
+    if (id in universal) universal[id] = mode; else personal[id] = mode
+  }
+  for (const mode of ['nourishment', 'appreciation', 'survival']) {
+    let guard = 0
+    while (countIn(mode) > MODE_NEED_CAP[mode] && guard++ < 20) {
+      const all    = { ...universal, ...personal }
+      const inMode = Object.keys(all).filter(id => all[id] === mode)
+      const moveId = inMode.slice().sort((a, b) => {
+        const ia = DROP_ORDER.indexOf(a), ib = DROP_ORDER.indexOf(b)
+        return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib)
+      })[0]
+      if (!moveId) break
+      const isRest = moveId === 'rest'
+      let target = null
+      if (!isRest && mode !== 'appreciation' && countIn('appreciation') < MODE_NEED_CAP.appreciation) target = 'appreciation'
+      else if (mode !== 'survival' && countIn('survival') < MODE_NEED_CAP.survival) target = 'survival'
+      else if (!isRest && mode !== 'nourishment' && countIn('nourishment') < MODE_NEED_CAP.nourishment) target = 'nourishment'
+      if (!target) break
+      setMode(moveId, target)
+    }
+  }
+}
+
 // When alwaysNeedId is 'rest' (which can never be exploration), pick the best
 // personal need from the user's energyGives signals, then fall back to whatever
 // is already in personal, then fall back to the first FILL_ORDER slot available.
@@ -407,6 +440,13 @@ function buildRecommendation({ anxietyLevel, anxietyType, energyGives, energyDra
     appreciationId = ensureAppreciation(universal, personal, explorationPersonalId ?? alwaysNeedId)
   }
 
+  capPersonalNeeds(universal, personal, maxTotal, explorationPersonalId, appreciationId)
+
+  rebalanceToCaps(universal, personal)
+
+  // rebalanceToCaps can increase practice weight (nourishment→appreciation: +1).
+  // Re-enforce the budget without creating new mode-cap violations — only drops
+  // unprotected personal needs, never demotes a mode.
   capPersonalNeeds(universal, personal, maxTotal, explorationPersonalId, appreciationId)
 
   return { universal, personal }
