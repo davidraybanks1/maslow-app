@@ -4,15 +4,18 @@ import styles from './OnboardingTour.module.css'
 const ALL_STEPS = [
   {
     target: 'space',
-    body: "This is your space. It starts at 0 and fills throughout the day as you complete your practices. The goal isn't always 100%. It's to figure out what works for you.",
+    body: [
+      "This is your space. It starts at 0 and fills throughout the day as you complete your practices.",
+      "The goal isn't always 100%. It's to figure out what works for you.",
+    ],
   },
   {
     target: 'modes',
-    body: 'Expand the modes to see your needs and daily practices. Tap a practice to mark it complete for the day.',
+    body: ['Expand the modes to see your needs and daily practices. Tap a practice to mark it complete for the day.'],
   },
   {
     target: 'profile',
-    body: 'Open your profile to personalize your canvas, notes, and notifications.',
+    body: ['Open your profile to personalize your canvas, notes, and notifications.'],
   },
 ]
 
@@ -142,8 +145,10 @@ export default function OnboardingTour({ markTourSeen }) {
     const cCX = c.left + c.width / 2
     const cCY = c.top + c.height / 2
 
-    // Classify as horizontal (desktop: card beside target) or vertical (mobile: above/below).
-    const isHoriz = Math.abs(tCX - cCX) > Math.abs(tCY - cCY)
+    // Classify as horizontal only when card and target have no x-axis overlap.
+    // Centre-distance comparison misclassifies full-width cards whose centre
+    // is far from the target horizontally but which still overlap the target.
+    const isHoriz = (c.right < t.left) || (c.left > t.right)
 
     let sx, sy, ex, ey, gap
 
@@ -241,20 +246,20 @@ export default function OnboardingTour({ markTourSeen }) {
           <defs>
             <marker
               id="tour-arrowhead"
-              markerWidth="10"
-              markerHeight="10"
-              refX="5"
-              refY="5"
+              markerWidth="12"
+              markerHeight="12"
+              refX="6"
+              refY="6"
               orient="auto"
               markerUnits="userSpaceOnUse"
             >
-              <path d="M 0 0 L 9 5 L 0 10 Z" fill="rgba(239,236,227,0.85)" />
+              <path d="M 0 0 L 11 6 L 0 12 Z" fill="#EFECE3" />
             </marker>
           </defs>
           <path
             d={arrowPath}
-            stroke="rgba(239,236,227,0.85)"
-            strokeWidth="1.5"
+            stroke="#EFECE3"
+            strokeWidth="2"
             fill="none"
             strokeLinecap="round"
             markerEnd="url(#tour-arrowhead)"
@@ -270,7 +275,9 @@ export default function OnboardingTour({ markTourSeen }) {
             ))}
           </div>
         </div>
-        <p className={styles.body}>{step.body}</p>
+        {step.body.map((para, i) => (
+          <p key={i} className={styles.body}>{para}</p>
+        ))}
         <div className={styles.actions}>
           <button className={styles.secondary} onClick={markTourSeen}>skip</button>
           <button

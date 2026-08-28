@@ -554,16 +554,16 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
 
       {/* ── Greeting ── */}
       <div className={styles.header}>
-        <div className={styles.headerRow} data-tour="space">
+        <div className={styles.headerRow}>
           <div className={styles.headerLeft}>
             <div className={styles.dateLabel}>{dateLabel}</div>
             <div className={styles.greeting}>good {SLOT_GREETING[slot]}.</div>
             {STREAK_LINES[streak] && <div className={styles.milestoneLine}>{STREAK_LINES[streak]}</div>}
           </div>
-          <div className={styles.headerRingWrap}>
+          <div className={styles.headerRingWrap} data-tour="space">
             <CompletionRing arcs={ringArcs} pct={ringPct} />
           </div>
-          <div className={styles.headerBarWrap}>
+          <div className={styles.headerBarWrap} data-tour="space">
             <CompletionBar arcs={ringArcs} pct={ringPct} />
           </div>
         </div>
