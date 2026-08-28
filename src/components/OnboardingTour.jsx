@@ -19,7 +19,7 @@ const ALL_STEPS = [
   },
 ]
 
-const CARD_MARGIN = 28
+const CARD_MARGIN = 56
 
 // Returns the first [data-tour="X"] element with a non-zero painted rect.
 // Handles duplicate attribute names across mutually-exclusive branches
@@ -133,6 +133,22 @@ export default function OnboardingTour({ markTourSeen }) {
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [markTourSeen])
+
+  // Open the modes accordion while step 2 is showing, close on leave/dismiss.
+  // Re-measure after the accordion animation so the arrow lands on the
+  // expanded position, not where the collapsed card used to be.
+  useEffect(() => {
+    if (!steps.length) return
+    const step = steps[index]
+    if (!step || step.target !== 'modes') return
+
+    window.dispatchEvent(new CustomEvent('maslow:open-tier'))
+    const remeasureTimer = setTimeout(() => measureStep(index, steps), 500)
+    return () => {
+      clearTimeout(remeasureTimer)
+      window.dispatchEvent(new CustomEvent('maslow:close-tier'))
+    }
+  }, [index, steps]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Compute the curved arrow path after every layout caused by a spotRect change.
   // Both card and target are in viewport coordinates, so no offset arithmetic needed.

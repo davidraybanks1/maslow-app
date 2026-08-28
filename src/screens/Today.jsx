@@ -430,6 +430,30 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   const tierBtnElems = useRef({})
   // Frozen sort order per mode — set at open, cleared at close so re-open re-sorts
   const accordionSnapshots = useRef({})
+
+  // Tour cross-component nudge: open/close the first mode accordion.
+  // Prefer exploration; fall back to the first mode in MODE_ORDER that has
+  // at least one need on the canvas; dispatch nothing if canvas is empty.
+  useEffect(() => {
+    function onOpenTier() {
+      const modeToOpen = MODE_ORDER.find(m => NEEDS.some(n => state.canvas[n.id] === m))
+      if (!modeToOpen) return
+      delete accordionSnapshots.current[modeToOpen]
+      setOpenTier(modeToOpen)
+    }
+    function onCloseTier() {
+      setOpenTier(prev => {
+        if (prev) delete accordionSnapshots.current[prev]
+        return null
+      })
+    }
+    window.addEventListener('maslow:open-tier', onOpenTier)
+    window.addEventListener('maslow:close-tier', onCloseTier)
+    return () => {
+      window.removeEventListener('maslow:open-tier', onOpenTier)
+      window.removeEventListener('maslow:close-tier', onCloseTier)
+    }
+  }, [state.canvas]) // eslint-disable-line react-hooks/exhaustive-deps
   const [openRetroSlot, setOpenRetroSlot] = useState(null)
 
   const [moodSelections, setMoodSelections] = useState(() => {
