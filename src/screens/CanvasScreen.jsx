@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useContext } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { HeaderSlotContext } from '../lib/headerSlot'
-import { NEEDS, MODE_ORDER, MODES, MODE_NEED_CAP, MODE_DESCS } from '../lib/constants'
+import { NEEDS, MODE_ORDER, MODES, MODE_NEED_CAP, MODE_DESCS, MODE_MAX_BUBBLES } from '../lib/constants'
 import { createDataStats, formatLastDone } from '../lib/dataStats'
 import styles from './CanvasScreen.module.css'
 
@@ -226,6 +226,9 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
 
               {/* Blurb */}
               <p className={styles.modeBlurb}>{MODE_DESCS[mode]}</p>
+              <p className={styles.modeDailyTarget}>
+                {(() => { const n = MODE_MAX_BUBBLES[mode]; return `each need here gets ${n} ${n === 1 ? 'practice' : 'practices'} a day.` })()}
+              </p>
 
               {/* Capacity bar */}
               <div className={styles.capacityTrack}>
