@@ -197,7 +197,7 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
             )}
           </div>
           <p className={styles.pageSubhead}>
-            add needs to your canvas. move needs between modes.{!onboarding && ' set your daily practices.'}
+            add needs to your canvas. move needs between modes. set your daily practices.
           </p>
         </div>
 
@@ -251,13 +251,12 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
                   <div key={need.id} className={styles.needBlock}>
                     <button className={styles.needRow} onClick={() => toggleNeed(need.id)}>
                       <span className={styles.needName}>{need.name}</span>
-                      {!onboarding && <span className={styles.practiceCount}>{practiceCountLabel(practices.length)}</span>}
+                      <span className={styles.practiceCount}>{practiceCountLabel(practices.length)}</span>
                       <span className={styles.needChevron}>{isOpen ? '▲' : '▼'}</span>
                     </button>
 
                     {isOpen && (
                       <div className={styles.needDetail}>
-                        {!onboarding && (<>
                         {/* Section label */}
                         <div className={styles.sectionLabel}>HOW IT SHOWS UP IN YOUR DAY</div>
 
@@ -368,7 +367,6 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
                             <span className={styles.addPracticeLabel}>add a practice</span>
                           </button>
                         )}
-                        </>)}
 
                         {/* Mode selector */}
                         <div className={styles.modeSelectorSection}>
@@ -416,7 +414,7 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
                           </div>
                           <p className={styles.modeSelectorNote}>
                             {onboarding
-                              ? 'you can move a need to a different mode at any time.'
+                              ? 'moving a need keeps its practices.'
                               : 'moving a need keeps every practice and all of its history.'}
                           </p>
                         </div>
@@ -431,7 +429,7 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
                           </button>
                           <p className={styles.removeFromCanvasNote}>
                             {onboarding
-                              ? 'you can place it again at any time.'
+                              ? 'its practices are kept — you can place it again at any time.'
                               : 'practices and history are kept — you can place it again anytime.'}
                           </p>
                         </div>

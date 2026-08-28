@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { signInNavRef, seedStarterContent, logSupabaseError } from '../../lib/store'
+import { STARTER_PRACTICES } from '../../lib/starterContent'
 import { hapticTick } from '../../lib/native'
 import OtpDisclosure from '../../components/OtpDisclosure'
 import styles from './DiagnosticFlow.module.css'
@@ -29,7 +30,7 @@ const MODE_COLORS = {
 
 const LEGEND_DESCS = {
   exploration:  'the one need that gives you energy',
-  appreciation: 'the needs that bring you joy',
+  appreciation: 'the needs that bring joy',
   nourishment:  'the needs that keep you from running empty',
   survival:     'the needs you just check the box on',
 }
@@ -543,7 +544,7 @@ function ProgressBar({ pct }) {
 
 // ─── Account screen (final step) ─────────────────────────────────────────────
 
-function OnboardingAccount({ destination, recommendation, updateCanvas, onDone, onBack }) {
+function OnboardingAccount({ destination, recommendation, updateCanvas, practicesDraft, onDone, onBack }) {
   const navigate = useNavigate()
   const [mode, setMode]             = useState('create')
 
@@ -629,7 +630,7 @@ function OnboardingAccount({ destination, recommendation, updateCanvas, onDone, 
         return
       }
 
-      const seeded = await seedStarterContent(userId, canvasObj)
+      const seeded = await seedStarterContent(userId, canvasObj, practicesDraft)
       setLoading(false)
       // Pass canvasObj and seeded rows so handleAccountDone can populate both
       // canvas and practicesDB in completeOnboarding before navigating.
@@ -797,6 +798,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
   // A refresh at the reveal/account step rebuilds the recommendation from saved answers.
   const [recommendation, setRecommendation] = useState(() => ((saved.step ?? 0) >= 8 ? rebuildFromSaved(saved) : null))
   const [canvasIntroSeen, setCanvasIntroSeen] = useState(() => !!(loadSavedAnswers().canvasIntroSeen))
+  const [practicesDraft, setPracticesDraft]   = useState(() => loadSavedAnswers().practicesDraft ?? {})
 
   const contentRef = useRef(null)
   useEffect(() => { if (contentRef.current) contentRef.current.scrollTop = 0 }, [step])
@@ -807,10 +809,10 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
       sessionStorage.setItem(SS_KEY, JSON.stringify({
         step: typeof step === 'number' ? step : 3,
         anxietyLevel, anxietyType, energyMap, season, flexibility, alwaysMatters, canWait,
-        canvasIntroSeen,
+        canvasIntroSeen, practicesDraft,
       }))
     } catch {}
-  }, [step, anxietyLevel, anxietyType, energyMap, season, flexibility, alwaysMatters, canWait, canvasIntroSeen])
+  }, [step, anxietyLevel, anxietyType, energyMap, season, flexibility, alwaysMatters, canWait, canvasIntroSeen, practicesDraft])
 
   function dismissCanvasIntro() {
     setCanvasIntroSeen(true)
@@ -867,6 +869,36 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
   function saveCanvas() {
     for (const [needId, mode] of Object.entries(recommendation.universal)) updateCanvas(needId, mode)
     for (const [needId, mode] of Object.entries(recommendation.personal))  updateCanvas(needId, mode)
+  }
+
+  function addPracticeLocal(needId, label) {
+    setPracticesDraft(prev => {
+      const current = prev[needId] ?? STARTER_PRACTICES[needId] ?? []
+      if (current.length >= 10) return prev
+      return { ...prev, [needId]: [...current, label] }
+    })
+  }
+
+  function renamePracticeLocal(practiceId, newLabel) {
+    const lastUnderscore = practiceId.lastIndexOf('_')
+    const needId = practiceId.slice(0, lastUnderscore)
+    const index = parseInt(practiceId.slice(lastUnderscore + 1), 10)
+    setPracticesDraft(prev => {
+      const current = prev[needId] ?? STARTER_PRACTICES[needId] ?? []
+      const updated = [...current]
+      updated[index] = newLabel
+      return { ...prev, [needId]: updated }
+    })
+  }
+
+  function archivePracticeLocal(practiceId) {
+    const lastUnderscore = practiceId.lastIndexOf('_')
+    const needId = practiceId.slice(0, lastUnderscore)
+    const index = parseInt(practiceId.slice(lastUnderscore + 1), 10)
+    setPracticesDraft(prev => {
+      const current = prev[needId] ?? STARTER_PRACTICES[needId] ?? []
+      return { ...prev, [needId]: current.filter((_, i) => i !== index) }
+    })
   }
 
   function handleAccountDone(dest, userId, canvas, seeded) {
@@ -1169,6 +1201,10 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
   // ── Screen 8: Canvas reveal ──────────────────────────────────────────────────
   if (step === 8 && recommendation) {
     const canvasObj = { ...recommendation.universal, ...recommendation.personal }
+    const practicesForCanvas = {}
+    for (const id of Object.keys(canvasObj)) {
+      practicesForCanvas[id] = practicesDraft[id] ?? STARTER_PRACTICES[id] ?? []
+    }
 
     function updateRecommendedCanvas(needId, mode) {
       const section = UNIVERSAL_IDS.has(needId) ? 'universal' : 'personal'
@@ -1186,8 +1222,11 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
       <>
         <CanvasScreen
           onboarding
-          state={{ canvas: canvasObj, practices: {} }}
+          state={{ canvas: canvasObj, practices: practicesForCanvas, practicesDB: [], checkins: {}, moods: [] }}
           updateCanvas={updateRecommendedCanvas}
+          addPractice={addPracticeLocal}
+          renamePractice={renamePracticeLocal}
+          archivePractice={archivePracticeLocal}
           header={<>
             <ProgressBar pct={PROGRESS[6]} />
             <button className={styles.backBtn} onClick={() => setStep(7)}>← back</button>
@@ -1250,6 +1289,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
         destination={destination}
         recommendation={recommendation}
         updateCanvas={updateCanvas}
+        practicesDraft={practicesDraft}
         onDone={handleAccountDone}
         onBack={() => setStep(8)}
       />

@@ -1184,7 +1184,7 @@ export async function deleteDebriefType(userId, { category, name }) {
   return { error }
 }
 
-export async function seedStarterContent(userId, canvasObj) {
+export async function seedStarterContent(userId, canvasObj, overrides = {}) {
   async function doSeed() {
     // Practices: idempotency guard is separate from notes guard
     const { data: existingPractices } = await supabase
@@ -1198,8 +1198,10 @@ export async function seedStarterContent(userId, canvasObj) {
       const practicesJsonb = {}
       const practicesRows = []
       for (const needId of canvasNeedIds) {
-        const labels = STARTER_PRACTICES[needId]
-        if (!labels) continue
+        const labels = needId in overrides
+          ? overrides[needId]
+          : STARTER_PRACTICES[needId]
+        if (!labels || labels.length === 0) continue
         practicesJsonb[needId] = labels
         for (const label of labels) {
           practicesRows.push({ user_id: userId, label, need_id: needId })
