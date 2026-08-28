@@ -50,7 +50,7 @@
 
 /* Option cards (energy / anxiety type) */
 .options { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
-.optionCard { position: relative; border: 1.5px solid var(--border); border-radius: 14px; background: var(--bg); padding: 16px; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none; }
+.optionCard { position: relative; border: 1.5px solid var(--border); border-radius: 14px; background: var(--card); padding: 16px; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none; }
 .optionCardSelected { border: 2px solid var(--nourishment); background: rgba(232,184,31,0.10); }
 .optionCardSelected::after { content: ''; position: absolute; top: 12px; right: 12px; width: 10px; height: 10px; border-radius: 50%; background: var(--nourishment); }
 .optionName { font-family: var(--font-serif); font-size: 18px; font-weight: 400; color: var(--ink); text-transform: lowercase; margin-bottom: 6px; }
@@ -125,7 +125,7 @@
   position: relative;
   border: 1px solid var(--border);
   border-radius: 10px;
-  background: var(--bg);
+  background: var(--card);
   padding: 12px 10px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -156,7 +156,7 @@
   position: relative;
   border: 1.5px solid var(--border);
   border-radius: 12px;
-  background: var(--bg);
+  background: var(--card);
   padding: 18px 10px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -198,7 +198,7 @@
   position: relative;
   border: 1.5px solid var(--border);
   border-radius: 12px;
-  background: var(--bg);
+  background: var(--card);
   padding: 14px 12px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
