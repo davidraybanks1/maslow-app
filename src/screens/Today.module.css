@@ -746,7 +746,7 @@
     display: grid;
     grid-template-rows: 0fr;
     overflow: hidden;
-    transition: grid-template-rows 260ms cubic-bezier(.32,.72,.28,1);
+    transition: grid-template-rows 390ms cubic-bezier(.32,.72,.28,1);
   }
 
   .tierContentOpen { grid-template-rows: 1fr; }

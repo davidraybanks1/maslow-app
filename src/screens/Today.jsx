@@ -431,6 +431,77 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   // Frozen sort order per mode — set at open, cleared at close so re-open re-sorts
   const accordionSnapshots = useRef({})
 
+  // Tour demo-ring: animate the completion ring while card 1 is visible.
+  // Sweeps 0→100% over 1800ms, holds 800ms, eases back to the real value.
+  // Under prefers-reduced-motion the animation is skipped entirely.
+  const [demoRing, setDemoRing] = useState(null)
+  const demoRingCancelRef = useRef(null)
+  const ringPctRef = useRef(ringPct)
+  useEffect(() => { ringPctRef.current = ringPct }, [ringPct])
+
+  useEffect(() => {
+    function onDemoRing() {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+      if (demoRingCancelRef.current) demoRingCancelRef.current()
+
+      let rafId = null
+      const timers = []
+      let cancelled = false
+
+      function cancel() {
+        cancelled = true
+        if (rafId) cancelAnimationFrame(rafId)
+        timers.forEach(clearTimeout)
+        setDemoRing(null)
+        demoRingCancelRef.current = null
+      }
+      demoRingCancelRef.current = cancel
+
+      timers.push(setTimeout(() => {
+        if (cancelled) return
+        const t0 = performance.now()
+        function sweepUp(now) {
+          if (cancelled) return
+          const frac = Math.min((now - t0) / 1800, 1)
+          setDemoRing(frac)
+          if (frac < 1) { rafId = requestAnimationFrame(sweepUp); return }
+          timers.push(setTimeout(() => {
+            if (cancelled) return
+            const real = ringPctRef.current / 100
+            const t1 = performance.now()
+            function sweepDown(now) {
+              if (cancelled) return
+              const t = Math.min((now - t1) / 700, 1)
+              const ease = 1 - t * t  // ease-out quadratic
+              const frac = real + (1 - real) * ease
+              if (frac > real + 0.005) {
+                setDemoRing(frac)
+                rafId = requestAnimationFrame(sweepDown)
+              } else {
+                setDemoRing(null)
+                demoRingCancelRef.current = null
+              }
+            }
+            rafId = requestAnimationFrame(sweepDown)
+          }, 800))
+        }
+        rafId = requestAnimationFrame(sweepUp)
+      }, 600))
+    }
+
+    function onDemoRingStop() {
+      if (demoRingCancelRef.current) demoRingCancelRef.current()
+    }
+
+    window.addEventListener('maslow:demo-ring', onDemoRing)
+    window.addEventListener('maslow:demo-ring-stop', onDemoRingStop)
+    return () => {
+      window.removeEventListener('maslow:demo-ring', onDemoRing)
+      window.removeEventListener('maslow:demo-ring-stop', onDemoRingStop)
+      if (demoRingCancelRef.current) demoRingCancelRef.current()
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Tour cross-component nudge: open/close the first mode accordion.
   // Prefer exploration; fall back to the first mode in MODE_ORDER that has
   // at least one need on the canvas; dispatch nothing if canvas is empty.
@@ -585,10 +656,16 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
             {STREAK_LINES[streak] && <div className={styles.milestoneLine}>{STREAK_LINES[streak]}</div>}
           </div>
           <div className={styles.headerRingWrap} data-tour="space">
-            <CompletionRing arcs={ringArcs} pct={ringPct} />
+            <CompletionRing
+              arcs={demoRing !== null ? ringArcs.map(a => ({ ...a, fill: demoRing })) : ringArcs}
+              pct={demoRing !== null ? Math.round(demoRing * 100) : ringPct}
+            />
           </div>
           <div className={styles.headerBarWrap} data-tour="space">
-            <CompletionBar arcs={ringArcs} pct={ringPct} />
+            <CompletionBar
+              arcs={demoRing !== null ? ringArcs.map(a => ({ ...a, fill: demoRing })) : ringArcs}
+              pct={demoRing !== null ? Math.round(demoRing * 100) : ringPct}
+            />
           </div>
         </div>
       </div>

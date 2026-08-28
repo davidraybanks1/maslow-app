@@ -5,7 +5,7 @@ const ALL_STEPS = [
   {
     target: 'space',
     body: [
-      "This is your space. It starts at 0 and fills throughout the day as you complete your practices.",
+      "This is your space. It starts at 0 and fills as you check off daily practices.",
       "The goal isn't always 100%. It's to figure out what works for you.",
     ],
   },
@@ -134,17 +134,30 @@ export default function OnboardingTour({ markTourSeen }) {
     return () => document.removeEventListener('keydown', onKey)
   }, [markTourSeen])
 
-  // Open the modes accordion while step 2 is showing, close on leave/dismiss.
-  // Re-measure after the accordion animation so the arrow lands on the
-  // expanded position, not where the collapsed card used to be.
+  // Demo-ring: animate the completion ring while card 1 (space) is showing.
+  useEffect(() => {
+    if (!steps.length) return
+    const step = steps[index]
+    if (!step || step.target !== 'space') return
+    window.dispatchEvent(new CustomEvent('maslow:demo-ring'))
+    return () => {
+      window.dispatchEvent(new CustomEvent('maslow:demo-ring-stop'))
+    }
+  }, [index, steps]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Open the modes accordion while card 2 (modes) is showing.
+  // Dispatch is delayed 1000ms so the user sees the card settle first.
+  // Remeasure fires at 1700ms: after the 1000ms delay plus 390ms transition
+  // plus a 310ms margin so the arrow targets the fully-expanded position.
   useEffect(() => {
     if (!steps.length) return
     const step = steps[index]
     if (!step || step.target !== 'modes') return
 
-    window.dispatchEvent(new CustomEvent('maslow:open-tier'))
-    const remeasureTimer = setTimeout(() => measureStep(index, steps), 500)
+    const dispatchTimer = setTimeout(() => window.dispatchEvent(new CustomEvent('maslow:open-tier')), 1000)
+    const remeasureTimer = setTimeout(() => measureStep(index, steps), 1700)
     return () => {
+      clearTimeout(dispatchTimer)
       clearTimeout(remeasureTimer)
       window.dispatchEvent(new CustomEvent('maslow:close-tier'))
     }
@@ -295,7 +308,12 @@ export default function OnboardingTour({ markTourSeen }) {
           <p key={i} className={styles.body}>{para}</p>
         ))}
         <div className={styles.actions}>
-          <button className={styles.secondary} onClick={markTourSeen}>skip</button>
+          <button
+            className={styles.secondary}
+            onClick={index === 0 ? markTourSeen : () => setIndex(i => i - 1)}
+          >
+            {index === 0 ? 'skip' : 'back'}
+          </button>
           <button
             className={styles.primary}
             onClick={isLast ? markTourSeen : () => setIndex(i => i + 1)}
