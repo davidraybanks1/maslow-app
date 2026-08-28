@@ -76,8 +76,6 @@
 
 /* Confirmation screen */
 
-.mutedNote { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink3); line-height: 1.6; }
-
 /* ── Screen 0 ── */
 
 .logoHairline { height: 0.5px; background: var(--border); flex-shrink: 0; }

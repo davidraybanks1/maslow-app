@@ -929,7 +929,6 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
               <p style={{ margin: 0 }}>Anxiety fills the space you give it. MyMaslow helps you take it back.</p>
               <p style={{ margin: '12px 0 0' }}>Answer a few questions to tailor your experience.</p>
             </div>
-            <div className={styles.mutedNote} style={{ marginTop: 16 }}>Takes about 5 minutes. Your answers stay yours.</div>
           </div>
         </div>
         <div className={styles.footer}>
