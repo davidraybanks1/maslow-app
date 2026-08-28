@@ -28,13 +28,6 @@ const MODE_COLORS = {
   survival:     '#D93B1C',
 }
 
-const LEGEND_DESCS = {
-  exploration:  'the one need that gives you energy',
-  appreciation: 'the needs that bring joy',
-  nourishment:  'the needs that keep you from running empty',
-  survival:     'the needs you just check the box on',
-}
-
 const UNIVERSAL_IDS = new Set(['movement', 'nutrition', 'rest'])
 
 const UNIVERSAL_NEEDS = [
@@ -1207,7 +1200,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
                       <span className={styles.canvasIntroSwatch} style={{ background: MODE_COLORS[m] }} />
                       <span>
                         <span className={styles.canvasIntroModeName}>{m}</span>
-                        <span className={styles.canvasIntroModeDesc}> — {LEGEND_DESCS[m]}</span>
+                        <span className={styles.canvasIntroModeDesc}> — {MODE_DESCS[m]}</span>
                       </span>
                     </div>
                   ))}

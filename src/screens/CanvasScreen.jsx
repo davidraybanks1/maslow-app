@@ -142,7 +142,7 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
     const trimmed = draft.trim()
     if (!trimmed) return null
     const matchedNeed = NEEDS.find(n => n.name === trimmed)
-    if (!matchedNeed) return `"${trimmed}" isn't in the need library.`
+    if (!matchedNeed) return `"${trimmed}" isn't in the needs library.`
     if (allModesFull) return 'every mode is at capacity. free a slot first, or swap a need out.'
     return `"${trimmed}" will be added — pick a mode for it next.`
   }
@@ -204,54 +204,59 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
         <div className={styles.headerHairline} />
       </div>
 
-      {/* ── Scroll area — mode cards ── */}
+      {/* ── Scroll area ── */}
       <div ref={scrollAreaRef} className={styles.scrollArea}>
-        {banner}
+        {onboarding && banner}
 
-        {/* ── Library + create ── */}
-        <div className={styles.librarySection}>
-          {unplacedNeeds.length > 0 && (
-            <div className={styles.libraryHeader}>
-              <span className={styles.libraryTitle}>need library</span>
-              <span className={styles.librarySubhead}>
-                {unplacedNeeds.length} {unplacedNeeds.length === 1 ? 'need' : 'needs'} not on your canvas yet
-              </span>
-            </div>
-          )}
-          {unplacedNeeds.length > 0 && (
-            <div className={styles.libraryChips}>
-              {unplacedNeeds.map(need => (
+        {/* /canvas: needs library sits above mode cards; onboarding: below */}
+        {!onboarding && (
+          <>
+            <div className={styles.librarySection}>
+              {unplacedNeeds.length > 0 && (
+                <div className={styles.libraryHeader}>
+                  <span className={styles.libraryTitle}>needs library</span>
+                  <span className={styles.librarySubhead}>
+                    {unplacedNeeds.length} {unplacedNeeds.length === 1 ? 'need' : 'needs'} not on your canvas yet
+                  </span>
+                </div>
+              )}
+              {unplacedNeeds.length > 0 && (
+                <div className={styles.libraryChips}>
+                  {unplacedNeeds.map(need => (
+                    <button
+                      key={need.id}
+                      className={styles.libraryChip}
+                      onClick={() => setDraft(need.name)}
+                    >
+                      <span className={styles.libraryChipName}>{need.name}</span>
+                      <span className={styles.libraryChipPlus}>+</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div className={styles.createRow}>
+                <input
+                  className={styles.createField}
+                  type="text"
+                  placeholder="add a need by name…"
+                  value={draft}
+                  onChange={e => setDraft(e.target.value)}
+                />
                 <button
-                  key={need.id}
-                  className={styles.libraryChip}
-                  onClick={() => setDraft(need.name)}
+                  className={`${styles.addBtn}${draft.trim() && NEEDS.find(n => n.name === draft.trim()) ? ` ${styles.addBtnActive}` : ''}`}
+                  disabled={!draft.trim() || !NEEDS.find(n => n.name === draft.trim())}
+                  onClick={handleAddClick}
                 >
-                  <span className={styles.libraryChipName}>{need.name}</span>
-                  <span className={styles.libraryChipPlus}>+</span>
+                  add
                 </button>
-              ))}
+              </div>
+              {draft.trim() && (
+                <p className={styles.createHint}>{getCreateHint()}</p>
+              )}
             </div>
-          )}
-          <div className={styles.createRow}>
-            <input
-              className={styles.createField}
-              type="text"
-              placeholder="add a need by name…"
-              value={draft}
-              onChange={e => setDraft(e.target.value)}
-            />
-            <button
-              className={`${styles.addBtn}${draft.trim() && NEEDS.find(n => n.name === draft.trim()) ? ` ${styles.addBtnActive}` : ''}`}
-              disabled={!draft.trim() || !NEEDS.find(n => n.name === draft.trim())}
-              onClick={handleAddClick}
-            >
-              add
-            </button>
-          </div>
-          {draft.trim() && (
-            <p className={styles.createHint}>{getCreateHint()}</p>
-          )}
-        </div>
+            <div className={styles.headerHairline} />
+          </>
+        )}
 
         {MODE_ORDER.map(mode => {
           const tierColor = MODES[mode].color
@@ -508,6 +513,56 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
             </div>
           )
         })}
+
+        {/* onboarding: needs library sits below mode cards */}
+        {onboarding && (
+          <>
+            <div className={styles.headerHairline} />
+            <div className={styles.librarySection}>
+              {unplacedNeeds.length > 0 && (
+                <div className={styles.libraryHeader}>
+                  <span className={styles.libraryTitle}>needs library</span>
+                  <span className={styles.librarySubhead}>
+                    {unplacedNeeds.length} {unplacedNeeds.length === 1 ? 'need' : 'needs'} not on your canvas yet
+                  </span>
+                </div>
+              )}
+              {unplacedNeeds.length > 0 && (
+                <div className={styles.libraryChips}>
+                  {unplacedNeeds.map(need => (
+                    <button
+                      key={need.id}
+                      className={styles.libraryChip}
+                      onClick={() => setDraft(need.name)}
+                    >
+                      <span className={styles.libraryChipName}>{need.name}</span>
+                      <span className={styles.libraryChipPlus}>+</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div className={styles.createRow}>
+                <input
+                  className={styles.createField}
+                  type="text"
+                  placeholder="add a need by name…"
+                  value={draft}
+                  onChange={e => setDraft(e.target.value)}
+                />
+                <button
+                  className={`${styles.addBtn}${draft.trim() && NEEDS.find(n => n.name === draft.trim()) ? ` ${styles.addBtnActive}` : ''}`}
+                  disabled={!draft.trim() || !NEEDS.find(n => n.name === draft.trim())}
+                  onClick={handleAddClick}
+                >
+                  add
+                </button>
+              </div>
+              {draft.trim() && (
+                <p className={styles.createHint}>{getCreateHint()}</p>
+              )}
+            </div>
+          </>
+        )}
 
       </div>
 
