@@ -125,9 +125,9 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
   }
 
   function practiceCountLabel(count) {
-    if (count === 0) return 'no practices'
-    if (count === 1) return '1 practice'
-    return `${count} practices`
+    if (count === 0) return 'none yet'
+    if (count === 1) return '1 to pick from'
+    return `${count} to pick from`
   }
 
   function circleStyle(days, tierColor) {
