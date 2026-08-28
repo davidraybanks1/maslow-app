@@ -35,12 +35,12 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
   const [draft, setDraft] = useState('')
 
   // Stage 6 state
-  const [pendingNeed, setPendingNeed]       = useState(null)
-  const [showModePicker, setShowModePicker] = useState(false)
-  const [showSwapFor, setShowSwapFor]       = useState(null)  // mode key
+  const [pendingNeed, setPendingNeed]         = useState(null)
+  const [showModePicker, setShowModePicker]   = useState(false)
+  const [showSwapFor, setShowSwapFor]         = useState(null)  // mode key
+  const [showAddNeedFor, setShowAddNeedFor]   = useState(null)  // mode key
 
   // Refs
-  const modeRefs      = useRef({})
   const scrollAreaRef = useRef(null)
 
   useEffect(() => {
@@ -92,26 +92,9 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
     return null
   }
 
-  // Derived counts
-  const needCount     = NEEDS.filter(n => state.canvas[n.id]).length
-  const practiceCount = NEEDS.reduce((sum, n) => sum + getPractices(n.id).length, 0)
-  const totalCap      = Object.values(MODE_NEED_CAP).reduce((a, b) => a + b, 0) // 10
-  const openSlots     = totalCap - needCount
-  const openSlotPhrase = openSlots === 0
-    ? 'every mode at capacity'
-    : openSlots === 1
-      ? '1 open slot'
-      : `${openSlots} open slots`
-
   // Stage 5 — derived
   const unplacedNeeds = NEEDS.filter(n => !state.canvas[n.id])
   const allModesFull  = MODE_ORDER.every(m => needsInMode(m).length >= MODE_NEED_CAP[m])
-
-  function scrollToMode(mode) {
-    modeRefs.current[mode]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    const firstNeed = needsInMode(mode)[0]
-    setOpenNeed(firstNeed ? firstNeed.id : null)
-  }
 
   function toggleNeed(needId) {
     const isOpening = openNeed !== needId
@@ -217,49 +200,18 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
             <button className={styles.closeBtn} onClick={handleClose} aria-label="close canvas">✕</button>
           </div>
           <p className={styles.pageSubhead}>
-            {needCount} {needCount === 1 ? 'need' : 'needs'} placed · {practiceCount} {practiceCount === 1 ? 'practice' : 'practices'} · {openSlotPhrase}
+            add needs to your canvas. move needs between modes. set your daily practices.
           </p>
-        </div>
-
-        {/* ── Capacity map ── */}
-        <div className={styles.capacityMap}>
-          {MODE_ORDER.map(mode => {
-            const tierColor = MODES[mode].color
-            const placed    = needsInMode(mode)
-            const cap       = MODE_NEED_CAP[mode]
-            const full      = placed.length >= cap
-            return (
-              <button
-                key={mode}
-                className={styles.capacityMapCard}
-                style={{ background: full ? 'rgba(0,0,0,.04)' : 'var(--card)' }}
-                onClick={() => scrollToMode(mode)}
-              >
-                <div className={styles.capacityMapTop}>
-                  <span className={styles.capacityMapDot} style={{ background: tierColor }} />
-                  <span className={styles.capacityMapCount}>{placed.length}/{cap}</span>
-                </div>
-                <div className={styles.capacityMapTrack}>
-                  <div
-                    className={styles.capacityMapFill}
-                    style={{
-                      width: cap > 0 ? `${(placed.length / cap) * 100}%` : '0%',
-                      background: tierColor,
-                    }}
-                  />
-                </div>
-                <span className={styles.capacityMapLabel}>{MODE_ABBR[mode]}</span>
-              </button>
-            )
-          })}
         </div>
 
         {/* ── Library + create ── */}
         <div className={styles.librarySection}>
           {unplacedNeeds.length > 0 && (
             <div className={styles.libraryHeader}>
-              <span className={styles.libraryHeaderLeft}>not on your canvas yet</span>
-              <span className={styles.libraryHeaderRight}>{unplacedNeeds.length} in the library</span>
+              <span className={styles.libraryTitle}>need library</span>
+              <span className={styles.librarySubhead}>
+                {unplacedNeeds.length} {unplacedNeeds.length === 1 ? 'need' : 'needs'} not on your canvas yet
+              </span>
             </div>
           )}
           {unplacedNeeds.length > 0 && (
@@ -311,7 +263,6 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
           return (
             <div
               key={mode}
-              ref={el => { modeRefs.current[mode] = el }}
               className={styles.modeCard}
             >
               {/* Header row */}
@@ -501,7 +452,7 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
                     </button>
                   </>
                 ) : (
-                  <button className={styles.addNeedRow}>
+                  <button className={styles.addNeedRow} onClick={() => setShowAddNeedFor(mode)}>
                     <span className={styles.addNeedPlus} style={{ color: tierColor }}>+</span>
                     <span className={styles.addNeedLabel}>add a need to {mode}</span>
                   </button>
@@ -551,6 +502,43 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
             <button
               className={styles.sheetCancel}
               onClick={() => { setShowModePicker(false); setPendingNeed(null) }}
+            >
+              cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Add need sheet ── */}
+      {showAddNeedFor && (
+        <div className={styles.sheetOverlay}>
+          <div
+            className={styles.sheetBackdrop}
+            onClick={() => setShowAddNeedFor(null)}
+          />
+          <div className={styles.sheet}>
+            <h2 className={styles.sheetTitle}>add a need to {showAddNeedFor}</h2>
+            {unplacedNeeds.length === 0 ? (
+              <p className={styles.sheetSubtitle}>every need is already on your canvas.</p>
+            ) : (
+              unplacedNeeds.map(need => (
+                <div key={need.id} className={styles.swapRow}>
+                  <span className={styles.swapNeedName}>{need.name}</span>
+                  <button
+                    className={styles.swapRemoveBtn}
+                    onClick={() => {
+                      updateCanvas(need.id, showAddNeedFor)
+                      setShowAddNeedFor(null)
+                    }}
+                  >
+                    add
+                  </button>
+                </div>
+              ))
+            )}
+            <button
+              className={styles.sheetCancel}
+              onClick={() => setShowAddNeedFor(null)}
             >
               cancel
             </button>
