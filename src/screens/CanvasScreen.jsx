@@ -13,7 +13,7 @@ const LIGHT_FILL_MODES = new Set(['appreciation', 'nourishment'])
 
 const GUIDE_KEY = 'maslow_canvas_guide_seen'
 
-export default function CanvasScreen({ state, updateCanvas, addPractice, renamePractice, archivePractice, onboarding = false, banner = null, footer = null }) {
+export default function CanvasScreen({ state, updateCanvas, addPractice, renamePractice, archivePractice, onboarding = false, header = null, banner = null, footer = null }) {
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -159,9 +159,10 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
 
   return (
     <div className={`${styles.screen}${footer ? ` ${styles.screenWithFooter}` : ''}`}>
+      {header}
       {/* ── Static header ── */}
       <div className={styles.staticHeader}>
-        <div className={`${styles.appBar}${onboarding ? ` ${styles.appBarOnboarding}` : ''}`}>
+        <div className={styles.appBar}>
           <button
             className={`${styles.guidePill} ${guideOpen ? styles.guidePillActive : ''}`}
             onClick={() => setGuideOpen(o => !o)}

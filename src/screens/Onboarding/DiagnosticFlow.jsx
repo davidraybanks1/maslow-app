@@ -6,6 +6,7 @@ import { hapticTick } from '../../lib/native'
 import OtpDisclosure from '../../components/OtpDisclosure'
 import styles from './DiagnosticFlow.module.css'
 import BrandMark from '../../components/BrandMark'
+import CanvasScreen from '../CanvasScreen'
 import { MODE_NEED_CAP, MODE_DESCS } from '../../lib/constants'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -33,12 +34,7 @@ const LEGEND_DESCS = {
   survival:     'the needs you just check the box on',
 }
 
-const MODE_DESCRIPTIONS = {
-  exploration:  'deepest commitment · 3 practices a day',
-  appreciation: 'present and intentional · 2 practices a day',
-  nourishment:  'steady and reliable · 1 practice a day',
-  survival:     'the floor that frees everything else · ½ weight',
-}
+const UNIVERSAL_IDS = new Set(['movement', 'nutrition', 'rest'])
 
 const UNIVERSAL_NEEDS = [
   { id: 'movement',  name: 'Movement' },
@@ -188,13 +184,6 @@ const FLEXIBILITY_OPTIONS = [
   },
 ]
 
-const HOW_IT_WORKS = [
-  { mode: 'exploration',  color: '#1B3A2D', desc: 'deepest commitment — 3 practices a day' },
-  { mode: 'appreciation', color: '#B8C3B1', desc: 'present and intentional — 2 practices a day' },
-  { mode: 'nourishment',  color: '#E8B81F', desc: 'steady and reliable — 1 practice a day' },
-  { mode: 'survival',     color: '#D93B1C', desc: 'the floor that frees everything else — 1 practice, half weight' },
-]
-
 // Steps 1–7 show a progress bar; PROGRESS[step - 1]
 const PROGRESS = [14, 28, 42, 57, 71, 85, 100]
 
@@ -202,12 +191,6 @@ const PROGRESS = [14, 28, 42, 57, 71, 85, 100]
 
 function modeRank(mode) {
   return { survival: 0, nourishment: 1, appreciation: 2, exploration: 3 }[mode] ?? -1
-}
-
-function nextMode(needId, mode) {
-  const order = needId === 'rest' ? ['survival', 'nourishment'] : MODE_ORDER
-  const idx = order.indexOf(mode)
-  return order[(idx + 1) % order.length]
 }
 
 // Daily practice count per mode (for canvas budget estimation — distinct from
@@ -218,11 +201,6 @@ const DROP_ORDER = ['money', 'dwelling', 'thrill', 'touch', 'intimacy', 'play', 
 
 function practiceWeight(canvasObj) {
   return Object.values(canvasObj).reduce((sum, mode) => sum + (MODE_DAILY_PRACTICES[mode] || 0), 0)
-}
-
-// Round up — half-weight survival needs still count as a full practice slot for display.
-function practiceCount(universal, personal) {
-  return Math.ceil(practiceWeight(universal) + practiceWeight(personal))
 }
 
 function ensureAppreciation(universal, personal, alwaysNeedId) {
@@ -542,21 +520,6 @@ function WelcomeBar() {
   )
 }
 
-// The reveal: THEIR canvas, sweeping in from black.
-function RevealBar({ recommendation }) {
-  const [on, setOn] = useState(false)
-  useEffect(() => { const t = setTimeout(() => setOn(true), 400); return () => clearTimeout(t) }, [])
-  const weights = canvasModeWeights(recommendation)
-  return (
-    <div className={styles.revealBar} aria-hidden="true">
-      {CARD_MODE_ORDER.map(m => weights[m] > 0 && (
-        <div key={m} className={styles.revealSeg} style={{ flexGrow: on ? weights[m] : 0.25, background: MODE_COLORS[m] }} />
-      ))}
-      <div className={`${styles.revealSeg} ${styles.welcomeSegX}`} style={{ flexGrow: on ? 0.9 : 6 }} />
-    </div>
-  )
-}
-
 // Static mini bar — the thing being saved on the account screen.
 function CanvasMiniBar({ recommendation }) {
   if (!recommendation) return null
@@ -574,54 +537,6 @@ function ProgressBar({ pct }) {
   return (
     <div className={styles.progressBar}>
       <div className={styles.progressFill} style={{ width: `${pct}%` }} />
-    </div>
-  )
-}
-
-function ModeDropdown({ id, currentMode, modes, onSelect, isOpen, onToggle }) {
-  const wrapRef = useRef(null)
-  const m = MODES[currentMode]
-
-  useEffect(() => {
-    if (!isOpen) return
-    function handleOutside(e) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target)) onToggle(null)
-    }
-    document.addEventListener('mousedown', handleOutside, true)
-    document.addEventListener('touchstart', handleOutside, true)
-    return () => {
-      document.removeEventListener('mousedown', handleOutside, true)
-      document.removeEventListener('touchstart', handleOutside, true)
-    }
-  }, [isOpen, onToggle])
-
-  return (
-    <div className={styles.modeDropdownWrap} ref={wrapRef}>
-      <button
-        className={styles.modePill}
-        style={{ background: m.bg, color: m.text }}
-        onClick={() => onToggle(isOpen ? null : id)}
-      >
-        {m.name}
-      </button>
-      {isOpen && (
-        <div className={styles.modeDropdown}>
-          {modes.map((opt, i) => (
-            <div key={opt}>
-              {i > 0 && <div className={styles.dropdownHairline} />}
-              <div
-                className={styles.dropdownOption}
-                onClick={() => { onSelect(opt); onToggle(null) }}
-              >
-                <div className={styles.dropdownPip} style={{ background: MODE_COLORS[opt] }} />
-                <span className={styles.dropdownModeName}>{opt}</span>
-                <span className={styles.dropdownModeDesc}>{MODE_DESCRIPTIONS[opt]}</span>
-                {currentMode === opt && <div className={styles.dropdownSelectedDot} />}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   )
 }
@@ -881,8 +796,6 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
   const [canWait, setCanWait]               = useState(saved.canWait ?? [])
   // A refresh at the reveal/account step rebuilds the recommendation from saved answers.
   const [recommendation, setRecommendation] = useState(() => ((saved.step ?? 0) >= 8 ? rebuildFromSaved(saved) : null))
-  const [openDropdownId, setOpenDropdownId] = useState(null)
-  const [revealCount, setRevealCount]       = useState(0)
   const [canvasIntroSeen, setCanvasIntroSeen] = useState(() => !!(loadSavedAnswers().canvasIntroSeen))
 
   const contentRef = useRef(null)
@@ -898,22 +811,6 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
       }))
     } catch {}
   }, [step, anxietyLevel, anxietyType, energyMap, season, flexibility, alwaysMatters, canWait, canvasIntroSeen])
-
-  // Staged reveal: canvas rows land one at a time when the reveal opens.
-  const totalRevealRows = recommendation
-    ? Object.keys(recommendation.universal).length + Object.keys(recommendation.personal).length
-    : 0
-  useEffect(() => {
-    if (step !== 8 || !recommendation) return
-    setRevealCount(0)
-    let i = 0
-    const t = setInterval(() => {
-      i += 1
-      setRevealCount(i)
-      if (i >= totalRevealRows) clearInterval(t)
-    }, 140)
-    return () => clearInterval(t)
-  }, [step]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function dismissCanvasIntro() {
     setCanvasIntroSeen(true)
@@ -965,25 +862,6 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
     const rec = buildRecommendation({ anxietyLevel, anxietyType, energyGives, energyDrains, season, alwaysNeedId, canWait, flexibility })
     setRecommendation(rec)
     setStep(8)
-  }
-
-  function setNeedMode(section, needId, mode) {
-    setRecommendation(prev => ({
-      ...prev,
-      [section]: { ...prev[section], [needId]: mode },
-    }))
-  }
-
-  function removePersonalNeed(needId) {
-    setRecommendation(prev => {
-      const next = { ...prev.personal }
-      delete next[needId]
-      return { ...prev, personal: next }
-    })
-  }
-
-  function addPersonalNeed(needId, mode = 'nourishment') {
-    setRecommendation(prev => ({ ...prev, personal: { ...prev.personal, [needId]: mode } }))
   }
 
   function saveCanvas() {
@@ -1290,142 +1168,53 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
 
   // ── Screen 8: Canvas reveal ──────────────────────────────────────────────────
   if (step === 8 && recommendation) {
-    const addableNeeds = PERSONAL_NEEDS.filter(n => !(n.id in recommendation.personal))
+    const canvasObj = { ...recommendation.universal, ...recommendation.personal }
+
+    function updateRecommendedCanvas(needId, mode) {
+      const section = UNIVERSAL_IDS.has(needId) ? 'universal' : 'personal'
+      setRecommendation(prev => {
+        const next = { ...prev[section] }
+        if (mode == null) delete next[needId]
+        else next[needId] = mode
+        return { ...prev, [section]: next }
+      })
+    }
+
+    const lines = becauseLines({ anxietyType, alwaysNeedId: ALWAYS_MATTERS_TO_NEED[alwaysMatters] || alwaysMatters, flexibility })
 
     return (
-      <div className={styles.screen}>
-        <ProgressBar pct={PROGRESS[6]} />
-        <div className={styles.content} ref={contentRef}>
-          <button className={styles.backBtn} onClick={() => setStep(7)}>← back</button>
-          <div className={styles.eyebrow}>YOUR CANVAS</div>
-          <div className={styles.headline}>here's what we're working with.</div>
-
-          <RevealBar recommendation={recommendation} />
-          <div className={styles.revealSummary}>
-            {totalRevealRows} needs · {practiceCount(recommendation.universal, recommendation.personal)} practices a day — space claimed back from anxiety.
-          </div>
-
-          <div className={styles.sub}>this is a starting point, not a verdict. tap a mode to change anything that doesn&apos;t feel right.</div>
-
-          {(() => {
-            const lines = becauseLines({ anxietyType, alwaysNeedId: ALWAYS_MATTERS_TO_NEED[alwaysMatters] || alwaysMatters, flexibility })
-            return lines.length > 0 && (
-              <div className={styles.becauseCard}>
-                <div className={styles.becauseEyebrow}>WHY THIS SHAPE</div>
-                {lines.map(line => <div key={line} className={styles.becauseLine}>{line}</div>)}
-              </div>
-            )
-          })()}
-
-          <div className={styles.canvasSectionLabel}>RECOMMENDED CANVAS</div>
-
-          {(() => { let rowIdx = 0
-          const rowStyle = () => {
-            const visible = rowIdx++ < revealCount
-            return { opacity: visible ? 1 : 0, transform: visible ? 'none' : 'translateY(6px)', transition: 'opacity .35s ease, transform .35s ease' }
-          }
-          return CARD_MODE_ORDER.map(mode => {
-            const color           = MODE_COLORS[mode]
-            const universalInMode = UNIVERSAL_NEEDS.filter(n => recommendation.universal[n.id] === mode)
-            const personalInMode  = PERSONAL_NEEDS.filter(n => recommendation.personal[n.id] === mode)
-            const hasNeeds = universalInMode.length > 0 || personalInMode.length > 0
-
-            return (
-              <div key={mode} className={styles.modeCard}>
-                <div className={styles.modeCardHeader}>
-                  <span className={styles.modeCardDot} style={{ background: color }} />
-                  <span className={styles.modeCardName}>{mode}</span>
-                  <span className={styles.modeCardCount}>{universalInMode.length + personalInMode.length} of {MODE_NEED_CAP[mode]}</span>
-                </div>
-                <p className={styles.modeCardBlurb}>{MODE_DESCS[mode]}</p>
-                <div className={styles.modeCardTrack}>
-                  <div className={styles.modeCardFill} style={{
-                    width: MODE_NEED_CAP[mode] > 0 ? `${((universalInMode.length + personalInMode.length) / MODE_NEED_CAP[mode]) * 100}%` : '0%',
-                    background: color,
-                  }} />
-                </div>
-                {hasNeeds && (
-                  <div className={styles.needsList}>
-                    {universalInMode.map(n => {
-                      const dropId  = `u-${n.id}`
-                      const uModes  = n.id === 'rest' ? ['nourishment', 'survival'] : MODE_ORDER
-                      return (
-                        <div key={n.id} className={styles.needRow} style={rowStyle()}>
-                          <div className={styles.needName}>{n.name}</div>
-                          <ModeDropdown
-                            id={dropId}
-                            currentMode={recommendation.universal[n.id]}
-                            modes={uModes}
-                            onSelect={m => setNeedMode('universal', n.id, m)}
-                            isOpen={openDropdownId === dropId}
-                            onToggle={setOpenDropdownId}
-                          />
-                        </div>
-                      )
-                    })}
-                    {personalInMode.map(n => {
-                      const dropId = `p-${n.id}`
-                      return (
-                        <div key={n.id} className={styles.needRow} style={rowStyle()}>
-                          <div className={styles.needName}>{n.name}</div>
-                          <div className={styles.needRowRight}>
-                            <ModeDropdown
-                              id={dropId}
-                              currentMode={recommendation.personal[n.id]}
-                              modes={MODE_ORDER}
-                              onSelect={m => setNeedMode('personal', n.id, m)}
-                              isOpen={openDropdownId === dropId}
-                              onToggle={setOpenDropdownId}
-                            />
-                            <button className={styles.removeBtn} onClick={() => removePersonalNeed(n.id)}>×</button>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-            )
-          }) })()}
-
-          {addableNeeds.length > 0 && (
-            <div className={styles.addWrap}>
-              <div className={styles.addLabel}>add more needs</div>
-              <div className={styles.addChips}>
-                {addableNeeds.map(n => (
-                  <div key={n.id} className={styles.addChip} onClick={() => addPersonalNeed(n.id)}>+ {n.name}</div>
-                ))}
-              </div>
+      <>
+        <CanvasScreen
+          onboarding
+          state={{ canvas: canvasObj, practices: {} }}
+          updateCanvas={updateRecommendedCanvas}
+          header={<>
+            <ProgressBar pct={PROGRESS[6]} />
+            <button className={styles.backBtn} onClick={() => setStep(7)}>← back</button>
+          </>}
+          banner={lines.length > 0 && (
+            <div className={styles.becauseCard}>
+              <div className={styles.becauseEyebrow}>WHY THIS SHAPE</div>
+              {lines.map(line => <div key={line} className={styles.becauseLine}>{line}</div>)}
             </div>
           )}
-
-          <div className={styles.howItWorksCard}>
-            <div className={styles.howItWorksEyebrow}>HOW THE CANVAS WORKS</div>
-            {HOW_IT_WORKS.map(({ mode, color, desc }) => (
-              <div key={mode} className={styles.howItWorksRow}>
-                <div className={styles.howItWorksPip} style={{ background: color }} />
-                <span className={styles.howItWorksName}>{mode}</span>
-                <span className={styles.howItWorksDesc}> — {desc}</span>
-              </div>
-            ))}
-          </div>
-
-        </div>
-        <div className={styles.footer}>
-          <button
-            className="btn-primary"
-            onClick={() => { saveCanvas(); setDestination('/today'); setStep(9) }}
-          >
-            this feels right →
-          </button>
-          <button
-            className="btn-ghost"
-            onClick={() => { saveCanvas(); setDestination('/canvas'); setStep(9) }}
-          >
-            i want to adjust this
-          </button>
-        </div>
-
+          footer={
+            <div className={styles.footer}>
+              <button
+                className="btn-primary"
+                onClick={() => { saveCanvas(); setDestination('/today'); setStep(9) }}
+              >
+                this feels right →
+              </button>
+              <button
+                className="btn-ghost"
+                onClick={() => { saveCanvas(); setDestination('/canvas'); setStep(9) }}
+              >
+                i want to adjust this
+              </button>
+            </div>
+          }
+        />
         {!canvasIntroSeen && (
           <>
             <div className={styles.canvasIntroScrim} onClick={dismissCanvasIntro} />
@@ -1450,7 +1239,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
             </div>
           </>
         )}
-      </div>
+      </>
     )
   }
 
