@@ -26,6 +26,13 @@ const MODE_COLORS = {
   survival:     '#D93B1C',
 }
 
+const LEGEND_DESCS = {
+  exploration:  'the one need that gives you energy',
+  appreciation: 'the needs that bring you joy',
+  nourishment:  'the needs that keep you from running empty',
+  survival:     'the needs you just check the box on',
+}
+
 const MODE_DESCRIPTIONS = {
   exploration:  'deepest commitment · 3 practices a day',
   appreciation: 'present and intentional · 2 practices a day',
@@ -1369,9 +1376,19 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
             <div className={styles.canvasIntroSheet} role="dialog" aria-modal="true">
               <p className={styles.canvasIntroHeading}>your canvas.</p>
               <div className={styles.canvasIntroBody}>
-                <p>thirteen needs make up a life. these are the ones that matter most to you right now — and how much of each one you&apos;re choosing to give.</p>
-                <p>exploration is the one you&apos;d call a passion. survival is the one you just check the box on. most people sit somewhere in between.</p>
-                <p>nothing here is fixed. tap any mode to change it.</p>
+                <p>your canvas creates the right shape for your days. each need sits in a mode, and the mode determines how many daily practices it gets.</p>
+                <div className={styles.canvasIntroLegend}>
+                  {CARD_MODE_ORDER.map(m => (
+                    <div key={m} className={styles.canvasIntroLegendRow}>
+                      <span className={styles.canvasIntroSwatch} style={{ background: MODE_COLORS[m] }} />
+                      <span>
+                        <span className={styles.canvasIntroModeName}>{m}</span>
+                        <span className={styles.canvasIntroModeDesc}> — {LEGEND_DESCS[m]}</span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <p>you can tweak your canvas now, or at any time.</p>
               </div>
               <button className={styles.canvasIntroDismiss} onClick={dismissCanvasIntro}>got it</button>
             </div>
