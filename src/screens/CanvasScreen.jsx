@@ -28,6 +28,8 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
   const [practiceMenu, setPracticeMenu]   = useState(null)   // practice id
   const [practiceDraft, setPracticeDraft] = useState('')
   const [deleteConfirm, setDeleteConfirm] = useState(null)   // practice id
+  const [addingFor, setAddingFor]         = useState(null)   // need id
+  const [addDraft, setAddDraft]           = useState('')
 
   // Stage 5 state
   const [draft, setDraft] = useState('')
@@ -95,12 +97,16 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
     setPracticeMenu(null)
     setPracticeDraft('')
     setDeleteConfirm(null)
+    setAddingFor(null)
+    setAddDraft('')
   }
 
   function openMenuFor(practiceId, label) {
     setPracticeMenu(practiceId)
     setPracticeDraft(label)
     setDeleteConfirm(null)
+    setAddingFor(null)
+    setAddDraft('')
   }
 
   function closeMenu() {
@@ -117,11 +123,6 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
   function handleArchive(practiceId) {
     archivePractice(practiceId)
     closeMenu()
-  }
-
-  function handleAddPractice(needId) {
-    const label = window.prompt('Name this practice:')
-    if (label && label.trim()) addPractice(needId, label.trim())
   }
 
   function practiceCountLabel(count) {
@@ -319,13 +320,54 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
                         })}
 
                         {/* Add a practice */}
-                        <button
-                          className={styles.addPracticeBtn}
-                          onClick={() => handleAddPractice(need.id)}
-                        >
-                          <span className={styles.addPracticePlus}>+</span>
-                          <span className={styles.addPracticeLabel}>add a practice</span>
-                        </button>
+                        {addingFor === need.id ? (
+                          <div className={styles.practiceEditor}>
+                            <input
+                              className={styles.renameField}
+                              value={addDraft}
+                              onChange={e => setAddDraft(e.target.value)}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter' && addDraft.trim()) {
+                                  addPractice(need.id, addDraft.trim())
+                                  setAddingFor(null)
+                                  setAddDraft('')
+                                } else if (e.key === 'Escape') {
+                                  setAddingFor(null)
+                                  setAddDraft('')
+                                }
+                              }}
+                              placeholder="name this practice"
+                              autoFocus
+                            />
+                            <div className={styles.editorActions}>
+                              <button
+                                className={styles.saveBtn}
+                                disabled={!addDraft.trim()}
+                                onClick={() => {
+                                  addPractice(need.id, addDraft.trim())
+                                  setAddingFor(null)
+                                  setAddDraft('')
+                                }}
+                              >
+                                save
+                              </button>
+                              <button
+                                className={styles.cancelBtn}
+                                onClick={() => { setAddingFor(null); setAddDraft('') }}
+                              >
+                                cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            className={styles.addPracticeBtn}
+                            onClick={() => { closeMenu(); setAddingFor(need.id); setAddDraft('') }}
+                          >
+                            <span className={styles.addPracticePlus}>+</span>
+                            <span className={styles.addPracticeLabel}>add a practice</span>
+                          </button>
+                        )}
                         </>)}
 
                         {/* Mode selector */}
