@@ -21,6 +21,22 @@
   padding: 8px 0 4px;
 }
 
+/* In onboarding mode: show the appBar on mobile (no shell app header to host the pill) */
+.appBarOnboarding {
+  display: flex;
+}
+
+/* When an inline footer is present: screen owns its height so the footer is always visible */
+.screenWithFooter {
+  height: 100%;
+  overflow: hidden;
+}
+
+.screenWithFooter .scrollArea {
+  flex: 1;
+  overflow-y: auto;
+}
+
 .guidePill {
   height: 26px;
   padding: 0 11px;

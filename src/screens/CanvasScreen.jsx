@@ -13,7 +13,7 @@ const LIGHT_FILL_MODES = new Set(['appreciation', 'nourishment'])
 
 const GUIDE_KEY = 'maslow_canvas_guide_seen'
 
-export default function CanvasScreen({ state, updateCanvas, addPractice, renamePractice, archivePractice }) {
+export default function CanvasScreen({ state, updateCanvas, addPractice, renamePractice, archivePractice, onboarding = false, banner = null, footer = null }) {
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -43,6 +43,7 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
 
   const setHeaderSlot = useContext(HeaderSlotContext)
   useEffect(() => {
+    if (onboarding) return
     setHeaderSlot(
       <button
         className={`${styles.guidePill} ${guideOpen ? styles.guidePillActive : ''}`}
@@ -52,7 +53,7 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
       </button>
     )
     return () => setHeaderSlot(null)
-  }, [guideOpen, setHeaderSlot])
+  }, [guideOpen, setHeaderSlot, onboarding])
 
   const useDB = Array.isArray(state.practicesDB) && state.practicesDB.length > 0
 
@@ -157,10 +158,10 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
   }
 
   return (
-    <div className={styles.screen}>
+    <div className={`${styles.screen}${footer ? ` ${styles.screenWithFooter}` : ''}`}>
       {/* ── Static header ── */}
       <div className={styles.staticHeader}>
-        <div className={styles.appBar}>
+        <div className={`${styles.appBar}${onboarding ? ` ${styles.appBarOnboarding}` : ''}`}>
           <button
             className={`${styles.guidePill} ${guideOpen ? styles.guidePillActive : ''}`}
             onClick={() => setGuideOpen(o => !o)}
@@ -189,10 +190,12 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
         <div className={styles.titleBlock}>
           <div className={styles.titleRow}>
             <h1 className={styles.pageTitle}>your canvas.</h1>
-            <button className={styles.closeBtn} onClick={handleClose} aria-label="close canvas">✕</button>
+            {!onboarding && (
+              <button className={styles.closeBtn} onClick={handleClose} aria-label="close canvas">✕</button>
+            )}
           </div>
           <p className={styles.pageSubhead}>
-            add needs to your canvas. move needs between modes. set your daily practices.
+            add needs to your canvas. move needs between modes.{!onboarding && ' set your daily practices.'}
           </p>
         </div>
 
@@ -201,6 +204,7 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
 
       {/* ── Scroll area — mode cards ── */}
       <div ref={scrollAreaRef} className={styles.scrollArea}>
+        {banner}
         {MODE_ORDER.map(mode => {
           const tierColor = MODES[mode].color
           const placed    = needsInMode(mode)
@@ -242,12 +246,13 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
                   <div key={need.id} className={styles.needBlock}>
                     <button className={styles.needRow} onClick={() => toggleNeed(need.id)}>
                       <span className={styles.needName}>{need.name}</span>
-                      <span className={styles.practiceCount}>{practiceCountLabel(practices.length)}</span>
+                      {!onboarding && <span className={styles.practiceCount}>{practiceCountLabel(practices.length)}</span>}
                       <span className={styles.needChevron}>{isOpen ? '▲' : '▼'}</span>
                     </button>
 
                     {isOpen && (
                       <div className={styles.needDetail}>
+                        {!onboarding && (<>
                         {/* Section label */}
                         <div className={styles.sectionLabel}>HOW IT SHOWS UP IN YOUR DAY</div>
 
@@ -317,6 +322,7 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
                           <span className={styles.addPracticePlus}>+</span>
                           <span className={styles.addPracticeLabel}>add a practice</span>
                         </button>
+                        </>)}
 
                         {/* Mode selector */}
                         <div className={styles.modeSelectorSection}>
@@ -363,7 +369,9 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
                             })}
                           </div>
                           <p className={styles.modeSelectorNote}>
-                            moving a need keeps every practice and all of its history.
+                            {onboarding
+                              ? 'you can move a need to a different mode at any time.'
+                              : 'moving a need keeps every practice and all of its history.'}
                           </p>
                         </div>
 
@@ -376,7 +384,9 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
                             remove from canvas
                           </button>
                           <p className={styles.removeFromCanvasNote}>
-                            practices and history are kept — you can place it again anytime.
+                            {onboarding
+                              ? 'you can place it again at any time.'
+                              : 'practices and history are kept — you can place it again anytime.'}
                           </p>
                         </div>
                       </div>
@@ -454,6 +464,8 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
           )}
         </div>
       </div>
+
+      {footer}
 
       {/* ── Mode picker sheet ── */}
       {showModePicker && pendingNeed && (
