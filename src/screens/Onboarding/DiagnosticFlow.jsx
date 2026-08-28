@@ -264,12 +264,17 @@ function capPersonalNeeds(universal, personal, maxTotal, protectedId, alsoProtec
 // push nourishment (cap 3) above its limit. Exploration is excluded — it is
 // capped at 1 by construction and never overflows. rest is never promoted to
 // appreciation — the generator already forces it to nourishment or below.
-function rebalanceToCaps(universal, personal) {
+// Target selection is budget-aware: prefer a target that keeps the daily-practice
+// total within budget; if none does, take the cheapest available target so the
+// second capPersonalNeeds pass only needs to drop at most one need, not two.
+function rebalanceToCaps(universal, personal, budget) {
   const countIn = mode =>
     Object.values({ ...universal, ...personal }).filter(v => v === mode).length
   const setMode = (id, mode) => {
     if (id in universal) universal[id] = mode; else personal[id] = mode
   }
+  const weight = () => practiceWeight(universal) + practiceWeight(personal)
+
   for (const mode of ['nourishment', 'appreciation', 'survival']) {
     let guard = 0
     while (countIn(mode) > MODE_NEED_CAP[mode] && guard++ < 20) {
@@ -280,11 +285,22 @@ function rebalanceToCaps(universal, personal) {
         return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib)
       })[0]
       if (!moveId) break
+
       const isRest = moveId === 'rest'
-      let target = null
-      if (!isRest && mode !== 'appreciation' && countIn('appreciation') < MODE_NEED_CAP.appreciation) target = 'appreciation'
-      else if (mode !== 'survival' && countIn('survival') < MODE_NEED_CAP.survival) target = 'survival'
-      else if (!isRest && mode !== 'nourishment' && countIn('nourishment') < MODE_NEED_CAP.nourishment) target = 'nourishment'
+      const here   = MODE_DAILY_PRACTICES[mode] || 0
+      const cands  = ['appreciation', 'survival', 'nourishment'].filter(t =>
+        t !== mode &&
+        countIn(t) < MODE_NEED_CAP[t] &&
+        !(isRest && t === 'appreciation')
+      )
+      // Prefer a target that keeps the daily-practice budget intact. If none
+      // does, take the cheapest and let capPersonalNeeds settle the remainder.
+      const affordable = cands.filter(t =>
+        weight() - here + (MODE_DAILY_PRACTICES[t] || 0) <= budget
+      )
+      const target = affordable[0] ?? cands.slice().sort((a, b) =>
+        (MODE_DAILY_PRACTICES[a] || 0) - (MODE_DAILY_PRACTICES[b] || 0)
+      )[0]
       if (!target) break
       setMode(moveId, target)
     }
@@ -442,11 +458,11 @@ function buildRecommendation({ anxietyLevel, anxietyType, energyGives, energyDra
 
   capPersonalNeeds(universal, personal, maxTotal, explorationPersonalId, appreciationId)
 
-  rebalanceToCaps(universal, personal)
+  rebalanceToCaps(universal, personal, maxTotal)
 
-  // rebalanceToCaps can increase practice weight (nourishment→appreciation: +1).
-  // Re-enforce the budget without creating new mode-cap violations — only drops
-  // unprotected personal needs, never demotes a mode.
+  // rebalanceToCaps can increase practice weight when the only affordable target
+  // is more expensive. Re-enforce the budget without creating new mode-cap
+  // violations — only drops unprotected personal needs, never demotes a mode.
   capPersonalNeeds(universal, personal, maxTotal, explorationPersonalId, appreciationId)
 
   return { universal, personal }
