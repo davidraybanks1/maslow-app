@@ -186,7 +186,7 @@ function modeRank(mode) {
 // Daily practice count per mode (for canvas budget estimation — distinct from
 // the scoring weights in constants.js which use equal weights for all modes).
 const MODE_DAILY_PRACTICES = { exploration: 3, appreciation: 2, nourishment: 1, survival: 0.5 }
-const FLEX_MAX = { low: 8, mid: 8, high: 10 }
+const FLEX_MAX = { low: 9, mid: 9, high: 10 }
 const DROP_ORDER = ['money', 'dwelling', 'thrill', 'touch', 'intimacy', 'play', 'information', 'beauty', 'reflection', 'community']
 
 function practiceWeight(canvasObj) {
