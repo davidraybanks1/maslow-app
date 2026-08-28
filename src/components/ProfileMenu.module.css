@@ -94,7 +94,7 @@
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 96px);
+  padding-bottom: calc(var(--safe-bottom) + 96px);
 }
 @media (min-width: 900px) {
   .scrollBody { overflow: visible; padding-bottom: 0; }

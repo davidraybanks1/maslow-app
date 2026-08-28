@@ -2,7 +2,7 @@
 
 /* ── List ── */
 .list { padding: 0 16px 32px; }
-@media (max-width: 899px) { .list { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); } }
+@media (max-width: 899px) { .list { padding-bottom: calc(96px + var(--safe-bottom)); } }
 
 /* ── Refresh error ── */
 .refreshError {

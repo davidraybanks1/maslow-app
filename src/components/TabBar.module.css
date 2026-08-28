@@ -10,7 +10,7 @@
     z-index: 50;
     background: var(--paper);
     border-top: 0.5px solid var(--hairline);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-bottom: var(--safe-bottom);
   }
 }
 

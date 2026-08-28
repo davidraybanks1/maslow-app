@@ -173,12 +173,13 @@ button { touch-action: manipulation; }
   --motion-data:        400ms;
   --motion-step:        150ms;
 
-  /* Safe-area top: non-zero on PWA; zeroed on native where contentInset handles it */
+  /* Safe-area tokens: non-zero on PWA; zeroed on native where contentInset handles both */
   --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* Capacitor sets this class at boot — content is already inset by the OS */
-html.native { --safe-top: 0px; }
+html.native { --safe-top: 0px; --safe-bottom: 0px; }
 
 html {
   font-size: 16px;
