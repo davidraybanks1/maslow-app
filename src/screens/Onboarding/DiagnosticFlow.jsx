@@ -123,14 +123,14 @@ const SEASON_OPTIONS = [
 ]
 
 const ALWAYS_MATTERS_OPTIONS = [
-  { id: 'community',  name: 'community',  desc: 'people who truly know you' },
-  { id: 'reflection', name: 'reflection', desc: 'time to process yourself' },
-  { id: 'creativity', name: 'creativity', desc: 'making things that are yours' },
+  { id: 'community',  name: 'community',  desc: 'bringing together your people' },
+  { id: 'creativity', name: 'creativity', desc: 'introducing new things into the world' },
+  { id: 'intimacy',   name: 'intimacy',   desc: 'connecting deeply with another' },
+  { id: 'beauty',     name: 'beauty',     desc: 'being moved by the world around you' },
+  { id: 'reflection', name: 'reflection', desc: 'making sense of life and your experiences' },
+  { id: 'learning',   name: 'learning',   desc: 'turning curiosity into a way of life' },
   { id: 'movement',   name: 'movement',   desc: 'pushing your body to its potential' },
-  { id: 'intimacy',   name: 'intimacy',   desc: 'to be truly known by another' },
-  { id: 'learning',   name: 'learning',   desc: 'curiosity as a way of life' },
-  { id: 'beauty',     name: 'beauty',     desc: 'being moved by the world' },
-  { id: 'thrill',     name: 'thrill',     desc: 'the feeling of being fully alive' },
+  { id: 'thrill',     name: 'thrill',     desc: 'jumping headfirst into an adventure' },
 ]
 
 // Maps "always matters" survey answers to canvas need IDs.
@@ -1086,8 +1086,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
         <div className={styles.content} ref={contentRef}>
           <button className={styles.backBtn} onClick={() => setStep(4)}>← back</button>
           <div className={styles.eyebrow}>STEP 5 OF 6 — FLOW STATE</div>
-          <div className={styles.headline}>what makes you feel most yourself?</div>
-          <div className={styles.sub}>what puts you in your most natural state, after which you feel recharged.</div>
+          <div className={styles.headline}>which is your most natural state?</div>
           <div className={styles.twoColGrid}>
             {ALWAYS_MATTERS_OPTIONS.map(opt => (
               <div
