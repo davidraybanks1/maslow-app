@@ -21,9 +21,7 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
     navigate(location.state?.returnTo || '/today', { state: { openProfile: true } })
   }
 
-  const [guideOpen, setGuideOpen] = useState(() => {
-    try { return !localStorage.getItem(GUIDE_KEY) } catch { return true }
-  })
+  const [guideOpen, setGuideOpen] = useState(false)
 
   // Stage 2/3 state
   const [openNeed, setOpenNeed]           = useState(null)
@@ -42,12 +40,6 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
 
   // Refs
   const scrollAreaRef = useRef(null)
-
-  useEffect(() => {
-    if (guideOpen) {
-      try { localStorage.setItem(GUIDE_KEY, '1') } catch {}
-    }
-  }, [])
 
   const setHeaderSlot = useContext(HeaderSlotContext)
   useEffect(() => {
@@ -202,51 +194,6 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
           <p className={styles.pageSubhead}>
             add needs to your canvas. move needs between modes. set your daily practices.
           </p>
-        </div>
-
-        {/* ── Library + create ── */}
-        <div className={styles.librarySection}>
-          {unplacedNeeds.length > 0 && (
-            <div className={styles.libraryHeader}>
-              <span className={styles.libraryTitle}>need library</span>
-              <span className={styles.librarySubhead}>
-                {unplacedNeeds.length} {unplacedNeeds.length === 1 ? 'need' : 'needs'} not on your canvas yet
-              </span>
-            </div>
-          )}
-          {unplacedNeeds.length > 0 && (
-            <div className={styles.libraryChips}>
-              {unplacedNeeds.map(need => (
-                <button
-                  key={need.id}
-                  className={styles.libraryChip}
-                  onClick={() => setDraft(need.name)}
-                >
-                  <span className={styles.libraryChipName}>{need.name}</span>
-                  <span className={styles.libraryChipPlus}>+</span>
-                </button>
-              ))}
-            </div>
-          )}
-          <div className={styles.createRow}>
-            <input
-              className={styles.createField}
-              type="text"
-              placeholder="create a custom need…"
-              value={draft}
-              onChange={e => setDraft(e.target.value)}
-            />
-            <button
-              className={`${styles.addBtn}${draft.trim() ? ` ${styles.addBtnActive}` : ''}`}
-              disabled={!draft.trim()}
-              onClick={handleAddClick}
-            >
-              add
-            </button>
-          </div>
-          {draft.trim() && (
-            <p className={styles.createHint}>{getCreateHint()}</p>
-          )}
         </div>
 
         <div className={styles.headerHairline} />
@@ -461,6 +408,51 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
             </div>
           )
         })}
+
+        {/* ── Library + create ── */}
+        <div className={styles.librarySection}>
+          {unplacedNeeds.length > 0 && (
+            <div className={styles.libraryHeader}>
+              <span className={styles.libraryTitle}>need library</span>
+              <span className={styles.librarySubhead}>
+                {unplacedNeeds.length} {unplacedNeeds.length === 1 ? 'need' : 'needs'} not on your canvas yet
+              </span>
+            </div>
+          )}
+          {unplacedNeeds.length > 0 && (
+            <div className={styles.libraryChips}>
+              {unplacedNeeds.map(need => (
+                <button
+                  key={need.id}
+                  className={styles.libraryChip}
+                  onClick={() => setDraft(need.name)}
+                >
+                  <span className={styles.libraryChipName}>{need.name}</span>
+                  <span className={styles.libraryChipPlus}>+</span>
+                </button>
+              ))}
+            </div>
+          )}
+          <div className={styles.createRow}>
+            <input
+              className={styles.createField}
+              type="text"
+              placeholder="create a custom need…"
+              value={draft}
+              onChange={e => setDraft(e.target.value)}
+            />
+            <button
+              className={`${styles.addBtn}${draft.trim() ? ` ${styles.addBtnActive}` : ''}`}
+              disabled={!draft.trim()}
+              onClick={handleAddClick}
+            >
+              add
+            </button>
+          </div>
+          {draft.trim() && (
+            <p className={styles.createHint}>{getCreateHint()}</p>
+          )}
+        </div>
       </div>
 
       {/* ── Mode picker sheet ── */}
