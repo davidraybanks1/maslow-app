@@ -90,7 +90,7 @@ const ANXIETY_TYPE_OPTIONS = [
   {
     id: 'apathy',
     name: 'apathetic',
-    desc: 'the volume drops; caring about any of it feels like more than you have.',
+    desc: 'You just feel bored and question why the things you do matter.',
   },
 ]
 
@@ -469,18 +469,20 @@ function rebuildFromSaved(s) {
 const NEED_NAMES = Object.fromEntries([...UNIVERSAL_NEEDS, ...PERSONAL_NEEDS].map(n => [n.id, n.name.toLowerCase()]))
 
 const BECAUSE_TYPE = {
-  frenetic:  'because anxiety runs frenetic for you, reflection takes your deepest commitment — clarity over more to-dos.',
-  overwhelm: 'because overwhelm is the shape of it, your canvas leans on small, steady, provable wins.',
-  apathy:    'because apathy is the shape of it, beauty and play carry extra weight — feeling something comes first.',
+  frenetic:  'Because frenetic is how anxiety presents itself, your canvas gives reflection the deepest commitment — clarity before more to-dos.',
+  overwhelm: 'Because overwhelm is how anxiety presents itself, your canvas focuses on small, steady, provable wins.',
+  apathy:    'Because apathy is how anxiety presents itself, beauty and play carry extra weight — feeling something comes first.',
 }
 
 function becauseLines({ anxietyType, alwaysNeedId, flexibility }) {
   const lines = []
   if (BECAUSE_TYPE[anxietyType]) lines.push(BECAUSE_TYPE[anxietyType])
   if (alwaysNeedId && NEED_NAMES[alwaysNeedId]) {
+    const n = NEED_NAMES[alwaysNeedId]
+    const cap = n[0].toUpperCase() + n.slice(1)
     lines.push(flexibility === 'low'
-      ? `${NEED_NAMES[alwaysNeedId]} is your non-negotiable — and because margins are thin right now, the canvas starts small on purpose.`
-      : `${NEED_NAMES[alwaysNeedId]} is your non-negotiable — it holds the deepest slot on your canvas.`)
+      ? `${cap} is your flow state, so it sits in exploration where it gets the most room. Margins are thin right now, so the canvas starts small on purpose.`
+      : `${cap} is your flow state, so it sits in exploration where it gets the most room.`)
   }
   return lines.slice(0, 2)
 }
@@ -934,9 +936,10 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
             </div>
             <WelcomeBar />
             <div className={styles.bodyText}>
-              anxiety fills the space you give it. answer seven honest questions and maslow builds you a canvas to take that space back.
+              <p style={{ margin: 0 }}>Anxiety fills the space you give it. MyMaslow helps you take it back.</p>
+              <p style={{ margin: '12px 0 0' }}>Answer a few questions to tailor your experience.</p>
             </div>
-            <div className={styles.mutedNote} style={{ marginTop: 16 }}>takes about 5 minutes. your answers stay yours.</div>
+            <div className={styles.mutedNote} style={{ marginTop: 16 }}>Takes about 5 minutes. Your answers stay yours.</div>
           </div>
         </div>
         <div className={styles.footer}>
@@ -956,9 +959,8 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
         <ProgressBar pct={PROGRESS[0]} />
         <div className={styles.content} ref={contentRef}>
           <button className={styles.backBtn} onClick={() => setStep(0)}>← back</button>
-          <div className={styles.eyebrow}>STEP 1 OF 7 — ANXIETY</div>
+          <div className={styles.eyebrow}>STEP 1 OF 7 — ANXIETY PRESENCE</div>
           <div className={styles.headline}>what's your relationship with anxiety?</div>
-          <div className={styles.sub}>be honest — there's no right answer.</div>
           <div className={styles.options}>
             {ANXIETY_LEVEL_OPTIONS.map(opt => (
               <div
@@ -986,7 +988,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
         <ProgressBar pct={PROGRESS[1]} />
         <div className={styles.content} ref={contentRef}>
           <button className={styles.backBtn} onClick={() => setStep(1)}>← back</button>
-          <div className={styles.eyebrow}>STEP 2 OF 7 — ANXIETY TYPE</div>
+          <div className={styles.eyebrow}>STEP 2 OF 7 — ANXIETY EXPERIENCE</div>
           <div className={styles.headline}>how does anxiety usually make you feel?</div>
           <div className={styles.sub}>one of these is probably more familiar than the others.</div>
           <div className={styles.options}>
@@ -1110,9 +1112,9 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
         <ProgressBar pct={PROGRESS[4]} />
         <div className={styles.content} ref={contentRef}>
           <button className={styles.backBtn} onClick={() => setStep(4)}>← back</button>
-          <div className={styles.eyebrow}>STEP 5 OF 7 — WHAT PUTS YOU IN FLOW</div>
-          <div className={styles.headline}>what's your secret sauce?</div>
-          <div className={styles.sub}>not the thing you'd rank first — the thing you lose an afternoon to. it becomes your exploration need, the one that earns the deepest daily commitment. choose one.</div>
+          <div className={styles.eyebrow}>STEP 5 OF 7 — FLOW STATE</div>
+          <div className={styles.headline}>what makes you feel most yourself?</div>
+          <div className={styles.sub}>What puts you in your most natural state, after which you feel recharged.</div>
           <div className={styles.twoColGrid}>
             {ALWAYS_MATTERS_OPTIONS.map(opt => (
               <div
