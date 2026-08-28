@@ -207,8 +207,6 @@
 }
 .needGridCardSelected { border: 2px solid var(--nourishment); background: rgba(232,184,31,0.10); }
 .needGridCardSelected::after { content: ''; position: absolute; top: 12px; right: 12px; width: 10px; height: 10px; border-radius: 50%; background: var(--nourishment); }
-.needGridCardWait { border: 2px solid var(--ink); background: var(--bg3); }
-.needGridCardWait::after { content: ''; position: absolute; top: 12px; right: 12px; width: 10px; height: 10px; border-radius: 50%; background: var(--ink); }
 .needGridName {
   font-family: var(--font-serif);
   font-size: 14px;
@@ -217,7 +215,6 @@
   text-transform: lowercase;
   margin-bottom: 3px;
 }
-.needGridNameWait { color: var(--ink4); }
 .needGridDesc {
   font-family: var(--font-mono);
   font-size: 10px;
@@ -225,8 +222,6 @@
   color: var(--ink3);
   line-height: 1.4;
 }
-.gridNote { font-family: var(--font-mono); font-size: 11px; color: var(--ink3); line-height: 1.6; margin-top: 12px; }
-
 /* ── Account screen (step 8) ── */
 
 .formError { font-family: var(--font-mono); font-size: 11px; color: #D93B1C; margin-top: 10px; line-height: 1.5; }
@@ -338,9 +333,6 @@
 .becauseLine + .becauseLine { margin-top: 8px; }
 
 /* the exhale between anxiety and energy */
-.breathWrap { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 0 28px; }
-.breathLine { font-family: var(--font-serif); font-size: 30px; color: var(--ink); margin-bottom: 10px; animation: breathIn 0.6s ease; }
-.breathSub { font-family: var(--font-mono); font-size: 13px; font-weight: 200; color: var(--ink2); line-height: 1.7; animation: breathIn 0.9s ease both; }
 @keyframes breathIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
 /* energy map: nudge the first card until the first tap */
@@ -458,7 +450,6 @@
 @media (prefers-reduced-motion: reduce) {
   .situationNudge { animation: none; }
   .welcomeSeg, .welcomeSegX { transition: none; }
-  .breathLine, .breathSub { animation: none; }
   .canvasIntroSheet { animation: none; }
 }
 

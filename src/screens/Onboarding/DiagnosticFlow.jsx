@@ -147,17 +147,6 @@ const ALWAYS_MATTERS_TO_NEED = {
   thrill:     'thrill',
 }
 
-const CAN_WAIT_OPTIONS = [
-  { id: 'money',       name: 'money',       desc: 'financial stability' },
-  { id: 'dwelling',    name: 'dwelling',    desc: 'home environment' },
-  { id: 'touch',       name: 'touch',       desc: 'physical affection and contact' },
-  { id: 'information', name: 'information', desc: 'staying oriented in the world' },
-  { id: 'play',        name: 'play',        desc: 'purposeless joy' },
-  { id: 'community',   name: 'community',   desc: 'belonging and group connection' },
-  { id: 'beauty',      name: 'beauty',      desc: 'contact with what moves you' },
-  { id: 'thrill',      name: 'thrill',      desc: 'intensity and aliveness' },
-]
-
 const FLEXIBILITY_OPTIONS = [
   {
     id: 'low',
@@ -185,8 +174,8 @@ const FLEXIBILITY_OPTIONS = [
   },
 ]
 
-// Steps 1–7 show a progress bar; PROGRESS[step - 1]
-const PROGRESS = [14, 28, 42, 57, 71, 85, 100]
+// Steps 1–6 show a progress bar; PROGRESS[step - 1]
+const PROGRESS = [17, 33, 50, 67, 83, 100]
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -452,7 +441,14 @@ function buildRecommendation({ anxietyLevel, anxietyType, energyGives, energyDra
 const SS_KEY = 'maslow_onboarding_v1'
 
 function loadSavedAnswers() {
-  try { return JSON.parse(sessionStorage.getItem(SS_KEY)) || {} } catch { return {} }
+  try {
+    const s = JSON.parse(sessionStorage.getItem(SS_KEY)) || {}
+    // Clamp step values from removed screens so users resuming a pre-change session
+    // don't land on a branch that no longer exists.
+    if (s.step === 'breath') s.step = 3
+    if (s.step === 7) s.step = 8
+    return s
+  } catch { return {} }
 }
 
 function rebuildFromSaved(s) {
@@ -796,7 +792,6 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
   const [season, setSeason]                 = useState(() => { const s = saved.season ?? null; return typeof s === 'string' ? [s] : s })
   const [flexibility, setFlexibility]       = useState(saved.flexibility ?? null)
   const [alwaysMatters, setAlwaysMatters]   = useState(saved.alwaysMatters ?? null)
-  const [canWait, setCanWait]               = useState(saved.canWait ?? [])
   // A refresh at the reveal/account step rebuilds the recommendation from saved answers.
   const [recommendation, setRecommendation] = useState(() => ((saved.step ?? 0) >= 8 ? rebuildFromSaved(saved) : null))
   const [canvasIntroSeen, setCanvasIntroSeen] = useState(() => !!(loadSavedAnswers().canvasIntroSeen))
@@ -810,11 +805,11 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
     try {
       sessionStorage.setItem(SS_KEY, JSON.stringify({
         step: typeof step === 'number' ? step : 3,
-        anxietyLevel, anxietyType, energyMap, season, flexibility, alwaysMatters, canWait,
+        anxietyLevel, anxietyType, energyMap, season, flexibility, alwaysMatters,
         canvasIntroSeen, practicesDraft,
       }))
     } catch {}
-  }, [step, anxietyLevel, anxietyType, energyMap, season, flexibility, alwaysMatters, canWait, canvasIntroSeen, practicesDraft])
+  }, [step, anxietyLevel, anxietyType, energyMap, season, flexibility, alwaysMatters, canvasIntroSeen, practicesDraft])
 
   function dismissCanvasIntro() {
     setCanvasIntroSeen(true)
@@ -854,16 +849,11 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
     })
   }
 
-  function toggleCanWait(needId) {
-    hapticTick()
-    setCanWait(prev => prev.includes(needId) ? prev.filter(id => id !== needId) : [...prev, needId])
-  }
-
   function goToCanvas() {
     const alwaysNeedId = ALWAYS_MATTERS_TO_NEED[alwaysMatters] || alwaysMatters
     const energyGives  = Object.entries(energyMap).filter(([, v]) => v === 'gives').map(([k]) => k)
     const energyDrains = Object.entries(energyMap).filter(([, v]) => v === 'drains').map(([k]) => k)
-    const rec = buildRecommendation({ anxietyLevel, anxietyType, energyGives, energyDrains, season, alwaysNeedId, canWait, flexibility })
+    const rec = buildRecommendation({ anxietyLevel, anxietyType, energyGives, energyDrains, season, alwaysNeedId, canWait: [], flexibility })
     setRecommendation(rec)
     setStep(8)
   }
@@ -959,7 +949,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
         <ProgressBar pct={PROGRESS[0]} />
         <div className={styles.content} ref={contentRef}>
           <button className={styles.backBtn} onClick={() => setStep(0)}>← back</button>
-          <div className={styles.eyebrow}>STEP 1 OF 7 — ANXIETY PRESENCE</div>
+          <div className={styles.eyebrow}>STEP 1 OF 6 — ANXIETY PRESENCE</div>
           <div className={styles.headline}>what's your relationship with anxiety?</div>
           <div className={styles.options}>
             {ANXIETY_LEVEL_OPTIONS.map(opt => (
@@ -988,7 +978,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
         <ProgressBar pct={PROGRESS[1]} />
         <div className={styles.content} ref={contentRef}>
           <button className={styles.backBtn} onClick={() => setStep(1)}>← back</button>
-          <div className={styles.eyebrow}>STEP 2 OF 7 — ANXIETY EXPERIENCE</div>
+          <div className={styles.eyebrow}>STEP 2 OF 6 — ANXIETY EXPERIENCE</div>
           <div className={styles.headline}>how does anxiety usually make you feel?</div>
           <div className={styles.sub}>one of these is probably more familiar than the others.</div>
           <div className={styles.options}>
@@ -1005,23 +995,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
           </div>
         </div>
         <div className={styles.footer}>
-          <button className="btn-primary" onClick={() => setStep('breath')} disabled={!anxietyType}>continue →</button>
-        </div>
-      </div>
-    )
-  }
-
-  // ── Interstitial: an exhale after the hard questions ────────────────────────
-  if (step === 'breath') {
-    return (
-      <div className={styles.screen}>
-        <ProgressBar pct={PROGRESS[1]} />
-        <div className={styles.breathWrap}>
-          <div className={styles.breathLine}>that&apos;s the hard part.</div>
-          <div className={styles.breathSub}>now the good stuff — what gives you energy?</div>
-        </div>
-        <div className={styles.footer}>
-          <button className="btn-primary" onClick={() => setStep(3)}>continue →</button>
+          <button className="btn-primary" onClick={() => setStep(3)} disabled={!anxietyType}>continue →</button>
         </div>
       </div>
     )
@@ -1034,7 +1008,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
         <ProgressBar pct={PROGRESS[2]} />
         <div className={styles.content} ref={contentRef}>
           <button className={styles.backBtn} onClick={() => setStep(2)}>← back</button>
-          <div className={styles.eyebrow}>STEP 3 OF 7 — ENERGY MAP</div>
+          <div className={styles.eyebrow}>STEP 3 OF 6 — ENERGY MAP</div>
           <div className={styles.headline}>what creates energy and what drains it?</div>
           <div className={styles.sub}>tap once for creates, twice for drains, three times to clear.</div>
           <div className={styles.legendRow}>
@@ -1078,7 +1052,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
         <ProgressBar pct={PROGRESS[3]} />
         <div className={styles.content} ref={contentRef}>
           <button className={styles.backBtn} onClick={() => setStep(3)}>← back</button>
-          <div className={styles.eyebrow}>STEP 4 OF 7 — YOUR SEASON</div>
+          <div className={styles.eyebrow}>STEP 4 OF 6 — YOUR SEASON</div>
           <div className={styles.headline}>what does life look like right now?</div>
           <div className={styles.sub}>seasons change. goals evolve. choose two — your first matters most.</div>
           <div className={styles.twoColGrid}>
@@ -1112,7 +1086,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
         <ProgressBar pct={PROGRESS[4]} />
         <div className={styles.content} ref={contentRef}>
           <button className={styles.backBtn} onClick={() => setStep(4)}>← back</button>
-          <div className={styles.eyebrow}>STEP 5 OF 7 — FLOW STATE</div>
+          <div className={styles.eyebrow}>STEP 5 OF 6 — FLOW STATE</div>
           <div className={styles.headline}>what makes you feel most yourself?</div>
           <div className={styles.sub}>What puts you in your most natural state, after which you feel recharged.</div>
           <div className={styles.twoColGrid}>
@@ -1142,7 +1116,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
         <ProgressBar pct={PROGRESS[5]} />
         <div className={styles.content} ref={contentRef}>
           <button className={styles.backBtn} onClick={() => setStep(5)}>← back</button>
-          <div className={styles.eyebrow}>STEP 6 OF 7 — FLEXIBILITY</div>
+          <div className={styles.eyebrow}>STEP 6 OF 6 — FLEXIBILITY</div>
           <div className={styles.headline}>how much room do you have to make change right now?</div>
           <div className={styles.sub}>this determines how many practices to start with. starting too many at once is its own form of overwhelm.</div>
           <div className={styles.options}>
@@ -1160,41 +1134,7 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
           </div>
         </div>
         <div className={styles.footer}>
-          <button className="btn-primary" onClick={() => setStep(7)} disabled={!flexibility}>continue →</button>
-        </div>
-      </div>
-    )
-  }
-
-  // ── Screen 7: Can wait ───────────────────────────────────────────────────────
-  if (step === 7) {
-    return (
-      <div className={styles.screen}>
-        <ProgressBar pct={PROGRESS[6]} />
-        <div className={styles.content} ref={contentRef}>
-          <button className={styles.backBtn} onClick={() => setStep(6)}>← back</button>
-          <div className={styles.eyebrow}>STEP 7 OF 7 — WHAT CAN WAIT</div>
-          <div className={styles.headline}>what doesn't need attention right now?</div>
-          <div className={styles.sub}>not ignored — just not taking up mental space. these won't appear on the canvas until the time is right.</div>
-          <div className={styles.twoColGrid}>
-            {CAN_WAIT_OPTIONS.map(opt => {
-              const selected = canWait.includes(opt.id)
-              return (
-                <div
-                  key={opt.id}
-                  className={`${styles.needGridCard} ${selected ? styles.needGridCardWait : ''}`}
-                  onClick={() => toggleCanWait(opt.id)}
-                >
-                  <div className={`${styles.needGridName} ${selected ? styles.needGridNameWait : ''}`}>{opt.name}</div>
-                  <div className={styles.needGridDesc}>{opt.desc}</div>
-                </div>
-              )
-            })}
-          </div>
-          <div className={styles.gridNote}>select as many or as few as feels right. nothing selected means everything stays in the mix.</div>
-        </div>
-        <div className={styles.footer}>
-          <button className="btn-primary" onClick={goToCanvas}>build my canvas →</button>
+          <button className="btn-primary" onClick={goToCanvas} disabled={!flexibility}>continue →</button>
         </div>
       </div>
     )
@@ -1230,8 +1170,8 @@ export default function DiagnosticFlow({ updateCanvas, completeOnboarding }) {
           renamePractice={renamePracticeLocal}
           archivePractice={archivePracticeLocal}
           header={<>
-            <ProgressBar pct={PROGRESS[6]} />
-            <button className={styles.backBtn} onClick={() => setStep(7)}>← back</button>
+            <ProgressBar pct={PROGRESS[5]} />
+            <button className={styles.backBtn} onClick={() => setStep(6)}>← back</button>
           </>}
           banner={lines.length > 0 && (
             <div className={styles.becauseCard}>
