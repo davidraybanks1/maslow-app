@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import * as Sentry from '@sentry/capacitor'
 import * as SentryReact from '@sentry/react'
+import { breadcrumbsIntegration } from '@sentry/react'
 import './index.css'
 import App from './App'
 import { isNative } from './lib/native'
@@ -13,15 +14,10 @@ Sentry.init(
     enabled: import.meta.env.PROD,
     release: '0.1.0',
     sendDefaultPii: false,
-    integrations: integrations =>
-      integrations
-        .filter(i => i.name !== 'Replay')
-        .map(i => {
-          if (i.name === 'Breadcrumbs') {
-            return new i.constructor({ dom: false, console: false })
-          }
-          return i
-        }),
+    integrations: integrations => [
+      ...integrations.filter(i => i.name !== 'Breadcrumbs' && i.name !== 'Replay'),
+      breadcrumbsIntegration({ dom: false, console: false }),
+    ],
     beforeBreadcrumb(breadcrumb) {
       if (['ui.click', 'ui.input', 'console'].includes(breadcrumb.category)) return null
       if (breadcrumb.category === 'fetch' || breadcrumb.category === 'xhr') {

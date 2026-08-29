@@ -1,4 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useRef, Component } from 'react'
+import * as Sentry from '@sentry/capacitor'
 import { HeaderSlotContext } from './lib/headerSlot'
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, useNavigationType } from 'react-router-dom'
 import { useAppState, loadCustomTags } from './lib/store'
@@ -23,6 +24,9 @@ import styles from './App.module.css'
 class AppErrorBoundary extends Component {
   constructor(props) { super(props); this.state = { error: null } }
   static getDerivedStateFromError(error) { return { error } }
+  componentDidCatch(error, info) {
+    Sentry.captureException(error, { contexts: { react: { componentStack: info.componentStack } } })
+  }
   render() {
     if (this.state.error) {
       return (
