@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from './supabase'
 import { STARTER_PRACTICES, STARTER_NOTES } from './starterContent.js'
+import * as Sentry from '@sentry/capacitor'
 
 const STORAGE_KEY = 'maslow_state'
 const STATE_VERSION = 2
@@ -258,6 +259,7 @@ export function useAppState(onSignIn) {
         const shouldSkip = signInNavRef.skip
         signInNavRef.skip = false
         const { id, email } = session.user
+        Sentry.setUser({ id })
         setTimeout(() => {
           restoreFromSupabase(id, email)
             .then(restored => {
@@ -276,6 +278,7 @@ export function useAppState(onSignIn) {
         }, 0)
       }
       if (event === 'SIGNED_OUT') {
+        Sentry.setUser(null)
         localStorage.removeItem('maslow_state')
         setState(initialState())
       }
