@@ -1,5 +1,5 @@
 export const STARTER_PRACTICES = {
-  reflection:  ['One journal entry', '10 minutes of quiet', 'Read self-help'],
+  reflection:  ['One journal entry', '10 minutes of quiet', 'Read notes to self'],
   movement:    ['Walk', 'Run', 'Lift'],
   nutrition:   ['Cook a meal', 'Eat something green', '8 cups of water'],
   rest:        ['7 hours', 'Nap', 'No screens before bed'],
