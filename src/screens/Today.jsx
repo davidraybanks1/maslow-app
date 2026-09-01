@@ -557,6 +557,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   }, [state.moods])
 
   async function handleMoodSelect(promptTime, mood) {
+    hapticTick()
     const prior = moodSelections[promptTime]
     setMoodSelections(prev => ({ ...prev, [promptTime]: mood }))
     if (!logMood) return

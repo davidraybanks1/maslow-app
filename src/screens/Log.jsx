@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { hapticTick } from '../lib/native'
 import { IconHeart, IconHeartFilled } from '@tabler/icons-react'
 import { NEEDS, MODE_MAX_BUBBLES, JOURNAL_TRUNCATE } from '../lib/constants'
 import { weekKey, todayKey, loadWeeklyReviews, loadJournalEntry, loadDebriefs, loadDebriefTypes, addNoteDeckCard, saveWeeklyReview, loadAllJournalMeta, loadJournalArchive, updateJournalEntryTags, toggleJournalFavorite, toggleJournalRevisit, loadDayCheckins, loadCustomTags } from '../lib/store'
@@ -1007,7 +1008,7 @@ export default function Log({ state, syncCheckinDay }) {
             <div
               key={opt.id}
               className={`${styles.weeklyMoodCard} ${weeklyMood === opt.id ? styles.weeklyMoodCardSelected : ''}`}
-              onClick={() => setWeeklyMood(opt.id)}
+              onClick={() => { hapticTick(); setWeeklyMood(opt.id) }}
             >
               <div className={styles.weeklyMoodName}>{opt.name}</div>
               <div className={styles.weeklyMoodDesc}>{opt.desc}</div>
