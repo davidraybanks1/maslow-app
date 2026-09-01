@@ -1,4 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
+import * as Sentry from '@sentry/react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { isNative, checkNotifPermission, requestNotifPermission } from '../lib/native'
@@ -43,6 +44,7 @@ export default function ProfileMenu({
   customTagCount = 0,
   resetTour,
 }) {
+  const [boom, setBoom] = useState(false) // TEMPORARY: sentry smoke test render throw
   const [phase, setPhase] = useState(null) // null | 'open' | 'closing'
   const [cadenceOpen, setCadenceOpen] = useState(false)
   const [confirmSignOut, setConfirmSignOut] = useState(false)
@@ -175,6 +177,9 @@ export default function ProfileMenu({
       document.removeEventListener('keydown', onKey)
     }
   }, [mounted])
+
+  // TEMPORARY: sentry smoke test — remove before release
+  if (boom) throw new Error('smoke test: render throw')
 
   return (
     <div ref={wrapperRef} className={styles.wrapper}>
@@ -442,6 +447,19 @@ export default function ProfileMenu({
                 className={styles.row}
                 onClick={() => { setConfirmSignOut(false); close() }}
               >terms</a>
+            </div>
+
+            {/* ── DEBUG — remove before release ── */}
+            <div className={styles.sectionLabel}><span style={{ color: '#c00', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.12em' }}>DEBUG — REMOVE BEFORE RELEASE</span></div>
+            <div className={styles.section}>
+              <button
+                className={styles.row}
+                onClick={() => Sentry.captureException(new Error('smoke test: captureException'))}
+              >sentry: capture</button>
+              <button
+                className={styles.row}
+                onClick={() => setBoom(true)}
+              >sentry: throw</button>
             </div>
 
             {/* ── Footer ── */}
