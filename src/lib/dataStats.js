@@ -132,7 +132,7 @@ export function getCanvasGuidance(checkins, canvas) {
 // practicesDB: [{id, label, need_id, archived_at}] from the practices table.
 // When provided, getPracticeStats groups by practice_id (reliable); falls back to
 // practice_text grouping against the legacy users.practices JSONB when not provided.
-export function createDataStats({ canvas, checkins, moods, practices, practicesDB }) {
+export function createDataStats({ canvas, checkins, moods, practices, practicesDB, onboardedAt }) {
   function isNeedMet(need, dateKey) {
     const required = requiredFor(canvas, need.id)
     if (required < 1) return null
@@ -152,6 +152,31 @@ export function createDataStats({ canvas, checkins, moods, practices, practicesD
       cursor.setDate(cursor.getDate() - 1)
     }
     return streak
+  }
+
+  function getStreakState() {
+    const count = getStreak()
+    const strip = dayRange(14, 0).map(dk => isDayHit(dk))
+    return {
+      count,
+      qualifies: count >= 3,
+      daysToQualify: Math.max(0, 3 - count),
+      strip,
+    }
+  }
+
+  function getQuiet(minDays = 5) {
+    return getPracticeStats(90)
+      .filter(p => !p.practice.archived_at && p.daysSinceLast !== null && p.daysSinceLast >= minDays)
+      .map(p => ({ need: p.need, practice: p.practice, mode: p.mode, daysSince: p.daysSinceLast }))
+      .sort((a, b) => b.daysSince - a.daysSince)
+  }
+
+  function getDataAge() {
+    const days = onboardedAt
+      ? Math.round((new Date() - new Date(onboardedAt + 'T12:00:00')) / 86400000) + 1
+      : 0
+    return { days, insightsReadyAt: 14, insightsReady: days >= 14 }
   }
 
   function getCompletion(rangeDays) {
@@ -603,31 +628,35 @@ export function createDataStats({ canvas, checkins, moods, practices, practicesD
 
     // family 'consistency' (priority 8) — need with highest met-day % >= 70%
     {
-      let bestNeed = null
-      let bestRatio = 0
-      let bestMetDays = 0
-      for (const need of NEEDS) {
-        if (!canvas[need.id]) continue
-        let metDays = 0
-        for (const day of days30) {
-          if (completedFor(checkins, need.id, day) > 0) metDays++
+      const dataAge = getDataAge()
+      const effectiveDays = Math.min(30, dataAge.days)
+      if (dataAge.days >= 7) {
+        let bestNeed = null
+        let bestRatio = 0
+        let bestMetDays = 0
+        for (const need of NEEDS) {
+          if (!canvas[need.id]) continue
+          let metDays = 0
+          for (const day of days30) {
+            if (completedFor(checkins, need.id, day) > 0) metDays++
+          }
+          const ratio = metDays / effectiveDays
+          if (ratio >= 0.7 && ratio > bestRatio) {
+            bestRatio = ratio
+            bestNeed = need
+            bestMetDays = metDays
+          }
         }
-        const ratio = metDays / days30.length
-        if (ratio >= 0.7 && ratio > bestRatio) {
-          bestRatio = ratio
-          bestNeed = need
-          bestMetDays = metDays
+        if (bestNeed) {
+          const pct = Math.round(bestRatio * 100)
+          candidates.push({
+            id: `consistency-${bestNeed.id}`,
+            family: 'consistency',
+            priority: 8,
+            finding: `you've logged ${bestNeed.name} on ${pct}% of days this month.`,
+            basis: `based on ${bestMetDays} of ${effectiveDays} days`,
+          })
         }
-      }
-      if (bestNeed) {
-        const pct = Math.round(bestRatio * 100)
-        candidates.push({
-          id: `consistency-${bestNeed.id}`,
-          family: 'consistency',
-          priority: 8,
-          finding: `you've logged ${bestNeed.name} on ${pct}% of days this month.`,
-          basis: `based on ${bestMetDays} of 30 days`,
-        })
       }
     }
 
@@ -772,6 +801,9 @@ export function createDataStats({ canvas, checkins, moods, practices, practicesD
     isNeedMet,
     isDayHit,
     getStreak,
+    getStreakState,
+    getQuiet,
+    getDataAge,
     getCompletion,
     getMoodMode,
     getNeedStats,

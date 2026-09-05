@@ -664,7 +664,7 @@ const QUIET_GROUPS = [
   { key: '2to3w',   label: 'two to three weeks',  min: 14,  max: 20 },
 ]
 
-function GoneQuietSection({ canvas, checkins, practicesDB, archivePractice, isDesktop }) {
+function GoneQuietSection({ stats, archivePractice, isDesktop }) {
   const [openGroups, setOpenGroups] = useState(() => new Set(['month+']))
   const [retireConfirm, setRetireConfirm] = useState(null)
   const toggleGroup = key => setOpenGroups(prev => {
@@ -674,30 +674,7 @@ function GoneQuietSection({ canvas, checkins, practicesDB, archivePractice, isDe
   })
   const navigate = useNavigate()
 
-  const recent90 = useMemo(() => buildWindowKeys(90, 0), [])
-  const todayKey = buildWindowKeys(1, 0)[0]
-
-  const quietPractices = useMemo(() => {
-    const result = []
-    for (const need of NEEDS) {
-      const mode = canvas[need.id]
-      if (!mode) continue
-      const practices = practicesDB.filter(p => p.need_id === need.id && !p.archived_at)
-      for (const p of practices) {
-        const lastDk = recent90.slice().reverse().find(dk =>
-          (checkins[dk] || []).some(e =>
-            e.need_id === need.id &&
-            (p.id && e.practice_id ? e.practice_id === p.id : e.practice_text === p.label)
-          )
-        ) ?? null
-        const daysSince = lastDk
-          ? Math.round((new Date(todayKey + 'T12:00:00') - new Date(lastDk + 'T12:00:00')) / 86400000)
-          : 99
-        if (daysSince >= 14) result.push({ need, mode, practice: p, daysSince })
-      }
-    }
-    return result.sort((a, b) => b.daysSince - a.daysSince)
-  }, [canvas, checkins, practicesDB, recent90, todayKey])
+  const quietPractices = useMemo(() => stats.getQuiet(14), [stats])
 
   const total = quietPractices.length
   if (total === 0) return null
@@ -904,15 +881,16 @@ export default function Data({ state, archivePractice }) {
     return () => setHeaderSlot(null)
   }, [period, setHeaderSlot])
 
-  const canvas    = state?.canvas    ?? {}
-  const checkins  = state?.checkins  ?? {}
-  const moods     = state?.moods     ?? []
-  const practices = state?.practices ?? {}
+  const canvas      = state?.canvas      ?? {}
+  const checkins    = state?.checkins    ?? {}
+  const moods       = state?.moods       ?? []
+  const practices   = state?.practices   ?? {}
   const practicesDB = state?.practicesDB ?? []
+  const onboardedAt = state?.onboardedAt ?? null
 
   const stats = useMemo(
-    () => createDataStats({ canvas, checkins, moods, practices, practicesDB }),
-    [canvas, checkins, moods, practices, practicesDB]
+    () => createDataStats({ canvas, checkins, moods, practices, practicesDB, onboardedAt }),
+    [canvas, checkins, moods, practices, practicesDB, onboardedAt]
   )
 
   const windowLen = isDesktop ? DESKTOP_WINDOW : MOBILE_WINDOW
@@ -963,7 +941,7 @@ export default function Data({ state, archivePractice }) {
             </div>
             <LongViewSection canvas={canvas} checkins={checkins} moods={moods} stats={stats} days={dayKeys} windowLen={windowLen} />
             <RibbonsSection canvas={canvas} checkins={checkins} practicesDB={practicesDB} days={dayKeys} windowLen={windowLen} isDesktop={isDesktop} />
-            <GoneQuietSection canvas={canvas} checkins={checkins} practicesDB={practicesDB} archivePractice={archivePractice} isDesktop={isDesktop} />
+            <GoneQuietSection stats={stats} archivePractice={archivePractice} isDesktop={isDesktop} />
             <AllNumbersSection period={period} canvas={canvas} checkins={checkins} />
           </>
         )}
