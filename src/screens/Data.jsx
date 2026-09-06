@@ -658,6 +658,165 @@ function RibbonsSection({ canvas, checkins, practicesDB, days, windowLen, isDesk
   )
 }
 
+// ── Top band helpers ────────────────────────────────────────────────────────
+
+function daysSinceLatestCheckin(checkins) {
+  const keys = Object.keys(checkins).filter(k => (checkins[k] || []).length > 0)
+  if (!keys.length) return null
+  const latest = [...keys].sort().at(-1)
+  return Math.floor((new Date() - new Date(latest + 'T12:00:00')) / 86400000)
+}
+
+// 14-cell building strip: [empty × 11] [filled × count] [dashed × daysToQualify]
+// count + daysToQualify is always 3, so empty is always 11.
+function buildingStripCells(count, daysToQualify) {
+  return [
+    ...Array(11).fill('empty'),
+    ...Array(count).fill('filled'),
+    ...Array(daysToQualify).fill('dashed'),
+  ]
+}
+
+function StripViz({ cells, dormant = false }) {
+  return (
+    <div className={`${styles.strip}${dormant ? ` ${styles.stripDormant}` : ''}`}>
+      {cells.map((kind, i) => (
+        <div
+          key={i}
+          className={`${styles.stripCell} ${
+            kind === 'filled' ? styles.stripCellFilled
+            : kind === 'dashed' ? styles.stripCellDashed
+            : styles.stripCellEmpty
+          }`}
+        />
+      ))}
+    </div>
+  )
+}
+
+function StreaksCard({ stats, checkins }) {
+  const streak = useMemo(() => stats.getStreakState(), [stats])
+  const daySince = useMemo(() => daysSinceLatestCheckin(checkins), [checkins])
+  const hasData = daySince !== null
+  const isDormant = !hasData || daySince >= 5
+
+  const dormantCells = streak.strip.map((hit, i) =>
+    i === streak.strip.length - 1 ? 'dashed' : hit ? 'filled' : 'empty'
+  )
+
+  return (
+    <div className={styles.topBandCard}>
+      <div className={styles.topCardLabel}>STREAKS</div>
+
+      {!hasData && (
+        <div className={styles.topPlaceholders}>
+          <div className={styles.topPlaceholderBar} style={{ width: '38%' }} />
+          <div className={styles.topPlaceholderBar} />
+          <div className={styles.topPlaceholderBar} style={{ width: '55%' }} />
+        </div>
+      )}
+
+      {hasData && isDormant && (
+        <>
+          <StripViz cells={dormantCells} dormant />
+          <p className={styles.topCopy}>log anything today and you start again.</p>
+        </>
+      )}
+
+      {hasData && !isDormant && streak.qualifies && (
+        <>
+          <div className={styles.topNumRow}>
+            <span className={`${styles.topNum} ${styles.topNumStreak}`}>{streak.count}</span>
+            <span className={styles.topNumUnit}>days in a row</span>
+          </div>
+          <StripViz cells={streak.strip.map(hit => hit ? 'filled' : 'empty')} />
+          <div className={styles.topMeta}>{streak.count === 3 ? 'first one' : 'longest yet'}</div>
+        </>
+      )}
+
+      {hasData && !isDormant && !streak.qualifies && (
+        <>
+          <StripViz cells={buildingStripCells(streak.count, streak.daysToQualify)} />
+          <p className={styles.topCopy}>
+            {streak.daysToQualify} more day{streak.daysToQualify !== 1 ? 's' : ''} and you have a streak.
+          </p>
+          <div className={styles.topMeta}>day count of 3</div>
+        </>
+      )}
+    </div>
+  )
+}
+
+function TopGoneQuietCard({ stats, canvas, practicesDB, checkins }) {
+  const navigate = useNavigate()
+  const quiet = useMemo(() => stats.getQuiet(5), [stats])
+  const daySince = useMemo(() => daysSinceLatestCheckin(checkins), [checkins])
+  const dataAge = useMemo(() => stats.getDataAge(), [stats])
+
+  const hasData = daySince !== null
+  const isDormant = !hasData || daySince >= 5
+  const isPreview = !hasData || dataAge.days < 5
+
+  const activePracticeCount = practicesDB.filter(p => !p.archived_at && canvas[p.need_id]).length
+  const isOverwhelmed = isDormant || (activePracticeCount > 0 && quiet.length > activePracticeCount * 0.6)
+
+  // Restart suggestions: active non-archived practices sorted by total completions (proxy for longest run)
+  const restartSuggestions = useMemo(() => {
+    if (!isOverwhelmed || isPreview) return []
+    return stats.getPracticeStats(90)
+      .filter(p => !p.practice.archived_at && canvas[p.need.id])
+      .sort((a, b) => b.totalCompletions - a.totalCompletions)
+      .slice(0, 2)
+  }, [stats, isOverwhelmed, isPreview, canvas])
+
+  return (
+    <div className={styles.topBandCard}>
+      <div className={styles.topCardLabel}>GONE QUIET</div>
+
+      {isPreview && (
+        <div className={styles.topPlaceholders}>
+          <div className={styles.topPlaceholderBar} style={{ width: '45%' }} />
+          <div className={styles.topPlaceholderBar} />
+          <div className={styles.topPlaceholderBar} />
+        </div>
+      )}
+
+      {!isPreview && quiet.length === 0 && (
+        <p className={styles.topCopy}>nothing has gone quiet yet.</p>
+      )}
+
+      {!isPreview && quiet.length > 0 && !isOverwhelmed && (
+        <>
+          <div className={styles.topNumRow}>
+            <span className={`${styles.topNum} ${styles.topNumQuiet}`}>{quiet.length}</span>
+            <span className={styles.topNumUnit}>practices</span>
+          </div>
+          {quiet.slice(0, 3).map(({ need, practice, mode, daysSince: ds }) => (
+            <div key={practice.id ?? practice.label} className={styles.topQuietRow}>
+              <span className={styles.moverDot} style={{ background: TIER_DOT[mode] }} />
+              <span className={styles.topQuietName}>{practice.label}</span>
+              <span className={styles.topQuietDays}>{ds}d ago</span>
+            </div>
+          ))}
+        </>
+      )}
+
+      {!isPreview && quiet.length > 0 && isOverwhelmed && (
+        <>
+          <p className={styles.topCopy}>you've been away a week. pick one thing to restart.</p>
+          {restartSuggestions.map(p => (
+            <div key={p.practice.id ?? p.practice.label} className={styles.topQuietRow}>
+              <span className={styles.moverDot} style={{ background: TIER_DOT[p.mode] }} />
+              <span className={styles.topQuietName}>{p.practice.label}</span>
+              <button className={styles.topLogBtn} onClick={() => navigate('/today')}>log</button>
+            </div>
+          ))}
+        </>
+      )}
+    </div>
+  )
+}
+
 const QUIET_GROUPS = [
   { key: 'month+',  label: 'a month or more',    min: 30,  max: Infinity },
   { key: '3to4w',   label: 'three to four weeks', min: 21,  max: 29 },
@@ -931,6 +1090,11 @@ export default function Data({ state, archivePractice }) {
 
         {hasCanvas && (
           <>
+            <div className={styles.topBand}>
+              <StreaksCard stats={stats} checkins={checkins} />
+              <TopGoneQuietCard stats={stats} canvas={canvas} practicesDB={practicesDB} checkins={checkins} />
+            </div>
+
             {totalCheckinDays >= 7 && (
               <section className={styles.section}>
                 <div className={styles.sectionHeader}>

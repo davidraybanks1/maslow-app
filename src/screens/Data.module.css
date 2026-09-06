@@ -63,6 +63,155 @@
   margin: 0 0 24px;
 }
 
+/* ── Top band: STREAKS + GONE QUIET ─────────────────────────────────────── */
+.topBand {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.topBandCard {
+  background: var(--card);
+  border: 0.5px solid var(--hairline);
+  border-radius: 12px;
+  padding: 16px 16px 14px;
+}
+
+.topCardLabel {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 400;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: 10px;
+}
+
+.topNumRow {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.topNum {
+  font-family: var(--font-serif);
+  font-size: 46px;
+  font-weight: 300;
+  line-height: .95;
+  letter-spacing: -0.02em;
+}
+
+.topNumStreak { color: var(--exploration); }
+.topNumQuiet  { color: var(--ink); }
+
+.topNumUnit {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink3);
+  line-height: 1.4;
+  max-width: 68px;
+}
+
+.topMeta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink4);
+  letter-spacing: .04em;
+  margin-top: 6px;
+}
+
+.topCopy {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  font-weight: 300;
+  line-height: 1.35;
+  color: var(--ink);
+  margin: 4px 0 8px;
+}
+
+/* Strip */
+.strip {
+  display: flex;
+  gap: 3px;
+  margin: 10px 0 4px;
+}
+
+.stripDormant { opacity: .28; }
+
+.stripCell {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.stripCellFilled  { background: var(--exploration); }
+.stripCellEmpty   { background: var(--empty-cell); }
+.stripCellDashed  {
+  background: transparent;
+  border: 1.5px dashed var(--exploration);
+  opacity: .55;
+}
+
+/* Gone-quiet top-band rows */
+.topQuietRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 0;
+  border-top: 0.5px solid var(--hairline);
+}
+
+.topQuietName {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--ink2);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topQuietDays {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink4);
+  flex-shrink: 0;
+}
+
+.topLogBtn {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink3);
+  background: none;
+  border: 0.5px solid var(--hairline);
+  border-radius: 4px;
+  padding: 3px 9px;
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.topLogBtn:active { opacity: .6; }
+
+/* Preview placeholders */
+.topPlaceholders {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0 6px;
+}
+
+.topPlaceholderBar {
+  height: 9px;
+  border-radius: 4px;
+  background: var(--empty-cell);
+}
+
 /* ── Headline card ──────────────────────────────────────────────────────── */
 .pacingCard {
   background: #1B3A2D;
@@ -926,6 +1075,14 @@
   .pageTitle { font-size: 42px; margin-bottom: 2px; }
   .pageSubhead { margin-bottom: 0; }
   .deskToggle { display: block; flex-shrink: 0; align-self: center; }
+
+  /* Top band: side by side on desktop */
+  .topBand {
+    flex-direction: row;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .topBandCard { flex: 1; }
 
   .insightDeckArrow {
     display: flex;
