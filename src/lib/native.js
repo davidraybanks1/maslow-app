@@ -50,6 +50,7 @@ export async function requestNotifPermission() {
 }
 
 const REMINDER_IDS = [1001, 1002, 1003, 1004]
+const PRACTICE_REMINDER_IDS = [2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010]
 
 // Slot written by the localNotificationActionPerformed listener; consumed by
 // Today.jsx on mount (cold launch) or scrolled to immediately (app running).
@@ -67,6 +68,35 @@ export const MOOD_SLOTS = [
   { slot: 'evening', id: 1003, body: 'Good evening. How are you feeling right at this moment?' },
 ]
 
+/* Group practices with reminder_on=true into notification batches.
+   Practices whose time is within 30 minutes of the group's FIRST time share a
+   notification. Invalid or missing times are dropped with a console.warn. */
+export function groupReminders(practices) {
+  const valid = []
+  for (const p of practices) {
+    if (!p.reminder_on) continue
+    if (!TIME_RE.test(p.reminder_time)) {
+      console.warn(`[native] groupReminders: dropping "${p.label}" — invalid time: ${JSON.stringify(p.reminder_time)}`)
+      continue
+    }
+    valid.push(p)
+  }
+  valid.sort((a, b) => a.reminder_time.localeCompare(b.reminder_time))
+
+  const groups = []
+  for (const p of valid) {
+    const [h, m] = p.reminder_time.split(':').map(n => parseInt(n, 10))
+    const minutes = h * 60 + m
+    if (groups.length === 0 || minutes - groups[groups.length - 1]._anchor >= 30) {
+      groups.push({ time: p.reminder_time, labels: [p.label], _anchor: minutes })
+    } else {
+      groups[groups.length - 1].labels.push(p.label)
+    }
+  }
+
+  return groups.map(({ time, labels }) => ({ time, labels }))
+}
+
 /* Daily mood prompts + the weekly/daily review reminder.
    reviewDay is Monday-indexed (0=Mon..6=Sun); iOS weekday is 1=Sun..7=Sat. */
 export async function scheduleReminders({
@@ -76,6 +106,7 @@ export async function scheduleReminders({
   reviewCadence = 'weekly',
   reviewDay = 0,
   reviewTime = '10:00',
+  practicesDB = [],
 } = {}) {
   if (!isNative()) return
   try {
@@ -83,7 +114,9 @@ export async function scheduleReminders({
     const perm = await LocalNotifications.checkPermissions()
     if (perm.display !== 'granted') return
 
-    await LocalNotifications.cancel({ notifications: REMINDER_IDS.map(id => ({ id })) })
+    await LocalNotifications.cancel({
+      notifications: [...REMINDER_IDS, ...PRACTICE_REMINDER_IDS].map(id => ({ id })),
+    })
 
     if (!remindersEnabled) return
 
@@ -120,7 +153,16 @@ export async function scheduleReminders({
       }
     }
 
-    const notifications = [...moodNotifs, ...reviewNotifs]
+    const practiceGroups = groupReminders(practicesDB)
+    const practiceNotifs = practiceGroups.slice(0, PRACTICE_REMINDER_IDS.length).map((group, i) => {
+      const [h, m] = group.time.split(':').map(n => parseInt(n, 10))
+      const body = group.labels.length === 1
+        ? `time for ${group.labels[0].toLowerCase()}.`
+        : `${group.labels[0].toLowerCase()} and ${group.labels[1].toLowerCase()}.`
+      return { id: PRACTICE_REMINDER_IDS[i], title: 'Practices', body, schedule: { on: { hour: h, minute: m } } }
+    })
+
+    const notifications = [...moodNotifs, ...reviewNotifs, ...practiceNotifs]
     if (notifications.length > 0) {
       await LocalNotifications.schedule({ notifications })
     }

@@ -163,7 +163,7 @@ async function restoreFromSupabase(userId, email) {
       supabase.from('checkins').select('*').eq('user_id', user.id).gte('date_key', cutoff),
       fetchMoods(user.id),
       loadNoteDeck(user.id),
-      supabase.from('practices').select('id, label, need_id, created_at, archived_at').eq('user_id', user.id).order('created_at'),
+      supabase.from('practices').select('id, label, need_id, created_at, archived_at, reminder_on, reminder_time, reminder_offered_at').eq('user_id', user.id).order('created_at'),
     ])
     const checkinsMap = {}
     for (const row of (checkins || [])) {
@@ -334,11 +334,11 @@ export function useAppState(onSignIn) {
       const previousPracticesDB = prev.practicesDB
       const newPractices = { ...prev.practices, [needId]: [...current, label] }
       const tempId = `pending_${Date.now()}_${Math.random()}`
-      const tempRecord = { id: tempId, label, need_id: needId, created_at: new Date().toISOString(), archived_at: null }
+      const tempRecord = { id: tempId, label, need_id: needId, created_at: new Date().toISOString(), archived_at: null, reminder_on: false, reminder_time: null, reminder_offered_at: null }
       if (prev.userId) {
         supabase.from('practices')
           .insert({ user_id: prev.userId, label, need_id: needId })
-          .select('id, label, need_id, created_at, archived_at')
+          .select('id, label, need_id, created_at, archived_at, reminder_on, reminder_time, reminder_offered_at')
           .single()
           .then(({ data, error }) => {
             if (error) {
@@ -735,7 +735,41 @@ export function useAppState(onSignIn) {
     setState(prev => ({ ...prev, checkins: newCheckins }))
   }
 
-  return { state, authLoading, updateCanvas, replaceCanvas, addPractice, renamePractice, archivePractice, removePractice, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule, updateReviewCadence, updateRemindersEnabled, updateReviewReminderEnabled, updateMoodReminder, markNotifPrimed, markTourSeen, resetTour, updateNoteDeck, syncCheckinDay }
+  function setPracticeReminder(practiceId, { on, time }) {
+    return new Promise((resolve, reject) => {
+      setState(prev => {
+        const activeCount = prev.practicesDB.filter(p => p.id !== practiceId && p.reminder_on).length
+        if (on && activeCount >= 3) {
+          reject(new Error('Maximum 3 practice reminders allowed'))
+          return prev
+        }
+        const previousPracticesDB = prev.practicesDB
+        const updatedDB = prev.practicesDB.map(p =>
+          p.id === practiceId
+            ? { ...p, reminder_on: on, ...(time !== undefined ? { reminder_time: time } : {}) }
+            : p
+        )
+        if (prev.userId) {
+          const updates = { reminder_on: on }
+          if (time !== undefined) updates.reminder_time = time
+          supabase.from('practices').update(updates).eq('id', practiceId).then(({ error }) => {
+            if (error) {
+              logSupabaseError('setPracticeReminder', error)
+              setState(p => ({ ...p, practicesDB: previousPracticesDB }))
+              reject(error)
+            } else {
+              resolve()
+            }
+          })
+        } else {
+          resolve()
+        }
+        return { ...prev, practicesDB: updatedDB }
+      })
+    })
+  }
+
+  return { state, authLoading, updateCanvas, replaceCanvas, addPractice, renamePractice, archivePractice, removePractice, setPracticeReminder, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule, updateReviewCadence, updateRemindersEnabled, updateReviewReminderEnabled, updateMoodReminder, markNotifPrimed, markTourSeen, resetTour, updateNoteDeck, syncCheckinDay }
 }
 
 export function todayKey() {
@@ -1214,7 +1248,7 @@ export async function seedStarterContent(userId, canvasObj, overrides = {}) {
         const { data: inserted, error: pErr } = await supabase
           .from('practices')
           .insert(practicesRows)
-          .select('id, label, need_id, created_at, archived_at')
+          .select('id, label, need_id, created_at, archived_at, reminder_on, reminder_time, reminder_offered_at')
         if (pErr) {
           logSupabaseError('seedStarterContent:practices', pErr)
           return null
