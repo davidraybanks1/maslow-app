@@ -1,12 +1,12 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { NEEDS, MODES, MODE_ORDER } from '../lib/constants'
+import { NEEDS, MODES, MODE_ORDER, TIME_RE } from '../lib/constants'
 import { createDataStats, formatLastDone } from '../lib/dataStats'
+import { isNative, checkNotifPermission, requestNotifPermission, scheduleReminders } from '../lib/native'
 import styles from './Practices.module.css'
 
 const MAX = 10
 
-// Starter practices — one tap to add, so an empty list is never a dead end.
 const STARTERS = {
   movement:    ['walk', 'stretch', 'run', 'lift'],
   nutrition:   ['cook a meal', 'full water bottle', 'greens'],
@@ -24,7 +24,7 @@ const STARTERS = {
 }
 const OB_FLAG = 'onboardingPracticesDone'
 
-export default function Practices({ state, addPractice, renamePractice, archivePractice, completeOnboarding }) {
+export default function Practices({ state, addPractice, renamePractice, archivePractice, setPracticeReminder, completeOnboarding }) {
   const navigate = useNavigate()
   const [inputs, setInputs] = useState({})
   const [openInputs, setOpenInputs] = useState({})
@@ -33,14 +33,112 @@ export default function Practices({ state, addPractice, renamePractice, archiveP
   const [renameValue, setRenameValue] = useState('')
   const [obDone, setObDone] = useState(() => !!localStorage.getItem(OB_FLAG))
 
+  // Reminder state — native only
+  const [notifPermission, setNotifPermission] = useState('prompt')
+  const [pickerOpenFor, setPickerOpenFor] = useState(null)
+  const [draftTimes, setDraftTimes] = useState({})
+  const [permissionErrors, setPermissionErrors] = useState(new Set())
+
+  const native = isNative()
+
+  useEffect(() => {
+    if (!native) return
+    checkNotifPermission().then(setNotifPermission)
+  }, [native])
+
   const useDB = Array.isArray(state.practicesDB) && state.practicesDB.length > 0
   const stats = createDataStats({ canvas: state.canvas, checkins: state.checkins, moods: state.moods, practices: state.practices, practicesDB: state.practicesDB })
   const lastDoneByKey = new Map(stats.getPracticeStats().map(p => [p.practice?.id || `${p.need.id}_${p.text}`, p.daysSinceLast]))
+
+  const activeReminderCount = (state.practicesDB || []).filter(p => p.reminder_on).length
 
   const totalPractices = useDB
     ? state.practicesDB.filter(p => !p.archived_at).length
     : Object.values(state.practices || {}).flat().length
   const showOnboardingCta = !obDone
+
+  function doSchedule(overridePracticesDB) {
+    scheduleReminders({
+      remindersEnabled: state.remindersEnabled,
+      moodReminders: state.moodReminders,
+      reviewReminderEnabled: state.reviewReminderEnabled,
+      reviewCadence: state.reviewCadence,
+      reviewDay: state.reviewDay ?? 0,
+      reviewTime: state.reviewTime || '10:00',
+      practicesDB: overridePracticesDB ?? state.practicesDB,
+    })
+  }
+
+  function getTakenTimes(excludeId) {
+    const taken = []
+    const mr = state.moodReminders || {}
+    for (const [slot, data] of Object.entries(mr)) {
+      if (data?.on && TIME_RE.test(data?.time)) taken.push({ time: data.time, label: `${slot} mood` })
+    }
+    if (state.reviewReminderEnabled && TIME_RE.test(state.reviewTime)) {
+      taken.push({ time: state.reviewTime, label: `${state.reviewCadence === 'daily' ? 'daily' : 'weekly'} review` })
+    }
+    for (const p of (state.practicesDB || [])) {
+      if (p.id !== excludeId && p.reminder_on && TIME_RE.test(p.reminder_time)) {
+        taken.push({ time: p.reminder_time, label: p.label })
+      }
+    }
+    return taken.sort((a, b) => a.time.localeCompare(b.time))
+  }
+
+  async function handleToggleReminder(practice) {
+    if (practice.reminder_on) {
+      const newDB = (state.practicesDB || []).map(p =>
+        p.id === practice.id ? { ...p, reminder_on: false } : p
+      )
+      try {
+        await setPracticeReminder(practice.id, { on: false })
+        doSchedule(newDB)
+      } catch (e) { console.warn('[Practices] toggle off failed', e) }
+      return
+    }
+
+    if (activeReminderCount >= 3) return
+
+    let perm = notifPermission
+    if (perm === 'prompt') {
+      perm = await requestNotifPermission()
+      setNotifPermission(perm)
+    }
+    if (perm !== 'granted') {
+      setPermissionErrors(prev => new Set([...prev, practice.id]))
+      return
+    }
+    setPermissionErrors(prev => { const n = new Set(prev); n.delete(practice.id); return n })
+
+    const time = TIME_RE.test(practice.reminder_time) ? practice.reminder_time : '08:00'
+    const newDB = (state.practicesDB || []).map(p =>
+      p.id === practice.id ? { ...p, reminder_on: true, reminder_time: time } : p
+    )
+    try {
+      await setPracticeReminder(practice.id, { on: true, time })
+      doSchedule(newDB)
+      setPickerOpenFor(practice.id)
+    } catch (e) { console.warn('[Practices] toggle on failed', e) }
+  }
+
+  async function handleCommitTime(practiceId) {
+    const draft = draftTimes[practiceId]
+    setDraftTimes(prev => { const n = { ...prev }; delete n[practiceId]; return n })
+    if (draft === undefined) return
+    const practice = (state.practicesDB || []).find(p => p.id === practiceId)
+    if (!practice) return
+    const persisted = practice.reminder_time || ''
+    if (TIME_RE.test(draft) && draft !== persisted) {
+      const newDB = (state.practicesDB || []).map(p =>
+        p.id === practiceId ? { ...p, reminder_time: draft } : p
+      )
+      try {
+        await setPracticeReminder(practiceId, { on: true, time: draft })
+        doSchedule(newDB)
+      } catch (e) { console.warn('[Practices] time commit failed', e) }
+    }
+  }
 
   function handleAdd(needId) {
     const text = (inputs[needId] || '').trim()
@@ -116,38 +214,103 @@ export default function Practices({ state, addPractice, renamePractice, archiveP
                       <div className={styles.empty}>no practices yet.</div>
                     )
                   )}
-                  {pool.map(p => (
-                    <div key={p.id || p.label} className={styles.poolItem}>
-                      {editMode && editingId === p.id ? (
-                        <>
-                          <input
-                            className={styles.renameInput}
-                            value={renameValue}
-                            onChange={e => setRenameValue(e.target.value)}
-                            onKeyDown={e => {
-                              if (e.key === 'Enter') handleCommitRename(p.id)
-                              if (e.key === 'Escape') setEditingId(null)
-                            }}
-                            autoFocus
-                          />
-                          <button className={styles.saveBtn} onClick={() => handleCommitRename(p.id)}>save</button>
-                        </>
-                      ) : (
-                        <>
-                          <span
-                            className={styles.poolText}
-                            onClick={editMode && p.id ? () => handleStartRename(p) : undefined}
-                            style={editMode && p.id ? { cursor: 'text' } : undefined}
-                          >{p.label}</span>
-                          {editMode ? (
-                            <button className={styles.archiveBtn} aria-label="archive — stops appearing, history kept" onClick={() => archivePractice(p.id)}>archive</button>
-                          ) : (
-                            <span className={styles.lastDone}>{formatLastDone(lastDoneByKey.get(p.id || `${n.id}_${p.label}`))}</span>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  ))}
+                  {pool.map(p => {
+                    const takenTimes = native && !editMode && pickerOpenFor === p.id
+                      ? getTakenTimes(p.id)
+                      : []
+                    const isAtCap = native && activeReminderCount >= 3 && !p.reminder_on
+                    const hasPermError = native && permissionErrors.has(p.id)
+                    return (
+                      <div key={p.id || p.label} className={styles.poolItem}>
+                        {editMode && editingId === p.id ? (
+                          <div className={styles.poolRow}>
+                            <input
+                              className={styles.renameInput}
+                              value={renameValue}
+                              onChange={e => setRenameValue(e.target.value)}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter') handleCommitRename(p.id)
+                                if (e.key === 'Escape') setEditingId(null)
+                              }}
+                              autoFocus
+                            />
+                            <button className={styles.saveBtn} onClick={() => handleCommitRename(p.id)}>save</button>
+                          </div>
+                        ) : (
+                          <>
+                            <div className={styles.poolRow}>
+                              <span
+                                className={styles.poolText}
+                                onClick={editMode && p.id ? () => handleStartRename(p) : undefined}
+                                style={editMode && p.id ? { cursor: 'text' } : undefined}
+                              >{p.label}</span>
+
+                              {editMode ? (
+                                <button
+                                  className={styles.archiveBtn}
+                                  aria-label="archive — stops appearing, history kept"
+                                  onClick={() => archivePractice(p.id)}
+                                >archive</button>
+
+                              ) : native ? (
+                                /* ── Reminder affordance (native only) ── */
+                                <div className={styles.reminderControl}>
+                                  {hasPermError ? (
+                                    <span className={styles.reminderError}>enable in ios settings</span>
+                                  ) : p.reminder_on ? (
+                                    <>
+                                      <input
+                                        type="time"
+                                        className={styles.reminderTimeInput}
+                                        value={pickerOpenFor === p.id && draftTimes[p.id] !== undefined
+                                          ? draftTimes[p.id]
+                                          : (p.reminder_time || '08:00')}
+                                        onFocus={() => setPickerOpenFor(p.id)}
+                                        onChange={e => setDraftTimes(prev => ({ ...prev, [p.id]: e.target.value }))}
+                                        onBlur={() => { handleCommitTime(p.id); setPickerOpenFor(null) }}
+                                        onClick={e => e.stopPropagation()}
+                                      />
+                                      <button
+                                        className={styles.rToggleBtn}
+                                        onClick={() => handleToggleReminder(p)}
+                                        aria-label="turn off reminder"
+                                      >
+                                        <div className={`${styles.rTrack} ${styles.rTrackOn}`}>
+                                          <span className={`${styles.rKnob} ${styles.rKnobOn}`} />
+                                        </div>
+                                      </button>
+                                    </>
+                                  ) : isAtCap ? (
+                                    <span className={styles.reminderCapped}>3 reminders is the maximum</span>
+                                  ) : (
+                                    <button
+                                      className={styles.reminderOffBtn}
+                                      onClick={() => handleToggleReminder(p)}
+                                    >remind me</button>
+                                  )}
+                                </div>
+
+                              ) : (
+                                <span className={styles.lastDone}>{formatLastDone(lastDoneByKey.get(p.id || `${n.id}_${p.label}`))}</span>
+                              )}
+                            </div>
+
+                            {/* Taken times — shown while this practice's picker is focused */}
+                            {takenTimes.length > 0 && (
+                              <div className={styles.reminderTaken}>
+                                <span className={styles.reminderTakenHead}>taken · </span>
+                                {takenTimes.map((t, i) => (
+                                  <span key={t.time + t.label} className={styles.reminderTakenItem}>
+                                    {i > 0 ? ' · ' : ''}{t.time} {t.label}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
 
                 {atMax ? (

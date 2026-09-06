@@ -23,10 +23,30 @@
 .needTag { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; color: var(--ink3); margin-left: auto; }
 
 .pool { display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; }
-.poolItem { display: flex; align-items: center; justify-content: space-between; min-height: 38px; padding: 6px 0; border-top: 0.5px solid var(--hairline); }
+.poolItem { display: flex; flex-direction: column; padding: 6px 0; border-top: 0.5px solid var(--hairline); }
 .poolItem:first-child { border-top: none; }
-.poolText { font-family: var(--font-serif); font-size: 15px; font-weight: 300; font-style: italic; color: var(--ink); }
+.poolRow { display: flex; align-items: center; min-height: 38px; }
+.poolText { font-family: var(--font-serif); font-size: 15px; font-weight: 300; font-style: italic; color: var(--ink); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lastDone { font-family: var(--font-mono); font-size: 11px; color: var(--ink3); flex-shrink: 0; }
+
+/* ── Practice reminder affordance (native only) ── */
+.reminderControl { display: flex; align-items: center; gap: 6px; flex-shrink: 0; margin-left: 8px; }
+.reminderOffBtn { background: none; border: 0.5px solid var(--hairline); border-radius: 999px; font-family: var(--font-mono); font-size: 10px; color: var(--ink3); padding: 3px 9px; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
+.reminderOffBtn:active { opacity: .6; }
+.reminderCapped { font-family: var(--font-mono); font-size: 10px; color: var(--ink4); white-space: nowrap; }
+.reminderError { font-family: var(--font-mono); font-size: 10px; color: var(--ink3); white-space: nowrap; }
+.reminderTimeInput { padding: 3px 9px; border: 0.5px solid var(--hairline); border-radius: 999px; font-family: var(--font-mono); font-size: 11px; color: var(--ink); background: transparent; outline: none; width: auto; flex-shrink: 0; cursor: default; -webkit-tap-highlight-color: transparent; }
+.rToggleBtn { background: none; border: none; padding: 0; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; }
+.rTrack { width: 36px; height: 20px; border-radius: 10px; border: 1px solid rgba(0,0,0,.14); background: rgba(0,0,0,.08); position: relative; transition: background 150ms ease-out, border-color 150ms ease-out; }
+.rTrackOn { background: var(--exploration); border-color: var(--exploration); }
+.rKnob { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 7px; background: white; transition: left 150ms ease-out; display: block; }
+.rKnobOn { left: 18px; }
+@media (prefers-reduced-motion: reduce) { .rTrack { transition: none; } .rKnob { transition: none; } }
+
+/* Taken times — shown below the row while the time picker is focused */
+.reminderTaken { font-family: var(--font-mono); font-size: 10px; color: var(--ink4); padding: 2px 0 6px; line-height: 1.5; }
+.reminderTakenHead { color: var(--ink3); }
+.reminderTakenItem { white-space: nowrap; }
 .archiveBtn { background: none; border: none; font-family: var(--font-mono); font-size: 11px; color: var(--ink3); cursor: pointer; padding: 0 4px; flex-shrink: 0; }
 .archiveBtn:hover { color: var(--ink2); }
 .renameInput { flex: 1; padding: 4px 8px; border-radius: 6px; border: 0.5px solid var(--hairline); background: var(--paper); font-family: var(--font-serif); font-size: 15px; font-weight: 300; font-style: italic; color: var(--ink); outline: none; }

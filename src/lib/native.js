@@ -4,6 +4,7 @@ import { Capacitor } from '@capacitor/core'
 import { TIME_RE } from './constants'
 
 export function isNative() {
+  if (typeof window !== 'undefined' && window.__nativeForTest) return true
   return Capacitor.isNativePlatform()
 }
 

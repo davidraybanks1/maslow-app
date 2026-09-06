@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from './supabase'
 import { STARTER_PRACTICES, STARTER_NOTES } from './starterContent.js'
+import { TIME_RE } from './constants'
 import * as Sentry from '@sentry/capacitor'
 
 const STORAGE_KEY = 'maslow_state'
@@ -737,6 +738,10 @@ export function useAppState(onSignIn) {
 
   function setPracticeReminder(practiceId, { on, time }) {
     return new Promise((resolve, reject) => {
+      if (time !== undefined && !TIME_RE.test(time)) {
+        reject(new Error(`setPracticeReminder: invalid time "${time}"`))
+        return
+      }
       setState(prev => {
         const activeCount = prev.practicesDB.filter(p => p.id !== practiceId && p.reminder_on).length
         if (on && activeCount >= 3) {
