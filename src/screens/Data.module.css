@@ -64,21 +64,21 @@
 }
 
 /* ── Headline card ──────────────────────────────────────────────────────── */
-.headlineCard {
+.pacingCard {
   background: #1B3A2D;
   border-radius: 18px;
   padding: 18px 18px 16px;
   margin-bottom: 8px;
 }
 
-.headlineTop {
+.pacingTop {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 14px;
 }
 
-.headlineLabel {
+.pacingLabel {
   font-family: var(--font-mono);
   font-size: 9.5px;
   font-weight: 400;
@@ -87,21 +87,21 @@
   color: rgba(242,240,232,.55);
 }
 
-.headlineDelta {
+.pacingDelta {
   font-family: var(--font-mono);
   font-size: 10.5px;
   color: rgba(242,240,232,.8);
 }
-.headlineDeltaDown { color: #F2A08C; }
+.pacingDeltaDown { color: #F2A08C; }
 
-.headlineNumberRow {
+.pacingNumberRow {
   display: flex;
   align-items: baseline;
   gap: 0;
   margin-bottom: 14px;
 }
 
-.headlineBig {
+.pacingBig {
   font-family: var(--font-serif);
   font-size: 52px;
   font-weight: 300;
@@ -110,7 +110,7 @@
   letter-spacing: -0.02em;
 }
 
-.headlinePct {
+.pacingPct {
   font-family: var(--font-serif);
   font-size: 22px;
   font-weight: 300;
@@ -118,7 +118,7 @@
   margin-left: 2px;
 }
 
-.headlineContext {
+.pacingContext {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -126,7 +126,7 @@
   margin-left: 14px;
   gap: 4px;
 }
-.headlineContext span {
+.pacingContext span {
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 300;
@@ -134,12 +134,12 @@
   color: rgba(242,240,232,.65);
 }
 
-.headlineBarWrap {
+.pacingBarWrap {
   position: relative;
   margin-bottom: 14px;
 }
 
-.headlineBarTrack {
+.pacingBarTrack {
   position: relative;
   height: 10px;
   border-radius: 5px;
@@ -147,7 +147,7 @@
   overflow: hidden;
 }
 
-.headlineBarBase {
+.pacingBarBase {
   position: absolute;
   top: 0;
   left: 0;
@@ -156,7 +156,7 @@
   transition: width 400ms ease;
 }
 
-.headlineBarSurplus {
+.pacingBarSurplus {
   position: absolute;
   top: 0;
   height: 100%;
@@ -164,7 +164,7 @@
   transition: left 400ms ease, width 400ms ease;
 }
 
-.headlinePaceTick {
+.pacingPaceTick {
   position: absolute;
   top: -4px;
   width: 2px;
@@ -175,7 +175,7 @@
   pointer-events: none;
 }
 
-.headlineSentence {
+.pacingSentence {
   font-family: var(--font-serif);
   font-size: 17px;
   font-weight: 300;
@@ -927,15 +927,6 @@
   .pageSubhead { margin-bottom: 0; }
   .deskToggle { display: block; flex-shrink: 0; align-self: center; }
 
-  /* Row 2: headline ~55% / insights ~45%, equal height */
-  .dRow2 {
-    display: grid;
-    grid-template-columns: 55fr 45fr;
-    gap: 12px;
-    margin-bottom: 12px;
-    align-items: stretch;
-  }
-  .headlineCard { margin-bottom: 0; }
   .insightDeckArrow {
     display: flex;
     width: 26px;
@@ -1003,7 +994,7 @@
   /* Grid gap handles intra-row spacing; sectionCard default margin only applies to LongView */
   .dRow3 > .sectionCard { margin-bottom: 0; }
 
-  /* WHAT CHANGED · YOUR RHYTHM · THE LONG VIEW — white cards matching headline/insights */
+  /* WHAT CHANGED · YOUR RHYTHM · THE LONG VIEW — white cards matching pacing card */
   .sectionCard {
     background: var(--card);
     border: 0.5px solid var(--hairline);
@@ -1014,7 +1005,7 @@
   }
 
   /* Closing lines: readable measure, not full-bleed */
-  .headlineSentence { max-width: 70ch; }
+  .pacingSentence { max-width: 70ch; }
   .sectionRead { max-width: 70ch; }
   .rhythmRead { max-width: 70ch; }
   .allNumsFooter { max-width: 70ch; }

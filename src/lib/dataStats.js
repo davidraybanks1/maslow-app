@@ -173,8 +173,12 @@ export function createDataStats({ canvas, checkins, moods, practices, practicesD
   }
 
   function getDataAge() {
-    const days = onboardedAt
-      ? Math.round((new Date() - new Date(onboardedAt + 'T12:00:00')) / 86400000) + 1
+    const checkinKeys = Object.keys(checkins).filter(k => (checkins[k] || []).length > 0)
+    const earliestCheckin = checkinKeys.length > 0 ? checkinKeys.sort()[0] : null
+    const candidates = [onboardedAt, earliestCheckin].filter(Boolean)
+    const anchor = candidates.length > 0 ? candidates.sort()[0] : null
+    const days = anchor
+      ? Math.round((new Date() - new Date(anchor + 'T12:00:00')) / 86400000) + 1
       : 0
     return { days, insightsReadyAt: 14, insightsReady: days >= 14 }
   }

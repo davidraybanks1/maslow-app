@@ -86,7 +86,7 @@ function buildNeedDeltas(canvas, checkins, period) {
 function cap(str) { return str[0].toUpperCase() + str.slice(1) }
 function pts(n) { return `${n} pt${n === 1 ? '' : 's'}` }
 
-function buildHeadlineSegments(canvas, checkins, period) {
+function buildPacingSegments(canvas, checkins, period) {
   const days = buildWindowKeys(period, 0)
   const activeNeeds = NEEDS.filter(n => canvas[n.id])
   const possible = period * activeNeeds.length
@@ -112,7 +112,7 @@ function buildHeadlineSegments(canvas, checkins, period) {
   }
 }
 
-function buildHeadlineSentence(diff, canvasTarget, modeStats, surplusNeeds) {
+function buildPacingSentence(diff, canvasTarget, modeStats, surplusNeeds) {
   const p = `${canvasTarget}%`
   if (Math.abs(diff) < 3) return `right on your pace of ${p}.`
   if (diff > 0) {
@@ -129,7 +129,7 @@ function buildHeadlineSentence(diff, canvasTarget, modeStats, surplusNeeds) {
   return `${pts(Math.abs(diff))} behind your own pace of ${p}.${modeClause}`
 }
 
-function HeadlineCard({ period, stats, canvas, checkins }) {
+function PacingCard({ period, stats, canvas, checkins }) {
   const { pct, delta } = stats.getCompletion(period)
   const activeNeeds = NEEDS.filter(n => canvas[n.id])
   const canvasTarget = activeNeeds.length > 0
@@ -137,49 +137,49 @@ function HeadlineCard({ period, stats, canvas, checkins }) {
     : 50
   const modeStats = stats.getModeStats(period).filter(ms => NEEDS.some(n => canvas[n.id] === ms.mode))
   const periodLabel = period === 7 ? 'last week' : 'last 30d'
-  const { basePct, surplusPct, surplusNeeds } = buildHeadlineSegments(canvas, checkins, period)
+  const { basePct, surplusPct, surplusNeeds } = buildPacingSegments(canvas, checkins, period)
   const diff = pct - canvasTarget
   const showSurplus = diff > 0 && surplusPct > 0.1
 
-  // Assert: bar segments sum to the headline pct (if they diverge, math has drifted)
+  // Assert: bar segments sum to the pacing pct (if they diverge, math has drifted)
   console.assert(
     Math.abs(Math.round(basePct + surplusPct) - pct) <= 1,
-    `Headline bar math diverged: bar=${(basePct + surplusPct).toFixed(2)} vs headline=${pct}`
+    `Pacing bar math diverged: bar=${(basePct + surplusPct).toFixed(2)} vs pacing=${pct}`
   )
 
   return (
-    <div className={styles.headlineCard}>
-      <div className={styles.headlineTop}>
-        <span className={styles.headlineLabel}>THE HEADLINE</span>
+    <div className={styles.pacingCard}>
+      <div className={styles.pacingTop}>
+        <span className={styles.pacingLabel}>PACING</span>
         {delta !== 0 && (
-          <span className={`${styles.headlineDelta}${delta < 0 ? ` ${styles.headlineDeltaDown}` : ''}`}>
+          <span className={`${styles.pacingDelta}${delta < 0 ? ` ${styles.pacingDeltaDown}` : ''}`}>
             {delta > 0 ? '▲' : '▼'} {Math.abs(delta)} pts vs {periodLabel}
           </span>
         )}
       </div>
-      <div className={styles.headlineNumberRow}>
-        <span className={styles.headlineBig}>{pct}</span>
-        <span className={styles.headlinePct}>%</span>
-        <div className={styles.headlineContext}>
+      <div className={styles.pacingNumberRow}>
+        <span className={styles.pacingBig}>{pct}</span>
+        <span className={styles.pacingPct}>%</span>
+        <div className={styles.pacingContext}>
           <span>of your needs have been met for this time period.</span>
         </div>
       </div>
-      <div className={styles.headlineBarWrap}>
-        <div className={styles.headlineBarTrack}>
+      <div className={styles.pacingBarWrap}>
+        <div className={styles.pacingBarTrack}>
           <div
-            className={styles.headlineBarBase}
+            className={styles.pacingBarBase}
             style={{ width: `${showSurplus ? basePct : Math.min(pct, 100)}%` }}
           />
           {showSurplus && (
             <div
-              className={styles.headlineBarSurplus}
+              className={styles.pacingBarSurplus}
               style={{ left: `${basePct}%`, width: `${surplusPct}%` }}
             />
           )}
         </div>
-        <div className={styles.headlinePaceTick} style={{ left: `${canvasTarget}%` }} />
+        <div className={styles.pacingPaceTick} style={{ left: `${canvasTarget}%` }} />
       </div>
-      <p className={styles.headlineSentence}>{buildHeadlineSentence(diff, canvasTarget, modeStats, surplusNeeds)}</p>
+      <p className={styles.pacingSentence}>{buildPacingSentence(diff, canvasTarget, modeStats, surplusNeeds)}</p>
     </div>
   )
 }
@@ -931,10 +931,15 @@ export default function Data({ state, archivePractice }) {
 
         {hasCanvas && (
           <>
-            <div className={styles.dRow2}>
-              <HeadlineCard period={period} stats={stats} canvas={canvas} checkins={checkins} />
-              {totalCheckinDays >= 7 && <InsightsCard stats={stats} />}
-            </div>
+            {totalCheckinDays >= 7 && (
+              <section className={styles.section}>
+                <div className={styles.sectionHeader}>
+                  <span className={styles.sectionLabel}>YOUR INSIGHTS</span>
+                </div>
+                <InsightsCard stats={stats} />
+              </section>
+            )}
+            <PacingCard period={period} stats={stats} canvas={canvas} checkins={checkins} />
             <div className={styles.dRow3}>
               <WhatChanged period={period} canvas={canvas} checkins={checkins} />
               <RhythmSection stats={stats} canvas={canvas} checkins={checkins} moods={moods} />
