@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, useNa
 import { useAppState, loadCustomTags } from './lib/store'
 import { useIsDesktop } from './lib/useIsDesktop'
 import { hideSplash, scheduleReminders, isNative, pendingNotifSlot, MOOD_SLOTS } from './lib/native'
+import { createDataStats } from './lib/dataStats'
 import NotifPrimingSheet from './components/NotifPrimingSheet'
 import OnboardingTour from './components/OnboardingTour'
 import LoadingScreen from './components/LoadingScreen'
@@ -96,7 +97,7 @@ function AppInner() {
     if (['/', '/signin', '/onboarding'].includes(location.pathname)) navigate('/today')
   }
 
-  const { state, authLoading, updateCanvas, replaceCanvas, addPractice, renamePractice, archivePractice, removePractice, setPracticeReminder, stampReminderOffered, incrementOffersDeclined, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule, updateReviewCadence, updateRemindersEnabled, updateReviewReminderEnabled, updateMoodReminder, markNotifPrimed, markTourSeen, resetTour, updateNoteDeck, syncCheckinDay } = useAppState(
+  const { state, authLoading, updateCanvas, replaceCanvas, addPractice, renamePractice, archivePractice, removePractice, setPracticeReminder, stampReminderOffered, incrementOffersDeclined, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule, updateReviewCadence, updateRemindersEnabled, updateReviewReminderEnabled, updateMoodReminder, updateNotifType, markNotifPrimed, markTourSeen, resetTour, updateNoteDeck, syncCheckinDay } = useAppState(
     () => onSignInRef.current?.()
   )
 
@@ -154,6 +155,7 @@ function AppInner() {
     if (state.onboarded && state.userId) {
       clearTimeout(scheduleTimerRef.current)
       scheduleTimerRef.current = setTimeout(() => {
+        const stats = createDataStats({ canvas: state.canvas, checkins: state.checkins, moods: state.moods, practices: state.practices, practicesDB: state.practicesDB })
         scheduleReminders({
           remindersEnabled: state.remindersEnabled,
           moodReminders: state.moodReminders,
@@ -162,11 +164,13 @@ function AppInner() {
           reviewDay: state.reviewDay ?? 0,
           reviewTime: state.reviewTime || '10:00',
           practicesDB: state.practicesDB,
+          practiceStats: stats.getPracticeStats(),
+          notifTypes: state.notifTypes,
         })
       }, 600)
     }
     return () => clearTimeout(scheduleTimerRef.current)
-  }, [state.onboarded, state.userId, state.remindersEnabled, state.moodReminders, state.reviewReminderEnabled, state.reviewCadence, state.reviewDay, state.reviewTime, state.practicesDB])
+  }, [state.onboarded, state.userId, state.remindersEnabled, state.moodReminders, state.reviewReminderEnabled, state.reviewCadence, state.reviewDay, state.reviewTime, state.practicesDB, state.checkins, state.canvas, state.notifTypes])
 
   if (showLoader) {
     const firstName = (state.profile?.name || '').trim().split(' ')[0]
@@ -176,11 +180,11 @@ function AppInner() {
   return (
     <HeaderSlotContext.Provider value={setHeaderSlot}>
     <div className={styles.shell} {...(state.onboarded && { 'data-tabbar': '' })}>
-      {state.onboarded && <DesktopNav name={state.profile.name} email={state.email} showNoteToSelf={state.showNoteToSelf} updateShowNoteToSelf={updateShowNoteToSelf} reviewCadence={state.reviewCadence} updateReviewCadence={updateReviewCadence} reviewDay={state.reviewDay} reviewTime={state.reviewTime} updateReviewSchedule={updateReviewSchedule} remindersEnabled={state.remindersEnabled} updateRemindersEnabled={updateRemindersEnabled} reviewReminderEnabled={state.reviewReminderEnabled} updateReviewReminderEnabled={updateReviewReminderEnabled} moodReminders={state.moodReminders} updateMoodReminder={updateMoodReminder} noteDeckCount={(state.noteDeck || []).length} customTagCount={customTagCount} resetTour={resetTour} />}
+      {state.onboarded && <DesktopNav name={state.profile.name} email={state.email} showNoteToSelf={state.showNoteToSelf} updateShowNoteToSelf={updateShowNoteToSelf} reviewCadence={state.reviewCadence} updateReviewCadence={updateReviewCadence} reviewDay={state.reviewDay} reviewTime={state.reviewTime} updateReviewSchedule={updateReviewSchedule} remindersEnabled={state.remindersEnabled} updateRemindersEnabled={updateRemindersEnabled} reviewReminderEnabled={state.reviewReminderEnabled} updateReviewReminderEnabled={updateReviewReminderEnabled} moodReminders={state.moodReminders} updateMoodReminder={updateMoodReminder} notifTypes={state.notifTypes} updateNotifType={updateNotifType} noteDeckCount={(state.noteDeck || []).length} customTagCount={customTagCount} resetTour={resetTour} />}
       <div className={styles.column}>
       {state.onboarded && (
         <div className={styles.appHeader}>
-          <AppHeader slot={headerSlot} name={state.profile.name} email={state.email} showNoteToSelf={state.showNoteToSelf} updateShowNoteToSelf={updateShowNoteToSelf} reviewCadence={state.reviewCadence} updateReviewCadence={updateReviewCadence} reviewDay={state.reviewDay} reviewTime={state.reviewTime} updateReviewSchedule={updateReviewSchedule} remindersEnabled={state.remindersEnabled} updateRemindersEnabled={updateRemindersEnabled} reviewReminderEnabled={state.reviewReminderEnabled} updateReviewReminderEnabled={updateReviewReminderEnabled} moodReminders={state.moodReminders} updateMoodReminder={updateMoodReminder} noteDeckCount={(state.noteDeck || []).length} customTagCount={customTagCount} resetTour={resetTour} />
+          <AppHeader slot={headerSlot} name={state.profile.name} email={state.email} showNoteToSelf={state.showNoteToSelf} updateShowNoteToSelf={updateShowNoteToSelf} reviewCadence={state.reviewCadence} updateReviewCadence={updateReviewCadence} reviewDay={state.reviewDay} reviewTime={state.reviewTime} updateReviewSchedule={updateReviewSchedule} remindersEnabled={state.remindersEnabled} updateRemindersEnabled={updateRemindersEnabled} reviewReminderEnabled={state.reviewReminderEnabled} updateReviewReminderEnabled={updateReviewReminderEnabled} moodReminders={state.moodReminders} updateMoodReminder={updateMoodReminder} notifTypes={state.notifTypes} updateNotifType={updateNotifType} noteDeckCount={(state.noteDeck || []).length} customTagCount={customTagCount} resetTour={resetTour} />
         </div>
       )}
       <div className={styles.content} ref={contentRef}>

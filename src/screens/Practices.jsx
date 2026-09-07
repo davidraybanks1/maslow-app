@@ -94,6 +94,8 @@ export default function Practices({ state, addPractice, renamePractice, archiveP
       reviewDay: state.reviewDay ?? 0,
       reviewTime: state.reviewTime || '10:00',
       practicesDB: overridePracticesDB ?? state.practicesDB,
+      practiceStats: stats.getPracticeStats(),
+      notifTypes: state.notifTypes,
     })
   }
 

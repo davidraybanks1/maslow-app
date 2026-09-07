@@ -75,6 +75,7 @@ function migrateState(saved) {
     if (saved.tourSeenAt === undefined) saved.tourSeenAt = null
     if (!saved.moodReminders) saved.moodReminders = { morning: { on: true, time: '09:00' }, midday: { on: true, time: '13:00' }, evening: { on: true, time: '19:00' } }
     if (saved.reminderOffersDeclined === undefined) saved.reminderOffersDeclined = 0
+    if (!saved.notifTypes) saved.notifTypes = { streaks: true, skips: true, plain: true }
     saved.canvas = sanitizeCanvas(saved.canvas)
 
     // Migrate old checkin format (string array like 'movement_go for a run')
@@ -136,6 +137,7 @@ export function initialState() {
     tourSeenAt: null,
     moodReminders: { morning: { on: true, time: '09:00' }, midday: { on: true, time: '13:00' }, evening: { on: true, time: '19:00' } },
     reminderOffersDeclined: 0,
+    notifTypes: { streaks: true, skips: true, plain: true },
   }
 }
 
@@ -205,6 +207,7 @@ async function restoreFromSupabase(userId, email) {
       tourSeenAt: user.tour_seen_at || null,
       moodReminders: user.mood_reminders || { morning: { on: true, time: '09:00' }, midday: { on: true, time: '13:00' }, evening: { on: true, time: '19:00' } },
       reminderOffersDeclined: user.reminder_offers_declined ?? 0,
+      notifTypes: user.practice_notif_types || { streaks: true, skips: true, plain: true },
     }
   } catch (e) {
     console.error('restoreFromSupabase error', e)
@@ -671,6 +674,18 @@ export function useAppState(onSignIn) {
     })
   }
 
+  function updateNotifType(key, value) {
+    setState(prev => {
+      const updated = { ...prev.notifTypes, [key]: value }
+      if (prev.userId) {
+        supabase.from('users').update({ practice_notif_types: updated }).eq('id', prev.userId).then(({ error }) => {
+          if (error) logSupabaseError('updateNotifType', error)
+        })
+      }
+      return { ...prev, notifTypes: updated }
+    })
+  }
+
   function markNotifPrimed() {
     const now = new Date().toISOString()
     setState(prev => {
@@ -802,7 +817,7 @@ export function useAppState(onSignIn) {
     })
   }
 
-  return { state, authLoading, updateCanvas, replaceCanvas, addPractice, renamePractice, archivePractice, removePractice, setPracticeReminder, stampReminderOffered, incrementOffersDeclined, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule, updateReviewCadence, updateRemindersEnabled, updateReviewReminderEnabled, updateMoodReminder, markNotifPrimed, markTourSeen, resetTour, updateNoteDeck, syncCheckinDay }
+  return { state, authLoading, updateCanvas, replaceCanvas, addPractice, renamePractice, archivePractice, removePractice, setPracticeReminder, stampReminderOffered, incrementOffersDeclined, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule, updateReviewCadence, updateRemindersEnabled, updateReviewReminderEnabled, updateMoodReminder, updateNotifType, markNotifPrimed, markTourSeen, resetTour, updateNoteDeck, syncCheckinDay }
 }
 
 export function todayKey() {

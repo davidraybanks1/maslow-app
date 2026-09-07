@@ -39,6 +39,7 @@ export default function ProfileMenu({
   remindersEnabled, updateRemindersEnabled,
   reviewReminderEnabled, updateReviewReminderEnabled,
   moodReminders, updateMoodReminder,
+  notifTypes, updateNotifType,
   noteDeckCount = 0,
   customTagCount = 0,
   resetTour,
@@ -390,6 +391,35 @@ export default function ProfileMenu({
                       </div>
                     </div>
                   </button>
+                  <div className={`${styles.row} ${styles.rowStatic}`}>
+                    <div className={styles.rowContent}>
+                      <div className={styles.rowSub}>practice reminders say:</div>
+                    </div>
+                  </div>
+                  {[
+                    { key: 'streaks', label: 'streaks' },
+                    { key: 'skips',   label: 'skips' },
+                    { key: 'plain',   label: 'time reminders' },
+                  ].map(({ key, label }) => {
+                    const on = notifTypes ? notifTypes[key] !== false : true
+                    return (
+                      <button key={key} className={styles.row} onClick={() => updateNotifType?.(key, !on)}>
+                        <span className={styles.rowTitle}>{label}</span>
+                        <div className={styles.toggleSwitch}>
+                          <div className={`${styles.toggleTrack} ${on ? styles.toggleTrackOn : ''}`}>
+                            <span className={`${styles.toggleKnob} ${on ? styles.toggleKnobOn : ''}`} />
+                          </div>
+                        </div>
+                      </button>
+                    )
+                  })}
+                  {notifTypes && Object.values(notifTypes).every(v => v === false) && (
+                    <div className={`${styles.row} ${styles.rowStatic}`}>
+                      <div className={styles.rowContent}>
+                        <div className={styles.rowSub}>with all three off, practice reminders stay silent.</div>
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
               {!isNative() && (

@@ -2,6 +2,7 @@
 // so the PWA keeps today's behavior and the iOS app gets the native extras.
 import { Capacitor } from '@capacitor/core'
 import { TIME_RE } from './constants'
+import { practiceNotifCopy } from './notifCopy'
 
 export function isNative() {
   if (import.meta.env.DEV && typeof window !== 'undefined' && window.__nativeForTest) return true
@@ -72,7 +73,8 @@ export const MOOD_SLOTS = [
 
 /* Group practices with reminder_on=true into notification batches.
    Practices whose time is within 30 minutes of the group's FIRST time share a
-   notification. Invalid or missing times are dropped with a console.warn. */
+   notification. Invalid or missing times are dropped with a console.warn.
+   Returns { time, practices } — full practice records so callers can match stats by id. */
 export function groupReminders(practices) {
   const valid = []
   for (const p of practices) {
@@ -90,13 +92,13 @@ export function groupReminders(practices) {
     const [h, m] = p.reminder_time.split(':').map(n => parseInt(n, 10))
     const minutes = h * 60 + m
     if (groups.length === 0 || minutes - groups[groups.length - 1]._anchor >= 30) {
-      groups.push({ time: p.reminder_time, labels: [p.label], _anchor: minutes })
+      groups.push({ time: p.reminder_time, practices: [p], _anchor: minutes })
     } else {
-      groups[groups.length - 1].labels.push(p.label)
+      groups[groups.length - 1].practices.push(p)
     }
   }
 
-  return groups.map(({ time, labels }) => ({ time, labels }))
+  return groups.map(({ time, practices }) => ({ time, practices }))
 }
 
 /* Daily mood prompts + the weekly/daily review reminder.
@@ -109,6 +111,8 @@ export async function scheduleReminders({
   reviewDay = 0,
   reviewTime = '10:00',
   practicesDB = [],
+  practiceStats = [],
+  notifTypes = undefined,
 } = {}) {
   if (!isNative()) return
   try {
@@ -134,7 +138,7 @@ export async function scheduleReminders({
       })
       .map(s => {
         const [h, m] = moodReminders[s.slot].time.split(':').map(n => parseInt(n, 10))
-        return { id: s.id, title: 'Mood Check', body: s.body, schedule: { on: { hour: h, minute: m } } }
+        return { id: s.id, title: 'mood check', body: s.body, schedule: { on: { hour: h, minute: m } } }
       })
 
     const reviewNotifs = []
@@ -156,13 +160,21 @@ export async function scheduleReminders({
     }
 
     const practiceGroups = groupReminders(practicesDB)
-    const practiceNotifs = practiceGroups.slice(0, PRACTICE_REMINDER_IDS.length).map((group, i) => {
+    const practiceNotifs = []
+    let idIdx = 0
+    for (const group of practiceGroups) {
+      if (idIdx >= PRACTICE_REMINDER_IDS.length) break
+      const labels = group.practices.map(p => p.label)
+      const statsRow = group.practices.length === 1
+        ? practiceStats.find(s => s.practice?.id === group.practices[0].id)
+        : null
+      const streak = statsRow?.streak ?? 0
+      const daysSinceLast = statsRow?.daysSinceLast ?? null
+      const copy = practiceNotifCopy({ labels, streak, daysSinceLast, types: notifTypes })
+      if (!copy) continue
       const [h, m] = group.time.split(':').map(n => parseInt(n, 10))
-      const body = group.labels.length === 1
-        ? `time for ${group.labels[0].toLowerCase()}.`
-        : `${group.labels[0].toLowerCase()} and ${group.labels[1].toLowerCase()}.`
-      return { id: PRACTICE_REMINDER_IDS[i], title: 'Practices', body, schedule: { on: { hour: h, minute: m } } }
-    })
+      practiceNotifs.push({ id: PRACTICE_REMINDER_IDS[idIdx++], title: copy.title, body: copy.body, schedule: { on: { hour: h, minute: m } } })
+    }
 
     const notifications = [...moodNotifs, ...reviewNotifs, ...practiceNotifs]
     if (notifications.length > 0) {
