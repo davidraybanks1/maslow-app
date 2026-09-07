@@ -5,9 +5,10 @@ export function practiceNotifCopy({ labels, streak, daysSinceLast, types }) {
 
   if (labels.length > 1) {
     if (t.plain === false) return null
+    const lower = labels
     const title = labels.length === 2
-      ? `${labels[0]} and ${labels[1]}`
-      : `${labels[0]}, ${labels[1]} and ${labels[2]}`
+      ? `${lower[0]} and ${lower[1]}`
+      : `${lower[0]}, ${lower[1]} and ${lower[2]}`
     return { title, body: 'This is usually about when you do them.' }
   }
 
