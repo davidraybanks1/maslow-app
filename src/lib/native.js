@@ -138,7 +138,7 @@ export async function scheduleReminders({
       })
       .map(s => {
         const [h, m] = moodReminders[s.slot].time.split(':').map(n => parseInt(n, 10))
-        return { id: s.id, title: 'mood check', body: s.body, schedule: { on: { hour: h, minute: m } } }
+        return { id: s.id, title: 'Mood check', body: s.body, schedule: { on: { hour: h, minute: m } } }
       })
 
     const reviewNotifs = []
@@ -152,8 +152,8 @@ export async function scheduleReminders({
           : { weekday: ((reviewDay + 1) % 7) + 1, hour: h, minute: m }
         reviewNotifs.push({
           id: 1004,
-          title: reviewCadence === 'daily' ? 'daily review' : 'weekly review',
-          body: reviewCadence === 'daily' ? 'your day is ready to look at.' : 'your week is ready to look at.',
+          title: reviewCadence === 'daily' ? 'Daily review' : 'Weekly review',
+          body: reviewCadence === 'daily' ? 'Your day is ready to look at.' : 'Your week is ready to look at.',
           schedule: { on },
         })
       }
