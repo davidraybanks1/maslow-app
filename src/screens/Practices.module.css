@@ -47,6 +47,14 @@
 .reminderTaken { font-family: var(--font-mono); font-size: 10px; color: var(--ink4); padding: 2px 0 6px; line-height: 1.5; }
 .reminderTakenHead { color: var(--ink3); }
 .reminderTakenItem { white-space: nowrap; }
+
+/* ── Once-only reminder offer ── */
+.offerRow { display: flex; align-items: center; gap: 8px; padding: 3px 0 6px; }
+.offerCopy { font-family: var(--font-mono); font-size: 10px; color: var(--ink3); flex: 1; }
+.offerSetTime { background: none; border: 0.5px solid var(--hairline); border-radius: 999px; font-family: var(--font-mono); font-size: 10px; color: var(--ink); padding: 3px 9px; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
+.offerSetTime:active { opacity: .6; }
+.offerNotNow { background: none; border: none; font-family: var(--font-mono); font-size: 10px; color: var(--ink4); padding: 3px 6px; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
+.offerNotNow:active { opacity: .6; }
 .archiveBtn { background: none; border: none; font-family: var(--font-mono); font-size: 11px; color: var(--ink3); cursor: pointer; padding: 0 4px; flex-shrink: 0; }
 .archiveBtn:hover { color: var(--ink2); }
 .renameInput { flex: 1; padding: 4px 8px; border-radius: 6px; border: 0.5px solid var(--hairline); background: var(--paper); font-family: var(--font-serif); font-size: 15px; font-weight: 300; font-style: italic; color: var(--ink); outline: none; }

@@ -28,6 +28,7 @@ export async function hideSplash() {
 
 /* Returns 'granted' | 'denied' | 'prompt'. No-ops to 'prompt' on web. */
 export async function checkNotifPermission() {
+  if (typeof window !== 'undefined' && window.__nativePermForTest) return window.__nativePermForTest
   if (!isNative()) return 'prompt'
   try {
     const { LocalNotifications } = await import('@capacitor/local-notifications')

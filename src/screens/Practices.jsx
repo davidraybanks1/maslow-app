@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { NEEDS, MODES, MODE_ORDER, TIME_RE } from '../lib/constants'
 import { createDataStats, formatLastDone } from '../lib/dataStats'
@@ -24,7 +24,7 @@ const STARTERS = {
 }
 const OB_FLAG = 'onboardingPracticesDone'
 
-export default function Practices({ state, addPractice, renamePractice, archivePractice, setPracticeReminder, completeOnboarding }) {
+export default function Practices({ state, addPractice, renamePractice, archivePractice, setPracticeReminder, stampReminderOffered, incrementOffersDeclined, completeOnboarding }) {
   const navigate = useNavigate()
   const [inputs, setInputs] = useState({})
   const [openInputs, setOpenInputs] = useState({})
@@ -51,6 +51,34 @@ export default function Practices({ state, addPractice, renamePractice, archiveP
   const lastDoneByKey = new Map(stats.getPracticeStats().map(p => [p.practice?.id || `${p.need.id}_${p.text}`, p.daysSinceLast]))
 
   const activeReminderCount = (state.practicesDB || []).filter(p => p.reminder_on).length
+
+  // Count checkins per practice_id (from the last 30 days in state)
+  const checkinCounts = useMemo(() => {
+    const counts = {}
+    for (const entries of Object.values(state.checkins || {})) {
+      for (const entry of (entries || [])) {
+        if (entry.practice_id) counts[entry.practice_id] = (counts[entry.practice_id] || 0) + 1
+      }
+    }
+    return counts
+  }, [state.checkins])
+
+  // Brake checked here, before rendering — if declined >= 2, offerPracticeId is null and nothing renders
+  const offerPracticeId = useMemo(() => {
+    if (!native) return null
+    if (notifPermission === 'denied') return null
+    if ((state.reminderOffersDeclined ?? 0) >= 2) return null
+    if (activeReminderCount >= 3) return null
+    const candidates = (state.practicesDB || [])
+      .filter(p =>
+        !p.archived_at &&
+        !p.reminder_on &&
+        !p.reminder_offered_at &&
+        (checkinCounts[p.id] || 0) >= 3
+      )
+      .sort((a, b) => (checkinCounts[b.id] || 0) - (checkinCounts[a.id] || 0))
+    return candidates[0]?.id ?? null
+  }, [native, notifPermission, state.reminderOffersDeclined, state.practicesDB, activeReminderCount, checkinCounts])
 
   const totalPractices = useDB
     ? state.practicesDB.filter(p => !p.archived_at).length
@@ -138,6 +166,33 @@ export default function Practices({ state, addPractice, renamePractice, archiveP
         doSchedule(newDB)
       } catch (e) { console.warn('[Practices] time commit failed', e) }
     }
+  }
+
+  async function handleAcceptOffer(practice) {
+    let perm = notifPermission
+    if (perm === 'prompt') {
+      perm = await requestNotifPermission()
+      setNotifPermission(perm)
+    }
+    stampReminderOffered(practice.id)
+    if (perm !== 'granted') {
+      setPermissionErrors(prev => new Set([...prev, practice.id]))
+      return
+    }
+    const time = TIME_RE.test(practice.reminder_time) ? practice.reminder_time : '08:00'
+    const newDB = (state.practicesDB || []).map(p =>
+      p.id === practice.id ? { ...p, reminder_on: true, reminder_time: time } : p
+    )
+    try {
+      await setPracticeReminder(practice.id, { on: true, time })
+      doSchedule(newDB)
+      setPickerOpenFor(practice.id)
+    } catch (e) { console.warn('[Practices] accept offer failed', e) }
+  }
+
+  function handleDeclineOffer(practice) {
+    stampReminderOffered(practice.id)
+    incrementOffersDeclined()
   }
 
   function handleAdd(needId) {
@@ -282,7 +337,7 @@ export default function Practices({ state, addPractice, renamePractice, archiveP
                                     </>
                                   ) : isAtCap ? (
                                     <span className={styles.reminderCapped}>3 reminders is the maximum</span>
-                                  ) : (
+                                  ) : p.id === offerPracticeId ? null : (
                                     <button
                                       className={styles.reminderOffBtn}
                                       onClick={() => handleToggleReminder(p)}
@@ -304,6 +359,15 @@ export default function Practices({ state, addPractice, renamePractice, archiveP
                                     {i > 0 ? ' · ' : ''}{t.time} {t.label}
                                   </span>
                                 ))}
+                              </div>
+                            )}
+
+                            {/* Once-only reminder offer — appears below the row */}
+                            {!editMode && p.id === offerPracticeId && (
+                              <div className={styles.offerRow}>
+                                <span className={styles.offerCopy}>remind me about this?</span>
+                                <button className={styles.offerSetTime} onClick={() => handleAcceptOffer(p)}>set a time</button>
+                                <button className={styles.offerNotNow} onClick={() => handleDeclineOffer(p)}>not now</button>
                               </div>
                             )}
                           </>

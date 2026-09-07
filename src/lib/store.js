@@ -74,6 +74,7 @@ function migrateState(saved) {
     if (saved.notifPrimedAt === undefined) saved.notifPrimedAt = null
     if (saved.tourSeenAt === undefined) saved.tourSeenAt = null
     if (!saved.moodReminders) saved.moodReminders = { morning: { on: true, time: '09:00' }, midday: { on: true, time: '13:00' }, evening: { on: true, time: '19:00' } }
+    if (saved.reminderOffersDeclined === undefined) saved.reminderOffersDeclined = 0
     saved.canvas = sanitizeCanvas(saved.canvas)
 
     // Migrate old checkin format (string array like 'movement_go for a run')
@@ -134,6 +135,7 @@ export function initialState() {
     notifPrimedAt: null,
     tourSeenAt: null,
     moodReminders: { morning: { on: true, time: '09:00' }, midday: { on: true, time: '13:00' }, evening: { on: true, time: '19:00' } },
+    reminderOffersDeclined: 0,
   }
 }
 
@@ -202,6 +204,7 @@ async function restoreFromSupabase(userId, email) {
       notifPrimedAt: user.notif_primed_at || null,
       tourSeenAt: user.tour_seen_at || null,
       moodReminders: user.mood_reminders || { morning: { on: true, time: '09:00' }, midday: { on: true, time: '13:00' }, evening: { on: true, time: '19:00' } },
+      reminderOffersDeclined: user.reminder_offers_declined ?? 0,
     }
   } catch (e) {
     console.error('restoreFromSupabase error', e)
@@ -736,6 +739,31 @@ export function useAppState(onSignIn) {
     setState(prev => ({ ...prev, checkins: newCheckins }))
   }
 
+  function stampReminderOffered(practiceId) {
+    const offeredAt = new Date().toISOString()
+    setState(prev => {
+      const updatedDB = prev.practicesDB.map(p =>
+        p.id === practiceId ? { ...p, reminder_offered_at: offeredAt } : p
+      )
+      if (prev.userId) {
+        supabase.from('practices').update({ reminder_offered_at: offeredAt }).eq('id', practiceId)
+          .then(({ error }) => { if (error) logSupabaseError('stampReminderOffered', error) })
+      }
+      return { ...prev, practicesDB: updatedDB }
+    })
+  }
+
+  function incrementOffersDeclined() {
+    setState(prev => {
+      const newCount = (prev.reminderOffersDeclined ?? 0) + 1
+      if (prev.userId) {
+        supabase.from('users').update({ reminder_offers_declined: newCount }).eq('id', prev.userId)
+          .then(({ error }) => { if (error) logSupabaseError('incrementOffersDeclined', error) })
+      }
+      return { ...prev, reminderOffersDeclined: newCount }
+    })
+  }
+
   function setPracticeReminder(practiceId, { on, time }) {
     return new Promise((resolve, reject) => {
       if (time !== undefined && !TIME_RE.test(time)) {
@@ -774,7 +802,7 @@ export function useAppState(onSignIn) {
     })
   }
 
-  return { state, authLoading, updateCanvas, replaceCanvas, addPractice, renamePractice, archivePractice, removePractice, setPracticeReminder, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule, updateReviewCadence, updateRemindersEnabled, updateReviewReminderEnabled, updateMoodReminder, markNotifPrimed, markTourSeen, resetTour, updateNoteDeck, syncCheckinDay }
+  return { state, authLoading, updateCanvas, replaceCanvas, addPractice, renamePractice, archivePractice, removePractice, setPracticeReminder, stampReminderOffered, incrementOffersDeclined, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule, updateReviewCadence, updateRemindersEnabled, updateReviewReminderEnabled, updateMoodReminder, markNotifPrimed, markTourSeen, resetTour, updateNoteDeck, syncCheckinDay }
 }
 
 export function todayKey() {
