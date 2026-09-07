@@ -4,7 +4,7 @@ import { Capacitor } from '@capacitor/core'
 import { TIME_RE } from './constants'
 
 export function isNative() {
-  if (typeof window !== 'undefined' && window.__nativeForTest) return true
+  if (import.meta.env.DEV && typeof window !== 'undefined' && window.__nativeForTest) return true
   return Capacitor.isNativePlatform()
 }
 
@@ -28,7 +28,7 @@ export async function hideSplash() {
 
 /* Returns 'granted' | 'denied' | 'prompt'. No-ops to 'prompt' on web. */
 export async function checkNotifPermission() {
-  if (typeof window !== 'undefined' && window.__nativePermForTest) return window.__nativePermForTest
+  if (import.meta.env.DEV && typeof window !== 'undefined' && window.__nativePermForTest) return window.__nativePermForTest
   if (!isNative()) return 'prompt'
   try {
     const { LocalNotifications } = await import('@capacitor/local-notifications')
