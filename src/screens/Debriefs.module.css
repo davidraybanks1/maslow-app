@@ -51,7 +51,6 @@
   color: var(--ink2);
   font-family: var(--font-mono);
   font-size: 11px;
-  text-transform: lowercase;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
@@ -71,7 +70,7 @@
 .episodeDate { font-family: var(--font-mono); font-size: 11px; color: var(--ink3); }
 .episodeTags { display: flex; gap: 6px; }
 
-.tag { padding: 3px 10px; border-radius: 20px; font-family: var(--font-mono); font-size: 10px; text-transform: lowercase; white-space: nowrap; }
+.tag { padding: 3px 10px; border-radius: 20px; font-family: var(--font-mono); font-size: 10px; white-space: nowrap; }
 
 .episodeExcerpt { font-family: var(--font-serif); font-style: italic; font-size: 15px; color: var(--ink2); line-height: 1.4; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
@@ -108,7 +107,7 @@
 .typeRow { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
 .typeRow:last-child { border-bottom: none; }
 .typeSwatch { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-.typeName { font-family: var(--font-serif); font-size: 15px; color: var(--ink); text-transform: lowercase; }
+.typeName { font-family: var(--font-serif); font-size: 15px; color: var(--ink); }
 .builtinTag { font-family: var(--font-mono); font-size: 10px; color: var(--ink4); margin-left: auto; }
 
 .typeAction { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--ink3); background: none; border: none; cursor: pointer; padding: 8px; margin: -8px 0 -8px 4px; -webkit-tap-highlight-color: transparent; }
@@ -153,7 +152,7 @@
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.chooseCardLabel { font-family: var(--font-serif); font-size: 18px; font-weight: 400; color: var(--ink); text-transform: lowercase; margin-bottom: 6px; }
+.chooseCardLabel { font-family: var(--font-serif); font-size: 18px; font-weight: 400; color: var(--ink); margin-bottom: 6px; }
 .chooseCardDesc { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink2); line-height: 1.5; }
 
 /* ── Full-screen overlay ── */
@@ -211,7 +210,7 @@
 /* ── Detail overlay ── */
 .detailDateRow { display: flex; align-items: baseline; gap: 8px; margin-bottom: 20px; }
 .detailDate { font-family: var(--font-mono); font-size: 12px; color: var(--ink3); }
-.detailTypeLabel { font-family: var(--font-mono); font-size: 10px; color: var(--ink4); text-transform: lowercase; }
+.detailTypeLabel { font-family: var(--font-mono); font-size: 10px; color: var(--ink4); }
 .hairline { height: 0.5px; background: var(--border); margin: 20px 0; }
 .detailSectionLabel { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink3); margin-bottom: 10px; }
 .detailSectionBody { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink); line-height: 1.7; white-space: pre-wrap; }

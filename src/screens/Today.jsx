@@ -78,7 +78,7 @@ function CompletionBar({ arcs, pct }) {
 function formatQuoteDate(dateKey) {
   if (!dateKey) return ''
   const d = new Date(dateKey + 'T12:00:00')
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toLowerCase()
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 function formatEntryTime(ts) {
@@ -228,7 +228,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
       p.daysSinceLast,
     ])
   )
-  const dateLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).toLowerCase()
+  const dateLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
 
   const [guidanceDismissedNow, setGuidanceDismissedNow] = useState(false)
   const onboardedToday = state.onboardedAt === today

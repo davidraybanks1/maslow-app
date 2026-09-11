@@ -87,7 +87,7 @@ function periodKey(cadence) {
 
 function formatCardDate(dateKey) {
   const d = new Date(dateKey + 'T12:00:00')
-  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toLowerCase()
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
 }
 
 

@@ -53,7 +53,7 @@
 .optionCard { position: relative; border: 1.5px solid var(--border); border-radius: 14px; background: var(--card); padding: 16px; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none; }
 .optionCardSelected { border: 2px solid var(--nourishment); background: rgba(232,184,31,0.10); }
 .optionCardSelected::after { content: ''; position: absolute; top: 12px; right: 12px; width: 10px; height: 10px; border-radius: 50%; background: var(--nourishment); }
-.optionName { font-family: var(--font-serif); font-size: 18px; font-weight: 400; color: var(--ink); text-transform: lowercase; margin-bottom: 6px; }
+.optionName { font-family: var(--font-serif); font-size: 18px; font-weight: 400; color: var(--ink); margin-bottom: 6px; }
 .optionDesc { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink2); line-height: 1.6; }
 .flexTag { display: inline-block; margin-top: 10px; padding: 4px 10px; border-radius: 20px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.02em; }
 
@@ -68,7 +68,7 @@
 .insightBody { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink2); line-height: 1.6; margin-bottom: 12px; }
 
 .pillRow { display: flex; flex-wrap: wrap; gap: 6px; }
-.pill { padding: 4px 12px; border-radius: 20px; font-family: var(--font-mono); font-size: 11px; text-transform: lowercase; }
+.pill { padding: 4px 12px; border-radius: 20px; font-family: var(--font-mono); font-size: 11px; }
 .pillRed { background: #FFF0EC; color: #D93B1C; }
 .pillGreen { background: #E8EFE9; color: #1B3A2D; }
 
@@ -165,7 +165,6 @@
   font-size: 14px;
   font-weight: 400;
   color: var(--ink);
-  text-transform: lowercase;
 }
 .gridCardSelected { border: 2px solid var(--nourishment); background: rgba(232,184,31,0.10); }
 .gridCardSelected::after { content: ''; position: absolute; top: 10px; right: 10px; width: 10px; height: 10px; border-radius: 50%; background: var(--nourishment); }
@@ -210,7 +209,6 @@
   font-size: 14px;
   font-weight: 400;
   color: var(--ink);
-  text-transform: lowercase;
   margin-bottom: 3px;
 }
 .needGridDesc {

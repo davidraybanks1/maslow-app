@@ -174,7 +174,7 @@ function AppInner() {
 
   if (showLoader) {
     const firstName = (state.profile?.name || '').trim().split(' ')[0]
-    return <LoadingScreen greeting={firstName ? `hey, ${firstName.toLowerCase()}` : 'hey, you'} fading={loaderFading} />
+    return <LoadingScreen greeting={firstName ? `Hey, ${firstName}` : 'Hey, you'} fading={loaderFading} />
   }
 
   return (

@@ -82,7 +82,6 @@
   font-size: 14px;
   font-weight: 300;
   color: var(--ink);
-  text-transform: lowercase;
 }
 
 .needSubCount {

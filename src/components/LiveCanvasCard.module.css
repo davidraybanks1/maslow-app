@@ -97,7 +97,6 @@
   font-family: var(--font-serif);
   font-size: 15px;
   color: var(--ink);
-  text-transform: lowercase;
   width: 84px;
   flex-shrink: 0;
 }
@@ -155,7 +154,6 @@
   font-family: var(--font-serif);
   font-size: 13px;
   color: var(--ink3);
-  text-transform: lowercase;
 }
 
 .lcSurvivalNote {

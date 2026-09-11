@@ -8,7 +8,7 @@
 .statusDot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; transition: background var(--motion-hover); }
 
 .chipRow { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip { padding: 5px 12px; border-radius: 20px; border: 0.5px solid var(--border2); background: var(--bg2); font-family: var(--font-mono); font-size: 11px; color: var(--ink2); text-transform: lowercase; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background var(--motion-micro), color var(--motion-micro), border-color var(--motion-micro); }
+.chip { padding: 5px 12px; border-radius: 20px; border: 0.5px solid var(--border2); background: var(--bg2); font-family: var(--font-mono); font-size: 11px; color: var(--ink2); cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background var(--motion-micro), color var(--motion-micro), border-color var(--motion-micro); }
 .chip:hover { border-color: var(--ink3); }
 
 .stepField { margin-bottom: 14px; }

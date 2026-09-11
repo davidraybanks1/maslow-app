@@ -19,7 +19,7 @@
 
 .needHeader { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
 .needPip { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.needName { font-family: var(--font-serif); font-size: 16px; font-weight: 300; color: var(--ink); letter-spacing: -0.01em; text-transform: lowercase; }
+.needName { font-family: var(--font-serif); font-size: 16px; font-weight: 300; color: var(--ink); letter-spacing: -0.01em; }
 .needTag { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; color: var(--ink3); margin-left: auto; }
 
 .pool { display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; }

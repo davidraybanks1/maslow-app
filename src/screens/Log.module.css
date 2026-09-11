@@ -35,7 +35,6 @@
   font-family: var(--font-serif);
   font-size: 13px;
   color: var(--ink);
-  text-transform: lowercase;
   margin-bottom: 2px;
 }
 .practiceNamesText {
@@ -66,7 +65,6 @@
   font-family: var(--font-mono);
   font-size: 10px;
   color: var(--ink3);
-  text-transform: lowercase;
 }
 .moodPeriodPill {
   padding: 2px 9px;
@@ -99,7 +97,6 @@
   border-radius: 999px;
   font-family: var(--font-mono);
   font-size: 10px;
-  text-transform: lowercase;
   white-space: nowrap;
 }
 
@@ -1291,7 +1288,6 @@
   font-family: var(--font-serif);
   font-size: 14px;
   color: var(--ink);
-  text-transform: lowercase;
 }
 .dayCardCount {
   font-family: var(--font-mono);
@@ -1406,7 +1402,6 @@
   font-size: 18px;
   font-weight: 300;
   color: var(--ink);
-  text-transform: lowercase;
   margin-bottom: 6px;
 }
 .weeklyMoodDesc {

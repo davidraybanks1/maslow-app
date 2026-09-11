@@ -62,10 +62,10 @@ function buildSubhead(period) {
   const start = new Date(today)
   start.setDate(today.getDate() - (period - 1))
   const fmtDay = d => {
-    const weekday = d.toLocaleDateString('en-GB', { weekday: 'long' }).toLowerCase()
+    const weekday = d.toLocaleDateString('en-GB', { weekday: 'long' })
     return `${weekday} ${d.getDate()}`
   }
-  const month = today.toLocaleDateString('en-GB', { month: 'long' }).toLowerCase()
+  const month = today.toLocaleDateString('en-GB', { month: 'long' })
   return `${fmtDay(start)} — ${fmtDay(today)} ${month} · compared with the week before`
 }
 
@@ -394,7 +394,7 @@ function LongViewSection({ canvas, checkins, moods, stats, days, windowLen }) {
       }
     })
     return groups.map(g => ({
-      label: new Date(g.key + '-15').toLocaleDateString('en-GB', { month: 'short' }).toLowerCase(),
+      label: new Date(g.key + '-15').toLocaleDateString('en-GB', { month: 'short' }),
       span: g.span,
     }))
   }, [days])
@@ -514,7 +514,7 @@ function RibbonsSection({ canvas, checkins, practicesDB, days, windowLen, isDesk
         (checkins[dk] || []).some(e => e.need_id === need.id)
       ) ?? null
       const sinceMonth = lastLoggedDk
-        ? new Date(lastLoggedDk + 'T12:00:00').toLocaleDateString('en-GB', { month: 'long' }).toLowerCase()
+        ? new Date(lastLoggedDk + 'T12:00:00').toLocaleDateString('en-GB', { month: 'long' })
         : null
       const run = isDormant ? null : computeRun(days, checkins, dk => (checkins[dk] || []).some(e => e.need_id === need.id))
       return { need, mode, daysActive, isDormant, sinceMonth, run }
