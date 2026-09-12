@@ -1616,12 +1616,11 @@
   /* Add button docked inside the textarea, bottom-right */
   .journalComposerWrap {
     position: relative;
-    flex: 1;
     display: flex;
     flex-direction: column;
   }
 
-  .journalComposerInput { padding-bottom: 34px; flex: 1; }
+  .journalComposerInput { padding-bottom: 34px; min-height: 112px; overflow-y: auto; }
 
   .journalComposerFooter {
     position: absolute;
@@ -1781,6 +1780,7 @@
     grid-row: 2;
     display: flex;
     flex-direction: column;
+    align-self: start;
   }
 
   .journalComposerCard {
@@ -1789,7 +1789,6 @@
     border-radius: 16px;
     padding: 14px 16px;
     margin-top: 0;
-    flex: 1;
     display: flex;
     flex-direction: column;
   }

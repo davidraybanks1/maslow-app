@@ -331,6 +331,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   const journalEntriesRef = useRef(null)
   const journalFileRef = useRef(null)
   const attachMenuRef = useRef(null)
+  const desktopTextareaRef = useRef(null)
 
   useEffect(() => {
     if (!state.userId) return
@@ -423,6 +424,28 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   }
 
   const isDesktop = useIsDesktop()
+
+  function autosizeDesktopTextarea() {
+    if (!isDesktop) return
+    const el = desktopTextareaRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    const top = el.getBoundingClientRect().top
+    const max = Math.max(112, window.innerHeight - top - 24)
+    el.style.height = Math.min(el.scrollHeight, max) + 'px'
+  }
+
+  useEffect(() => {
+    if (!isDesktop) return
+    autosizeDesktopTextarea()
+  }, [draftText, isDesktop]) // draftText drives height; isDesktop gates the effect
+
+  useEffect(() => {
+    if (!isDesktop) return
+    window.addEventListener('resize', autosizeDesktopTextarea)
+    return () => window.removeEventListener('resize', autosizeDesktopTextarea)
+  }, [isDesktop])
+
   const [justTapped, setJustTapped] = useState(null)
   const [openTier, setOpenTier] = useState(null)
   const [popupMode, setPopupMode] = useState(null)
@@ -1097,6 +1120,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 )}
                 <div className={styles.journalComposerWrap}>
                   <textarea
+                    ref={desktopTextareaRef}
                     className={styles.journalComposerInput}
                     placeholder="add a thought…"
                     value={draftText}
