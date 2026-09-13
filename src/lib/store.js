@@ -560,7 +560,7 @@ export function useAppState(onSignIn) {
     })
   }
 
-  async function logMood(userId, promptTime, mood, note, date) {
+  async function logMood(userId, promptTime, mood, note, date, feeling) {
     if (!userId) return { error: 'Not authenticated' }
     const previous = (state.moods || []).find(
       m => m.date_key === date && m.prompt_time === promptTime
@@ -570,12 +570,12 @@ export function useAppState(onSignIn) {
       const filtered = (prev.moods || []).filter(
         m => !(m.date_key === date && m.prompt_time === promptTime)
       )
-      return { ...prev, moods: [{ user_id: userId, date_key: date, prompt_time: promptTime, mood, note: note || null }, ...filtered] }
+      return { ...prev, moods: [{ user_id: userId, date_key: date, prompt_time: promptTime, mood, note: note || null, feeling: feeling || null }, ...filtered] }
     })
 
     const { error } = await supabase
       .from('moods')
-      .upsert({ user_id: userId, date_key: date, prompt_time: promptTime, mood, note: note || null },
+      .upsert({ user_id: userId, date_key: date, prompt_time: promptTime, mood, note: note || null, feeling: feeling || null },
         { onConflict: 'user_id,date_key,prompt_time' })
 
     if (error) {

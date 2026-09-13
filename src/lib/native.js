@@ -18,6 +18,37 @@ export async function hapticTick() {
   } catch (e) { console.warn('[native]', e) }
 }
 
+let lastTick = 0
+
+export async function tuneStart() {
+  if (!isNative()) return
+  try {
+    const { Haptics } = await import('@capacitor/haptics')
+    await Haptics.selectionStart()
+  } catch (e) { console.warn('[native]', e) }
+}
+
+/** One detent. `isBandEdge` gets a heavier tick and is never throttled. */
+export async function tuneTick(isBandEdge) {
+  if (!isNative()) return
+  const now = Date.now()
+  if (!isBandEdge && now - lastTick < 40) return
+  lastTick = now
+  try {
+    const { Haptics, ImpactStyle } = await import('@capacitor/haptics')
+    if (isBandEdge) await Haptics.impact({ style: ImpactStyle.Medium })
+    else await Haptics.selectionChanged()
+  } catch (e) { console.warn('[native]', e) }
+}
+
+export async function tuneEnd() {
+  if (!isNative()) return
+  try {
+    const { Haptics } = await import('@capacitor/haptics')
+    await Haptics.selectionEnd()
+  } catch (e) { console.warn('[native]', e) }
+}
+
 /* Hide the native splash once the app (or the daily ritual) has rendered. */
 export async function hideSplash() {
   if (!isNative()) return

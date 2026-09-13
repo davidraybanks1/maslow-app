@@ -5,8 +5,8 @@ import { currentSlot, precedingSlots, SLOT_NOUN, SLOT_GREETING } from '../lib/sl
 import { todayKey, loadJournalEntries, addJournalEntry, deleteJournalEntry, loadNoteDeck, loadCustomTags, uploadNoteImage, loadRevisitQueue } from '../lib/store'
 import { BUILTIN_NATURE_TYPES, BUILTIN_PEAK_TYPES } from '../lib/debriefTypes'
 import { createDataStats, getCanvasGuidance } from '../lib/dataStats'
-import { hapticTick, isNative, pendingNotifSlot } from '../lib/native'
-import { normalizeBand } from '../lib/frequency'
+import { hapticTick, isNative, pendingNotifSlot, tuneStart, tuneTick, tuneEnd } from '../lib/native'
+import { normalizeBand, BANDS, FEELINGS } from '../lib/frequency'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import JournalQuote from '../components/JournalQuote'
 import ManageDeck from '../components/ManageDeck'
@@ -17,16 +17,125 @@ import styles from './Today.module.css'
 const NOTE_DECK_MAX = 5
 const MODE_THRESHOLDS = { exploration: 80, appreciation: 60, nourishment: 50, survival: 20 }
 
-const MOODS = ['good', 'mid', 'bad']
-const MOOD_FILL = {
-  good: { background: 'var(--exploration)',  borderColor: 'var(--exploration)',  color: 'var(--card)' },
-  mid:  { background: 'var(--appreciation)', borderColor: 'var(--appreciation)', color: 'var(--ink)'  },
-  bad:  { background: 'var(--survival)',     borderColor: 'var(--survival)',     color: 'var(--card)' },
-}
 const MOOD_PIP_COLOR = {
   good: 'var(--exploration)',
   mid:  'var(--appreciation-deep)',
   bad:  'var(--survival)',
+}
+
+// ── Frequency strip ──────────────────────────────────────────────────────────
+
+const STATION_W = 89
+const BAND_EDGES = [1, 6, 11]
+
+// 16 stations: blank + (marker + 4 feelings) × 3 bands
+const STATIONS = [
+  { type: 'blank', band: null, feeling: null, label: '' },
+  { type: 'band',    band: 'good', feeling: null,          label: 'good' },
+  ...FEELINGS.good.map(f => ({ type: 'feeling', band: 'good', feeling: f, label: f })),
+  { type: 'band',    band: 'mid',  feeling: null,          label: 'mid' },
+  ...FEELINGS.mid.map(f  => ({ type: 'feeling', band: 'mid',  feeling: f, label: f })),
+  { type: 'band',    band: 'bad',  feeling: null,          label: 'bad' },
+  ...FEELINGS.bad.map(f  => ({ type: 'feeling', band: 'bad',  feeling: f, label: f })),
+]
+
+function indexForSelection(band, feeling) {
+  if (!band) return 0
+  const bi = BANDS.indexOf(band)
+  if (bi < 0) return 0
+  const base = bi * 5 + 1
+  if (!feeling) return base
+  const fi = FEELINGS[band].indexOf(feeling)
+  return fi >= 0 ? base + fi + 1 : base
+}
+
+function selectionForIndex(index) {
+  if (index === 0) return { band: null, feeling: null }
+  const bi = Math.floor((index - 1) / 5)
+  const within = (index - 1) % 5
+  const band = BANDS[bi]
+  return within === 0 ? { band, feeling: null } : { band, feeling: FEELINGS[band][within - 1] }
+}
+
+function FrequencyStrip({ initialBand, initialFeeling, onSettle }) {
+  const scrollRef = useRef(null)
+  const initIdx = indexForSelection(initialBand, initialFeeling)
+  const prevIdxRef = useRef(initIdx)
+  const settleTimerRef = useRef(null)
+  const tapRef = useRef(false)
+  const [currentIndex, setCurrentIndex] = useState(initIdx)
+
+  useLayoutEffect(() => {
+    const el = scrollRef.current
+    if (!el || initIdx === 0) return
+    el.scrollLeft = initIdx * STATION_W
+  }, []) // mount-only: set initial position without animation
+
+  function handleScroll() {
+    const el = scrollRef.current
+    if (!el) return
+    clearTimeout(settleTimerRef.current)
+    const newIdx = Math.max(0, Math.min(STATIONS.length - 1, Math.round(el.scrollLeft / STATION_W)))
+    if (newIdx !== prevIdxRef.current) {
+      if (!tapRef.current) tuneTick(BAND_EDGES.includes(newIdx))
+      prevIdxRef.current = newIdx
+      setCurrentIndex(newIdx)
+    }
+    settleTimerRef.current = setTimeout(() => {
+      tapRef.current = false
+      tuneEnd()
+      const settled = Math.max(0, Math.min(STATIONS.length - 1, Math.round(el.scrollLeft / STATION_W)))
+      if (settled === 0) return
+      const { band, feeling } = selectionForIndex(settled)
+      onSettle(band, feeling)
+    }, 300)
+  }
+
+  function tapStation(i) {
+    tapRef.current = true
+    scrollRef.current?.scrollTo({ left: i * STATION_W, behavior: 'smooth' })
+    setTimeout(() => { tapRef.current = false }, 600)
+  }
+
+  const { band: selBand, feeling: selFeeling } = selectionForIndex(currentIndex)
+
+  return (
+    <div className={styles.stripOuter}>
+      <div className={styles.stripNeedle} aria-hidden="true" />
+      <div
+        ref={scrollRef}
+        className={styles.stripScroll}
+        onScroll={handleScroll}
+        onPointerDown={tuneStart}
+      >
+        <div className={styles.stripTrack}>
+          <div className={styles.bandRail}>
+            <div className={styles.railBlank} />
+            <div className={styles.railGood} />
+            <div className={styles.railMid} />
+            <div className={styles.railBad} />
+          </div>
+          <div className={styles.stationsRow}>
+            {STATIONS.map((s, i) => (
+              <button
+                key={i}
+                className={`${styles.station} ${styles['station_' + s.type]} ${i === currentIndex ? styles.stationActive : ''}`}
+                onClick={() => tapStation(i)}
+                aria-label={s.label || 'not set'}
+              >
+                {s.label && <span className={styles.stationLabel}>{s.label}</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className={styles.fadeLeft} aria-hidden="true" />
+      <div className={styles.fadeRight} aria-hidden="true" />
+      <div className={styles.stripReadout}>
+        {currentIndex === 0 ? 'not set' : (selFeeling || selBand)}
+      </div>
+    </div>
+  )
 }
 
 
@@ -557,13 +666,19 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     return init
   })
 
+  const [moodFeelings, setMoodFeelings] = useState(() => {
+    const init = {}
+    todayMoods.forEach(m => { if (m.feeling) init[m.prompt_time] = m.feeling })
+    return init
+  })
+
   const [moodNotes, setMoodNotes] = useState(() => {
     const init = {}
     todayMoods.forEach(m => { init[m.prompt_time] = m.note || '' })
     return init
   })
 
-  // Sync mood selections and notes from the server after restoreFromSupabase loads.
+  // Sync mood selections, feelings, and notes from the server after restoreFromSupabase loads.
   // Only fills empty slots — never overwrites live user input.
   useEffect(() => {
     const todayMoodsNow = (state.moods || []).filter(m => m.date_key === today)
@@ -573,6 +688,11 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
       todayMoodsNow.forEach(m => { if (!next[m.prompt_time]) next[m.prompt_time] = normalizeBand(m.mood) })
       return next
     })
+    setMoodFeelings(prev => {
+      const next = { ...prev }
+      todayMoodsNow.forEach(m => { if (!next[m.prompt_time] && m.feeling) next[m.prompt_time] = m.feeling })
+      return next
+    })
     setMoodNotes(prev => {
       const next = { ...prev }
       todayMoodsNow.forEach(m => { if (!next[m.prompt_time] && m.note) next[m.prompt_time] = m.note })
@@ -580,20 +700,27 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     })
   }, [state.moods])
 
-  async function handleMoodSelect(promptTime, mood) {
-    hapticTick()
-    const prior = moodSelections[promptTime]
-    setMoodSelections(prev => ({ ...prev, [promptTime]: mood }))
+  async function handleFrequencySettle(promptTime, band, feeling) {
+    if (!band) return  // blank station → no write
+    const priorBand = moodSelections[promptTime]
+    const priorFeeling = moodFeelings[promptTime]
+    setMoodSelections(prev => ({ ...prev, [promptTime]: band }))
+    setMoodFeelings(prev => ({ ...prev, [promptTime]: feeling || null }))
     if (!logMood) return
-    const { error } = await logMood(state.userId, promptTime, mood, moodNotes[promptTime] || null, today)
+    const { error } = await logMood(state.userId, promptTime, band, moodNotes[promptTime] || null, today, feeling || null)
     if (error) {
       setMoodSelections(prev => {
         const next = { ...prev }
-        if (next[promptTime] !== mood) return next
-        if (prior !== undefined) { next[promptTime] = prior } else { delete next[promptTime] }
+        if (next[promptTime] !== band) return next
+        if (priorBand !== undefined) next[promptTime] = priorBand; else delete next[promptTime]
         return next
       })
-      setMoodNotes(prev => ({ ...prev, [promptTime]: '' }))
+      setMoodFeelings(prev => {
+        const next = { ...prev }
+        if (next[promptTime] !== (feeling || null)) return next
+        if (priorFeeling !== undefined) next[promptTime] = priorFeeling; else delete next[promptTime]
+        return next
+      })
     }
   }
 
@@ -776,9 +903,9 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
           {showGuidance && <GuidanceCard type={guidanceType} onDismiss={handleDismissGuidance} />}
         </div>
 
-        {/* ── Mood section ── */}
+        {/* ── Frequency section ── */}
         <div className={styles.moodCard} data-tour="mood">
-          <div className={styles.moodEyebrow}>MOOD CHECK</div>
+          <div className={styles.moodEyebrow}>FREQUENCY</div>
           <div className={styles.moodRow}>
             <div className={styles.moodLeft}>
               <div className={styles.moodQuestion}>how's the {SLOT_NOUN[slot]}?</div>
@@ -797,28 +924,22 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 </div>
               )}
             </div>
-            <div className={styles.moodCircles}>
-              {MOODS.map(mood => (
-                <button
-                  key={mood}
-                  className={`${styles.moodCircle} ${moodSelections[slot] === mood ? styles.moodCircleSelected : ''}`}
-                  style={moodSelections[slot] === mood ? MOOD_FILL[mood] : undefined}
-                  onClick={() => handleMoodSelect(slot, mood)}
-                >{mood}</button>
-              ))}
-            </div>
           </div>
-          {/* Retro slot detail */}
+          <FrequencyStrip
+            key={slot}
+            initialBand={moodSelections[slot] || null}
+            initialFeeling={moodFeelings[slot] || null}
+            onSettle={(band, feeling) => handleFrequencySettle(slot, band, feeling)}
+          />
           {openRetroSlot && (
             <div className={styles.retroRow}>
               <div className={styles.retroQ}>how was the {SLOT_NOUN[openRetroSlot]}?</div>
-              <div className={styles.moodCircles}>
-                {MOODS.map(mood => (
-                  <button key={mood} className={`${styles.moodCircle} ${styles.moodCircleSm} ${moodSelections[openRetroSlot] === mood ? styles.moodCircleSelected : ''}`}
-                    style={moodSelections[openRetroSlot] === mood ? MOOD_FILL[mood] : undefined}
-                    onClick={() => { handleMoodSelect(openRetroSlot, mood); setOpenRetroSlot(null) }}>{mood}</button>
-                ))}
-              </div>
+              <FrequencyStrip
+                key={openRetroSlot}
+                initialBand={moodSelections[openRetroSlot] || null}
+                initialFeeling={moodFeelings[openRetroSlot] || null}
+                onSettle={(band, feeling) => { handleFrequencySettle(openRetroSlot, band, feeling); setOpenRetroSlot(null) }}
+              />
             </div>
           )}
         </div>

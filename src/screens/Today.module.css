@@ -1016,6 +1016,128 @@
   margin: 18px 0;
 }
 
+/* ── Frequency strip ── */
+.stripOuter {
+  position: relative;
+  overflow: hidden;
+  margin-top: 14px;
+}
+
+.stripNeedle {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 20px; /* stop above readout */
+  width: 1px;
+  background: var(--ink3);
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.stripScroll {
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-inline: calc((100% - 89px) / 2);
+  position: relative;
+  z-index: 1;
+}
+.stripScroll::-webkit-scrollbar { display: none; }
+
+.stripTrack {
+  width: 1424px; /* 16 × 89 */
+  display: flex;
+  flex-direction: column;
+}
+
+.bandRail {
+  display: flex;
+  height: 4px;
+  flex-shrink: 0;
+}
+.railBlank { width: 89px;  flex-shrink: 0; background: rgba(0,0,0,.06); }
+.railGood  { width: 445px; flex-shrink: 0; background: var(--exploration); opacity: 0.55; }
+.railMid   { width: 445px; flex-shrink: 0; background: var(--appreciation); opacity: 0.55; }
+.railBad   { width: 445px; flex-shrink: 0; background: var(--survival); opacity: 0.55; }
+
+.stationsRow {
+  display: flex;
+}
+
+.station {
+  width: 89px;
+  flex-shrink: 0;
+  scroll-snap-align: center;
+  height: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  padding: 0;
+}
+
+/* station type variants */
+.station_band    .stationLabel { font-size: 10.5px; letter-spacing: 0.09em; font-weight: 500; }
+.station_feeling .stationLabel { font-size: 11px; }
+.station_blank   .stationLabel { display: none; }
+
+.stationLabel {
+  font-family: var(--font-mono);
+  color: var(--ink3);
+  opacity: 0.3;
+  transition: opacity 0.1s, color 0.1s;
+  white-space: nowrap;
+}
+
+.stationActive .stationLabel {
+  opacity: 1;
+  color: var(--ink);
+}
+
+.fadeLeft {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 54px;
+  background: linear-gradient(to right, var(--strip-fade, var(--paper)), transparent);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.fadeRight {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 54px;
+  background: linear-gradient(to left, var(--strip-fade, var(--paper)), transparent);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.stripReadout {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink3);
+  text-align: center;
+  padding: 5px 0 0;
+  letter-spacing: 0.06em;
+  height: 20px;
+}
+
+/* retroRow contains a strip: fades must match card background */
+.retroRow {
+  --strip-fade: var(--card);
+}
+
 /* ── Journal entry cards ── */
 .journalMobileEntries {
   display: flex;
@@ -1716,6 +1838,7 @@
 
   /* Mood card: white surface matching the note card beside it */
   .moodCard {
+    --strip-fade: var(--card);
     background: var(--card);
     border: var(--card-border);
     border-radius: 16px;
