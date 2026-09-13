@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { hapticTick } from '../lib/native'
+import { normalizeBand } from '../lib/frequency'
 import { IconHeart, IconHeartFilled } from '@tabler/icons-react'
 import { NEEDS, MODE_MAX_BUBBLES, JOURNAL_TRUNCATE } from '../lib/constants'
 import { weekKey, todayKey, loadWeeklyReviews, loadJournalEntry, loadDebriefs, loadDebriefTypes, addNoteDeckCard, saveWeeklyReview, loadAllJournalMeta, loadJournalArchive, updateJournalEntryTags, toggleJournalFavorite, toggleJournalRevisit, loadDayCheckins, loadCustomTags } from '../lib/store'
@@ -13,8 +14,8 @@ import styles from './Log.module.css'
 
 const MOOD_PILL = {
   good: { bg: '#1B3A2D', label: 'good' },
-  fine: { bg: '#B8C3B1', label: 'fine' },
-  bad: { bg: '#D93B1C', label: 'hard' },
+  mid:  { bg: '#B8C3B1', label: 'mid' },
+  bad:  { bg: '#D93B1C', label: 'hard' },
 }
 const MOOD_PERIODS = ['morning', 'midday', 'evening']
 
@@ -95,8 +96,8 @@ const WDAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','satu
 const MONTHS_LONG = ['january','february','march','april','may','june','july','august','september','october','november','december']
 const MONTHS_SHORT = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec']
 
-const MOOD_DOT_COLOR = { good: 'var(--exploration)', fine: '#9DB394', bad: 'var(--survival)' }
-const MOOD_WASH = { good: 'rgba(27,58,45,.10)', fine: 'rgba(232,184,31,.16)', bad: 'rgba(217,59,28,.13)' }
+const MOOD_DOT_COLOR = { good: 'var(--exploration)', mid: '#9DB394', bad: 'var(--survival)' }
+const MOOD_WASH = { good: 'rgba(27,58,45,.10)', mid: 'rgba(232,184,31,.16)', bad: 'rgba(217,59,28,.13)' }
 const SLOT_ORDER = { morning: 0, midday: 1, evening: 2 }
 const MODE_DOT_TOKEN = {
   exploration:  'var(--exploration)',
@@ -293,10 +294,10 @@ function formatReviewTime(time) {
 function dominantMoodForDay(moods, dateKey) {
   const dayMoods = moods.filter(m => m.date_key === dateKey)
   if (dayMoods.length === 0) return null
-  const counts = { good: 0, fine: 0, bad: 0 }
-  for (const m of dayMoods) if (counts[m.mood] !== undefined) counts[m.mood]++
+  const counts = { good: 0, mid: 0, bad: 0 }
+  for (const m of dayMoods) { const band = normalizeBand(m.mood); if (counts[band] !== undefined) counts[band]++ }
   let best = null
-  for (const mood of ['good', 'fine', 'bad']) {
+  for (const mood of ['good', 'mid', 'bad']) {
     if (counts[mood] > 0 && (best === null || counts[mood] > counts[best])) best = mood
   }
   return best
@@ -413,7 +414,7 @@ function DayCardExpandedContent({ canvas, checkins, dateKey, moods, journal, deb
               <div className={styles.moodPeriodRow}>
                 <span className={styles.moodPeriodLabel}>{period}</span>
                 {m ? (
-                  <span className={styles.moodPeriodPill} style={{ background: MOOD_PILL[m.mood].bg }}>{m.mood}</span>
+                  <span className={styles.moodPeriodPill} style={{ background: MOOD_PILL[normalizeBand(m.mood)].bg }}>{normalizeBand(m.mood)}</span>
                 ) : (
                   <span className={styles.moodPeriodEmpty}>—</span>
                 )}
@@ -1264,7 +1265,7 @@ export default function Log({ state, syncCheckinDay }) {
                     ) : (
                       openMatches.slice().reverse().map(e => {
                         const slotMood = e.slot && !e.state
-                          ? ((state.moods || []).find(m => m.date_key === e.date_key && m.prompt_time === e.slot)?.mood || null)
+                          ? normalizeBand((state.moods || []).find(m => m.date_key === e.date_key && m.prompt_time === e.slot)?.mood || null)
                           : null
                         const moodDotColor = slotMood ? MOOD_DOT_COLOR[slotMood] : null
                         return (
@@ -1382,7 +1383,7 @@ export default function Log({ state, syncCheckinDay }) {
                     const dateKey = `${monthPrefix}${String(day).padStart(2, '0')}`
                     const isFuture = dateKey > todayKey
                     const moodEntry = monthMoodIndex[dateKey]
-                    const moodWash = moodEntry ? MOOD_WASH[moodEntry.mood] : null
+                    const moodWash = moodEntry ? MOOD_WASH[normalizeBand(moodEntry.mood)] : null
                     const hasJournal = monthHasJournal.has(dateKey)
                     const hasData = !!(moodEntry || hasJournal)
                     const isSelected = selectedDayKey === dateKey
@@ -1434,8 +1435,8 @@ export default function Log({ state, syncCheckinDay }) {
                       {detailMoods.flatMap((m, i) => {
                         const pair = (
                           <span key={`pair-${m.prompt_time}`} className={styles.calDetailMoodPair}>
-                            <span className={styles.calDetailMoodDot} style={{ background: MOOD_DOT_COLOR[m.mood] }} />
-                            <span className={styles.calDetailMoodLabel}>{m.prompt_time} {m.mood}</span>
+                            <span className={styles.calDetailMoodDot} style={{ background: MOOD_DOT_COLOR[normalizeBand(m.mood)] }} />
+                            <span className={styles.calDetailMoodLabel}>{m.prompt_time} {normalizeBand(m.mood)}</span>
                           </span>
                         )
                         return i === 0
@@ -1483,7 +1484,7 @@ export default function Log({ state, syncCheckinDay }) {
                   {detailJournals.length > 0 ? detailJournals.map(e => {
                     const timeStr = `${e.slot ? `${e.slot} · ` : ''}${formatEntryTime(e.created_at)}`
                     const slotMood = e.slot && !e.state
-                      ? (detailMoods.find(m => m.prompt_time === e.slot)?.mood || null)
+                      ? normalizeBand(detailMoods.find(m => m.prompt_time === e.slot)?.mood || null)
                       : null
                     const entryMoodDotColor = slotMood ? MOOD_DOT_COLOR[slotMood] : null
                     const needName = e.need_id ? (NEEDS.find(n => n.id === e.need_id)?.name || e.need_id) : null
@@ -1777,7 +1778,7 @@ export default function Log({ state, syncCheckinDay }) {
               <div className={styles.archiveCards}>
                 {visible.map(e => {
                     const slotMood = (e.slot && !e.state)
-                      ? ((state.moods || []).find(m => m.date_key === e.date_key && m.prompt_time === e.slot)?.mood || null)
+                      ? normalizeBand((state.moods || []).find(m => m.date_key === e.date_key && m.prompt_time === e.slot)?.mood || null)
                       : null
                     const dotColor = slotMood ? MOOD_DOT_COLOR[slotMood] : null
                     const body = e.entry || ''

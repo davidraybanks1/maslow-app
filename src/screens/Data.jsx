@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { HeaderSlotContext } from '../lib/headerSlot'
 import { NEEDS, MODE_ORDER } from '../lib/constants'
 import { createDataStats } from '../lib/dataStats'
+import { normalizeBand } from '../lib/frequency'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import styles from './Data.module.css'
 
@@ -276,11 +277,11 @@ function dominantMoodFor(moods, dk) {
   const dayMoods = moods.filter(m => m.date_key === dk)
   if (!dayMoods.length) return null
   const c = {}
-  for (const m of dayMoods) c[m.mood] = (c[m.mood] || 0) + 1
+  for (const m of dayMoods) { const band = normalizeBand(m.mood); c[band] = (c[band] || 0) + 1 }
   return Object.entries(c).sort((a, b) => b[1] - a[1])[0][0]
 }
 
-const RHYTHM_MOOD_DOT = { good: '#1B3A2D', fine: '#9DB394', bad: '#D93B1C' }
+const RHYTHM_MOOD_DOT = { good: '#1B3A2D', mid: '#9DB394', bad: '#D93B1C' }
 
 function RhythmSection({ stats, canvas, checkins, moods }) {
   const [weekOffset, setWeekOffset] = useState(0)
@@ -363,7 +364,7 @@ function practicesColor(pct) {
   if (pct < 85) return 'rgba(28,58,46,.78)'
   return '#1B3A2D'
 }
-const MOOD_LENS_COLOR = { good: '#1B3A2D', fine: '#9DB394', bad: '#D93B1C' }
+const MOOD_LENS_COLOR = { good: '#1B3A2D', mid: '#9DB394', bad: '#D93B1C' }
 const EMPTY_CELL = 'rgba(0,0,0,.06)'
 
 const MOBILE_WINDOW = 30
@@ -476,7 +477,7 @@ function LongViewSection({ canvas, checkins, moods, stats, days, windowLen }) {
           {Object.entries(MOOD_LENS_COLOR).map(([k, c]) => (
             <span key={k} className={styles.legendSwatch} style={{ background: c }} />
           ))}
-          <span className={styles.legendText}>good · fine · bad</span>
+          <span className={styles.legendText}>good · mid · bad</span>
           <span className={styles.legendSwatch} style={{ background: EMPTY_CELL }} />
           <span className={styles.legendText}>not logged</span>
         </div>

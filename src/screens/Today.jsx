@@ -6,6 +6,7 @@ import { todayKey, loadJournalEntries, addJournalEntry, deleteJournalEntry, load
 import { BUILTIN_NATURE_TYPES, BUILTIN_PEAK_TYPES } from '../lib/debriefTypes'
 import { createDataStats, getCanvasGuidance } from '../lib/dataStats'
 import { hapticTick, isNative, pendingNotifSlot } from '../lib/native'
+import { normalizeBand } from '../lib/frequency'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import JournalQuote from '../components/JournalQuote'
 import ManageDeck from '../components/ManageDeck'
@@ -16,15 +17,15 @@ import styles from './Today.module.css'
 const NOTE_DECK_MAX = 5
 const MODE_THRESHOLDS = { exploration: 80, appreciation: 60, nourishment: 50, survival: 20 }
 
-const MOODS = ['good', 'fine', 'bad']
+const MOODS = ['good', 'mid', 'bad']
 const MOOD_FILL = {
   good: { background: 'var(--exploration)',  borderColor: 'var(--exploration)',  color: 'var(--card)' },
-  fine: { background: 'var(--appreciation)', borderColor: 'var(--appreciation)', color: 'var(--ink)'  },
+  mid:  { background: 'var(--appreciation)', borderColor: 'var(--appreciation)', color: 'var(--ink)'  },
   bad:  { background: 'var(--survival)',     borderColor: 'var(--survival)',     color: 'var(--card)' },
 }
 const MOOD_PIP_COLOR = {
   good: 'var(--exploration)',
-  fine: 'var(--appreciation-deep)',
+  mid:  'var(--appreciation-deep)',
   bad:  'var(--survival)',
 }
 
@@ -552,7 +553,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
 
   const [moodSelections, setMoodSelections] = useState(() => {
     const init = {}
-    todayMoods.forEach(m => { init[m.prompt_time] = m.mood })
+    todayMoods.forEach(m => { init[m.prompt_time] = normalizeBand(m.mood) })
     return init
   })
 
@@ -569,7 +570,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     if (!todayMoodsNow.length) return
     setMoodSelections(prev => {
       const next = { ...prev }
-      todayMoodsNow.forEach(m => { if (!next[m.prompt_time]) next[m.prompt_time] = m.mood })
+      todayMoodsNow.forEach(m => { if (!next[m.prompt_time]) next[m.prompt_time] = normalizeBand(m.mood) })
       return next
     })
     setMoodNotes(prev => {

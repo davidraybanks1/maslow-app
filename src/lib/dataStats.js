@@ -1,5 +1,6 @@
 import { NEEDS, MODES, MODE_ORDER } from './constants'
 import { parseDebriefEntry } from './debriefTypes'
+import { normalizeBand } from './frequency'
 
 // Formats the finding + basis strings for a mood-link result.
 // Lives here so the copy stays with the computation.
@@ -23,7 +24,7 @@ function buildInsightCopy(link) {
   }
 }
 
-const MOOD_RANK = { bad: 1, fine: 2, good: 3 }
+const MOOD_RANK = { bad: 1, fine: 2, mid: 2, good: 3 }
 
 export const DEBRIEF_NATURE_COLORS = { frenetic: '#C47B3A', overwhelm: '#7A8FA6', apathy: '#9E7B5A' }
 export const DEBRIEF_PEAK_COLORS = { confident: '#1B3A2D', creative: '#C47B3A', curious: '#7A8FA6' }
@@ -206,12 +207,13 @@ export function createDataStats({ canvas, checkins, moods, practices, practicesD
   }
 
   function modeOfMoods(days) {
-    const counts = { good: 0, fine: 0, bad: 0 }
+    const counts = { good: 0, mid: 0, bad: 0 }
     for (const m of moods) {
-      if (days.includes(m.date_key) && counts[m.mood] !== undefined) counts[m.mood]++
+      const band = normalizeBand(m.mood)
+      if (days.includes(m.date_key) && counts[band] !== undefined) counts[band]++
     }
     let best = null
-    for (const mood of ['good', 'fine', 'bad']) {
+    for (const mood of ['good', 'mid', 'bad']) {
       if (counts[mood] > 0 && (best === null || counts[mood] > counts[best])) best = mood
     }
     return best
@@ -308,14 +310,14 @@ export function createDataStats({ canvas, checkins, moods, practices, practicesD
     function statsFor(period) {
       const ms = moods.filter(m => days.includes(m.date_key) && m.prompt_time === period)
       const total = ms.length
-      const good = ms.filter(m => m.mood === 'good').length
-      const fine = ms.filter(m => m.mood === 'fine').length
-      const bad = ms.filter(m => m.mood === 'bad').length
+      const good = ms.filter(m => normalizeBand(m.mood) === 'good').length
+      const mid  = ms.filter(m => normalizeBand(m.mood) === 'mid').length
+      const bad  = ms.filter(m => normalizeBand(m.mood) === 'bad').length
       return {
-        total, good, fine, bad,
+        total, good, mid, bad,
         goodShare: total > 0 ? good / total : 0,
-        fineShare: total > 0 ? fine / total : 0,
-        badShare: total > 0 ? bad / total : 0,
+        midShare:  total > 0 ? mid  / total : 0,
+        badShare:  total > 0 ? bad  / total : 0,
       }
     }
 
@@ -335,15 +337,15 @@ export function createDataStats({ canvas, checkins, moods, practices, practicesD
       const sampleCount = bucketDays.filter(d => moods.some(m => m.date_key === d)).length
       const bucketMoods = moods.filter(m => bucketDays.includes(m.date_key))
       const total = bucketMoods.length
-      const good = bucketMoods.filter(m => m.mood === 'good').length
-      const fine = bucketMoods.filter(m => m.mood === 'fine').length
-      const bad = bucketMoods.filter(m => m.mood === 'bad').length
+      const good = bucketMoods.filter(m => normalizeBand(m.mood) === 'good').length
+      const mid  = bucketMoods.filter(m => normalizeBand(m.mood) === 'mid').length
+      const bad  = bucketMoods.filter(m => normalizeBand(m.mood) === 'bad').length
       return {
         weekday,
         sampleCount,
         goodShare: total > 0 ? good / total : 0,
-        fineShare: total > 0 ? fine / total : 0,
-        badShare: total > 0 ? bad / total : 0,
+        midShare:  total > 0 ? mid  / total : 0,
+        badShare:  total > 0 ? bad  / total : 0,
       }
     })
 
