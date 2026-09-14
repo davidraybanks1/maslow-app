@@ -1,12 +1,12 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { NEEDS, MODES, MODE_ORDER, MODE_MAX_BUBBLES, MODE_WEIGHTS, JOURNAL_TRUNCATE } from '../lib/constants'
-import { currentSlot, precedingSlots, SLOT_NOUN, SLOT_GREETING } from '../lib/slots'
+import { currentSlot, precedingSlots, SLOTS, SLOT_NOUN, SLOT_GREETING } from '../lib/slots'
 import { todayKey, loadJournalEntries, addJournalEntry, deleteJournalEntry, loadNoteDeck, loadCustomTags, uploadNoteImage, loadRevisitQueue } from '../lib/store'
 import { BUILTIN_NATURE_TYPES, BUILTIN_PEAK_TYPES } from '../lib/debriefTypes'
 import { createDataStats, getCanvasGuidance } from '../lib/dataStats'
-import { hapticTick, isNative, pendingNotifSlot, tuneStart, tuneTick, tuneEnd } from '../lib/native'
-import { normalizeBand, BANDS, FEELINGS } from '../lib/frequency'
+import { hapticTick, isNative, pendingNotifSlot } from '../lib/native'
+import { normalizeBand, BANDS, FEELINGS, BAND_LABEL } from '../lib/frequency'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import JournalQuote from '../components/JournalQuote'
 import ManageDeck from '../components/ManageDeck'
@@ -23,122 +23,112 @@ const MOOD_PIP_COLOR = {
   bad:  'var(--survival)',
 }
 
-// ── Frequency strip ──────────────────────────────────────────────────────────
+// ── Frequency card ───────────────────────────────────────────────────────────
+// Props: initialBand, initialFeeling, onSettle(band, feeling), compact, pastTense, dayparts
+// dayparts: [{ name, isCurrent, band, hasFeeling, onTap }]
 
-const STATION_W = 89
-const BAND_EDGES = [1, 6, 11]
-
-// 16 stations: blank + (marker + 4 feelings) × 3 bands
-const STATIONS = [
-  { type: 'blank', band: null, feeling: null, label: '' },
-  { type: 'band',    band: 'good', feeling: null,          label: 'good' },
-  ...FEELINGS.good.map(f => ({ type: 'feeling', band: 'good', feeling: f, label: f })),
-  { type: 'band',    band: 'mid',  feeling: null,          label: 'mid' },
-  ...FEELINGS.mid.map(f  => ({ type: 'feeling', band: 'mid',  feeling: f, label: f })),
-  { type: 'band',    band: 'bad',  feeling: null,          label: 'bad' },
-  ...FEELINGS.bad.map(f  => ({ type: 'feeling', band: 'bad',  feeling: f, label: f })),
-]
-
-function indexForSelection(band, feeling) {
-  if (!band) return 0
-  const bi = BANDS.indexOf(band)
-  if (bi < 0) return 0
-  const base = bi * 5 + 1
-  if (!feeling) return base
-  const fi = FEELINGS[band].indexOf(feeling)
-  return fi >= 0 ? base + fi + 1 : base
-}
-
-function selectionForIndex(index) {
-  if (index === 0) return { band: null, feeling: null }
-  const bi = Math.floor((index - 1) / 5)
-  const within = (index - 1) % 5
-  const band = BANDS[bi]
-  return within === 0 ? { band, feeling: null } : { band, feeling: FEELINGS[band][within - 1] }
-}
-
-function FrequencyStrip({ initialBand, initialFeeling, onSettle }) {
-  const scrollRef = useRef(null)
-  const initIdx = indexForSelection(initialBand, initialFeeling)
-  const prevIdxRef = useRef(initIdx)
-  const settleTimerRef = useRef(null)
-  const tapRef = useRef(false)
+function FrequencyCard({ initialBand, initialFeeling, onSettle, compact, pastTense, dayparts }) {
+  const [band, setBand] = useState(initialBand || null)
+  const [feeling, setFeeling] = useState(initialFeeling || null)
   const touchedRef = useRef(false)
-  const [currentIndex, setCurrentIndex] = useState(initIdx)
 
-  useLayoutEffect(() => {
-    const el = scrollRef.current
-    if (!el || touchedRef.current) return
-    const idx = indexForSelection(initialBand, initialFeeling)
-    if (idx === prevIdxRef.current) return
-    el.scrollLeft = idx * STATION_W
-    prevIdxRef.current = idx
-    setCurrentIndex(idx)
+  useEffect(() => {
+    if (touchedRef.current) return
+    setBand(initialBand || null)
+    setFeeling(initialFeeling || null)
   }, [initialBand, initialFeeling])
 
-  function handleScroll() {
-    const el = scrollRef.current
-    if (!el) return
-    clearTimeout(settleTimerRef.current)
-    const newIdx = Math.max(0, Math.min(STATIONS.length - 1, Math.round(el.scrollLeft / STATION_W)))
-    if (newIdx !== prevIdxRef.current) {
-      if (!tapRef.current) tuneTick(BAND_EDGES.includes(newIdx))
-      prevIdxRef.current = newIdx
-      setCurrentIndex(newIdx)
-    }
-    settleTimerRef.current = setTimeout(() => {
-      tapRef.current = false
-      tuneEnd()
-      const settled = Math.max(0, Math.min(STATIONS.length - 1, Math.round(el.scrollLeft / STATION_W)))
-      if (settled === 0) return
-      const { band, feeling } = selectionForIndex(settled)
-      onSettle(band, feeling)
-    }, 300)
+  function pickBand(b) {
+    touchedRef.current = true
+    hapticTick()
+    setBand(b)
+    setFeeling(null)
+    onSettle(b, null)
   }
 
-  function tapStation(i) {
-    tapRef.current = true
-    scrollRef.current?.scrollTo({ left: i * STATION_W, behavior: 'smooth' })
-    setTimeout(() => { tapRef.current = false }, 600)
+  function pickFeeling(f) {
+    hapticTick()
+    setFeeling(f)
+    onSettle(band, f)
   }
 
-  const { band: selBand, feeling: selFeeling } = selectionForIndex(currentIndex)
+  function goBack() {
+    touchedRef.current = false
+    setBand(null)
+    setFeeling(null)
+  }
+
+  const displayLabel = feeling || (band ? BAND_LABEL[band] : null)
 
   return (
-    <div className={styles.stripOuter}>
-      <div className={styles.stripNeedle} aria-hidden="true" />
-      <div
-        ref={scrollRef}
-        className={styles.stripScroll}
-        onScroll={handleScroll}
-        onPointerDown={() => { touchedRef.current = true; tuneStart() }}
-      >
-        <div className={styles.stripTrack}>
-          <div className={styles.bandRail}>
-            <div className={styles.railBlank} />
-            <div className={styles.railGood} />
-            <div className={styles.railMid} />
-            <div className={styles.railBad} />
-          </div>
-          <div className={styles.stationsRow}>
-            {STATIONS.map((s, i) => (
+    <div className={styles.freqCard}>
+      {!compact && (
+        <p className={styles.freqSentence}>
+          {pastTense ? 'I was feeling' : "I'm feeling"}{' '}
+          {displayLabel
+            ? <span className={styles.freqFilled}>{displayLabel}</span>
+            : <span className={styles.freqBlank}>?</span>
+          }{'.'}
+        </p>
+      )}
+
+      {!band ? (
+        <div className={styles.freqOptionsRow}>
+          {BANDS.map(b => (
+            <button key={b} className={styles.freqOptionBtn} onClick={() => pickBand(b)}>
+              {BAND_LABEL[b]}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <>
+          {!compact && (
+            <p className={styles.freqTextureQ}>Is there a specific texture?</p>
+          )}
+          <div className={styles.freqOptionsRow}>
+            {FEELINGS[band].map(f => (
               <button
-                key={i}
-                className={`${styles.station} ${styles['station_' + s.type]} ${i === currentIndex ? styles.stationActive : ''}`}
-                onClick={() => tapStation(i)}
-                aria-label={s.label || 'not set'}
-              >
-                {s.label && <span className={styles.stationLabel}>{s.label}</span>}
-              </button>
+                key={f}
+                className={`${styles.freqOptionBtn} ${f === feeling ? styles.freqOptionActive : ''} ${feeling && f !== feeling ? styles.freqOptionDim : ''}`}
+                onClick={() => pickFeeling(f)}
+              >{f}</button>
             ))}
           </div>
-        </div>
-      </div>
-      <div className={styles.fadeLeft} aria-hidden="true" />
-      <div className={styles.fadeRight} aria-hidden="true" />
-      <div className={styles.stripReadout}>
-        {currentIndex === 0 ? 'not set' : (selFeeling || selBand)}
-      </div>
+        </>
+      )}
+
+      {!compact && (
+        <>
+          <div className={styles.freqRule} />
+          {band && (
+            <button className={styles.freqBackBtn} onClick={goBack}>
+              ← {feeling ? 'change' : `${BAND_LABEL[band]} is saved — this gives you more detail`}
+            </button>
+          )}
+          {dayparts && (
+            <div className={styles.freqDayparts}>
+              {dayparts.map(dp => {
+                const color = dp.band ? MOOD_PIP_COLOR[dp.band] : null
+                const dotStyle = !color ? undefined
+                  : dp.hasFeeling
+                    ? { background: color, borderColor: color }
+                    : { background: `linear-gradient(to right, ${color} 50%, transparent 50%)`, borderColor: color }
+                return (
+                  <button
+                    key={dp.name}
+                    className={`${styles.freqDaypart} ${dp.isCurrent ? styles.freqDaypartCurrent : ''}`}
+                    onClick={dp.onTap || undefined}
+                    style={!dp.onTap ? { cursor: 'default' } : undefined}
+                  >
+                    <span className={styles.freqDot} style={dotStyle} />
+                    <span className={styles.freqDaypartLabel}>{dp.name}</span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </>
+      )}
     </div>
   )
 }
@@ -435,6 +425,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   const [draftMoodFeeling, setDraftMoodFeeling] = useState(null)
   const [draftMoodInherited, setDraftMoodInherited] = useState(true)
   const [freqPickerOpen, setFreqPickerOpen] = useState(false)
+  const freqPickerNewSlot = useRef(false)
   const [draftImage, setDraftImage] = useState(null)
   const [uploadingJournalImage, setUploadingJournalImage] = useState(false)
   const [quotedText, setQuotedText] = useState(null)
@@ -925,40 +916,27 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
 
         {/* ── Frequency section ── */}
         <div className={styles.moodCard} data-tour="mood">
-          <div className={styles.moodEyebrow}>FREQUENCY</div>
-          <div className={styles.moodRow}>
-            <div className={styles.moodLeft}>
-              <div className={styles.moodQuestion}>how's the {SLOT_NOUN[slot]}?</div>
-              {precedingSlots(slot).length > 0 && (
-                <div className={styles.moodPipRow}>
-                  {precedingSlots(slot).map(prevSlot => (
-                    <button key={prevSlot} className={styles.moodPip} aria-expanded={openRetroSlot === prevSlot}
-                      onClick={() => setOpenRetroSlot(o => o === prevSlot ? null : prevSlot)}>
-                      <span
-                        className={`${styles.moodPipDot} ${moodSelections[prevSlot] ? styles.moodPipDotFilled : ''}`}
-                        style={moodSelections[prevSlot] ? { background: MOOD_PIP_COLOR[moodSelections[prevSlot]], borderColor: MOOD_PIP_COLOR[moodSelections[prevSlot]] } : undefined}
-                      />
-                      <span className={styles.moodPipLabel}>{prevSlot}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-          <FrequencyStrip
+          <FrequencyCard
             key={slot}
             initialBand={moodSelections[slot] || null}
             initialFeeling={moodFeelings[slot] || null}
             onSettle={(band, feeling) => handleFrequencySettle(slot, band, feeling)}
+            dayparts={SLOTS.map(s => ({
+              name: s,
+              isCurrent: s === slot,
+              band: moodSelections[s] || null,
+              hasFeeling: !!(moodFeelings[s]),
+              onTap: precedingSlots(slot).includes(s) ? () => setOpenRetroSlot(o => o === s ? null : s) : null,
+            }))}
           />
           {openRetroSlot && (
             <div className={styles.retroRow}>
-              <div className={styles.retroQ}>how was the {SLOT_NOUN[openRetroSlot]}?</div>
-              <FrequencyStrip
+              <FrequencyCard
                 key={openRetroSlot}
                 initialBand={moodSelections[openRetroSlot] || null}
                 initialFeeling={moodFeelings[openRetroSlot] || null}
                 onSettle={(band, feeling) => { handleFrequencySettle(openRetroSlot, band, feeling); setOpenRetroSlot(null) }}
+                pastTense
               />
             </div>
           )}
@@ -1223,13 +1201,13 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                   <span className={styles.composerTimeChip}>{formatEntryTime(new Date().toISOString())}</span>
                   <span className={styles.composerSlotChip}>{slot}</span>
                   {chipBand ? (
-                    <button className={styles.composerTagActive} onClick={() => { setFreqPickerOpen(o => !o); setNeedPickerOpen(false); setStatePickerOpen(false); setCustomPickerOpen(false) }}>
+                    <button className={styles.composerTagActive} onClick={() => { freqPickerNewSlot.current = !moodSelections[slot]; setFreqPickerOpen(o => !o); setNeedPickerOpen(false); setStatePickerOpen(false); setCustomPickerOpen(false) }}>
                       <span className={styles.composerFreqDot} style={draftMoodInherited ? { border: `1.5px solid ${MOOD_PIP_COLOR[chipBand]}` } : { background: MOOD_PIP_COLOR[chipBand] }} />
                       {chipFeeling || chipBand}
                       {!draftMoodInherited && <span className={styles.composerFreqClear} onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); setDraftMoodInherited(true); setDraftMoodBand(null); setDraftMoodFeeling(null); setFreqPickerOpen(false) }}>×</span>}
                     </button>
                   ) : (
-                    <button className={styles.composerTagBtn} onClick={() => { setFreqPickerOpen(o => !o); setNeedPickerOpen(false); setStatePickerOpen(false); setCustomPickerOpen(false) }}>+ frequency</button>
+                    <button className={styles.composerTagBtn} onClick={() => { freqPickerNewSlot.current = !moodSelections[slot]; setFreqPickerOpen(o => !o); setNeedPickerOpen(false); setStatePickerOpen(false); setCustomPickerOpen(false) }}>+ frequency</button>
                   )}
                   {draftState ? (
                     <button className={styles.composerTagActive} onClick={() => setDraftState(null)}>{draftState} ×</button>
@@ -1249,15 +1227,16 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 </div>
                 {freqPickerOpen && (
                   <div className={styles.composerFreqPicker}>
-                    <FrequencyStrip
+                    <FrequencyCard
                       initialBand={chipBand}
                       initialFeeling={chipFeeling}
+                      compact
                       onSettle={(band, feeling) => {
                         setDraftMoodBand(band)
                         setDraftMoodFeeling(feeling || null)
                         setDraftMoodInherited(false)
-                        setFreqPickerOpen(false)
-                        if (!moodSelections[slot]) handleFrequencySettle(slot, band, feeling)
+                        if (feeling) setFreqPickerOpen(false)
+                        if (freqPickerNewSlot.current) handleFrequencySettle(slot, band, feeling)
                       }}
                     />
                   </div>
@@ -1368,13 +1347,13 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                   <div className={styles.composerChips}>
                     <span className={styles.composerSlotChip}>{slot}</span>
                     {chipBand ? (
-                      <button className={styles.composerTagActive} onClick={() => { setFreqPickerOpen(o => !o); setNeedPickerOpen(false); setStatePickerOpen(false); setCustomPickerOpen(false) }}>
+                      <button className={styles.composerTagActive} onClick={() => { freqPickerNewSlot.current = !moodSelections[slot]; setFreqPickerOpen(o => !o); setNeedPickerOpen(false); setStatePickerOpen(false); setCustomPickerOpen(false) }}>
                         <span className={styles.composerFreqDot} style={draftMoodInherited ? { border: `1.5px solid ${MOOD_PIP_COLOR[chipBand]}` } : { background: MOOD_PIP_COLOR[chipBand] }} />
                         {chipFeeling || chipBand}
                         {!draftMoodInherited && <span className={styles.composerFreqClear} onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); setDraftMoodInherited(true); setDraftMoodBand(null); setDraftMoodFeeling(null); setFreqPickerOpen(false) }}>×</span>}
                       </button>
                     ) : (
-                      <button className={styles.composerTagBtn} onClick={() => { setFreqPickerOpen(o => !o); setNeedPickerOpen(false); setStatePickerOpen(false); setCustomPickerOpen(false) }}>+ frequency</button>
+                      <button className={styles.composerTagBtn} onClick={() => { freqPickerNewSlot.current = !moodSelections[slot]; setFreqPickerOpen(o => !o); setNeedPickerOpen(false); setStatePickerOpen(false); setCustomPickerOpen(false) }}>+ frequency</button>
                     )}
                     {draftNeedId ? (
                       <button className={styles.composerTagActive} onClick={() => setDraftNeedId(null)}>{draftNeedId} ×</button>
@@ -1394,15 +1373,16 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                   </div>
                   {freqPickerOpen && (
                     <div className={styles.composerFreqPicker}>
-                      <FrequencyStrip
+                      <FrequencyCard
                         initialBand={chipBand}
                         initialFeeling={chipFeeling}
+                        compact
                         onSettle={(band, feeling) => {
                           setDraftMoodBand(band)
                           setDraftMoodFeeling(feeling || null)
                           setDraftMoodInherited(false)
-                          setFreqPickerOpen(false)
-                          if (!moodSelections[slot]) handleFrequencySettle(slot, band, feeling)
+                          if (feeling) setFreqPickerOpen(false)
+                          if (freqPickerNewSlot.current) handleFrequencySettle(slot, band, feeling)
                         }}
                       />
                     </div>

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { HeaderSlotContext } from '../lib/headerSlot'
 import { NEEDS, MODE_ORDER } from '../lib/constants'
 import { createDataStats } from '../lib/dataStats'
-import { normalizeBand } from '../lib/frequency'
+import { normalizeBand, BAND_LABEL } from '../lib/frequency'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import styles from './Data.module.css'
 
@@ -477,7 +477,7 @@ function LongViewSection({ canvas, checkins, moods, stats, days, windowLen }) {
           {Object.entries(MOOD_LENS_COLOR).map(([k, c]) => (
             <span key={k} className={styles.legendSwatch} style={{ background: c }} />
           ))}
-          <span className={styles.legendText}>good · mid · bad</span>
+          <span className={styles.legendText}>{BAND_LABEL.good} · {BAND_LABEL.mid} · {BAND_LABEL.bad}</span>
           <span className={styles.legendSwatch} style={{ background: EMPTY_CELL }} />
           <span className={styles.legendText}>not logged</span>
         </div>

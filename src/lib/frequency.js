@@ -1,12 +1,15 @@
 export const BANDS = ['good', 'mid', 'bad']
 
+// Display labels. The stored token never changes; only this map does.
+export const BAND_LABEL = { good: 'good', mid: 'fine', bad: 'bad' }
+
 export const FEELINGS = {
   good: ['calm', 'curious', 'creative', 'confident'],
   mid:  ['steady', 'flat', 'restless', 'braced'],
-  bad:  ['overwhelmed', 'apathetic', 'frenetic', 'fearful'],
+  bad:  ['overwhelmed', 'apathetic', 'frenetic', 'small'],
 }
 
-export const THREADS = ['capacity', 'engagement', 'drive', 'safety']
+export const THREADS = ['capacity', 'engagement', 'drive', 'standing']
 
 /** Thread name for a feeling — its index within its band. Not rendered; used by the Data screen. */
 export function threadOf(feeling) {

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { hapticTick } from '../lib/native'
-import { normalizeBand } from '../lib/frequency'
+import { normalizeBand, BAND_LABEL } from '../lib/frequency'
 import { IconHeart, IconHeartFilled } from '@tabler/icons-react'
 import { NEEDS, MODE_MAX_BUBBLES, JOURNAL_TRUNCATE } from '../lib/constants'
 import { weekKey, todayKey, loadWeeklyReviews, loadJournalEntry, loadDebriefs, loadDebriefTypes, addNoteDeckCard, saveWeeklyReview, loadAllJournalMeta, loadJournalArchive, updateJournalEntryTags, toggleJournalFavorite, toggleJournalRevisit, loadDayCheckins, loadCustomTags } from '../lib/store'
@@ -13,9 +13,9 @@ import { supabase } from '../lib/supabase'
 import styles from './Log.module.css'
 
 const MOOD_PILL = {
-  good: { bg: '#1B3A2D', label: 'good' },
-  mid:  { bg: '#B8C3B1', label: 'mid' },
-  bad:  { bg: '#D93B1C', label: 'hard' },
+  good: { bg: '#1B3A2D' },
+  mid:  { bg: '#B8C3B1' },
+  bad:  { bg: '#D93B1C' },
 }
 const MOOD_PERIODS = ['morning', 'midday', 'evening']
 
@@ -414,7 +414,7 @@ function DayCardExpandedContent({ canvas, checkins, dateKey, moods, journal, deb
               <div className={styles.moodPeriodRow}>
                 <span className={styles.moodPeriodLabel}>{period}</span>
                 {m ? (
-                  <span className={styles.moodPeriodPill} style={{ background: MOOD_PILL[normalizeBand(m.mood)].bg }}>{normalizeBand(m.mood)}</span>
+                  <span className={styles.moodPeriodPill} style={{ background: MOOD_PILL[normalizeBand(m.mood)].bg }}>{BAND_LABEL[normalizeBand(m.mood)]}</span>
                 ) : (
                   <span className={styles.moodPeriodEmpty}>—</span>
                 )}
@@ -496,7 +496,7 @@ function DayCard({ dateKey, canvas, checkins, moods, journal, debriefs, debriefT
         <div className={styles.dayCardBarFill} style={{ width: `${pct}%` }} />
       </div>
       {mood && (
-        <span className={styles.dayCardMoodPill} style={{ background: MOOD_PILL[mood].bg }}>{MOOD_PILL[mood].label}</span>
+        <span className={styles.dayCardMoodPill} style={{ background: MOOD_PILL[mood].bg }}>{BAND_LABEL[mood]}</span>
       )}
       {excerpt && <div className={styles.dayCardExcerpt}>{excerpt}</div>}
       {(anxietyCount > 0 || peakCount > 0) && (
