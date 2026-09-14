@@ -63,13 +63,18 @@ function FrequencyStrip({ initialBand, initialFeeling, onSettle }) {
   const prevIdxRef = useRef(initIdx)
   const settleTimerRef = useRef(null)
   const tapRef = useRef(false)
+  const touchedRef = useRef(false)
   const [currentIndex, setCurrentIndex] = useState(initIdx)
 
   useLayoutEffect(() => {
     const el = scrollRef.current
-    if (!el || initIdx === 0) return
-    el.scrollLeft = initIdx * STATION_W
-  }, []) // mount-only: set initial position without animation
+    if (!el || touchedRef.current) return
+    const idx = indexForSelection(initialBand, initialFeeling)
+    if (idx === prevIdxRef.current) return
+    el.scrollLeft = idx * STATION_W
+    prevIdxRef.current = idx
+    setCurrentIndex(idx)
+  }, [initialBand, initialFeeling])
 
   function handleScroll() {
     const el = scrollRef.current
@@ -106,7 +111,7 @@ function FrequencyStrip({ initialBand, initialFeeling, onSettle }) {
         ref={scrollRef}
         className={styles.stripScroll}
         onScroll={handleScroll}
-        onPointerDown={tuneStart}
+        onPointerDown={() => { touchedRef.current = true; tuneStart() }}
       >
         <div className={styles.stripTrack}>
           <div className={styles.bandRail}>
@@ -426,6 +431,10 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   const [draftNeedId, setDraftNeedId] = useState(null)
   const [draftState, setDraftState] = useState(null)
   const [draftCustom, setDraftCustom] = useState(null)
+  const [draftMoodBand, setDraftMoodBand] = useState(null)
+  const [draftMoodFeeling, setDraftMoodFeeling] = useState(null)
+  const [draftMoodInherited, setDraftMoodInherited] = useState(true)
+  const [freqPickerOpen, setFreqPickerOpen] = useState(false)
   const [draftImage, setDraftImage] = useState(null)
   const [uploadingJournalImage, setUploadingJournalImage] = useState(false)
   const [quotedText, setQuotedText] = useState(null)
@@ -451,6 +460,8 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   async function handleAddEntry() {
     const text = draftText.trim()
     if (!text || !state.userId) return
+    const entryBand = draftMoodInherited ? (moodSelections[slot] || null) : draftMoodBand
+    const entryFeeling = draftMoodInherited ? (moodFeelings[slot] || null) : draftMoodFeeling
     const { data, error } = await addJournalEntry(state.userId, today, {
       entry: text,
       slot: currentSlot(),
@@ -460,6 +471,8 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
       imageUrl: draftImage,
       quotedText,
       quotedDate,
+      moodBand: entryBand,
+      moodFeeling: entryFeeling,
     })
     if (error) { setJournalSaveError('save failed — try again'); return }
     setJournalEntries(prev => [...prev, data])
@@ -475,6 +488,10 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     setStatePickerOpen(false)
     setCustomPickerOpen(false)
     setAttachMenuOpen(false)
+    setDraftMoodInherited(true)
+    setDraftMoodBand(null)
+    setDraftMoodFeeling(null)
+    setFreqPickerOpen(false)
   }
 
   async function handleJournalFilePick(e) {
@@ -699,6 +716,9 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
       return next
     })
   }, [state.moods])
+
+  const chipBand = draftMoodInherited ? (moodSelections[slot] || null) : draftMoodBand
+  const chipFeeling = draftMoodInherited ? (moodFeelings[slot] || null) : draftMoodFeeling
 
   async function handleFrequencySettle(promptTime, band, feeling) {
     if (!band) return  // blank station → no write
@@ -1152,11 +1172,10 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 {journalEntries.length === 0 ? (
                   <span className={styles.journalEntriesEmpty}>nothing written yet — start typing below</span>
                 ) : journalEntries.map(e => {
-                  const entryMoodKey = !e.state && e.slot ? moodSelections[e.slot] : null
                   return (
                   <div key={e.id} className={styles.journalEntryCard}>
                     <div className={styles.journalEntryMeta}>
-                      {entryMoodKey && <span className={styles.journalMoodDot} style={{ background: MOOD_PIP_COLOR[entryMoodKey] }} />}
+                      {e.mood_band && <span className={styles.journalFreqChip}><span className={styles.journalFreqDot} style={{ background: MOOD_PIP_COLOR[e.mood_band] }} />{e.mood_feeling || e.mood_band}</span>}
                       <span className={styles.journalEntryTime}>{formatEntryTime(e.created_at)}</span>
                       {e.slot && <span className={styles.journalSlotChip}>{e.slot}</span>}
                       {e.state && <span className={styles.journalStateTag}>{e.state}</span>}
@@ -1203,22 +1222,46 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 <div className={styles.composerChips}>
                   <span className={styles.composerTimeChip}>{formatEntryTime(new Date().toISOString())}</span>
                   <span className={styles.composerSlotChip}>{slot}</span>
+                  {chipBand ? (
+                    <button className={styles.composerTagActive} onClick={() => { setFreqPickerOpen(o => !o); setNeedPickerOpen(false); setStatePickerOpen(false); setCustomPickerOpen(false) }}>
+                      <span className={styles.composerFreqDot} style={draftMoodInherited ? { border: `1.5px solid ${MOOD_PIP_COLOR[chipBand]}` } : { background: MOOD_PIP_COLOR[chipBand] }} />
+                      {chipFeeling || chipBand}
+                      {!draftMoodInherited && <span className={styles.composerFreqClear} onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); setDraftMoodInherited(true); setDraftMoodBand(null); setDraftMoodFeeling(null); setFreqPickerOpen(false) }}>×</span>}
+                    </button>
+                  ) : (
+                    <button className={styles.composerTagBtn} onClick={() => { setFreqPickerOpen(o => !o); setNeedPickerOpen(false); setStatePickerOpen(false); setCustomPickerOpen(false) }}>+ frequency</button>
+                  )}
                   {draftState ? (
                     <button className={styles.composerTagActive} onClick={() => setDraftState(null)}>{draftState} ×</button>
                   ) : (
-                    <button className={styles.composerTagBtn} onClick={() => { setStatePickerOpen(o => !o); setNeedPickerOpen(false); setCustomPickerOpen(false) }}>+ state</button>
+                    <button className={styles.composerTagBtn} onClick={() => { setStatePickerOpen(o => !o); setNeedPickerOpen(false); setCustomPickerOpen(false); setFreqPickerOpen(false) }}>+ state</button>
                   )}
                   {draftNeedId ? (
                     <button className={styles.composerTagActive} onClick={() => setDraftNeedId(null)}>{draftNeedId} ×</button>
                   ) : (
-                    <button className={styles.composerTagBtn} onClick={() => { setNeedPickerOpen(o => !o); setStatePickerOpen(false); setCustomPickerOpen(false) }}>+ need</button>
+                    <button className={styles.composerTagBtn} onClick={() => { setNeedPickerOpen(o => !o); setStatePickerOpen(false); setCustomPickerOpen(false); setFreqPickerOpen(false) }}>+ need</button>
                   )}
                   {customTags.length > 0 && (draftCustom ? (
                     <button className={styles.composerTagActive} onClick={() => setDraftCustom(null)}>{draftCustom} ×</button>
                   ) : (
-                    <button className={styles.composerTagBtn} onClick={() => { setCustomPickerOpen(o => !o); setNeedPickerOpen(false); setStatePickerOpen(false) }}>+ custom</button>
+                    <button className={styles.composerTagBtn} onClick={() => { setCustomPickerOpen(o => !o); setNeedPickerOpen(false); setStatePickerOpen(false); setFreqPickerOpen(false) }}>+ custom</button>
                   ))}
                 </div>
+                {freqPickerOpen && (
+                  <div className={styles.composerFreqPicker}>
+                    <FrequencyStrip
+                      initialBand={chipBand}
+                      initialFeeling={chipFeeling}
+                      onSettle={(band, feeling) => {
+                        setDraftMoodBand(band)
+                        setDraftMoodFeeling(feeling || null)
+                        setDraftMoodInherited(false)
+                        setFreqPickerOpen(false)
+                        if (!moodSelections[slot]) handleFrequencySettle(slot, band, feeling)
+                      }}
+                    />
+                  </div>
+                )}
                 {needPickerOpen && activeNeeds.length > 0 && (
                   <div className={styles.composerPicker}>
                     {activeNeeds.map(n => (
@@ -1272,11 +1315,10 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               {journalEntries.length > 0 && (
                 <div className={styles.journalMobileEntries}>
                   {journalEntries.map(e => {
-                    const entryMoodKey = !e.state && e.slot ? moodSelections[e.slot] : null
                     return (
                     <div key={e.id} className={styles.journalEntryCard}>
                       <div className={styles.journalEntryMeta}>
-                        {entryMoodKey && <span className={styles.journalMoodDot} style={{ background: MOOD_PIP_COLOR[entryMoodKey] }} />}
+                        {e.mood_band && <span className={styles.journalFreqChip}><span className={styles.journalFreqDot} style={{ background: MOOD_PIP_COLOR[e.mood_band] }} />{e.mood_feeling || e.mood_band}</span>}
                         <span className={styles.journalEntryTime}>{formatEntryTime(e.created_at)}</span>
                         {e.slot && <span className={styles.journalSlotChip}>{e.slot}</span>}
                         {e.state && <span className={styles.journalStateTag}>{e.state}</span>}
@@ -1325,22 +1367,46 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 <div className={styles.journalComposer}>
                   <div className={styles.composerChips}>
                     <span className={styles.composerSlotChip}>{slot}</span>
+                    {chipBand ? (
+                      <button className={styles.composerTagActive} onClick={() => { setFreqPickerOpen(o => !o); setNeedPickerOpen(false); setStatePickerOpen(false); setCustomPickerOpen(false) }}>
+                        <span className={styles.composerFreqDot} style={draftMoodInherited ? { border: `1.5px solid ${MOOD_PIP_COLOR[chipBand]}` } : { background: MOOD_PIP_COLOR[chipBand] }} />
+                        {chipFeeling || chipBand}
+                        {!draftMoodInherited && <span className={styles.composerFreqClear} onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); setDraftMoodInherited(true); setDraftMoodBand(null); setDraftMoodFeeling(null); setFreqPickerOpen(false) }}>×</span>}
+                      </button>
+                    ) : (
+                      <button className={styles.composerTagBtn} onClick={() => { setFreqPickerOpen(o => !o); setNeedPickerOpen(false); setStatePickerOpen(false); setCustomPickerOpen(false) }}>+ frequency</button>
+                    )}
                     {draftNeedId ? (
                       <button className={styles.composerTagActive} onClick={() => setDraftNeedId(null)}>{draftNeedId} ×</button>
                     ) : (
-                      <button className={styles.composerTagBtn} onClick={() => { setNeedPickerOpen(o => !o); setStatePickerOpen(false); setCustomPickerOpen(false) }}>+ need</button>
+                      <button className={styles.composerTagBtn} onClick={() => { setNeedPickerOpen(o => !o); setStatePickerOpen(false); setCustomPickerOpen(false); setFreqPickerOpen(false) }}>+ need</button>
                     )}
                     {draftState ? (
                       <button className={styles.composerTagActive} onClick={() => setDraftState(null)}>{draftState} ×</button>
                     ) : (
-                      <button className={styles.composerTagBtn} onClick={() => { setStatePickerOpen(o => !o); setNeedPickerOpen(false); setCustomPickerOpen(false) }}>+ state</button>
+                      <button className={styles.composerTagBtn} onClick={() => { setStatePickerOpen(o => !o); setNeedPickerOpen(false); setCustomPickerOpen(false); setFreqPickerOpen(false) }}>+ state</button>
                     )}
                     {customTags.length > 0 && (draftCustom ? (
                       <button className={styles.composerTagActive} onClick={() => setDraftCustom(null)}>{draftCustom} ×</button>
                     ) : (
-                      <button className={styles.composerTagBtn} onClick={() => { setCustomPickerOpen(o => !o); setNeedPickerOpen(false); setStatePickerOpen(false) }}>+ custom</button>
+                      <button className={styles.composerTagBtn} onClick={() => { setCustomPickerOpen(o => !o); setNeedPickerOpen(false); setStatePickerOpen(false); setFreqPickerOpen(false) }}>+ custom</button>
                     ))}
                   </div>
+                  {freqPickerOpen && (
+                    <div className={styles.composerFreqPicker}>
+                      <FrequencyStrip
+                        initialBand={chipBand}
+                        initialFeeling={chipFeeling}
+                        onSettle={(band, feeling) => {
+                          setDraftMoodBand(band)
+                          setDraftMoodFeeling(feeling || null)
+                          setDraftMoodInherited(false)
+                          setFreqPickerOpen(false)
+                          if (!moodSelections[slot]) handleFrequencySettle(slot, band, feeling)
+                        }}
+                      />
+                    </div>
+                  )}
                   {needPickerOpen && activeNeeds.length > 0 && (
                     <div className={styles.composerPicker}>
                       {activeNeeds.map(n => (

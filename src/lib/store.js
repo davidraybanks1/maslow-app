@@ -845,18 +845,18 @@ export async function signInWithPassword(email, password) {
 export async function loadJournalEntries(userId, dateKey) {
   const { data } = await supabase
     .from('journal')
-    .select('id, entry, slot, need_id, state, custom, image_url, favorite, revisit, quoted_text, quoted_date, created_at')
+    .select('id, entry, slot, need_id, state, custom, image_url, favorite, revisit, quoted_text, quoted_date, created_at, mood_band, mood_feeling')
     .eq('user_id', userId)
     .eq('date_key', dateKey)
     .order('created_at', { ascending: true })
   return data || []
 }
 
-export async function addJournalEntry(userId, dateKey, { entry, slot, needId, state, custom, imageUrl, quotedText, quotedDate }) {
+export async function addJournalEntry(userId, dateKey, { entry, slot, needId, state, custom, imageUrl, quotedText, quotedDate, moodBand, moodFeeling }) {
   const { data, error } = await supabase
     .from('journal')
-    .insert({ user_id: userId, date_key: dateKey, entry, slot: slot || null, need_id: needId || null, state: state || null, custom: custom || null, image_url: imageUrl || null, quoted_text: quotedText || null, quoted_date: quotedDate || null })
-    .select('id, entry, slot, need_id, state, custom, image_url, favorite, revisit, quoted_text, quoted_date, created_at')
+    .insert({ user_id: userId, date_key: dateKey, entry, slot: slot || null, need_id: needId || null, state: state || null, custom: custom || null, image_url: imageUrl || null, quoted_text: quotedText || null, quoted_date: quotedDate || null, mood_band: moodBand || null, mood_feeling: moodFeeling || null })
+    .select('id, entry, slot, need_id, state, custom, image_url, favorite, revisit, quoted_text, quoted_date, created_at, mood_band, mood_feeling')
     .single()
   if (error) logSupabaseError('addJournalEntry', error)
   return { data, error }
@@ -865,7 +865,7 @@ export async function addJournalEntry(userId, dateKey, { entry, slot, needId, st
 export async function loadAllJournalMeta(userId) {
   const { data } = await supabase
     .from('journal')
-    .select('id, need_id, state, custom')
+    .select('id, need_id, state, custom, mood_band, mood_feeling')
     .eq('user_id', userId)
   return data || []
 }
@@ -873,7 +873,7 @@ export async function loadAllJournalMeta(userId) {
 export async function loadJournalArchive(userId) {
   const { data } = await supabase
     .from('journal')
-    .select('id, date_key, entry, slot, need_id, state, custom, image_url, favorite, revisit, quoted_text, quoted_date, created_at')
+    .select('id, date_key, entry, slot, need_id, state, custom, image_url, favorite, revisit, quoted_text, quoted_date, created_at, mood_band, mood_feeling')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
   return data || []
