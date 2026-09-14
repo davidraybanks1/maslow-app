@@ -5,8 +5,9 @@ import { currentSlot, precedingSlots, SLOTS, SLOT_NOUN, SLOT_GREETING } from '..
 import { todayKey, loadJournalEntries, addJournalEntry, deleteJournalEntry, loadNoteDeck, loadCustomTags, uploadNoteImage, loadRevisitQueue } from '../lib/store'
 import { createDataStats, getCanvasGuidance } from '../lib/dataStats'
 import { hapticTick, isNative, pendingNotifSlot } from '../lib/native'
-import { normalizeBand, BANDS, FEELINGS, BAND_LABEL } from '../lib/frequency'
+import { normalizeBand, BAND_LABEL } from '../lib/frequency'
 import { useIsDesktop } from '../lib/useIsDesktop'
+import FrequencyCard, { MOOD_PIP_COLOR } from '../components/FrequencyCard'
 import JournalQuote from '../components/JournalQuote'
 import ManageDeck from '../components/ManageDeck'
 import ManageTags from '../components/ManageTags'
@@ -15,143 +16,6 @@ import styles from './Today.module.css'
 
 const NOTE_DECK_MAX = 5
 const MODE_THRESHOLDS = { exploration: 80, appreciation: 60, nourishment: 50, survival: 20 }
-
-const MOOD_PIP_COLOR = {
-  good: 'var(--exploration)',
-  mid:  'var(--appreciation-deep)',
-  bad:  'var(--survival)',
-}
-
-// ── Frequency card ───────────────────────────────────────────────────────────
-// Props: initialBand, initialFeeling, onSettle(band, feeling), compact, pastTense, dayparts
-// dayparts: [{ name, isCurrent, band, hasFeeling, onTap }]
-
-function FrequencyCard({ initialBand, initialFeeling, onSettle, compact, pastTense, dayparts }) {
-  const [band, setBand] = useState(initialBand || null)
-  const [feeling, setFeeling] = useState(initialFeeling || null)
-  const touchedRef = useRef(false)
-
-  useEffect(() => {
-    if (touchedRef.current) return
-    setBand(initialBand || null)
-    setFeeling(initialFeeling || null)
-  }, [initialBand, initialFeeling])
-
-  function pickBand(b) {
-    touchedRef.current = true
-    hapticTick()
-    setBand(b)
-    setFeeling(null)
-    onSettle(b, null)
-  }
-
-  function pickFeeling(f) {
-    hapticTick()
-    setFeeling(f)
-    onSettle(band, f)
-  }
-
-  function goBack() {
-    touchedRef.current = false
-    setBand(null)
-    setFeeling(null)
-  }
-
-  const displayLabel = feeling || (band ? BAND_LABEL[band] : null)
-
-  return (
-    <div className={styles.freqCard}>
-      {!compact && (
-        <p className={styles.freqSentence}>
-          {pastTense ? 'I was feeling' : "I'm feeling"}{' '}
-          {displayLabel
-            ? <span className={styles.freqFilled}>{displayLabel}</span>
-            : <span className={styles.freqBlank}>?</span>
-          }{'.'}
-        </p>
-      )}
-
-      {compact ? (
-        <>
-          <div className={styles.freqOptionsRow}>
-            {BANDS.map(b => (
-              <button
-                key={b}
-                className={`${styles.freqOptionBtn} ${styles.freqOptionCompact} ${b === band ? styles.freqOptionActive : styles.freqOptionDim}`}
-                onClick={() => pickBand(b)}
-              >{BAND_LABEL[b]}</button>
-            ))}
-          </div>
-          {band && (
-            <div className={styles.freqOptionsRow}>
-              {FEELINGS[band].map(f => (
-                <button
-                  key={f}
-                  className={`${styles.freqOptionBtn} ${styles.freqOptionCompact} ${f === feeling ? styles.freqOptionActive : styles.freqOptionDim}`}
-                  onClick={() => pickFeeling(f)}
-                >{f}</button>
-              ))}
-            </div>
-          )}
-        </>
-      ) : !band ? (
-        <div className={styles.freqOptionsRow}>
-          {BANDS.map(b => (
-            <button key={b} className={styles.freqOptionBtn} onClick={() => pickBand(b)}>
-              {BAND_LABEL[b]}
-            </button>
-          ))}
-        </div>
-      ) : (
-        <>
-          <p className={styles.freqTextureQ}>Is there a specific texture?</p>
-          <div className={styles.freqOptionsRow}>
-            {FEELINGS[band].map(f => (
-              <button
-                key={f}
-                className={`${styles.freqOptionBtn} ${f === feeling ? styles.freqOptionActive : ''} ${feeling && f !== feeling ? styles.freqOptionDim : ''}`}
-                onClick={() => pickFeeling(f)}
-              >{f}</button>
-            ))}
-          </div>
-        </>
-      )}
-
-      {!compact && (
-        <>
-          <div className={styles.freqRule} />
-          {band && (
-            <button className={styles.freqBackBtn} onClick={goBack}>
-              ← {feeling ? 'change' : `${BAND_LABEL[band]} is saved — this gives you more detail`}
-            </button>
-          )}
-          {dayparts && (
-            <div className={styles.freqDayparts}>
-              {dayparts.map(dp => {
-                const color = dp.band ? MOOD_PIP_COLOR[dp.band] : null
-                const dotStyle = !color ? undefined
-                  : dp.hasFeeling
-                    ? { background: color, borderColor: color }
-                    : { background: `linear-gradient(to right, ${color} 50%, transparent 50%)`, borderColor: color }
-                return (
-                  <button
-                    key={dp.name}
-                    className={`${styles.freqDaypart} ${dp.isCurrent ? styles.freqDaypartCurrent : ''}`}
-                    onClick={dp.onTap || undefined}
-                    style={!dp.onTap ? { cursor: 'default' } : undefined}
-                  >
-                    <span className={styles.freqDot} style={dotStyle} />
-                    <span className={styles.freqDaypartLabel}>{dp.name}</span>
-                  </button>
-                )
-              })}
-            </div>
-          )}
-        </>
-      )}
-    </div>
-  )
-}
 
 
 // Shared math: each mode owns ≤25% of total; returns [{color, from, to}] in percent

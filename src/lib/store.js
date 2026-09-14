@@ -922,11 +922,12 @@ export async function loadDayCheckins(userId, dateKey) {
   }))
 }
 
-export async function updateJournalEntryTags(id, { needId, stateName, customLabel }) {
+export async function updateJournalEntryTags(id, { needId, customLabel, moodBand, moodFeeling }) {
   const updates = {}
-  if (needId !== undefined) updates.need_id = needId
-  if (stateName !== undefined) updates.state = stateName
-  if (customLabel !== undefined) updates.custom = customLabel
+  if (needId !== undefined)      updates.need_id      = needId
+  if (customLabel !== undefined) updates.custom       = customLabel
+  if (moodBand !== undefined)    updates.mood_band    = moodBand
+  if (moodFeeling !== undefined) updates.mood_feeling = moodFeeling
   const { error } = await supabase.from('journal').update(updates).eq('id', id)
   if (error) logSupabaseError('updateJournalEntryTags', error)
   return { error }

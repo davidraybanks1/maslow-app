@@ -1,0 +1,122 @@
+.freqCard {
+  padding: 10px 0 4px;
+}
+
+.freqSentence {
+  font-family: var(--font-serif);
+  font-size: 29px;
+  font-weight: 300;
+  line-height: 1.38;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin: 0 0 18px;
+}
+
+.freqBlank {
+  display: inline-block;
+  min-width: 128px;
+  text-align: center;
+  border-bottom: 1.5px dotted var(--ink4);
+  color: var(--ink4);
+}
+
+.freqFilled {
+  color: var(--ink);
+  border-bottom: 1.5px solid var(--hairline);
+}
+
+.freqTextureQ {
+  font-family: var(--font-serif);
+  font-size: 19px;
+  font-weight: 300;
+  color: var(--ink3);
+  margin: 0 0 10px;
+}
+
+.freqOptionsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 22px;
+}
+
+.freqOptionBtn {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 300;
+  color: rgba(0,0,0,.3);
+  background: none;
+  border: none;
+  padding: 11px 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.1s;
+  min-height: 44px;
+}
+.freqOptionBtn:hover { color: rgba(0,0,0,.55); }
+
+.freqOptionCompact { font-size: 17px; }
+
+.freqOptionActive {
+  color: var(--ink);
+}
+
+.freqOptionDim {
+  color: rgba(0,0,0,.3);
+}
+
+.freqRule {
+  height: 1px;
+  background: var(--hairline);
+  margin: 14px 0 10px;
+}
+
+.freqBackBtn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink4);
+  background: none;
+  border: none;
+  padding: 0 0 8px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  text-align: left;
+}
+
+.freqDayparts {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-top: 2px;
+}
+
+.freqDaypart {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.freqDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(0,0,0,.2);
+  flex-shrink: 0;
+  background: transparent;
+}
+
+.freqDaypartLabel {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--ink4);
+  letter-spacing: 0.04em;
+}
+
+.freqDaypartCurrent .freqDaypartLabel {
+  color: var(--ink);
+  font-weight: 500;
+}
