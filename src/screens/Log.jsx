@@ -141,7 +141,7 @@ function archiveHeaderText(filteredEntries, total, filterSlot, filterNeed, filte
   }
   const n = filteredEntries.length
   const stateCounts = {}
-  for (const e of filteredEntries) if (e.state) stateCounts[e.state] = (stateCounts[e.state] || 0) + 1
+  for (const e of filteredEntries) if (e.mood_feeling) stateCounts[e.mood_feeling] = (stateCounts[e.mood_feeling] || 0) + 1
   const topState = Object.entries(stateCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || null
   let text = `${n} ${n === 1 ? 'entry' : 'entries'}`
   if (filterFav) text += ' · favorite'
@@ -171,7 +171,7 @@ function matchesPredicate(e, pred, afterKey, beforeKey) {
   if (pred.revisit && !e.revisit)  return false
   if (pred.slot   && e.slot    !== pred.slot)   return false
   if (pred.need   && e.need_id !== pred.need)   return false
-  if (pred.state  && e.state   !== pred.state)  return false
+  if (pred.feeling && e.mood_feeling !== pred.feeling) return false
   if (pred.custom && e.custom  !== pred.custom) return false
   if (afterKey    && e.date_key < afterKey)     return false
   if (beforeKey   && e.date_key > beforeKey)    return false
@@ -747,8 +747,8 @@ export default function Log({ state, syncCheckinDay }) {
     const oldest = archiveEntries[archiveEntries.length - 1]
     const journalAge = Math.round((today - new Date(oldest.date_key + 'T12:00:00')) / 86400000)
     const exclusionDays = Math.min(25, Math.floor(journalAge / 2))
-    const todayStates = new Set(
-      archiveEntries.filter(e => e.date_key === todayKey && e.state).map(e => e.state)
+    const todayBands = new Set(
+      archiveEntries.filter(e => e.date_key === todayKey && e.mood_band).map(e => e.mood_band)
     )
     const eligible = archiveEntries.filter(e => {
       if (e.date_key === todayKey) return false
@@ -763,8 +763,8 @@ export default function Log({ state, syncCheckinDay }) {
       }
       return a
     }
-    const matches = eligible.filter(e => e.state && todayStates.has(e.state))
-    const others = eligible.filter(e => !e.state || !todayStates.has(e.state))
+    const matches = eligible.filter(e => e.mood_band && todayBands.has(e.mood_band))
+    const others = eligible.filter(e => !e.mood_band || !todayBands.has(e.mood_band))
     setResurfacePool([
       ...shuffle(matches).map(e => ({ id: e.id, isMatch: true })),
       ...shuffle(others).map(e => ({ id: e.id, isMatch: false })),
@@ -1101,7 +1101,7 @@ export default function Log({ state, syncCheckinDay }) {
 
   const entryCount = journalMeta.length
   const needCount = journalMeta.filter(e => e.need_id).length
-  const stateCount = journalMeta.filter(e => e.state).length
+  const stateCount = journalMeta.filter(e => e.mood_feeling).length
 
   return (
     <div className={styles.screen}>
@@ -1162,17 +1162,17 @@ export default function Log({ state, syncCheckinDay }) {
           const entryDateStr = new Date(ey, em - 1, ed).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })
           const entryTags = [
             entry.slot ? { label: entry.slot, isState: false } : null,
-            entry.state ? { label: entry.state, isState: true } : null,
+            (entry.mood_feeling || entry.mood_band) ? { label: entry.mood_feeling || entry.mood_band, isState: false } : null,
             entry.need_id ? { label: NEEDS.find(n => n.id === entry.need_id)?.name || null, isState: false } : null,
             entry.custom ? { label: entry.custom, isState: false } : null,
           ].filter(t => t && t.label)
-          const todayStateSlots = {}
+          const todayBandSlots = {}
           for (const e of archiveEntries) {
-            if (e.date_key === todayKey && e.state && e.slot && !todayStateSlots[e.state]) {
-              todayStateSlots[e.state] = e.slot
+            if (e.date_key === todayKey && e.mood_band && e.slot && !todayBandSlots[e.mood_band]) {
+              todayBandSlots[e.mood_band] = e.slot
             }
           }
-          const matchSlot = poolItem.isMatch && entry.state ? todayStateSlots[entry.state] : null
+          const matchSlot = poolItem.isMatch && entry.mood_band ? todayBandSlots[entry.mood_band] : null
           const reasonText = matchSlot ? `matched to this ${matchSlot}` : 'a day at random'
           return (
             <div className={styles.resurfaceSection}>
