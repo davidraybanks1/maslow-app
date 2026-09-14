@@ -231,8 +231,8 @@ export default function ProfileMenu({
               >
                 <div className={styles.rowContent}>
                   <div className={styles.rowTitle}>your note deck</div>
-                  <div className={`${styles.rowSub} ${noteDeckCount > 5 ? styles.rowSubOver : ''}`}>
-                    {noteDeckCount}/5 on your today screen
+                  <div className={styles.rowSub}>
+                    {noteDeckCount} on your today screen
                   </div>
                 </div>
               </button>

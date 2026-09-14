@@ -73,9 +73,6 @@
   color: rgba(0,0,0,.45);
   flex-shrink: 0;
 }
-.subheadCountOver {
-  color: var(--destructive);
-}
 
 /* ── Scrollable body ── */
 .body {
@@ -265,13 +262,13 @@
   .switchKnob { transition: none; }
 }
 
-/* ── Inline cap error ── */
-.capError {
+/* ── Floor notice (shown when deck is at minimum) ── */
+.floorNote {
   margin-top: 7px;
   font-family: var(--font-mono);
   font-size: 11px;
   line-height: 1.4;
-  color: var(--destructive);
+  color: var(--ink4);
 }
 
 /* ── Edit panel ── */

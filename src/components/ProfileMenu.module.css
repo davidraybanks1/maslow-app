@@ -257,7 +257,6 @@
   color: rgba(0,0,0,.38);
   margin-top: 2px;
 }
-.rowSubOver { color: var(--destructive); }
 
 .rowMeta {
   font-family: var(--font-mono);

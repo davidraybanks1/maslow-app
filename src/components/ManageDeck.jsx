@@ -7,8 +7,6 @@ import {
 } from '../lib/store'
 import styles from './ManageDeck.module.css'
 
-const DECK_MAX = 5
-
 export default function ManageDeck({ userId, onClose, onDeckChanged }) {
   const [deck, setDeck] = useState([])
   const [library, setLibrary] = useState([])
@@ -17,7 +15,6 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
   const [deleteConfirmId, setDeleteConfirmId] = useState(null)
   const [composerOpen, setComposerOpen] = useState(false)
   const [composerDraft, setComposerDraft] = useState('')
-  const [capErrorId, setCapErrorId] = useState(null)
   const [errorMsg, setErrorMsg] = useState(null)
   const [closing, setClosing] = useState(false)
 
@@ -33,13 +30,8 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
     setTimeout(() => onClose(), 200)
   }
 
-  function clearCap() {
-    if (capErrorId !== null) setCapErrorId(null)
-  }
-
   // ── Reorder within deck ────────────────────────────────────────────────────
   function handleMove(deckIndex, dir) {
-    clearCap()
     const j = deckIndex + dir
     if (j < 0 || j >= deck.length) return
     const next = [...deck]
@@ -57,7 +49,6 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
     const deckCard = deck.find(c => c.id === id)
     if (deckCard) {
       // ON → OFF: archive
-      clearCap()
       if (editingId === id) setEditingId(null)
       setDeleteConfirmId(null)
       const newDeck = deck.filter(c => c.id !== id)
@@ -70,15 +61,14 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
         setDeck(deck)
         setLibrary(prev => prev.filter(c => c.id !== id))
         onDeckChanged?.(deck)
-        setErrorMsg('failed to remove — try again')
+        setErrorMsg(
+          error.message?.toLowerCase().includes('at least three')
+            ? 'a deck keeps at least three notes — write another before removing this one'
+            : 'failed to remove — try again'
+        )
       }
     } else {
-      // OFF → ON: cap check first
-      if (deck.length >= DECK_MAX) {
-        setCapErrorId(id)
-        return
-      }
-      clearCap()
+      // OFF → ON: restore
       const libCard = library.find(c => c.id === id)
       if (!libCard) return
       const newLibrary = library.filter(c => c.id !== id)
@@ -91,19 +81,14 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
         setDeck(deck)
         setLibrary(library)
         onDeckChanged?.(deck)
-        setCapErrorId(id)
-        setErrorMsg(
-          error.message?.toLowerCase().includes('full')
-            ? 'deck is full — turn one off first (race condition)'
-            : 'failed to add — try again'
-        )
+        setErrorMsg('failed to add — try again')
       }
     }
   }
 
   // ── Edit panel open/close ──────────────────────────────────────────────────
   function handleEditOpen(id, text) {
-    clearCap()
+
     if (editingId === id) {
       setEditingId(null)
       setDeleteConfirmId(null)
@@ -116,14 +101,14 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
   }
 
   function handleCancelEdit() {
-    clearCap()
+
     setEditingId(null)
     setDeleteConfirmId(null)
   }
 
   // ── Save edit ──────────────────────────────────────────────────────────────
   async function handleSaveEdit(id) {
-    clearCap()
+
     const text = (drafts[id] || '').trim()
     if (!text) return
     const card = [...deck, ...library].find(c => c.id === id)
@@ -142,12 +127,12 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
   }
 
   // ── Delete (all notes, two-step) ───────────────────────────────────────────
-  function handleDeleteTap(id) {
-    clearCap()
+  async function handleDeleteTap(id) {
     if (deleteConfirmId === id) {
       const card = [...deck, ...library].find(c => c.id === id)
       if (!card) return
-      if (deck.find(c => c.id === id)) {
+      const isActive = !!deck.find(c => c.id === id)
+      if (isActive) {
         const newDeck = deck.filter(c => c.id !== id)
         setDeck(newDeck)
         onDeckChanged?.(newDeck)
@@ -156,7 +141,16 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
       }
       setEditingId(null)
       setDeleteConfirmId(null)
-      deleteNoteDeckCard(id, userId, card.text, card.image_url)
+      const { error } = await deleteNoteDeckCard(id, userId, card.text, card.image_url)
+      if (error && isActive) {
+        setDeck(deck)
+        onDeckChanged?.(deck)
+        setErrorMsg(
+          error.message?.toLowerCase().includes('at least three')
+            ? 'a deck keeps at least three notes — write another before removing this one'
+            : 'failed to delete — try again'
+        )
+      }
     } else {
       setDeleteConfirmId(id)
     }
@@ -164,7 +158,7 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
 
   // ── Composer ───────────────────────────────────────────────────────────────
   function handleComposerToggle() {
-    clearCap()
+
     if (composerOpen) {
       setComposerOpen(false)
       setComposerDraft('')
@@ -199,10 +193,8 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
 
       {/* ── Subhead (not scrollable) ── */}
       <div className={styles.subhead}>
-        the phrases, mantras and quotes that put you in the right headspace. pick up to five to show on your today screen.{' '}
-        <span className={deck.length > DECK_MAX ? styles.subheadCountOver : ''}>
-          ({deck.length}/5)
-        </span>
+        the phrases, mantras and quotes that put you in the right headspace. these show on your today screen. a deck keeps at least three.{' '}
+        <span>({deck.length})</span>
       </div>
 
       {/* ── Scrollable body ── */}
@@ -246,8 +238,9 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
             const pos = isOn ? deckIndex + 1 : null
             const isEditing = editingId === card.id
             const isConfirming = deleteConfirmId === card.id
-            const showCapError = capErrorId === card.id
             const editText = drafts[card.id] ?? card.text
+            // floor: once the deck reaches 3, active cards can't be removed below 3
+            const atFloor = isOn && deck.length <= 3
 
             return (
               <div key={card.id} className={isOn ? styles.noteRowOn : styles.noteRowOff}>
@@ -263,16 +256,18 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
                   >edit</button>
                   <button
                     className={`${styles.switch} ${isOn ? styles.switchOn : styles.switchOff}`}
-                    onClick={() => handleToggle(card.id)}
+                    onClick={() => !atFloor && handleToggle(card.id)}
                     aria-label={isOn ? 'remove from today' : 'add to today'}
+                    disabled={atFloor}
+                    title={atFloor ? 'a deck keeps at least three notes' : undefined}
                   >
                     <span className={styles.switchKnob} style={{ left: isOn ? '21px' : '2px' }} />
                   </button>
                 </div>
 
-                {showCapError && (
-                  <div className={styles.capError}>
-                    your today screen is full — turn one off first.
+                {atFloor && (
+                  <div className={styles.floorNote}>
+                    a deck keeps at least three notes.
                   </div>
                 )}
 
@@ -304,6 +299,8 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
                       <button
                         className={isConfirming ? styles.deleteBtnConfirm : styles.deleteBtn}
                         onClick={() => handleDeleteTap(card.id)}
+                        disabled={atFloor}
+                        title={atFloor ? 'a deck keeps at least three notes' : undefined}
                       >{isConfirming ? 'confirm' : 'delete'}</button>
                     </div>
                   </div>

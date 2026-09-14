@@ -14,7 +14,6 @@ import ManageTags from '../components/ManageTags'
 import NeedsPopup from '../components/NeedsPopup'
 import styles from './Today.module.css'
 
-const NOTE_DECK_MAX = 5
 const MODE_THRESHOLDS = { exploration: 80, appreciation: 60, nourishment: 50, survival: 20 }
 
 
@@ -744,19 +743,15 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                         </div>
                         <div className={styles.noteDeckFooter}>
                           <div className={styles.deckControls}>
-                            {noteDeck.length > NOTE_DECK_MAX ? (
-                              <span className={styles.noteDeckCounter} style={{ color: 'var(--survival)' }}>{noteDeck.length}/{NOTE_DECK_MAX}</span>
-                            ) : (
-                              <>
-                                {noteDeck.length > 1 && (
-                                  <button className={styles.deckArrow} onClick={() => advanceDeckCard(-1)} aria-label="previous card">‹</button>
-                                )}
-                                <span className={styles.noteDeckCounter}>{activeCardIndex + 1}/{noteDeck.length}</span>
-                                {noteDeck.length > 1 && (
-                                  <button className={styles.deckArrow} onClick={() => advanceDeckCard(1)} aria-label="next card">›</button>
-                                )}
-                              </>
-                            )}
+                            <>
+                              {noteDeck.length > 1 && (
+                                <button className={styles.deckArrow} onClick={() => advanceDeckCard(-1)} aria-label="previous card">‹</button>
+                              )}
+                              <span className={styles.noteDeckCounter}>{activeCardIndex + 1}/{noteDeck.length}</span>
+                              {noteDeck.length > 1 && (
+                                <button className={styles.deckArrow} onClick={() => advanceDeckCard(1)} aria-label="next card">›</button>
+                              )}
+                            </>
                           </div>
                           <button className={styles.noteEditPill} onClick={openManageDeck}>edit</button>
                         </div>
