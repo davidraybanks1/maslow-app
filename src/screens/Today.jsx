@@ -8,6 +8,7 @@ import { hapticTick, isNative, pendingNotifSlot } from '../lib/native'
 import { normalizeBand, BAND_LABEL } from '../lib/frequency'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import FrequencyCard, { MOOD_PIP_COLOR } from '../components/FrequencyCard'
+import Bloom from '../components/Bloom'
 import JournalQuote from '../components/JournalQuote'
 import ManageDeck from '../components/ManageDeck'
 import ManageTags from '../components/ManageTags'
@@ -36,6 +37,21 @@ function buildRingGradient(arcs) {
   const segs = buildProgressSegments(arcs)
   const stops = segs.flatMap(s => [`${s.color} ${s.from.toFixed(2)}%`, `${s.color} ${s.to.toFixed(2)}%`])
   return `conic-gradient(from -90deg, ${stops.join(', ')})`
+}
+
+// Soft-bloom card surface: warm paper radial gradient, origin varies by position
+const BLOOM_ORIGINS = [[20,20],[50,20],[80,20],[20,50],[80,50]]
+function softBloomBg(pos) {
+  const [x, y] = BLOOM_ORIGINS[pos % 5]
+  return `radial-gradient(132% 112% at ${x}% ${y - 9}%, #FFFFFF 0%, #FAF8F4 44%, #F0EDE6 100%)`
+}
+
+// Mode-tinted card surface: subtle pip-color glow in top-right
+function modeSoftBg(hex) {
+  const r = parseInt(hex.slice(1,3), 16)
+  const g = parseInt(hex.slice(3,5), 16)
+  const b = parseInt(hex.slice(5,7), 16)
+  return `radial-gradient(132% 112% at 80% 10%, rgba(${r},${g},${b},0.12) 0%, rgba(${r},${g},${b},0.04) 44%, transparent 100%)`
 }
 
 function CompletionRing({ arcs, pct }) {
@@ -281,7 +297,8 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   function handleDeckScroll() {
     const wrapper = deckWrapperRef.current
     if (!wrapper || wrapper.clientWidth === 0) return
-    setActiveCardIndex(Math.round(wrapper.scrollLeft / wrapper.clientWidth))
+    const unit = isDesktop ? wrapper.clientWidth : 294  // 282px card + 12px gap
+    setActiveCardIndex(Math.round(wrapper.scrollLeft / unit))
   }
 
   function openManageDeck() {
@@ -293,7 +310,10 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     const next = (activeCardIndex + dir + noteDeck.length) % noteDeck.length
     setActiveCardIndex(next)
     const wrapper = deckWrapperRef.current
-    if (wrapper) wrapper.scrollTo({ left: next * wrapper.clientWidth, behavior: 'smooth' })
+    if (wrapper) {
+      const unit = isDesktop ? wrapper.clientWidth : 294
+      wrapper.scrollTo({ left: next * unit, behavior: 'smooth' })
+    }
   }
 
   const [journalEntries, setJournalEntries] = useState([])
@@ -640,6 +660,14 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   const activeNeeds = NEEDS.filter(n => state.canvas[n.id])
 
 
+  const daypartsData = SLOTS.map(s => ({
+    name: s,
+    isCurrent: s === slot,
+    band: moodSelections[s] || null,
+    hasFeeling: !!(moodFeelings[s]),
+    onTap: precedingSlots(slot).includes(s) ? () => setOpenRetroSlot(o => o === s ? null : s) : null,
+  }))
+
   const renderAttachControl = () => {
     const hasPhoto = !!draftImage
     const hasQuote = !!quotedText
@@ -697,7 +725,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
             {STREAK_LINES[streak] && <div className={styles.milestoneLine}>{STREAK_LINES[streak]}</div>}
           </div>
           <div className={styles.headerRingWrap} data-tour="space">
-            <CompletionRing
+            <Bloom
               arcs={demoRing !== null ? ringArcs.map(a => ({ ...a, fill: demoRing })) : ringArcs}
               pct={demoRing !== null ? Math.round(demoRing * 100) : ringPct}
             />
@@ -722,12 +750,16 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 <>
                   <div
                     className={styles.noteDeckWrapper}
-                    style={!isDesktop && deckHeight ? { height: deckHeight } : undefined}
                     ref={deckWrapperRef}
                     onScroll={handleDeckScroll}
                   >
                     {noteDeck.map((card, i) => (
-                      <div key={card.id} className={styles.noteDeckCard} ref={el => { cardRefs.current[i] = el }}>
+                      <div
+                        key={card.id}
+                        className={styles.noteDeckCard}
+                        ref={el => { cardRefs.current[i] = el }}
+                        style={!isDesktop ? { background: softBloomBg(i) } : undefined}
+                      >
                         <div className={styles.noteDeckEyebrow}>NOTE TO SELF</div>
                         <div className={styles.noteDeckBody}>
                           <span className={styles.noteText}>{card.text}</span>
@@ -746,7 +778,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                               {noteDeck.length > 1 && (
                                 <button className={styles.deckArrow} onClick={() => advanceDeckCard(-1)} aria-label="previous card">‹</button>
                               )}
-                              <span className={styles.noteDeckCounter}>{activeCardIndex + 1}/{noteDeck.length}</span>
+                              <span className={styles.noteDeckCounter}>{Math.min(activeCardIndex + 1, noteDeck.length)}/{noteDeck.length}</span>
                               {noteDeck.length > 1 && (
                                 <button className={styles.deckArrow} onClick={() => advanceDeckCard(1)} aria-label="next card">›</button>
                               )}
@@ -756,6 +788,18 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                         </div>
                       </div>
                     ))}
+                    {!isDesktop && (
+                      <div
+                        className={`${styles.noteDeckCard} ${styles.noteDeckAddCard}`}
+                        ref={el => { cardRefs.current[noteDeck.length] = el }}
+                        style={{ background: softBloomBg(noteDeck.length) }}
+                      >
+                        <div className={styles.noteDeckBody}>
+                          <button className={styles.noteAddBtn} onClick={openManageDeck}>+ add a note to self</button>
+                        </div>
+                        <div className={styles.noteDeckFooter}><span /></div>
+                      </div>
+                    )}
                   </div>
                 </>
               ) : deckLoaded ? (
@@ -785,18 +829,38 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
 
         {/* ── Frequency section ── */}
         <div className={styles.moodCard} data-tour="mood">
+          {!isDesktop && (
+            <div className={styles.freqHeader}>
+              <span className={styles.freqHeaderLabel}>FREQUENCY</span>
+              <div className={styles.freqHeaderDayparts}>
+                {daypartsData.map(dp => {
+                  const color = dp.band ? MOOD_PIP_COLOR[dp.band] : null
+                  const dotStyle = !color ? undefined
+                    : dp.hasFeeling
+                      ? { background: color, borderColor: color }
+                      : { background: `linear-gradient(to right, ${color} 50%, transparent 50%)`, borderColor: color }
+                  return (
+                    <button
+                      key={dp.name}
+                      className={`${styles.freqHeaderDp} ${dp.isCurrent ? styles.freqHeaderDpCurrent : ''}`}
+                      onClick={dp.onTap || undefined}
+                      style={!dp.onTap ? { cursor: 'default' } : undefined}
+                    >
+                      <span className={styles.freqHeaderDot} style={dotStyle} />
+                      <span className={styles.freqHeaderDpName}>{dp.name}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
           <FrequencyCard
             key={slot}
             initialBand={moodSelections[slot] || null}
             initialFeeling={moodFeelings[slot] || null}
             onSettle={(band, feeling) => handleFrequencySettle(slot, band, feeling)}
-            dayparts={SLOTS.map(s => ({
-              name: s,
-              isCurrent: s === slot,
-              band: moodSelections[s] || null,
-              hasFeeling: !!(moodFeelings[s]),
-              onTap: precedingSlots(slot).includes(s) ? () => setOpenRetroSlot(o => o === s ? null : s) : null,
-            }))}
+            dayparts={isDesktop ? daypartsData : null}
+            bandAsBack={!isDesktop}
           />
           {openRetroSlot && (
             <div className={styles.retroRow}>
@@ -815,8 +879,8 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         {/* ── Needs & Practices ── */}
         <div className={styles.practicesCard} data-tour="modes">
           <div className={styles.tierSectionHeader}>
-            <span className={styles.tierSectionLabel}>CANVAS</span>
-            <span className={styles.tierSectionHint}>tap a mode to fill it</span>
+            <span className={styles.tierSectionLabel}>{isDesktop ? 'CANVAS' : 'MODES'}</span>
+            {isDesktop && <span className={styles.tierSectionHint}>tap a mode to fill it</span>}
           </div>
           <div className={styles.tierList}>
             {MODE_ORDER.map(mode => {
@@ -897,6 +961,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 <div
                   key={mode}
                   className={`${styles.tier} ${isOpen ? styles.tierOpen : ''}`}
+                  style={{ background: pip ? modeSoftBg(pip) : undefined }}
                 >
                   <button
                     className={styles.tierHeader}
@@ -914,7 +979,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                     <div className={styles.tierHeaderTop}>
                       <div className={styles.tierDot} style={{ background: pip }} />
                       <span className={styles.tierName}>{mode}</span>
-                      <span className={styles.tierCount}>{modeDone}/{totalPossible}</span>
                     </div>
                     <div className={styles.tierBar}>
                       <div
@@ -1142,7 +1206,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         ) : (
           <div className={styles.cardJournal} data-tour="journal">
             <div className={styles.sectionHeader}>
-              <span className={styles.sectionLabel}>journal</span>
+              <span className={styles.sectionLabel}>drafts</span>
               <span className={styles.journalEntryCount}>
                 {journalEntryCount > 0 ? `${journalEntryCount} ${journalEntryCount === 1 ? 'entry' : 'entries'} today` : ''}
               </span>

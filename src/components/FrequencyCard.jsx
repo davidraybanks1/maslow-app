@@ -11,7 +11,7 @@ export const MOOD_PIP_COLOR = {
 
 // Props: initialBand, initialFeeling, onSettle(band, feeling), compact, pastTense, dayparts
 // dayparts: [{ name, isCurrent, band, hasFeeling, onTap }]
-export default function FrequencyCard({ initialBand, initialFeeling, onSettle, compact, pastTense, dayparts }) {
+export default function FrequencyCard({ initialBand, initialFeeling, onSettle, compact, pastTense, dayparts, bandAsBack }) {
   const [band, setBand] = useState(initialBand || null)
   const [feeling, setFeeling] = useState(initialFeeling || null)
   const touchedRef = useRef(false)
@@ -23,6 +23,10 @@ export default function FrequencyCard({ initialBand, initialFeeling, onSettle, c
   }, [initialBand, initialFeeling])
 
   function pickBand(b) {
+    if (bandAsBack && b === band) {
+      goBack()
+      return
+    }
     touchedRef.current = true
     hapticTick()
     setBand(b)
@@ -89,6 +93,17 @@ export default function FrequencyCard({ initialBand, initialFeeling, onSettle, c
         </div>
       ) : (
         <>
+          {bandAsBack && (
+            <div className={styles.freqOptionsRow}>
+              {BANDS.map(b => (
+                <button
+                  key={b}
+                  className={`${styles.freqOptionBtn} ${b === band ? styles.freqOptionActive : styles.freqOptionDim}`}
+                  onClick={() => pickBand(b)}
+                >{BAND_LABEL[b]}</button>
+              ))}
+            </div>
+          )}
           <p className={styles.freqTextureQ}>Is there a specific texture?</p>
           <div className={styles.freqOptionsRow}>
             {FEELINGS[band].map(f => (
@@ -104,8 +119,8 @@ export default function FrequencyCard({ initialBand, initialFeeling, onSettle, c
 
       {!compact && (
         <>
-          <div className={styles.freqRule} />
-          {band && (
+          {!bandAsBack && <div className={styles.freqRule} />}
+          {band && !bandAsBack && (
             <button className={styles.freqBackBtn} onClick={goBack}>
               ← {feeling ? 'change' : `${BAND_LABEL[band]} is saved — this gives you more detail`}
             </button>

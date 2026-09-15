@@ -2012,3 +2012,156 @@
   line-height: 1.45;
   color: var(--ink);
 }
+
+/* ── Mobile redesign (max-width: 899px) ── */
+@media (max-width: 899px) {
+
+  /* ── Bloom layout tokens & positioning ── */
+  .header {
+    position: relative;
+    overflow: visible;
+    --bloom-w: 200px;
+    --bloom-top: 0px;
+    --bloom-right: -22px;
+    padding-bottom: 28px;
+  }
+
+  .headerRingWrap {
+    position: absolute;
+    top: var(--bloom-top);
+    right: var(--bloom-right);
+    width: var(--bloom-w);
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .headerLeft {
+    position: relative;
+    z-index: 3;
+    max-width: calc(100% - 100px);
+  }
+
+  /* ── Notes deck — fullbleed horizontal scroll ── */
+  .reflectiveSection {
+    background: none;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    margin-left: -22px;
+    margin-right: -22px;
+    width: calc(100% + 44px);
+    overflow: visible;
+    --surface-reflective: transparent;
+  }
+
+  .noteDeckWrapper {
+    padding: 6px calc((100% - 282px) / 2);
+    gap: 12px;
+    /* height driven by fixed-size cards, no JS height needed */
+  }
+
+  .noteDeckCard {
+    flex: 0 0 282px;
+    width: 282px;
+    height: 296px;
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+    border-radius: 20px;
+    padding: 20px;
+    border: 0.5px solid rgba(0,0,0,0.07);
+    box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+  }
+
+  .noteDeckAddCard {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  .noteDeckAddCard .noteDeckBody {
+    flex: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  .noteDeckEyebrow {
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    margin-bottom: 12px;
+  }
+
+  .noteText {
+    font-size: 14px;
+  }
+
+  .noteDeckFooter {
+    margin-top: auto;
+  }
+
+  /* ── Mode cards — mode-tinted backgrounds ── */
+  .tier {
+    background: var(--card); /* fallback; inline style applies the tint */
+  }
+
+  /* ── Frequency section header ── */
+  .freqHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .freqHeaderLabel {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink3);
+  }
+
+  .freqHeaderDayparts {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .freqHeaderDp {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .freqHeaderDot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(0,0,0,.2);
+    flex-shrink: 0;
+    display: block;
+    background: transparent;
+    box-sizing: border-box;
+  }
+
+  .freqHeaderDpName {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--ink4);
+    letter-spacing: 0.04em;
+  }
+
+  .freqHeaderDpCurrent .freqHeaderDpName {
+    color: var(--ink2);
+  }
+
+  /* moodCard: small top margin since bloom provides visual separation */
+  .moodCard {
+    margin-top: 12px;
+  }
+}
