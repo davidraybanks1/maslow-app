@@ -33,7 +33,6 @@ function formatBuildTime(iso) {
 
 export default function ProfileMenu({
   name, email, dropUp = false,
-  showNoteToSelf, updateShowNoteToSelf,
   reviewCadence, updateReviewCadence,
   reviewDay, reviewTime, updateReviewSchedule,
   remindersEnabled, updateRemindersEnabled,
@@ -257,17 +256,6 @@ export default function ProfileMenu({
                   </div>
                 </button>
               )}
-              <button
-                className={styles.row}
-                onClick={() => { setConfirmSignOut(false); updateShowNoteToSelf?.(!showNoteToSelf) }}
-              >
-                <span className={styles.rowTitle}>show note to self</span>
-                <div className={styles.toggleSwitch}>
-                  <div className={`${styles.toggleTrack} ${showNoteToSelf ? styles.toggleTrackOn : ''}`}>
-                    <span className={`${styles.toggleKnob} ${showNoteToSelf ? styles.toggleKnobOn : ''}`} />
-                  </div>
-                </div>
-              </button>
               <button
                 className={styles.row}
                 onClick={() => { setConfirmSignOut(false); setCadenceOpen(o => !o) }}

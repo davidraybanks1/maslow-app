@@ -65,7 +65,6 @@ function migrateState(saved) {
     if (!saved.practicesDB) saved.practicesDB = []
     if (!saved.noteDeck) saved.noteDeck = []
     if (saved.onboardedAt === undefined) saved.onboardedAt = null
-    if (saved.showNoteToSelf === undefined) saved.showNoteToSelf = true
     if (saved.reviewDay === undefined) saved.reviewDay = 0
     if (saved.reviewTime === undefined) saved.reviewTime = '10:00'
     if (saved.reviewCadence === undefined) saved.reviewCadence = 'weekly'
@@ -127,7 +126,6 @@ export function initialState() {
     noteDeck: [],
     profile: { name: '' },
     email: '',
-    showNoteToSelf: true,
     reviewDay: 0,
     reviewTime: '10:00',
     reviewCadence: 'weekly',
@@ -197,7 +195,6 @@ async function restoreFromSupabase(userId, email) {
       profile: { name: user.name || '' },
       email: email,
       onboardedAt: user.onboarded_at || null,
-      showNoteToSelf: user.show_note_to_self !== false,
       reviewDay: user.review_day ?? 0,
       reviewTime: user.review_time || '10:00',
       reviewCadence: user.review_cadence || 'weekly',
@@ -607,17 +604,6 @@ export function useAppState(onSignIn) {
     }))
   }
 
-  function updateShowNoteToSelf(value) {
-    setState(prev => {
-      if (prev.userId) {
-        supabase.from('users').update({ show_note_to_self: value }).eq('id', prev.userId).then(({ error }) => {
-          if (error) logSupabaseError('updateShowNoteToSelf', error)
-        })
-      }
-      return { ...prev, showNoteToSelf: value }
-    })
-  }
-
   function updateReviewSchedule(day, time) {
     setState(prev => {
       if (prev.userId) {
@@ -817,7 +803,7 @@ export function useAppState(onSignIn) {
     })
   }
 
-  return { state, authLoading, updateCanvas, replaceCanvas, addPractice, renamePractice, archivePractice, removePractice, setPracticeReminder, stampReminderOffered, incrementOffersDeclined, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood, completeOnboarding, updateShowNoteToSelf, updateReviewSchedule, updateReviewCadence, updateRemindersEnabled, updateReviewReminderEnabled, updateMoodReminder, updateNotifType, markNotifPrimed, markTourSeen, resetTour, updateNoteDeck, syncCheckinDay }
+  return { state, authLoading, updateCanvas, replaceCanvas, addPractice, renamePractice, archivePractice, removePractice, setPracticeReminder, stampReminderOffered, incrementOffersDeclined, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood, completeOnboarding, updateReviewSchedule, updateReviewCadence, updateRemindersEnabled, updateReviewReminderEnabled, updateMoodReminder, updateNotifType, markNotifPrimed, markTourSeen, resetTour, updateNoteDeck, syncCheckinDay }
 }
 
 export function todayKey() {

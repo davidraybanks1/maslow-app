@@ -712,12 +712,11 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
       </div>
 
       {/* ── Scrollable / grid body ── */}
-      <div className={`${styles.list}${!state.showNoteToSelf && isDesktop ? ` ${styles.listNoNote}` : ''}`}>
+      <div className={styles.list}>
         <div className={styles.colLeft}>
 
         {/* ── Note to self deck ── */}
-        {state.showNoteToSelf && (
-          <div className={styles.reflectiveSection} data-tour="note">
+        <div className={styles.reflectiveSection} data-tour="note">
             <div className={styles.noteDeckSection}>
               {noteDeck.length > 0 ? (
                 <>
@@ -763,12 +762,9 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 <div className={styles.noteDeckCard}>
                   <div className={styles.noteDeckEyebrow}>NOTE TO SELF</div>
                   <div className={styles.noteDeckBody}>
-                    <span className={styles.noteEmpty}>no notes yet — tap edit to add one</span>
+                    <button className={styles.noteAddBtn} onClick={openManageDeck}>+ add a note to self</button>
                   </div>
-                  <div className={styles.noteDeckFooter}>
-                    <span />
-                    <button className={styles.noteEditPill} onClick={openManageDeck}>edit</button>
-                  </div>
+                  <div className={styles.noteDeckFooter}><span /></div>
                 </div>
               ) : (
                 <div className={styles.noteDeckCard}>
@@ -781,7 +777,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               )}
             </div>
           </div>
-        )}
 
         {/* ── Guidance ── */}
         <div className={styles.guidanceSlot}>

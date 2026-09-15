@@ -196,6 +196,20 @@
   flex: 1;
 }
 
+.noteAddBtn {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink3);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  text-align: left;
+  flex: 1;
+}
+.noteAddBtn:hover { color: var(--ink); }
+
 .noteThumbnail {
   width: 52px;
   height: 52px;
@@ -1583,9 +1597,6 @@
   .reflectiveSection { margin-bottom: 0; }
   .moodCard          { margin-top: 0; }
   .practicesCard     { margin-bottom: 0; }
-
-  /* No-note variant: mood spans full width */
-  .listNoNote .moodCard { grid-column: 1 / -1; }
 
   /* Band 3: four tier cards in a horizontal row */
   .tierList { flex-direction: row; gap: var(--tier-gap); }

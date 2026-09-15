@@ -2,7 +2,7 @@ import styles from './AppHeader.module.css'
 import BrandMark from './BrandMark'
 import ProfileMenu from './ProfileMenu'
 
-export default function AppHeader({ slot, name, email, showNoteToSelf, updateShowNoteToSelf, reviewCadence, updateReviewCadence, reviewDay, reviewTime, updateReviewSchedule, remindersEnabled, updateRemindersEnabled, reviewReminderEnabled, updateReviewReminderEnabled, moodReminders, updateMoodReminder, notifTypes, updateNotifType, noteDeckCount, customTagCount, resetTour }) {
+export default function AppHeader({ slot, name, email, reviewCadence, updateReviewCadence, reviewDay, reviewTime, updateReviewSchedule, remindersEnabled, updateRemindersEnabled, reviewReminderEnabled, updateReviewReminderEnabled, moodReminders, updateMoodReminder, notifTypes, updateNotifType, noteDeckCount, customTagCount, resetTour }) {
   return (
     <header className={styles.header}>
       <div className={styles.left}>
@@ -12,7 +12,6 @@ export default function AppHeader({ slot, name, email, showNoteToSelf, updateSho
         {slot}
         <ProfileMenu
           name={name} email={email}
-          showNoteToSelf={showNoteToSelf} updateShowNoteToSelf={updateShowNoteToSelf}
           reviewCadence={reviewCadence} updateReviewCadence={updateReviewCadence}
           reviewDay={reviewDay} reviewTime={reviewTime} updateReviewSchedule={updateReviewSchedule}
           remindersEnabled={remindersEnabled} updateRemindersEnabled={updateRemindersEnabled}
