@@ -13,12 +13,11 @@ const PETALS = [
 
 const MODE_ORDER = ['exploration', 'appreciation', 'nourishment', 'survival']
 
-// Light (highlight) and deep (shadow) stops for each lit mode
 const MODE_LIT = {
-  exploration:  ['#3D7052', '#081910'],
-  appreciation: ['#CDD9C6', '#546150'],
-  nourishment:  ['#F2CC4A', '#9A6E00'],
-  survival:     ['#E86750', '#871404'],
+  exploration:  ['#2E8A64', '#0C5038'],
+  appreciation: ['#C7D4C1', '#9DB394'],
+  nourishment:  ['#FFD166', '#F0A800'],
+  survival:     ['#FF7A55', '#F03C10'],
 }
 
 // Unlit 3-stop: stop[0] pinned (same in both arrays), stops[1] and [2] interpolate with pct
@@ -67,11 +66,6 @@ export default function Bloom({ arcs, pct }) {
     return fill >= (idx + 0.5) / n
   })
 
-  // Single light source in user coordinates (viewBox "-5 30 280 220")
-  const LX = 90
-  const LY = 87
-  const GR = 200
-
   const fid = `bs-${uid}`  // shadow filter
   const mid = `bm-${uid}`  // knockout mask
 
@@ -84,58 +78,47 @@ export default function Bloom({ arcs, pct }) {
     >
       <defs>
         {MODE_ORDER.map(mode => (
-          <radialGradient
-            key={mode}
-            id={`lg-${mode}-${uid}`}
-            cx={LX} cy={LY} r={GR}
-            gradientUnits="userSpaceOnUse"
-          >
+          <radialGradient key={mode} id={`lg-${mode}-${uid}`} cx="34%" cy="26%">
             <stop offset="0%"   stopColor={MODE_LIT[mode][0]} />
             <stop offset="100%" stopColor={MODE_LIT[mode][1]} />
           </radialGradient>
         ))}
 
-        <radialGradient
-          id={`ug-${uid}`}
-          cx={LX} cy={LY} r={GR}
-          gradientUnits="userSpaceOnUse"
-        >
+        <radialGradient id={`ug-${uid}`} cx="34%" cy="26%">
           <stop offset="0%"   stopColor={u0} />
           <stop offset="45%"  stopColor={u1} />
           <stop offset="100%" stopColor={u2} />
         </radialGradient>
 
-        <filter id={fid} x="-30%" y="-30%" width="160%" height="160%">
-          <feDropShadow dx="0" dy="6" stdDeviation="10" floodOpacity="0.18" />
+        <filter id={fid} x="-30%" y="-30%" width="160%" height="160%"
+                colorInterpolationFilters="sRGB">
+          <feGaussianBlur in="SourceAlpha" stdDeviation="9" />
+          <feOffset dy="6" />
+          <feComponentTransfer><feFuncA type="linear" slope="0.13" /></feComponentTransfer>
         </filter>
 
         <mask id={mid}>
           <rect x="-200" y="-200" width="700" height="700" fill="white" />
           <text
-            x="143" y="167"
+            x="143" y="160"
             textAnchor="middle"
             dominantBaseline="middle"
-            style={{ fontFamily: 'var(--font-serif)', fontWeight: 300, fontSize: '58px', letterSpacing: '-1px' }}
+            style={{
+              fontFamily: 'var(--font-serif)',
+              fontWeight: 300,
+              fontSize: '58px',
+              letterSpacing: '-1px',
+              fontFeatureSettings: "'tnum' 1",
+            }}
             fill="black"
-          >{pct}</text>
-          <text
-            x="175" y="152"
-            textAnchor="start"
-            dominantBaseline="middle"
-            style={{ fontFamily: 'var(--font-serif)', fontWeight: 300, fontSize: '25px' }}
-            fill="black"
-          >%</text>
+          >{pct}<tspan fontSize="25px" dy="-14">%</tspan></text>
         </mask>
       </defs>
 
-      {/* Shadow layer — unmasked copy behind the main bloom */}
-      <g filter={`url(#${fid})`} opacity="0.4">
+      {/* Shadow layer — alpha-only blur; fill colour is irrelevant */}
+      <g filter={`url(#${fid})`} aria-hidden="true">
         {PETALS.map((p, i) => (
-          <circle
-            key={i}
-            cx={p.cx} cy={p.cy} r={p.r}
-            fill={litMap[i] ? `url(#lg-${p.mode}-${uid})` : `url(#ug-${uid})`}
-          />
+          <circle key={i} cx={p.cx} cy={p.cy} r={p.r} fill="#000" />
         ))}
       </g>
 
