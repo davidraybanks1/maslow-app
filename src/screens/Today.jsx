@@ -46,12 +46,12 @@ function softBloomBg(pos) {
   return `radial-gradient(132% 112% at ${x}% ${y - 9}%, #FFFFFF 0%, #FAF8F4 44%, #F0EDE6 100%)`
 }
 
-// Mode-tinted card surface: subtle pip-color glow in top-right
-function modeSoftBg(hex) {
-  const r = parseInt(hex.slice(1,3), 16)
-  const g = parseInt(hex.slice(3,5), 16)
-  const b = parseInt(hex.slice(5,7), 16)
-  return `radial-gradient(132% 112% at 80% 10%, rgba(${r},${g},${b},0.12) 0%, rgba(${r},${g},${b},0.04) 44%, transparent 100%)`
+// Practice check gradient stops — hi/lo per mode, matches Bloom petal lighting
+const MODE_CHECK_COLORS = {
+  exploration:  ['#2E8A64', '#0C5038'],
+  appreciation: ['#C7D4C1', '#9DB394'],
+  nourishment:  ['#FFD166', '#F0A800'],
+  survival:     ['#FF7A55', '#F03C10'],
 }
 
 function CompletionRing({ arcs, pct }) {
@@ -772,20 +772,23 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                             />
                           )}
                         </div>
-                        <div className={styles.noteDeckFooter}>
-                          <div className={styles.deckControls}>
-                            <>
-                              {noteDeck.length > 1 && (
-                                <button className={styles.deckArrow} onClick={() => advanceDeckCard(-1)} aria-label="previous card">‹</button>
-                              )}
-                              <span className={styles.noteDeckCounter}>{Math.min(activeCardIndex + 1, noteDeck.length)}/{noteDeck.length}</span>
-                              {noteDeck.length > 1 && (
-                                <button className={styles.deckArrow} onClick={() => advanceDeckCard(1)} aria-label="next card">›</button>
-                              )}
-                            </>
+                        {/* Desktop keeps footer inside the card */}
+                        {isDesktop && (
+                          <div className={styles.noteDeckFooter}>
+                            <div className={styles.deckControls}>
+                              <>
+                                {noteDeck.length > 1 && (
+                                  <button className={styles.deckArrow} onClick={() => advanceDeckCard(-1)} aria-label="previous card">‹</button>
+                                )}
+                                <span className={styles.noteDeckCounter}>{Math.min(activeCardIndex + 1, noteDeck.length)}/{noteDeck.length}</span>
+                                {noteDeck.length > 1 && (
+                                  <button className={styles.deckArrow} onClick={() => advanceDeckCard(1)} aria-label="next card">›</button>
+                                )}
+                              </>
+                            </div>
+                            <button className={styles.noteEditPill} onClick={openManageDeck}>edit</button>
                           </div>
-                          <button className={styles.noteEditPill} onClick={openManageDeck}>edit</button>
-                        </div>
+                        )}
                       </div>
                     ))}
                     {!isDesktop && (
@@ -797,10 +800,16 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                         <div className={styles.noteDeckBody}>
                           <button className={styles.noteAddBtn} onClick={openManageDeck}>+ add a note to self</button>
                         </div>
-                        <div className={styles.noteDeckFooter}><span /></div>
                       </div>
                     )}
                   </div>
+                  {/* Mobile: single shared footer below the rail */}
+                  {!isDesktop && (
+                    <div className={styles.deckFooterRow}>
+                      <span className={styles.noteDeckCounter}>{Math.min(activeCardIndex + 1, noteDeck.length)}/{noteDeck.length}</span>
+                      <button className={styles.noteEditPill} onClick={openManageDeck}>edit</button>
+                    </div>
+                  )}
                 </>
               ) : deckLoaded ? (
                 <div className={styles.noteDeckCard}>
@@ -883,7 +892,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
             {isDesktop && <span className={styles.tierSectionHint}>tap a mode to fill it</span>}
           </div>
           <div className={styles.tierList}>
-            {MODE_ORDER.map(mode => {
+            {MODE_ORDER.map((mode, mi) => {
               const modeNeeds = NEEDS.filter(n => state.canvas[n.id] === mode)
               if (!modeNeeds.length) return null
               const pip = MODES[mode]?.pip
@@ -961,7 +970,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 <div
                   key={mode}
                   className={`${styles.tier} ${isOpen ? styles.tierOpen : ''}`}
-                  style={{ background: pip ? modeSoftBg(pip) : undefined }}
+                  style={!isDesktop ? { background: softBloomBg(mi) } : undefined}
                 >
                   <button
                     className={styles.tierHeader}
@@ -1024,7 +1033,9 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                                 >
                                   <div
                                     className={`${styles.practiceCheck} ${count > 0 ? styles.practiceCheckFilled : ''}`}
-                                    style={count > 0 ? { background: pip, borderColor: pip } : { borderColor: pip }}
+                                    style={count > 0
+                                      ? { '--practice-paint-hi': (MODE_CHECK_COLORS[mode] || [])[0] || pip, '--practice-paint-lo': (MODE_CHECK_COLORS[mode] || [])[1] || pip, borderColor: 'transparent' }
+                                      : { borderColor: pip }}
                                   />
                                   <span className={styles.practiceLabel}>{practice.label}</span>
                                   <div className={styles.practiceMeta}>
@@ -1204,7 +1215,9 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
             </div>
           </div>
         ) : (
-          <div className={styles.cardJournal} data-tour="journal">
+          <div className={styles.cardJournal} data-tour="journal"
+            style={!isDesktop ? { background: softBloomBg(MODE_ORDER.length) } : undefined}
+          >
             <div className={styles.sectionHeader}>
               <span className={styles.sectionLabel}>drafts</span>
               <span className={styles.journalEntryCount}>

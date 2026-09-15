@@ -2078,6 +2078,13 @@
     box-shadow: 0 2px 16px rgba(0,0,0,0.08);
   }
 
+  .noteDeckBody {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+
   .noteDeckAddCard {
     display: flex;
     flex-direction: column;
@@ -2106,9 +2113,9 @@
     margin-top: auto;
   }
 
-  /* ── Mode cards — mode-tinted backgrounds ── */
+  /* ── Mode cards — neutral surface via softBloomBg inline style ── */
   .tier {
-    background: var(--card); /* fallback; inline style applies the tint */
+    background: var(--card); /* fallback if inline style absent */
   }
 
   /* ── Frequency section header ── */
@@ -2164,6 +2171,21 @@
 
   .freqHeaderDpCurrent .freqHeaderDpName {
     color: var(--ink2);
+  }
+
+  /* ── Deck footer — rendered once below the rail, not inside each card ── */
+  .deckFooterRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px calc((100% - 282px) / 2) 0;
+    /* mirrors the deck's centering padding so counter aligns with card centre */
+  }
+
+  /* ── Practice check — radial-gradient fill matching petal lighting ── */
+  .practiceCheckFilled {
+    background: radial-gradient(circle at 34% 26%, var(--practice-paint-hi), var(--practice-paint-lo)) !important;
+    border-color: transparent !important;
   }
 
   /* moodCard: small top margin since bloom provides visual separation */
