@@ -40,7 +40,7 @@ function buildRingGradient(arcs) {
 }
 
 // Soft-bloom card surface: warm paper radial gradient, origin varies by position
-const BLOOM_ORIGINS = [[20,20],[50,20],[80,20],[20,50],[80,50]]
+const BLOOM_ORIGINS = [[34,26],[28,18],[41,30],[30,15],[37,24]]
 function softBloomBg(pos) {
   const [x, y] = BLOOM_ORIGINS[pos % 5]
   return `radial-gradient(132% 112% at ${x}% ${y - 9}%, #FFFFFF 0%, #FAF8F4 44%, #F0EDE6 100%)`
@@ -1215,9 +1215,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
             </div>
           </div>
         ) : (
-          <div className={styles.cardJournal} data-tour="journal"
-            style={!isDesktop ? { background: softBloomBg(MODE_ORDER.length) } : undefined}
-          >
+          <div className={styles.cardJournal} data-tour="journal">
             <div className={styles.sectionHeader}>
               <span className={styles.sectionLabel}>drafts</span>
               <span className={styles.journalEntryCount}>
