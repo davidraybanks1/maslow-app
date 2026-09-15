@@ -762,7 +762,10 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                       >
                         <div className={styles.noteDeckEyebrow}>NOTE TO SELF</div>
                         <div className={styles.noteDeckBody}>
-                          <span className={styles.noteText}>{card.text}</span>
+                          <span
+                            className={styles.noteText}
+                            data-len={card.text.length > 110 ? 'long' : card.text.length > 60 ? 'mid' : undefined}
+                          >{card.text}</span>
                           {card.image_url && (
                             <img
                               src={card.image_url}

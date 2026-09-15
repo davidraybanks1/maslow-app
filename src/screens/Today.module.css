@@ -2082,11 +2082,21 @@
     box-shadow: 0 2px 16px rgba(0,0,0,0.08);
   }
 
+  /* The bloom's lowest petal (exploration, cx146 cy160 r62) reaches 84px into
+     the card at this size and offset. --note-text-top is that plus the shadow's
+     spread, and it is the only number to change if the bloom moves or resizes.
+     The eyebrow clears the form on its own — the form starts at x 228, the
+     eyebrow ends near x 205 — so only the text needs pushing down. */
+  .noteDeckCard { --note-text-top: 92px; }
+
   .noteDeckBody {
     flex: 1;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
+    justify-content: center;
+    /* card padding (20) + eyebrow block (~23) already sit above the body, so
+       this is the remainder needed to start the text below the form. */
+    padding-top: calc(var(--note-text-top) - 43px);
   }
 
   .noteDeckAddCard {
@@ -2101,6 +2111,7 @@
     display: flex;
     align-items: center;
     justify-content: flex-start;
+    padding-top: 0;
   }
 
   .noteDeckEyebrow {
@@ -2109,9 +2120,20 @@
     margin-bottom: 12px;
   }
 
+  /* flex:1 in the base rule made the text fill the body, so it rendered from
+     the top no matter what justify-content said. That is why the bottom-anchor
+     never took effect. */
   .noteText {
-    font-size: 14px;
+    flex: 0 0 auto;
+    font-size: 20px;
+    line-height: 1.32;
+    letter-spacing: -0.01em;
   }
+  /* Size steps down with length so the block stays roughly the same mass.
+     Thresholds are the live distribution: of 36 notes, 22 are <=60 chars,
+     12 are 61-110, 2 are over; the longest is 132. */
+  .noteText[data-len="mid"]  { font-size: 17.5px; line-height: 1.36; }
+  .noteText[data-len="long"] { font-size: 15.5px; line-height: 1.40; }
 
   .noteDeckFooter {
     margin-top: auto;
