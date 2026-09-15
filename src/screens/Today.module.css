@@ -2082,21 +2082,27 @@
     box-shadow: 0 2px 16px rgba(0,0,0,0.08);
   }
 
-  /* The bloom's lowest petal (exploration, cx146 cy160 r62) reaches 84px into
-     the card at this size and offset. --note-text-top is that plus the shadow's
-     spread, and it is the only number to change if the bloom moves or resizes.
-     The eyebrow clears the form on its own — the form starts at x 228, the
-     eyebrow ends near x 205 — so only the text needs pushing down. */
-  .noteDeckCard { --note-text-top: 92px; }
+  /* The bloom's lowest petal (exploration, cx146 cy160 r62) bottoms out 178px
+     below .header's top. The section header pushes the card top to 231, so the
+     form reaches 58px into the card; --note-text-top is that plus the shadow's
+     spread. It is the only number to change if the bloom or the header moves. */
+  .noteDeckCard { --note-text-top: 66px; }
+
+  /* One header for the section, on the paper, matching Drafts. The rail is
+     fullbleed here, so the label needs the page gutter put back. */
+  .noteSectionHeader {
+    padding-inline: 22px;
+    margin-bottom: 14px;
+  }
 
   .noteDeckBody {
     flex: 1;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    /* card padding (20) + eyebrow block (~23) already sit above the body, so
-       this is the remainder needed to start the text below the form. */
-    padding-top: calc(var(--note-text-top) - 43px);
+    /* only the card's own padding sits above the body now that the eyebrow has
+       moved out, so this is the remainder needed to start below the form. */
+    padding-top: calc(var(--note-text-top) - 20px);
   }
 
   .noteDeckAddCard {
@@ -2214,16 +2220,21 @@
     border-color: transparent !important;
   }
 
-  /* moodCard: small top margin since bloom provides visual separation */
+  /* Section rules: one under the rail, one above Drafts. Drawn as a top border
+     on the section below, so the rule and its spacing travel together. */
   .moodCard {
-    margin-top: 12px;
+    border-top: 0.5px solid var(--hairline);
+    margin-top: 26px;
+    padding-top: 26px;
   }
 
   /* Drafts: no card on mobile — header, chips, entries and composer sit on the paper */
   .cardJournal {
     background: none;
     border: none;
+    border-top: 0.5px solid var(--hairline);
     border-radius: 0;
-    padding: 0;
+    margin-top: 26px;
+    padding: 26px 0 0;
   }
 }

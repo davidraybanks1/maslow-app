@@ -746,6 +746,11 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         {/* ── Note to self deck ── */}
         <div className={styles.reflectiveSection} data-tour="note">
             <div className={styles.noteDeckSection}>
+              {!isDesktop && (
+                <div className={styles.noteSectionHeader}>
+                  <span className={styles.sectionLabel}>notes to self</span>
+                </div>
+              )}
               {noteDeck.length > 0 ? (
                 <>
                   <div
@@ -760,7 +765,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                         ref={el => { cardRefs.current[i] = el }}
                         style={!isDesktop ? { background: softBloomBg(i) } : undefined}
                       >
-                        <div className={styles.noteDeckEyebrow}>NOTE TO SELF</div>
+                        {isDesktop && <div className={styles.noteDeckEyebrow}>NOTE TO SELF</div>}
                         <div className={styles.noteDeckBody}>
                           <span
                             className={styles.noteText}
