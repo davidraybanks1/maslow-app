@@ -2020,9 +2020,15 @@
   .header {
     position: relative;
     overflow: visible;
-    --bloom-w: 200px;
-    --bloom-top: 0px;
-    --bloom-right: -22px;
+    /* Approved size, translated for the cropped viewBox "-5 30 280 220".
+       At the original "0 0 290 250" the approved values were 367 / -70 / -30.
+       Cropping removed 30 units of empty space above the first petal and 15 to
+       the right, so width scales by 280/290 and the offsets shift by that empty
+       space at the new scale (1.266). Setting 367/-70/-30 here would render the
+       form ~4% large and sitting ~38px too high. */
+    --bloom-w: 354px;
+    --bloom-top: -32px;
+    --bloom-right: -11px;
     padding-bottom: 28px;
   }
 
