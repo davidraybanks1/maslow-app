@@ -38,4 +38,14 @@
   .shell[data-tabbar] .content {
     padding-bottom: calc(96px + var(--safe-bottom));
   }
+
+  /* The bloom is absolute at right:-34px inside a 22px gutter, so it sits 12px
+     past the viewport by design. overflow-y:auto here makes the used value of
+     overflow-x auto as well, which turned that 12px into a pannable page and
+     let the screen sway sideways while scrolling. overflow-y is already auto,
+     so pinning x to hidden changes nothing else. The notes rail keeps its own
+     overflow-x:auto and is unaffected. */
+  .content {
+    overflow-x: hidden;
+  }
 }
