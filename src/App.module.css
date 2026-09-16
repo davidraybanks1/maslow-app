@@ -35,8 +35,12 @@
 }
 
 @media (max-width: 899px) {
+  /* --kb is the height the software keyboard is covering, measured off the
+     visual viewport. Without it the scroll container bottoms out before the
+     composer clears the keys, and no amount of scrolling — by us or by the
+     user — can get the field into view. */
   .shell[data-tabbar] .content {
-    padding-bottom: calc(96px + var(--safe-bottom));
+    padding-bottom: calc(96px + var(--safe-bottom) + var(--kb, 0px));
   }
 
   /* The bloom is absolute at right:-34px inside a 22px gutter, so it sits 12px

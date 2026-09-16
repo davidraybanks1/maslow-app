@@ -8,6 +8,7 @@ import { hapticTick, isNative, pendingNotifSlot } from '../lib/native'
 import { normalizeBand, BAND_LABEL } from '../lib/frequency'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import FrequencyCard, { MOOD_PIP_COLOR, MOOD_PIP_COLOR_DARK } from '../components/FrequencyCard'
+import { revealWhenSettled } from '../lib/keyboard'
 import Bloom from '../components/Bloom'
 import JournalQuote from '../components/JournalQuote'
 import ManageDeck from '../components/ManageDeck'
@@ -336,6 +337,16 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   const [quoteEntries, setQuoteEntries] = useState([])
   const [quoteLoading, setQuoteLoading] = useState(false)
   const [composerOpen, setComposerOpen] = useState(false)
+  const composerRef = useRef(null)
+
+  /* The textarea autofocuses, so the keyboard comes up before the browser has
+     laid out the composer at its new position. iOS then decides the field is
+     "visible" because it is inside the layout viewport — which extends behind
+     the keys. This puts it above them for real. */
+  useEffect(() => {
+    if (!composerOpen) return
+    return revealWhenSettled(() => composerRef.current)
+  }, [composerOpen])
   const [needPickerOpen, setNeedPickerOpen] = useState(false)
   const [customPickerOpen, setCustomPickerOpen] = useState(false)
   const [attachMenuOpen, setAttachMenuOpen] = useState(false)
@@ -1285,7 +1296,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                   + add a thought…
                 </button>
               ) : (
-                <div className={styles.journalComposer}>
+                <div className={styles.journalComposer} ref={composerRef}>
                   <div className={styles.composerChips}>
                     <span className={styles.composerSlotChip}>{slot}</span>
                     {chipBand ? (

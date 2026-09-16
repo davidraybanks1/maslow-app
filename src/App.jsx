@@ -4,6 +4,7 @@ import { HeaderSlotContext } from './lib/headerSlot'
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, useNavigationType } from 'react-router-dom'
 import { useAppState, loadCustomTags } from './lib/store'
 import { useIsDesktop } from './lib/useIsDesktop'
+import { useTypingFocus, useKeyboardInset } from './lib/keyboard'
 import { hideSplash, scheduleReminders, isNative, pendingNotifSlot, MOOD_SLOTS } from './lib/native'
 import { createDataStats } from './lib/dataStats'
 import NotifPrimingSheet from './components/NotifPrimingSheet'
@@ -87,6 +88,8 @@ function AppInner() {
   })
 
   const isDesktop = useIsDesktop()
+  const typing = useTypingFocus()
+  const kbInset = useKeyboardInset()
 
   // Updated every render so the SIGNED_IN handler always reads the current pathname
   // rather than the one captured at mount. Without this, password-reset flows would
@@ -179,7 +182,7 @@ function AppInner() {
 
   return (
     <HeaderSlotContext.Provider value={setHeaderSlot}>
-    <div className={styles.shell} {...(state.onboarded && { 'data-tabbar': '' })}>
+    <div className={styles.shell} style={{ '--kb': kbInset + 'px' }} {...(state.onboarded && { 'data-tabbar': '' })}>
       {state.onboarded && <DesktopNav name={state.profile.name} email={state.email} reviewCadence={state.reviewCadence} updateReviewCadence={updateReviewCadence} reviewDay={state.reviewDay} reviewTime={state.reviewTime} updateReviewSchedule={updateReviewSchedule} remindersEnabled={state.remindersEnabled} updateRemindersEnabled={updateRemindersEnabled} reviewReminderEnabled={state.reviewReminderEnabled} updateReviewReminderEnabled={updateReviewReminderEnabled} moodReminders={state.moodReminders} updateMoodReminder={updateMoodReminder} notifTypes={state.notifTypes} updateNotifType={updateNotifType} noteDeckCount={(state.noteDeck || []).length} customTagCount={customTagCount} resetTour={resetTour} />}
       <div className={styles.column}>
       {state.onboarded && (
@@ -187,7 +190,7 @@ function AppInner() {
           <AppHeader slot={headerSlot} name={state.profile.name} email={state.email} reviewCadence={state.reviewCadence} updateReviewCadence={updateReviewCadence} reviewDay={state.reviewDay} reviewTime={state.reviewTime} updateReviewSchedule={updateReviewSchedule} remindersEnabled={state.remindersEnabled} updateRemindersEnabled={updateRemindersEnabled} reviewReminderEnabled={state.reviewReminderEnabled} updateReviewReminderEnabled={updateReviewReminderEnabled} moodReminders={state.moodReminders} updateMoodReminder={updateMoodReminder} notifTypes={state.notifTypes} updateNotifType={updateNotifType} noteDeckCount={(state.noteDeck || []).length} customTagCount={customTagCount} resetTour={resetTour} />
         </div>
       )}
-      <div className={styles.content} ref={contentRef}>
+      <div className={styles.content} ref={contentRef} data-scroll>
         <Routes>
           <Route path="/" element={state.onboarded ? <Navigate to="/today" replace /> : <Navigate to="/onboarding" replace />} />
           <Route path="/onboarding" element={state.onboarded ? <Navigate to="/today" replace /> : <DiagnosticFlow updateCanvas={updateCanvas} completeOnboarding={completeOnboarding} />} />
@@ -202,7 +205,7 @@ function AppInner() {
         </Routes>
       </div>
       </div>
-      {state.onboarded && <TabBar />}
+      {state.onboarded && !typing && <TabBar />}
       {isNative() && state.onboarded && state.userId && state.notifPrimedAt == null && state.tourSeenAt != null && (
         <NotifPrimingSheet updateRemindersEnabled={updateRemindersEnabled} markNotifPrimed={markNotifPrimed} />
       )}

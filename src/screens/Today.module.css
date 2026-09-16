@@ -1640,8 +1640,11 @@
     margin-top: 24px;
     border-top: 0.5px solid rgba(0,0,0,.08);
     padding-top: 14px;
+    padding-bottom: 12px;
     width: 100%;
     box-sizing: border-box;
+    /* for any scrollIntoView that reaches this — keeps it off the keyboard */
+    scroll-margin-bottom: 24px;
   }
 
   .journalComposerInput {
