@@ -18,9 +18,21 @@ export const MOOD_PIP_COLOR_DARK = {
   bad:  '#FF8A66',
 }
 
-// Props: initialBand, initialFeeling, onSettle(band, feeling), compact, pastTense, dayparts
+/* The amber ground is light, so the pips take the deep end of each ramp
+   instead of the lit head — the same colours, read from the other side. */
+export const MOOD_PIP_COLOR_AMBER = {
+  good: '#07301F',
+  mid:  '#4F6449',
+  bad:  '#A81F06',
+}
+
+export const PIPS_FOR = tone =>
+  tone === 'amber' ? MOOD_PIP_COLOR_AMBER : tone === 'dark' ? MOOD_PIP_COLOR_DARK : MOOD_PIP_COLOR
+
+// Props: initialBand, initialFeeling, onSettle(band, feeling), compact, pastTense, dayparts,
+//        tone: 'dark' | 'amber' | undefined (paper)
 // dayparts: [{ name, isCurrent, band, hasFeeling, onTap }]
-export default function FrequencyCard({ initialBand, initialFeeling, onSettle, compact, pastTense, dayparts, bandAsBack, dark }) {
+export default function FrequencyCard({ initialBand, initialFeeling, onSettle, compact, pastTense, dayparts, bandAsBack, tone }) {
   const [band, setBand] = useState(initialBand || null)
   const [feeling, setFeeling] = useState(initialFeeling || null)
   const touchedRef = useRef(false)
@@ -58,7 +70,7 @@ export default function FrequencyCard({ initialBand, initialFeeling, onSettle, c
   const displayLabel = feeling || (band ? BAND_LABEL[band] : null)
 
   return (
-    <div className={`${styles.freqCard}${dark ? ` ${styles.dark}` : ''}`}>
+    <div className={`${styles.freqCard}${tone && styles[tone] ? ` ${styles[tone]}` : ''}`}>
       {!compact && (
         <p className={styles.freqSentence}>
           {pastTense ? 'I was feeling' : "I'm feeling"}{' '}
@@ -137,7 +149,7 @@ export default function FrequencyCard({ initialBand, initialFeeling, onSettle, c
           {dayparts && (
             <div className={styles.freqDayparts}>
               {dayparts.map(dp => {
-                const color = dp.band ? (dark ? MOOD_PIP_COLOR_DARK : MOOD_PIP_COLOR)[dp.band] : null
+                const color = dp.band ? PIPS_FOR(tone)[dp.band] : null
                 const dotStyle = !color ? undefined
                   : dp.hasFeeling
                     ? { background: color, borderColor: color }

@@ -162,5 +162,44 @@
   background: linear-gradient(90deg, rgba(127, 230, 189, 0.9), rgba(63, 168, 122, 0.25));
 }
 
+/* ── on the bloom's yellow ─────────────────────────────────────────────────
+   MODE_LIT.nourishment in Bloom.jsx is ['#FFD166', '#F0A800'] on a radial at
+   34% / 26% — two stops, which is exactly why it reads richer than a long
+   ramp: no pale highlight at the top, no brown at the edge. The ground is
+   light, so this tone is the mirror of .dark rather than a recolour of it:
+   ink on colour, not colour on ink. Cream would be 2.4:1 here and fails.
+   Ink at 0.52 on the lit corner is ~5.2:1 and on the deep corner ~4.6:1. */
+
+.amber .freqSentence { color: #241A02; }
+.amber .freqBlank {
+  color: rgba(36, 26, 2, 0.5);
+  min-width: 96px;
+  border-bottom: 1px solid rgba(36, 26, 2, 0.34);
+}
+.amber .freqFilled { color: #160F00; border-bottom-color: rgba(36, 26, 2, 0.34); }
+.amber .freqTextureQ { color: rgba(36, 26, 2, 0.6); margin: 18px 0 12px; }
+
+.amber .freqOptionBtn { color: rgba(36, 26, 2, 0.52); }
+.amber .freqOptionBtn:hover { color: rgba(36, 26, 2, 0.8); }
+.amber .freqOptionActive { color: #150F00; }
+.amber .freqOptionDim { color: rgba(36, 26, 2, 0.5); }
+
+.amber .freqRule { background: rgba(36, 26, 2, 0.18); }
+.amber .freqBackBtn { color: rgba(36, 26, 2, 0.5); }
+.amber .freqDot { border-color: rgba(36, 26, 2, 0.36); }
+.amber .freqDaypartLabel { color: rgba(36, 26, 2, 0.55); }
+.amber .freqDaypartCurrent .freqDaypartLabel { color: #2A1E00; }
+
+/* mint disappears on amber, so the receipt is drawn in ink instead */
+.amber .freqOptionActive::after {
+  content: "";
+  display: block;
+  height: 1.5px;
+  margin-top: 3px;
+  border-radius: 1px;
+  background: linear-gradient(90deg, rgba(21, 15, 0, 0.78), rgba(21, 15, 0, 0.16));
+}
+
 /* three taps a day deserve a bigger target than the text needs */
-.dark .freqOptionBtn { padding: 13px 0; min-height: 48px; }
+.dark .freqOptionBtn,
+.amber .freqOptionBtn { padding: 13px 0; min-height: 48px; }
