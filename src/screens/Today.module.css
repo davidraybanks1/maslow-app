@@ -2085,7 +2085,10 @@
     margin-right: -22px;
     width: calc(100% + 44px);
     overflow: visible;
-    --surface-reflective: transparent;
+    /* The note cards carried no background of their own here — the inline
+       gradient was it. --card (#FAF8F1) is that gradient's 44% stop, so the
+       flat surface is the middle of the light it replaces. */
+    --surface-reflective: var(--card);
   }
 
   .noteDeckWrapper {
@@ -2169,9 +2172,9 @@
     margin-top: auto;
   }
 
-  /* ── Mode cards — neutral surface via softBloomBg inline style ── */
+  /* ── Mode cards — flat neutral surface ── */
   .tier {
-    background: var(--card); /* fallback if inline style absent */
+    background: var(--card);
   }
 
   /* ── Frequency section header ── */

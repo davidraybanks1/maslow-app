@@ -41,13 +41,6 @@ function buildRingGradient(arcs) {
   return `conic-gradient(from -90deg, ${stops.join(', ')})`
 }
 
-// Soft-bloom card surface: warm paper radial gradient, origin varies by position
-const BLOOM_ORIGINS = [[34,26],[28,18],[41,30],[30,15],[37,24]]
-function softBloomBg(pos) {
-  const [x, y] = BLOOM_ORIGINS[pos % 5]
-  return `radial-gradient(132% 112% at ${x}% ${y - 9}%, #FFFFFF 0%, #FAF8F4 44%, #F0EDE6 100%)`
-}
-
 // Practice check gradient stops — hi/lo per mode, matches Bloom petal lighting
 const MODE_CHECK_COLORS = {
   exploration:  ['#2E8A64', '#0C5038'],
@@ -775,7 +768,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                         key={card.id}
                         className={styles.noteDeckCard}
                         ref={el => { cardRefs.current[i] = el }}
-                        style={!isDesktop ? { background: softBloomBg(i) } : undefined}
                       >
                         {isDesktop && <div className={styles.noteDeckEyebrow}><Glyph kind="note" />NOTE TO SELF</div>}
                         <div className={styles.noteDeckBody}>
@@ -815,7 +807,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                       <div
                         className={`${styles.noteDeckCard} ${styles.noteDeckAddCard}`}
                         ref={el => { cardRefs.current[noteDeck.length] = el }}
-                        style={{ background: softBloomBg(noteDeck.length) }}
                       >
                         <div className={styles.noteDeckBody}>
                           <button className={styles.noteAddBtn} onClick={openManageDeck}>+ add a note to self</button>
@@ -990,7 +981,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 <div
                   key={mode}
                   className={`${styles.tier} ${isOpen ? styles.tierOpen : ''}`}
-                  style={!isDesktop ? { background: softBloomBg(mi) } : undefined}
                 >
                   <button
                     className={styles.tierHeader}
