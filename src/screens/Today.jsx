@@ -874,14 +874,16 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               </div>
             </div>
           )}
-          <FrequencyCard
-            key={slot}
-            initialBand={moodSelections[slot] || null}
-            initialFeeling={moodFeelings[slot] || null}
-            onSettle={(band, feeling) => handleFrequencySettle(slot, band, feeling)}
-            dayparts={isDesktop ? daypartsData : null}
-            bandAsBack={!isDesktop}
-          />
+          <div className={styles.freqShell}>
+            <FrequencyCard
+              key={slot}
+              initialBand={moodSelections[slot] || null}
+              initialFeeling={moodFeelings[slot] || null}
+              onSettle={(band, feeling) => handleFrequencySettle(slot, band, feeling)}
+              dayparts={isDesktop ? daypartsData : null}
+              bandAsBack={!isDesktop}
+            />
+          </div>
           {openRetroSlot && (
             <div className={styles.retroRow}>
               <FrequencyCard

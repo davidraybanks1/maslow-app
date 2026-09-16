@@ -1,20 +1,23 @@
 .freqCard {
-  padding: 10px 0 4px;
+  padding: 0;
 }
 
+/* The sentence is the receipt, not the control - so it steps down to a size
+   that no longer outranks the page greeting, and the chips below it do the
+   tapping. */
 .freqSentence {
   font-family: var(--font-serif);
-  font-size: 29px;
+  font-size: 21px;
   font-weight: 300;
-  line-height: 1.38;
-  letter-spacing: -0.02em;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
   color: var(--ink);
-  margin: 0 0 18px;
+  margin: 0 0 12px;
 }
 
 .freqBlank {
   display: inline-block;
-  min-width: 96px;
+  min-width: 72px;
   text-align: center;
   border-bottom: 1px solid rgba(0, 0, 0, 0.3);
   color: rgba(0, 0, 0, 0.42);
@@ -27,10 +30,55 @@
 
 .freqTextureQ {
   font-family: var(--font-serif);
-  font-size: 19px;
+  font-size: 14px;
   font-weight: 300;
   color: var(--ink3);
-  margin: 0 0 10px;
+  margin: 14px 0 8px;
+}
+
+/* ── chips ──────────────────────────────────────────────────────────────────
+   The same dialect as the chip on a draft (.journalFreqChip: 10px mono, 1px
+   rule at .22, a 6px dot) at a size a thumb can hit three times a day. 40px
+   is the height most iOS chip controls settle on; the 8px row gap keeps
+   neighbours from being one target. Selected is the same black as the
+   "+ add a thought" pill, so there is one meaning for black on this screen. */
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 14px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: rgba(0, 0, 0, 0.62);
+  background: none;
+  border: 1px solid rgba(0, 0, 0, 0.22);
+  border-radius: 999px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.chip:hover { border-color: rgba(0, 0, 0, 0.4); color: var(--ink); }
+
+.chipOn {
+  background: var(--ink);
+  color: #F2F0E8;
+  border-color: var(--ink);
+}
+.chipOn:hover { border-color: var(--ink); color: #F2F0E8; }
+
+.chipDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .freqOptionsRow {

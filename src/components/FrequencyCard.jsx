@@ -104,48 +104,55 @@ export default function FrequencyCard({ initialBand, initialFeeling, onSettle, c
             </div>
           )}
         </>
-      ) : !band ? (
-        <div className={styles.freqOptionsRow}>
-          {BANDS.map(b => (
-            <button key={b} className={styles.freqOptionBtn} onClick={() => pickBand(b)}>
-              {BAND_LABEL[b]}
-            </button>
-          ))}
-        </div>
       ) : (
         <>
-          {bandAsBack && (
-            <div className={styles.freqOptionsRow}>
-              {BANDS.map(b => (
+          {/* The sentence above is the receipt; these are the control. The band
+              row stays visible after a pick so what you chose is always in view
+              and one tap away from changing - the chips carry the same colour
+              dot the draft will show an hour later, so input and output are the
+              same object. */}
+          <div className={styles.chipRow}>
+            {BANDS.map(b => {
+              const on = b === band
+              return (
                 <button
                   key={b}
-                  className={`${styles.freqOptionBtn} ${b === band ? styles.freqOptionActive : styles.freqOptionDim}`}
+                  className={`${styles.chip}${on ? ` ${styles.chipOn}` : ''}`}
                   onClick={() => pickBand(b)}
-                >{BAND_LABEL[b]}</button>
-              ))}
-            </div>
-          )}
-          <p className={styles.freqTextureQ}>Is there a specific texture?</p>
-          <div className={styles.freqOptionsRow}>
-            {FEELINGS[band].map(f => (
-              <button
-                key={f}
-                className={`${styles.freqOptionBtn} ${f === feeling ? styles.freqOptionActive : ''} ${feeling && f !== feeling ? styles.freqOptionDim : ''}`}
-                onClick={() => pickFeeling(f)}
-              >{f}</button>
-            ))}
+                  aria-pressed={on}
+                >
+                  <span className={styles.chipDot} style={{ background: (on ? MOOD_PIP_COLOR_DARK : MOOD_PIP_COLOR)[b] }} />
+                  {BAND_LABEL[b]}
+                </button>
+              )
+            })}
           </div>
+          {band && (
+            <>
+              <p className={styles.freqTextureQ}>
+                What type of {BAND_LABEL[band]} {pastTense ? 'was' : 'is'} it?
+              </p>
+              <div className={styles.chipRow}>
+                {FEELINGS[band].map(f => {
+                  const on = f === feeling
+                  return (
+                    <button
+                      key={f}
+                      className={`${styles.chip}${on ? ` ${styles.chipOn}` : ''}`}
+                      onClick={() => pickFeeling(f)}
+                      aria-pressed={on}
+                    >{f}</button>
+                  )
+                })}
+              </div>
+            </>
+          )}
         </>
       )}
 
       {!compact && (
         <>
           {!bandAsBack && <div className={styles.freqRule} />}
-          {band && !bandAsBack && (
-            <button className={styles.freqBackBtn} onClick={goBack}>
-              ← {feeling ? 'change' : `${BAND_LABEL[band]} is saved — this gives you more detail`}
-            </button>
-          )}
           {dayparts && (
             <div className={styles.freqDayparts}>
               {dayparts.map(dp => {

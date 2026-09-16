@@ -2182,7 +2182,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 14px;
+    margin-bottom: 10px;
   }
 
   .freqHeaderLabel {
@@ -2247,30 +2247,28 @@
     border-color: transparent !important;
   }
 
-  /* ── The frequency band ───────────────────────────────────────────────
-     Full bleed, square: -22px escapes .screen's gutter so the white reaches
-     both edges, and the padding puts the type back on the same left margin as
-     everything above it. No radius, no border, no shadow — the change of
-     value against the paper is the whole division, the same way the black
-     band worked. White is the only ground on this screen that is lighter than
-     the paper, so the section lifts rather than sinks. */
+  /* ── The frequency section ────────────────────────────────────────────
+     A section in the same grammar as MODES: an eyebrow on the paper, then a
+     card in .tier's exact clothes - 10px radius, hairline, --card. The
+     white band this replaces was the one element on the page speaking a
+     third language (a square stripe cut through the paper, neither an object
+     on it nor text set on it), which is why no colour ever fixed it. */
   .moodCard {
-    margin: 26px -22px 0;
-    padding: 22px 22px 18px; /* the option buttons carry 13px of tap padding of their own */
-    background: #FFFFFF;
+    margin: 26px 0 0;
+    padding: 0;
+    background: none;
+  }
+  .freqShell {
+    background: var(--card);
+    border: 0.5px solid var(--hairline);
+    border-radius: 10px;
+    padding: 14px 14px 14px;
   }
 
   /* the card's own lower edge separates it from the modes — but the divider
      was also carrying 36px of air, so the gap moves onto the section below */
   .moodDivider { display: none; }
   .practicesCard { margin-top: 26px; }
-
-  /* Retro slot: the paper, cut into the white, so it reads as recessed */
-  .retroRow {
-    background: var(--paper);
-    border: none;
-    margin-top: 16px;
-  }
 
   /* Drafts: no card on mobile — header, chips, entries and composer sit on the paper */
   .cardJournal {
