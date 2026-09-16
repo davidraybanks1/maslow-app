@@ -120,3 +120,47 @@
   color: var(--ink);
   font-weight: 500;
 }
+
+
+/* ── on the dark band ──────────────────────────────────────────────────────
+   The section inverts rather than recolouring piece by piece: one tone switch,
+   and everything inside it answers. Cream on the warm black is about 13:1;
+   the dim state sits at 4.5:1, which is fine for 22px serif and keeps the
+   chosen word unmistakable. */
+
+.dark .freqSentence { color: var(--on-dark, #F2F0E8); }
+/* the empty slot is an invitation, so it gets tightened on the dark: 1.5px
+   dotted reads as a broken line on black, and 128px left the period stranded */
+.dark .freqBlank {
+  color: rgba(242, 240, 232, 0.5);
+  min-width: 96px;
+  border-bottom: 1px solid rgba(242, 240, 232, 0.3);
+}
+.dark .freqFilled { color: #FFFDF7; border-bottom-color: rgba(242, 240, 232, 0.30); }
+.dark .freqTextureQ { color: rgba(242, 240, 232, 0.55); margin: 18px 0 12px; }
+
+/* an unchosen word still has to look like something you'd tap — 0.36 read as
+   disabled on the black. 0.5 is ~6:1 and still clearly below the chosen one. */
+.dark .freqOptionBtn { color: rgba(242, 240, 232, 0.52); }
+.dark .freqOptionBtn:hover { color: rgba(242, 240, 232, 0.8); }
+.dark .freqOptionActive { color: #FFFDF7; }
+.dark .freqOptionDim { color: rgba(242, 240, 232, 0.5); }
+
+.dark .freqRule { background: rgba(242, 240, 232, 0.16); }
+.dark .freqBackBtn { color: rgba(242, 240, 232, 0.45); }
+.dark .freqDot { border-color: rgba(242, 240, 232, 0.32); }
+.dark .freqDaypartLabel { color: rgba(242, 240, 232, 0.5); }
+.dark .freqDaypartCurrent .freqDaypartLabel { color: var(--on-dark, #F2F0E8); }
+
+/* a chosen word is lit, not merely lighter — the underline is the receipt */
+.dark .freqOptionActive::after {
+  content: "";
+  display: block;
+  height: 1.5px;
+  margin-top: 3px;
+  border-radius: 1px;
+  background: linear-gradient(90deg, rgba(127, 230, 189, 0.9), rgba(63, 168, 122, 0.25));
+}
+
+/* three taps a day deserve a bigger target than the text needs */
+.dark .freqOptionBtn { padding: 13px 0; min-height: 48px; }

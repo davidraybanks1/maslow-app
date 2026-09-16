@@ -9,9 +9,18 @@ export const MOOD_PIP_COLOR = {
   bad:  'var(--survival)',
 }
 
+/* On the black band the paper pips go invisible — exploration is #1B3A2D, which
+   is 1.3:1 against #0A0807. These are the lit heads of the same ramps the
+   streak glyphs use, so a good day reads as the same green in both places. */
+export const MOOD_PIP_COLOR_DARK = {
+  good: '#3FA87A',
+  mid:  '#C7D4C1',
+  bad:  '#FF8A66',
+}
+
 // Props: initialBand, initialFeeling, onSettle(band, feeling), compact, pastTense, dayparts
 // dayparts: [{ name, isCurrent, band, hasFeeling, onTap }]
-export default function FrequencyCard({ initialBand, initialFeeling, onSettle, compact, pastTense, dayparts, bandAsBack }) {
+export default function FrequencyCard({ initialBand, initialFeeling, onSettle, compact, pastTense, dayparts, bandAsBack, dark }) {
   const [band, setBand] = useState(initialBand || null)
   const [feeling, setFeeling] = useState(initialFeeling || null)
   const touchedRef = useRef(false)
@@ -49,7 +58,7 @@ export default function FrequencyCard({ initialBand, initialFeeling, onSettle, c
   const displayLabel = feeling || (band ? BAND_LABEL[band] : null)
 
   return (
-    <div className={styles.freqCard}>
+    <div className={`${styles.freqCard}${dark ? ` ${styles.dark}` : ''}`}>
       {!compact && (
         <p className={styles.freqSentence}>
           {pastTense ? 'I was feeling' : "I'm feeling"}{' '}
@@ -128,7 +137,7 @@ export default function FrequencyCard({ initialBand, initialFeeling, onSettle, c
           {dayparts && (
             <div className={styles.freqDayparts}>
               {dayparts.map(dp => {
-                const color = dp.band ? MOOD_PIP_COLOR[dp.band] : null
+                const color = dp.band ? (dark ? MOOD_PIP_COLOR_DARK : MOOD_PIP_COLOR)[dp.band] : null
                 const dotStyle = !color ? undefined
                   : dp.hasFeeling
                     ? { background: color, borderColor: color }

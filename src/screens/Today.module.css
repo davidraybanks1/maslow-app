@@ -2220,13 +2220,35 @@
     border-color: transparent !important;
   }
 
-  /* Section rules: one under the rail, one above Drafts. Drawn as a top border
-     on the section below, so the rule and its spacing travel together. */
+  /* ── The frequency band ───────────────────────────────────────────────
+     Full bleed: -22px escapes .screen's gutter and the padding puts it back
+     inside, so the black runs edge to edge while the type stays on the same
+     left margin as everything above it. No radius, no border — it is a band
+     in the page, not a card on it. The hairline rule this used to carry is
+     redundant now; the change of ground is the division. */
   .moodCard {
-    border-top: 0.5px solid var(--hairline);
-    margin-top: 26px;
-    padding-top: 26px;
+    margin: 26px -22px 0;
+    padding: 22px 22px 18px; /* the option buttons carry 13px of tap padding of their own */
+    background-color: #0A0807;
+    background-image: radial-gradient(86% 128% at 26% 12%, #37312A 0%, #221D18 34%, #12100D 62%, #0A0807 82%, #070605 100%);
   }
+  /* the band's own lower edge separates it from the modes — but the divider
+     was also carrying 36px of air, so the gap moves onto the section below */
+  .moodDivider { display: none; }
+  .practicesCard { margin-top: 26px; }
+
+  /* Retro slot: a lighter panel cut out of the band, not a cream card on it */
+  .retroRow {
+    background: rgba(242, 240, 232, 0.05);
+    border: 0.5px solid rgba(242, 240, 232, 0.12);
+    margin-top: 16px;
+  }
+
+  /* ── Frequency header, inverted ── */
+  .freqHeaderLabel { color: rgba(242, 240, 232, 0.42); }
+  .freqHeaderDot { border-color: rgba(242, 240, 232, 0.3); }
+  .freqHeaderDpName { color: rgba(242, 240, 232, 0.42); }
+  .freqHeaderDpCurrent .freqHeaderDpName { color: rgba(242, 240, 232, 0.88); }
 
   /* Drafts: no card on mobile — header, chips, entries and composer sit on the paper */
   .cardJournal {
