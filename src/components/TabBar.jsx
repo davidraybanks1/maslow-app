@@ -39,7 +39,7 @@ function ReflectIcon({ active }) {
 
 const TABS = [
   { to: '/today',  label: 'today',   Icon: TodayIcon },
-  { to: '/data',   label: 'data',    Icon: DataIcon },
+  { to: '/data',   label: 'almanac', Icon: DataIcon },
   { to: '/log',    label: 'reflect', Icon: ReflectIcon },
 ]
 
