@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
 import { buildStreaks, STREAK_KINDS } from '../lib/streaks'
+import { GlyphShape, GLYPH_BOX, GLYPH_RADIAL } from '../lib/glyphs'
 import styles from './StreaksRail.module.css'
 
 /* Four kinds of run, four silhouettes — so you can tell what you are looking
@@ -23,8 +24,8 @@ let uid = 0
 function Glyph({ streak }) {
   const id = useMemo(() => `sg${++uid}`, [])
   const [a, b] = streak.quiet ? UNLIT : rampFor(streak)
-  const fill = `url(#${id})`
-  const defs = streak.kind === 'need'
+  const [w, h] = GLYPH_BOX[streak.kind] || GLYPH_BOX.mode
+  const defs = GLYPH_RADIAL[streak.kind]
     ? <radialGradient id={id} cx="34%" cy="26%" r="78%">
         <stop offset="0%" stopColor={a} /><stop offset="100%" stopColor={b} />
       </radialGradient>
@@ -32,29 +33,10 @@ function Glyph({ streak }) {
         <stop offset="0%" stopColor={a} /><stop offset="100%" stopColor={b} />
       </linearGradient>
 
-  if (streak.kind === 'mode') return (
-    <svg width="24" height="16" viewBox="0 0 24 16"><defs>{defs}</defs>
-      <path d="M2.6 13.6 A 9.4 9.4 0 0 1 21.4 13.6" fill="none" stroke={fill}
-        strokeWidth="4.4" strokeLinecap="round" />
-    </svg>
-  )
-  if (streak.kind === 'need') return (
-    <svg width="21" height="17" viewBox="0 0 21 17"><defs>{defs}</defs>
-      <circle cx="7.5" cy="9.5" r="6" fill={fill} />
-      <circle cx="15" cy="6" r="4.4" fill={fill} />
-      <circle cx="16.5" cy="13" r="3.4" fill={fill} />
-    </svg>
-  )
-  if (streak.kind === 'practice') return (
-    <svg width="14" height="14" viewBox="0 0 14 14"><defs>{defs}</defs>
-      <rect x="0.6" y="0.6" width="12.8" height="12.8" rx="4.1" fill={fill} />
-    </svg>
-  )
   return (
-    <svg width="28" height="12" viewBox="0 0 28 12"><defs>{defs}</defs>
-      <path d="M1.2 6 Q2.6 1.2 4 6 Q5.4 10.8 6.8 6 Q8.2 1.6 9.6 6 Q11 10.4 12.4 6
-               Q13.8 1.6 15.2 6 Q16.6 10.4 18 6 Q19.4 2 20.8 6 Q22.2 10 23.6 6 Q25 2.7 26.8 6"
-        fill="none" stroke={fill} strokeWidth="2.1" strokeLinecap="round" />
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden="true">
+      <defs>{defs}</defs>
+      <GlyphShape kind={streak.kind} paint={`url(#${id})`} />
     </svg>
   )
 }

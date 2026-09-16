@@ -1030,6 +1030,27 @@
   margin: 18px 0;
 }
 
+/* ── Section marks ─────────────────────────────────────────────────────────
+   The same five glyphs the streak rail draws, here in the flat-tint register.
+   In the rail, lit means a run is going and unlit means it has gone quiet —
+   both are statuses, and a section label has no status, so these are neither.
+   They name a kind of thing, which is what a label does, and they make the
+   Data screen legible before you have opened it. */
+.freqHeaderLabel,
+.tierSectionLabel,
+.noteDeckEyebrow,
+.sectionLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.freqHeaderLabel > svg,
+.tierSectionLabel > svg,
+.noteDeckEyebrow > svg,
+.sectionLabel > svg {
+  color: rgba(0, 0, 0, 0.34);
+}
+
 /* ── Journal entry cards ── */
 .journalMobileEntries {
   display: flex;

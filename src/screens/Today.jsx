@@ -9,6 +9,7 @@ import { normalizeBand, BAND_LABEL } from '../lib/frequency'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import FrequencyCard, { MOOD_PIP_COLOR } from '../components/FrequencyCard'
 import { revealWhenSettled } from '../lib/keyboard'
+import Glyph from '../lib/glyphs'
 import Bloom from '../components/Bloom'
 import JournalQuote from '../components/JournalQuote'
 import ManageDeck from '../components/ManageDeck'
@@ -776,7 +777,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                         ref={el => { cardRefs.current[i] = el }}
                         style={!isDesktop ? { background: softBloomBg(i) } : undefined}
                       >
-                        {isDesktop && <div className={styles.noteDeckEyebrow}>NOTE TO SELF</div>}
+                        {isDesktop && <div className={styles.noteDeckEyebrow}><Glyph kind="note" />NOTE TO SELF</div>}
                         <div className={styles.noteDeckBody}>
                           <span
                             className={styles.noteText}
@@ -832,7 +833,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 </>
               ) : deckLoaded ? (
                 <div className={styles.noteDeckCard}>
-                  <div className={styles.noteDeckEyebrow}>NOTE TO SELF</div>
+                  <div className={styles.noteDeckEyebrow}><Glyph kind="note" />NOTE TO SELF</div>
                   <div className={styles.noteDeckBody}>
                     <button className={styles.noteAddBtn} onClick={openManageDeck}>+ add a note to self</button>
                   </div>
@@ -840,7 +841,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 </div>
               ) : (
                 <div className={styles.noteDeckCard}>
-                  <div className={styles.noteDeckEyebrow}>NOTE TO SELF</div>
+                  <div className={styles.noteDeckEyebrow}><Glyph kind="note" />NOTE TO SELF</div>
                   <div className={styles.noteDeckBody}>
                     <span className={styles.noteEmpty}>—</span>
                   </div>
@@ -859,7 +860,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         <div className={styles.moodCard} data-tour="mood">
           {!isDesktop && (
             <div className={styles.freqHeader}>
-              <span className={styles.freqHeaderLabel}>FREQUENCY</span>
+              <span className={styles.freqHeaderLabel}><Glyph kind="frequency" />FREQUENCY</span>
               <div className={styles.freqHeaderDayparts}>
                 {daypartsData.map(dp => {
                   const color = dp.band ? MOOD_PIP_COLOR[dp.band] : null
@@ -907,7 +908,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         {/* ── Needs & Practices ── */}
         <div className={styles.practicesCard} data-tour="modes">
           <div className={styles.tierSectionHeader}>
-            <span className={styles.tierSectionLabel}>{isDesktop ? 'CANVAS' : 'MODES'}</span>
+            <span className={styles.tierSectionLabel}><Glyph kind="mode" />{isDesktop ? 'CANVAS' : 'MODES'}</span>
             {isDesktop && <span className={styles.tierSectionHint}>tap a mode to fill it</span>}
           </div>
           <div className={styles.tierList}>
@@ -1236,7 +1237,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         ) : (
           <div className={styles.cardJournal} data-tour="journal">
             <div className={styles.sectionHeader}>
-              <span className={styles.sectionLabel}>drafts</span>
+              <span className={styles.sectionLabel}><Glyph kind="note" />drafts</span>
               <span className={styles.journalEntryCount}>
                 {journalEntryCount > 0 ? `${journalEntryCount} ${journalEntryCount === 1 ? 'entry' : 'entries'} today` : ''}
               </span>
