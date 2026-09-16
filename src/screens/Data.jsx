@@ -7,6 +7,8 @@ import { normalizeBand, BAND_LABEL } from '../lib/frequency'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import LadderSection from '../components/LadderSection'
 import ThreadsSection from '../components/ThreadsSection'
+import StreaksRail from '../components/StreaksRail'
+import StrataRibbon from '../components/StrataRibbon'
 import { buildLadder } from '../lib/ladder'
 import { buildInsights, INSIGHT_KIND } from '../lib/insights'
 import styles from './Data.module.css'
@@ -1142,12 +1144,12 @@ export default function Data({ state, archivePractice }) {
 
         {hasCanvas && (
           <>
+            <StreaksRail canvas={canvas} checkins={checkins} moods={moods} practicesDB={practicesDB} />
+            <StrataRibbon moods={moods} />
             <div className={styles.topBand}>
-              <StreaksCard stats={stats} checkins={checkins} />
               <TopGoneQuietCard stats={stats} canvas={canvas} practicesDB={practicesDB} checkins={checkins} />
             </div>
 
-            <LongViewSection canvas={canvas} checkins={checkins} moods={moods} stats={stats} days={dayKeys} windowLen={windowLen} />
             <LadderSection canvas={canvas} checkins={checkins} moods={moods} practicesDB={practicesDB} />
             <ThreadsSection userId={state?.userId} moods={moods} />
             {totalCheckinDays >= 7 && (
