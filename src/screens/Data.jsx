@@ -6,6 +6,7 @@ import { createDataStats } from '../lib/dataStats'
 import { normalizeBand, BAND_LABEL } from '../lib/frequency'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import LadderSection from '../components/LadderSection'
+import ThreadsSection from '../components/ThreadsSection'
 import { buildLadder } from '../lib/ladder'
 import { buildInsights, INSIGHT_KIND } from '../lib/insights'
 import styles from './Data.module.css'
@@ -30,6 +31,27 @@ const TIER_BAR = {
   appreciation: '#B8C3B1',
   nourishment: '#E8B81F',
   survival: '#D93B1C',
+}
+// One light source at 34% / 26%, the way every other object in the app is lit.
+// Appreciation runs to ink because sage on paper is about 1.8:1.
+const TIER_RAMP = {
+  exploration: ['#2E8A64', '#0C5038'],
+  appreciation: ['#B4C4AC', '#536E4D'],
+  nourishment: ['#FFD166', '#F0A800'],
+  survival: ['#FF7A55', '#F03C10'],
+}
+// The run behind you is a wash of the same colour; only the run you are on is
+// paint. Contrast is value, not alpha — the same hue at lower opacity left
+// sage sitting on sage.
+const TIER_WASH = {
+  exploration: '#2E8A6459',
+  appreciation: '#B0C2A8',
+  nourishment: '#FFD166A6',
+  survival: '#FF7A5559',
+}
+const petal = mode => {
+  const r = TIER_RAMP[mode] || TIER_RAMP.exploration
+  return `radial-gradient(circle at 34% 26%, ${r[0]}, ${r[1]})`
 }
 
 // Rolling window ending today; comparison = same length immediately prior.
@@ -188,6 +210,27 @@ function PacingCard({ period, stats, canvas, checkins }) {
   )
 }
 
+/** Where the need was, where it is, and the move between — the ladder's grammar. */
+function MoverSlope({ pct, delta }) {
+  const clamp = v => Math.max(2, Math.min(98, v))
+  const was = clamp(pct - delta), now = clamp(pct)
+  const up = delta >= 0
+  const ramp = up ? ['#3FA87A', '#07301F'] : ['#FF8A66', '#A81F06']
+  return (
+    <div className={styles.moverBarTrack}>
+      <span className={styles.moverSlopeLine} />
+      <span className={styles.moverSlopeRun} style={{
+        left: `${Math.min(was, now)}%`, width: `${Math.abs(now - was)}%`,
+        background: `linear-gradient(90deg, ${ramp[0]}, ${ramp[1]})`,
+      }} />
+      <span className={styles.moverSlopeDot} style={{ left: `${was}%`, background: 'rgba(0,0,0,.18)' }} />
+      <span className={styles.moverSlopeDot} style={{
+        left: `${now}%`, background: `radial-gradient(circle at 34% 26%, ${ramp[0]}, ${ramp[1]})`,
+      }} />
+    </div>
+  )
+}
+
 function WhatChanged({ period, canvas, checkins }) {
   const needDeltas = useMemo(
     () => buildNeedDeltas(canvas, checkins, period),
@@ -214,11 +257,9 @@ function WhatChanged({ period, canvas, checkins }) {
       </div>
       {rows.map(ns => (
         <div key={ns.need.id} className={styles.moverRow}>
-          <span className={styles.moverDot} style={{ background: TIER_DOT[ns.mode] }} />
+          <span className={styles.moverDot} style={{ background: petal(ns.mode) }} />
           <span className={styles.moverName}>{ns.need.name}</span>
-          <div className={styles.moverBarTrack}>
-            <div className={styles.moverBarFill} style={{ width: `${Math.min(ns.pct, 100)}%`, background: TIER_BAR[ns.mode] }} />
-          </div>
+          <MoverSlope pct={ns.pct} delta={ns.delta} />
           <span className={styles.moverValue}>{ns.pct}%</span>
           <span className={`${styles.moverDelta} ${ns.delta > 0 ? styles.moverDeltaUp : ns.delta < 0 ? styles.moverDeltaDown : styles.moverDeltaFlat}`}>
             {ns.delta > 0 ? '+' : ''}{ns.delta}
@@ -536,7 +577,7 @@ function RibbonsSection({ canvas, checkins, practicesDB, days, windowLen, isDesk
     <section className={`${styles.section} ${styles.sectionCard}`}>
       <div className={styles.sectionHeader}>
         <span className={styles.sectionLabel}>EACH NEED, DAY BY DAY</span>
-        <span className={styles.sectionMeta}>held ▸ faded</span>
+        <span className={styles.sectionMeta}>lit = running now</span>
       </div>
       <div className={styles.ribbonStack}>
         {needRows.map(({ need, mode, daysActive, isDormant, sinceMonth, run }) => {
@@ -577,16 +618,18 @@ function RibbonsSection({ canvas, checkins, practicesDB, days, windowLen, isDesk
 
               {/* Need band — one cell per day */}
               <div className={styles.ribbonBand}>
-                {days.map(dk => (
+                {days.map((dk, i) => (
                   <div
                     key={dk}
                     className={`${styles.ribbonCell}${isDesktop ? ` ${styles.ribbonCellClickable}` : ''}`}
                     title={formatDkLabel(dk)}
                     onClick={isDesktop ? () => showRibbonTooltip(need.id, dk) : undefined}
                     style={{
-                      background: (checkins[dk] || []).some(e => e.need_id === need.id)
-                        ? TIER_BAR[mode]
-                        : EMPTY_CELL,
+                      background: !(checkins[dk] || []).some(e => e.need_id === need.id)
+                        ? EMPTY_CELL
+                        : run?.isStreak && i >= days.length - run.count
+                          ? petal(mode)
+                          : (TIER_WASH[mode] || TIER_WASH.exploration),
                     }}
                   />
                 ))}
@@ -1104,10 +1147,13 @@ export default function Data({ state, archivePractice }) {
               <TopGoneQuietCard stats={stats} canvas={canvas} practicesDB={practicesDB} checkins={checkins} />
             </div>
 
+            <LongViewSection canvas={canvas} checkins={checkins} moods={moods} stats={stats} days={dayKeys} windowLen={windowLen} />
+            <LadderSection canvas={canvas} checkins={checkins} moods={moods} practicesDB={practicesDB} />
+            <ThreadsSection userId={state?.userId} moods={moods} />
             {totalCheckinDays >= 7 && (
               <section className={styles.section}>
                 <div className={styles.sectionHeader}>
-                  <span className={styles.sectionLabel}>YOUR INSIGHTS</span>
+                  <span className={styles.sectionLabel}>WHAT ELSE IS TRUE</span>
                 </div>
                 <InsightsCard canvas={canvas} checkins={checkins} moods={moods} practicesDB={practicesDB} />
               </section>
@@ -1116,8 +1162,6 @@ export default function Data({ state, archivePractice }) {
               <WhatChanged period={period} canvas={canvas} checkins={checkins} />
               <RhythmSection stats={stats} canvas={canvas} checkins={checkins} moods={moods} />
             </div>
-            <LongViewSection canvas={canvas} checkins={checkins} moods={moods} stats={stats} days={dayKeys} windowLen={windowLen} />
-            <LadderSection canvas={canvas} checkins={checkins} moods={moods} practicesDB={practicesDB} />
             <RibbonsSection canvas={canvas} checkins={checkins} practicesDB={practicesDB} days={dayKeys} windowLen={windowLen} isDesktop={isDesktop} />
             <GoneQuietSection stats={stats} archivePractice={archivePractice} isDesktop={isDesktop} />
             <AllNumbersSection period={period} canvas={canvas} checkins={checkins} />
