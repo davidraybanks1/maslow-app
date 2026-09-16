@@ -1,0 +1,127 @@
+/* What carries it — the ladder down the canvas.
+   Tokens come from index.css; nothing here hardcodes paper or ink. */
+
+.section { margin-top: 32px; border-top: 0.5px solid var(--hairline); padding-top: 26px; }
+.pad { padding-inline: 22px; }
+.title {
+  font-family: var(--serif, 'Newsreader', Georgia, serif);
+  font-size: 23px; font-weight: 300; letter-spacing: -0.015em; margin: 0 0 3px;
+}
+.sub { font-family: var(--mono); font-size: 9.5px; color: var(--ink4); margin: 0 0 14px; }
+.claim {
+  font-family: var(--serif, 'Newsreader', Georgia, serif);
+  font-weight: 300; font-size: 19px; line-height: 1.36; letter-spacing: -0.01em;
+  margin: 4px 0 0; text-wrap: balance;
+}
+.claim em { font-style: italic; color: var(--expl-deep, #0C5038); }
+.note { font-family: var(--mono); font-size: 9.5px; line-height: 1.64; color: var(--ink4); margin: 14px 0 0; }
+.note b { color: var(--ink2); font-weight: 400; }
+
+/* the headline number, borrowing the streak rail's numerals */
+.hero { display: flex; align-items: flex-end; gap: 16px; margin-top: 22px; }
+.heroBig {
+  font-family: var(--serif, 'Newsreader', Georgia, serif);
+  font-size: 56px; font-weight: 300; line-height: 0.86; letter-spacing: -0.03em;
+  background: linear-gradient(168deg, #3FA87A, #07301F);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  font-variant-numeric: tabular-nums;
+}
+.heroBig i { font-style: normal; font-size: 24px; letter-spacing: 0; }
+.heroCap {
+  font-family: var(--mono); font-size: 9.5px; line-height: 1.72;
+  color: var(--ink3); padding-bottom: 6px; max-width: 200px;
+}
+.heroCap b { color: var(--ink); font-weight: 400; }
+
+/* ── the tree ── */
+.tree { margin-top: 22px; }
+.node { position: relative; }
+.node0 { --ind: 22px; --orb: 15px; }
+.node1 { --ind: 46px; --orb: 13px; --pind: 22px; }
+.node2 { --ind: 70px; --orb: 11px; --pind: 46px; }
+
+.row {
+  position: relative; display: flex; align-items: center; gap: 10px; width: 100%;
+  background: none; border: 0; padding: 12px 22px 12px var(--ind);
+  text-align: left; cursor: pointer; font: inherit; color: inherit;
+  border-top: 0.5px solid var(--hairline);
+}
+.node0 > .row { border-top: 0.5px solid rgba(0, 0, 0, 0.17); }
+.row:disabled { cursor: default; }
+
+/* one continuous stem down whatever survives, hairline elbows everywhere else */
+.kids > .node:not(:last-child)::before {
+  content: ""; position: absolute; left: calc(var(--pind) + 7px); top: 0; bottom: 0;
+  width: var(--sw, 1px); background: var(--stem, rgba(0, 0, 0, 0.11)); border-radius: 1px;
+}
+.kids > .node > .row::before {
+  content: ""; position: absolute; left: calc(var(--pind) + 7px); top: 0; height: 50%;
+  width: calc(var(--ind) - var(--pind) - 7px);
+  border-left: var(--sw, 1px) solid var(--stem, rgba(0, 0, 0, 0.11));
+  border-bottom: var(--sw, 1px) solid var(--stem, rgba(0, 0, 0, 0.11));
+  border-bottom-left-radius: 14px;
+}
+
+.orb { flex: 0 0 var(--orb); width: var(--orb); height: var(--orb); border-radius: 50%; display: block; }
+.name { font-family: var(--serif, 'Newsreader', Georgia, serif); font-size: 17px; font-weight: 300; line-height: 1.05; white-space: nowrap; }
+.node1 .name { font-size: 15px; }
+.node2 .name { font-size: 13.5px; }
+.rowNew .name { color: var(--ink3); }
+.days { font-family: var(--mono); font-size: 8.5px; color: var(--ink4); white-space: nowrap; }
+
+/* where it starts, where it ends, the move between */
+.slope { flex: 1 1 auto; min-width: 46px; height: 14px; position: relative; }
+.slopeTrack { position: absolute; top: 6.6px; height: 1px; background: rgba(0, 0, 0, 0.10); left: 0; right: 0; border-radius: 1px; }
+.slopeRun { position: absolute; top: 5.8px; height: 2.4px; border-radius: 2px; }
+.slopeDot { position: absolute; top: 3.5px; width: 7.5px; height: 7.5px; border-radius: 50%; margin-left: -3.75px; }
+.gap { font-family: var(--mono); font-size: 10.5px; width: 30px; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.caret { font-family: var(--mono); font-size: 9px; color: var(--ink4); width: 8px; text-align: right; }
+
+.kids { position: relative; }
+.why {
+  font-family: var(--mono); font-size: 9px; line-height: 1.7; color: var(--ink4);
+  margin: 0; padding: 0 22px 13px calc(var(--ind) + var(--orb) + 10px);
+}
+.why b { color: var(--ink2); font-weight: 400; }
+.whyTier {
+  font-family: var(--sans); font-size: 9px; letter-spacing: 0.13em;
+  text-transform: uppercase; color: var(--ink2);
+}
+.stop {
+  font-family: var(--mono); font-size: 9px; line-height: 1.66; color: #A8290A; opacity: 0.8;
+  padding: 9px 22px 11px calc(var(--ind) + 24px); background: rgba(168, 41, 10, 0.045);
+}
+
+/* ── the evidence control ── */
+.levels { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; margin-top: 18px; }
+.level {
+  font-family: var(--mono); font-size: 9.5px; padding: 5px 9px; border-radius: 999px;
+  border: 0.5px solid var(--hairline); background: none; color: var(--ink3);
+  cursor: pointer; white-space: nowrap;
+}
+.levelOn { background: #0C5038; border-color: #0C5038; color: #fff; }
+.lvlNote { font-family: var(--mono); font-size: 9px; line-height: 1.6; color: var(--ink4); text-align: center; margin: 11px 0 0; }
+.lvlNote b { color: var(--ink2); font-weight: 400; }
+.key { display: flex; flex-wrap: wrap; gap: 12px 15px; margin-top: 17px; font-family: var(--mono); font-size: 8.5px; color: var(--ink4); }
+.key span { display: flex; align-items: center; gap: 6px; }
+.key i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+
+/* ── the verdict ── */
+.verdict { margin-top: 26px; padding: 26px 24px 24px; color: var(--on-dark, #F2F0E8); position: relative; margin-inline: -8px; }
+.verdict::before {
+  content: ""; position: absolute; inset: -6px -4px; pointer-events: none; z-index: 0;
+  background: radial-gradient(128% 118% at 36% 30%, #302B25 0%, #17130F 44%, #0A0807 72%, rgba(6, 5, 5, 0.90) 86%, rgba(6, 5, 5, 0) 100%);
+}
+.verdict > * { position: relative; z-index: 1; }
+.verdictLabel { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(242, 240, 232, 0.5); }
+.verdictHead {
+  font-family: var(--serif, 'Newsreader', Georgia, serif);
+  font-size: 20px; font-weight: 300; line-height: 1.36; margin: 12px 0 0; max-width: 26ch;
+}
+.verdictHead em {
+  font-style: italic;
+  background: linear-gradient(160deg, #7FE6BD, #3FA87A);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.verdictBody { font-size: 12.5px; line-height: 1.5; color: rgba(242, 240, 232, 0.8); margin: 11px 0 0; max-width: 36ch; }
+.verdictBody b { color: rgba(242, 240, 232, 0.95); font-weight: 500; }

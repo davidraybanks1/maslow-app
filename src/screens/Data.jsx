@@ -5,6 +5,7 @@ import { NEEDS, MODE_ORDER } from '../lib/constants'
 import { createDataStats } from '../lib/dataStats'
 import { normalizeBand, BAND_LABEL } from '../lib/frequency'
 import { useIsDesktop } from '../lib/useIsDesktop'
+import LadderSection from '../components/LadderSection'
 import styles from './Data.module.css'
 
 const PERIODS = [
@@ -1104,12 +1105,12 @@ export default function Data({ state, archivePractice }) {
                 <InsightsCard stats={stats} />
               </section>
             )}
-            <PacingCard period={period} stats={stats} canvas={canvas} checkins={checkins} />
             <div className={styles.dRow3}>
               <WhatChanged period={period} canvas={canvas} checkins={checkins} />
               <RhythmSection stats={stats} canvas={canvas} checkins={checkins} moods={moods} />
             </div>
             <LongViewSection canvas={canvas} checkins={checkins} moods={moods} stats={stats} days={dayKeys} windowLen={windowLen} />
+            <LadderSection canvas={canvas} checkins={checkins} moods={moods} practicesDB={practicesDB} />
             <RibbonsSection canvas={canvas} checkins={checkins} practicesDB={practicesDB} days={dayKeys} windowLen={windowLen} isDesktop={isDesktop} />
             <GoneQuietSection stats={stats} archivePractice={archivePractice} isDesktop={isDesktop} />
             <AllNumbersSection period={period} canvas={canvas} checkins={checkins} />

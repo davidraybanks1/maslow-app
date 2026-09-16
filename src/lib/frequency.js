@@ -9,7 +9,7 @@ export const FEELINGS = {
   bad:  ['overwhelmed', 'apathetic', 'frenetic', 'small'],
 }
 
-export const THREADS = ['capacity', 'engagement', 'drive', 'standing']
+export const THREADS = ['capacity', 'engagement', 'drive', 'posture']
 
 /** Thread name for a feeling — its index within its band. Not rendered; used by the Data screen. */
 export function threadOf(feeling) {
