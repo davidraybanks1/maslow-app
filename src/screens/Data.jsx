@@ -6,6 +6,8 @@ import { createDataStats } from '../lib/dataStats'
 import { normalizeBand, BAND_LABEL } from '../lib/frequency'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import LadderSection from '../components/LadderSection'
+import { buildLadder } from '../lib/ladder'
+import { buildInsights, INSIGHT_KIND } from '../lib/insights'
 import styles from './Data.module.css'
 
 const PERIODS = [
@@ -904,8 +906,11 @@ function GoneQuietSection({ stats, archivePractice, isDesktop }) {
   )
 }
 
-function InsightsCard({ stats }) {
-  const insights = useMemo(() => stats.getInsights(), [stats])
+function InsightsCard({ canvas, checkins, moods, practicesDB }) {
+  const insights = useMemo(() => {
+    const ladder = buildLadder({ canvas, checkins, moods, practicesDB, modeOrder: MODE_ORDER })
+    return buildInsights({ ladder, moods, checkins, canvas })
+  }, [canvas, checkins, moods, practicesDB])
   const [activeIdx, setActiveIdx] = useState(0)
   const wrapperRef = useRef(null)
 
@@ -930,10 +935,12 @@ function InsightsCard({ stats }) {
       <div ref={wrapperRef} className={styles.insightDeckWrapper} onScroll={handleScroll}>
         {cards.map((insight, i) => (
           <div key={insight ? insight.id : 'empty'} className={styles.insightCard}>
-            <div className={styles.insightLabel}>YOUR INSIGHTS</div>
+            <div className={styles.insightLabel}>
+              {insight ? INSIGHT_KIND[insight.kind].label.toUpperCase() : 'YOUR INSIGHTS'}
+            </div>
             {insight ? (
               <>
-                <p className={styles.insightFinding}>{insight.finding}</p>
+                <p className={styles.insightFinding}>{insight.text}</p>
                 <p className={styles.insightBasis}>{insight.basis}</p>
               </>
             ) : (
@@ -1102,7 +1109,7 @@ export default function Data({ state, archivePractice }) {
                 <div className={styles.sectionHeader}>
                   <span className={styles.sectionLabel}>YOUR INSIGHTS</span>
                 </div>
-                <InsightsCard stats={stats} />
+                <InsightsCard canvas={canvas} checkins={checkins} moods={moods} practicesDB={practicesDB} />
               </section>
             )}
             <div className={styles.dRow3}>

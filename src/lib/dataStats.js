@@ -353,6 +353,17 @@ export function createDataStats({ canvas, checkins, moods, practices, practicesD
     return result
   }
 
+  /**
+   * DEPRECATED as an insight source — see src/lib/insights.js.
+   *
+   * This runs one uncorrected comparison per need with no control for how full
+   * the day was, so it reports the confound rather than the effect. It is what
+   * produced "on days you log beauty, the next morning feels good 3.8x more
+   * often": beauty days average 7.0 needs met against 4.5 on skip days, and
+   * holding that constant leaves an odds ratio of 1.10, p = 0.95.
+   *
+   * Findings now come only from the gated ladder. Do not wire this to a card.
+   */
   function getNeedMoodLinks() {
     // Full history: derive range from earliest data point to today
     const allKeys = [...new Set([...Object.keys(checkins), ...moods.map(m => m.date_key)])].sort()
