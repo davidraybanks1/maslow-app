@@ -158,12 +158,16 @@ async function restoreFromSupabase(userId, email) {
       console.warn('restoreFromSupabase: users.id does not match auth.uid() — likely a pre-migration row', { usersId: user.id, authUid: userId })
     }
 
-    const thirtyDaysAgo = new Date()
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-    const cutoff = thirtyDaysAgo.toLocaleDateString('en-CA')
-
+    // All of it, not the last 30 days. The 30-day cutoff (344a73d) was a startup
+    // perf call, but moods were still loaded all-time, so the ladder saw 105
+    // days of moods against 31 days of check-ins and scored the other 74 days
+    // as "met nothing" - which pulled every gap toward zero and hid a chain
+    // that clears its gate at 1 day in a million. Streaks were capped at 31
+    // days and "what changed" compared last month against an empty one for
+    // the same reason. At ~10 rows a day this is ~200KB for a 100-day user;
+    // when it isn't, the fix is to page the almanac's history, not to cut it.
     const [{ data: checkins }, moods, noteDeck, { data: practicesRows }] = await Promise.all([
-      supabase.from('checkins').select('*').eq('user_id', user.id).gte('date_key', cutoff),
+      supabase.from('checkins').select('*').eq('user_id', user.id),
       fetchMoods(user.id),
       loadNoteDeck(user.id),
       supabase.from('practices').select('id, label, need_id, created_at, archived_at, reminder_on, reminder_time, reminder_offered_at').eq('user_id', user.id).order('created_at'),
