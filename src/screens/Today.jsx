@@ -7,7 +7,7 @@ import { createDataStats, getCanvasGuidance } from '../lib/dataStats'
 import { hapticTick, isNative, pendingNotifSlot } from '../lib/native'
 import { normalizeBand, BAND_LABEL } from '../lib/frequency'
 import { useIsDesktop } from '../lib/useIsDesktop'
-import FrequencyCard, { MOOD_PIP_COLOR, MOOD_PIP_COLOR_AMBER } from '../components/FrequencyCard'
+import FrequencyCard, { MOOD_PIP_COLOR, MOOD_PIP_COLOR_DARK } from '../components/FrequencyCard'
 import { revealWhenSettled } from '../lib/keyboard'
 import Bloom from '../components/Bloom'
 import JournalQuote from '../components/JournalQuote'
@@ -862,7 +862,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               <span className={styles.freqHeaderLabel}>FREQUENCY</span>
               <div className={styles.freqHeaderDayparts}>
                 {daypartsData.map(dp => {
-                  const color = dp.band ? MOOD_PIP_COLOR_AMBER[dp.band] : null
+                  const color = dp.band ? MOOD_PIP_COLOR_DARK[dp.band] : null
                   const dotStyle = !color ? undefined
                     : dp.hasFeeling
                       ? { background: color, borderColor: color }
@@ -889,7 +889,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
             onSettle={(band, feeling) => handleFrequencySettle(slot, band, feeling)}
             dayparts={isDesktop ? daypartsData : null}
             bandAsBack={!isDesktop}
-            tone={isDesktop ? undefined : 'amber'}
+            tone={isDesktop ? undefined : 'dark'}
           />
           {openRetroSlot && (
             <div className={styles.retroRow}>
@@ -899,7 +899,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 initialFeeling={moodFeelings[openRetroSlot] || null}
                 onSettle={(band, feeling) => { handleFrequencySettle(openRetroSlot, band, feeling); setOpenRetroSlot(null) }}
                 pastTense
-                tone={isDesktop ? undefined : 'amber'}
+                tone={isDesktop ? undefined : 'dark'}
               />
             </div>
           )}

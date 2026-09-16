@@ -2225,24 +2225,26 @@
 
   /* ── The frequency card ───────────────────────────────────────────────
      Full width, but a card rather than a band: -22px escapes .screen's gutter
-     so the colour reaches both edges, the padding puts the type back on the
+     so the black reaches both edges, the padding puts the type back on the
      same left margin as everything above it, and the corners stay round so it
      reads as an object on the paper instead of a stripe cut through it.
 
-     The ground is the bloom's own nourishment fill — MODE_LIT.nourishment in
-     Bloom.jsx, ['#FFD166', '#F0A800'] on a radial at 34% / 26%. Two stops is
-     the whole trick: a longer ramp goes pale at the highlight and brown at
-     the edge, which is what made earlier attempts read weak. The section's
-     text inverts to ink in FrequencyCard's .amber tone, because cream on
-     #F0A800 is 2.4:1. */
+     The ground is the bloom's unlit petal, lifted verbatim from Bloom.jsx:
+     UNLIT_DARK is ['#4A453E', '#191612', '#060505'] at 0 / 45 / 100 on a
+     radial at 34% / 26%. What makes it read as black rather than as a long
+     grey wash is where the stops sit — the light is spent by 45% and the
+     whole outer half is #060505. The five-stop ramp this replaces put mid
+     tones across the entire card, which is why it looked soft-focus instead
+     of lit. Same light source as every other painted object in the app. */
   .moodCard {
     margin: 26px -22px 0;
     padding: 22px 22px 18px; /* the option buttons carry 13px of tap padding of their own */
     border-radius: 18px;
-    background-color: #F0A800;
-    background-image: radial-gradient(112% 136% at 34% 26%, #FFD166 0%, #F0A800 100%);
-    box-shadow: 0 1px 1px rgba(90, 62, 0, 0.16), 0 10px 24px rgba(150, 106, 0, 0.22);
+    background-color: #060505;
+    background-image: radial-gradient(48% 96% at 34% 26%, #4A453E 0%, #191612 45%, #060505 100%);
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.22), 0 10px 24px rgba(20, 14, 6, 0.24);
   }
+
   /* the card's own lower edge separates it from the modes — but the divider
      was also carrying 36px of air, so the gap moves onto the section below */
   .moodDivider { display: none; }
@@ -2250,16 +2252,16 @@
 
   /* Retro slot: a panel cut out of the card, not a cream card sitting on it */
   .retroRow {
-    background: rgba(36, 26, 2, 0.06);
-    border: 0.5px solid rgba(36, 26, 2, 0.14);
+    background: rgba(242, 240, 232, 0.05);
+    border: 0.5px solid rgba(242, 240, 232, 0.12);
     margin-top: 16px;
   }
 
-  /* ── Frequency header, on the amber ── */
-  .freqHeaderLabel { color: rgba(36, 26, 2, 0.56); }
-  .freqHeaderDot { border-color: rgba(36, 26, 2, 0.36); }
-  .freqHeaderDpName { color: rgba(36, 26, 2, 0.56); }
-  .freqHeaderDpCurrent .freqHeaderDpName { color: #2A1E00; }
+  /* ── Frequency header, on the black ── */
+  .freqHeaderLabel { color: rgba(242, 240, 232, 0.42); }
+  .freqHeaderDot { border-color: rgba(242, 240, 232, 0.3); }
+  .freqHeaderDpName { color: rgba(242, 240, 232, 0.42); }
+  .freqHeaderDpCurrent .freqHeaderDpName { color: rgba(242, 240, 232, 0.88); }
 
   /* Drafts: no card on mobile — header, chips, entries and composer sit on the paper */
   .cardJournal {
