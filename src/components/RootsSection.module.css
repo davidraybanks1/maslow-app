@@ -1,0 +1,47 @@
+.section { margin-top: 32px; border-top: 0.5px solid var(--hairline); padding-top: 26px; }
+.pad { padding-inline: 22px; }
+.title {
+  font-family: var(--serif, 'Newsreader', Georgia, serif);
+  font-size: 23px; font-weight: 300; letter-spacing: -0.015em; margin: 0 0 3px;
+}
+.sub { font-family: var(--mono); font-size: 9.5px; color: var(--ink4); margin: 0 0 14px; }
+.head {
+  font-family: var(--serif, 'Newsreader', Georgia, serif);
+  font-weight: 300; font-size: 19px; line-height: 1.3; letter-spacing: -0.01em; margin: 0; max-width: 30ch;
+}
+.head em { font-style: italic; }
+.headSub { font-family: var(--mono); font-size: 10px; color: var(--ink3); margin: 6px 0 0; line-height: 1.5; letter-spacing: 0.02em; }
+
+.roots { display: block; width: 100%; margin-top: 14px; overflow: visible; }
+.surface { stroke: rgba(0,0,0,.22); stroke-width: 0.7; }
+.modeLab { font-family: var(--mono); font-size: 8px; letter-spacing: 0.12em; text-transform: uppercase; fill: var(--ink3); }
+.lab { font-family: var(--mono); font-size: 8.6px; fill: var(--ink2); letter-spacing: 0.02em; }
+.labSig { fill: var(--ink); }
+.labDim { fill: rgba(0,0,0,.38); }
+.labNum { font-family: var(--mono); font-size: 8px; fill: #2C6E49; }
+.leader { stroke: rgba(0,0,0,.22); stroke-width: 0.6; fill: none; }
+/* a wild root is drawn in the significant ramp but hangs off grey - the contrast is the point */
+.wild { stroke: url(#rootsSig) !important; stroke-width: 3.2 !important; }
+
+.pick {
+  font-family: var(--mono); font-size: 10px; line-height: 1.55; color: var(--ink2);
+  margin: 12px 0 0; padding: 10px 12px; border-radius: 10px;
+  background: var(--card); border: 0.5px solid var(--hairline); position: relative; padding-right: 30px;
+}
+.pick b { font-weight: 500; color: var(--ink); }
+.pickClose {
+  position: absolute; right: 8px; top: 6px; background: none; border: none; font-size: 14px;
+  color: var(--ink3); cursor: pointer; padding: 2px 6px;
+}
+
+.levels { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; margin-top: 18px; }
+.level {
+  font-family: var(--mono); font-size: 9.5px; padding: 5px 9px; border-radius: 999px;
+  border: 0.5px solid var(--hairline); background: none; color: var(--ink3); cursor: pointer;
+}
+.levelOn { background: var(--ink); color: #F2F0E8; border-color: var(--ink); }
+.key { display: flex; flex-wrap: wrap; gap: 10px 16px; margin-top: 16px; font-family: var(--mono); font-size: 8.5px; color: var(--ink4); }
+.key span { display: flex; align-items: center; gap: 6px; }
+.key i { display: block; width: 18px; height: 0; border-top-style: solid; }
+.note { font-family: var(--mono); font-size: 9px; line-height: 1.6; color: var(--ink4); margin: 14px 0 0; }
+.note b { color: var(--ink2); font-weight: 400; }

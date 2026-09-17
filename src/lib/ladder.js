@@ -67,6 +67,18 @@ const MIN_DAYS = 8       // days on each side before a row is testable at all
 const MIN_ROWS = 10      // check-ins on each side
 const WORTH_TESTING = 10 // points of gap that make a row worth an experiment
 
+/* Two doors, one error budget. The gate (mode, then need, then practice,
+   each corrected only against its siblings) is a shortcut that makes the
+   bar fair for a practice whose need has already earned scrutiny - but it
+   is a wall for a practice whose need failed. So there is a second door:
+   every practice is also tested flat, corrected against all practices at
+   once. A practice that clears THAT is significant whatever its parents
+   did, because it cleared the bar the gate was only ever a shortcut around.
+   The 0.05 is split between the doors so the two together still hold it. */
+const ALPHA = 0.05
+const GATE_ALPHA = ALPHA / 2
+const WILD_ALPHA = ALPHA / 2
+
 /** How often luck alone would produce this, phrased for a human. */
 export function oneIn(p) {
   if (p == null || p <= 0) return 'never, in a run this size'
@@ -137,7 +149,7 @@ function measure(panel, isOn, name, kind, floor, extra = {}) {
 
   let tier
   if (p < floor) tier = 'significant'
-  else if (p < 0.05) tier = 'close'
+  else if (p < ALPHA) tier = 'close'
   else if (Math.abs(gap) >= WORTH_TESTING) tier = 'testing'
   else tier = 'quiet'
 
@@ -177,13 +189,13 @@ export function buildLadder({ canvas, checkins, moods, practicesDB = [], modeOrd
     let cut = median(counts)
     if (counts.every(c => c > cut) || counts.every(c => c <= cut))
       cut = counts.reduce((s, c) => s + c, 0) / counts.length
-    const node = measure(panel, r => ns.filter(n => r.needs.has(n)).length > cut, mode, 'mode', 0.05 / modes.length)
+    const node = measure(panel, r => ns.filter(n => r.needs.has(n)).length > cut, mode, 'mode', GATE_ALPHA / modes.length)
 
     node.children = ns.map(needId => {
-      const kid = measure(panel, r => r.needs.has(needId), needId, 'need', 0.05 / ns.length)
+      const kid = measure(panel, r => r.needs.has(needId), needId, 'need', GATE_ALPHA / ns.length)
       const ps = practicesDB.filter(p => p.need_id === needId && !p.archived_at)
       kid.children = ps
-        .map(p => measure(panel, r => r.pracs.has(p.id), p.label, 'practice', 0.05 / Math.max(ps.length, 1), { id: p.id }))
+        .map(p => measure(panel, r => r.pracs.has(p.id), p.label, 'practice', GATE_ALPHA / Math.max(ps.length, 1), { id: p.id }))
         .sort(byTier)
       return kid
     }).sort(byTier)
@@ -192,10 +204,33 @@ export function buildLadder({ canvas, checkins, moods, practicesDB = [], modeOrd
   }).sort(byTier)
 }
 
+/**
+ * The second door. Every practice against the flat bar - WILD_ALPHA over the
+ * number of live practices - regardless of its parents. A practice that
+ * clears it while its chain above did not is a wild root: it carries a need
+ * that otherwise isn't. Mutates the tree in place; returns the wild ones.
+ */
+export function openSecondDoor(tree, practicesDB = []) {
+  const live = practicesDB.filter(p => !p.archived_at).length || 1
+  const flat = WILD_ALPHA / live
+  const wild = []
+  walkLadder(tree, (n, depth, chain) => {
+    if (n.kind !== 'practice' || n.p == null) return
+    n.flatFloor = +flat.toFixed(6)
+    const gatedOpen = chain.every(a => a.tier === 'significant')
+    if (n.p < flat && !gatedOpen) {
+      n.tier = 'significant'
+      n.wild = true
+      wild.push(n)
+    }
+  })
+  return wild
+}
+
 /** Flatten for counting, badges, and the insight generator. */
 export function walkLadder(tree, fn) {
-  const go = (n, depth) => { fn(n, depth); (n.children || []).forEach(k => go(k, depth + 1)) }
-  ;(tree || []).forEach(n => go(n, 0))
+  const go = (n, depth, chain) => { fn(n, depth, chain); (n.children || []).forEach(k => go(k, depth + 1, [...chain, n])) }
+  ;(tree || []).forEach(n => go(n, 0, []))
 }
 
 export function tierCounts(tree) {

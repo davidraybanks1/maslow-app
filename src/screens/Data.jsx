@@ -5,7 +5,7 @@ import { NEEDS, MODE_ORDER } from '../lib/constants'
 import { createDataStats } from '../lib/dataStats'
 import { normalizeBand, BAND_LABEL } from '../lib/frequency'
 import { useIsDesktop } from '../lib/useIsDesktop'
-import LadderSection from '../components/LadderSection'
+import RootsSection from '../components/RootsSection'
 import ThreadsSection from '../components/ThreadsSection'
 import StreaksRail from '../components/StreaksRail'
 import StrataRibbon from '../components/StrataRibbon'
@@ -1128,7 +1128,7 @@ export default function Data({ state, archivePractice }) {
       <div className={styles.desktopWrap}>
         <div className={styles.pageHeaderRow}>
           <div className={styles.pageTitleBlock}>
-            <h1 className={styles.pageTitle}>data.</h1>
+            <h1 className={styles.pageTitle}>almanac.</h1>
             <p className={styles.pageSubhead}>{buildSubhead(period)}</p>
           </div>
           <div className={styles.deskToggle}>{periodToggleEl}</div>
@@ -1150,7 +1150,7 @@ export default function Data({ state, archivePractice }) {
               <TopGoneQuietCard stats={stats} canvas={canvas} practicesDB={practicesDB} checkins={checkins} />
             </div>
 
-            <LadderSection canvas={canvas} checkins={checkins} moods={moods} practicesDB={practicesDB} />
+            <RootsSection canvas={canvas} checkins={checkins} moods={moods} practicesDB={practicesDB} />
             <ThreadsSection userId={state?.userId} moods={moods} />
             {totalCheckinDays >= 7 && (
               <section className={styles.section}>

@@ -154,6 +154,11 @@ button { touch-action: manipulation; }
   /* Typography */
   --font-serif: 'Newsreader', serif;
   --font-mono:  'DM Mono', monospace;
+  /* short aliases - the almanac components reach for these, and an undefined
+     var() in font-family silently resolves to inherit, which is how five
+     sections of mono labels shipped in DM Sans without anyone noticing */
+  --serif: var(--font-serif);
+  --mono:  var(--font-mono);
   --font-sans:  'DM Sans', sans-serif;
 
   /* Spacing */
