@@ -139,14 +139,32 @@ export function initialState() {
   }
 }
 
-async function fetchMoods(userId) {
-  const { data } = await supabase
-    .from('moods')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-  return data || []
+/* Supabase caps a single request at 1,000 rows (PostgREST max-rows). Anything
+   that can outgrow that has to page, and it has to page NEWEST FIRST - so if a
+   cap is ever hit anyway, what falls off is old history, never today. The
+   first version of the all-time load did neither: 1,029 check-ins came back
+   as the oldest 1,000, and the 29 that vanished were the last two days. */
+const PAGE = 1000
+
+async function fetchAllRows(table, userId) {
+  const out = []
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await supabase
+      .from(table)
+      .select('*')
+      .eq('user_id', userId)
+      .order('date_key', { ascending: false })
+      .order('created_at', { ascending: false })
+      .range(from, from + PAGE - 1)
+    if (error) { logSupabaseError(`fetchAllRows:${table}`, error); break }
+    out.push(...(data || []))
+    if (!data || data.length < PAGE) break
+  }
+  return out
 }
+
+const fetchMoods = userId => fetchAllRows('moods', userId)
+const fetchCheckins = userId => fetchAllRows('checkins', userId)
 
 async function restoreFromSupabase(userId, email) {
   try {
@@ -166,8 +184,8 @@ async function restoreFromSupabase(userId, email) {
     // days and "what changed" compared last month against an empty one for
     // the same reason. At ~10 rows a day this is ~200KB for a 100-day user;
     // when it isn't, the fix is to page the almanac's history, not to cut it.
-    const [{ data: checkins }, moods, noteDeck, { data: practicesRows }] = await Promise.all([
-      supabase.from('checkins').select('*').eq('user_id', user.id),
+    const [checkins, moods, noteDeck, { data: practicesRows }] = await Promise.all([
+      fetchCheckins(user.id),
       fetchMoods(user.id),
       loadNoteDeck(user.id),
       supabase.from('practices').select('id, label, need_id, created_at, archived_at, reminder_on, reminder_time, reminder_offered_at').eq('user_id', user.id).order('created_at'),
