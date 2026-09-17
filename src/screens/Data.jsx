@@ -83,19 +83,38 @@ function computeRun(days, checkins, testFn) {
   return { count, isStreak: startMet, atEdge }
 }
 
-function buildSubhead(period) {
+const dkOf = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+
+/* The span "This week" looks at: a calendar week (Monday first) or a
+   calendar month, stepped back by `offset`. Every card under the title
+   reads the same keys, and compares against the span before. */
+function buildRange(period, offset) {
   const today = new Date()
-  if (period === 30) return 'the last 30 days · against the 30 before'
-  const start = new Date(today)
-  start.setDate(today.getDate() - (period - 1))
-  const fmt = d => `${d.toLocaleDateString('en-GB', { weekday: 'short' })} ${d.getDate()}`
-  const month = today.toLocaleDateString('en-GB', { month: 'short' })
-  return `${fmt(start)} — ${fmt(today)} ${month} · against the week before`
+  const todayKey = dkOf(today)
+  const span = n => {
+    if (period === 30) {
+      const first = new Date(today.getFullYear(), today.getMonth() - n, 1)
+      const days = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate()
+      return Array.from({ length: days }, (_, i) => dkOf(new Date(first.getFullYear(), first.getMonth(), i + 1)))
+    }
+    const monday = new Date(today)
+    monday.setDate(today.getDate() - ((today.getDay() + 6) % 7) - n * 7)
+    return Array.from({ length: 7 }, (_, i) => { const d = new Date(monday); d.setDate(monday.getDate() + i); return dkOf(d) })
+  }
+  const keys = span(offset), prevKeys = span(offset + 1)
+  const fmt = dk => { const [, m, d] = dk.split('-').map(Number); return `${d} ${MONTHS[m - 1].slice(0, 3)}` }
+  const title = period === 30
+    ? (offset === 0 ? 'This month' : offset === 1 ? 'Last month' : MONTHS[+keys[0].split('-')[1] - 1])
+    : (offset === 0 ? 'This week' : offset === 1 ? 'Last week' : `${fmt(keys[0])} — ${fmt(keys[6])}`)
+  const label = period === 30
+    ? `${MONTHS[+keys[0].split('-')[1] - 1]} ${keys[0].slice(0, 4)}`
+    : `${fmt(keys[0])} — ${fmt(keys[6])}`
+  return { keys, prevKeys, title, label, todayKey, elapsed: keys.filter(dk => dk <= todayKey) }
 }
 
-function buildNeedDeltas(canvas, checkins, period) {
-  const cur = buildWindowKeys(period, 0)
-  const pri = buildWindowKeys(period, period)
+function buildNeedDeltas(canvas, checkins, cur, pri) {
+  if (!cur.length || !pri.length) return []
   return NEEDS.filter(n => canvas[n.id]).map(need => {
     const pct = Math.round(
       cur.filter(dk => (checkins[dk] || []).some(e => e.need_id === need.id)).length / cur.length * 100
@@ -128,10 +147,11 @@ function MoverSlope({ pct, delta }) {
   )
 }
 
-function WhatChanged({ period, canvas, checkins }) {
+function WhatChanged({ range, canvas, checkins }) {
+  // only the days that have happened count against you
   const needDeltas = useMemo(
-    () => buildNeedDeltas(canvas, checkins, period),
-    [canvas, checkins, period]
+    () => buildNeedDeltas(canvas, checkins, range.elapsed, range.prevKeys),
+    [canvas, checkins, range]
   )
   const sorted = [...needDeltas].sort((a, b) => b.delta - a.delta)
   const risers = sorted.filter(n => n.delta > 0).slice(0, 3)
@@ -150,7 +170,7 @@ function WhatChanged({ period, canvas, checkins }) {
     <section className={`${styles.section} ${styles.sectionCard}`}>
       <div className={styles.sectionHeader}>
         <span className={styles.sectionLabel}>WHAT CHANGED</span>
-        <span className={styles.sectionMeta}>biggest movers</span>
+        <span className={styles.sectionMeta}>against the {range.keys.length > 7 ? 'month' : 'week'} before</span>
       </div>
       {rows.map(ns => (
         <div key={ns.need.id} className={styles.moverRow}>
@@ -169,25 +189,6 @@ function WhatChanged({ period, canvas, checkins }) {
 }
 
 const WEEKDAY_LETTERS = ['m', 't', 'w', 't', 'f', 's', 's']
-
-function weekKeysAt(offsetWeeks) {
-  const today = new Date()
-  const mondayOffset = (today.getDay() + 6) % 7
-  const monday = new Date(today)
-  monday.setDate(today.getDate() - mondayOffset - offsetWeeks * 7)
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(monday)
-    d.setDate(monday.getDate() + i)
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-  })
-}
-
-function weekRangeLabel(weekKeys) {
-  const [fy, fm, fd] = weekKeys[0].split('-').map(Number)
-  const [ly, lm, ld] = weekKeys[6].split('-').map(Number)
-  const fmt = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  return `${fmt(new Date(fy, fm - 1, fd))} – ${fmt(new Date(ly, lm - 1, ld))}`
-}
 
 function formatDkLabel(dk) {
   const [y, m, d] = dk.split('-').map(Number)
@@ -211,22 +212,9 @@ function dominantMoodFor(moods, dk) {
 
 const RHYTHM_MOOD_DOT = { good: '#1B3A2D', mid: '#9DB394', bad: '#D93B1C' }
 
-function RhythmSection({ stats, canvas, checkins, moods, period = 7 }) {
-  const [weekOffset, setWeekOffset] = useState(0)
-  const monthly = period === 30
-  const weekKeys = useMemo(() => monthly ? buildWindowKeys(30, 0) : weekKeysAt(weekOffset), [weekOffset, monthly])
-  const todayKey = buildWindowKeys(1, 0)[0]
-
-  const earliestDk = useMemo(() => {
-    const dks = [
-      ...Object.keys(checkins).filter(dk => (checkins[dk] || []).length > 0),
-      ...moods.map(m => m.date_key),
-    ].sort()
-    return dks[0] ?? null
-  }, [checkins, moods])
-
-  const canGoBack = !monthly && !!earliestDk && earliestDk < weekKeys[0]
-  const isCurrentWeek = weekOffset === 0
+function RhythmSection({ stats, canvas, checkins, moods, range }) {
+  const monthly = range.keys.length > 7
+  const { keys, todayKey } = range
   // in the month view a Monday is labelled with its date; the rest stay blank
   const dayLabel = (dk, i) => {
     if (!monthly) return WEEKDAY_LETTERS[i]
@@ -242,29 +230,10 @@ function RhythmSection({ stats, canvas, checkins, moods, period = 7 }) {
     <section className={`${styles.section} ${styles.sectionCard} ${styles.rhythmCard}`}>
       <div className={styles.sectionHeader}>
         <span className={styles.sectionLabel}>YOUR RHYTHM</span>
-        <span className={styles.sectionMeta}>
-          {weekOffset > 0 && !monthly ? weekRangeLabel(weekKeys) : 'bar\u00a0=\u00a0practices met · dot\u00a0=\u00a0mood'}
-        </span>
-        {!monthly && <div className={styles.weekNav}>
-          <button
-            className={styles.weekNavBtn}
-            onClick={() => setWeekOffset(o => o + 1)}
-            disabled={!canGoBack}
-            aria-label="previous week"
-          >‹</button>
-          {!isCurrentWeek && (
-            <button className={`${styles.weekNavBtn} ${styles.weekNavNow}`} onClick={() => setWeekOffset(0)}>now</button>
-          )}
-          <button
-            className={styles.weekNavBtn}
-            onClick={() => setWeekOffset(o => o - 1)}
-            disabled={isCurrentWeek}
-            aria-label="next week"
-          >›</button>
-        </div>}
+        <span className={styles.sectionMeta}>{'bar\u00a0=\u00a0practices met · dot\u00a0=\u00a0mood'}</span>
       </div>
       <div className={`${styles.rhythmGrid}${monthly ? ` ${styles.rhythmGridMonth}` : ''}`}>
-        {weekKeys.map((dk, i) => {
+        {keys.map((dk, i) => {
           const pct = dayCompPct(canvas, checkins, dk)
           const mood = dominantMoodFor(moods, dk)
           const isToday = dk === todayKey
@@ -291,7 +260,6 @@ function RhythmSection({ stats, canvas, checkins, moods, period = 7 }) {
   )
 }
 
-
 const MOOD_LENS_COLOR = { good: '#1B3A2D', mid: '#9DB394', bad: '#D93B1C' }
 const EMPTY_CELL = 'rgba(0,0,0,.06)'
 
@@ -302,11 +270,9 @@ const DESKTOP_WINDOW = 30
 /* ── Your feels: how the days felt, one column each ──────────────────── */
 const FEEL_C = { good: '#1B3A2D', mid: '#9DB394', bad: '#D93B1C' }
 
-function FeelsSection({ moods, period = 7 }) {
-  const monthly = period === 30
-  const keys = useMemo(() => monthly ? buildWindowKeys(30, 0) : weekKeysAt(0), [monthly])
-  const prevKeys = useMemo(() => monthly ? buildWindowKeys(30, 30) : weekKeysAt(1), [monthly])
-  const todayKey = buildWindowKeys(1, 0)[0]
+function FeelsSection({ moods, range }) {
+  const monthly = range.keys.length > 7
+  const { keys, prevKeys, todayKey } = range
 
   const { days, total, good, prevPct, prevTotal, words } = useMemo(() => {
     const tally = keys.map(dk => ({ dk, good: 0, mid: 0, bad: 0, n: 0 }))
@@ -339,12 +305,13 @@ function FeelsSection({ moods, period = 7 }) {
   const peak = Math.max(...days.map(d => d.n), 1)
   const pct = Math.round(good / total * 100)
   const span = monthly ? 'month' : 'week'
+  const now = keys.includes(todayKey)
   const dayLabel = (dk, i) => {
     if (!monthly) return WEEKDAY_LETTERS[i]
     const [y, m, d] = dk.split('-').map(Number)
     return new Date(y, m - 1, d).getDay() === 1 ? String(d) : ''
   }
-  const read = `Good took ${pct}% of ${total} check-in${total === 1 ? '' : 's'} this ${span}`
+  const read = `Good took ${pct}% of ${total} check-in${total === 1 ? '' : 's'} ${now ? `this ${span}` : `that ${span}`}`
     + (prevTotal ? `, ${prevPct}% the ${span} before.` : '.')
     + (words.length ? ` You mostly felt ${words.map(w => w[0]).join(' and ')}.` : '')
 
@@ -605,9 +572,9 @@ function InsightsCard({ insights }) {
   )
 }
 
-function AllNumbersSection({ period, canvas, checkins }) {
+function AllNumbersSection({ range, canvas, checkins }) {
   const [open, setOpen] = useState(false)
-  const periodDays = useMemo(() => buildWindowKeys(period, 0), [period])
+  const periodDays = range.elapsed
 
   const modeData = useMemo(() => {
     return MODE_ORDER.map(mode => {
@@ -624,7 +591,7 @@ function AllNumbersSection({ period, canvas, checkins }) {
       const modePct = totalPossible > 0 ? Math.round(totalMet / totalPossible * 100) : 0
       return { mode, modePct, needRows }
     }).filter(Boolean)
-  }, [period, canvas, checkins, periodDays])
+  }, [canvas, checkins, periodDays])
 
   if (!modeData.length) return null
 
@@ -632,7 +599,7 @@ function AllNumbersSection({ period, canvas, checkins }) {
     <section className={styles.section}>
       <button className={styles.allNumsHeader} onClick={() => setOpen(o => !o)}>
         <span className={styles.sectionLabel}>ALL THE NUMBERS</span>
-        <span className={styles.sectionMeta}>by mode and need</span>
+        <span className={styles.sectionMeta}>by mode and need · {range.title.toLowerCase()}</span>
         <span className={styles.ribbonChevron}>{open ? '▴' : '▾'}</span>
       </button>
 
@@ -680,7 +647,7 @@ function Group({ title, sub, aside, first, children }) {
       <div className={styles.groupHead}>
         <div>
           <h2 className={styles.groupTitle}>{title}</h2>
-          {sub && <p className={styles.groupSub}>{sub}</p>}
+          {sub && <div className={styles.groupSub}>{sub}</div>}
         </div>
         {aside}
       </div>
@@ -690,7 +657,9 @@ function Group({ title, sub, aside, first, children }) {
 }
 
 export default function Data({ state }) {
-  const [period, setPeriod] = useState(7)
+  const [period, setPeriodRaw] = useState(7)
+  const [offset, setOffset] = useState(0)
+  const setPeriod = p => { setPeriodRaw(p); setOffset(0) }
   const isDesktop = useIsDesktop()
 
   const canvas      = state?.canvas      ?? {}
@@ -713,6 +682,20 @@ export default function Data({ state }) {
   const dayKeys = useMemo(() => buildWindowKeys(windowLen, 0), [windowLen])
   const hasCanvas = Object.keys(canvas).length > 0
   const totalCheckinDays = useMemo(() => Object.keys(checkins).filter(dk => (checkins[dk] || []).length > 0).length, [checkins])
+  const range = useMemo(() => buildRange(period, offset), [period, offset])
+  const earliestDk = useMemo(() => {
+    const dks = [...Object.keys(checkins).filter(dk => (checkins[dk] || []).length > 0), ...moods.map(m => m.date_key)].sort()
+    return dks[0] ?? null
+  }, [checkins, moods])
+  const canGoBack = !!earliestDk && earliestDk < range.keys[0]
+  const rangeNav = (
+    <div className={styles.rangeNav}>
+      <button type="button" className={styles.rangeBtn} onClick={() => setOffset(o => o + 1)} disabled={!canGoBack} aria-label={`previous ${period === 30 ? 'month' : 'week'}`}>‹</button>
+      <span className={styles.rangeLabel}>{range.label}</span>
+      <button type="button" className={styles.rangeBtn} onClick={() => setOffset(o => o - 1)} disabled={offset === 0} aria-label={`next ${period === 30 ? 'month' : 'week'}`}>›</button>
+      {offset > 0 && <button type="button" className={styles.rangeNow} onClick={() => setOffset(0)}>now</button>}
+    </div>
+  )
 
   const periodToggleEl = (
     <div className={styles.periodToggle}>
@@ -743,15 +726,15 @@ export default function Data({ state }) {
 
         {hasCanvas && (
           <>
-            <Group title={insights.length ? `${insights.length} headline${insights.length === 1 ? '' : 's'}` : 'Headlines'} first>
+            <div className={styles.headlines}>
               <InsightsCard insights={insights} />
-            </Group>
+            </div>
 
-            <Group title={period === 30 ? 'This month' : 'This week'} sub={buildSubhead(period)} aside={periodToggleEl}>
+            <Group title={range.title} sub={rangeNav} aside={periodToggleEl}>
               <div className={styles.dRow3}>
-                <RhythmSection stats={stats} canvas={canvas} checkins={checkins} moods={moods} period={period} />
-                <FeelsSection moods={moods} period={period} />
-                <WhatChanged period={period} canvas={canvas} checkins={checkins} />
+                <RhythmSection stats={stats} canvas={canvas} checkins={checkins} moods={moods} range={range} />
+                <FeelsSection moods={moods} range={range} />
+                <WhatChanged range={range} canvas={canvas} checkins={checkins} />
               </div>
             </Group>
 
@@ -763,7 +746,7 @@ export default function Data({ state }) {
 
             <Group title="Your ledger" sub="every need, every number">
               <RibbonsSection canvas={canvas} checkins={checkins} practicesDB={practicesDB} days={dayKeys} windowLen={windowLen} isDesktop={isDesktop} />
-              <AllNumbersSection period={period} canvas={canvas} checkins={checkins} />
+              <AllNumbersSection range={range} canvas={canvas} checkins={checkins} />
             </Group>
           </>
         )}

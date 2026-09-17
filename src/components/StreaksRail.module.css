@@ -1,4 +1,4 @@
-/* Streaks — a rail of every run currently going. No cards, a gutter between. */
+/* Streaks — a rail of every run currently going, one white card each. */
 
 .section { margin-top: 32px; border-top: 0.5px solid var(--hairline); padding-top: 26px; }
 .pad { padding-inline: 0; }
@@ -6,13 +6,16 @@
 .sub { font-family: var(--mono); font-size: var(--type-floor); color: var(--ink4); margin: 0 0 14px; }
 
 .rail {
-  display: flex; gap: 40px; overflow-x: auto; scroll-snap-type: x proximity;
+  display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x proximity;
   padding: 8px 22px 18px; scroll-padding-left: 22px; margin-inline: -22px;
   scrollbar-width: none; -webkit-overflow-scrolling: touch;
 }
 .rail::-webkit-scrollbar { display: none; }
 
-.card { flex: 0 0 152px; scroll-snap-align: start; display: flex; flex-direction: column; padding: 12px 0 10px; }
+.card {
+  flex: 0 0 172px; scroll-snap-align: start; display: flex; flex-direction: column; box-sizing: border-box;
+  padding: 14px 14px 13px; background: var(--card); border: 0.5px solid var(--hairline); border-radius: 16px;
+}
 .head { display: flex; align-items: center; gap: 9px; height: 32px; }
 .head svg { display: block; flex: 0 0 auto; }
 .kind { font-family: var(--mono); font-size: var(--type-floor); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink3); }

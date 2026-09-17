@@ -7,10 +7,12 @@ import styles from './StrataRibbon.module.css'
    rectangle, and the whole point is that the silhouette should undulate.
    Thickness is how much you logged; the layers are how it felt. */
 
+/* Drawn the way the roots are: a full-colour ridge line over a light fill,
+   on the paper, rather than a solid gradient block. */
 const BAND_C = {
-  good: ['#3FA87A', '#0C5038', '#07301F'],
-  mid: ['#D2DECB', '#9DB394', '#6E8566'],
-  bad: ['#FF8A66', '#F03C10', '#A81F06'],
+  good: { line: '#0C5038', fill: 'rgba(12,80,56,.26)' },
+  mid: { line: '#7E9478', fill: 'rgba(126,148,120,.14)' },
+  bad: { line: '#E8461C', fill: 'rgba(232,70,28,.22)' },
 }
 const BANDS = ['good', 'mid', 'bad']
 const RANGES = [
@@ -138,7 +140,7 @@ export default function StrataRibbon({ moods }) {
     // strip only the moveto; the curve back has to follow the lower edge, not cut across it
     const back = smoothPath(rev).replace(/^M\s*-?[\d.]+\s+-?[\d.]+/, '')
     const d = smoothPath(upper) + ` L${rev[0][0].toFixed(1)} ${rev[0][1].toFixed(1)}` + back + ' Z'
-    return { band, d }
+    return { band, d, ridge: smoothPath(upper) }
   })
 
   return (
@@ -149,7 +151,7 @@ export default function StrataRibbon({ moods }) {
           <div className={styles.legend}>
             {BANDS.map(b => (
               <span key={b}>
-                <i style={{ background: `linear-gradient(160deg,${BAND_C[b][0]},${BAND_C[b][2]})` }} />
+                <i style={{ background: BAND_C[b].fill, boxShadow: `inset 0 1.5px 0 ${BAND_C[b].line}` }} />
                 {b === 'mid' ? 'fine' : b}
               </span>
             ))}
@@ -163,16 +165,9 @@ export default function StrataRibbon({ moods }) {
 
       <figure className={styles.fig}>
         <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="How your days have layered up">
-          <defs>
-            {BANDS.map(b => (
-              <linearGradient key={b} id={`st-${b}`} x1="14%" y1="4%" x2="86%" y2="96%">
-                <stop offset="0%" stopColor={BAND_C[b][0]} />
-                <stop offset="34%" stopColor={BAND_C[b][1]} />
-                <stop offset="100%" stopColor={BAND_C[b][2]} />
-              </linearGradient>
-            ))}
-          </defs>
-          {layers.map(l => <path key={l.band} d={l.d} fill={`url(#st-${l.band})`} />)}
+          {layers.map(l => <path key={l.band} d={l.d} fill={BAND_C[l.band].fill} />)}
+          {/* ridges drawn top layer first, so where a band is empty the one beneath shows through in its own colour */}
+          {[...layers].reverse().map(l => <path key={`${l.band}-r`} d={l.ridge} fill="none" stroke={BAND_C[l.band].line} strokeWidth="1.6" strokeLinejoin="round" />)}
         </svg>
       </figure>
 

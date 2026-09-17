@@ -51,6 +51,21 @@
   line-height: 1.15; color: var(--ink); margin: 0 0 3px;
 }
 .groupSub { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink4); margin: 0; line-height: 1.5; }
+.headlines { margin-top: 18px; }
+
+/* stepping the range: the arrows are buttons you can see, the span sits between them */
+.rangeNav { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+.rangeBtn {
+  width: 28px; height: 28px; border-radius: 50%; border: 0.5px solid var(--hairline); background: var(--card);
+  font-family: var(--font-mono); font-size: 16px; line-height: 1; color: var(--ink2); cursor: pointer;
+  display: grid; place-items: center; padding: 0 0 2px; -webkit-tap-highlight-color: transparent;
+}
+.rangeBtn:disabled { opacity: 0.3; cursor: default; }
+.rangeLabel { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); white-space: nowrap; min-width: 9ch; text-align: center; }
+.rangeNow {
+  font-family: var(--font-mono); font-size: var(--type-floor); letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 5px 10px; border-radius: 999px; border: 0.5px solid var(--hairline); background: none; color: var(--ink3); cursor: pointer;
+}
 .groupBody > .section:first-child,
 .groupBody > .dRow3 > .section:first-child { border-top: none; padding-top: 0; margin-top: 0; }
 
@@ -596,36 +611,6 @@
   min-height: 18px;
 }
 
-.weekNav {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  margin-left: auto;
-}
-
-.weekNavBtn {
-  font-family: var(--font-mono);
-  font-size: 14px;
-  line-height: 1;
-  color: var(--ink3);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 2px 5px;
-  border-radius: 3px;
-}
-
-.weekNavBtn:disabled {
-  opacity: 0.25;
-  cursor: default;
-}
-
-.weekNavNow {
-  font-size: var(--type-floor);
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  padding: 2px 4px;
-}
 
 /* ── New wrapper classes (mobile base — transparent wrappers) ─────────────── */
 .desktopWrap { padding: 14px 22px; }
