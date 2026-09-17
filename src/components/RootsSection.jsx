@@ -35,7 +35,7 @@ const MODE_FILL = {
 /* the pyramid, bottom to top, left to right */
 const DRAW_ORDER = [...MODE_ORDER].reverse()
 
-const W = 349, SURF = 104
+const W = 349, SURF = 48
 /* DM Mono at the 12px floor runs about 7.3px a character; every label box
    below is estimated from this, so the collision rule is honest at the size
    the labels actually render. */
@@ -91,6 +91,13 @@ function samples(e) {
               u * u * u * ay + 3 * u * u * t * by + 3 * u * t * t * cy + t * t * t * dy])
   }
   return out
+}
+
+/* mode names run along the surface, staggered low / high so neighbours never
+   touch; a name near an edge is pulled in so it stays on the page */
+const modeLabX = m => {
+  const half = m.name.length * CW * 1.1 / 2 + 2
+  return Math.max(-34 + half, Math.min(W + 34 - half, m.x)).toFixed(1)
 }
 
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1)
@@ -174,7 +181,7 @@ export default function RootsSection({ canvas, checkins, moods, practicesDB }) {
     .sort((a, b) => rank(a) - rank(b) || a.y1 - b.y1 || a.x - b.x)
     .forEach(n => {
       const sig = n.tier === 'significant'
-      const num = sig && n.ref.gap != null ? `+${Math.round(n.ref.gap)} · ${oneIn(n.ref.p)}` : null
+      const num = sig && n.ref.gap != null ? `+${Math.round(n.ref.gap)}` : null
       if (n.depth === 1) {
         // a need's name sits beside its tip - above it if it can, where only the
         // one root comes in, else below, where its children fan out
@@ -234,7 +241,7 @@ export default function RootsSection({ canvas, checkins, moods, practicesDB }) {
             <g key={m.name} onClick={() => setPicked(m.ref)} style={{ cursor: 'pointer' }}>
               <path d={`M${m.x} ${SURF} L${m.x} ${m.y1}`} fill="none" stroke={STROKE[m.tier]} strokeWidth={WEIGHT[m.tier]} strokeLinecap="round" />
               <circle cx={m.x} cy={SURF} r="5.2" fill={MODE_FILL[m.name] || 'var(--ink)'} />
-              <text className={styles.modeLab} transform={`translate(${(m.x + 4.5).toFixed(1)} ${SURF - 11}) rotate(-90)`}>{m.name}</text>
+              <text className={styles.modeLab} x={modeLabX(m)} y={SURF - (i % 2 ? 27 : 11)} textAnchor="middle">{m.name}</text>
             </g>
           ))}
 
