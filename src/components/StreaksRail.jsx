@@ -72,14 +72,14 @@ export default function StreaksRail({ canvas, checkins, moods, practicesDB, chil
   if (!all.length) return null
 
   const running = all.filter(s => !s.quiet).length
-  const slumped = all.length - running
+  const lulled = all.length - running
 
   return (
     <section className={styles.section}>
       <div className={styles.pad}>
-        <h2 className={styles.title}>Your streaks and slumps</h2>
+        <h2 className={styles.title}>Your streaks and lulls</h2>
         <p className={styles.sub}>
-          {running} streak{running === 1 ? '' : 's'} running · {slumped} slump{slumped === 1 ? '' : 's'}
+          {running} streak{running === 1 ? '' : 's'} running · {lulled} lull{lulled === 1 ? '' : 's'}
         </p>
       </div>
 
@@ -103,7 +103,7 @@ export default function StreaksRail({ canvas, checkins, moods, practicesDB, chil
             <span className={styles.spacer} />
             <span className={styles.meter}><Meter streak={s} /></span>
             <span className={`${styles.foot}${s.isRecord && !s.quiet ? ` ${styles.rec}` : ''}`}>
-              {s.quiet ? 'in a slump' : s.isRecord ? 'your longest yet' : 'still going'}
+              {s.quiet ? 'in a lull' : s.isRecord ? 'your longest yet' : 'still going'}
             </span>
           </div>
         ))}
