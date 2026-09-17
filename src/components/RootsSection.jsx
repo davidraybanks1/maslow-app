@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { buildLadder, openSecondDoor, walkLadder, tierCounts, oneIn } from '../lib/ladder'
 import { MODE_ORDER } from '../lib/constants'
 import FinePrint from './FinePrint'
@@ -130,6 +130,45 @@ export default function RootsSection({ canvas, checkins, moods, practicesDB }) {
   const [level, setLevel] = useState('testing')
   const [picked, setPicked] = useState(null)
 
+  /* zoom: pinch on the drawing, or the +/- pair. The drawing grows inside a
+     box that keeps its 1x height, so you pan around it rather than the page
+     stretching; a zoom keeps whatever was under the middle of the box there. */
+  const [zoom, setZoom] = useState(1)
+  const boxRef = useRef(null)
+  const [baseH, setBaseH] = useState(0)   // the box's height at 1x, kept while zoomed
+  const pinch = useRef(null)
+  const zoomTo = useCallback(z => setZoom(Math.min(3, Math.max(1, Math.round(z * 20) / 20))), [])
+  useEffect(() => {
+    const box = boxRef.current
+    if (!box) return
+    const dist = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY)
+    const start = e => { if (e.touches.length === 2) pinch.current = { d: dist(e.touches), z: zoom } }
+    const move = e => {
+      if (!pinch.current || e.touches.length !== 2) return
+      e.preventDefault()
+      zoomTo(pinch.current.z * dist(e.touches) / pinch.current.d)
+    }
+    const end = () => { pinch.current = null }
+    box.addEventListener('touchstart', start, { passive: true })
+    box.addEventListener('touchmove', move, { passive: false })
+    box.addEventListener('touchend', end)
+    box.addEventListener('touchcancel', end)
+    return () => {
+      box.removeEventListener('touchstart', start); box.removeEventListener('touchmove', move)
+      box.removeEventListener('touchend', end); box.removeEventListener('touchcancel', end)
+    }
+  }, [zoom, zoomTo])
+  const prevZoom = useRef(1)
+  useEffect(() => {
+    const box = boxRef.current
+    if (!box) return
+    if (zoom === 1) setBaseH(box.clientHeight)
+    const k = zoom / prevZoom.current
+    box.scrollLeft = (box.scrollLeft + box.clientWidth / 2) * k - box.clientWidth / 2
+    box.scrollTop = (box.scrollTop + box.clientHeight / 2) * k - box.clientHeight / 2
+    prevZoom.current = zoom
+  }, [zoom, level])
+
   const { tree, wild } = useMemo(() => {
     const t = buildLadder({ canvas, checkins, moods, practicesDB, modeOrder: DRAW_ORDER })
     const w = openSecondDoor(t, practicesDB)
@@ -221,7 +260,9 @@ export default function RootsSection({ canvas, checkins, moods, practicesDB }) {
         <p className={styles.head}>{head}</p>
         <p className={styles.headSub}>{sub}</p>
 
-        <svg className={styles.roots} viewBox={`-34 0 ${W + 68} ${H}`} role="img" aria-label="root system of modes, needs and practices">
+        <div ref={boxRef} className={`${styles.box}${zoom > 1 ? ` ${styles.boxZoomed}` : ''}`}
+          style={zoom > 1 && baseH ? { maxHeight: baseH } : undefined}>
+        <svg className={styles.roots} style={{ width: `${zoom * 100}%` }} viewBox={`-34 0 ${W + 68} ${H}`} role="img" aria-label="root system of modes, needs and practices">
           <defs>
             <linearGradient id="rootsSig" gradientUnits="userSpaceOnUse" x1="0" y1={SURF} x2="0" y2={H}>
               <stop offset="0" stopColor="#3FA87A" /><stop offset="1" stopColor="#0C5038" />
@@ -268,6 +309,15 @@ export default function RootsSection({ canvas, checkins, moods, practicesDB }) {
             )
           })}
         </svg>
+        </div>
+        <div className={styles.zoomRow}>
+          <span className={styles.zoomHint}>{zoom > 1 ? `${zoom.toFixed(zoom % 1 ? 2 : 0)}× · drag to look around` : 'pinch or tap + to look closer'}</span>
+          <span className={styles.zoomBtns}>
+            <button type="button" className={styles.zoomBtn} onClick={() => zoomTo(zoom - 0.5)} disabled={zoom <= 1} aria-label="zoom out">−</button>
+            <button type="button" className={styles.zoomBtn} onClick={() => zoomTo(zoom + 0.5)} disabled={zoom >= 3} aria-label="zoom in">+</button>
+            {zoom > 1 && <button type="button" className={`${styles.zoomBtn} ${styles.zoomReset}`} onClick={() => zoomTo(1)}>reset</button>}
+          </span>
+        </div>
 
         {picked && (
           <p className={styles.pick}>

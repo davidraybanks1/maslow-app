@@ -1,8 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { NEEDS, MODE_ORDER } from '../lib/constants'
 import { createDataStats } from '../lib/dataStats'
-import { normalizeBand } from '../lib/frequency'
+import { normalizeBand, BAND_LABEL } from '../lib/frequency'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import RootsSection from '../components/RootsSection'
 import ThreadsSection from '../components/ThreadsSection'
@@ -300,6 +299,87 @@ const MOBILE_WINDOW = 30
 // Clamped to store's 30-day checkins fetch; raise both together when that widens.
 const DESKTOP_WINDOW = 30
 
+/* ── Your feels: how the days felt, one column each ──────────────────── */
+const FEEL_C = { good: '#1B3A2D', mid: '#9DB394', bad: '#D93B1C' }
+
+function FeelsSection({ moods, period = 7 }) {
+  const monthly = period === 30
+  const keys = useMemo(() => monthly ? buildWindowKeys(30, 0) : weekKeysAt(0), [monthly])
+  const prevKeys = useMemo(() => monthly ? buildWindowKeys(30, 30) : weekKeysAt(1), [monthly])
+  const todayKey = buildWindowKeys(1, 0)[0]
+
+  const { days, total, good, prevPct, prevTotal, words } = useMemo(() => {
+    const tally = keys.map(dk => ({ dk, good: 0, mid: 0, bad: 0, n: 0 }))
+    const idx = new Map(keys.map((dk, i) => [dk, i]))
+    const prev = new Set(prevKeys)
+    let prevGood = 0, prevN = 0
+    const wc = {}
+    for (const m of moods || []) {
+      if (!m?.date_key) continue
+      const band = normalizeBand(m.mood)
+      const i = idx.get(m.date_key)
+      if (i !== undefined) {
+        const t = tally[i]
+        if (t[band] !== undefined) t[band]++
+        t.n++
+        if (m.feeling) wc[m.feeling] = (wc[m.feeling] || 0) + 1
+      } else if (prev.has(m.date_key)) {
+        prevN++
+        if (band === 'good') prevGood++
+      }
+    }
+    const total = tally.reduce((s, t) => s + t.n, 0)
+    const good = tally.reduce((s, t) => s + t.good, 0)
+    const words = Object.entries(wc).sort((a, b) => b[1] - a[1]).slice(0, 2)
+    return { days: tally, total, good, prevPct: prevN ? Math.round(prevGood / prevN * 100) : null, prevTotal: prevN, words }
+  }, [moods, keys, prevKeys])
+
+  if (!total) return null
+
+  const peak = Math.max(...days.map(d => d.n), 1)
+  const pct = Math.round(good / total * 100)
+  const span = monthly ? 'month' : 'week'
+  const dayLabel = (dk, i) => {
+    if (!monthly) return WEEKDAY_LETTERS[i]
+    const [y, m, d] = dk.split('-').map(Number)
+    return new Date(y, m - 1, d).getDay() === 1 ? String(d) : ''
+  }
+  const read = `Good took ${pct}% of ${total} check-in${total === 1 ? '' : 's'} this ${span}`
+    + (prevTotal ? `, ${prevPct}% the ${span} before.` : '.')
+    + (words.length ? ` You mostly felt ${words.map(w => w[0]).join(' and ')}.` : '')
+
+  return (
+    <section className={`${styles.section} ${styles.sectionCard}`}>
+      <div className={styles.sectionHeader}>
+        <span className={styles.sectionLabel}>YOUR FEELS</span>
+        <span className={styles.sectionMeta}>
+          {['good', 'mid', 'bad'].map(b => (
+            <span key={b} className={styles.feelKey}><i style={{ background: FEEL_C[b] }} />{BAND_LABEL[b]}</span>
+          ))}
+        </span>
+      </div>
+      <div className={`${styles.feelGrid}${monthly ? ` ${styles.feelGridMonth}` : ''}`}>
+        {days.map((d, i) => {
+          const isToday = d.dk === todayKey
+          const isFuture = d.dk > todayKey
+          return (
+            <div key={d.dk} className={styles.feelCol}>
+              <div className={styles.feelStack}>
+                {!isFuture && d.n === 0 && <i className={styles.feelEmpty} />}
+                {['bad', 'mid', 'good'].map(b => d[b] > 0 && (
+                  <i key={b} style={{ height: `${(d[b] / peak) * 100}%`, background: FEEL_C[b] }} />
+                ))}
+              </div>
+              <span className={`${styles.rhythmLetter}${isToday ? ` ${styles.rhythmLetterToday}` : ''}`}>{dayLabel(d.dk, i)}</span>
+            </div>
+          )
+        })}
+      </div>
+      <p className={styles.rhythmRead}>{read}</p>
+    </section>
+  )
+}
+
 function practiceClosingLine(allCount, activeCount) {
   if (allCount === 0) return null
   if (activeCount === allCount) return `All ${allCount} practice${allCount === 1 ? '' : 's'} are still running.`
@@ -472,98 +552,7 @@ function RibbonsSection({ canvas, checkins, practicesDB, days, windowLen, isDesk
   )
 }
 
-// ── Gone quiet ──────────────────────────────────────────────────────────────
-
-const QUIET_GROUPS = [
-  { key: 'month+',  label: 'a month or more',    min: 30,  max: Infinity },
-  { key: '3to4w',   label: 'three to four weeks', min: 21,  max: 29 },
-  { key: '2to3w',   label: 'two to three weeks',  min: 14,  max: 20 },
-]
-
-function GoneQuietSection({ stats, archivePractice, isDesktop }) {
-  const [openGroups, setOpenGroups] = useState(() => new Set(['month+']))
-  const [retireConfirm, setRetireConfirm] = useState(null)
-  const toggleGroup = key => setOpenGroups(prev => {
-    const next = new Set(prev)
-    next.has(key) ? next.delete(key) : next.add(key)
-    return next
-  })
-  const navigate = useNavigate()
-
-  const quietPractices = useMemo(() => stats.getQuiet(14), [stats])
-
-  const total = quietPractices.length
-  if (total === 0) return null
-
-  // Closing read: dominant mode among quiet practices
-  const modeCounts = {}
-  for (const { mode } of quietPractices) modeCounts[mode] = (modeCounts[mode] || 0) + 1
-  const [topMode, topCount] = Object.entries(modeCounts).sort((a, b) => b[1] - a[1])[0]
-  const closingRead = total >= 3 && topCount >= Math.ceil(total / 2)
-    ? `${topCount} of these ${total} belong to ${topMode}. That is a mode going dormant, not ${total} separate failures — retire what you have outgrown.`
-    : `${total} practice${total !== 1 ? 's' : ''} have gone quiet. Review each to retire or restart.`
-
-  return (
-    <section className={styles.section}>
-      <div className={styles.sectionHeader}>
-        <span className={styles.sectionLabel}>GONE QUIET</span>
-        <span className={styles.sectionMeta}>{total} practice{total !== 1 ? 's' : ''} · two weeks or more</span>
-      </div>
-
-      <div className={styles.quietGroups}>
-        {QUIET_GROUPS.map(grp => {
-          const rows = quietPractices.filter(p => p.daysSince >= grp.min && p.daysSince <= grp.max)
-          if (!isDesktop && rows.length === 0) return null
-          const isOpen = openGroups.has(grp.key)
-          return (
-            <div key={grp.key} className={styles.quietCard}>
-              <button
-                className={styles.quietCardHeader}
-                onClick={() => toggleGroup(grp.key)}
-              >
-                <span className={styles.quietCardTitle}>{grp.label}</span>
-                <span className={styles.quietCardCount}>{rows.length}</span>
-                <span className={styles.ribbonChevron}>{isOpen ? '▴' : '▾'}</span>
-              </button>
-              {isOpen && (
-                rows.length === 0 ? (
-                  <p className={styles.quietEmpty}>nothing in this range.</p>
-                ) : (
-                  rows.map(({ need, mode, practice }) => (
-                    <div key={practice.id ?? practice.label} className={styles.quietRow}>
-                      <span className={styles.moverDot} style={{ background: TIER_DOT[mode] }} />
-                      <span className={styles.quietPracticeName}>{practice.label}</span>
-                      <div className={styles.quietActions}>
-                        <button className={styles.quietBtn} onClick={() => navigate('/today')}>log</button>
-                        {archivePractice && practice.id && (
-                          retireConfirm === practice.id ? (
-                            <button
-                              className={`${styles.quietBtn} ${styles.quietBtnConfirm}`}
-                              onClick={() => { archivePractice(practice.id); setRetireConfirm(null) }}
-                            >confirm retire</button>
-                          ) : (
-                            <button className={styles.quietBtn} onClick={() => setRetireConfirm(practice.id)}>retire</button>
-                          )
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )
-              )}
-            </div>
-          )
-        })}
-      </div>
-      <p className={styles.sectionRead}>{closingRead}</p>
-    </section>
-  )
-}
-
-function InsightsCard({ canvas, checkins, moods, practicesDB }) {
-  const insights = useMemo(() => {
-    const ladder = buildLadder({ canvas, checkins, moods, practicesDB, modeOrder: MODE_ORDER })
-    return buildInsights({ ladder, moods, checkins, canvas })
-  }, [canvas, checkins, moods, practicesDB])
+function InsightsCard({ insights }) {
   const [activeIdx, setActiveIdx] = useState(0)
   const wrapperRef = useRef(null)
 
@@ -593,7 +582,7 @@ function InsightsCard({ canvas, checkins, moods, practicesDB }) {
             </div>
             {insight ? (
               <>
-                <p className={styles.insightFinding}>{insight.text}</p>
+                <p className={styles.insightFinding} data-len={insight.text.length > 150 ? 'long' : insight.text.length > 90 ? 'mid' : undefined}>{insight.text}</p>
                 <p className={styles.insightBasis}>{insight.basis}</p>
               </>
             ) : (
@@ -700,7 +689,7 @@ function Group({ title, sub, aside, first, children }) {
   )
 }
 
-export default function Data({ state, archivePractice }) {
+export default function Data({ state }) {
   const [period, setPeriod] = useState(7)
   const isDesktop = useIsDesktop()
 
@@ -715,6 +704,10 @@ export default function Data({ state, archivePractice }) {
     () => createDataStats({ canvas, checkins, moods, practices, practicesDB, onboardedAt }),
     [canvas, checkins, moods, practices, practicesDB, onboardedAt]
   )
+  const insights = useMemo(() => {
+    const ladder = buildLadder({ canvas, checkins, moods, practicesDB, modeOrder: MODE_ORDER })
+    return buildInsights({ ladder, moods, checkins, canvas })
+  }, [canvas, checkins, moods, practicesDB])
 
   const windowLen = isDesktop ? DESKTOP_WINDOW : MOBILE_WINDOW
   const dayKeys = useMemo(() => buildWindowKeys(windowLen, 0), [windowLen])
@@ -750,20 +743,19 @@ export default function Data({ state, archivePractice }) {
 
         {hasCanvas && (
           <>
-            <Group title="Your headlines" sub="what stands out right now" first>
-              <InsightsCard canvas={canvas} checkins={checkins} moods={moods} practicesDB={practicesDB} />
+            <Group title={insights.length ? `${insights.length} headline${insights.length === 1 ? '' : 's'}` : 'Headlines'} first>
+              <InsightsCard insights={insights} />
             </Group>
 
             <Group title={period === 30 ? 'This month' : 'This week'} sub={buildSubhead(period)} aside={periodToggleEl}>
               <div className={styles.dRow3}>
-                <WhatChanged period={period} canvas={canvas} checkins={checkins} />
                 <RhythmSection stats={stats} canvas={canvas} checkins={checkins} moods={moods} period={period} />
+                <FeelsSection moods={moods} period={period} />
+                <WhatChanged period={period} canvas={canvas} checkins={checkins} />
               </div>
             </Group>
 
-            <StreaksRail canvas={canvas} checkins={checkins} moods={moods} practicesDB={practicesDB}>
-              <GoneQuietSection stats={stats} archivePractice={archivePractice} isDesktop={isDesktop} />
-            </StreaksRail>
+            <StreaksRail canvas={canvas} checkins={checkins} moods={moods} practicesDB={practicesDB} />
 
             <StrataRibbon moods={moods} />
             <RootsSection canvas={canvas} checkins={checkins} moods={moods} practicesDB={practicesDB} />

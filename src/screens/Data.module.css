@@ -58,8 +58,16 @@
 /* ── Insights deck ──────────────────────────────────────────────────────── */
 .insightDeck { display: flex; flex-direction: column; }
 
+ /* the same rail as notes to self on Today: one card centred, the next
+   peeking in from the right, so the deck reads as a deck */
 .insightDeckWrapper {
   display: flex;
+  align-items: stretch;
+  gap: 12px;
+  width: calc(100% + 44px);
+  margin-inline: -22px;
+  padding: 6px calc((100% - 282px + 44px) / 2);
+  box-sizing: border-box;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
@@ -69,13 +77,19 @@
 .insightDeckWrapper::-webkit-scrollbar { display: none; }
 
 .insightCard {
-  flex: 0 0 100%;
-  scroll-snap-align: start;
+  flex: 0 0 282px;
+  width: 282px;
+  height: 296px;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
   background: var(--card);
-  border: 1px solid rgba(0,0,0,.09);
-  border-radius: 16px;
-  padding: 15px 16px;
+  border: 0.5px solid rgba(0,0,0,0.07);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.08);
 }
 
 .insightDeckFooter {
@@ -113,20 +127,25 @@
   font-family: var(--font-mono);
   font-size: var(--type-floor);
   font-weight: 400;
-  letter-spacing: .16em;
+  letter-spacing: .18em;
   text-transform: uppercase;
   color: var(--ink3);
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
+/* the finding sits in the middle of the card, the basis at the foot;
+   the type steps down with length so the block keeps roughly one mass */
 .insightFinding {
   font-family: var(--font-serif);
-  font-size: 19px;
+  font-size: 20px;
   font-weight: 300;
-  line-height: 1.35;
+  line-height: 1.32;
+  letter-spacing: -0.01em;
   color: var(--ink);
-  margin: 0 0 8px;
+  margin: auto 0;
 }
+.insightFinding[data-len="mid"]  { font-size: 17.5px; line-height: 1.36; }
+.insightFinding[data-len="long"] { font-size: 15.5px; line-height: 1.40; }
 
 .insightBasis {
   font-family: var(--font-mono);
@@ -134,7 +153,7 @@
   font-weight: 300;
   line-height: 1.5;
   color: var(--ink3);
-  margin: 0;
+  margin: 12px 0 0;
 }
 
 /* ── Shared section chrome ──────────────────────────────────────────────── */
@@ -194,6 +213,18 @@
 .rhythmGridMonth .rhythmBar { border-radius: 2px; min-height: 3px; }
 .rhythmGridMonth .rhythmDot { width: 5px; height: 5px; margin: 4px 0 3px; }
 .rhythmGridMonth .rhythmLetter { font-variant-numeric: tabular-nums; min-height: 12px; }
+
+/* ── Your feels ── */
+.feelKey { display: inline-flex; align-items: center; gap: 5px; margin-left: 10px; }
+.feelKey i { display: block; width: 8px; height: 8px; border-radius: 2px; }
+.feelGrid { display: flex; gap: 6px; height: 84px; margin-bottom: 10px; }
+.feelGridMonth { gap: 2px; }
+.feelCol { flex: 1; display: flex; flex-direction: column; align-items: center; }
+.feelStack { flex: 1; width: 100%; display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; margin-bottom: 6px; }
+.feelStack i { display: block; width: 100%; min-height: 4px; border-radius: 3px; }
+.feelGridMonth .feelStack i { border-radius: 1.5px; min-height: 3px; }
+.feelStack .feelEmpty { height: 4px; min-height: 4px; background: rgba(0,0,0,.06); }
+.feelGridMonth .rhythmLetter { font-variant-numeric: tabular-nums; min-height: 12px; }
 
 .rhythmCol {
   flex: 1;
@@ -431,88 +462,6 @@
   border-radius: 2px;
 }
 
-/* ── Gone quiet ─────────────────────────────────────────────────────────── */
-.quietCard {
-  background: var(--card);
-  border: 1px solid rgba(0,0,0,.09);
-  border-radius: 14px;
-  padding: 13px 15px 11px;
-  margin-bottom: 8px;
-}
-
-.quietCardHeader {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: none;
-  border: none;
-  padding: 0;
-  width: 100%;
-  cursor: pointer;
-  text-align: left;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.quietCardTitle {
-  font-family: var(--font-serif);
-  font-size: 16px;
-  font-weight: 300;
-  color: var(--ink);
-  flex: 1;
-}
-
-.quietCardCount {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  color: var(--ink3);
-}
-
-.quietRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  height: 46px;
-  border-top: 1px solid rgba(0,0,0,.06);
-}
-
-.quietPracticeName {
-  font-family: var(--font-mono);
-  font-size: 13.5px;
-  font-weight: 300;
-  color: var(--ink);
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.quietActions {
-  display: flex;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.quietBtn {
-  height: 32px;
-  padding: 0 12px;
-  border-radius: 16px;
-  border: 1px solid rgba(0,0,0,.14);
-  background: transparent;
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  color: var(--ink);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-  white-space: nowrap;
-}
-.quietBtn:active { opacity: 0.65; }
-
-.quietBtnConfirm {
-  border-color: #C4381F;
-  color: #C4381F;
-}
 
 /* ── All the numbers ────────────────────────────────────────────────────── */
 .allNumsHeader {
@@ -683,8 +632,6 @@
 .pageHeaderRow { }
 .dRow3 { }
 .sectionCard { }
-.quietGroups { }
-.quietEmpty { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink4); padding: 8px 0 4px; }
 .allNumsCards { }
 
 /* ── Desktop ────────────────────────────────────────────────────────────── */
@@ -708,6 +655,12 @@
   }
   .pageTitle { font-size: 42px; margin-bottom: 2px; }
   .groupTitle { font-size: 28px; }
+
+  .insightDeckWrapper { width: 100%; margin-inline: 0; padding: 0; gap: 0; }
+  .insightCard { flex: 0 0 100%; width: auto; height: auto; scroll-snap-align: start; border-radius: 16px; padding: 18px 20px; box-shadow: none; border: 0.5px solid var(--hairline); }
+  .insightFinding { margin: 0 0 8px; font-size: 20px; }
+  .insightFinding[data-len="mid"], .insightFinding[data-len="long"] { font-size: 20px; line-height: 1.32; }
+  .insightBasis { margin: 0; }
 
   .insightDeckArrow {
     display: flex;
@@ -753,14 +706,6 @@
     gap: 9px;
   }
 
-  /* Row 6: gone quiet — three side-by-side cards */
-  .quietGroups {
-    display: flex;
-    gap: 12px;
-    align-items: flex-start;
-    margin-bottom: 0;
-  }
-  .quietCard { flex: 1; margin-bottom: 0; }
 
   /* Row 7: all numbers — four mode cards in a row */
   .allNumsCards {
