@@ -354,7 +354,7 @@ function RhythmSection({ stats, canvas, checkins, moods }) {
       <div className={styles.sectionHeader}>
         <span className={styles.sectionLabel}>YOUR RHYTHM</span>
         <span className={styles.sectionMeta}>
-          {weekOffset > 0 ? weekRangeLabel(weekKeys) : 'bar = practices met · dot = mood'}
+          {weekOffset > 0 ? weekRangeLabel(weekKeys) : 'bar\u00a0=\u00a0practices met · dot\u00a0=\u00a0mood'}
         </span>
         <div className={styles.weekNav}>
           <button

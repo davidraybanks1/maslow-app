@@ -13,8 +13,8 @@ const BAND_C = {
 }
 const BANDS = ['good', 'mid', 'bad']
 const RANGES = [
-  { v: 7, label: 'last week' }, { v: 14, label: '2 weeks' },
-  { v: 21, label: '3 weeks' }, { v: 30, label: 'last month' },
+  { v: 7, label: 'week' }, { v: 14, label: '2 weeks' },
+  { v: 21, label: '3 weeks' }, { v: 30, label: 'month' },
 ]
 const W = 393, H = 196, TOP = 14, BOT = 190
 
@@ -93,7 +93,7 @@ export default function StrataRibbon({ moods }) {
         </div>
         <p className={styles.sub}>{pts.length} days · {from?.slice(5)} — {to?.slice(5)}</p>
         <p className={styles.story}>
-          Good took {Math.round((good / Math.max(total, 1)) * 100)}% of these {total} check-ins
+          Good took {Math.round((good / Math.max(total, 1)) * 100)}% of these {total} <span className={styles.nb}>check-ins</span>
           {pts.length > 20 ? <>, <em>and the seam has barely moved.</em></> : '.'}
         </p>
       </div>

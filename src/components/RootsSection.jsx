@@ -114,7 +114,7 @@ function verdict(tree, wild) {
   if (!prac) return { head: <><em>{cap(need.name)}</em> is the root. It comes down through {m.name}.</>, sub: `+${Math.round(need.gap)} · luck would do that ${oneIn(need.p)}` }
   return {
     head: <><em>{cap(need.name)}</em> is the root. It comes down through {m.name} and reaches bottom at <em>{prac.name}</em>.</>,
-    sub: `the only root that goes all the way · ${prac.name} +${Math.round(prac.gap)}, luck would do that ${oneIn(prac.p)}`,
+    sub: `${prac.name} +${Math.round(prac.gap)} · luck would do that ${oneIn(prac.p)}`,
   }
 }
 
@@ -209,7 +209,7 @@ export default function RootsSection({ canvas, checkins, moods, practicesDB }) {
     <section className={styles.section}>
       <div className={styles.pad}>
         <h2 className={styles.title}>Roots</h2>
-        <p className={styles.sub}>{days} days · {tree.length} modes · {counts.total - tree.length - geo.nodes.filter(n => n.depth === 2).length} needs · {geo.nodes.filter(n => n.depth === 2).length} practices</p>
+        <p className={styles.sub}>{days} days · {counts.total - tree.length - geo.nodes.filter(n => n.depth === 2).length} needs · {geo.nodes.filter(n => n.depth === 2).length} practices</p>
         <p className={styles.head}>{head}</p>
         <p className={styles.headSub}>{sub}</p>
 

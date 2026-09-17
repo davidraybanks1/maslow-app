@@ -109,7 +109,6 @@ export default function StreaksRail({ canvas, checkins, moods, practicesDB }) {
 
       <div className={styles.pad}>
         <div className={styles.railFoot}>
-          <span className={styles.railPos}>{Math.min(pos, rows.length)}/{rows.length}</span>
           <div className={styles.kinds}>
             {STREAK_KINDS.map(k => (
               <button
@@ -122,7 +121,7 @@ export default function StreaksRail({ canvas, checkins, moods, practicesDB }) {
               >{k.label}</button>
             ))}
           </div>
-          <span className={styles.railAll} />
+          <span className={styles.railPos}>{Math.min(pos, rows.length)} of {rows.length}</span>
         </div>
       </div>
     </section>

@@ -38,16 +38,20 @@
 .mCells { display: flex; gap: 2.5px; width: 100%; }
 .mCells i { flex: 1; height: 8px; border-radius: 2px; display: block; }
 
-/* position on the left, filters centred, the way out on the right */
+/* filters on one line, position beneath; the row scrolls before it wraps */
 .railFoot {
-  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 6px;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
   margin-top: 4px; font-family: var(--mono); font-size: var(--type-floor); color: var(--ink4);
 }
 .railPos { font-variant-numeric: tabular-nums; white-space: nowrap; }
-.railAll { white-space: nowrap; text-align: right; }
-.kinds { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; }
+.kinds {
+  display: flex; gap: 4px; flex-wrap: nowrap; justify-content: safe center;
+  width: calc(100% + 44px); margin-inline: -22px;
+  overflow-x: auto; scrollbar-width: none;
+}
+.kinds::-webkit-scrollbar { display: none; }
 .kindPill {
-  font-family: var(--mono); font-size: var(--type-floor); letter-spacing: 0.01em; padding: 5px 8px;
+  font-family: var(--mono); font-size: var(--type-floor); letter-spacing: 0.01em; padding: 5px 7px;
   border-radius: 999px; border: 0.5px solid var(--hairline); background: none;
   color: var(--ink3); cursor: pointer; white-space: nowrap;
 }

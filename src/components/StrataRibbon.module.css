@@ -19,6 +19,7 @@
 .fig svg { display: block; width: 100%; height: auto; }
 
 .read { font-family: var(--mono); font-size: var(--type-floor); line-height: 1.62; color: var(--ink3); margin: 13px 0 0; }
+.nb { white-space: nowrap; }
 .kinds { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
 .kindPill {
   font-family: var(--mono); font-size: var(--type-floor); padding: 5px 9px; border-radius: 999px;
