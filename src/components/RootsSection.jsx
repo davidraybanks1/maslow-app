@@ -24,9 +24,9 @@ const STROKE = {
 }
 const ORDER = ['significant', 'close', 'testing', 'quiet', 'new']
 const LEVELS = [
-  { v: 'significant', label: 'significant only', shows: ['significant'] },
-  { v: 'close',       label: 'and close',        shows: ['significant', 'close'] },
-  { v: 'testing',     label: 'and worth testing', shows: ['significant', 'close', 'testing'] },
+  { v: 'significant', label: 'significant', shows: ['significant'] },
+  { v: 'close',       label: '+ close',     shows: ['significant', 'close'] },
+  { v: 'testing',     label: '+ testing',   shows: ['significant', 'close', 'testing'] },
 ]
 const MODE_FILL = {
   exploration: 'var(--exploration)', appreciation: 'var(--appreciation-deep)',
@@ -35,7 +35,11 @@ const MODE_FILL = {
 /* the pyramid, bottom to top, left to right */
 const DRAW_ORDER = [...MODE_ORDER].reverse()
 
-const W = 349, SURF = 30
+const W = 349, SURF = 104
+/* DM Mono at the 12px floor runs about 7.3px a character; every label box
+   below is estimated from this, so the collision rule is honest at the size
+   the labels actually render. */
+const CW = 7.3
 const litLeaf = t => ORDER.indexOf(t) <= 2
 function leaves(n) { return n.children?.length ? n.children.reduce((s, c) => s + leaves(c), 0) : (litLeaf(n.tier) ? 3 : 1) }
 const modeWeight = m => Math.max(leaves(m), 9)   // never narrower than its own name
@@ -66,12 +70,27 @@ function layout(tree) {
   return { edges, nodes, modes }
 }
 
-function path(e) {
+function bez(e) {
   const p = e.from, c = e.to
   const sy = p.y1 - Math.min(10, (p.y1 - p.y0) * 0.35), sx = p.x
   const bend = wob(c.x + c.y1, 10)
   const my = sy + (c.y1 - sy) * 0.55
-  return `M${sx.toFixed(1)} ${sy.toFixed(1)} C${(sx + bend).toFixed(1)} ${(sy + (c.y1 - sy) * 0.35).toFixed(1)}, ${(c.x - bend).toFixed(1)} ${my.toFixed(1)}, ${c.x.toFixed(1)} ${c.y1.toFixed(1)}`
+  return [[sx, sy], [sx + bend, sy + (c.y1 - sy) * 0.35], [c.x - bend, my], [c.x, c.y1]]
+}
+function path(e) {
+  const [[ax, ay], [bx, by], [cx, cy], [dx, dy]] = bez(e)
+  return `M${ax.toFixed(1)} ${ay.toFixed(1)} C${bx.toFixed(1)} ${by.toFixed(1)}, ${cx.toFixed(1)} ${cy.toFixed(1)}, ${dx.toFixed(1)} ${dy.toFixed(1)}`
+}
+/* a dozen points along each root, so a label can tell whether it would sit on one */
+function samples(e) {
+  const [[ax, ay], [bx, by], [cx, cy], [dx, dy]] = bez(e)
+  const out = []
+  for (let i = 1; i < 12; i++) {
+    const t = i / 12, u = 1 - t
+    out.push([u * u * u * ax + 3 * u * u * t * bx + 3 * u * t * t * cx + t * t * t * dx,
+              u * u * u * ay + 3 * u * u * t * by + 3 * u * t * t * cy + t * t * t * dy])
+  }
+  return out
 }
 
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1)
@@ -120,35 +139,71 @@ export default function RootsSection({ canvas, checkins, moods, practicesDB }) {
   const { head, sub } = verdict(tree, wild)
   const days = tree[0].days + tree[0].off
 
-  const H = Math.max(...geo.nodes.map(n => n.y1)) + 112
 
-  /* labels, with the collision rule */
+  /* labels, with the collision rule: a label may not sit on another label,
+     and tries not to sit on any root. Each label has a few places it could
+     go; the first clean one wins, else the one that touches the fewest roots,
+     with a leader back to its tip when it has had to move. */
   const placed = []
-  const hits = bx => placed.some(p => bx.x0 < p.x1 && bx.x1 > p.x0 && bx.y0 < p.y1 && bx.y1 > p.y0)
+  const onLabel = bx => placed.some(p => bx.x0 < p.x1 && bx.x1 > p.x0 && bx.y0 < p.y1 && bx.y1 > p.y0)
+  const rootPts = geo.edges.map(e => ({ to: e.to, pts: samples(e) }))
+    .concat(geo.modes.map(m => ({ to: m, pts: [0.2, 0.4, 0.6, 0.8].map(t => [m.x, SURF + (m.y1 - SURF) * t]) })))
+  const onRoot = (bx, self) => rootPts.reduce((k, r) => r.to === self ? k :
+    k + r.pts.filter(([x, y]) => x > bx.x0 - 2 && x < bx.x1 + 2 && y > bx.y0 && y < bx.y1).length, 0)
+  const settle = (cands, self) => {
+    let best = null
+    for (const c of cands) {
+      for (let step = 0; step < 6; step++) {
+        const bx = { x0: c.x0, x1: c.x1, y0: c.y0 + step * LH, y1: c.y1 + step * LH }
+        if (onLabel(bx)) continue
+        const cost = onRoot(bx, self) + step * 0.5 + c.pref
+        if (!best || cost < best.cost) best = { ...c, bx, dy: step * LH, cost }
+        if (cost === c.pref) break
+      }
+      if (best && best.cost === 0) break
+    }
+    return best
+  }
   const labels = []
+  const LH = 14
+  // significant labels claim their place first; everything else moves around them
+  const rank = n => ORDER.indexOf(n.tier)
+  const litKid = n => (n.ref.children || []).some(c => lit(c))
   geo.nodes
-    .filter(n => n.depth > 0 && lit(n))
-    .sort((a, b) => a.y1 - b.y1 || a.x - b.x)
+    .filter(n => n.depth > 0 && (lit(n) || (n.depth === 1 && litKid(n))))
+    .sort((a, b) => rank(a) - rank(b) || a.y1 - b.y1 || a.x - b.x)
     .forEach(n => {
       const sig = n.tier === 'significant'
       const num = sig && n.ref.gap != null ? `+${Math.round(n.ref.gap)} · ${oneIn(n.ref.p)}` : null
       if (n.depth === 1) {
-        const right = sig ? true : n.x < W / 2
-        const tw = Math.max(n.name.length * 5.2, num ? num.length * 4.9 : 0)
-        const bx = { x0: right ? n.x + 7 : n.x - 7 - tw, y0: n.y1 - 4 }
-        bx.x1 = bx.x0 + tw; bx.y1 = bx.y0 + 11 + (num ? 10 : 0)
-        let y = n.y1 + 3
-        while (hits(bx)) { bx.y0 += 11; bx.y1 += 11; y += 11 }
-        placed.push(bx)
-        labels.push({ n, kind: 'need', right, y, num, leader: y - (n.y1 + 3) > 4 })
+        // a need's name sits beside its tip - above it if it can, where only the
+        // one root comes in, else below, where its children fan out
+        const tw = Math.max(n.name.length, num ? num.length : 0) * CW
+        const lines = num ? 2 : 1
+        const outside = n.x >= n.parent.x
+        const sides = [outside, !outside].filter(r => r ? n.x + 8 + tw <= W + 30 : n.x - 8 - tw >= -30)
+        const cands = []
+        for (const above of [true, false]) for (const right of sides) {
+          const x0 = right ? n.x + 8 : n.x - 8 - tw
+          const y0 = above ? n.y1 - 6 - lines * LH : n.y1 - 5
+          cands.push({ x0, x1: x0 + tw, y0, y1: y0 + lines * LH + (above ? 4 : 0), right, above, pref: (above ? 0 : 0.25) + (right === outside ? 0 : 0.1) })
+        }
+        const b = settle(cands, n)
+        if (!b) return
+        placed.push(b.bx)
+        const y = (b.above ? n.y1 - 6 - (lines - 1) * LH : n.y1 + 6) + b.dy
+        labels.push({ n, kind: 'need', right: b.right, y, num, leader: b.dy > 0 })
       } else {
-        const bx = { x0: n.x - 6, x1: n.x + 6, y0: n.y1, y1: n.y1 + 6 + n.name.length * 5.2 + (num ? 0 : 0) }
-        let dy = 0
-        while (hits(bx)) { bx.y0 += 11; bx.y1 += 11; dy += 11 }
-        placed.push(bx)
-        labels.push({ n, kind: 'practice', y: n.y1 + 6 + dy, num, leader: dy > 4 })
+        // a practice runs down its root; with a number it takes a second column
+        const th = Math.max(n.name.length, num ? num.length : 0) * CW
+        const c = { x0: n.x - (num ? 14 : 4), x1: n.x + 12, y0: n.y1, y1: n.y1 + 8 + th, pref: 0 }
+        const b = settle([c], n)
+        if (!b) return
+        placed.push(b.bx)
+        labels.push({ n, kind: 'practice', y: n.y1 + 8 + b.dy, num, leader: b.dy > 0, bottom: b.bx.y1 })
       }
     })
+  const H = Math.max(...geo.nodes.map(n => n.y1 + 20), ...labels.map(l => l.bottom || 0)) + 12
 
   return (
     <section className={styles.section}>
@@ -179,7 +234,7 @@ export default function RootsSection({ canvas, checkins, moods, practicesDB }) {
             <g key={m.name} onClick={() => setPicked(m.ref)} style={{ cursor: 'pointer' }}>
               <path d={`M${m.x} ${SURF} L${m.x} ${m.y1}`} fill="none" stroke={STROKE[m.tier]} strokeWidth={WEIGHT[m.tier]} strokeLinecap="round" />
               <circle cx={m.x} cy={SURF} r="5.2" fill={MODE_FILL[m.name] || 'var(--ink)'} />
-              <text className={styles.modeLab} x={m.x} y={SURF - (i % 2 ? 19 : 9)} textAnchor="middle">{m.name}</text>
+              <text className={styles.modeLab} transform={`translate(${(m.x + 4.5).toFixed(1)} ${SURF - 11}) rotate(-90)`}>{m.name}</text>
             </g>
           ))}
 
@@ -192,15 +247,15 @@ export default function RootsSection({ canvas, checkins, moods, practicesDB }) {
                 <g key={n.name + n.y1} onClick={() => setPicked(n.ref)} style={{ cursor: 'pointer' }}>
                   {leader && <path className={styles.leader} d={`M${n.x} ${n.y1} L${n.x} ${y - 3} L${right ? n.x + 5 : n.x - 5} ${y - 3}`} />}
                   <text className={cls} x={x} y={y} textAnchor={anchor}>{n.name}</text>
-                  {num && <text className={styles.labNum} x={x} y={y + 10} textAnchor={anchor}>{num}</text>}
+                  {num && <text className={styles.labNum} x={x} y={y + 14} textAnchor={anchor}>{num}</text>}
                 </g>
               )
             }
             return (
               <g key={n.name + n.y1} onClick={() => setPicked(n.ref)} style={{ cursor: 'pointer' }}>
                 {leader && <path className={styles.leader} d={`M${n.x} ${n.y1} L${n.x} ${y - 4}`} />}
-                <text className={cls} transform={`translate(${(n.x + 3.5).toFixed(1)} ${y.toFixed(1)}) rotate(90)`}>{n.name}</text>
-                {num && <text className={styles.labNum} transform={`translate(${(n.x - 6.5).toFixed(1)} ${y.toFixed(1)}) rotate(90)`}>{num}</text>}
+                <text className={cls} transform={`translate(${(n.x + 4.5).toFixed(1)} ${y.toFixed(1)}) rotate(90)`}>{n.name}</text>
+                {num && <text className={styles.labNum} transform={`translate(${(n.x - 9.5).toFixed(1)} ${y.toFixed(1)}) rotate(90)`}>{num}</text>}
               </g>
             )
           })}

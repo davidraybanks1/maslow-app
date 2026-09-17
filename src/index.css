@@ -159,6 +159,16 @@ button { touch-action: manipulation; }
      sections of mono labels shipped in DM Sans without anyone noticing */
   --serif: var(--font-serif);
   --mono:  var(--font-mono);
+
+  /* ── Type floor ────────────────────────────────────────────────────────
+     Nothing in the app renders below --type-floor. It is one number so the
+     whole label register can be tuned at once; scripts/check-type.mjs fails
+     the build on any literal font-size beneath it. 12px is iOS's caption
+     size. The 250 declarations that used to sit below it - 10px was the
+     workhorse, 133 of them - now reference the token instead. */
+  --type-floor: 12px;   /* labels, eyebrows, keys, chips, timestamps */
+  --type-meta:  13px;   /* secondary lines that are read, not scanned */
+  --type-body:  15px;   /* anything a sentence long */
   --font-sans:  'DM Sans', sans-serif;
 
   /* Spacing */
@@ -218,7 +228,7 @@ body {
 
 .eyebrow {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: var(--ink3);
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -318,7 +328,7 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 }
 .nav-item-label {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--type-floor);
   color: var(--ink3);
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -359,7 +369,7 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 }
 .tile-mode {
   font-family: var(--font-mono);
-  font-size: 8px;
+  font-size: var(--type-floor);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   opacity: 0.7;

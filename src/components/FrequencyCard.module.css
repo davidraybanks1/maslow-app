@@ -55,7 +55,7 @@
   min-height: 40px;
   padding: 0 14px;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--type-floor);
   letter-spacing: 0.02em;
   color: rgba(0, 0, 0, 0.62);
   background: none;
@@ -121,7 +121,7 @@
 
 .freqBackBtn {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--type-floor);
   color: var(--ink4);
   background: none;
   border: none;
@@ -160,7 +160,7 @@
 
 .freqDaypartLabel {
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: var(--type-floor);
   color: var(--ink4);
   letter-spacing: 0.04em;
 }

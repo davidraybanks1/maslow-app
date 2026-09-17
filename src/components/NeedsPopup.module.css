@@ -32,7 +32,7 @@
 
 .popupModeName {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ink3);
@@ -46,7 +46,7 @@
   background: none;
   color: var(--ink3);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--type-floor);
   line-height: 1;
   cursor: pointer;
   display: flex;
@@ -86,7 +86,7 @@
 
 .needSubCount {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: var(--ink4);
 }
 
@@ -138,14 +138,14 @@
 
 .practiceX2 {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--type-floor);
   font-weight: 500;
   color: var(--ink3);
 }
 
 .practiceStamp {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: var(--ink4);
   white-space: nowrap;
 }

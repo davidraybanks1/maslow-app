@@ -11,7 +11,7 @@ export default function ComingSoon({ title }) {
         ← back
       </button>
       <div style={{ fontFamily: 'var(--font-serif)', fontSize: 24, color: 'var(--ink)', letterSpacing: '-0.01em', marginBottom: 12 }}>{title}</div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink3)' }}>Coming soon.</div>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--type-floor)', color: 'var(--ink3)' }}>Coming soon.</div>
     </div>
   )
 }

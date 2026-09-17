@@ -9,7 +9,9 @@
     "preview": "vite preview",
     "lint": "eslint src",
     "check:css": "node scripts/check-css-tokens.mjs",
-    "check": "npm run lint && npm run check:css",
+    "check:type": "node scripts/check-type.mjs",
+    "prebuild": "npm run check:type",
+    "check": "npm run lint && npm run check:css && npm run check:type",
     "ios:sync": "npm run build && npx cap sync ios",
     "ios:open": "npx cap open ios"
   },

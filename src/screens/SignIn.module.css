@@ -12,7 +12,7 @@
 .input:focus { border-color: var(--ink); }
 .input::placeholder { color: var(--ink4); }
 
-.error { font-family: var(--font-mono); font-size: 11px; color: var(--survival); }
+.error { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--survival); }
 
 .secondary { margin-top: 24px; }
 .hairline { height: 0.5px; background: var(--hairline); }

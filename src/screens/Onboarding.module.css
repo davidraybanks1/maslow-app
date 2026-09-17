@@ -23,7 +23,7 @@
 }
 .phonetic {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: var(--ink3);
   letter-spacing: 0.06em;
   margin-bottom: 28px;
@@ -57,7 +57,7 @@
 }
 .qNum {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: var(--ink3);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -147,7 +147,7 @@
 }
 .inputLabel {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: var(--ink3);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -187,23 +187,23 @@
 
 .modeSection { margin-bottom: 20px; }
 .modeSectionHead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-.modeSectionLabel { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink); }
+.modeSectionLabel { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: var(--type-floor); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink); }
 .modePip { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.modeSectionCount { font-family: var(--font-mono); font-size: 10px; color: var(--ink3); }
+.modeSectionCount { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); }
 
 .slotsRow { display: flex; gap: 6px; flex-wrap: wrap; }
 .slotFilled { border-radius: 6px; border: 0.5px solid var(--border); background: var(--bg2); display: flex; align-items: center; justify-content: space-between; padding: 0 12px; min-height: 40px; cursor: pointer; }
 .slotName { font-family: var(--font-serif); font-size: 13px; color: var(--ink); }
 .slotX { font-family: var(--font-mono); font-size: 13px; color: var(--ink3); }
-.slotEmpty { border-radius: 6px; border: 1px dashed var(--border2); display: flex; align-items: center; justify-content: center; min-height: 40px; cursor: pointer; font-family: var(--font-mono); font-size: 10px; color: var(--ink4); }
+.slotEmpty { border-radius: 6px; border: 1px dashed var(--border2); display: flex; align-items: center; justify-content: center; min-height: 40px; cursor: pointer; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink4); }
 .slotHighlight { border-color: var(--ink); color: var(--ink2); }
 
 .lotDivider { height: 0.5px; background: var(--border); margin: 8px 0 14px; }
-.lotLabel { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink3); margin-bottom: 10px; }
+.lotLabel { font-family: var(--font-mono); font-size: var(--type-floor); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink3); margin-bottom: 10px; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { padding: 6px 12px; border-radius: 20px; border: 0.5px solid var(--border2); font-family: var(--font-serif); font-size: 13px; color: var(--ink); cursor: pointer; }
 .chipSelected { background: var(--ink); color: #fff; border-color: var(--ink); }
-.allAssigned { font-family: var(--font-mono); font-size: 11px; color: var(--ink3); }
+.allAssigned { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); }
 .consentGroup {
   margin-top: 8px;
 }
@@ -222,7 +222,7 @@
 }
 .consentText {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--type-floor);
   color: var(--ink3);
   line-height: 1.6;
   font-weight: 200;
@@ -238,13 +238,13 @@
 .practiceNeedGroup:last-child { border-bottom: none; }
 .practiceNeedHeader { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
 .practiceNeedName { font-family: var(--font-serif); font-size: 15px; color: var(--ink); }
-.practiceCount { font-family: var(--font-mono); font-size: 10px; color: var(--ink3); margin-left: auto; }
+.practiceCount { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); margin-left: auto; }
 .practiceItem { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 0.5px solid var(--border); }
 .practiceItem:last-of-type { border-bottom: none; }
 .practiceItemText { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink2); }
 .practiceDeleteBtn { background: none; border: none; color: var(--ink3); font-size: 18px; line-height: 1; cursor: pointer; padding: 0 4px; }
 .practiceDeleteBtn:hover { color: var(--ink); }
-.practiceEmpty { font-family: var(--font-mono); font-size: 11px; color: var(--ink4); padding: 4px 0 8px; }
+.practiceEmpty { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink4); padding: 4px 0 8px; }
 .practiceAddRow { display: flex; gap: 8px; margin-top: 10px; }
 .practiceAddInput { flex: 1; padding: 8px 12px; border-radius: 6px; border: 0.5px solid var(--border); background: var(--bg); font-family: var(--font-mono); font-size: 16px; font-weight: 200; color: var(--ink); outline: none; }
 .practiceAddInput:focus { border-color: var(--ink2); }

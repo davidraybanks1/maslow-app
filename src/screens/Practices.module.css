@@ -2,7 +2,7 @@
 
 .header { padding: 20px 16px 16px; }
 .eyebrowRow { display: flex; align-items: center; justify-content: flex-end; margin-bottom: 6px; }
-.editToggle { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink3); background: none; border: none; cursor: pointer; padding: 0; -webkit-tap-highlight-color: transparent; }
+.editToggle { font-family: var(--font-mono); font-size: var(--type-floor); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink3); background: none; border: none; cursor: pointer; padding: 0; -webkit-tap-highlight-color: transparent; }
 .editToggle:hover { color: var(--ink); }
 .title { font-family: var(--font-serif); font-size: 26px; font-weight: 300; letter-spacing: -0.01em; color: var(--ink); }
 .sub { font-family: var(--font-mono); font-size: 12px; color: var(--ink3); margin-top: 6px; }
@@ -20,22 +20,22 @@
 .needHeader { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
 .needPip { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .needName { font-family: var(--font-serif); font-size: 16px; font-weight: 300; color: var(--ink); letter-spacing: -0.01em; }
-.needTag { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; color: var(--ink3); margin-left: auto; }
+.needTag { font-family: var(--font-mono); font-size: var(--type-floor); letter-spacing: 0.1em; color: var(--ink3); margin-left: auto; }
 
 .pool { display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; }
 .poolItem { display: flex; flex-direction: column; padding: 6px 0; border-top: 0.5px solid var(--hairline); }
 .poolItem:first-child { border-top: none; }
 .poolRow { display: flex; align-items: center; min-height: 38px; }
 .poolText { font-family: var(--font-serif); font-size: 15px; font-weight: 300; font-style: italic; color: var(--ink); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.lastDone { font-family: var(--font-mono); font-size: 11px; color: var(--ink3); flex-shrink: 0; }
+.lastDone { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); flex-shrink: 0; }
 
 /* ── Practice reminder affordance (native only) ── */
 .reminderControl { display: flex; align-items: center; gap: 6px; flex-shrink: 0; margin-left: 8px; }
-.reminderOffBtn { background: none; border: 0.5px solid var(--hairline); border-radius: 999px; font-family: var(--font-mono); font-size: 10px; color: var(--ink3); padding: 3px 9px; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
+.reminderOffBtn { background: none; border: 0.5px solid var(--hairline); border-radius: 999px; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); padding: 3px 9px; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
 .reminderOffBtn:active { opacity: .6; }
-.reminderCapped { font-family: var(--font-mono); font-size: 10px; color: var(--ink4); white-space: nowrap; }
-.reminderError { font-family: var(--font-mono); font-size: 10px; color: var(--ink3); white-space: nowrap; }
-.reminderTimeInput { padding: 3px 9px; border: 0.5px solid var(--hairline); border-radius: 999px; font-family: var(--font-mono); font-size: 11px; color: var(--ink); background: transparent; outline: none; width: auto; flex-shrink: 0; cursor: default; -webkit-tap-highlight-color: transparent; }
+.reminderCapped { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink4); white-space: nowrap; }
+.reminderError { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); white-space: nowrap; }
+.reminderTimeInput { padding: 3px 9px; border: 0.5px solid var(--hairline); border-radius: 999px; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink); background: transparent; outline: none; width: auto; flex-shrink: 0; cursor: default; -webkit-tap-highlight-color: transparent; }
 .rToggleBtn { background: none; border: none; padding: 0; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; }
 .rTrack { width: 36px; height: 20px; border-radius: 10px; border: 1px solid rgba(0,0,0,.14); background: rgba(0,0,0,.08); position: relative; transition: background 150ms ease-out, border-color 150ms ease-out; }
 .rTrackOn { background: var(--exploration); border-color: var(--exploration); }
@@ -44,22 +44,22 @@
 @media (prefers-reduced-motion: reduce) { .rTrack { transition: none; } .rKnob { transition: none; } }
 
 /* Taken times — shown below the row while the time picker is focused */
-.reminderTaken { font-family: var(--font-mono); font-size: 10px; color: var(--ink4); padding: 2px 0 6px; line-height: 1.5; }
+.reminderTaken { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink4); padding: 2px 0 6px; line-height: 1.5; }
 .reminderTakenHead { color: var(--ink3); }
 .reminderTakenItem { white-space: nowrap; }
 
 /* ── Once-only reminder offer ── */
 .offerRow { display: flex; align-items: center; gap: 8px; padding: 3px 0 6px; }
-.offerCopy { font-family: var(--font-mono); font-size: 10px; color: var(--ink3); flex: 1; }
-.offerSetTime { background: none; border: 0.5px solid var(--hairline); border-radius: 999px; font-family: var(--font-mono); font-size: 10px; color: var(--ink); padding: 3px 9px; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
+.offerCopy { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); flex: 1; }
+.offerSetTime { background: none; border: 0.5px solid var(--hairline); border-radius: 999px; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink); padding: 3px 9px; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
 .offerSetTime:active { opacity: .6; }
-.offerNotNow { background: none; border: none; font-family: var(--font-mono); font-size: 10px; color: var(--ink4); padding: 3px 6px; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
+.offerNotNow { background: none; border: none; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink4); padding: 3px 6px; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
 .offerNotNow:active { opacity: .6; }
-.archiveBtn { background: none; border: none; font-family: var(--font-mono); font-size: 11px; color: var(--ink3); cursor: pointer; padding: 0 4px; flex-shrink: 0; }
+.archiveBtn { background: none; border: none; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); cursor: pointer; padding: 0 4px; flex-shrink: 0; }
 .archiveBtn:hover { color: var(--ink2); }
 .renameInput { flex: 1; padding: 4px 8px; border-radius: 6px; border: 0.5px solid var(--hairline); background: var(--paper); font-family: var(--font-serif); font-size: 15px; font-weight: 300; font-style: italic; color: var(--ink); outline: none; }
 .renameInput:focus { border-color: var(--ink2); }
-.saveBtn { background: none; border: none; font-family: var(--font-mono); font-size: 11px; color: var(--ink2); cursor: pointer; padding: 0 4px; flex-shrink: 0; }
+.saveBtn { background: none; border: none; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink2); cursor: pointer; padding: 0 4px; flex-shrink: 0; }
 
 .empty { font-family: var(--font-mono); font-size: 12px; color: var(--ink4); padding: 4px 0 8px; }
 
@@ -74,7 +74,7 @@
 .addBtn:hover:not(:disabled) { background: var(--paper); }
 .addBtn:disabled { opacity: 0.35; cursor: not-allowed; }
 
-.maxNote { font-family: var(--font-mono); font-size: 11px; color: var(--ink4); padding-top: 8px; }
+.maxNote { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink4); padding-top: 8px; }
 
 .listWithCta { padding-bottom: 88px; }
 
@@ -109,7 +109,7 @@
 .starterWrap { padding: 4px 0 8px; }
 .starterLabel {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--type-floor);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ink4);

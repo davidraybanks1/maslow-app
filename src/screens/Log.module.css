@@ -12,7 +12,7 @@
 /* ── Shared day-card expanded content (review step 1 + full log accordion) ── */
 .detailLabel {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink3);
@@ -22,7 +22,7 @@
 
 .detailEmpty {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--type-floor);
   font-weight: 200;
   color: var(--ink4);
 }
@@ -63,26 +63,26 @@
 }
 .moodPeriodLabel {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: var(--ink3);
 }
 .moodPeriodPill {
   padding: 2px 9px;
   border-radius: 999px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: #fff;
   flex-shrink: 0;
 }
 .moodPeriodEmpty {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: var(--ink4);
   flex-shrink: 0;
 }
 .moodPeriodNote {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--type-floor);
   color: var(--ink);
   opacity: 0.6;
   text-align: right;
@@ -96,7 +96,7 @@
   padding: 2px 8px;
   border-radius: 999px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   white-space: nowrap;
 }
 
@@ -126,7 +126,7 @@
 
 .pageSubhead {
   font-family: var(--font-mono);
-  font-size: 11.5px;
+  font-size: var(--type-floor);
   font-weight: 300;
   color: var(--ink3);
   line-height: 1.5;
@@ -144,7 +144,7 @@
 
 .ritualEyebrow {
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: var(--type-floor);
   font-weight: 400;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -228,7 +228,7 @@
 
 .resurfaceSectionLabel {
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: var(--type-floor);
   font-weight: 400;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -262,7 +262,7 @@
 
 .resurfaceDate {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: rgba(0,0,0,.32);
   flex-shrink: 0;
 }
@@ -276,7 +276,7 @@
 
 .resurfaceTag {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: rgba(0,0,0,.60);
   border: 1px solid rgba(0,0,0,.22);
   border-radius: 999px;
@@ -314,7 +314,7 @@
   background: transparent;
   color: rgba(0,0,0,.55);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--type-floor);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
@@ -324,7 +324,7 @@
 
 .resurfaceWhy {
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: var(--type-floor);
   color: rgba(0,0,0,.32);
 }
 
@@ -344,7 +344,7 @@
 
 .threadSectionLabel {
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: var(--type-floor);
   font-weight: 400;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -353,7 +353,7 @@
 
 .threadSectionMeta {
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: var(--type-floor);
   color: rgba(0,0,0,.35);
 }
 
@@ -413,14 +413,14 @@
 
 .threadChevron {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--type-floor);
   color: rgba(0,0,0,.42);
   flex-shrink: 0;
 }
 
 .threadStat {
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: var(--type-floor);
   color: rgba(0,0,0,.45);
   line-height: 1.3;
   margin-top: 4px;
@@ -428,7 +428,7 @@
 
 .threadStatEmpty {
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: var(--type-floor);
   color: rgba(0,0,0,.32);
   line-height: 1.3;
   margin-top: 3px;
@@ -478,7 +478,7 @@
   border-radius: 13px;
   background: transparent;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: rgba(0,0,0,.5);
   cursor: pointer;
   flex-shrink: 0;
@@ -516,7 +516,7 @@
   align-items: center;
   gap: 6px;
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: var(--type-floor);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: rgba(0,0,0,.42);
@@ -531,7 +531,7 @@
 }
 .threadReadTag {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: rgba(0,0,0,.60);
   border: 1px solid rgba(0,0,0,.22);
   border-radius: 999px;
@@ -579,7 +579,7 @@
 
 .archiveSectionLabel {
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: var(--type-floor);
   font-weight: 400;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -588,7 +588,7 @@
 
 .archiveSectionMeta {
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: var(--type-floor);
   color: rgba(0,0,0,.35);
 }
 
@@ -609,7 +609,7 @@
 
 .facetGroupLabel {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--type-floor);
   font-variant: small-caps;
   letter-spacing: 0.1em;
   color: rgba(0,0,0,.32);
@@ -648,7 +648,7 @@
 .facetChipActive:hover { border-color: var(--ink); }
 
 .facetCount {
-  font-size: 9.5px;
+  font-size: var(--type-floor);
   opacity: 0.6;
 }
 
@@ -677,7 +677,7 @@
   background: transparent;
   color: rgba(0,0,0,.5);
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: var(--type-floor);
   cursor: pointer;
   flex-shrink: 0;
   -webkit-tap-highlight-color: transparent;
@@ -730,7 +730,7 @@
 .archiveCardDateSlot {
   flex: 1;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   font-weight: 400;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -739,7 +739,7 @@
 
 .archiveCardTime {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: rgba(0,0,0,.3);
 }
 
@@ -758,7 +758,7 @@
   display: block;
   margin-top: 7px;
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: var(--type-floor);
   font-weight: 400;
   color: rgba(0,0,0,.4);
 }
@@ -781,7 +781,7 @@
 
 .archiveTag {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: rgba(0,0,0,.60);
   border: 1px solid rgba(0,0,0,.22);
   border-radius: 999px;
@@ -796,7 +796,7 @@
   background: transparent;
   color: rgba(0,0,0,.40);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
@@ -814,7 +814,7 @@
 }
 .retroTagLabel {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--type-floor);
   font-weight: 400;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -833,7 +833,7 @@
   background: transparent;
   color: rgba(0,0,0,.60);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
@@ -847,7 +847,7 @@
   border: 0;
   border-top: 0.5px solid rgba(0,0,0,.07);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--type-floor);
   color: var(--ink3);
   cursor: pointer;
   text-align: center;
@@ -892,7 +892,7 @@
   border-radius: 999px;
   background: none;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--type-floor);
   color: rgba(0,0,0,.45);
   cursor: pointer;
   text-align: center;
@@ -909,7 +909,7 @@
 .calSectionLabel {
   display: block;
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: var(--type-floor);
   font-weight: 400;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -973,7 +973,7 @@
 
 .calDayLabel {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   text-align: center;
   color: rgba(0,0,0,.35);
   padding: 2px 0;
@@ -1057,7 +1057,7 @@
   border-radius: 13px;
   background: transparent;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: rgba(0,0,0,.5);
   cursor: pointer;
   flex-shrink: 0;
@@ -1081,7 +1081,7 @@
 
 .calDetailEditHint {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: rgba(0,0,0,.38);
   margin-bottom: 4px;
 }
@@ -1120,7 +1120,7 @@
 
 .calDetailSectionLabel {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--type-floor);
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: rgba(0,0,0,.4);
@@ -1151,7 +1151,7 @@
   align-items: center;
   gap: 6px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: rgba(0,0,0,.4);
   margin-bottom: 5px;
 }
@@ -1170,7 +1170,7 @@
 
 .calDetailJournalTag {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: rgba(0,0,0,.60);
   border: 1px solid rgba(0,0,0,.22);
   border-radius: 999px;
@@ -1195,7 +1195,7 @@
 
 .reviewBackBtn {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--type-floor);
   letter-spacing: 0.08em;
   color: var(--ink3);
   background: none;
@@ -1209,7 +1209,7 @@
 
 .reviewEyebrow {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--ink3);
@@ -1255,7 +1255,7 @@
 }
 .reviewSkipBtn {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--type-floor);
   font-weight: 200;
   color: var(--ink4);
   background: none;
@@ -1291,7 +1291,7 @@
 }
 .dayCardCount {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--type-floor);
   color: var(--ink3);
   flex-shrink: 0;
 }
@@ -1312,7 +1312,7 @@
   padding: 2px 9px;
   border-radius: 20px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: #fff;
   margin-bottom: 6px;
 }
@@ -1330,7 +1330,7 @@
   padding: 2px 8px;
   border-radius: 999px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   background: rgba(217,59,28,0.08);
   color: #993C1D;
   white-space: nowrap;
@@ -1339,14 +1339,14 @@
   padding: 2px 8px;
   border-radius: 999px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   background: rgba(27,58,45,0.08);
   color: #1B3A2D;
   white-space: nowrap;
 }
 .dayCardEmptyNote {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--type-floor);
   font-weight: 200;
   color: var(--ink4);
 }
@@ -1360,7 +1360,7 @@
 .debriefStepRow { padding: 6px 0; }
 .debriefStepLabel {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -1376,7 +1376,7 @@
 }
 .legacyNote {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--type-floor);
   font-weight: 200;
   color: var(--ink4);
   margin-top: 4px;
@@ -1437,7 +1437,7 @@
 }
 .insightLabel {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--ink3);
@@ -1471,14 +1471,14 @@
 .noteTextarea::placeholder { color: var(--ink4); font-style: italic; }
 .noteCharCount {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: var(--ink3);
   text-align: right;
   margin-top: 4px;
 }
 .noteSectionLabel {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--ink3);
@@ -1586,7 +1586,7 @@
 
   /* Facet GROUP labels (WHEN / TIME OF DAY / NEED / HOW IT FELT / CUSTOM)
      are subordinate to the "the archive" section label, so one step quieter. */
-  .facetGroupLabel { font-size: 11px; }
+  .facetGroupLabel { font-size: var(--type-floor); }
 
   /* Without a card container the facet block needs spatial separation
      from the entries card. margin-bottom:24px collapses with archiveCards
@@ -1613,7 +1613,7 @@
 .archiveFavBtn,
 .archiveRevisitBtn {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   border-radius: 999px;
   padding: 3.5px 11px;
   cursor: pointer;
@@ -1673,7 +1673,7 @@
 }
 .archiveQuoteLabel {
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: var(--type-floor);
   letter-spacing: 0.06em;
   color: rgba(0,0,0,.4);
 }
@@ -1689,6 +1689,6 @@
   display: block;
   margin-top: 5px;
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: var(--type-floor);
   color: rgba(0,0,0,.4);
 }

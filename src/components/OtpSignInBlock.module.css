@@ -52,7 +52,7 @@
 .error {
   margin: 0;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--type-floor);
   color: var(--survival);
   padding-left: 4px;
 }

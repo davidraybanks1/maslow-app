@@ -34,6 +34,6 @@
 
 .label {
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: var(--type-floor);
   letter-spacing: 0.04em;
 }

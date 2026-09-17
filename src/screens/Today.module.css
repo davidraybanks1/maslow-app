@@ -24,7 +24,7 @@
 }
 .dateLabel {
   font-family: var(--font-mono);
-  font-size: 11.5px;
+  font-size: var(--type-floor);
   color: var(--ink3);
 }
 .greeting { font-family: var(--font-serif); font-size: 30px; font-weight: 300; letter-spacing: -0.01em; line-height: 1.1; color: var(--ink); }
@@ -95,7 +95,7 @@
   transform: scaleX(-1);
 }
 .ringPctSign {
-  font-size: 11px;
+  font-size: var(--type-floor);
 }
 
 /* ── Cards ── */
@@ -165,7 +165,7 @@
 
 .noteDeckEyebrow {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--ink3);
@@ -230,14 +230,14 @@
 
 .noteDeckCounter {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: var(--ink3);
   letter-spacing: 0.04em;
 }
 
 .noteEditPill {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: var(--ink);
   background: none;
   border: 0.5px solid var(--hairline);
@@ -340,7 +340,7 @@
 
 .noteSectionLabel {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--ink3);
@@ -366,7 +366,7 @@
 .noteTextarea::placeholder { color: var(--ink4); font-style: italic; }
 .noteCharCount {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: var(--ink3);
   text-align: right;
   margin-top: 4px;
@@ -484,7 +484,7 @@
 }
 .noteHistoryDate {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: var(--ink3);
   flex-shrink: 0;
 }
@@ -497,7 +497,7 @@
 }
 .composerImageRemove {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--type-floor);
   color: var(--ink3);
   background: none;
   border: none;
@@ -512,7 +512,7 @@
   border: 0.5px solid var(--hairline);
   background: transparent;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--type-floor);
   color: var(--ink2);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -522,7 +522,7 @@
 
 .composerError {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--type-floor);
   color: var(--survival);
   margin-bottom: 10px;
 }
@@ -560,7 +560,7 @@
 }
 .guidanceEyebrowGrow {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--exploration);
@@ -568,7 +568,7 @@
 }
 .guidanceEyebrowSimplify {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--nourishment-deep);
@@ -624,7 +624,7 @@
   background: none;
   border: none;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--type-floor);
   font-weight: 200;
   color: var(--ink3);
   cursor: pointer;
@@ -646,7 +646,7 @@
 
 .tierSectionLabel {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ink3);
@@ -654,7 +654,7 @@
 
 .tierSectionHint {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: var(--ink4);
 }
 
@@ -701,7 +701,7 @@
 
 .tierName {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ink3);
@@ -731,7 +731,7 @@
 
 .tierNeedLabels {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: var(--ink3);
   white-space: nowrap;
   overflow: hidden;
@@ -805,7 +805,7 @@
 
   .needSubCount {
     font-family: var(--font-mono);
-    font-size: 10px;
+    font-size: var(--type-floor);
     color: var(--ink4);
   }
 
@@ -852,14 +852,14 @@
 
   .practiceX2 {
     font-family: var(--font-mono);
-    font-size: 9px;
+    font-size: var(--type-floor);
     font-weight: 500;
     color: var(--ink3);
   }
 
   .practiceStamp {
     font-family: var(--font-mono);
-    font-size: 10px;
+    font-size: var(--type-floor);
     color: var(--ink4);
     white-space: nowrap;
   }
@@ -882,8 +882,8 @@
 }
 
 .chipRow { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 4px; }
-.practiceChip { padding: 4px 10px; border-radius: 20px; border: 0.5px solid var(--border2); font-family: var(--font-mono); font-size: 11px; font-weight: 200; color: var(--ink2); background: var(--bg); cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent; transition: background 100ms ease, color 100ms ease, border-color 100ms ease; }
-.chipCount { font-size: 9px; font-style: normal; margin-left: 2px; vertical-align: super; opacity: 0.85; }
+.practiceChip { padding: 4px 10px; border-radius: 20px; border: 0.5px solid var(--border2); font-family: var(--font-mono); font-size: var(--type-floor); font-weight: 200; color: var(--ink2); background: var(--bg); cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent; transition: background 100ms ease, color 100ms ease, border-color 100ms ease; }
+.chipCount { font-size: var(--type-floor); font-style: normal; margin-left: 2px; vertical-align: super; opacity: 0.85; }
 
 /* ── Mood & section headers ── */
 .sectionHeader {
@@ -892,11 +892,11 @@
   align-items: baseline;
   margin-bottom: 24px;
 }
-.sectionLabel { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink3); }
+.sectionLabel { font-family: var(--font-mono); font-size: var(--type-floor); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink3); }
 
 .journalTimestampBtn {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--type-floor);
   color: var(--ink3);
   background: none;
   border: none;
@@ -941,7 +941,7 @@
 
 .moodPipLabel {
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: var(--type-floor);
   color: var(--ink3);
   letter-spacing: 0.06em;
 }
@@ -1000,7 +1000,7 @@
   border: 1.5px solid rgba(0,0,0,.14);
   background: transparent;
   font-family: var(--font-mono);
-  font-size: 11.5px;
+  font-size: var(--type-floor);
   font-weight: 500;
   color: var(--ink3);
   cursor: pointer;
@@ -1019,7 +1019,7 @@
 .moodCircleSm {
   width: 36px;
   height: 36px;
-  font-size: 10px;
+  font-size: var(--type-floor);
 }
 
 
@@ -1075,13 +1075,13 @@
 
 .journalEntryTime {
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: var(--type-floor);
   color: rgba(0,0,0,.45);
 }
 
 .journalSlotChip {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: rgba(0,0,0,.60);
   border: 1px solid rgba(0,0,0,.22);
   border-radius: 999px;
@@ -1090,7 +1090,7 @@
 
 .journalStateTag {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: rgba(0,0,0,.60);
   border: 1px solid rgba(0,0,0,.22);
   border-radius: 999px;
@@ -1099,7 +1099,7 @@
 
 .journalNeedTag {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: rgba(0,0,0,.60);
   border: 1px solid rgba(0,0,0,.22);
   border-radius: 999px;
@@ -1119,7 +1119,7 @@
   align-items: center;
   gap: 5px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: rgba(0,0,0,.60);
   border: 1px solid rgba(0,0,0,.22);
   border-radius: 999px;
@@ -1147,7 +1147,7 @@
 .journalEntryDelete:hover { color: var(--ink2); }
 .journalEntryDeletePending {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: var(--survival);
   border: 0.5px solid var(--survival);
   border-radius: 4px;
@@ -1168,7 +1168,7 @@
   display: inline-block;
   margin-top: 4px;
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: var(--type-floor);
   color: var(--ink3);
   background: none;
   border: none;
@@ -1196,7 +1196,7 @@
 /* ── Journal entry count: chrome register ── */
 .journalEntryCount {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: var(--ink3);
   letter-spacing: 0.06em;
 }
@@ -1251,13 +1251,13 @@
 
 .composerTimeChip {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: var(--ink3);
 }
 
 .composerSlotChip {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: rgba(0,0,0,.60);
   border: 1px solid rgba(0,0,0,.22);
   border-radius: 999px;
@@ -1266,7 +1266,7 @@
 
 .composerTagBtn {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: rgba(0,0,0,.40);
   background: none;
   border: 1px dashed rgba(0,0,0,.22);
@@ -1280,7 +1280,7 @@
 
 .composerTagActive {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   background: transparent;
   border: 1px solid rgba(0,0,0,.22);
   border-radius: 999px;
@@ -1319,7 +1319,7 @@
 
 .composerPickerItem {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   padding: 3.5px 11px;
   border-radius: 999px;
   border: 1px solid rgba(0,0,0,.22);
@@ -1378,7 +1378,7 @@
 
 .attachMenuItem {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--type-floor);
   color: var(--ink);
   background: none;
   border: none;
@@ -1406,7 +1406,7 @@
 
 .attachChip {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: var(--ink2);
   background: none;
   border: 1px solid rgba(0,0,0,.22);
@@ -1462,7 +1462,7 @@
 
 .journalSaveError {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--type-floor);
   color: var(--survival);
   margin-top: 4px;
 }
@@ -1512,7 +1512,7 @@
 
 .moodEyebrow {
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: var(--type-floor);
   font-variant: small-caps;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -1708,7 +1708,7 @@
 
   .journalHint {
     font-family: var(--font-mono);
-    font-size: 10px;
+    font-size: var(--type-floor);
     color: var(--ink4);
     letter-spacing: 0.02em;
     user-select: none;
@@ -1723,7 +1723,7 @@
     color: rgba(0,0,0,.35);
     border: 0.5px solid rgba(0,0,0,.18);
     font-family: var(--font-mono);
-    font-size: 11px;
+    font-size: var(--type-floor);
     letter-spacing: 0.04em;
     cursor: default;
     -webkit-tap-highlight-color: transparent;
@@ -1881,7 +1881,7 @@
 
   .journalEntryCount {
     font-family: var(--font-mono);
-    font-size: 10px;
+    font-size: var(--type-floor);
     color: var(--ink4);
     letter-spacing: 0.04em;
   }
@@ -1912,7 +1912,7 @@
 }
 .journalQuoteDate {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--type-floor);
   letter-spacing: 0.06em;
   color: rgba(0,0,0,.4);
 }
@@ -1928,7 +1928,7 @@
   display: block;
   margin-top: 4px;
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: var(--type-floor);
   color: var(--ink3);
 }
 
@@ -1962,7 +1962,7 @@
 }
 .quotePickerTitle {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--type-floor);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: rgba(0,0,0,.5);
@@ -1998,7 +1998,7 @@
   padding: 24px 12px;
   text-align: center;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--type-floor);
   color: rgba(0,0,0,.35);
 }
 .quotePickerItem {
@@ -2025,7 +2025,7 @@
 }
 .quotePickerItemDate {
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: var(--type-floor);
   letter-spacing: 0.06em;
   color: rgba(0,0,0,.4);
 }
@@ -2148,7 +2148,7 @@
   }
 
   .noteDeckEyebrow {
-    font-size: 9px;
+    font-size: var(--type-floor);
     letter-spacing: 0.18em;
     margin-bottom: 12px;
   }
@@ -2187,7 +2187,7 @@
 
   .freqHeaderLabel {
     font-family: var(--font-mono);
-    font-size: 10px;
+    font-size: var(--type-floor);
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--ink3);
@@ -2223,7 +2223,7 @@
 
   .freqHeaderDpName {
     font-family: var(--font-mono);
-    font-size: 10px;
+    font-size: var(--type-floor);
     color: var(--ink4);
     letter-spacing: 0.04em;
   }

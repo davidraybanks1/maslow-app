@@ -25,7 +25,7 @@
   border: 1px solid rgba(0,0,0,.15);
   background: none;
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: var(--type-floor);
   letter-spacing: .06em;
   color: rgba(0,0,0,.45);
   cursor: pointer;
@@ -56,7 +56,7 @@
 
 .pageSubhead {
   font-family: var(--font-mono);
-  font-size: 11.5px;
+  font-size: var(--type-floor);
   font-weight: 300;
   line-height: 1.5;
   color: var(--ink3);
@@ -80,7 +80,7 @@
 
 .topCardLabel {
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: var(--type-floor);
   font-weight: 400;
   letter-spacing: .16em;
   text-transform: uppercase;
@@ -108,7 +108,7 @@
 
 .topNumUnit {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--type-floor);
   color: var(--ink3);
   line-height: 1.4;
   max-width: 68px;
@@ -116,7 +116,7 @@
 
 .topMeta {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: var(--ink4);
   letter-spacing: .04em;
   margin-top: 6px;
@@ -178,14 +178,14 @@
 
 .topQuietDays {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: var(--ink4);
   flex-shrink: 0;
 }
 
 .topLogBtn {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: var(--ink3);
   background: none;
   border: 0.5px solid var(--hairline);
@@ -229,7 +229,7 @@
 
 .pacingLabel {
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: var(--type-floor);
   font-weight: 400;
   letter-spacing: .16em;
   text-transform: uppercase;
@@ -238,7 +238,7 @@
 
 .pacingDelta {
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: var(--type-floor);
   color: rgba(242,240,232,.8);
 }
 .pacingDeltaDown { color: #F2A08C; }
@@ -366,7 +366,7 @@
 
 .insightDeckCounter {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: var(--ink3);
   letter-spacing: 0.04em;
 }
@@ -381,7 +381,7 @@
   border: none;
   padding: 0;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: var(--ink3);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -390,7 +390,7 @@
 
 .insightLabel {
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: var(--type-floor);
   font-weight: 400;
   letter-spacing: .16em;
   text-transform: uppercase;
@@ -409,7 +409,7 @@
 
 .insightBasis {
   font-family: var(--font-mono);
-  font-size: 11.5px;
+  font-size: var(--type-floor);
   font-weight: 300;
   line-height: 1.5;
   color: var(--ink3);
@@ -433,7 +433,7 @@
 
 .sectionLabel {
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: var(--type-floor);
   font-weight: 400;
   letter-spacing: .16em;
   text-transform: uppercase;
@@ -442,14 +442,14 @@
 
 .sectionMeta {
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: var(--type-floor);
   color: var(--ink4);
   letter-spacing: .02em;
 }
 
 .sectionRead {
   font-family: var(--font-mono);
-  font-size: 11.5px;
+  font-size: var(--type-floor);
   font-weight: 300;
   line-height: 1.5;
   color: var(--ink3);
@@ -469,7 +469,7 @@
   border: 1px solid rgba(0,0,0,.15);
   background: none;
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: var(--type-floor);
   letter-spacing: .04em;
   color: rgba(0,0,0,.45);
   cursor: pointer;
@@ -489,7 +489,7 @@
 }
 .monthLabel {
   font-family: var(--font-mono);
-  font-size: 8.5px;
+  font-size: var(--type-floor);
   color: rgba(0,0,0,.35);
   text-align: left;
   overflow: hidden;
@@ -531,7 +531,7 @@
 }
 .legendText {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--type-floor);
   text-transform: uppercase;
   color: var(--ink4);
   letter-spacing: .04em;
@@ -582,7 +582,7 @@
 
 .rhythmLetter {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: var(--ink4);
   line-height: 1;
 }
@@ -648,7 +648,7 @@
 
 .moverValue {
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: var(--type-floor);
   color: var(--ink3);
   width: 34px;
   text-align: right;
@@ -657,7 +657,7 @@
 
 .moverDelta {
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: var(--type-floor);
   font-weight: 500;
   width: 42px;
   text-align: right;
@@ -704,18 +704,18 @@
 
 .ribbonStat {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: rgba(0,0,0,.35);
 }
 .ribbonStatDormant {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: #C4381F;
 }
 
 .ribbonChevron {
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: var(--type-floor);
   color: var(--ink4);
 }
 
@@ -743,7 +743,7 @@
 
 .ribbonExpandNote {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--type-floor);
   font-weight: 300;
   line-height: 1.5;
   color: var(--ink3);
@@ -772,7 +772,7 @@
 
 .practiceStat {
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: var(--type-floor);
   color: var(--ink3);
 }
 .practiceStatQuiet { color: #C4381F; }
@@ -820,7 +820,7 @@
 
 .quietCardCount {
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: var(--type-floor);
   color: var(--ink3);
 }
 
@@ -857,7 +857,7 @@
   border: 1px solid rgba(0,0,0,.14);
   background: transparent;
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: var(--type-floor);
   color: var(--ink);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -963,14 +963,14 @@
 
 .allNumsFraction {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: rgba(0,0,0,.32);
   flex-shrink: 0;
 }
 
 .allNumsPct {
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: var(--type-floor);
   color: var(--ink);
   width: 36px;
   text-align: right;
@@ -979,7 +979,7 @@
 
 .allNumsFooter {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--type-floor);
   font-weight: 300;
   line-height: 1.5;
   color: var(--ink3);
@@ -1006,7 +1006,7 @@
 
 .dateHint {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: var(--ink3);
   text-align: center;
   padding: 4px 0;
@@ -1038,7 +1038,7 @@
 }
 
 .weekNavNow {
-  font-size: 9px;
+  font-size: var(--type-floor);
   letter-spacing: .06em;
   text-transform: uppercase;
   padding: 2px 4px;
@@ -1053,7 +1053,7 @@
 .dRow3 { }
 .sectionCard { }
 .quietGroups { }
-.quietEmpty { font-family: var(--font-mono); font-size: 11px; color: var(--ink4); padding: 8px 0 4px; }
+.quietEmpty { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink4); padding: 8px 0 4px; }
 .allNumsCards { }
 
 /* ── Desktop ────────────────────────────────────────────────────────────── */

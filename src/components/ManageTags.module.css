@@ -86,7 +86,7 @@
 /* ── Error banner ── */
 .errorBanner {
   font-family: var(--font-mono);
-  font-size: 11.5px;
+  font-size: var(--type-floor);
   color: var(--destructive);
   background: rgba(196,56,31,.07);
   border-radius: 10px;
@@ -136,7 +136,7 @@
 /* ── Dupe error ── */
 .dupeError {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--type-floor);
   color: var(--destructive);
   margin-bottom: 12px;
 }
@@ -148,7 +148,7 @@
 
 .illustrationCaption {
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: var(--type-floor);
   font-weight: 300;
   color: rgba(0,0,0,.40);
   line-height: 1.55;
@@ -177,7 +177,7 @@
 
 .facsimileTime {
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: var(--type-floor);
   color: rgba(0,0,0,.40);
 }
 
@@ -186,7 +186,7 @@
    leave custom "kids" at full opacity. */
 .facsimilePill {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--type-floor);
   color: rgba(0,0,0,.60);
   border: 1px solid rgba(0,0,0,.22);
   border-radius: 999px;
@@ -228,13 +228,13 @@
 }
 .tagMeta {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--type-floor);
   color: rgba(0,0,0,.38);
   flex-shrink: 0;
 }
 .deleteBtn {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--type-floor);
   color: rgba(0,0,0,.38);
   background: none;
   border: 0.5px solid rgba(0,0,0,.18);
@@ -247,7 +247,7 @@
 .deleteBtn:hover { border-color: var(--destructive); color: var(--destructive); }
 .deleteBtnConfirm {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--type-floor);
   color: var(--card);
   background: var(--destructive);
   border: none;
@@ -261,7 +261,7 @@
 /* ── Delete hint ── */
 .deleteHint {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--type-floor);
   color: rgba(0,0,0,.38);
   margin-top: 12px;
   line-height: 1.5;
@@ -281,6 +281,6 @@
   .body { padding-left: 0; padding-right: 0; }
   .createRow, .illustration, .tagRow { max-width: var(--page-measure); }
   .title { font-size: 42px; }
-  .subhead { font-size: 11.5px; }
+  .subhead { font-size: var(--type-floor); }
   .header { max-width: var(--page-measure); }
 }

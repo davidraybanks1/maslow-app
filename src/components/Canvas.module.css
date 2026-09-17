@@ -16,7 +16,7 @@
   align-items: center;
   gap: 5px;
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--type-floor);
   color: var(--ink3);
   letter-spacing: 0.06em;
 }
@@ -35,7 +35,7 @@
 }
 .progressLabel {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: var(--ink3);
   letter-spacing: 0.06em;
   white-space: nowrap;
@@ -87,7 +87,7 @@
 }
 .anxietyEye {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--type-floor);
   color: #6A6458;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -134,7 +134,7 @@
 }
 .tileMode {
   font-family: var(--font-mono);
-  font-size: 8px;
+  font-size: var(--type-floor);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   opacity: 0.8;
@@ -200,6 +200,6 @@
 }
 .dropdownCheck {
   margin-left: auto;
-  font-size: 10px;
+  font-size: var(--type-floor);
   color: var(--ink3);
 }
