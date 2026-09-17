@@ -159,6 +159,7 @@ button { touch-action: manipulation; }
      sections of mono labels shipped in DM Sans without anyone noticing */
   --serif: var(--font-serif);
   --mono:  var(--font-mono);
+  --sans:  var(--font-sans);
 
   /* ── Type floor ────────────────────────────────────────────────────────
      Nothing in the app renders below --type-floor. It is one number so the

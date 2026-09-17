@@ -110,5 +110,5 @@ export const STREAK_KINDS = [
   { v: 'mode', label: 'modes' },
   { v: 'need', label: 'needs' },
   { v: 'practice', label: 'practices' },
-  { v: 'frequency', label: 'frequency' },
+  { v: 'frequency', label: 'vibrations' },
 ]

@@ -1804,7 +1804,7 @@ export default function Log({ state, syncCheckinDay }) {
                     const panelLabel = missingCount > 1
                       ? 'add a tag to this entry'
                       : canAddNeed ? 'add a need to this entry'
-                      : canAddFrequency ? 'add a frequency to this entry'
+                      : canAddFrequency ? 'add a vibration to this entry'
                       : 'add a custom tag to this entry'
 
                     return (

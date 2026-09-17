@@ -1,14 +1,13 @@
 /* Streaks — a rail of every run currently going. No cards, a gutter between. */
 
 .section { margin-top: 32px; border-top: 0.5px solid var(--hairline); padding-top: 26px; }
-.first { margin-top: 0; border-top: 0; padding-top: 0; }
-.pad { padding-inline: 22px; }
+.pad { padding-inline: 0; }
 .title { font-family: var(--serif, 'Newsreader', Georgia, serif); font-size: 23px; font-weight: 300; letter-spacing: -0.015em; margin: 0 0 3px; }
 .sub { font-family: var(--mono); font-size: var(--type-floor); color: var(--ink4); margin: 0 0 14px; }
 
 .rail {
   display: flex; gap: 40px; overflow-x: auto; scroll-snap-type: x proximity;
-  padding: 8px 22px 18px; scroll-padding-left: 22px;
+  padding: 8px 22px 18px; scroll-padding-left: 22px; margin-inline: -22px;
   scrollbar-width: none; -webkit-overflow-scrolling: touch;
 }
 .rail::-webkit-scrollbar { display: none; }
@@ -46,8 +45,7 @@
 .railPos { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .kinds {
   display: flex; gap: 4px; flex-wrap: nowrap; justify-content: safe center;
-  width: calc(100% + 44px); margin-inline: -22px;
-  overflow-x: auto; scrollbar-width: none;
+  width: 100%; overflow-x: auto; scrollbar-width: none;
 }
 .kinds::-webkit-scrollbar { display: none; }
 .kindPill {
@@ -56,3 +54,7 @@
   color: var(--ink3); cursor: pointer; white-space: nowrap;
 }
 .kindOn { background: var(--expl-deep, #0C5038); border-color: var(--expl-deep, #0C5038); color: #fff; }
+
+@media (min-width: 900px) {
+  .rail { margin-inline: 0; padding-inline: 0; scroll-padding-left: 0; }
+}

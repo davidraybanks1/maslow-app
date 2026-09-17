@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { buildLadder, openSecondDoor, walkLadder, tierCounts, oneIn } from '../lib/ladder'
 import { MODE_ORDER } from '../lib/constants'
+import FinePrint from './FinePrint'
 import styles from './RootsSection.module.css'
 
 /* ── The ladder, drawn as a root system ──────────────────────────────────
@@ -215,7 +216,7 @@ export default function RootsSection({ canvas, checkins, moods, practicesDB }) {
   return (
     <section className={styles.section}>
       <div className={styles.pad}>
-        <h2 className={styles.title}>Roots</h2>
+        <h2 className={styles.title}>Your roots</h2>
         <p className={styles.sub}>{days} days · {counts.total - tree.length - geo.nodes.filter(n => n.depth === 2).length} needs · {geo.nodes.filter(n => n.depth === 2).length} practices</p>
         <p className={styles.head}>{head}</p>
         <p className={styles.headSub}>{sub}</p>
@@ -293,11 +294,11 @@ export default function RootsSection({ canvas, checkins, moods, practicesDB }) {
           <span><i style={{ borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,.2)' }} />quiet</span>
           <span><i style={{ borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,.28)', borderTopStyle: 'dotted' }} />too new</span>
         </div>
-        <p className={styles.note}>
-          Depth is evidence. A root can only grow from where the one above it stopped — that is the gate, drawn.
-          A practice under a need that failed can still break through on its own if it clears the flat bar,
-          corrected against every practice at once; that is a <b>wild root</b>, and you have {wild.length === 0 ? 'none' : wild.length}.
-        </p>
+        <FinePrint>
+          <p>Every mode, need and practice here is a root, and the deeper it goes the surer I am that it actually moves your mood. Depth is evidence, nothing else.</p>
+          <p>A root can only grow from where the one above it stopped. So a practice can't get credit until its need and its mode have earned some first. That's deliberate: it stops one lucky week from looking like a discovery.</p>
+          <p>The exception is a <b>wild root</b>: a practice so strong it clears a much higher bar all on its own, even though its need didn't. Those are drawn in green hanging off grey.{wild.length ? ` You have ${wild.length}.` : ' You have none yet.'} Tap anything to see its numbers.</p>
+        </FinePrint>
       </div>
     </section>
   )

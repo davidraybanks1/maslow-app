@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { FEELINGS, THREADS, BANDS, threadOf } from '../lib/frequency'
 import { loadAllJournalMeta } from '../lib/store'
+import FinePrint from './FinePrint'
 import styles from './ThreadsSection.module.css'
 
 /* The twelve words are four threads at three depths — frequency.js has always
@@ -73,7 +74,7 @@ export default function ThreadsSection({ userId, moods }) {
   return (
     <section className={styles.section}>
       <div className={styles.pad}>
-        <h2 className={styles.title}>The four threads</h2>
+        <h2 className={styles.title}>Your vibrations</h2>
         <p className={styles.sub}>
           {total} reading{total === 1 ? '' : 's'}
           {since ? ` since ${since}` : ''} · {wordsUsed} of 12 words used
@@ -130,11 +131,10 @@ export default function ThreadsSection({ userId, moods }) {
           <span className={styles.keyRight}>area = readings</span>
         </div>
 
-        <p className={styles.foot}>
-          Each of the twelve words is one of four threads at one of three depths. Reading the threads
-          instead of the words gives four buckets instead of twelve — which is why this grid fills in
-          about a third of the time.
-        </p>
+        <FinePrint>
+          <p>The twelve feeling words you pick from are really four threads, each at three depths. <b>Capacity</b> runs calm, steady, overwhelmed. <b>Engagement</b> runs curious, flat, apathetic. <b>Drive</b> runs creative, restless, frenetic. <b>Posture</b> runs confident, braced, small.</p>
+          <p>Counting by thread instead of by word gives four buckets instead of twelve, so this grid fills in about three times faster. A bigger circle is a word you reach for more. An empty ring is a word you have never picked, which is its own kind of information.</p>
+        </FinePrint>
       </div>
     </section>
   )

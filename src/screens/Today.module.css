@@ -2243,6 +2243,9 @@
 
   /* ── Practice check — radial-gradient fill matching petal lighting ── */
   .practiceCheckFilled {
+    /* the pair is set inline per mode; these are the defaults it overrides */
+    --practice-paint-hi: #2E8A64;
+    --practice-paint-lo: #0C5038;
     background: radial-gradient(circle at 34% 26%, var(--practice-paint-hi), var(--practice-paint-lo)) !important;
     border-color: transparent !important;
   }

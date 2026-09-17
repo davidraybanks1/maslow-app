@@ -57,7 +57,7 @@ function Meter({ streak }) {
   )
 }
 
-export default function StreaksRail({ canvas, checkins, moods, practicesDB }) {
+export default function StreaksRail({ canvas, checkins, moods, practicesDB, children }) {
   const [kind, setKind] = useState('all')
   const [pos, setPos] = useState(1)
   const railRef = useRef(null)
@@ -67,17 +67,19 @@ export default function StreaksRail({ canvas, checkins, moods, practicesDB }) {
     [canvas, checkins, moods, practicesDB]
   )
   const rows = kind === 'all' ? all : all.filter(s => s.kind === kind)
+  // only offer a filter that has something behind it
+  const kinds = STREAK_KINDS.filter(k => k.v === 'all' || all.some(s => s.kind === k.v))
   if (!all.length) return null
 
   const running = all.filter(s => !s.quiet).length
+  const slumped = all.length - running
 
   return (
-    <section className={`${styles.section} ${styles.first}`}>
+    <section className={styles.section}>
       <div className={styles.pad}>
-        <h2 className={styles.title}>Streaks</h2>
+        <h2 className={styles.title}>Your streaks and slumps</h2>
         <p className={styles.sub}>
-          {all.length} streak{all.length === 1 ? '' : 's'} · {running} running,{' '}
-          {all.length - running} quiet
+          {running} streak{running === 1 ? '' : 's'} running · {slumped} slump{slumped === 1 ? '' : 's'}
         </p>
       </div>
 
@@ -92,7 +94,7 @@ export default function StreaksRail({ canvas, checkins, moods, practicesDB }) {
           <div key={s.key + (s.quiet ? ':q' : '')} className={`${styles.card}${s.quiet ? ` ${styles.quiet}` : ''}`}>
             <div className={styles.head}>
               <Glyph streak={s} />
-              <span className={styles.kind}>{s.kind === 'frequency' ? 'frequency' : s.kind}</span>
+              <span className={styles.kind}>{s.kind === 'frequency' ? 'vibration' : s.kind}</span>
             </div>
             <span className={styles.num}>{s.days}<i>days</i></span>
             <span className={styles.name}>
@@ -101,16 +103,16 @@ export default function StreaksRail({ canvas, checkins, moods, practicesDB }) {
             <span className={styles.spacer} />
             <span className={styles.meter}><Meter streak={s} /></span>
             <span className={`${styles.foot}${s.isRecord && !s.quiet ? ` ${styles.rec}` : ''}`}>
-              {s.quiet ? 'days quiet' : s.isRecord ? 'your longest yet' : 'still going'}
+              {s.quiet ? 'in a slump' : s.isRecord ? 'your longest yet' : 'still going'}
             </span>
           </div>
         ))}
       </div>
 
       <div className={styles.pad}>
-        <div className={styles.railFoot}>
+        {kinds.length > 2 && <div className={styles.railFoot}>
           <div className={styles.kinds}>
-            {STREAK_KINDS.map(k => (
+            {kinds.map(k => (
               <button
                 key={k.v} type="button" aria-pressed={kind === k.v}
                 className={`${styles.kindPill}${kind === k.v ? ` ${styles.kindOn}` : ''}`}
@@ -122,7 +124,8 @@ export default function StreaksRail({ canvas, checkins, moods, practicesDB }) {
             ))}
           </div>
           <span className={styles.railPos}>{Math.min(pos, rows.length)} of {rows.length}</span>
-        </div>
+        </div>}
+        {children}
       </div>
     </section>
   )

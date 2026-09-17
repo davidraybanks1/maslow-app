@@ -1,7 +1,7 @@
 /* Your strata — the ground you have laid down. */
 
 .section { margin-top: 32px; border-top: 0.5px solid var(--hairline); padding-top: 26px; }
-.pad { padding-inline: 22px; }
+.pad { padding-inline: 0; }
 .titleRow { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .title { font-family: var(--serif, 'Newsreader', Georgia, serif); font-size: 23px; font-weight: 300; letter-spacing: -0.015em; margin: 0 0 3px; }
 .legend { display: flex; gap: 11px; font-family: var(--mono); font-size: var(--type-floor); color: var(--ink4); letter-spacing: 0.02em; }
@@ -15,11 +15,9 @@
 .story em { font-style: italic; color: var(--expl-deep, #0C5038); }
 
 /* full bleed — the ribbon is terrain, not a chart in a box */
-.fig { margin: 6px 0 0; width: 100%; }
+.fig { margin: 6px -22px 0; width: calc(100% + 44px); }
 .fig svg { display: block; width: 100%; height: auto; }
 
-.read { font-family: var(--mono); font-size: var(--type-floor); line-height: 1.62; color: var(--ink3); margin: 13px 0 0; }
-.nb { white-space: nowrap; }
 .kinds { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
 .kindPill {
   font-family: var(--mono); font-size: var(--type-floor); padding: 5px 9px; border-radius: 999px;
@@ -27,3 +25,7 @@
   cursor: pointer; white-space: nowrap;
 }
 .kindOn { background: var(--expl-deep, #0C5038); border-color: var(--expl-deep, #0C5038); color: #fff; }
+
+@media (min-width: 900px) {
+  .fig { margin-inline: 0; width: 100%; }
+}

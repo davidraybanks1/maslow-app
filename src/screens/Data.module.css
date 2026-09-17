@@ -64,6 +64,18 @@
 }
 
 /* ── Top band: STREAKS + GONE QUIET ─────────────────────────────────────── */
+/* ── Groups: the titled bands of the page ─────────────────────────────── */
+.group { margin-top: 32px; border-top: 0.5px solid var(--hairline); padding-top: 26px; }
+.groupFirst { margin-top: 18px; border-top: 0; padding-top: 0; }
+.groupHead { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.groupTitle {
+  font-family: var(--font-serif); font-size: 23px; font-weight: 300; letter-spacing: -0.015em;
+  line-height: 1.15; color: var(--ink); margin: 0 0 3px;
+}
+.groupSub { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink4); margin: 0; line-height: 1.5; }
+.groupBody > .section:first-child,
+.groupBody > .dRow3 > .section:first-child { border-top: none; padding-top: 0; margin-top: 0; }
+
 .topBand {
   display: flex;
   flex-direction: column;
@@ -555,6 +567,11 @@
   height: 118px;
   margin-bottom: 10px;
 }
+
+.rhythmGridMonth { gap: 2px; }
+.rhythmGridMonth .rhythmBar { border-radius: 2px; min-height: 3px; }
+.rhythmGridMonth .rhythmDot { width: 5px; height: 5px; margin: 4px 0 3px; }
+.rhythmGridMonth .rhythmLetter { font-variant-numeric: tabular-nums; min-height: 12px; }
 
 .rhythmCol {
   flex: 1;
@@ -1084,8 +1101,7 @@
     padding: 32px 0 20px;
   }
   .pageTitle { font-size: 42px; margin-bottom: 2px; }
-  .pageSubhead { margin-bottom: 0; }
-  .deskToggle { display: block; flex-shrink: 0; align-self: center; }
+  .groupTitle { font-size: 28px; }
 
   /* Top band: side by side on desktop */
   .topBand {

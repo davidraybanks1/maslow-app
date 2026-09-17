@@ -851,7 +851,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         <div className={styles.moodCard} data-tour="mood">
           {!isDesktop && (
             <div className={styles.freqHeader}>
-              <span className={styles.freqHeaderLabel}><Glyph kind="frequency" />FREQUENCY</span>
+              <span className={styles.freqHeaderLabel}><Glyph kind="frequency" />VIBRATIONS</span>
               <div className={styles.freqHeaderDayparts}>
                 {daypartsData.map(dp => {
                   const color = dp.band ? MOOD_PIP_COLOR[dp.band] : null
@@ -1163,7 +1163,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                       {!draftMoodInherited && <span className={styles.composerFreqClear} onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); setDraftMoodInherited(true); setDraftMoodBand(null); setDraftMoodFeeling(null); setFreqPickerOpen(false) }}>×</span>}
                     </button>
                   ) : (
-                    <button className={styles.composerTagBtn} onClick={() => { freqPickerNewSlot.current = !moodSelections[slot]; setFreqPickerOpen(o => !o); setNeedPickerOpen(false); setCustomPickerOpen(false) }}>+ frequency</button>
+                    <button className={styles.composerTagBtn} onClick={() => { freqPickerNewSlot.current = !moodSelections[slot]; setFreqPickerOpen(o => !o); setNeedPickerOpen(false); setCustomPickerOpen(false) }}>+ vibration</button>
                   )}
                   {draftNeedId ? (
                     <button className={styles.composerTagActive} onClick={() => setDraftNeedId(null)}>{draftNeedId} ×</button>
@@ -1297,7 +1297,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                         {!draftMoodInherited && <span className={styles.composerFreqClear} onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); setDraftMoodInherited(true); setDraftMoodBand(null); setDraftMoodFeeling(null); setFreqPickerOpen(false) }}>×</span>}
                       </button>
                     ) : (
-                      <button className={styles.composerTagBtn} onClick={() => { freqPickerNewSlot.current = !moodSelections[slot]; setFreqPickerOpen(o => !o); setNeedPickerOpen(false); setCustomPickerOpen(false) }}>+ frequency</button>
+                      <button className={styles.composerTagBtn} onClick={() => { freqPickerNewSlot.current = !moodSelections[slot]; setFreqPickerOpen(o => !o); setNeedPickerOpen(false); setCustomPickerOpen(false) }}>+ vibration</button>
                     )}
                     {draftNeedId ? (
                       <button className={styles.composerTagActive} onClick={() => setDraftNeedId(null)}>{draftNeedId} ×</button>

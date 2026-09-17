@@ -1,6 +1,5 @@
-import { useState, useMemo, useCallback, useContext, useEffect, useRef } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { HeaderSlotContext } from '../lib/headerSlot'
 import { NEEDS, MODE_ORDER } from '../lib/constants'
 import { createDataStats } from '../lib/dataStats'
 import { normalizeBand, BAND_LABEL } from '../lib/frequency'
@@ -9,13 +8,14 @@ import RootsSection from '../components/RootsSection'
 import ThreadsSection from '../components/ThreadsSection'
 import StreaksRail from '../components/StreaksRail'
 import StrataRibbon from '../components/StrataRibbon'
+import FinePrint from '../components/FinePrint'
 import { buildLadder } from '../lib/ladder'
 import { buildInsights, INSIGHT_KIND } from '../lib/insights'
 import styles from './Data.module.css'
 
 const PERIODS = [
-  { label: '7d', days: 7 },
-  { label: '30d', days: 30 },
+  { label: 'week', days: 7 },
+  { label: 'month', days: 30 },
 ]
 
 const MODE_THRESHOLDS = { exploration: 80, appreciation: 60, nourishment: 50, survival: 20 }
@@ -86,15 +86,12 @@ function computeRun(days, checkins, testFn) {
 
 function buildSubhead(period) {
   const today = new Date()
-  if (period === 30) return 'last 30 days · compared with the 30 before'
+  if (period === 30) return 'the last 30 days · against the 30 before'
   const start = new Date(today)
   start.setDate(today.getDate() - (period - 1))
-  const fmtDay = d => {
-    const weekday = d.toLocaleDateString('en-GB', { weekday: 'long' })
-    return `${weekday} ${d.getDate()}`
-  }
-  const month = today.toLocaleDateString('en-GB', { month: 'long' })
-  return `${fmtDay(start)} — ${fmtDay(today)} ${month} · compared with the week before`
+  const fmt = d => `${d.toLocaleDateString('en-GB', { weekday: 'short' })} ${d.getDate()}`
+  const month = today.toLocaleDateString('en-GB', { month: 'short' })
+  return `${fmt(start)} — ${fmt(today)} ${month} · against the week before`
 }
 
 function buildNeedDeltas(canvas, checkins, period) {
@@ -329,9 +326,10 @@ function dominantMoodFor(moods, dk) {
 
 const RHYTHM_MOOD_DOT = { good: '#1B3A2D', mid: '#9DB394', bad: '#D93B1C' }
 
-function RhythmSection({ stats, canvas, checkins, moods }) {
+function RhythmSection({ stats, canvas, checkins, moods, period = 7 }) {
   const [weekOffset, setWeekOffset] = useState(0)
-  const weekKeys = useMemo(() => weekKeysAt(weekOffset), [weekOffset])
+  const monthly = period === 30
+  const weekKeys = useMemo(() => monthly ? buildWindowKeys(30, 0) : weekKeysAt(weekOffset), [weekOffset, monthly])
   const todayKey = buildWindowKeys(1, 0)[0]
 
   const earliestDk = useMemo(() => {
@@ -342,8 +340,14 @@ function RhythmSection({ stats, canvas, checkins, moods }) {
     return dks[0] ?? null
   }, [checkins, moods])
 
-  const canGoBack = !!earliestDk && earliestDk < weekKeys[0]
+  const canGoBack = !monthly && !!earliestDk && earliestDk < weekKeys[0]
   const isCurrentWeek = weekOffset === 0
+  // in the month view a Monday is labelled with its date; the rest stay blank
+  const dayLabel = (dk, i) => {
+    if (!monthly) return WEEKDAY_LETTERS[i]
+    const [y, m, d] = dk.split('-').map(Number)
+    return new Date(y, m - 1, d).getDay() === 1 ? String(d) : ''
+  }
 
   const moodByWeekday = useMemo(() => stats.getMoodByWeekday(), [stats])
   const moodByPeriod  = useMemo(() => stats.getMoodByPeriod(30), [stats])
@@ -354,9 +358,9 @@ function RhythmSection({ stats, canvas, checkins, moods }) {
       <div className={styles.sectionHeader}>
         <span className={styles.sectionLabel}>YOUR RHYTHM</span>
         <span className={styles.sectionMeta}>
-          {weekOffset > 0 ? weekRangeLabel(weekKeys) : 'bar\u00a0=\u00a0practices met · dot\u00a0=\u00a0mood'}
+          {weekOffset > 0 && !monthly ? weekRangeLabel(weekKeys) : 'bar\u00a0=\u00a0practices met · dot\u00a0=\u00a0mood'}
         </span>
-        <div className={styles.weekNav}>
+        {!monthly && <div className={styles.weekNav}>
           <button
             className={styles.weekNavBtn}
             onClick={() => setWeekOffset(o => o + 1)}
@@ -372,9 +376,9 @@ function RhythmSection({ stats, canvas, checkins, moods }) {
             disabled={isCurrentWeek}
             aria-label="next week"
           >›</button>
-        </div>
+        </div>}
       </div>
-      <div className={styles.rhythmGrid}>
+      <div className={`${styles.rhythmGrid}${monthly ? ` ${styles.rhythmGridMonth}` : ''}`}>
         {weekKeys.map((dk, i) => {
           const pct = dayCompPct(canvas, checkins, dk)
           const mood = dominantMoodFor(moods, dk)
@@ -391,7 +395,7 @@ function RhythmSection({ stats, canvas, checkins, moods }) {
               </div>
               <div className={styles.rhythmDot} style={{ background: dotColor }} />
               <span className={`${styles.rhythmLetter}${isToday ? ` ${styles.rhythmLetterToday}` : ''}`}>
-                {WEEKDAY_LETTERS[i]}
+                {dayLabel(dk, i)}
               </span>
             </div>
           )
@@ -899,7 +903,7 @@ function GoneQuietSection({ stats, archivePractice, isDesktop }) {
     <section className={styles.section}>
       <div className={styles.sectionHeader}>
         <span className={styles.sectionLabel}>GONE QUIET</span>
-        <span className={styles.sectionMeta}>{total} practice{total !== 1 ? 's' : ''}</span>
+        <span className={styles.sectionMeta}>{total} practice{total !== 1 ? 's' : ''} · two weeks or more</span>
       </div>
 
       <div className={styles.quietGroups}>
@@ -1065,11 +1069,29 @@ function AllNumbersSection({ period, canvas, checkins }) {
               </div>
             ))}
           </div>
-          <p className={styles.allNumsFooter}>
-            tick marks are the pace your canvas implies. Percentages are practices met out of practices possible in the window.
-          </p>
+          <FinePrint>
+            <p>Each bar is how often you met that mode's needs in this window: days you logged something for a need, out of the days you could have. The needs underneath are the same thing, one at a time.</p>
+            <p>The little tick on each bar is the pace your canvas implies for that mode. Past the tick, you're doing more than you set out to; short of it, less. Neither is a grade.</p>
+          </FinePrint>
         </>
       )}
+    </section>
+  )
+}
+
+/* A titled band of the page. The four drawn sections carry their own; these
+   wrap the cards that live in this file. */
+function Group({ title, sub, aside, first, children }) {
+  return (
+    <section className={`${styles.group}${first ? ` ${styles.groupFirst}` : ''}`}>
+      <div className={styles.groupHead}>
+        <div>
+          <h2 className={styles.groupTitle}>{title}</h2>
+          {sub && <p className={styles.groupSub}>{sub}</p>}
+        </div>
+        {aside}
+      </div>
+      <div className={styles.groupBody}>{children}</div>
     </section>
   )
 }
@@ -1077,22 +1099,6 @@ function AllNumbersSection({ period, canvas, checkins }) {
 export default function Data({ state, archivePractice }) {
   const [period, setPeriod] = useState(7)
   const isDesktop = useIsDesktop()
-
-  const setHeaderSlot = useContext(HeaderSlotContext)
-  useEffect(() => {
-    setHeaderSlot(
-      <div className={styles.periodToggle}>
-        {PERIODS.map(p => (
-          <button
-            key={p.days}
-            className={`${styles.periodPill}${period === p.days ? ` ${styles.periodPillActive}` : ''}`}
-            onClick={() => setPeriod(p.days)}
-          >{p.label}</button>
-        ))}
-      </div>
-    )
-    return () => setHeaderSlot(null)
-  }, [period, setHeaderSlot])
 
   const canvas      = state?.canvas      ?? {}
   const checkins    = state?.checkins    ?? {}
@@ -1127,11 +1133,7 @@ export default function Data({ state, archivePractice }) {
     <div className={styles.screen}>
       <div className={styles.desktopWrap}>
         <div className={styles.pageHeaderRow}>
-          <div className={styles.pageTitleBlock}>
-            <h1 className={styles.pageTitle}>almanac.</h1>
-            <p className={styles.pageSubhead}>{buildSubhead(period)}</p>
-          </div>
-          <div className={styles.deskToggle}>{periodToggleEl}</div>
+          <h1 className={styles.pageTitle}>almanac.</h1>
         </div>
 
         {!hasCanvas && (
@@ -1144,29 +1146,29 @@ export default function Data({ state, archivePractice }) {
 
         {hasCanvas && (
           <>
-            <StreaksRail canvas={canvas} checkins={checkins} moods={moods} practicesDB={practicesDB} />
-            <StrataRibbon moods={moods} />
-            <div className={styles.topBand}>
-              <TopGoneQuietCard stats={stats} canvas={canvas} practicesDB={practicesDB} checkins={checkins} />
-            </div>
+            <Group title="Your headlines" sub="what stands out right now" first>
+              <InsightsCard canvas={canvas} checkins={checkins} moods={moods} practicesDB={practicesDB} />
+            </Group>
 
+            <Group title={period === 30 ? 'This month' : 'This week'} sub={buildSubhead(period)} aside={periodToggleEl}>
+              <div className={styles.dRow3}>
+                <WhatChanged period={period} canvas={canvas} checkins={checkins} />
+                <RhythmSection stats={stats} canvas={canvas} checkins={checkins} moods={moods} period={period} />
+              </div>
+            </Group>
+
+            <StreaksRail canvas={canvas} checkins={checkins} moods={moods} practicesDB={practicesDB}>
+              <GoneQuietSection stats={stats} archivePractice={archivePractice} isDesktop={isDesktop} />
+            </StreaksRail>
+
+            <StrataRibbon moods={moods} />
             <RootsSection canvas={canvas} checkins={checkins} moods={moods} practicesDB={practicesDB} />
             <ThreadsSection userId={state?.userId} moods={moods} />
-            {totalCheckinDays >= 7 && (
-              <section className={styles.section}>
-                <div className={styles.sectionHeader}>
-                  <span className={styles.sectionLabel}>WHAT ELSE IS TRUE</span>
-                </div>
-                <InsightsCard canvas={canvas} checkins={checkins} moods={moods} practicesDB={practicesDB} />
-              </section>
-            )}
-            <div className={styles.dRow3}>
-              <WhatChanged period={period} canvas={canvas} checkins={checkins} />
-              <RhythmSection stats={stats} canvas={canvas} checkins={checkins} moods={moods} />
-            </div>
-            <RibbonsSection canvas={canvas} checkins={checkins} practicesDB={practicesDB} days={dayKeys} windowLen={windowLen} isDesktop={isDesktop} />
-            <GoneQuietSection stats={stats} archivePractice={archivePractice} isDesktop={isDesktop} />
-            <AllNumbersSection period={period} canvas={canvas} checkins={checkins} />
+
+            <Group title="Your ledger" sub="every need, every number">
+              <RibbonsSection canvas={canvas} checkins={checkins} practicesDB={practicesDB} days={dayKeys} windowLen={windowLen} isDesktop={isDesktop} />
+              <AllNumbersSection period={period} canvas={canvas} checkins={checkins} />
+            </Group>
           </>
         )}
       </div>
