@@ -51,7 +51,6 @@
   line-height: 1.15; color: var(--ink); margin: 0 0 3px;
 }
 .groupSub { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink4); margin: 0; line-height: 1.5; }
-.headlines { margin-top: 18px; }
 
 /* stepping the range: the arrows are buttons you can see, the span sits between them */
 .rangeNav { display: flex; align-items: center; gap: 8px; margin-top: 4px; }

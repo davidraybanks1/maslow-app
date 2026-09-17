@@ -10,9 +10,9 @@ import styles from './StrataRibbon.module.css'
 /* Drawn the way the roots are: a full-colour ridge line over a light fill,
    on the paper, rather than a solid gradient block. */
 const BAND_C = {
-  good: { line: '#0C5038', fill: 'rgba(12,80,56,.26)' },
-  mid: { line: '#7E9478', fill: 'rgba(126,148,120,.14)' },
-  bad: { line: '#E8461C', fill: 'rgba(232,70,28,.22)' },
+  good: { line: '#3FA87A', fill: 'rgba(63,168,122,.30)' },   // the top of a significant root
+  mid: { line: '#9DB394', fill: 'rgba(157,179,148,.26)' },   // appreciation's mark
+  bad: { line: '#F03C10', fill: 'rgba(240,60,16,.24)' },     // survival's disc
 }
 const BANDS = ['good', 'mid', 'bad']
 const RANGES = [

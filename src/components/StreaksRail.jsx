@@ -57,7 +57,7 @@ function Meter({ streak }) {
   )
 }
 
-export default function StreaksRail({ canvas, checkins, moods, practicesDB, children }) {
+export default function StreaksRail({ canvas, checkins, moods, practicesDB, first, children }) {
   const [kind, setKind] = useState('all')
   const [pos, setPos] = useState(1)
   const railRef = useRef(null)
@@ -75,7 +75,7 @@ export default function StreaksRail({ canvas, checkins, moods, practicesDB, chil
   const lulled = all.length - running
 
   return (
-    <section className={styles.section}>
+    <section className={`${styles.section}${first ? ` ${styles.first}` : ''}`}>
       <div className={styles.pad}>
         <h2 className={styles.title}>Your streaks and lulls</h2>
         <p className={styles.sub}>

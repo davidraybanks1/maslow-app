@@ -9,7 +9,7 @@ import StreaksRail from '../components/StreaksRail'
 import StrataRibbon from '../components/StrataRibbon'
 import FinePrint from '../components/FinePrint'
 import { buildLadder } from '../lib/ladder'
-import { buildInsights, INSIGHT_KIND } from '../lib/insights'
+import { buildInsights } from '../lib/insights'
 import styles from './Data.module.css'
 
 const PERIODS = [
@@ -210,7 +210,15 @@ function dominantMoodFor(moods, dk) {
   return Object.entries(c).sort((a, b) => b[1] - a[1])[0][0]
 }
 
-const RHYTHM_MOOD_DOT = { good: '#1B3A2D', mid: '#9DB394', bad: '#D93B1C' }
+/* One light source at 34% / 26%, the way the bloom and the streak glyphs
+   are lit. A bar that met the day is nourishment's full ramp; a bar that
+   fell short is the same ramp washed back. The mood dots and the feels
+   stacks use the band ramps. */
+const LIT = (a, b) => `radial-gradient(circle at 34% 26%, ${a}, ${b})`
+const BAR_FULL = LIT('#FFD166', '#F0A800')
+const BAR_WASH = LIT('#FFE6A6', '#F5C542')
+const MOOD_RAMP = { good: ['#3FA87A', '#07301F'], mid: ['#B4C4AC', '#3E5238'], bad: ['#FF8A66', '#A81F06'] }
+const MOOD_LIT = Object.fromEntries(Object.entries(MOOD_RAMP).map(([k, [a, b]]) => [k, LIT(a, b)]))
 
 function RhythmSection({ stats, canvas, checkins, moods, range }) {
   const monthly = range.keys.length > 7
@@ -238,8 +246,8 @@ function RhythmSection({ stats, canvas, checkins, moods, range }) {
           const mood = dominantMoodFor(moods, dk)
           const isToday = dk === todayKey
           const isFuture = dk > todayKey
-          const barColor = isToday || pct >= 70 ? '#E8B81F' : 'rgba(232,184,31,.45)'
-          const dotColor = mood ? RHYTHM_MOOD_DOT[mood] : 'rgba(0,0,0,.06)'
+          const barColor = isToday || pct >= 70 ? BAR_FULL : BAR_WASH
+          const dotColor = mood ? MOOD_LIT[mood] : 'rgba(0,0,0,.06)'
           return (
             <div key={dk} className={styles.rhythmCol}>
               <div className={styles.rhythmBarArea}>
@@ -268,7 +276,6 @@ const MOBILE_WINDOW = 30
 const DESKTOP_WINDOW = 30
 
 /* ── Your feels: how the days felt, one column each ──────────────────── */
-const FEEL_C = { good: '#1B3A2D', mid: '#9DB394', bad: '#D93B1C' }
 
 function FeelsSection({ moods, range }) {
   const monthly = range.keys.length > 7
@@ -321,7 +328,7 @@ function FeelsSection({ moods, range }) {
         <span className={styles.sectionLabel}>YOUR FEELS</span>
         <span className={styles.sectionMeta}>
           {['good', 'mid', 'bad'].map(b => (
-            <span key={b} className={styles.feelKey}><i style={{ background: FEEL_C[b] }} />{BAND_LABEL[b]}</span>
+            <span key={b} className={styles.feelKey}><i style={{ background: MOOD_LIT[b] }} />{BAND_LABEL[b]}</span>
           ))}
         </span>
       </div>
@@ -334,7 +341,7 @@ function FeelsSection({ moods, range }) {
               <div className={styles.feelStack}>
                 {!isFuture && d.n === 0 && <i className={styles.feelEmpty} />}
                 {['bad', 'mid', 'good'].map(b => d[b] > 0 && (
-                  <i key={b} style={{ height: `${(d[b] / peak) * 100}%`, background: FEEL_C[b] }} />
+                  <i key={b} style={{ height: `${(d[b] / peak) * 100}%`, background: MOOD_LIT[b] }} />
                 ))}
               </div>
               <span className={`${styles.rhythmLetter}${isToday ? ` ${styles.rhythmLetterToday}` : ''}`}>{dayLabel(d.dk, i)}</span>
@@ -545,7 +552,7 @@ function InsightsCard({ insights }) {
         {cards.map((insight, i) => (
           <div key={insight ? insight.id : 'empty'} className={styles.insightCard}>
             <div className={styles.insightLabel}>
-              {insight ? INSIGHT_KIND[insight.kind].label.toUpperCase() : 'YOUR INSIGHTS'}
+              {insight ? 'OBSERVATION' : 'OBSERVATIONS'}
             </div>
             {insight ? (
               <>
@@ -726,9 +733,7 @@ export default function Data({ state }) {
 
         {hasCanvas && (
           <>
-            <div className={styles.headlines}>
-              <InsightsCard insights={insights} />
-            </div>
+            <StreaksRail canvas={canvas} checkins={checkins} moods={moods} practicesDB={practicesDB} first />
 
             <Group title={range.title} sub={rangeNav} aside={periodToggleEl}>
               <div className={styles.dRow3}>
@@ -738,7 +743,9 @@ export default function Data({ state }) {
               </div>
             </Group>
 
-            <StreaksRail canvas={canvas} checkins={checkins} moods={moods} practicesDB={practicesDB} />
+            <Group title="Observations">
+              <InsightsCard insights={insights} />
+            </Group>
 
             <StrataRibbon moods={moods} />
             <RootsSection canvas={canvas} checkins={checkins} moods={moods} practicesDB={practicesDB} />

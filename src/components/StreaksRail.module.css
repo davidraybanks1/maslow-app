@@ -1,6 +1,7 @@
 /* Streaks — a rail of every run currently going, one white card each. */
 
 .section { margin-top: 32px; border-top: 0.5px solid var(--hairline); padding-top: 26px; }
+.first { margin-top: 18px; border-top: 0; padding-top: 0; }
 .pad { padding-inline: 0; }
 .title { font-family: var(--serif, 'Newsreader', Georgia, serif); font-size: 23px; font-weight: 300; letter-spacing: -0.015em; margin: 0 0 3px; }
 .sub { font-family: var(--mono); font-size: var(--type-floor); color: var(--ink4); margin: 0 0 14px; }
