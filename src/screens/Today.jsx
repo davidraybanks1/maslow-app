@@ -11,6 +11,7 @@ import FrequencyCard, { MOOD_PIP_COLOR } from '../components/FrequencyCard'
 import { revealWhenSettled } from '../lib/keyboard'
 import Glyph from '../lib/glyphs'
 import Bloom from '../components/Bloom'
+import NoteStack from '../components/NoteStack'
 import JournalQuote from '../components/JournalQuote'
 import ManageDeck from '../components/ManageDeck'
 import ManageTags from '../components/ManageTags'
@@ -311,40 +312,20 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   }, [])
   const visibleDeck = isDesktop ? noteDeck : noteDeck.filter(c => !reviewedNotes.ids.has(c.id))
   const deckReviewed = !isDesktop && noteDeck.length > 0 && visibleDeck.length === 0
-  const settleTimer = useRef(null)
-  const pendingScrollLeft = useRef(null)
 
+  // Desktop only: the rail is a plain horizontal scroller, nothing leaves it.
   function handleDeckScroll() {
     const wrapper = deckWrapperRef.current
     if (!wrapper || wrapper.clientWidth === 0) return
-    const unit = isDesktop ? wrapper.clientWidth : 294  // 282px card + 12px gap
-    setActiveCardIndex(Math.round(wrapper.scrollLeft / unit))
-    if (isDesktop) return
-    // once the swipe settles, every card left behind is reviewed and leaves
-    // the rail; the rail is shifted back so the card in view stays put
-    clearTimeout(settleTimer.current)
-    settleTimer.current = setTimeout(() => {
-      const w = deckWrapperRef.current
-      if (!w) return
-      const idx = Math.round(w.scrollLeft / unit)
-      if (idx <= 0) return
-      visibleDeck.slice(0, idx).forEach(c => reviewedNotes.ids.add(c.id))
-      pendingScrollLeft.current = w.scrollLeft - idx * unit
-      setReviewedTick(t => t + 1)
-    }, 140)
+    setActiveCardIndex(Math.round(wrapper.scrollLeft / wrapper.clientWidth))
   }
-  useLayoutEffect(() => {
-    if (pendingScrollLeft.current == null) return
-    const w = deckWrapperRef.current
-    if (w) {
-      const prev = w.style.scrollBehavior
-      w.style.scrollBehavior = 'auto'
-      w.scrollLeft = Math.max(0, pendingScrollLeft.current)
-      w.style.scrollBehavior = prev
-    }
-    pendingScrollLeft.current = null
-    setActiveCardIndex(0)
-  })
+
+  // Mobile: a note that flies off the stack (NoteStack handles the drag and
+  // the animation itself) is reviewed for the rest of the session.
+  function handleNoteDismissed(id) {
+    reviewedNotes.ids.add(id)
+    setReviewedTick(t => t + 1)
+  }
 
   // Reviewing the whole deck is a practice: when the last card goes, the
   // 'notes to self' practice (whatever it is called - read, review...) is
@@ -832,19 +813,19 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 </div>
               )}
               {noteDeck.length > 0 ? (
-                <>
+                isDesktop ? (
                   <div
                     className={styles.noteDeckWrapper}
                     ref={deckWrapperRef}
                     onScroll={handleDeckScroll}
                   >
-                    {visibleDeck.map((card, i) => (
+                    {noteDeck.map((card, i) => (
                       <div
                         key={card.id}
                         className={styles.noteDeckCard}
                         ref={el => { cardRefs.current[i] = el }}
                       >
-                        {isDesktop && <div className={styles.noteDeckEyebrow}><Glyph kind="note" />NOTE TO SELF</div>}
+                        <div className={styles.noteDeckEyebrow}><Glyph kind="note" />NOTE TO SELF</div>
                         <div className={styles.noteDeckBody}>
                           <span className={styles.noteText}>{card.text}</span>
                           {card.image_url && (
@@ -856,44 +837,48 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                             />
                           )}
                         </div>
-                        {/* Desktop keeps footer inside the card */}
-                        {isDesktop && (
-                          <div className={styles.noteDeckFooter}>
-                            <div className={styles.deckControls}>
-                              <>
-                                {noteDeck.length > 1 && (
-                                  <button className={styles.deckArrow} onClick={() => advanceDeckCard(-1)} aria-label="previous card">‹</button>
-                                )}
-                                <span className={styles.noteDeckCounter}>{Math.min(activeCardIndex + 1, noteDeck.length)}/{noteDeck.length}</span>
-                                {noteDeck.length > 1 && (
-                                  <button className={styles.deckArrow} onClick={() => advanceDeckCard(1)} aria-label="next card">›</button>
-                                )}
-                              </>
-                            </div>
-                            <button className={styles.noteEditPill} onClick={openManageDeck}>edit</button>
+                        <div className={styles.noteDeckFooter}>
+                          <div className={styles.deckControls}>
+                            <>
+                              {noteDeck.length > 1 && (
+                                <button className={styles.deckArrow} onClick={() => advanceDeckCard(-1)} aria-label="previous card">‹</button>
+                              )}
+                              <span className={styles.noteDeckCounter}>{Math.min(activeCardIndex + 1, noteDeck.length)}/{noteDeck.length}</span>
+                              {noteDeck.length > 1 && (
+                                <button className={styles.deckArrow} onClick={() => advanceDeckCard(1)} aria-label="next card">›</button>
+                              )}
+                            </>
                           </div>
-                        )}
-                      </div>
-                    ))}
-                    {!isDesktop && (
-                      <div
-                        className={`${styles.noteDeckCard} ${styles.noteDeckAddCard}`}
-                        ref={el => { cardRefs.current[visibleDeck.length] = el }}
-                      >
-                        <div className={styles.noteDeckBody}>
-                          <button className={styles.noteAddBtn} onClick={openManageDeck}>+ add a note to self</button>
+                          <button className={styles.noteEditPill} onClick={openManageDeck}>edit</button>
                         </div>
                       </div>
-                    )}
+                    ))}
                   </div>
-                  {/* Mobile: single shared footer below the rail */}
-                  {!isDesktop && (
+                ) : (
+                  <>
+                    <NoteStack
+                      cards={visibleDeck}
+                      onDismiss={handleNoteDismissed}
+                      renderCard={card => (
+                        <div className={styles.noteDeckBody}>
+                          <span className={styles.noteText}>{card.text}</span>
+                          {card.image_url && (
+                            <img
+                              src={card.image_url}
+                              alt=""
+                              className={styles.noteThumbnail}
+                              onClick={() => setLightboxImage(card.image_url)}
+                            />
+                          )}
+                        </div>
+                      )}
+                    />
                     <div className={styles.deckFooterRow}>
-                      <span className={styles.noteDeckCounter}>{Math.min(noteDeck.length - visibleDeck.length + activeCardIndex + 1, noteDeck.length)}/{noteDeck.length}</span>
+                      <span className={styles.noteDeckCounter}>{Math.min(noteDeck.length - visibleDeck.length + 1, noteDeck.length)}/{noteDeck.length}</span>
                       <button className={styles.noteEditPill} onClick={openManageDeck}>edit</button>
                     </div>
-                  )}
-                </>
+                  </>
+                )
               ) : deckLoaded ? (
                 <div className={styles.noteDeckCard}>
                   <div className={styles.noteDeckEyebrow}><Glyph kind="note" />NOTE TO SELF</div>
