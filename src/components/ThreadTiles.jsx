@@ -1,42 +1,26 @@
 import { useMemo } from 'react'
 import styles from './ThreadTiles.module.css'
 
-/* Your threads as a plot of beds: one rectangle, divided so that each thread
-   gets an area in proportion to how much you have written on it lately. The
-   division is squarified, so beds stay close to square and the biggest
-   threads sit top-left. Each bed is lit from the same point as the bloom, in
-   greens, oranges and yellows that sit beside the mode colours without
-   borrowing them. A thread prefers a colour chosen from its name, so it keeps
-   it between visits; when two threads want the same colour, the smaller one
-   takes the next free shade. */
+/* Your threads as a plot of tiles: one rectangle, edge to edge, divided so
+   that each thread gets an area in proportion to how much you have written on
+   it lately. The division is squarified, so tiles stay close to square and
+   the biggest threads sit top-left. The colours are flat, and all drawn from
+   two of the app's own: the plot runs from nourishment's deep yellow at the
+   biggest thread to appreciation's deep sage at the smallest, so the whole
+   thing reads as one gradient laid over the grid. */
 
-const RAMPS = [
-  ['#FFB27A', '#C2561C'],   // apricot
-  ['#A6D36F', '#3F6E1E'],   // grass
-  ['#F0B23C', '#8A5A08'],   // amber
-  ['#B8C05A', '#5C6414'],   // olive
-  ['#FF9A48', '#B44A06'],   // tangerine
-  ['#8FAE6A', '#3B5522'],   // moss
-  ['#D9BD2E', '#7A6606'],   // mustard
-  ['#D6DB70', '#6E7A14'],   // chartreuse
-  ['#E3895A', '#8C3418'],   // terracotta
-  ['#F7E38F', '#A88A1C'],   // butter
+const RAMP = [
+  '#F0A800', '#F7BE33', '#FFD166', '#FFE08A', '#EFE0A0',
+  '#D5D8A6', '#B4C4AC', '#98AE90', '#7A9070', '#536E4D',
 ]
-// the lightest ramps read better with ink type
-const DARK_TYPE = new Set([7, 9])
+// the deep sages want white type
+const LIGHT_TYPE = new Set([7, 8, 9])
 
-function hash(str) { let h = 5381; for (const ch of str) h = ((h << 5) + h + ch.charCodeAt(0)) | 0; return Math.abs(h) }
-
-/* colours by rank: each thread asks for the shade its name hashes to and
-   takes the next free one if a bigger thread already has it */
-function assignRamps(threads) {
-  const used = new Set(), out = {}
-  for (const t of threads) {
-    let i = hash(t.id) % RAMPS.length
-    for (let k = 0; k < RAMPS.length && used.has(i); k++) i = (i + 1) % RAMPS.length
-    used.add(i); out[t.id] = i
-  }
-  return out
+/* shades by rank, spread across the whole ramp however many threads there
+   are, so a short list still runs yellow to sage */
+function assignShades(n) {
+  if (n === 1) return [0]
+  return Array.from({ length: n }, (_, k) => Math.round((k / (n - 1)) * (RAMP.length - 1)))
 }
 
 /* squarified treemap (Bruls, Huizing, van Wijk): lay rows of beds along the
@@ -79,17 +63,20 @@ function squarify(items, x, y, w, h) {
 const CH = 7.3   // mono glyph width at the type floor
 
 export default function ThreadTiles({ threads, openId, onPick }) {
-  const W = 349
+  const W = 393
   const geo = useMemo(() => {
     if (!threads.length) return null
     const n = threads.length
     const H = n <= 2 ? 110 : n <= 4 ? 160 : n <= 7 ? 210 : 240
-    const G = 3
-    const ramps = assignRamps(threads)
+    const G = 4
+    const shades = assignShades(threads.length)
     const tiles = squarify(threads.map(t => ({ ...t, v: t.windowCount })), 0, 0, W, H)
     const small = []
-    const drawn = tiles.map(t => {
-      const w = t.w - G, h = t.h - G
+    const drawn = tiles.map((t, k) => {
+      // grout only between tiles: the plot's outer edges are the screen's
+      const l = t.x > 0.5 ? G / 2 : 0, r = t.x + t.w < W - 0.5 ? G / 2 : 0
+      const tp = t.y > 0.5 ? G / 2 : 0, bt = t.y + t.h < H - 0.5 ? G / 2 : 0
+      const w = t.w - l - r, h = t.h - tp - bt
       const words = t.label.split(' ')
       const longest = Math.max(...words.map(s => s.length))
       const full = t.label.length * CH
@@ -99,35 +86,26 @@ export default function ThreadTiles({ threads, openId, onPick }) {
       else if (full < h - 32 && w >= 30) mode = 'tall'
       else mode = 'count'
       if (mode === 'count') small.push(t)
-      return { ...t, w, h, mode, words, ramp: ramps[t.id], dark: DARK_TYPE.has(ramps[t.id]) }
+      return { ...t, x: t.x + l, y: t.y + tp, w, h, mode, words, shade: shades[k], light: LIGHT_TYPE.has(shades[k]) }
     })
-    return { H, G, drawn, small }
+    return { H, drawn, small }
   }, [threads])
   if (!geo) return null
 
-  const { H, G, drawn, small } = geo
+  const { H, drawn, small } = geo
   return (
     <div className={styles.wrap}>
+      <div className={styles.bleed}>
       <svg className={styles.svg} viewBox={`0 0 ${W} ${H}`} style={{ height: H }} role="img" aria-label="your most active threads">
-        <defs>
-          {drawn.map(t => {
-            const [a, b] = RAMPS[t.ramp]
-            return (
-              <radialGradient key={t.id} id={`tt-${t.id.replace(/\W/g, '')}`} cx="34%" cy="26%" r="78%">
-                <stop offset="0%" stopColor={a} /><stop offset="100%" stopColor={b} />
-              </radialGradient>
-            )
-          })}
-        </defs>
         {drawn.map(t => {
           const open = openId === t.id
-          const x = t.x + G / 2, y = t.y + G / 2
-          const lab = `${styles.lab}${t.dark ? ` ${styles.labDark}` : ''}`
-          const num = `${styles.num}${t.dark ? ` ${styles.numDark}` : ''}`
+          const x = t.x, y = t.y
+          const lab = `${styles.lab}${t.light ? ` ${styles.labLight}` : ''}`
+          const num = `${styles.num}${t.light ? ` ${styles.numLight}` : ''}`
           return (
             <g key={t.id} className={styles.bed} onClick={() => onPick(t.id)} style={{ cursor: 'pointer' }}>
-              <rect x={x} y={y} width={t.w} height={t.h} rx={Math.min(10, t.w / 3, t.h / 3)} fill={`url(#tt-${t.id.replace(/\W/g, '')})`} />
-              {open && <rect x={x + 3} y={y + 3} width={t.w - 6} height={t.h - 6} rx={Math.max(2, Math.min(7, t.w / 4, t.h / 4))} className={styles.ring} />}
+              <rect x={x} y={y} width={t.w} height={t.h} fill={RAMP[t.shade]} />
+              {open && <rect x={x + 3} y={y + 3} width={t.w - 6} height={t.h - 6} className={`${styles.ring}${t.light ? ` ${styles.ringLight}` : ''}`} />}
               {t.mode === 'flat' && (
                 <>
                   <text x={x + 9} y={y + 18} className={lab}>{t.label}</text>
@@ -154,6 +132,7 @@ export default function ThreadTiles({ threads, openId, onPick }) {
           )
         })}
       </svg>
+      </div>
       {small.length > 0 && (
         <p className={styles.small}>
           {'smaller: '}
@@ -161,7 +140,7 @@ export default function ThreadTiles({ threads, openId, onPick }) {
             <span key={t.id}>
               {i > 0 && ' · '}
               <button type="button" className={styles.smallBtn} onClick={() => onPick(t.id)}>
-                <b style={{ color: RAMPS[geo.drawn.find(d => d.id === t.id).ramp][1] }}>{t.windowCount}</b> {t.label}
+                <b>{t.windowCount}</b> {t.label}
               </button>
             </span>
           ))}
