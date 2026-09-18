@@ -154,7 +154,13 @@ export default function NoteStack({ cards, onDismiss, onCommit, renderCard }) {
           key={card.id}
           ref={i === 0 ? topRef : null}
           className={`${styles.card}${i > 0 ? ` ${styles.cardBehind}` : ''}`}
-          style={i > 0 ? { transform: `translateY(${i * 14}px) scale(${1 - i * 0.045})`, opacity: i === 1 ? 0.9 : 0.55, zIndex: 10 - i } : { zIndex: 10 }}
+          // Kept low on purpose: the bloom sits at z-index 2 (Today.module.css's
+          // .headerRingWrap), and neither .stack nor its ancestors isolate a
+          // stacking context, so these numbers compete directly against it in
+          // the same context. 1/0/-1 preserves the deck's own front-to-back
+          // order (top card above its peeks) while staying under the bloom,
+          // so the flower overlaps the card's corner instead of the reverse.
+          style={i > 0 ? { transform: `translateY(${i * 14}px) scale(${1 - i * 0.045})`, opacity: i === 1 ? 0.9 : 0.55, zIndex: 1 - i } : { zIndex: 1 }}
           onPointerDown={i === 0 ? e => onPointerDown(e, card.id) : undefined}
           onPointerMove={i === 0 ? onPointerMove : undefined}
           onPointerUp={i === 0 ? onPointerUp : undefined}
