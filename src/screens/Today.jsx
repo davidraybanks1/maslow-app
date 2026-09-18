@@ -859,6 +859,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                     <NoteStack
                       cards={visibleDeck}
                       onDismiss={handleNoteDismissed}
+                      onCommit={hapticTick}
                       renderCard={card => (
                         <div className={styles.noteDeckBody}>
                           <span className={styles.noteText}>{card.text}</span>

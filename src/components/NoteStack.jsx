@@ -7,13 +7,24 @@ import styles from './NoteStack.module.css'
    short, or a drag to the right, springs back to centre. Everything below
    pointerdown is imperative (direct style writes on the DOM node), so a drag
    never waits on a re-render - React only hears about it once a note has
-   actually left, via onDismiss. */
+   actually left, via onDismiss.
+
+   The moment a swipe is committed (pointerup past the threshold), two things
+   fire at once, not one after the other: onCommit (the haptic - it should
+   land the instant the decision is made, not once the card has finished
+   leaving) and the fling itself, quick and a little reckless - it shrinks
+   as it goes, like something tossed rather than politely slid away. The
+   card behind it is never told to wait: it is always one class away from
+   full size, so the instant the departing card's DOM node stops claiming
+   that class (on removal), the browser's own transition carries it up to
+   full size with a small overshoot - the "next card" pop needs no timer
+   of its own. */
 
 const THRESH = { left: 96, up: 88, down: 110 }
-const FLING = { left: 620, up: 720, down: 720 }
+const FLING = { left: 640, up: 760, down: 760 }
 const DEADZONE = 5
 
-export default function NoteStack({ cards, onDismiss, renderCard }) {
+export default function NoteStack({ cards, onDismiss, onCommit, renderCard }) {
   const [order, setOrder] = useState(cards)
   const idsKey = cards.map(c => c.id).join('|')
 
@@ -85,12 +96,15 @@ export default function NoteStack({ cards, onDismiss, renderCard }) {
     const dir = best === 0 ? null : best === leftScore ? 'left' : best === upScore ? 'up' : 'down'
 
     if (dir) {
-      el.style.transition = 'transform 260ms cubic-bezier(.2,.7,.3,1), opacity 220ms ease-out'
-      const rot = Math.max(-24, Math.min(24, d.dx / 9))
+      // the haptic and the throw fire together - the tick is the moment of
+      // commitment, not a reward for waiting out the animation
+      onCommit?.(dir)
+      el.style.transition = 'transform 200ms cubic-bezier(.32,.94,.6,1), opacity 200ms ease-out'
+      const rot = Math.max(-28, Math.min(28, d.dx / 7))
       const targets = {
-        left: `translate(-${FLING.left}px, ${d.dy}px) rotate(${Math.min(rot, -14)}deg)`,
-        up: `translate(${d.dx}px, -${FLING.up}px) rotate(${rot}deg)`,
-        down: `translate(${d.dx}px, ${FLING.down}px) rotate(${rot}deg)`,
+        left: `translate(-${FLING.left}px, ${d.dy - 30}px) rotate(${Math.min(rot, -20)}deg) scale(.9)`,
+        up: `translate(${d.dx}px, -${FLING.up}px) rotate(${rot}deg) scale(.88)`,
+        down: `translate(${d.dx}px, ${FLING.down}px) rotate(${rot}deg) scale(.88)`,
       }
       el.style.transform = targets[dir]
       el.style.opacity = '0'
@@ -98,7 +112,7 @@ export default function NoteStack({ cards, onDismiss, renderCard }) {
       let done = false
       const finish = () => { if (done) return; done = true; el.removeEventListener('transitionend', finish); settle(id) }
       el.addEventListener('transitionend', finish)
-      setTimeout(finish, 320)
+      setTimeout(finish, 240)
     } else {
       el.style.transition = 'transform 340ms cubic-bezier(.34,1.4,.4,1), opacity 200ms ease-out'
       el.style.transform = 'translate(0px, 0px) rotate(0deg)'

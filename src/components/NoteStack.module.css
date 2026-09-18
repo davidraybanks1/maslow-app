@@ -26,9 +26,15 @@
      clears it. Left is wider than the rest on purpose - a narrower measure
      reads faster than a wide one. */
   padding: 66px 18px 18px 58px;
+  /* Lives on every card, not just the ones behind: a card being dragged or
+     thrown gets its transition set inline (which wins over this), but the
+     card that is promoted into the top spot never gets an inline style at
+     all - it just loses the "behind" transform in a React re-render, and
+     this is what turns that into the spring-up-to-size pop rather than a
+     snap. The slight overshoot is the flourish. */
+  transition: transform 260ms cubic-bezier(.32, 1.5, .5, 1), opacity 200ms ease;
 }
 
 .cardBehind {
   pointer-events: none;
-  transition: transform 220ms ease, opacity 220ms ease;
 }
