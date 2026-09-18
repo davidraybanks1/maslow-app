@@ -2,12 +2,12 @@
   padding: 0;
 }
 
-/* The sentence is the receipt, not the control - so it steps down to a size
-   that no longer outranks the page greeting, and the chips below it do the
-   tapping. */
+/* The sentence is the receipt, not the control - the chips below it do the
+   tapping - but it is the line that names how the day feels, so it sits
+   just under the page greeting in size. */
 .freqSentence {
   font-family: var(--font-serif);
-  font-size: 21px;
+  font-size: 26px;
   font-weight: 300;
   line-height: 1.3;
   letter-spacing: -0.015em;
@@ -41,7 +41,7 @@
    rule at .22, a 6px dot) at a size a thumb can hit three times a day. 40px
    is the height most iOS chip controls settle on; the 8px row gap keeps
    neighbours from being one target. Selected is the same black as the
-   "+ add a thought" pill, so there is one meaning for black on this screen. */
+   "+ create a draft" pill, so there is one meaning for black on this screen. */
 .chipRow {
   display: flex;
   flex-wrap: wrap;

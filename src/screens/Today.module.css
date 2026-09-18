@@ -2130,6 +2130,10 @@
     /* only the card's own padding sits above the body now that the eyebrow has
        moved out, so this is the remainder needed to start below the form. */
     padding-top: calc(var(--note-text-top) - 20px);
+    /* the body must not grow past the card: the note's type is sized by
+       measuring this box, and a box that stretches never overflows */
+    min-height: 0;
+    overflow: hidden;
   }
 
   .noteDeckAddCard {

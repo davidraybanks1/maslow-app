@@ -11,6 +11,7 @@ import FrequencyCard, { MOOD_PIP_COLOR } from '../components/FrequencyCard'
 import { revealWhenSettled } from '../lib/keyboard'
 import Glyph from '../lib/glyphs'
 import Bloom from '../components/Bloom'
+import FitText from '../components/FitText'
 import JournalQuote from '../components/JournalQuote'
 import ManageDeck from '../components/ManageDeck'
 import ManageTags from '../components/ManageTags'
@@ -771,10 +772,14 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                       >
                         {isDesktop && <div className={styles.noteDeckEyebrow}><Glyph kind="note" />NOTE TO SELF</div>}
                         <div className={styles.noteDeckBody}>
-                          <span
-                            className={styles.noteText}
-                            data-len={card.text.length > 110 ? 'long' : card.text.length > 60 ? 'mid' : undefined}
-                          >{card.text}</span>
+                          {isDesktop ? (
+                            <span
+                              className={styles.noteText}
+                              data-len={card.text.length > 110 ? 'long' : card.text.length > 60 ? 'mid' : undefined}
+                            >{card.text}</span>
+                          ) : (
+                            <FitText text={card.text} className={styles.noteText} max={44} min={15} />
+                          )}
                           {card.image_url && (
                             <img
                               src={card.image_url}
@@ -1210,7 +1215,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                   <textarea
                     ref={desktopTextareaRef}
                     className={styles.journalComposerInput}
-                    placeholder="add a thought…"
+                    placeholder="create a draft…"
                     value={draftText}
                     onChange={e => setDraftText(e.target.value)}
                     onKeyDown={handleComposerKeyDown}
@@ -1284,7 +1289,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               )}
               {!composerOpen ? (
                 <button className={styles.composerCollapsed} onClick={() => setComposerOpen(true)}>
-                  + add a thought…
+                  + create a draft…
                 </button>
               ) : (
                 <div className={styles.journalComposer} ref={composerRef}>

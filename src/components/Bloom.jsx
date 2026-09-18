@@ -1,14 +1,24 @@
 import { useId, useState, useEffect } from 'react'
 
+/* Petals per mode, big to small. The small ones at the edges give each mode
+   finer steps, so lighting can track how much of the mode is actually done
+   rather than jumping a whole big sphere on the first practice. They stay
+   inside the original bloom's box (44..246 across, 44..222 down), which the
+   Today layout depends on. */
 const PETALS = [
   { mode: 'survival',    cx: 70,  cy: 150, r: 26 },
+  { mode: 'survival',    cx: 58,  cy: 176, r: 14 },
   { mode: 'nourishment', cx: 104, cy: 106, r: 46 },
   { mode: 'nourishment', cx: 76,  cy: 126, r: 30 },
+  { mode: 'nourishment', cx: 132, cy: 70,  r: 19 },
   { mode: 'appreciation',cx: 176, cy: 96,  r: 52 },
   { mode: 'appreciation',cx: 216, cy: 124, r: 34 },
+  { mode: 'appreciation',cx: 232, cy: 158, r: 16 },
   { mode: 'exploration', cx: 146, cy: 160, r: 62 },
   { mode: 'exploration', cx: 206, cy: 174, r: 40 },
   { mode: 'exploration', cx: 96,  cy: 180, r: 34 },
+  { mode: 'exploration', cx: 224, cy: 204, r: 18 },
+  { mode: 'exploration', cx: 112, cy: 206, r: 16 },
 ]
 
 const MODE_ORDER = ['exploration', 'appreciation', 'nourishment', 'survival']
@@ -32,9 +42,32 @@ function mixHex(h1, h2, t) {
   }).join('')
 }
 
-// Count petals per mode to determine lit threshold
-const MODE_COUNTS = {}
-PETALS.forEach(p => { MODE_COUNTS[p.mode] = (MODE_COUNTS[p.mode] || 0) + 1 })
+/* Lit petals per mode: light from the smallest up, taking the set whose
+   area comes closest to the mode's share done. Anything done lights at
+   least the smallest petal; only a finished mode lights them all. */
+const BY_MODE = {}
+PETALS.forEach((p, i) => { (BY_MODE[p.mode] ||= []).push({ i, a: p.r * p.r }) })
+Object.values(BY_MODE).forEach(list => list.sort((x, y) => x.a - y.a))
+
+function litSet(fillByMode) {
+  const lit = new Set()
+  for (const mode in BY_MODE) {
+    const list = BY_MODE[mode]
+    const fill = Math.max(0, Math.min(1, fillByMode[mode] || 0))
+    if (fill <= 0) continue
+    if (fill >= 1) { list.forEach(p => lit.add(p.i)); continue }
+    const total = list.reduce((s, p) => s + p.a, 0)
+    const target = fill * total
+    let best = 1, bestDiff = Infinity, cum = 0
+    for (let k = 1; k < list.length; k++) {   // never all of them short of done
+      cum += list[k - 1].a
+      const diff = Math.abs(cum - target)
+      if (diff < bestDiff) { bestDiff = diff; best = k }
+    }
+    for (let k = 0; k < best; k++) lit.add(list[k].i)
+  }
+  return lit
+}
 
 // Props: arcs [{color, fill}] in MODE_ORDER, pct (0–100)
 export default function Bloom({ arcs, pct }) {
@@ -56,15 +89,8 @@ export default function Bloom({ arcs, pct }) {
   const u1 = mixHex(UNLIT_DARK[1], UNLIT_EASED[1], t)
   const u2 = mixHex(UNLIT_DARK[2], UNLIT_EASED[2], t)
 
-  // Determine lit state: petal idx of n is lit when fill >= (idx + 0.5) / n
-  const modeIdx = {}
-  const litMap = PETALS.map(p => {
-    modeIdx[p.mode] = (modeIdx[p.mode] || 0)
-    const idx = modeIdx[p.mode]++
-    const n = MODE_COUNTS[p.mode]
-    const fill = fillByMode[p.mode] || 0
-    return fill >= (idx + 0.5) / n
-  })
+  const lit = litSet(fillByMode)
+  const litMap = PETALS.map((_, i) => lit.has(i))
 
   const fid = `bs-${uid}`  // shadow filter
   const mid = `bm-${uid}`  // knockout mask
