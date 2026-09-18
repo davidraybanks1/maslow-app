@@ -116,8 +116,8 @@ const MODE_DOT_TOKEN = {
 const ARCHIVE_SLOTS = ['morning', 'midday', 'evening']
 const ARCHIVE_FEELINGS = Object.values(FEELINGS).flat()
 const ARCHIVE_DATE_PRESETS = [
-  { key: '30d', label: 'last 30 days' },
-  { key: '90d', label: 'last 90 days' },
+  { key: '30d', label: '30 days' },
+  { key: '90d', label: '90 days' },
 ]
 const ARCHIVE_PAGE_SIZE = 3
 
@@ -143,29 +143,6 @@ function formatRangeLabel(start, end) {
   return `${formatRangeDateStr(start)} – ${formatRangeDateStr(end)}`
 }
 
-function archiveHeaderText(filteredEntries, total, filterSlot, filterNeed, filterFeeling, filterCustom, filterDate, rangeLabel, filterFav, filterRevisit) {
-  if (!filterSlot && !filterNeed && !filterFeeling && !filterCustom && !filterDate && !rangeLabel && !filterFav && !filterRevisit) {
-    return `all ${total} ${total === 1 ? 'entry' : 'entries'}, newest first.`
-  }
-  const n = filteredEntries.length
-  const stateCounts = {}
-  for (const e of filteredEntries) if (e.mood_feeling) stateCounts[e.mood_feeling] = (stateCounts[e.mood_feeling] || 0) + 1
-  const topState = Object.entries(stateCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || null
-  let text = `${n} ${n === 1 ? 'entry' : 'entries'}`
-  if (filterFav) text += ' · favorite'
-  if (filterRevisit) text += ' · ↩ revisit'
-  if (topState) text += ` · mostly ${topState}`
-  if (rangeLabel) text += ` · ${rangeLabel}`
-  else if (filterDate === '30d') text += ' · in the last 30 days'
-  else if (filterDate === '90d') text += ' · in the last 90 days'
-  else if (n > 0) {
-    const oldest = filteredEntries[filteredEntries.length - 1]
-    const today = new Date(); today.setHours(12, 0, 0, 0)
-    const daysBack = Math.round((today - new Date(oldest.date_key + 'T12:00:00')) / 86400000)
-    text += ` · back to ${daysBack}d ago`
-  }
-  return text
-}
 
 function ritualMetaLine(cadence) {
   const days = reviewWindowKeys(cadence)
@@ -1548,25 +1525,16 @@ export default function Log({ state, syncCheckinDay }) {
             <div className={styles.archiveSection}>
               <div className={styles.archiveSectionHeader}>
                 <span className={styles.archiveSectionLabel}>The archive</span>
-                <span className={styles.archiveSectionMeta}>
-                  {archiveEntries.length === 0
-                    ? 'no entries yet.'
-                    : archiveHeaderText(filtered, archiveEntries.length, filterSlot, filterNeed, filterFeeling, filterCustom, filterDate, rangeLabel, filterFav, filterRevisit)}
-                </span>
               </div>
 
               {/* one row of facets; tap one to open its choices beneath */}
               {(() => {
                 const feelingLabel = filterFeeling || null
                 const needLabel = filterNeed ? (NEEDS.find(n => n.id === filterNeed)?.name || filterNeed) : null
-                const whenLabel = rangeStart ? rangeLabel : filterDate ? ARCHIVE_DATE_PRESETS.find(r => r.key === filterDate)?.label : null
-                const markedLabel = filterFav && filterRevisit ? 'favorite · revisit' : filterFav ? 'favorite' : filterRevisit ? 'revisit' : null
                 const facets = [
-                  { key: 'marked', name: 'marked', value: markedLabel, show: favCount + revisitCount > 0 || filterFav || filterRevisit },
-                  { key: 'when', name: 'when', value: whenLabel, show: true },
-                  { key: 'slot', name: 'time of day', value: filterSlot, show: true },
+                  { key: 'slot', name: 'daypart', value: filterSlot, show: true },
                   { key: 'need', name: 'need', value: needLabel, show: canvasNeeds.length > 0 },
-                  { key: 'feeling', name: 'how it felt', value: feelingLabel, show: true },
+                  { key: 'feeling', name: 'vibrations', value: feelingLabel, show: true },
                   { key: 'custom', name: 'tags', value: filterCustom, show: allCustomLabels.length > 0 },
                 ].filter(f => f.show)
                 const chip = (active, onClick, text, cnt, key) => (
@@ -1579,42 +1547,21 @@ export default function Log({ state, syncCheckinDay }) {
                 )
                 return (
                   <div className={styles.facetBar}>
-                    <div className={styles.facetRail}>
-                      {facets.map(f => (
-                        <button
-                          key={f.key}
-                          className={`${styles.facet}${f.value ? ` ${styles.facetSet}` : ''}${openFacet === f.key ? ` ${styles.facetOpen}` : ''}`}
-                          onClick={() => setOpenFacet(o => o === f.key ? null : f.key)}
-                        >
-                          <span className={styles.facetName}>{f.name}</span>
-                          {f.value && <span className={styles.facetValue}>{f.value}</span>}
-                          <i className={styles.facetChev} aria-hidden="true" />
-                        </button>
-                      ))}
-                      {anyFilter && (
-                        <button className={styles.facetClear} onClick={() => { setFilterFav(false); setFilterRevisit(false); setFilterSlot(null); setFilterNeed(null); setFilterFeeling(null); setFilterCustom(null); setFilterDate(null); setRangeStart(null); setRangeEnd(null); setPickAnchor(null); setDatePickerOpen(false); setOpenFacet(null); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}>clear</button>
-                      )}
+                    <div className={styles.facetRow}>
+                      {ARCHIVE_DATE_PRESETS.map(r => chip(filterDate === r.key, () => {
+                        setFilterDate(v => v === r.key ? null : r.key)
+                        setRangeStart(null); setRangeEnd(null); setPickAnchor(null); setDatePickerOpen(false)
+                        setArchiveVisible(ARCHIVE_PAGE_SIZE)
+                      }, r.label, presetCounts[r.key], r.key))}
+                      {chip(!!(rangeStart || datePickerOpen), () => {
+                        setFilterDate(null)
+                        if (datePickerOpen) { setDatePickerOpen(false); setPickAnchor(null) }
+                        else setDatePickerOpen(true)
+                        setArchiveVisible(ARCHIVE_PAGE_SIZE)
+                      }, rangeStart ? rangeLabel : 'pick dates', null, 'range')}
                     </div>
-
-                    {openFacet === 'marked' && (
+                    {datePickerOpen && (
                       <div className={styles.facetPanel}>
-                        {chip(filterFav, () => { setFilterFav(v => !v); setArchiveVisible(ARCHIVE_PAGE_SIZE) }, <><IconHeartFilled size={12} stroke={1.5} style={{ verticalAlign: 'middle', marginRight: 4 }} />favorite</>, favCount, 'fav')}
-                        {chip(filterRevisit, () => { setFilterRevisit(v => !v); setArchiveVisible(ARCHIVE_PAGE_SIZE) }, '↩ revisit', revisitCount, 'rev')}
-                      </div>
-                    )}
-                    {openFacet === 'when' && (
-                      <div className={styles.facetPanel}>
-                        {ARCHIVE_DATE_PRESETS.map(r => chip(filterDate === r.key, () => {
-                          setFilterDate(v => v === r.key ? null : r.key)
-                          setRangeStart(null); setRangeEnd(null); setPickAnchor(null); setDatePickerOpen(false)
-                          setArchiveVisible(ARCHIVE_PAGE_SIZE)
-                        }, r.label, presetCounts[r.key], r.key))}
-                        {chip(!!(rangeStart || datePickerOpen), () => {
-                          setFilterDate(null)
-                          if (datePickerOpen) { setDatePickerOpen(false); setPickAnchor(null) }
-                          else setDatePickerOpen(true)
-                          setArchiveVisible(ARCHIVE_PAGE_SIZE)
-                        }, rangeStart ? rangeLabel : 'pick dates', null, 'range')}
                   {datePickerOpen && (() => {
                     const today = new Date(); today.setHours(12, 0, 0, 0)
                     const pickerPrefix = `${pickerYear}-${String(pickerMonth + 1).padStart(2, '0')}-`
@@ -1701,6 +1648,29 @@ export default function Log({ state, syncCheckinDay }) {
                   })()}
                       </div>
                     )}
+                    {(favCount + revisitCount > 0 || filterFav || filterRevisit) && (
+                      <div className={styles.facetRow}>
+                        {chip(filterFav, () => { setFilterFav(v => !v); setArchiveVisible(ARCHIVE_PAGE_SIZE) }, <><IconHeartFilled size={12} stroke={1.5} style={{ verticalAlign: 'middle', marginRight: 4 }} />favorite</>, favCount, 'fav')}
+                        {chip(filterRevisit, () => { setFilterRevisit(v => !v); setArchiveVisible(ARCHIVE_PAGE_SIZE) }, '↩ revisit', revisitCount, 'rev')}
+                      </div>
+                    )}
+                    <div className={styles.facetRail}>
+                      {facets.map(f => (
+                        <button
+                          key={f.key}
+                          className={`${styles.facet}${f.value ? ` ${styles.facetSet}` : ''}${openFacet === f.key ? ` ${styles.facetOpen}` : ''}`}
+                          onClick={() => setOpenFacet(o => o === f.key ? null : f.key)}
+                        >
+                          <span className={styles.facetName}>{f.name}</span>
+                          {f.value && <span className={styles.facetValue}>{f.value}</span>}
+                          <i className={styles.facetChev} aria-hidden="true" />
+                        </button>
+                      ))}
+                      {anyFilter && (
+                        <button className={styles.facetClear} onClick={() => { setFilterFav(false); setFilterRevisit(false); setFilterSlot(null); setFilterNeed(null); setFilterFeeling(null); setFilterCustom(null); setFilterDate(null); setRangeStart(null); setRangeEnd(null); setPickAnchor(null); setDatePickerOpen(false); setOpenFacet(null); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}>clear</button>
+                      )}
+                    </div>
+
                     {openFacet === 'slot' && (
                       <div className={styles.facetPanel}>
                         {ARCHIVE_SLOTS.map(sl => chip(filterSlot === sl, () => { setFilterSlot(v => v === sl ? null : sl); setArchiveVisible(ARCHIVE_PAGE_SIZE) }, sl, slotCounts[sl], sl))}

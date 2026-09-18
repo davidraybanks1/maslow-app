@@ -594,12 +594,9 @@
 
 /* ── The archive's facets: one rail, one open panel ── */
 .facetBar { margin-bottom: 14px; }
-.facetRail {
-  display: flex; gap: 6px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none;
-  width: calc(100% + 44px); margin-inline: -22px; padding-inline: 22px; box-sizing: border-box;
-  -webkit-overflow-scrolling: touch;
-}
-.facetRail::-webkit-scrollbar { display: none; }
+.facetRow { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.facetRow > .facetPanel { width: 100%; }
+.facetRail { display: flex; flex-wrap: wrap; gap: 6px; }
 .facet {
   display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto;
   height: 32px; padding: 0 10px 0 12px; border-radius: 16px;
@@ -631,6 +628,7 @@
   background: var(--card); border: 0.5px solid var(--hairline); border-radius: 14px;
 }
 .facetPanel > .datePicker { flex-basis: 100%; width: 100%; }
+.facetPanel + .facetRow { margin-top: 10px; }
 .threadReadMore {
   display: block; width: 100%; margin-top: 12px; padding: 10px; border-radius: 12px;
   border: 0.5px solid var(--hairline); background: none; font-family: var(--font-mono); font-size: var(--type-floor);
@@ -1535,8 +1533,6 @@
    Margins that previously collapsed between siblings would sum in flex —
    zero the sending side on each affected pair to keep 20px gaps unchanged. */
 @media (max-width: 899px) {
-  .content { display: flex; flex-direction: column; }
-  .calSection { order: 1; margin-top: 0; }
   .ritualDueCard { margin-bottom: 0; }
   .ritualQuiet { margin-bottom: 0; }
 }
@@ -1607,8 +1603,6 @@
   /* Paired right-hand meta — one step quieter than the label. */
   .threadSectionMeta, .archiveSectionMeta { font-size: 12px; }
 
-  /* the facet rail sits inside the column on desktop; no bleed, and it wraps */
-  .facetRail { width: 100%; margin-inline: 0; padding-inline: 0; flex-wrap: wrap; overflow: visible; }
 
   /* Constrain review cards to the left-column width so they don't stretch
      across the full two-column grid. 24px matches column-gap above. */
