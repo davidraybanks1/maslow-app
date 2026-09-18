@@ -11,6 +11,7 @@ import { natureTagStyle, peakTagStyle, ENVIRONMENT_TAG_STYLE, parseDebriefEntry 
 import LiveCanvasCard from '../components/LiveCanvasCard'
 import JournalQuote from '../components/JournalQuote'
 import { supabase } from '../lib/supabase'
+import ThreadBubbles from '../components/ThreadBubbles'
 import styles from './Log.module.css'
 
 const MOOD_PILL = {
@@ -98,7 +99,13 @@ const MONTHS_LONG = ['january','february','march','april','may','june','july','a
 const MONTHS_SHORT = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec']
 
 const MOOD_DOT_COLOR = { good: 'var(--exploration)', mid: '#9DB394', bad: 'var(--survival)' }
-const MOOD_WASH = { good: 'rgba(27,58,45,.10)', mid: 'rgba(232,184,31,.16)', bad: 'rgba(217,59,28,.13)' }
+/* lit from the same point as the bloom - the calendar's mood spheres and the day's practice marks */
+const LIT = (a, b) => `radial-gradient(circle at 34% 26%, ${a}, ${b})`
+const MOOD_LIT = { good: LIT('#3FA87A', '#07301F'), mid: LIT('#B4C4AC', '#3E5238'), bad: LIT('#FF8A66', '#A81F06') }
+const MODE_LIT = {
+  exploration: LIT('#2E8A64', '#0C5038'), appreciation: LIT('#B4C4AC', '#536E4D'),
+  nourishment: LIT('#FFD166', '#F0A800'), survival: LIT('#FF7A55', '#F03C10'),
+}
 const SLOT_ORDER = { morning: 0, midday: 1, evening: 2 }
 const MODE_DOT_TOKEN = {
   exploration:  'var(--exploration)',
@@ -195,7 +202,7 @@ function formatThreadDate(dateKey, slot) {
 
 function formatDayDetailDate(dateKey) {
   const d = new Date(dateKey + 'T12:00:00')
-  return `${WDAYS[d.getDay()]}, ${MONTHS_LONG[d.getMonth()]} ${d.getDate()}`
+  return `${WDAYS[d.getDay()].slice(0, 3)} ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`
 }
 
 function computeActiveThreads(archiveEntries, canvas, customTags) {
@@ -209,6 +216,7 @@ function computeActiveThreads(archiveEntries, canvas, customTags) {
     ...ARCHIVE_SLOTS.map(s => ({
       id: `slot:${s}`,
       predicate: { slot: s },
+      label: `${s}s`,
       title: `what ${s}s sound like`,
       intro: `everything you've written in the ${s}`,
       dim: 'slot',
@@ -216,6 +224,8 @@ function computeActiveThreads(archiveEntries, canvas, customTags) {
     ...ARCHIVE_FEELINGS.map(f => ({
       id: `feeling:${f}`,
       predicate: { feeling: f },
+      label: f,
+      band: BANDS.find(b => FEELINGS[b].includes(f)),
       title: `${f} days`,
       intro: `days that felt ${f}`,
       dim: 'feeling',
@@ -223,6 +233,8 @@ function computeActiveThreads(archiveEntries, canvas, customTags) {
     ...canvasNeeds.map(n => ({
       id: `need:${n.id}`,
       predicate: { need: n.id },
+      label: n.name,
+      modeName: canvas?.[n.id] || null,
       title: n.name,
       intro: `everything you've written about ${n.name}`,
       dim: 'need',
@@ -231,6 +243,7 @@ function computeActiveThreads(archiveEntries, canvas, customTags) {
     ...(customTags || []).map(t => ({
       id: `custom:${t.label}`,
       predicate: { custom: t.label },
+      label: t.label,
       title: `the ${t.label} thread`,
       intro: `everything you've written about ${t.label}`,
       dim: 'custom',
@@ -239,14 +252,22 @@ function computeActiveThreads(archiveEntries, canvas, customTags) {
 
   const scored = candidates
     .map(c => {
-      const windowCount = archiveEntries.filter(e => matchesPredicate(e, c.predicate, afterKey)).length
+      const inWindow = archiveEntries.filter(e => matchesPredicate(e, c.predicate, afterKey))
+      const windowCount = inWindow.length
       const lastDate = archiveEntries.find(e => matchesPredicate(e, c.predicate))?.date_key || '0000-00-00'
-      return { ...c, windowCount, lastDate }
+      // a daypart takes the colour of how it mostly felt
+      let band = c.band
+      if (c.dim === 'slot') {
+        const tally = {}
+        for (const e of inWindow) if (e.mood_band) tally[e.mood_band] = (tally[e.mood_band] || 0) + 1
+        band = Object.entries(tally).sort((a, b) => b[1] - a[1])[0]?.[0] || null
+      }
+      return { ...c, windowCount, lastDate, band }
     })
     .filter(c => c.windowCount >= 2)
     .sort((a, b) => b.windowCount - a.windowCount || b.lastDate.localeCompare(a.lastDate))
 
-  return scored.slice(0, 4)
+  return scored.slice(0, 6)
 }
 
 function threadsInterpretiveLine(threads, archiveEntries) {
@@ -644,6 +665,9 @@ export default function Log({ state, syncCheckinDay }) {
   const [pickerYear, setPickerYear] = useState(() => new Date().getFullYear())
   const [pickerMonth, setPickerMonth] = useState(() => new Date().getMonth())
   const [openThreadId, setOpenThreadId] = useState(null)
+  const [openFacet, setOpenFacet] = useState(null)
+  const [threadVisible, setThreadVisible] = useState(8)
+  useEffect(() => { setThreadVisible(8) }, [openThreadId])
   const [archiveVisible, setArchiveVisible] = useState(ARCHIVE_PAGE_SIZE)
   const [expandedEntries, setExpandedEntries] = useState(new Set())
   const [taggingEntryId, setTaggingEntryId] = useState(null)
@@ -1151,7 +1175,7 @@ export default function Log({ state, syncCheckinDay }) {
         {/* ── Resurfacing ── */}
         {archiveLoaded && archiveEntries.length > 0 && archiveEntries.length < 10 && (
           <div className={styles.resurfaceSection}>
-            <div className={styles.resurfaceSectionLabel}>a peek into the past</div>
+            <div className={styles.resurfaceSectionLabel}>A peek into the past</div>
             <div className={styles.resurfaceGrowth}>keep writing — your past will start speaking back soon.</div>
           </div>
         )}
@@ -1179,7 +1203,7 @@ export default function Log({ state, syncCheckinDay }) {
           const reasonText = matchSlot ? `matched to this ${matchSlot}` : 'a day at random'
           return (
             <div className={styles.resurfaceSection}>
-              <div className={styles.resurfaceSectionLabel}>a peek into the past</div>
+              <div className={styles.resurfaceSectionLabel}>A peek into the past</div>
               <div className={styles.resurfaceCard}>
                 <div className={styles.resurfaceHeader}>
                   <span className={styles.resurfaceDate}>{entryDateStr}</span>
@@ -1224,35 +1248,17 @@ export default function Log({ state, syncCheckinDay }) {
           return (
             <div className={styles.threadSection}>
               <div className={styles.threadSectionHeader}>
-                <span className={styles.threadSectionLabel}>your most active threads</span>
-                <span className={styles.threadSectionMeta}>from the last 30 days</span>
+                <span className={styles.threadSectionLabel}>Your threads</span>
+                <span className={styles.threadSectionMeta}>most active · last 30 days</span>
               </div>
               {activeThreads.length === 0 ? (
                 <p className={styles.threadInterpretive} style={{ fontStyle: 'italic' }}>threads appear as you write — entries from the last 30 days shape this list.</p>
               ) : (
-                <div className={styles.threadListCard}>
-                  {activeThreads.map(thread => {
-                    const allMatches = archiveEntries.filter(e => matchesPredicate(e, thread.predicate))
-                    const modeName = thread.dim === 'need' ? (state.canvas?.[thread.needId] || null) : null
-                    const dotColor = modeName ? (MODE_DOT_TOKEN[modeName] || 'var(--ink)') : 'var(--ink)'
-                    return (
-                      <button
-                        key={thread.id}
-                        className={styles.threadListRow}
-                        onClick={() => setOpenThreadId(id => id === thread.id ? null : thread.id)}
-                      >
-                        <div className={styles.threadCardRow}>
-                          <span className={styles.threadDot} style={{ background: dotColor }} />
-                          <span className={styles.threadTitle}>{thread.title}</span>
-                          <span className={styles.threadChevron} aria-hidden="true">›</span>
-                        </div>
-                        <div className={styles.threadStat}>
-                          {thread.windowCount} {thread.windowCount === 1 ? 'entry' : 'entries'} in the last 30 days · {allMatches.length} overall
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
+                <ThreadBubbles
+                  threads={activeThreads}
+                  openId={openThreadId}
+                  onPick={id => setOpenThreadId(cur => cur === id ? null : id)}
+                />
               )}
               {openThread && (() => {
                 const openMatches = archiveEntries.filter(e => matchesPredicate(e, openThread.predicate))
@@ -1266,7 +1272,7 @@ export default function Log({ state, syncCheckinDay }) {
                     {openMatches.length === 0 ? (
                       <p className={styles.threadReadEmpty}>nothing here yet.</p>
                     ) : (
-                      openMatches.slice().reverse().map(e => {
+                      openMatches.slice(0, threadVisible).map(e => {
                         const slotMood = e.slot && !e.state
                           ? normalizeBand((state.moods || []).find(m => m.date_key === e.date_key && m.prompt_time === e.slot)?.mood || null)
                           : null
@@ -1300,6 +1306,11 @@ export default function Log({ state, syncCheckinDay }) {
                         )
                       })
                     )}
+                    {openMatches.length > threadVisible && (
+                      <button className={styles.threadReadMore} onClick={() => setThreadVisible(v => v + 8)}>
+                        show {Math.min(8, openMatches.length - threadVisible)} more · {openMatches.length - threadVisible} left
+                      </button>
+                    )}
                   </div>
                 )
               })()}
@@ -1317,12 +1328,12 @@ export default function Log({ state, syncCheckinDay }) {
           const firstDayOfWeek = (new Date(calYear, calMonth, 1).getDay() + 6) % 7
           const monthPrefix = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-`
 
-          // Mood grid index: first match wins (state.moods ordered created_at DESC)
+          // every mood of the month, one per slot per day (state.moods is newest first, so the first wins)
           const monthMoodIndex = {}
           for (const m of (state.moods || [])) {
-            if (m.date_key.startsWith(monthPrefix) && !monthMoodIndex[m.date_key]) {
-              monthMoodIndex[m.date_key] = m
-            }
+            if (!m.date_key.startsWith(monthPrefix)) continue
+            const d = (monthMoodIndex[m.date_key] ||= {})
+            if (!d[m.prompt_time]) d[m.prompt_time] = normalizeBand(m.mood)
           }
           const monthHasJournal = new Set(
             archiveEntries.filter(e => e.date_key.startsWith(monthPrefix)).map(e => e.date_key)
@@ -1346,7 +1357,7 @@ export default function Log({ state, syncCheckinDay }) {
 
           return (
             <div className={styles.calSection}>
-              <span className={styles.calSectionLabel}>calendar</span>
+              <span className={styles.calSectionLabel}>Your calendar</span>
               <div className={styles.calCard}>
                 <div className={styles.calNavRow}>
                   <button
@@ -1385,11 +1396,11 @@ export default function Log({ state, syncCheckinDay }) {
                     const day = i + 1
                     const dateKey = `${monthPrefix}${String(day).padStart(2, '0')}`
                     const isFuture = dateKey > todayKey
-                    const moodEntry = monthMoodIndex[dateKey]
-                    const moodWash = moodEntry ? MOOD_WASH[normalizeBand(moodEntry.mood)] : null
+                    const dayMoods = monthMoodIndex[dateKey]
                     const hasJournal = monthHasJournal.has(dateKey)
-                    const hasData = !!(moodEntry || hasJournal)
+                    const hasData = !!(dayMoods || hasJournal)
                     const isSelected = selectedDayKey === dateKey
+                    const isToday = dateKey === todayKey
 
                     if (isFuture) {
                       return (
@@ -1402,16 +1413,15 @@ export default function Log({ state, syncCheckinDay }) {
                     return (
                       <button
                         key={dateKey}
-                        className={`${styles.calDay}${isSelected ? ` ${styles.calDaySelected}` : ''}`}
-                        style={moodWash ? { background: moodWash } : undefined}
+                        className={`${styles.calDay}${isSelected ? ` ${styles.calDaySelected}` : ''}${isToday ? ` ${styles.calDayToday}` : ''}`}
                         onClick={() => selectDay(dateKey)}
                       >
-                        <span className={`${styles.calDayNum}${!hasData ? ` ${styles.calDayNumMuted}` : ''}`}>{day}</span>
-                        {hasJournal && (
-                          <div className={styles.calDayDots}>
-                            <span className={styles.calDayDot} style={{ background: 'var(--exploration)' }} />
-                          </div>
-                        )}
+                        <span className={`${styles.calDayNum}${!hasData ? ` ${styles.calDayNumMuted}` : ''}${hasJournal ? ` ${styles.calDayNumWritten}` : ''}`}>{day}</span>
+                        <div className={styles.calDayDots}>
+                          {MOOD_PERIODS.map(slot => dayMoods?.[slot]
+                            ? <span key={slot} className={styles.calDayDot} style={{ background: MOOD_LIT[dayMoods[slot]] }} />
+                            : <span key={slot} className={`${styles.calDayDot} ${styles.calDayDotOff}`} />)}
+                        </div>
                       </button>
                     )
                   })}
@@ -1423,28 +1433,27 @@ export default function Log({ state, syncCheckinDay }) {
                   <div className={styles.calDetailHeader}>
                     <span className={styles.calDetailDate}>{formatDayDetailDate(selectedDayKey)}</span>
                     <div className={styles.calDetailHeaderBtns}>
-                      {selectedDayKey < todayKey && (
+                      {selectedDayKey <= todayKey && activePractices.length > 0 && (
                         <button
-                          className={`${styles.calDetailCloseBtn}${editMode ? ` ${styles.calDetailEditBtnActive}` : ''}`}
+                          className={`${styles.calDetailEditBtn}${editMode ? ` ${styles.calDetailEditBtnActive}` : ''}`}
                           onClick={() => setEditMode(e => !e)}
-                        >{editMode ? 'done' : 'edit'}</button>
+                        >{editMode ? 'done' : 'edit this day'}</button>
                       )}
-                      <button className={styles.calDetailCloseBtn} onClick={() => setSelectedDayKey(null)}>close</button>
+                      <button className={styles.calDetailCloseBtn} onClick={() => setSelectedDayKey(null)} aria-label="close">×</button>
                     </div>
                   </div>
 
                   {detailMoods.length > 0 && (
                     <div className={styles.calDetailMoodRow}>
-                      {detailMoods.flatMap((m, i) => {
-                        const pair = (
-                          <span key={`pair-${m.prompt_time}`} className={styles.calDetailMoodPair}>
-                            <span className={styles.calDetailMoodDot} style={{ background: MOOD_DOT_COLOR[normalizeBand(m.mood)] }} />
-                            <span className={styles.calDetailMoodLabel}>{m.prompt_time} {normalizeBand(m.mood)}</span>
+                      {MOOD_PERIODS.map(slot => {
+                        const m = detailMoods.find(x => x.prompt_time === slot)
+                        const band = m ? normalizeBand(m.mood) : null
+                        return (
+                          <span key={slot} className={`${styles.calDetailMoodPair}${band ? '' : ` ${styles.calDetailMoodPairOff}`}`}>
+                            <span className={styles.calDetailMoodDot} style={band ? { background: MOOD_LIT[band] } : undefined} />
+                            <span className={styles.calDetailMoodLabel}>{slot}{band ? ` · ${BAND_LABEL[band]}${m.feeling ? `, ${m.feeling}` : ''}` : ''}</span>
                           </span>
                         )
-                        return i === 0
-                          ? [pair]
-                          : [<span key={`sep-${i}`} className={styles.calDetailMoodSep} aria-hidden="true">·</span>, pair]
                       })}
                     </div>
                   )}
@@ -1454,30 +1463,48 @@ export default function Log({ state, syncCheckinDay }) {
                       <div className={styles.calDetailSectionLabel}>
                         practices · {detailLoading ? '…' : `${metCount} of ${activePractices.length} met`}
                       </div>
-                      {editMode && <div className={styles.calDetailEditHint}>tap a practice to log or correct it.</div>}
-                      {!detailLoading && activePractices.map(p => {
-                        const checkin = findCheckin(p)
-                        const isMet = !!checkin
-                        const count = checkin?.count || 0
-                        const modeName = state.canvas?.[p.need_id] || null
-                        const Tag = editMode ? 'button' : 'div'
+                      {editMode && <div className={styles.calDetailEditHint}>tap a practice to log it, tap again for twice, once more to clear it.</div>}
+                      {!detailLoading && metCount === 0 && !editMode && (
+                        <p className={styles.calDetailEmpty}>no practices logged this day.</p>
+                      )}
+                      {!detailLoading && NEEDS.filter(n => activePractices.some(p => p.need_id === n.id)).map(n => {
+                        const modeName = state.canvas?.[n.id] || null
+                        const all = activePractices.filter(p => p.need_id === n.id)
+                        const met = all.filter(p => findCheckin(p)).length
+                        // read a day by what you did; edit it against everything you could have
+                        const ps = editMode ? all : all.filter(p => findCheckin(p))
+                        if (!ps.length) return null
                         return (
-                          <Tag
-                            key={p.id}
-                            className={`${styles.calDetailPracticeRow}${editMode ? ` ${styles.calDetailPracticeRowEditable}` : ''}`}
-                            onClick={editMode ? () => handlePracticeTap(p) : undefined}
-                          >
-                            <span
-                              className={styles.calDetailPracticeRing}
-                              style={isMet
-                                ? { background: modeName ? `var(--${modeName})` : 'var(--ink3)' }
-                                : { border: '1px solid rgba(0,0,0,.25)', background: 'transparent' }
-                              }
-                            />
-                            <span className={styles.calDetailPracticeName}>
-                              {p.label}{count > 1 ? ` ×${count}` : ''}
-                            </span>
-                          </Tag>
+                          <div key={n.id} className={styles.calDetailNeed}>
+                            <div className={styles.calDetailNeedHead}>
+                              <span className={styles.calDetailNeedDot} style={{ background: modeName ? MODE_LIT[modeName] : 'var(--ink3)' }} />
+                              <span className={styles.calDetailNeedName}>{n.name}</span>
+                              <span className={styles.calDetailNeedCount}>{met} of {all.length}</span>
+                            </div>
+                            {ps.map(p => {
+                              const checkin = findCheckin(p)
+                              const isMet = !!checkin
+                              const count = checkin?.count || 0
+                              const Tag = editMode ? 'button' : 'div'
+                              return (
+                                <Tag
+                                  key={p.id}
+                                  className={`${styles.calDetailPracticeRow}${editMode ? ` ${styles.calDetailPracticeRowEditable}` : ''}${!isMet && !editMode ? ` ${styles.calDetailPracticeRowOff}` : ''}`}
+                                  onClick={editMode ? () => handlePracticeTap(p) : undefined}
+                                >
+                                  <span
+                                    className={styles.calDetailPracticeRing}
+                                    style={isMet
+                                      ? { background: modeName ? MODE_LIT[modeName] : 'var(--ink3)' }
+                                      : { border: '1px solid rgba(0,0,0,.25)', background: 'transparent' }
+                                    }
+                                  />
+                                  <span className={styles.calDetailPracticeName}>{p.label}</span>
+                                  {count > 1 && <span className={styles.calDetailPracticeTimes}>×{count}</span>}
+                                </Tag>
+                              )
+                            })}
+                          </div>
                         )
                       })}
                     </div>
@@ -1529,7 +1556,7 @@ export default function Log({ state, syncCheckinDay }) {
           return (
             <div className={styles.archiveSection}>
               <div className={styles.archiveSectionHeader}>
-                <span className={styles.archiveSectionLabel}>the archive</span>
+                <span className={styles.archiveSectionLabel}>The archive</span>
                 <span className={styles.archiveSectionMeta}>
                   {archiveEntries.length === 0
                     ? 'no entries yet.'
@@ -1537,65 +1564,66 @@ export default function Log({ state, syncCheckinDay }) {
                 </span>
               </div>
 
-              <div className={styles.facetCard}>
-              <div className={styles.facetRows}>
-                {/* marked group (favorite + revisit) */}
-                <div className={styles.facetGroup}>
-                  <div className={styles.facetGroupLabel}>MARKED</div>
-                  <div className={styles.facetRow}>
-                    <button
-                      className={`${styles.facetChip} ${filterFav ? styles.facetChipActive : ''}`}
-                      style={favCount === 0 && !filterFav ? { opacity: 0.4 } : undefined}
-                      disabled={favCount === 0 && !filterFav}
-                      onClick={() => { setFilterFav(v => !v); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}
-                    >
-                      <IconHeartFilled size={12} stroke={1.5} style={{ verticalAlign: 'middle', marginRight: 4 }} />favorite<span className={styles.facetCount}>{favCount}</span>
-                    </button>
-                    <button
-                      className={`${styles.facetChip} ${filterRevisit ? styles.facetChipActive : ''}`}
-                      style={revisitCount === 0 && !filterRevisit ? { opacity: 0.4 } : undefined}
-                      disabled={revisitCount === 0 && !filterRevisit}
-                      onClick={() => { setFilterRevisit(v => !v); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}
-                    >
-                      ↩ revisit<span className={styles.facetCount}>{revisitCount}</span>
-                    </button>
-                  </div>
-                </div>
-                {/* date group */}
-                <div className={styles.facetGroup}>
-                  <div className={styles.facetGroupLabel}>WHEN</div>
-                  <div className={styles.facetRow}>
-                    {ARCHIVE_DATE_PRESETS.map(r => {
-                      const cnt = presetCounts[r.key]
-                      const isInert = cnt === 0 && filterDate !== r.key
-                      return (
+              {/* one row of facets; tap one to open its choices beneath */}
+              {(() => {
+                const feelingLabel = filterFeeling || null
+                const needLabel = filterNeed ? (NEEDS.find(n => n.id === filterNeed)?.name || filterNeed) : null
+                const whenLabel = rangeStart ? rangeLabel : filterDate ? ARCHIVE_DATE_PRESETS.find(r => r.key === filterDate)?.label : null
+                const markedLabel = filterFav && filterRevisit ? 'favorite · revisit' : filterFav ? 'favorite' : filterRevisit ? 'revisit' : null
+                const facets = [
+                  { key: 'marked', name: 'marked', value: markedLabel, show: favCount + revisitCount > 0 || filterFav || filterRevisit },
+                  { key: 'when', name: 'when', value: whenLabel, show: true },
+                  { key: 'slot', name: 'time of day', value: filterSlot, show: true },
+                  { key: 'need', name: 'need', value: needLabel, show: canvasNeeds.length > 0 },
+                  { key: 'feeling', name: 'how it felt', value: feelingLabel, show: true },
+                  { key: 'custom', name: 'tags', value: filterCustom, show: allCustomLabels.length > 0 },
+                ].filter(f => f.show)
+                const chip = (active, onClick, text, cnt, key) => (
+                  <button
+                    key={key}
+                    className={`${styles.facetChip} ${active ? styles.facetChipActive : ''}`}
+                    disabled={cnt === 0 && !active}
+                    onClick={onClick}
+                  >{text}{cnt != null && <span className={styles.facetCount}>{cnt}</span>}</button>
+                )
+                return (
+                  <div className={styles.facetBar}>
+                    <div className={styles.facetRail}>
+                      {facets.map(f => (
                         <button
-                          key={r.key}
-                          className={`${styles.facetChip} ${filterDate === r.key ? styles.facetChipActive : ''}`}
-                          style={isInert ? { opacity: 0.4 } : undefined}
-                          disabled={isInert}
-                          onClick={() => {
-                            setFilterDate(v => v === r.key ? null : r.key)
-                            setRangeStart(null); setRangeEnd(null); setPickAnchor(null); setDatePickerOpen(false)
-                            setArchiveVisible(ARCHIVE_PAGE_SIZE)
-                          }}
+                          key={f.key}
+                          className={`${styles.facet}${f.value ? ` ${styles.facetSet}` : ''}${openFacet === f.key ? ` ${styles.facetOpen}` : ''}`}
+                          onClick={() => setOpenFacet(o => o === f.key ? null : f.key)}
                         >
-                          {r.label}<span className={styles.facetCount}>{cnt}</span>
+                          <span className={styles.facetName}>{f.name}</span>
+                          {f.value && <span className={styles.facetValue}>{f.value}</span>}
+                          <i className={styles.facetChev} aria-hidden="true" />
                         </button>
-                      )
-                    })}
-                    <button
-                      className={`${styles.facetChip} ${rangeStart || datePickerOpen ? styles.facetChipActive : ''}`}
-                      onClick={() => {
-                        setFilterDate(null)
-                        if (datePickerOpen) { setDatePickerOpen(false); setPickAnchor(null) }
-                        else setDatePickerOpen(true)
-                        setArchiveVisible(ARCHIVE_PAGE_SIZE)
-                      }}
-                    >
-                      {rangeStart ? rangeLabel : 'date range'}
-                    </button>
-                  </div>
+                      ))}
+                      {anyFilter && (
+                        <button className={styles.facetClear} onClick={() => { setFilterFav(false); setFilterRevisit(false); setFilterSlot(null); setFilterNeed(null); setFilterFeeling(null); setFilterCustom(null); setFilterDate(null); setRangeStart(null); setRangeEnd(null); setPickAnchor(null); setDatePickerOpen(false); setOpenFacet(null); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}>clear</button>
+                      )}
+                    </div>
+
+                    {openFacet === 'marked' && (
+                      <div className={styles.facetPanel}>
+                        {chip(filterFav, () => { setFilterFav(v => !v); setArchiveVisible(ARCHIVE_PAGE_SIZE) }, <><IconHeartFilled size={12} stroke={1.5} style={{ verticalAlign: 'middle', marginRight: 4 }} />favorite</>, favCount, 'fav')}
+                        {chip(filterRevisit, () => { setFilterRevisit(v => !v); setArchiveVisible(ARCHIVE_PAGE_SIZE) }, '↩ revisit', revisitCount, 'rev')}
+                      </div>
+                    )}
+                    {openFacet === 'when' && (
+                      <div className={styles.facetPanel}>
+                        {ARCHIVE_DATE_PRESETS.map(r => chip(filterDate === r.key, () => {
+                          setFilterDate(v => v === r.key ? null : r.key)
+                          setRangeStart(null); setRangeEnd(null); setPickAnchor(null); setDatePickerOpen(false)
+                          setArchiveVisible(ARCHIVE_PAGE_SIZE)
+                        }, r.label, presetCounts[r.key], r.key))}
+                        {chip(!!(rangeStart || datePickerOpen), () => {
+                          setFilterDate(null)
+                          if (datePickerOpen) { setDatePickerOpen(false); setPickAnchor(null) }
+                          else setDatePickerOpen(true)
+                          setArchiveVisible(ARCHIVE_PAGE_SIZE)
+                        }, rangeStart ? rangeLabel : 'pick dates', null, 'range')}
                   {datePickerOpen && (() => {
                     const today = new Date(); today.setHours(12, 0, 0, 0)
                     const pickerPrefix = `${pickerYear}-${String(pickerMonth + 1).padStart(2, '0')}-`
@@ -1680,105 +1708,37 @@ export default function Log({ state, syncCheckinDay }) {
                       </div>
                     )
                   })()}
-                </div>
-                {/* slot group */}
-                <div className={styles.facetGroup}>
-                  <div className={styles.facetGroupLabel}>TIME OF DAY</div>
-                  <div className={styles.facetRow}>
-                    {ARCHIVE_SLOTS.map(s => {
-                      const cnt = slotCounts[s]
-                      const isInert = cnt === 0 && filterSlot !== s
-                      return (
-                        <button
-                          key={s}
-                          className={`${styles.facetChip} ${filterSlot === s ? styles.facetChipActive : ''}`}
-                          style={isInert ? { opacity: 0.4 } : undefined}
-                          disabled={isInert}
-                          onClick={() => { setFilterSlot(v => v === s ? null : s); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}
-                        >
-                          {s}<span className={styles.facetCount}>{cnt}</span>
-                        </button>
-                      )
-                    })}
+                      </div>
+                    )}
+                    {openFacet === 'slot' && (
+                      <div className={styles.facetPanel}>
+                        {ARCHIVE_SLOTS.map(sl => chip(filterSlot === sl, () => { setFilterSlot(v => v === sl ? null : sl); setArchiveVisible(ARCHIVE_PAGE_SIZE) }, sl, slotCounts[sl], sl))}
+                      </div>
+                    )}
+                    {openFacet === 'need' && (
+                      <div className={styles.facetPanel}>
+                        {canvasNeeds.map(n => chip(filterNeed === n.id, () => { setFilterNeed(v => v === n.id ? null : n.id); setArchiveVisible(ARCHIVE_PAGE_SIZE) },
+                          <><span className={styles.facetDot} style={{ background: MODE_DOT_TOKEN[state.canvas?.[n.id]] || 'var(--ink)' }} />{n.name}</>, needCounts[n.id], n.id))}
+                      </div>
+                    )}
+                    {openFacet === 'feeling' && (
+                      <div className={styles.facetPanel}>
+                        {BANDS.map(b => (
+                          <div key={b} className={styles.facetBandRow}>
+                            <span className={styles.facetBandName}>{BAND_LABEL[b]}</span>
+                            {FEELINGS[b].map(f => chip(filterFeeling === f, () => { setFilterFeeling(v => v === f ? null : f); setArchiveVisible(ARCHIVE_PAGE_SIZE) }, f, feelingCounts[f], f))}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {openFacet === 'custom' && (
+                      <div className={styles.facetPanel}>
+                        {allCustomLabels.map(label => chip(filterCustom === label, () => { setFilterCustom(v => v === label ? null : label); setArchiveVisible(ARCHIVE_PAGE_SIZE) }, label, customCounts[label], label))}
+                      </div>
+                    )}
                   </div>
-                </div>
-                {/* need group — canvas needs only */}
-                {canvasNeeds.length > 0 && (
-                  <div className={styles.facetGroup}>
-                    <div className={styles.facetGroupLabel}>NEED</div>
-                    <div className={styles.facetRow}>
-                      {canvasNeeds.map(n => {
-                        const cnt = needCounts[n.id]
-                        const isInert = cnt === 0 && filterNeed !== n.id
-                        return (
-                          <button
-                            key={n.id}
-                            className={`${styles.facetChip} ${filterNeed === n.id ? styles.facetChipActive : ''}`}
-                            style={isInert ? { opacity: 0.4 } : undefined}
-                            disabled={isInert}
-                            onClick={() => { setFilterNeed(v => v === n.id ? null : n.id); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}
-                          >
-                            {n.name}<span className={styles.facetCount}>{cnt}</span>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
-                {/* feeling group — twelve feelings grouped by band */}
-                <div className={styles.facetGroup}>
-                  <div className={styles.facetGroupLabel}>HOW IT FELT</div>
-                  {BANDS.map(b => (
-                    <div key={b} className={styles.facetRow}>
-                      {FEELINGS[b].map(f => {
-                        const cnt = feelingCounts[f]
-                        const isInert = cnt === 0 && filterFeeling !== f
-                        return (
-                          <button
-                            key={f}
-                            className={`${styles.facetChip} ${filterFeeling === f ? styles.facetChipActive : ''}`}
-                            style={isInert ? { opacity: 0.4 } : undefined}
-                            disabled={isInert}
-                            onClick={() => { setFilterFeeling(v => v === f ? null : f); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}
-                          >
-                            {f}<span className={styles.facetCount}>{cnt}</span>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  ))}
-                </div>
-                {/* custom group — vocabulary union distinct stored values */}
-                {allCustomLabels.length > 0 && (
-                  <div className={styles.facetGroup}>
-                    <div className={styles.facetGroupLabel}>CUSTOM</div>
-                    <div className={styles.facetRow}>
-                      {allCustomLabels.map(label => {
-                        const cnt = customCounts[label]
-                        const isInert = cnt === 0 && filterCustom !== label
-                        return (
-                          <button
-                            key={label}
-                            className={`${styles.facetChip} ${filterCustom === label ? styles.facetChipActive : ''}`}
-                            style={isInert ? { opacity: 0.4 } : undefined}
-                            disabled={isInert}
-                            onClick={() => { setFilterCustom(v => v === label ? null : label); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}
-                          >
-                            {label}<span className={styles.facetCount}>{cnt}</span>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-              </div>
-
-              {anyFilter && (
-                <div className={styles.archiveHeader}>
-                  <button className={styles.archiveClearBtn} onClick={() => { setFilterFav(false); setFilterSlot(null); setFilterNeed(null); setFilterFeeling(null); setFilterCustom(null); setFilterDate(null); setRangeStart(null); setRangeEnd(null); setPickAnchor(null); setDatePickerOpen(false); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}>clear</button>
-                </div>
-              )}
+                )
+              })()}
 
               <div className={styles.archiveCards}>
                 {visible.map(e => {
@@ -1832,7 +1792,7 @@ export default function Log({ state, syncCheckinDay }) {
                           {e.image_url && <img src={e.image_url} className={styles.archiveEntryImage} alt="" />}
                         </button>
                         <span className={styles.archiveCardTags}>
-                          {(e.mood_feeling || e.mood_band) && <span className={styles.archiveTag}>{e.mood_feeling || e.mood_band}</span>}
+                          {(e.mood_feeling || e.mood_band) && <span className={styles.archiveTag}>{e.mood_feeling || BAND_LABEL[normalizeBand(e.mood_band)] || e.mood_band}</span>}
                           {needName && <span className={styles.archiveTag}>{needName}</span>}
                           {e.custom && <span className={styles.archiveTag}>{e.custom}</span>}
                           {(canAddNeed || canAddFrequency || canAddCustom) && (

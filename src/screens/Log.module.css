@@ -227,12 +227,13 @@
 }
 
 .resurfaceSectionLabel {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  font-weight: 400;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: rgba(0,0,0,.42);
+  font-family: var(--font-serif);
+  font-size: 23px;
+  font-weight: 300;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+  color: var(--ink);
+  text-transform: none;
 }
 
 .resurfaceGrowth {
@@ -337,18 +338,20 @@
 
 .threadSectionHeader {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
-  margin-bottom: 13px;
+  gap: 12px;
+  margin-bottom: 6px;
 }
 
 .threadSectionLabel {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  font-weight: 400;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: rgba(0,0,0,.42);
+  font-family: var(--font-serif);
+  font-size: 23px;
+  font-weight: 300;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+  color: var(--ink);
+  text-transform: none;
 }
 
 .threadSectionMeta {
@@ -573,17 +576,19 @@
 
 .archiveSectionHeader {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 12px;
 }
 
 .archiveSectionLabel {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  font-weight: 400;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: rgba(0,0,0,.42);
+  font-family: var(--font-serif);
+  font-size: 23px;
+  font-weight: 300;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+  color: var(--ink);
+  text-transform: none;
 }
 
 .archiveSectionMeta {
@@ -592,73 +597,67 @@
   color: rgba(0,0,0,.35);
 }
 
-.facetCard { display: contents; }
-
-.facetRows {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 11px;
+/* ── The archive's facets: one rail, one open panel ── */
+.facetBar { margin-bottom: 14px; }
+.facetRail {
+  display: flex; gap: 6px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none;
+  width: calc(100% + 44px); margin-inline: -22px; padding-inline: 22px; box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
 }
-
-.facetGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
+.facetRail::-webkit-scrollbar { display: none; }
+.facet {
+  display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto;
+  height: 32px; padding: 0 10px 0 12px; border-radius: 16px;
+  border: 0.5px solid var(--hairline); background: var(--card);
+  font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink2);
+  cursor: pointer; -webkit-tap-highlight-color: transparent; white-space: nowrap;
 }
-
-.facetGroupLabel {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  font-variant: small-caps;
-  letter-spacing: 0.1em;
-  color: rgba(0,0,0,.32);
+.facetName { letter-spacing: 0.02em; }
+.facetValue { color: var(--ink); }
+.facetValue::before { content: '·'; margin-right: 6px; color: var(--ink4); }
+.facetChev {
+  display: block; width: 5px; height: 5px; margin-top: -2px;
+  border-right: 1px solid currentColor; border-bottom: 1px solid currentColor; transform: rotate(45deg);
+  transition: transform 160ms ease; opacity: .6;
 }
-
-.facetRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+.facetOpen { border-color: var(--ink); }
+.facetOpen .facetChev { transform: rotate(225deg); margin-top: 2px; }
+.facetSet { background: var(--ink); border-color: var(--ink); color: rgba(242,240,232,.7); }
+.facetSet .facetValue { color: #F2F0E8; }
+.facetSet .facetValue::before { color: rgba(242,240,232,.45); }
+.facetSet .facetChev { color: #F2F0E8; }
+.facetClear {
+  flex: 0 0 auto; height: 32px; padding: 0 12px; border-radius: 16px; border: none; background: none;
+  font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); cursor: pointer;
+  text-decoration: underline; text-underline-offset: 3px;
 }
+.facetPanel {
+  display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; padding: 12px;
+  background: var(--card); border: 0.5px solid var(--hairline); border-radius: 14px;
+}
+.facetPanel > .datePicker { flex-basis: 100%; width: 100%; }
+.threadReadMore {
+  display: block; width: 100%; margin-top: 12px; padding: 10px; border-radius: 12px;
+  border: 0.5px solid var(--hairline); background: none; font-family: var(--font-mono); font-size: var(--type-floor);
+  color: var(--ink3); cursor: pointer;
+}
+.facetBandRow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; width: 100%; }
+.facetBandRow + .facetBandRow { margin-top: 4px; }
+.facetBandName { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink4); width: 3.2em; }
+.facetDot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
 
 .facetChip {
-  height: 32px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 12px;
-  border-radius: 16px;
-  border: 1px solid rgba(0,0,0,.28);
-  background: transparent;
-  color: var(--ink);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 300;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
+  display: inline-flex; align-items: center; height: 30px; padding: 0 11px; border-radius: 15px;
+  border: 0.5px solid rgba(0,0,0,.2); background: transparent;
+  font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink2);
+  cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent;
 }
-.facetChip:hover { border-color: rgba(0,0,0,.45); }
-.facetChip:disabled { cursor: default; opacity: 0.4; }
+.facetChip:disabled { cursor: default; opacity: 0.35; }
+.facetChipActive { background: var(--ink); border-color: var(--ink); color: #F2F0E8; }
+.facetChipActive .facetCount { color: rgba(242,240,232,.6); }
+.facetCount { margin-left: 6px; color: var(--ink4); font-variant-numeric: tabular-nums; }
 
-.facetChipActive {
-  border-color: var(--ink);
-  background: var(--ink);
-  color: var(--card);
-}
-.facetChipActive:hover { border-color: var(--ink); }
 
-.facetCount {
-  font-size: var(--type-floor);
-  opacity: 0.6;
-}
-
-.archiveHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-top: 13px;
-  gap: 10px;
-}
 
 .archiveHeaderText {
   font-family: var(--font-serif);
@@ -669,19 +668,6 @@
   line-height: 1.5;
 }
 
-.archiveClearBtn {
-  height: 24px;
-  padding: 0 10px;
-  border-radius: 12px;
-  border: 1px solid rgba(0,0,0,.14);
-  background: transparent;
-  color: rgba(0,0,0,.5);
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  cursor: pointer;
-  flex-shrink: 0;
-  -webkit-tap-highlight-color: transparent;
-}
 
 .archiveCards {
   background: var(--card);
@@ -908,20 +894,22 @@
 
 .calSectionLabel {
   display: block;
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  font-weight: 400;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: rgba(0,0,0,.42);
+  font-family: var(--font-serif);
+  font-size: 23px;
+  font-weight: 300;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+  color: var(--ink);
+  text-transform: none;
   margin-bottom: 8px;
 }
 
 .calCard {
   background: var(--card);
   border: 0.5px solid var(--hairline);
-  border-radius: 18px;
-  padding: 14px 14px 16px;
+  border-radius: 20px;
+  padding: 16px 14px 14px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.05);
 }
 
 .calNavRow {
@@ -933,8 +921,8 @@
 }
 
 .calNavBtn {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   border: 0.5px solid var(--hairline);
   background: transparent;
@@ -957,7 +945,7 @@
   font-family: var(--font-serif);
   font-style: italic;
   font-weight: 300;
-  font-size: 19px;
+  font-size: 21px;
   color: var(--ink);
   min-width: 160px;
   text-align: center;
@@ -990,12 +978,12 @@
 .calDay {
   aspect-ratio: 1;
   border-radius: 12px;
-  border: 1.5px solid transparent;
+  border: 1px solid transparent;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 4px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   background: transparent;
@@ -1006,7 +994,10 @@
 .calDayFuture { pointer-events: none; cursor: default; }
 .calDayFuture .calDayNum { color: rgba(0,0,0,.3); }
 
-.calDaySelected { border-color: var(--exploration) !important; }
+.calDayToday { border-color: rgba(0,0,0,.35); }
+.calDaySelected { background: var(--ink) !important; border-color: var(--ink) !important; }
+.calDaySelected .calDayNum { color: #F2F0E8; opacity: 1; }
+.calDaySelected .calDayDotOff { background: rgba(255,255,255,.18); }
 
 .calDayNum {
   font-family: var(--font-mono);
@@ -1016,17 +1007,22 @@
 }
 
 .calDayNumMuted { opacity: 0.28; }
+/* a day you wrote on carries a hairline beneath its number */
+.calDayNumWritten { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; text-decoration-color: rgba(0,0,0,.45); }
 
-.calDayDots { display: flex; align-items: center; gap: 2px; }
-.calDayDot { width: 5px; height: 5px; border-radius: 50%; }
+/* morning, midday, evening - three small spheres, lit when there is a reading */
+.calDayDots { display: flex; align-items: center; gap: 2.5px; height: 6px; }
+.calDayDot { width: 6px; height: 6px; border-radius: 50%; }
+.calDayDotOff { background: rgba(0,0,0,.06); }
 
 /* Calendar day detail */
 .calDetail {
   margin-top: 12px;
   background: var(--card);
-  border: 0.5px solid rgba(0,0,0,.1);
-  border-radius: 18px;
-  padding: 16px;
+  border: 0.5px solid var(--hairline);
+  border-radius: 20px;
+  padding: 18px 16px 16px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.05);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -1051,16 +1047,20 @@
 }
 
 .calDetailCloseBtn {
-  height: 26px;
-  padding: 0 11px;
-  border: 0.5px solid rgba(0,0,0,.2);
-  border-radius: 13px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0.5px solid var(--hairline);
+  border-radius: 50%;
   background: transparent;
   font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  color: rgba(0,0,0,.5);
+  font-size: 15px;
+  line-height: 1;
+  color: var(--ink2);
   cursor: pointer;
   flex-shrink: 0;
+  display: grid;
+  place-items: center;
   -webkit-tap-highlight-color: transparent;
 }
 .calDetailCloseBtn:hover { opacity: 0.7; }
@@ -1072,9 +1072,23 @@
   flex-shrink: 0;
 }
 
+.calDetailEditBtn {
+  height: 28px;
+  padding: 0 12px;
+  border: 0.5px solid var(--ink);
+  border-radius: 14px;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
 .calDetailEditBtnActive {
   background: var(--ink);
-  color: var(--paper);
+  color: #F2F0E8;
   border-color: var(--ink);
 }
 .calDetailEditBtnActive:hover { opacity: 1; }
@@ -1100,21 +1114,30 @@
 
 .calDetailMoodRow {
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 6px;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
-.calDetailMoodPair { display: flex; align-items: center; gap: 5px; }
-.calDetailMoodDot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.calDetailMoodPair { display: flex; align-items: center; gap: 8px; }
+.calDetailMoodPairOff { opacity: .45; }
+.calDetailMoodDot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; background: rgba(0,0,0,.08); }
 
 .calDetailMoodLabel {
   font-family: var(--font-mono);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 300;
   color: var(--ink2);
 }
+
+/* practices, grouped by need */
+.calDetailNeed { margin-top: 8px; }
+.calDetailNeedHead { display: flex; align-items: center; gap: 8px; padding: 6px 0 2px; }
+.calDetailNeedDot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.calDetailNeedName { font-family: var(--font-serif); font-size: 16px; font-weight: 300; color: var(--ink); flex: 1; }
+.calDetailNeedCount { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink4); font-variant-numeric: tabular-nums; }
+.calDetailPracticeRowOff .calDetailPracticeName { color: var(--ink4); }
+.calDetailPracticeTimes { margin-left: auto; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); }
 
 .calDetailMoodSep { font-family: var(--font-mono); font-size: 14px; color: rgba(0,0,0,.3); }
 
@@ -1131,11 +1154,11 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  height: 38px;
+  height: 36px;
   border-top: 0.5px solid rgba(0,0,0,.06);
 }
 
-.calDetailPracticeRing { width: 13px; height: 13px; border-radius: 50%; flex-shrink: 0; }
+.calDetailPracticeRing { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; box-sizing: border-box; }
 
 .calDetailPracticeName {
   font-family: var(--font-mono);
@@ -1571,27 +1594,19 @@
     margin-bottom: 0;
   }
 
-  /* Section labels: 13px mono / .16em / uppercase / var(--ink3).
-     Matches the pass just landed on Today and Data. */
+  /* Section titles match the almanac's group titles on desktop */
   .archiveSectionLabel,
   .calSectionLabel,
   .resurfaceSectionLabel,
   .threadSectionLabel {
-    font-size: 13px;
-    letter-spacing: 0.16em;
+    font-size: 28px;
   }
 
   /* Paired right-hand meta — one step quieter than the label. */
   .threadSectionMeta, .archiveSectionMeta { font-size: 12px; }
 
-  /* Facet GROUP labels (WHEN / TIME OF DAY / NEED / HOW IT FELT / CUSTOM)
-     are subordinate to the "the archive" section label, so one step quieter. */
-  .facetGroupLabel { font-size: var(--type-floor); }
-
-  /* Without a card container the facet block needs spatial separation
-     from the entries card. margin-bottom:24px collapses with archiveCards
-     margin-top:12px → max(24,12) = 24px rendered gap. */
-  .facetRows { margin-bottom: 24px; }
+  /* the facet rail sits inside the column on desktop; no bleed, and it wraps */
+  .facetRail { width: 100%; margin-inline: 0; padding-inline: 0; flex-wrap: wrap; overflow: visible; }
 
   /* Constrain review cards to the left-column width so they don't stretch
      across the full two-column grid. 24px matches column-gap above. */
