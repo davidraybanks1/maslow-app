@@ -20,6 +20,12 @@ import styles from './Today.module.css'
 
 const MODE_THRESHOLDS = { exploration: 80, appreciation: 60, nourishment: 50, survival: 20 }
 
+// Same thresholds as the almanac's observation cards (Data.jsx) - the two
+// card types share a footprint, so a note steps its type down at the same
+// lengths a finding does, rather than picking its own scale.
+function noteLenAttr(text) {
+  return text.length > 150 ? 'long' : text.length > 90 ? 'mid' : undefined
+}
 
 // Shared math: each mode owns ≤25% of total; returns [{color, from, to}] in percent
 function buildProgressSegments(arcs) {
@@ -827,7 +833,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                       >
                         <div className={styles.noteDeckEyebrow}><Glyph kind="note" />NOTE TO SELF</div>
                         <div className={styles.noteDeckBody}>
-                          <span className={styles.noteText}>{card.text}</span>
+                          <span className={styles.noteText} data-len={noteLenAttr(card.text)}>{card.text}</span>
                           {card.image_url && (
                             <img
                               src={card.image_url}
@@ -862,7 +868,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                       onCommit={hapticTick}
                       renderCard={card => (
                         <div className={styles.noteDeckBody}>
-                          <span className={styles.noteText}>{card.text}</span>
+                          <span className={styles.noteText} data-len={noteLenAttr(card.text)}>{card.text}</span>
                           {card.image_url && (
                             <img
                               src={card.image_url}

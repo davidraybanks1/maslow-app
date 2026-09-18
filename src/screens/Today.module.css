@@ -179,20 +179,28 @@
   flex: 1;
 }
 
-/* One size and one face for every note, so each card starts at the same
-   line and reads the same as the next: Newsreader, the paper's own serif -
-   a newsroom-column feel rather than a typed one. Left-aligned regardless
-   of the card's own text-align (none is set, but this is now explicit,
-   not incidental). */
+/* Matches the almanac's observation cards (Data.module.css's .insightFinding)
+   face for face: Newsreader at the same weight and leading, stepping down at
+   the same two length thresholds (noteLenAttr in Today.jsx mirrors Data.jsx's
+   own > 150 / > 90 split). The two card types share a 282x296 footprint, and
+   unlike the almanac card this one keeps that footprint - and its overflow:
+   hidden - at every width (NoteStack.module.css's .card), so the step-down
+   stays active here at all sizes rather than flattening on mobile the way
+   .insightFinding does once its own card goes full-width/auto-height there.
+   Left-aligned regardless of the card's own text-align (none is set, but
+   this is now explicit, not incidental). */
 .noteText {
   font-family: var(--font-serif);
-  font-size: 16px;
-  font-weight: 400;
+  font-size: 20px;
+  font-weight: 300;
+  line-height: 1.32;
+  letter-spacing: -0.01em;
   text-align: left;
   color: var(--ink);
-  line-height: 1.5;
   flex: 1;
 }
+.noteText[data-len="mid"] { font-size: 17.5px; line-height: 1.36; }
+.noteText[data-len="long"] { font-size: 15.5px; line-height: 1.40; }
 
 .noteEmpty {
   font-family: var(--font-mono);
