@@ -247,27 +247,6 @@ function computeActiveThreads(archiveEntries, canvas, customTags) {
   return scored.slice(0, 10)
 }
 
-function threadsInterpretiveLine(threads, archiveEntries) {
-  const countFor = t => archiveEntries.filter(e => matchesPredicate(e, t.predicate)).length
-  const parts = []
-  for (const dim of ['slot', 'need', 'state', 'custom']) {
-    const dimThreads = threads.filter(t => t.dim === dim)
-    if (!dimThreads.length) continue
-    const richOnes = dimThreads.filter(t => countFor(t) >= 8)
-    if (!richOnes.length) continue
-    if (dim === 'slot') {
-      parts.push(`${richOnes[0].predicate.slot}s run deep`)
-    } else if (dim === 'need') {
-      parts.push(richOnes.length === 1 ? `${richOnes[0].title} is building` : 'needs are building')
-    } else if (dim === 'state') {
-      parts.push(richOnes.length === 1 ? `${richOnes[0].title} has real shape` : 'states are taking shape')
-    } else {
-      parts.push(richOnes.length === 1 ? `${richOnes[0].title} is a real thread` : 'custom threads are active')
-    }
-  }
-  return parts.length ? parts.join('; ') + '.' : 'keep writing — threads deepen over time.'
-}
-
 // Monday-indexed (0=Mon..6=Sun) review day -> the matching JS Date.getDay() value (0=Sun..6=Sat)
 function reviewDayToJsDay(reviewDay) {
   return (reviewDay + 1) % 7
@@ -1139,13 +1118,7 @@ export default function Log({ state, syncCheckinDay }) {
               >later</button>
             </div>
           </div>
-        ) : (
-          <div className={styles.ritualQuiet}>
-            <span className={styles.ritualQuietNext}>
-              {cadence === 'daily' ? 'next daily review: tomorrow' : `next weekly review: ${REVIEW_DAY_LABELS[state.reviewDay ?? 0]}`}
-            </span>
-          </div>
-        )}
+        ) : null}
         </div>
         <div className={styles.colLeft}>
         {/* ── Threads ── */}
@@ -1154,8 +1127,7 @@ export default function Log({ state, syncCheckinDay }) {
           return (
             <div className={styles.threadSection}>
               <div className={styles.threadSectionHeader}>
-                <span className={styles.threadSectionLabel}>Your threads</span>
-                <span className={styles.threadSectionMeta}>most active · last 30 days</span>
+                <span className={styles.threadSectionMeta}>most active threads · last 30 days</span>
               </div>
               {activeThreads.length === 0 ? (
                 <p className={styles.threadInterpretive} style={{ fontStyle: 'italic' }}>threads appear as you write — entries from the last 30 days shape this list.</p>
@@ -1220,7 +1192,6 @@ export default function Log({ state, syncCheckinDay }) {
                   </div>
                 )
               })()}
-              {activeThreads.length > 0 && <p className={styles.threadInterpretive}>{threadsInterpretiveLine(activeThreads, archiveEntries)}</p>}
             </div>
           )
         })()}

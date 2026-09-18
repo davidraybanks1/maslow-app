@@ -202,23 +202,6 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-/* ── Ritual card: quiet state ── */
-.ritualQuiet {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  border-top: 1px solid rgba(0,0,0,.1);
-  padding: 14px 0 0;
-  margin-bottom: 20px;
-}
-
-.ritualQuietNext {
-  font-family: var(--font-serif);
-  font-size: 14px;
-  font-style: italic;
-  color: var(--ink2);
-}
-
 /* ── Resurfacing ── */
 .resurfaceSection {
   margin-top: 20px;
@@ -337,16 +320,6 @@
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 6px;
-}
-
-.threadSectionLabel {
-  font-family: var(--font-serif);
-  font-size: 23px;
-  font-weight: 300;
-  letter-spacing: -0.015em;
-  line-height: 1.15;
-  color: var(--ink);
-  text-transform: none;
 }
 
 .threadSectionMeta {
@@ -1534,7 +1507,6 @@
    zero the sending side on each affected pair to keep 20px gaps unchanged. */
 @media (max-width: 899px) {
   .ritualDueCard { margin-bottom: 0; }
-  .ritualQuiet { margin-bottom: 0; }
 }
 
 /* desktop grid */
@@ -1595,8 +1567,7 @@
   /* Section titles match the almanac's group titles on desktop */
   .archiveSectionLabel,
   .calSectionLabel,
-  .resurfaceSectionLabel,
-  .threadSectionLabel {
+  .resurfaceSectionLabel {
     font-size: 28px;
   }
 
@@ -1607,7 +1578,6 @@
   /* Constrain review cards to the left-column width so they don't stretch
      across the full two-column grid. 24px matches column-gap above. */
   .ritualDueCard,
-  .ritualQuiet,
   .completeBanner {
     max-width: calc((100% - 24px) / 2);
   }
