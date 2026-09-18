@@ -4,23 +4,28 @@ import styles from './ThreadTiles.module.css'
 /* Your threads as a plot of tiles: one rectangle, edge to edge, divided so
    that each thread gets an area in proportion to how much you have written on
    it lately. The division is squarified, so tiles stay close to square and
-   the biggest threads sit top-left. The colours are flat, and all drawn from
-   two of the app's own: the plot runs from nourishment's deep yellow at the
-   biggest thread to appreciation's deep sage at the smallest, so the whole
-   thing reads as one gradient laid over the grid. */
+   the biggest threads sit top-left. Every tile carries its own name: if the
+   smallest cannot, the big ones give up a little area first (the scale is
+   compressed) and, when that is not enough, the smallest threads step off
+   the plot into a line beneath it. The colour is nourishment's yellow, deep
+   at the biggest thread and pale at the smallest, each tile lit from the
+   same point as the bloom. */
 
-const RAMP = [
-  '#F0A800', '#F7BE33', '#FFD166', '#FFE08A', '#EFE0A0',
-  '#D5D8A6', '#B4C4AC', '#98AE90', '#7A9070', '#536E4D',
-]
-// the deep sages want white type
-const LIGHT_TYPE = new Set([7, 8, 9])
+const RAMP = ['#F0A800', '#F6B10E', '#FBBA22', '#FFC338', '#FFCB4E', '#FFD166', '#FFD77A', '#FFDD8E', '#FFE4A0', '#FFEAB0']
 
-/* shades by rank, spread across the whole ramp however many threads there
-   are, so a short list still runs yellow to sage */
-function assignShades(n) {
+function mix(hex, to, t) {
+  const c = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16))
+  const a = c(hex), b = c(to)
+  return '#' + a.map((v, i) => Math.round(v + (b[i] - v) * t).toString(16).padStart(2, '0')).join('')
+}
+// the lit look: a warm highlight toward the bloom's light, the shade itself at the edge
+const HI = shade => mix(shade, '#FFF8DC', 0.55)
+
+/* shades by rank, spread across the whole ramp however many tiles there
+   are, so a short list still runs deep to pale */
+function assignShades(n, steps) {
   if (n === 1) return [0]
-  return Array.from({ length: n }, (_, k) => Math.round((k / (n - 1)) * (RAMP.length - 1)))
+  return Array.from({ length: n }, (_, k) => Math.round((k / (n - 1)) * (steps - 1)))
 }
 
 /* squarified treemap (Bruls, Huizing, van Wijk): lay rows of beds along the
@@ -62,33 +67,55 @@ function squarify(items, x, y, w, h) {
 
 const CH = 7.3   // mono glyph width at the type floor
 
+const PAD = 8    // inset of the name from the tile's edge
+
+/* how a name sits in a tile of this size, or null if it cannot */
+function fitLabel(label, w, h) {
+  const words = label.split(' ')
+  if (label.length * CH <= w - PAD * 2 && h >= 40) return { mode: 'flat', lines: [label] }
+  if (words.length > 1 && h >= 54) {
+    const cut = Math.ceil(words.length / 2)
+    const lines = [words.slice(0, cut).join(' '), words.slice(cut).join(' ')]
+    if (Math.max(...lines.map(l => l.length)) * CH <= w - PAD * 2) return { mode: 'wrap', lines }
+  }
+  return null
+}
+
 export default function ThreadTiles({ threads, openId, onPick }) {
   const W = 393
   const geo = useMemo(() => {
     if (!threads.length) return null
-    const n = threads.length
-    const H = n <= 2 ? 110 : n <= 4 ? 160 : n <= 7 ? 210 : 240
-    const G = 4
-    const shades = assignShades(threads.length)
-    const tiles = squarify(threads.map(t => ({ ...t, v: t.windowCount })), 0, 0, W, H)
-    const small = []
-    const drawn = tiles.map((t, k) => {
-      // grout only between tiles: the plot's outer edges are the screen's
-      const l = t.x > 0.5 ? G / 2 : 0, r = t.x + t.w < W - 0.5 ? G / 2 : 0
-      const tp = t.y > 0.5 ? G / 2 : 0, bt = t.y + t.h < H - 0.5 ? G / 2 : 0
-      const w = t.w - l - r, h = t.h - tp - bt
-      const words = t.label.split(' ')
-      const longest = Math.max(...words.map(s => s.length))
-      const full = t.label.length * CH
-      let mode
-      if (full < w - 16 && h >= 40) mode = 'flat'
-      else if (words.length > 1 && longest * CH < w - 16 && h >= 56) mode = 'wrap'
-      else if (full < h - 32 && w >= 30) mode = 'tall'
-      else mode = 'count'
-      if (mode === 'count') small.push(t)
-      return { ...t, x: t.x + l, y: t.y + tp, w, h, mode, words, shade: shades[k], light: LIGHT_TYPE.has(shades[k]) }
-    })
-    return { H, drawn, small }
+    const G = 2
+    // every name must fit. Prefer showing every thread: first compress the
+    // scale so the big tiles yield some area, then let the plot grow a
+    // little taller, and only then drop the smallest threads
+    const POWERS = [1, 0.85, 0.7, 0.55]
+    const baseH = n => (n <= 2 ? 110 : n <= 4 ? 160 : n <= 7 ? 210 : 240)
+    const layout = (list, p, H) => {
+      const tiles = squarify(list.map(t => ({ ...t, v: Math.pow(t.windowCount, p) })), 0, 0, W, H)
+      const shades = assignShades(list.length, RAMP.length)
+      return tiles.map((t, k) => {
+        // grout only between tiles: the plot's outer edges are the screen's
+        const l = t.x > 0.5 ? G / 2 : 0, r = t.x + t.w < W - 0.5 ? G / 2 : 0
+        const tp = t.y > 0.5 ? G / 2 : 0, bt = t.y + t.h < H - 0.5 ? G / 2 : 0
+        const w = t.w - l - r, h = t.h - tp - bt
+        return { ...t, x: t.x + l, y: t.y + tp, w, h, fit: fitLabel(t.label, w, h), shade: shades[k] }
+      })
+    }
+    let drawn = null
+    for (let n = threads.length; n >= 1 && !drawn; n--) {
+      const list = threads.slice(0, n)
+      for (const p of POWERS) {
+        for (const H of [baseH(n), baseH(n) + 30, baseH(n) + 60]) {
+          const tiles = layout(list, p, H)
+          if (tiles.every(t => t.fit)) { drawn = { H, tiles }; break }
+        }
+        if (drawn) break
+      }
+      if (!drawn && n === 1) drawn = { H: baseH(1), tiles: layout(list, 1, baseH(1)) }   // one thread always shows
+    }
+    const shown = new Set(drawn.tiles.map(t => t.id))
+    return { H: drawn.H, drawn: drawn.tiles, small: threads.filter(t => !shown.has(t.id)) }
   }, [threads])
   if (!geo) return null
 
@@ -97,36 +124,27 @@ export default function ThreadTiles({ threads, openId, onPick }) {
     <div className={styles.wrap}>
       <div className={styles.bleed}>
       <svg className={styles.svg} viewBox={`0 0 ${W} ${H}`} style={{ height: H }} role="img" aria-label="your most active threads">
+        <defs>
+          {RAMP.map((shade, k) => (
+            <radialGradient key={k} id={`tt-s${k}`} cx="34%" cy="26%" r="78%">
+              <stop offset="0%" stopColor={HI(shade)} /><stop offset="100%" stopColor={shade} />
+            </radialGradient>
+          ))}
+        </defs>
         {drawn.map(t => {
           const open = openId === t.id
           const x = t.x, y = t.y
-          const lab = `${styles.lab}${t.light ? ` ${styles.labLight}` : ''}`
-          const num = `${styles.num}${t.light ? ` ${styles.numLight}` : ''}`
           return (
             <g key={t.id} className={styles.bed} onClick={() => onPick(t.id)} style={{ cursor: 'pointer' }}>
-              <rect x={x} y={y} width={t.w} height={t.h} fill={RAMP[t.shade]} />
-              {open && <rect x={x + 3} y={y + 3} width={t.w - 6} height={t.h - 6} className={`${styles.ring}${t.light ? ` ${styles.ringLight}` : ''}`} />}
-              {t.mode === 'flat' && (
+              <rect x={x} y={y} width={t.w} height={t.h} fill={`url(#tt-s${t.shade})`} />
+              {open && <rect x={x + 3} y={y + 3} width={t.w - 6} height={t.h - 6} className={styles.ring} />}
+              {t.fit ? (
                 <>
-                  <text x={x + 9} y={y + 18} className={lab}>{t.label}</text>
-                  <text x={x + 9} y={y + t.h - 8} className={num}>{t.windowCount}</text>
+                  {t.fit.lines.map((ln, i) => <text key={i} x={x + PAD} y={y + 17 + i * 14} className={styles.lab}>{ln}</text>)}
+                  <text x={x + PAD} y={y + t.h - 8} className={styles.num}>{t.windowCount}</text>
                 </>
-              )}
-              {t.mode === 'wrap' && (
-                <>
-                  <text x={x + 9} y={y + 18} className={lab}>{t.words.slice(0, Math.ceil(t.words.length / 2)).join(' ')}</text>
-                  <text x={x + 9} y={y + 32} className={lab}>{t.words.slice(Math.ceil(t.words.length / 2)).join(' ')}</text>
-                  <text x={x + 9} y={y + t.h - 8} className={num}>{t.windowCount}</text>
-                </>
-              )}
-              {t.mode === 'tall' && (
-                <>
-                  <text transform={`translate(${x + t.w / 2 + 4} ${y + t.h - 8}) rotate(-90)`} className={lab}>{t.label}</text>
-                  <text x={x + t.w / 2} y={y + 17} textAnchor="middle" className={`${num} ${styles.numSmall}`}>{t.windowCount}</text>
-                </>
-              )}
-              {t.mode === 'count' && t.w >= 20 && t.h >= 16 && (
-                <text x={x + t.w / 2} y={y + t.h / 2 + 5} textAnchor="middle" className={`${num} ${styles.numSmall}`}>{t.windowCount}</text>
+              ) : (
+                <text x={x + PAD} y={y + t.h - 8} className={styles.num}>{t.windowCount}</text>
               )}
             </g>
           )
@@ -135,7 +153,7 @@ export default function ThreadTiles({ threads, openId, onPick }) {
       </div>
       {small.length > 0 && (
         <p className={styles.small}>
-          {'smaller: '}
+          {'also: '}
           {small.map((t, i) => (
             <span key={t.id}>
               {i > 0 && ' · '}
