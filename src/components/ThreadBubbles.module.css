@@ -1,9 +1,0 @@
-.svg { display: block; width: 100%; overflow: visible; margin: 6px 0 2px; }
-.bubble { -webkit-tap-highlight-color: transparent; }
-.bubble:active circle { opacity: .85; }
-.ring { fill: none; stroke: var(--ink); stroke-width: 1; stroke-dasharray: 2 3; }
-.lab { font-family: var(--mono); font-size: var(--type-floor); fill: rgba(255,255,255,.92); letter-spacing: 0.02em; }
-.labDark { fill: rgba(0,0,0,.78); }
-.num { font-family: var(--serif); font-size: 15px; font-weight: 300; fill: rgba(255,255,255,.95); font-variant-numeric: tabular-nums; }
-.numDark { fill: var(--ink); }
-.labOut { font-family: var(--mono); font-size: var(--type-floor); fill: var(--ink3); }

@@ -1,0 +1,13 @@
+.wrap { margin: 6px 0 2px; }
+.svg { display: block; width: 100%; overflow: visible; }
+.bed { -webkit-tap-highlight-color: transparent; }
+.bed:active rect { opacity: .85; }
+.ring { fill: none; stroke: rgba(255,255,255,.85); stroke-width: 1.2; stroke-dasharray: 2 3; }
+.lab { font-family: var(--mono); font-size: var(--type-floor); fill: rgba(255,255,255,.94); letter-spacing: 0.02em; }
+.labDark { fill: rgba(0,0,0,.78); }
+.num { font-family: var(--serif); font-size: 15px; font-weight: 300; fill: rgba(255,255,255,.95); font-variant-numeric: tabular-nums; }
+.numDark { fill: var(--ink); }
+.numSmall { font-size: 13px; }
+.small { font-family: var(--mono); font-size: var(--type-floor); color: var(--ink3); margin: 8px 0 0; line-height: 1.6; }
+.smallBtn { appearance: none; background: none; border: 0; padding: 0; font: inherit; color: inherit; cursor: pointer; }
+.smallBtn b { font-weight: 500; }

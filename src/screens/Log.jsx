@@ -11,7 +11,7 @@ import { natureTagStyle, peakTagStyle, ENVIRONMENT_TAG_STYLE, parseDebriefEntry 
 import LiveCanvasCard from '../components/LiveCanvasCard'
 import JournalQuote from '../components/JournalQuote'
 import { supabase } from '../lib/supabase'
-import ThreadBubbles from '../components/ThreadBubbles'
+import ThreadTiles from '../components/ThreadTiles'
 import styles from './Log.module.css'
 
 const MOOD_PILL = {
@@ -1160,7 +1160,7 @@ export default function Log({ state, syncCheckinDay }) {
               {activeThreads.length === 0 ? (
                 <p className={styles.threadInterpretive} style={{ fontStyle: 'italic' }}>threads appear as you write — entries from the last 30 days shape this list.</p>
               ) : (
-                <ThreadBubbles
+                <ThreadTiles
                   threads={activeThreads}
                   openId={openThreadId}
                   onPick={id => setOpenThreadId(cur => cur === id ? null : id)}
