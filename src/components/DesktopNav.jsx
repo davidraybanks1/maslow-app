@@ -8,7 +8,7 @@ import ProfileMenu from './ProfileMenu'
 const ITEMS = [
   ['/today', 'today'],
   ['/data', 'almanac'],
-  ['/log', 'reflect'],
+  ['/log', 'drafts'],
 ]
 
 export default function DesktopNav({ name, email, reviewCadence, updateReviewCadence, reviewDay, reviewTime, updateReviewSchedule, remindersEnabled, updateRemindersEnabled, reviewReminderEnabled, updateReviewReminderEnabled, moodReminders, updateMoodReminder, notifTypes, updateNotifType, noteDeckCount, customTagCount, resetTour }) {

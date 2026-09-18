@@ -321,13 +321,8 @@
 }
 .resurfaceAnotherBtn:hover { opacity: 0.7; }
 
-.resurfaceFooterSpacer { flex: 1; }
 
-.resurfaceWhy {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  color: rgba(0,0,0,.32);
-}
+
 
 /* ── Threads section ── */
 .threadSection {
@@ -825,6 +820,13 @@
 }
 .retroTagOption:hover { opacity: 0.75; }
 
+.resurfaceSectionSub { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink4); margin: 2px 0 12px; }
+.archiveMoreRow { display: flex; gap: 8px; padding: 12px 16px 14px; border-top: 0.5px solid rgba(0,0,0,.07); }
+.archiveMoreBtn {
+  flex: 1; height: 34px; border-radius: 17px; border: 0.5px solid var(--hairline); background: none;
+  font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink2); cursor: pointer;
+}
+.archiveMoreBtn:active { opacity: .6; }
 .archiveLoadMore {
   display: block;
   width: 100%;

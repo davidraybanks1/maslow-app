@@ -3,29 +3,27 @@ import styles from './ThreadBubbles.module.css'
 
 /* Your threads, as a handful of lit spheres: the more you have written on
    a thread lately, the bigger its bubble. Each is lit from the same point as
-   the bloom. Needs take their mode's ramp, feelings their band's, dayparts
-   the unlit sphere, and your own tags a warm paper ramp. */
+   the bloom, in a palette of its own - vivid, and deliberately clear of the
+   four mode colours, so a thread never looks like a mode. A thread keeps its
+   colour between visits: it is chosen from its name, not its rank. */
 
-const RAMP = {
-  exploration: ['#2E8A64', '#0C5038'],
-  appreciation: ['#B4C4AC', '#536E4D'],
-  nourishment: ['#FFD166', '#F0A800'],
-  survival: ['#FF7A55', '#F03C10'],
-  good: ['#3FA87A', '#07301F'],
-  mid: ['#B4C4AC', '#3E5238'],
-  bad: ['#FF8A66', '#A81F06'],
-  ink: ['#4A453E', '#0A0807'],
-  paper: ['#E6DCC4', '#9C8C6B'],
-}
-// which ramps carry ink comfortably, and which want light type
-const DARK_TYPE = new Set(['nourishment', 'appreciation', 'mid', 'paper'])
+const RAMPS = [
+  ['#B9A6E8', '#4A2C8C'],   // violet
+  ['#8FB4FF', '#1E3F9E'],   // cobalt
+  ['#7FD3D9', '#0F5F6B'],   // teal
+  ['#E39AC9', '#7A1F5C'],   // plum
+  ['#FFB3C0', '#B8324F'],   // rose
+  ['#A9B8D6', '#3A4A6E'],   // slate
+  ['#E8B48A', '#8A4A1C'],   // copper
+  ['#D6C2F5', '#6E4FB3'],   // lilac
+  ['#8CD4B0', '#1F6B4F'],   // mint
+  ['#F0A6A6', '#9C2F2F'],   // brick
+]
+// the two lightest ramps read better with ink type
+const DARK_TYPE = new Set([7])
 
-export function rampFor(thread) {
-  if (thread.dim === 'need') return thread.modeName || 'exploration'
-  if (thread.dim === 'feeling') return thread.band || 'mid'
-  if (thread.dim === 'slot') return thread.band || 'ink'
-  return 'paper'
-}
+function hash(str) { let h = 5381; for (const ch of str) h = ((h << 5) + h + ch.charCodeAt(0)) | 0; return Math.abs(h) }
+export function rampIndex(thread) { return hash(thread.id) % RAMPS.length }
 
 /* greedy packing: the biggest bubble sits in the middle, each next one
    settles into the tightest spot that touches what is already there */
@@ -71,7 +69,12 @@ export default function ThreadBubbles({ threads, openId, onPick }) {
   const geo = useMemo(() => {
     if (!threads.length) return null
     const max = Math.max(...threads.map(t => t.windowCount))
-    const items = threads.map(t => ({ ...t, r: 22 + Math.sqrt(t.windowCount / max) * 48 }))
+    // a bubble is sized by its count, but never smaller than its own name needs
+    const items = threads.map(t => {
+      const words = t.label.split(' ')
+      const longest = words.length > 1 ? Math.max(...words.map(w => w.length)) : t.label.length
+      return { ...t, r: Math.max(18 + Math.sqrt(t.windowCount / max) * 46, (longest * 7.3) / 1.7 + 3) }
+    })
     const placed = pack(items, W)
     const minX = Math.min(...placed.map(p => p.x - p.r)), maxX = Math.max(...placed.map(p => p.x + p.r))
     const minY = Math.min(...placed.map(p => p.y - p.r)), maxY = Math.max(...placed.map(p => p.y + p.r))
@@ -84,7 +87,7 @@ export default function ThreadBubbles({ threads, openId, onPick }) {
     <svg className={styles.svg} viewBox={geo.vb} style={{ height: geo.h }} role="img" aria-label="your most active threads">
       <defs>
         {geo.placed.map(p => {
-          const [a, b] = RAMP[rampFor(p)]
+          const [a, b] = RAMPS[rampIndex(p)]
           return (
             <radialGradient key={p.id} id={`tb-${p.id.replace(/\W/g, '')}`} cx="34%" cy="26%" r="78%">
               <stop offset="0%" stopColor={a} /><stop offset="100%" stopColor={b} />
@@ -93,15 +96,14 @@ export default function ThreadBubbles({ threads, openId, onPick }) {
         })}
       </defs>
       {geo.placed.map(p => {
-        const ramp = rampFor(p)
-        const dark = DARK_TYPE.has(ramp)
-        const inside = p.r >= 30
+        const dark = DARK_TYPE.has(rampIndex(p))
         const open = openId === p.id
         const words = p.label.split(' ')
-        // two lines at most inside a bubble; a long single word just runs
-        const lines = inside && words.length > 1 && p.label.length > Math.floor(p.r / 4)
+        // two lines at most inside a bubble; the name goes beneath if it will not fit
+        const lines = words.length > 1 && p.label.length * 7.3 > p.r * 1.7
           ? [words.slice(0, Math.ceil(words.length / 2)).join(' '), words.slice(Math.ceil(words.length / 2)).join(' ')]
           : [p.label]
+        const inside = Math.max(...lines.map(l => l.length)) * 7.3 <= p.r * 1.75
         return (
           <g key={p.id} className={styles.bubble} onClick={() => onPick(p.id)} style={{ cursor: 'pointer' }}>
             {open && <circle cx={p.x} cy={p.y} r={p.r + 4} className={styles.ring} />}

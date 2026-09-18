@@ -119,7 +119,7 @@ const ARCHIVE_DATE_PRESETS = [
   { key: '30d', label: 'last 30 days' },
   { key: '90d', label: 'last 90 days' },
 ]
-const ARCHIVE_PAGE_SIZE = 15
+const ARCHIVE_PAGE_SIZE = 3
 
 function formatArchiveDate(dateKey) {
   const d = new Date(dateKey + 'T12:00:00')
@@ -267,7 +267,7 @@ function computeActiveThreads(archiveEntries, canvas, customTags) {
     .filter(c => c.windowCount >= 2)
     .sort((a, b) => b.windowCount - a.windowCount || b.lastDate.localeCompare(a.lastDate))
 
-  return scored.slice(0, 6)
+  return scored.slice(0, 10)
 }
 
 function threadsInterpretiveLine(threads, archiveEntries) {
@@ -1142,8 +1142,7 @@ export default function Log({ state, syncCheckinDay }) {
           </div>
         )}
 
-        <div className={styles.pageTitle}>reflect.</div>
-        <div className={styles.pageSubhead}>the conversations you've been having with yourself.</div>
+        <div className={styles.pageTitle}>drafts.</div>
 
         {ritualDue ? (
           <div className={styles.ritualDueCard}>
@@ -1172,76 +1171,6 @@ export default function Log({ state, syncCheckinDay }) {
         )}
         </div>
         <div className={styles.colLeft}>
-        {/* ── Resurfacing ── */}
-        {archiveLoaded && archiveEntries.length > 0 && archiveEntries.length < 10 && (
-          <div className={styles.resurfaceSection}>
-            <div className={styles.resurfaceSectionLabel}>A peek into the past</div>
-            <div className={styles.resurfaceGrowth}>keep writing — your past will start speaking back soon.</div>
-          </div>
-        )}
-        {archiveLoaded && resurfacePool.length > 0 && (() => {
-          const poolItem = resurfacePool[resurfaceIdx % resurfacePool.length]
-          const entry = archiveEntries.find(e => e.id === poolItem.id)
-          if (!entry) return null
-          const today = new Date(); today.setHours(12, 0, 0, 0)
-          const todayKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`
-          const [ey, em, ed] = entry.date_key.split('-').map(Number)
-          const entryDateStr = new Date(ey, em - 1, ed).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })
-          const entryTags = [
-            entry.slot ? { label: entry.slot, isState: false } : null,
-            (entry.mood_feeling || entry.mood_band) ? { label: entry.mood_feeling || entry.mood_band, isState: false } : null,
-            entry.need_id ? { label: NEEDS.find(n => n.id === entry.need_id)?.name || null, isState: false } : null,
-            entry.custom ? { label: entry.custom, isState: false } : null,
-          ].filter(t => t && t.label)
-          const todayBandSlots = {}
-          for (const e of archiveEntries) {
-            if (e.date_key === todayKey && e.mood_band && e.slot && !todayBandSlots[e.mood_band]) {
-              todayBandSlots[e.mood_band] = e.slot
-            }
-          }
-          const matchSlot = poolItem.isMatch && entry.mood_band ? todayBandSlots[entry.mood_band] : null
-          const reasonText = matchSlot ? `matched to this ${matchSlot}` : 'a day at random'
-          return (
-            <div className={styles.resurfaceSection}>
-              <div className={styles.resurfaceSectionLabel}>A peek into the past</div>
-              <div className={styles.resurfaceCard}>
-                <div className={styles.resurfaceHeader}>
-                  <span className={styles.resurfaceDate}>{entryDateStr}</span>
-                  {entryTags.length > 0 && (
-                    <span className={styles.resurfaceTagRow}>
-                      {entryTags.map(t => (
-                        <span key={t.label} className={styles.resurfaceTag}>{t.label}</span>
-                      ))}
-                    </span>
-                  )}
-                </div>
-                <p className={styles.resurfaceBody}>{entry.entry}</p>
-                <div className={styles.resurfaceMarks}>
-                  <button
-                    className={`${styles.archiveRevisitBtn}${entry.revisit ? ` ${styles.archiveRevisitBtnActive}` : ''}`}
-                    onClick={() => handleToggleRevisit(entry.id, entry.revisit)}
-                    aria-pressed={entry.revisit}
-                  >↩ revisit</button>
-                  <button
-                    className={`${styles.archiveFavBtn}${entry.favorite ? ` ${styles.archiveFavBtnActive}` : ''}`}
-                    onClick={() => handleToggleFav(entry.id, entry.favorite)}
-                    aria-pressed={entry.favorite}
-                    aria-label={entry.favorite ? 'remove from favorites' : 'add to favorites'}
-                  >{entry.favorite ? <IconHeartFilled size={15} stroke={1.5} /> : <IconHeart size={15} stroke={1.5} />}</button>
-                </div>
-                <div className={styles.resurfaceFooter}>
-                  <button
-                    className={styles.resurfaceAnotherBtn}
-                    onClick={() => setResurfaceIdx(i => (i + 1) % resurfacePool.length)}
-                  >another one</button>
-                  <span className={styles.resurfaceFooterSpacer} />
-                  <span className={styles.resurfaceWhy}>{reasonText}</span>
-                </div>
-              </div>
-            </div>
-          )
-        })()}
-
         {/* ── Threads ── */}
         {archiveLoaded && (() => {
           const openThread = activeThreads.find(t => t.id === openThreadId) || null
@@ -1315,6 +1244,68 @@ export default function Log({ state, syncCheckinDay }) {
                 )
               })()}
               {activeThreads.length > 0 && <p className={styles.threadInterpretive}>{threadsInterpretiveLine(activeThreads, archiveEntries)}</p>}
+            </div>
+          )
+        })()}
+
+        {/* ── Resurfacing ── */}
+        {archiveLoaded && archiveEntries.length > 0 && archiveEntries.length < 10 && (
+          <div className={styles.resurfaceSection}>
+            <div className={styles.resurfaceSectionLabel}>Wild card</div>
+              <div className={styles.resurfaceSectionSub}>a random day from the past</div>
+            <div className={styles.resurfaceGrowth}>keep writing — your past will start speaking back soon.</div>
+          </div>
+        )}
+        {archiveLoaded && resurfacePool.length > 0 && (() => {
+          const poolItem = resurfacePool[resurfaceIdx % resurfacePool.length]
+          const entry = archiveEntries.find(e => e.id === poolItem.id)
+          if (!entry) return null
+          const today = new Date(); today.setHours(12, 0, 0, 0)
+          const todayKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`
+          const [ey, em, ed] = entry.date_key.split('-').map(Number)
+          const entryDateStr = new Date(ey, em - 1, ed).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })
+          const entryTags = [
+            entry.slot ? { label: entry.slot, isState: false } : null,
+            (entry.mood_feeling || entry.mood_band) ? { label: entry.mood_feeling || entry.mood_band, isState: false } : null,
+            entry.need_id ? { label: NEEDS.find(n => n.id === entry.need_id)?.name || null, isState: false } : null,
+            entry.custom ? { label: entry.custom, isState: false } : null,
+          ].filter(t => t && t.label)
+          return (
+            <div className={styles.resurfaceSection}>
+              <div className={styles.resurfaceSectionLabel}>Wild card</div>
+              <div className={styles.resurfaceSectionSub}>a random day from the past</div>
+              <div className={styles.resurfaceCard}>
+                <div className={styles.resurfaceHeader}>
+                  <span className={styles.resurfaceDate}>{entryDateStr}</span>
+                  {entryTags.length > 0 && (
+                    <span className={styles.resurfaceTagRow}>
+                      {entryTags.map(t => (
+                        <span key={t.label} className={styles.resurfaceTag}>{t.label}</span>
+                      ))}
+                    </span>
+                  )}
+                </div>
+                <p className={styles.resurfaceBody}>{entry.entry}</p>
+                <div className={styles.resurfaceMarks}>
+                  <button
+                    className={`${styles.archiveRevisitBtn}${entry.revisit ? ` ${styles.archiveRevisitBtnActive}` : ''}`}
+                    onClick={() => handleToggleRevisit(entry.id, entry.revisit)}
+                    aria-pressed={entry.revisit}
+                  >↩ revisit</button>
+                  <button
+                    className={`${styles.archiveFavBtn}${entry.favorite ? ` ${styles.archiveFavBtnActive}` : ''}`}
+                    onClick={() => handleToggleFav(entry.id, entry.favorite)}
+                    aria-pressed={entry.favorite}
+                    aria-label={entry.favorite ? 'remove from favorites' : 'add to favorites'}
+                  >{entry.favorite ? <IconHeartFilled size={15} stroke={1.5} /> : <IconHeart size={15} stroke={1.5} />}</button>
+                </div>
+                <div className={styles.resurfaceFooter}>
+                  <button
+                    className={styles.resurfaceAnotherBtn}
+                    onClick={() => setResurfaceIdx(i => (i + 1) % resurfacePool.length)}
+                  >see another</button>
+                </div>
+              </div>
             </div>
           )
         })()}
@@ -1844,9 +1835,14 @@ export default function Log({ state, syncCheckinDay }) {
                     )
                   })}
                 {filtered.length > archiveVisible && (
-                  <button className={styles.archiveLoadMore} onClick={() => setArchiveVisible(v => v + ARCHIVE_PAGE_SIZE)}>
-                    show more · {filtered.length - archiveVisible} remaining
-                  </button>
+                  <div className={styles.archiveMoreRow}>
+                    <button className={styles.archiveMoreBtn} onClick={() => setArchiveVisible(v => v + ARCHIVE_PAGE_SIZE)}>
+                      {Math.min(ARCHIVE_PAGE_SIZE, filtered.length - archiveVisible) === 3 ? 'three more' : `${filtered.length - archiveVisible} more`}
+                    </button>
+                    <button className={styles.archiveMoreBtn} onClick={() => setArchiveVisible(filtered.length)}>
+                      show all · {filtered.length}
+                    </button>
+                  </div>
                 )}
               </div>
             </div>

@@ -40,7 +40,7 @@ function ReflectIcon({ active }) {
 const TABS = [
   { to: '/today',  label: 'today',   Icon: TodayIcon },
   { to: '/data',   label: 'almanac', Icon: DataIcon },
-  { to: '/log',    label: 'reflect', Icon: ReflectIcon },
+  { to: '/log',    label: 'drafts', Icon: ReflectIcon },
 ]
 
 export default function TabBar() {
