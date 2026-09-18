@@ -179,10 +179,10 @@
   flex: 1;
 }
 
+/* One size and one face for every note, so each card starts at the same
+   line and reads the same as the next: the mono, like a typed note. */
 .noteText {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-weight: 300;
+  font-family: var(--font-mono);
   font-size: 15px;
   color: var(--ink);
   line-height: 1.55;
@@ -2126,14 +2126,11 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    /* top-aligned: every note starts on the same line, just below the bloom */
+    justify-content: flex-start;
     /* only the card's own padding sits above the body now that the eyebrow has
        moved out, so this is the remainder needed to start below the form. */
     padding-top: calc(var(--note-text-top) - 20px);
-    /* the body must not grow past the card: the note's type is sized by
-       measuring this box, and a box that stretches never overflows */
-    min-height: 0;
-    overflow: hidden;
   }
 
   .noteDeckAddCard {
@@ -2157,20 +2154,9 @@
     margin-bottom: 12px;
   }
 
-  /* flex:1 in the base rule made the text fill the body, so it rendered from
-     the top no matter what justify-content said. That is why the bottom-anchor
-     never took effect. */
   .noteText {
     flex: 0 0 auto;
-    font-size: 20px;
-    line-height: 1.32;
-    letter-spacing: -0.01em;
   }
-  /* Size steps down with length so the block stays roughly the same mass.
-     Thresholds are the live distribution: of 36 notes, 22 are <=60 chars,
-     12 are 61-110, 2 are over; the longest is 132. */
-  .noteText[data-len="mid"]  { font-size: 17.5px; line-height: 1.36; }
-  .noteText[data-len="long"] { font-size: 15.5px; line-height: 1.40; }
 
   .noteDeckFooter {
     margin-top: auto;

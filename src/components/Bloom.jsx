@@ -13,11 +13,11 @@ const PETALS = [
   { mode: 'nourishment', cx: 132, cy: 70,  r: 19 },
   { mode: 'appreciation',cx: 176, cy: 96,  r: 52 },
   { mode: 'appreciation',cx: 216, cy: 124, r: 34 },
-  { mode: 'appreciation',cx: 232, cy: 158, r: 16 },
+  { mode: 'appreciation',cx: 204, cy: 58,  r: 14 },
   { mode: 'exploration', cx: 146, cy: 160, r: 62 },
   { mode: 'exploration', cx: 206, cy: 174, r: 40 },
   { mode: 'exploration', cx: 96,  cy: 180, r: 34 },
-  { mode: 'exploration', cx: 224, cy: 204, r: 18 },
+  { mode: 'exploration', cx: 232, cy: 140, r: 15 },
   { mode: 'exploration', cx: 112, cy: 206, r: 16 },
 ]
 
