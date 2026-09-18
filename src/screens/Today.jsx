@@ -157,9 +157,20 @@ const STREAK_LINES = {
   365: 'a year of showing up.',
 }
 
+/* Notes to self you have swiped past this session. Kept outside the
+   component so a trip to another tab does not bring them back; cleared when
+   the app is reopened, so every day starts with the full deck. */
+const reviewedNotes = { ids: new Set(), token: 0 }
+function clearReviewedNotes() { reviewedNotes.ids = new Set(); reviewedNotes.token++ }
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') clearReviewedNotes() })
+  window.addEventListener('pageshow', clearReviewedNotes)
+}
+
 export default function Today({ state, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood, onActiveDeckChanged, onCustomTagsChanged }) {
   const navigate = useNavigate()
   const location = useLocation()
+  const isDesktop = useIsDesktop()
   const [today, setToday] = useState(() => todayKey())
   const [slot, setSlot] = useState(() => currentSlot())
   const checked = state.checkins[today] || []
@@ -289,12 +300,76 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     if (heights.length) setDeckHeight(Math.max(...heights))
   }, [noteDeck])
 
+  // Cards swiped past drop out of the rail; a re-render is forced when the
+  // session memory is cleared (the app coming back to the foreground).
+  const [, setReviewedTick] = useState(0)
+  useEffect(() => {
+    const onShow = () => setReviewedTick(t => t + 1)
+    document.addEventListener('visibilitychange', onShow)
+    window.addEventListener('pageshow', onShow)
+    return () => { document.removeEventListener('visibilitychange', onShow); window.removeEventListener('pageshow', onShow) }
+  }, [])
+  const visibleDeck = isDesktop ? noteDeck : noteDeck.filter(c => !reviewedNotes.ids.has(c.id))
+  const deckReviewed = !isDesktop && noteDeck.length > 0 && visibleDeck.length === 0
+  const settleTimer = useRef(null)
+  const pendingScrollLeft = useRef(null)
+
   function handleDeckScroll() {
     const wrapper = deckWrapperRef.current
     if (!wrapper || wrapper.clientWidth === 0) return
     const unit = isDesktop ? wrapper.clientWidth : 294  // 282px card + 12px gap
     setActiveCardIndex(Math.round(wrapper.scrollLeft / unit))
+    if (isDesktop) return
+    // once the swipe settles, every card left behind is reviewed and leaves
+    // the rail; the rail is shifted back so the card in view stays put
+    clearTimeout(settleTimer.current)
+    settleTimer.current = setTimeout(() => {
+      const w = deckWrapperRef.current
+      if (!w) return
+      const idx = Math.round(w.scrollLeft / unit)
+      if (idx <= 0) return
+      visibleDeck.slice(0, idx).forEach(c => reviewedNotes.ids.add(c.id))
+      pendingScrollLeft.current = w.scrollLeft - idx * unit
+      setReviewedTick(t => t + 1)
+    }, 140)
   }
+  useLayoutEffect(() => {
+    if (pendingScrollLeft.current == null) return
+    const w = deckWrapperRef.current
+    if (w) {
+      const prev = w.style.scrollBehavior
+      w.style.scrollBehavior = 'auto'
+      w.scrollLeft = Math.max(0, pendingScrollLeft.current)
+      w.style.scrollBehavior = prev
+    }
+    pendingScrollLeft.current = null
+    setActiveCardIndex(0)
+  })
+
+  // Reviewing the whole deck is a practice: when the last card goes, the
+  // 'notes to self' practice (whatever it is called - read, review...) is
+  // checked once for the day, which fills its bubble and lights the bloom.
+  const autoCheckedFor = useRef(null)
+  useEffect(() => {
+    if (!deckReviewed || autoCheckedFor.current === today) return
+    const matches = label => /notes? to self/i.test(label || '')
+    let practice = null
+    if (state.practicesDB && state.practicesDB.length > 0) {
+      const p = state.practicesDB.find(p => !p.archived_at && matches(p.label) && state.canvas[p.need_id])
+      if (p) practice = { needId: p.need_id, label: p.label, id: p.id }
+    } else {
+      for (const needId of Object.keys(state.practices || {})) {
+        const label = (state.practices[needId] || []).find(matches)
+        if (label && state.canvas[needId]) { practice = { needId, label, id: null }; break }
+      }
+    }
+    if (!practice) return
+    autoCheckedFor.current = today
+    const done = checked.some(e => e.need_id === practice.needId && (practice.id && e.practice_id ? e.practice_id === practice.id : e.practice_text === practice.label))
+    if (done) return
+    checkIn(practice.needId, practice.label, state.canvas[practice.needId], undefined, practice.id)
+    hapticTick()
+  }, [deckReviewed, today])
 
   function openManageDeck() {
     setManageDeckOpen(true)
@@ -444,7 +519,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     }
   }
 
-  const isDesktop = useIsDesktop()
 
   function autosizeDesktopTextarea() {
     if (!isDesktop) return
@@ -749,7 +823,8 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         <div className={styles.colLeft}>
 
         {/* ── Note to self deck ── */}
-        <div className={styles.reflectiveSection} data-tour="note">
+        {deckReviewed && <div className={styles.deckReviewedSpace} aria-hidden="true" />}
+        {!deckReviewed && <div className={styles.reflectiveSection} data-tour="note">
             <div className={styles.noteDeckSection}>
               {!isDesktop && (
                 <div className={styles.noteSectionHeader}>
@@ -763,7 +838,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                     ref={deckWrapperRef}
                     onScroll={handleDeckScroll}
                   >
-                    {noteDeck.map((card, i) => (
+                    {visibleDeck.map((card, i) => (
                       <div
                         key={card.id}
                         className={styles.noteDeckCard}
@@ -803,7 +878,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                     {!isDesktop && (
                       <div
                         className={`${styles.noteDeckCard} ${styles.noteDeckAddCard}`}
-                        ref={el => { cardRefs.current[noteDeck.length] = el }}
+                        ref={el => { cardRefs.current[visibleDeck.length] = el }}
                       >
                         <div className={styles.noteDeckBody}>
                           <button className={styles.noteAddBtn} onClick={openManageDeck}>+ add a note to self</button>
@@ -814,7 +889,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                   {/* Mobile: single shared footer below the rail */}
                   {!isDesktop && (
                     <div className={styles.deckFooterRow}>
-                      <span className={styles.noteDeckCounter}>{Math.min(activeCardIndex + 1, noteDeck.length)}/{noteDeck.length}</span>
+                      <span className={styles.noteDeckCounter}>{Math.min(noteDeck.length - visibleDeck.length + activeCardIndex + 1, noteDeck.length)}/{noteDeck.length}</span>
                       <button className={styles.noteEditPill} onClick={openManageDeck}>edit</button>
                     </div>
                   )}
@@ -837,7 +912,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 </div>
               )}
             </div>
-          </div>
+          </div>}
 
         {/* ── Guidance ── */}
         <div className={styles.guidanceSlot}>
