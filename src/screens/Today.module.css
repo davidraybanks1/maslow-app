@@ -180,12 +180,17 @@
 }
 
 /* One size and one face for every note, so each card starts at the same
-   line and reads the same as the next: the mono, like a typed note. */
+   line and reads the same as the next: Newsreader, the paper's own serif -
+   a newsroom-column feel rather than a typed one. Left-aligned regardless
+   of the card's own text-align (none is set, but this is now explicit,
+   not incidental). */
 .noteText {
-  font-family: var(--font-mono);
-  font-size: 15px;
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-weight: 400;
+  text-align: left;
   color: var(--ink);
-  line-height: 1.55;
+  line-height: 1.5;
   flex: 1;
 }
 
@@ -2083,6 +2088,12 @@
     padding: 0;
     margin-left: -22px;
     margin-right: -22px;
+    /* The stack used to start at 123px (measured), tucked 55px up under the
+       bloom's own box (which runs to 204px, glow included) so the card's
+       top corner sat behind the flower. That layered look is gone now - the
+       whole section, label included, drops far enough to clear it with
+       ~20px of daylight (123 + 88 = 211). */
+    margin-top: 88px;
     width: calc(100% + 44px);
     overflow: visible;
     /* The note cards carried no background of their own here — the inline
@@ -2116,9 +2127,10 @@
   .noteDeckCard { --note-text-top: 66px; }
 
   /* With the deck reviewed and its section gone, the vibrations card would
-     slide up under the bloom (its lowest petal is 178px below the header's
-     top; the card would start at 117px). This holds it clear. */
-  .deckReviewedSpace { height: 80px; }
+     slide up under the bloom (the bloom's own box runs to 204px below the
+     header's top, glow included; the card would start at 117px). This
+     holds it clear, to the same ~211px line the active deck now sits below. */
+  .deckReviewedSpace { height: 93px; }
 
   /* One header for the section, on the paper, matching Drafts. The rail is
      fullbleed here, so the label needs the page gutter put back. */

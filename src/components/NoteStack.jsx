@@ -12,17 +12,24 @@ import styles from './NoteStack.module.css'
    The moment a swipe is committed (pointerup past the threshold), two things
    fire at once, not one after the other: onCommit (the haptic - it should
    land the instant the decision is made, not once the card has finished
-   leaving) and the fling itself, quick and a little reckless - it shrinks
-   as it goes, like something tossed rather than politely slid away. The
-   card behind it is never told to wait: it is always one class away from
-   full size, so the instant the departing card's DOM node stops claiming
-   that class (on removal), the browser's own transition carries it up to
-   full size with a small overshoot - the "next card" pop needs no timer
-   of its own. */
+   leaving) and the fling itself - it shrinks as it goes, like something
+   tossed rather than politely slid away, and it now blooms a warm yellow
+   glow/tint as it goes, the same beat as the fling itself, so the color is
+   part of the exit rather than a flash tacked onto it. The card behind it
+   is never told to wait: it is always one class away from full size, so
+   the instant the departing card's DOM node stops claiming that class (on
+   removal), the browser's own transition carries it up to full size with a
+   small overshoot - the "next card" pop needs no timer of its own. */
 
 const THRESH = { left: 96, up: 88, down: 110 }
 const FLING = { left: 640, up: 760, down: 760 }
 const DEADZONE = 5
+const FLING_MS = 260   // slightly slower than the original 200ms toss
+const FLING_FALLBACK_MS = 320
+// the flourish: a warm nourishment-yellow glow + tint, matching the bloom's
+// own lit color rather than an arbitrary yellow
+const FLOURISH_GLOW_LIT = '0 0 48px 16px rgba(240,168,0,.55), 0 10px 30px rgba(240,168,0,.25)'
+const FLOURISH_TINT = 'rgba(255,209,102,.85)'
 
 export default function NoteStack({ cards, onDismiss, onCommit, renderCard }) {
   const [order, setOrder] = useState(cards)
@@ -99,7 +106,10 @@ export default function NoteStack({ cards, onDismiss, onCommit, renderCard }) {
       // the haptic and the throw fire together - the tick is the moment of
       // commitment, not a reward for waiting out the animation
       onCommit?.(dir)
-      el.style.transition = 'transform 200ms cubic-bezier(.32,.94,.6,1), opacity 200ms ease-out'
+      // box-shadow's "from" is whatever the card already has (its resting
+      // drop-shadow) - no need to set a starting point by hand, the browser
+      // transitions from the current computed value on its own
+      el.style.transition = `transform ${FLING_MS}ms cubic-bezier(.32,.94,.6,1), opacity ${FLING_MS}ms ease-out, box-shadow ${FLING_MS}ms ease-out, background-color ${FLING_MS}ms ease-out`
       const rot = Math.max(-28, Math.min(28, d.dx / 7))
       const targets = {
         left: `translate(-${FLING.left}px, ${d.dy - 30}px) rotate(${Math.min(rot, -20)}deg) scale(.9)`,
@@ -108,11 +118,13 @@ export default function NoteStack({ cards, onDismiss, onCommit, renderCard }) {
       }
       el.style.transform = targets[dir]
       el.style.opacity = '0'
+      el.style.boxShadow = FLOURISH_GLOW_LIT
+      el.style.backgroundColor = FLOURISH_TINT
       const id = d.id
       let done = false
       const finish = () => { if (done) return; done = true; el.removeEventListener('transitionend', finish); settle(id) }
       el.addEventListener('transitionend', finish)
-      setTimeout(finish, 240)
+      setTimeout(finish, FLING_FALLBACK_MS)
     } else {
       el.style.transition = 'transform 340ms cubic-bezier(.34,1.4,.4,1), opacity 200ms ease-out'
       el.style.transform = 'translate(0px, 0px) rotate(0deg)'
