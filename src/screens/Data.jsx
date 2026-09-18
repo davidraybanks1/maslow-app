@@ -220,7 +220,7 @@ const BAR_WASH = LIT('#FFE6A6', '#F5C542')
 const MOOD_RAMP = { good: ['#3FA87A', '#07301F'], mid: ['#B4C4AC', '#3E5238'], bad: ['#FF8A66', '#A81F06'] }
 const MOOD_LIT = Object.fromEntries(Object.entries(MOOD_RAMP).map(([k, [a, b]]) => [k, LIT(a, b)]))
 
-function RhythmSection({ stats, canvas, checkins, moods, range }) {
+function RhythmSection({ canvas, checkins, moods, range }) {
   const monthly = range.keys.length > 7
   const { keys, todayKey } = range
   // in the month view a Monday is labelled with its date; the rest stay blank
@@ -230,15 +230,10 @@ function RhythmSection({ stats, canvas, checkins, moods, range }) {
     return new Date(y, m - 1, d).getDay() === 1 ? String(d) : ''
   }
 
-  const moodByWeekday = useMemo(() => stats.getMoodByWeekday(), [stats])
-  const moodByPeriod  = useMemo(() => stats.getMoodByPeriod(30), [stats])
-  const closingRead = stats.getWeekdaySummary(moodByWeekday) ?? stats.getTimeOfDaySummary(moodByPeriod)
-
   return (
     <section className={`${styles.section} ${styles.sectionCard} ${styles.rhythmCard}`}>
       <div className={styles.sectionHeader}>
         <span className={styles.sectionLabel}>YOUR RHYTHM</span>
-        <span className={styles.sectionMeta}>{'bar\u00a0=\u00a0practices met · dot\u00a0=\u00a0mood'}</span>
       </div>
       <div className={`${styles.rhythmGrid}${monthly ? ` ${styles.rhythmGridMonth}` : ''}`}>
         {keys.map((dk, i) => {
@@ -263,7 +258,7 @@ function RhythmSection({ stats, canvas, checkins, moods, range }) {
           )
         })}
       </div>
-      {closingRead && <p className={styles.rhythmRead}>{closingRead}</p>}
+      <p className={styles.rhythmLegend}>{'bar\u00a0=\u00a0practices met · dot\u00a0=\u00a0mood'}</p>
     </section>
   )
 }
@@ -281,7 +276,7 @@ function FeelsSection({ moods, range }) {
   const monthly = range.keys.length > 7
   const { keys, prevKeys, todayKey } = range
 
-  const { days, total, good, prevPct, prevTotal, words } = useMemo(() => {
+  const { days, total } = useMemo(() => {
     const tally = keys.map(dk => ({ dk, good: 0, mid: 0, bad: 0, n: 0 }))
     const idx = new Map(keys.map((dk, i) => [dk, i]))
     const prev = new Set(prevKeys)
@@ -310,17 +305,11 @@ function FeelsSection({ moods, range }) {
   if (!total) return null
 
   const peak = Math.max(...days.map(d => d.n), 1)
-  const pct = Math.round(good / total * 100)
-  const span = monthly ? 'month' : 'week'
-  const now = keys.includes(todayKey)
   const dayLabel = (dk, i) => {
     if (!monthly) return WEEKDAY_LETTERS[i]
     const [y, m, d] = dk.split('-').map(Number)
     return new Date(y, m - 1, d).getDay() === 1 ? String(d) : ''
   }
-  const read = `Good took ${pct}% of ${total} check-in${total === 1 ? '' : 's'} ${now ? `this ${span}` : `that ${span}`}`
-    + (prevTotal ? `, ${prevPct}% the ${span} before.` : '.')
-    + (words.length ? ` You mostly felt ${words.map(w => w[0]).join(' and ')}.` : '')
 
   return (
     <section className={`${styles.section} ${styles.sectionCard}`}>
@@ -349,7 +338,6 @@ function FeelsSection({ moods, range }) {
           )
         })}
       </div>
-      <p className={styles.rhythmRead}>{read}</p>
     </section>
   )
 }

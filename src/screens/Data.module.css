@@ -277,12 +277,14 @@
 }
 .rhythmLetterToday { color: var(--ink); }
 
-.rhythmRead {
-  font-family: var(--font-serif);
-  font-size: 12px;
-  font-weight: 300;
-  line-height: 1.5;
-  color: rgba(0,0,0,.6);
+/* The bar/dot key, moved down under the chart it explains rather than
+   competing with the section label up top. */
+.rhythmLegend {
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  color: var(--ink4);
+  letter-spacing: .02em;
+  text-align: right;
   margin: 0;
 }
 
@@ -715,5 +717,4 @@
 
   /* Closing lines: readable measure, not full-bleed */
   .sectionRead { max-width: 70ch; }
-  .rhythmRead { max-width: 70ch; }
 }
