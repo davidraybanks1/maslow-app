@@ -1121,6 +1121,12 @@ export default function Log({ state, syncCheckinDay }) {
         ) : null}
         </div>
         <div className={styles.colLeft}>
+        {/* Threads, resurfacing, and the calendar all wait on the journal
+           archive fetch - without this, the page renders just the title and
+           sits blank for however long that round trip takes, which reads as
+           broken rather than loading. */}
+        {!archiveLoaded && <div className={styles.emptyState}>loading your drafts…</div>}
+
         {/* ── Threads ── */}
         {archiveLoaded && (() => {
           const openThread = activeThreads.find(t => t.id === openThreadId) || null
