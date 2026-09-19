@@ -1456,17 +1456,23 @@
   font-size: 16px;
   font-weight: 200;
   color: var(--ink);
-  /* Explicit rather than left to default currentColor - some WebKit builds
-     (the iOS app shell included) fail to paint the text caret when it has
-     to resolve color through a CSS custom property, leaving the field
-     typeable but visually cursor-less. */
+  /* Explicit rather than left to default currentColor, cheap insurance
+     against WebKit builds that fail to resolve it through a CSS custom
+     property. */
   caret-color: var(--ink);
   line-height: 1.7;
   resize: none;
   outline: none;
   transition: border-color var(--motion-hover);
   min-height: 120px;
-  overflow: hidden;
+  /* Was overflow: hidden, just to hide the native resize handle/scrollbar -
+     but iOS Safari's textarea caret lives on the same internal scrolling
+     layer overflow:hidden suppresses, so it never painted: the field stayed
+     typeable with no visible cursor. overflow-y: auto keeps that layer
+     alive; the global ::-webkit-scrollbar{width:0} rule (index.css) still
+     keeps the bar itself invisible, so nothing changes visually except the
+     caret now shows. */
+  overflow-y: auto;
   box-sizing: border-box;
 }
 
