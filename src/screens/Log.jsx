@@ -617,6 +617,7 @@ export default function Log({ state, syncCheckinDay }) {
   const [rangeStart, setRangeStart] = useState(null)
   const [rangeEnd, setRangeEnd] = useState(null)
   const [pickAnchor, setPickAnchor] = useState(null)
+  const [hoverDay, setHoverDay] = useState(null)
   const [datePickerOpen, setDatePickerOpen] = useState(false)
   const [pickerYear, setPickerYear] = useState(() => new Date().getFullYear())
   const [pickerMonth, setPickerMonth] = useState(() => new Date().getMonth())
@@ -1527,12 +1528,12 @@ export default function Log({ state, syncCheckinDay }) {
                     <div className={styles.facetRow}>
                       {ARCHIVE_DATE_PRESETS.map(r => chip(filterDate === r.key, () => {
                         setFilterDate(v => v === r.key ? null : r.key)
-                        setRangeStart(null); setRangeEnd(null); setPickAnchor(null); setDatePickerOpen(false)
+                        setRangeStart(null); setRangeEnd(null); setPickAnchor(null); setHoverDay(null); setDatePickerOpen(false)
                         setArchiveVisible(ARCHIVE_PAGE_SIZE)
                       }, r.label, presetCounts[r.key], r.key))}
                       {chip(!!(rangeStart || datePickerOpen), () => {
                         setFilterDate(null)
-                        if (datePickerOpen) { setDatePickerOpen(false); setPickAnchor(null) }
+                        if (datePickerOpen) { setDatePickerOpen(false); setPickAnchor(null); setHoverDay(null) }
                         else setDatePickerOpen(true)
                         setArchiveVisible(ARCHIVE_PAGE_SIZE)
                       }, rangeStart ? rangeLabel : 'pick dates', null, 'range')}
@@ -1551,6 +1552,14 @@ export default function Log({ state, syncCheckinDay }) {
                     const isPickerCurMonth = pickerYear === today.getFullYear() && pickerMonth === today.getMonth()
                     const isPickerMinMonth = pickerYear === minY && pickerMonth === minM
                     const appliedEnd = rangeEnd || rangeStart
+                    // While an anchor is set but the range isn't committed yet, preview
+                    // what tapping the hovered day would produce - same in-range fill as
+                    // a finished range, so the shape of the selection is visible before
+                    // the second tap, not just after it. Touch has no hover, so the hint
+                    // line below carries the same information there.
+                    const previewEnd = pickAnchor && hoverDay && hoverDay !== pickAnchor ? hoverDay : null
+                    const previewLo = previewEnd ? (pickAnchor <= previewEnd ? pickAnchor : previewEnd) : null
+                    const previewHi = previewEnd ? (pickAnchor <= previewEnd ? previewEnd : pickAnchor) : null
                     return (
                       <div className={styles.datePicker}>
                         <div className={styles.datePickerNav}>
@@ -1574,6 +1583,11 @@ export default function Log({ state, syncCheckinDay }) {
                             aria-label="next month"
                           >›</button>
                         </div>
+                        {pickAnchor && (
+                          <div className={styles.datePickerHint}>
+                            {formatArchiveDate(pickAnchor)}{previewEnd ? ` – ${formatArchiveDate(previewEnd)}` : ''} · now pick an end date
+                          </div>
+                        )}
                         <div className={styles.calDayLabels}>
                           {['M','T','W','T','F','S','S'].map((dl, i) => <span key={i} className={styles.calDayLabel}>{dl}</span>)}
                         </div>
@@ -1584,8 +1598,9 @@ export default function Log({ state, syncCheckinDay }) {
                             const dk = `${pickerPrefix}${String(day).padStart(2, '0')}`
                             const isFuture = dk > todayKey
                             const hasJ = allJournalDays.has(dk)
-                            const isSelected = dk === pickAnchor || (!pickAnchor && rangeStart && (dk === rangeStart || dk === appliedEnd))
-                            const isInRange = !pickAnchor && rangeStart && appliedEnd && rangeStart !== appliedEnd && dk > rangeStart && dk < appliedEnd
+                            const isSelected = dk === pickAnchor || dk === previewEnd || (!pickAnchor && rangeStart && (dk === rangeStart || dk === appliedEnd))
+                            const isInRange = (previewLo && dk > previewLo && dk < previewHi)
+                              || (!pickAnchor && rangeStart && appliedEnd && rangeStart !== appliedEnd && dk > rangeStart && dk < appliedEnd)
                             if (isFuture) return (
                               <div key={dk} className={`${styles.calDay} ${styles.calDayFuture}`}>
                                 <span className={styles.calDayNum}>{day}</span>
@@ -1595,15 +1610,19 @@ export default function Log({ state, syncCheckinDay }) {
                               <button
                                 key={dk}
                                 className={`${styles.calDay}${isSelected ? ` ${styles.pickerDaySelected}` : ''}${isInRange ? ` ${styles.pickerDayInRange}` : ''}`}
+                                onMouseEnter={() => { if (pickAnchor) setHoverDay(dk) }}
+                                onMouseLeave={() => { if (pickAnchor) setHoverDay(d => d === dk ? null : d) }}
                                 onClick={() => {
                                   if (!pickAnchor) {
                                     setPickAnchor(dk)
+                                    setHoverDay(null)
                                     setRangeStart(null); setRangeEnd(null)
                                     setFilterDate(null)
                                   } else {
                                     const [a, b] = pickAnchor <= dk ? [pickAnchor, dk] : [dk, pickAnchor]
                                     setRangeStart(a); setRangeEnd(b)
                                     setPickAnchor(null)
+                                    setHoverDay(null)
                                     setFilterDate(null)
                                     setArchiveVisible(ARCHIVE_PAGE_SIZE)
                                   }
@@ -1619,7 +1638,7 @@ export default function Log({ state, syncCheckinDay }) {
                             )
                           })}
                         </div>
-                        <button className={styles.datePickerCloseBtn} onClick={() => { setDatePickerOpen(false); setPickAnchor(null) }}>close</button>
+                        <button className={styles.datePickerCloseBtn} onClick={() => { setDatePickerOpen(false); setPickAnchor(null); setHoverDay(null) }}>close</button>
                       </div>
                     )
                   })()}

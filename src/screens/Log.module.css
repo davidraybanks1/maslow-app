@@ -828,6 +828,16 @@
   margin-bottom: 6px;
 }
 
+/* Shown once a start date is tapped, before the range is committed - names
+   what's been picked so far since touch has no hover to preview it with. */
+.datePickerHint {
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  color: rgba(0,0,0,.45);
+  text-align: center;
+  margin-bottom: 8px;
+}
+
 .pickerDaySelected {
   background: var(--exploration);
 }
