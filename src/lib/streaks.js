@@ -44,9 +44,20 @@ export function buildStreaks({ canvas, checkins, moods, practicesDB = [], today 
   if (!all.length) return []
   const end = today || all[all.length - 1]
 
-  const metNeed = (needId, dk) => (checkins[dk] || []).some(e => e.need_id === needId)
   const didPrac = (p, dk) => (checkins[dk] || []).some(e =>
     p.id && e.practice_id ? e.practice_id === p.id : e.practice_text === p.label)
+
+  // A need only counts as "met" for the day once every one of its active
+  // practices landed - 2/2, 3/3 - not the moment any single one does.
+  const practicesByNeed = {}
+  for (const p of practicesDB) {
+    if (p.archived_at || !p.need_id) continue
+    ;(practicesByNeed[p.need_id] ||= []).push(p)
+  }
+  const metNeed = (needId, dk) => {
+    const ps = practicesByNeed[needId]
+    return !!ps && ps.length > 0 && ps.every(p => didPrac(p, dk))
+  }
 
   const out = []
   const push = (kind, name, mode, hit, opts = {}) => {

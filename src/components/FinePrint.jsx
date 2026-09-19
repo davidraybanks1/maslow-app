@@ -2,7 +2,7 @@ import styles from './FinePrint.module.css'
 
 /* The fine print under a chart, folded away. Written the way you would
    explain it to a friend, not to a user. */
-export default function FinePrint({ children, label = 'Make this make sense' }) {
+export default function FinePrint({ children, label = 'Explain this chart' }) {
   return (
     <details className={styles.fp}>
       <summary className={styles.sum}>

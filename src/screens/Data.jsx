@@ -739,7 +739,7 @@ export default function Data({ state }) {
             <RootsSection canvas={canvas} checkins={checkins} moods={moods} practicesDB={practicesDB} />
             <ThreadsSection userId={state?.userId} moods={moods} />
 
-            <Group title="Your ledger" sub="every need, every number">
+            <Group title="Your ledger">
               <RibbonsSection canvas={canvas} checkins={checkins} practicesDB={practicesDB} days={dayKeys} windowLen={windowLen} isDesktop={isDesktop} />
               <AllNumbersSection range={range} canvas={canvas} checkins={checkins} />
             </Group>

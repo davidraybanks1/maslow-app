@@ -1456,6 +1456,11 @@
   font-size: 16px;
   font-weight: 200;
   color: var(--ink);
+  /* Explicit rather than left to default currentColor - some WebKit builds
+     (the iOS app shell included) fail to paint the text caret when it has
+     to resolve color through a CSS custom property, leaving the field
+     typeable but visually cursor-less. */
+  caret-color: var(--ink);
   line-height: 1.7;
   resize: none;
   outline: none;
@@ -1698,6 +1703,9 @@
     font-size: 14px;
     font-weight: 200;
     color: var(--ink);
+    /* See .journalInput - explicit so WebKit always has a concrete color
+       to paint the caret with. */
+    caret-color: var(--ink);
     line-height: 1.6;
     resize: none;
     outline: none;
