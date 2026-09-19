@@ -2181,6 +2181,21 @@
     justify-content: center;
   }
 
+  /* The actual swipeable note-to-self card only (not the "+ add a note"
+     empty state, which keeps the rule above). height:100% above centers
+     within the space left after NoteStack's card reserves 66px up top for
+     the bloom, which sits noticeably below the card's true middle. Taking
+     this out of flow and sizing it to the card's full box - padding
+     included - centers on the card itself instead; NoteStack's .card is
+     already position:absolute, so inset:0 here resolves against its full
+     padding box, not the padded-down content area. */
+  .noteDeckBody.noteStackBody {
+    position: absolute;
+    inset: 0;
+    height: auto;
+    padding: 0 18px 0 20px;
+  }
+
   .noteDeckAddCard {
     display: flex;
     flex-direction: column;
