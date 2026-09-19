@@ -794,6 +794,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
             <Bloom
               arcs={demoRing !== null ? ringArcs.map(a => ({ ...a, fill: demoRing })) : ringArcs}
               pct={demoRing !== null ? Math.round(demoRing * 100) : ringPct}
+              variant={isDesktop ? 'wide' : 'classic'}
             />
           </div>
           <div className={styles.headerBarWrap} data-tour="space">

@@ -1580,9 +1580,12 @@
   .greeting { font-size: 40px; }
   .dateLabel { letter-spacing: 0.10em; }
   /* Same bloom graphic as mobile now - one consistent header across
-     breakpoints - just in-flow at a fixed size rather than mobile's
-     bled/absolute crop, since the desktop row has room to spare. */
-  .headerRingWrap { display: block; flex-shrink: 0; width: 220px; }
+     breakpoints - just in-flow rather than mobile's bled/absolute crop.
+     It grows to fill the row's leftover width (capped so it doesn't
+     balloon on very wide windows), using Bloom's "wide" petal layout so
+     the shape itself spreads into that space instead of just scaling up
+     a round cluster. */
+  .headerRingWrap { display: block; flex: 1 1 0; min-width: 0; max-width: 620px; }
   .headerBarWrap { display: none; }
   .spaceBar { max-width: none; }
 
