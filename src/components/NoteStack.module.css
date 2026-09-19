@@ -23,9 +23,9 @@
   user-select: none;
   /* The bloom's lowest petal bottoms out 178px below the header's top; the
      card starts 65px into that (231px page position), so the top inset
-     clears it. Left is wider than the rest on purpose - a narrower measure
-     reads faster than a wide one. */
-  padding: 66px 18px 18px 58px;
+     clears it. Left matches right/bottom now - text sits closer to the
+     edge instead of in a narrow, heavily-indented column. */
+  padding: 66px 18px 18px 20px;
   /* Lives on every card, not just the ones behind: a card being dragged or
      thrown gets its transition set inline (which wins over this), but the
      card that is promoted into the top spot never gets an inline style at

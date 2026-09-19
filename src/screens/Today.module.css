@@ -1512,14 +1512,6 @@
   100% { filter: brightness(1); }
 }
 
-.milestoneLine {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: 15px;
-  color: var(--ink2);
-  margin-top: 2px;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .spaceBarComplete { animation: none; }
 }
@@ -2146,12 +2138,6 @@
     box-shadow: 0 2px 16px rgba(0,0,0,0.08);
   }
 
-  /* The bloom's lowest petal (exploration, cx146 cy160 r62) bottoms out 178px
-     below .header's top. The section header pushes the card top to 231, so the
-     form reaches 58px into the card; --note-text-top is that plus the shadow's
-     spread. It is the only number to change if the bloom or the header moves. */
-  .noteDeckCard { --note-text-top: 66px; }
-
   /* With the deck reviewed and its section gone, the vibrations card would
      slide up under the bloom (its lowest petal is 178px below the header's
      top; the card would start at 117px). This holds it clear. */
@@ -2165,14 +2151,16 @@
   }
 
   .noteDeckBody {
-    flex: 1;
+    /* height, not flex: 1 - the swipe deck's own card (NoteStack.module.css)
+       isn't a flex container, so flex:1 had nothing to stretch against and
+       this sat at its own shrink-to-fit height, pinned under the padding. */
+    height: 100%;
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    /* top-aligned: every note starts on the same line, just below the bloom */
-    justify-content: flex-start;
-    /* only the card's own padding sits above the body now that the eyebrow has
-       moved out, so this is the remainder needed to start below the form. */
-    padding-top: calc(var(--note-text-top) - 20px);
+    /* Centered in the space below the card's own top padding (still clearing
+       the bloom, which overlaps the card's top-right corner). */
+    justify-content: center;
   }
 
   .noteDeckAddCard {

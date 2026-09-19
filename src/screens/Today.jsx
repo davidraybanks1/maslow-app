@@ -153,17 +153,6 @@ function GuidanceCard({ type, onDismiss }) {
   )
 }
 
-// Quiet streak-milestone greetings — copy only, shown for that one day.
-const STREAK_LINES = {
-  7: 'one week of showing up.',
-  14: 'two weeks of showing up.',
-  21: 'three weeks of showing up.',
-  30: 'a month of showing up.',
-  60: 'two months of showing up.',
-  100: '100 days of showing up.',
-  365: 'a year of showing up.',
-}
-
 /* Notes to self you have swiped past this session. Kept outside the
    component so a trip to another tab does not bring them back; cleared when
    the app is reopened, so every day starts with the full deck. */
@@ -238,7 +227,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
 
   const todayMoods = (state.moods || []).filter(m => m.date_key === today)
   const stats = createDataStats({ canvas: state.canvas || {}, checkins: state.checkins || {}, moods: state.moods || [], practices: state.practices || {}, practicesDB: state.practicesDB || [] })
-  const streak = stats.getStreak()
   const lastDoneMap = new Map(
     stats.getPracticeStats().map(p => [
       p.practice?.id || `${p.need.id}_${p.text}`,
@@ -788,7 +776,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
           <div className={styles.headerLeft}>
             <div className={styles.dateLabel}>{dateLabel}</div>
             <div className={styles.greeting}>good {SLOT_GREETING[slot]}.</div>
-            {STREAK_LINES[streak] && <div className={styles.milestoneLine}>{STREAK_LINES[streak]}</div>}
           </div>
           <div className={styles.headerRingWrap} data-tour="space">
             <Bloom
