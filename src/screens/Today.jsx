@@ -904,26 +904,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
           {!isDesktop && (
             <div className={styles.freqHeader}>
               <span className={styles.freqHeaderLabel}><Glyph kind="frequency" />VIBRATIONS</span>
-              <div className={styles.freqHeaderDayparts}>
-                {daypartsData.map(dp => {
-                  const color = dp.band ? MOOD_PIP_COLOR[dp.band] : null
-                  const dotStyle = !color ? undefined
-                    : dp.hasFeeling
-                      ? { background: color, borderColor: color }
-                      : { background: `linear-gradient(to right, ${color} 50%, transparent 50%)`, borderColor: color }
-                  return (
-                    <button
-                      key={dp.name}
-                      className={`${styles.freqHeaderDp} ${dp.isCurrent ? styles.freqHeaderDpCurrent : ''}`}
-                      onClick={dp.onTap || undefined}
-                      style={!dp.onTap ? { cursor: 'default' } : undefined}
-                    >
-                      <span className={styles.freqHeaderDot} style={dotStyle} />
-                      <span className={styles.freqHeaderDpName}>{dp.name}</span>
-                    </button>
-                  )
-                })}
-              </div>
             </div>
           )}
           <div className={styles.freqShell}>
@@ -936,6 +916,28 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               bandAsBack={!isDesktop}
             />
           </div>
+          {!isDesktop && (
+            <div className={styles.freqHeaderDayparts}>
+              {daypartsData.map(dp => {
+                const color = dp.band ? MOOD_PIP_COLOR[dp.band] : null
+                const dotStyle = !color ? undefined
+                  : dp.hasFeeling
+                    ? { background: color, borderColor: color }
+                    : { background: `linear-gradient(to right, ${color} 50%, transparent 50%)`, borderColor: color }
+                return (
+                  <button
+                    key={dp.name}
+                    className={`${styles.freqHeaderDp} ${dp.isCurrent ? styles.freqHeaderDpCurrent : ''}`}
+                    onClick={dp.onTap || undefined}
+                    style={!dp.onTap ? { cursor: 'default' } : undefined}
+                  >
+                    <span className={styles.freqHeaderDot} style={dotStyle} />
+                    <span className={styles.freqHeaderDpName}>{dp.name}</span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
           {openRetroSlot && (
             <div className={styles.retroRow}>
               <FrequencyCard
@@ -1052,6 +1054,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                     <div className={styles.tierHeaderTop}>
                       <div className={styles.tierDot} style={{ background: pip }} />
                       <span className={styles.tierName}>{mode}</span>
+                      <i className={`${styles.tierChevron} ${isOpen ? styles.tierChevronOpen : ''}`} aria-hidden="true" />
                     </div>
                     <div className={styles.tierBar}>
                       <div

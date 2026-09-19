@@ -729,6 +729,24 @@
   line-height: 1;
 }
 
+/* Dropdown affordance - same folded chevron used under charts (FinePrint),
+   so it reads as the same "tap to open" language across the app. */
+.tierChevron {
+  display: block;
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  margin-top: -3px;
+  border-right: 1px solid var(--ink3);
+  border-bottom: 1px solid var(--ink3);
+  transform: rotate(45deg);
+  transition: transform 200ms ease;
+}
+.tierChevronOpen {
+  transform: rotate(225deg);
+  margin-top: 3px;
+}
+
 .tierBar {
   height: 10px;
   background: var(--track);
@@ -2213,10 +2231,14 @@
     color: var(--ink3);
   }
 
+  /* Below the white card now, not beside the eyebrow label - centered as
+     its own row rather than pinned to one side. */
   .freqHeaderDayparts {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 14px;
+    margin-top: 14px;
   }
 
   .freqHeaderDp {
