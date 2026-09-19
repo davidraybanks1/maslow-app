@@ -1575,12 +1575,15 @@
   }
 
   .header { flex-shrink: 0; padding: 40px 0 0; }
-  .headerRow { align-items: center; gap: 40px; }
+  .headerRow { align-items: center; justify-content: space-between; gap: 40px; }
   .headerLeft { flex: 0 0 auto; }
   .greeting { font-size: 40px; }
   .dateLabel { letter-spacing: 0.10em; }
-  .headerRingWrap { display: none; }
-  .headerBarWrap { display: flex; flex: 1; min-width: 0; align-items: center; }
+  /* Same bloom graphic as mobile now - one consistent header across
+     breakpoints - just in-flow at a fixed size rather than mobile's
+     bled/absolute crop, since the desktop row has room to spare. */
+  .headerRingWrap { display: block; flex-shrink: 0; width: 220px; }
+  .headerBarWrap { display: none; }
   .spaceBar { max-width: none; }
 
   /* Reset mobile order values */
