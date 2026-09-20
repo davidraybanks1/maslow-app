@@ -132,13 +132,13 @@ export default function FrequencyCard({ initialBand, initialFeeling, onSettle, c
               <p className={styles.freqTextureQ}>
                 What type of {BAND_LABEL[band]} {pastTense ? 'was' : 'is'} it?
               </p>
-              <div className={styles.chipRow}>
+              <div className={`${styles.chipRow} ${styles.chipRowFit}`}>
                 {FEELINGS[band].map(f => {
                   const on = f === feeling
                   return (
                     <button
                       key={f}
-                      className={`${styles.chip}${on ? ` ${styles.chipOn}` : ''}`}
+                      className={`${styles.chip} ${styles.chipFit}${on ? ` ${styles.chipOn}` : ''}`}
                       onClick={() => pickFeeling(f)}
                       aria-pressed={on}
                     >{f}</button>

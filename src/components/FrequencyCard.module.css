@@ -81,6 +81,24 @@
   flex-shrink: 0;
 }
 
+/* The four feelings need to read as one set, so they stay on one line
+   instead of stranding one ("braced") alone on a second row - tighter gap
+   and padding than the default chip, and letting a chip shrink below its own
+   content width (min-width: 0) rather than wrap, since these are single
+   words with nowhere sensible to break. */
+.chipRowFit {
+  flex-wrap: nowrap;
+  gap: 5px;
+}
+
+.chipFit {
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: 0 8px;
+  letter-spacing: 0;
+  justify-content: center;
+}
+
 .freqOptionsRow {
   display: flex;
   flex-wrap: wrap;
