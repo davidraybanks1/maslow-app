@@ -1,4 +1,6 @@
-/* The four threads — capacity, engagement, drive, posture. */
+/* The four threads — capacity, engagement, drive, posture — drawn as four
+   concentric rings rippling out from "you" at the center. Outer ring = the
+   thread you lead with. See ThreadsSection.jsx for the full rationale. */
 
 .section { margin-top: 32px; border-top: 0.5px solid var(--hairline); padding-top: 26px; }
 .pad { padding-inline: 0; }
@@ -11,32 +13,127 @@
 }
 .claim em { font-style: italic; color: var(--expl-deep, #0C5038); }
 
-.grid { display: grid; grid-template-columns: 1fr 1fr; margin-top: 18px; }
-.cell { padding: 16px 0 18px; }
-.grid > .cell:nth-child(odd) { padding-right: 16px; border-right: 0.5px solid var(--hairline); }
-.grid > .cell:nth-child(even) { padding-left: 16px; }
-.grid > .cell:nth-child(-n + 2) { border-bottom: 0.5px solid var(--hairline); padding-top: 0; }
+/* ── Rings stage ── */
+.ringsWrap { margin-top: 18px; display: flex; justify-content: center; }
+.rings { width: 100%; max-width: 380px; height: auto; overflow: visible; }
 
-.cellHead { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
-.cellName { font-family: var(--mono); font-size: var(--type-floor); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink2); }
-.cellN { font-family: var(--mono); font-size: var(--type-floor); color: var(--ink4); font-variant-numeric: tabular-nums; }
-.shape { font-family: var(--serif, 'Newsreader', Georgia, serif); font-style: italic; font-size: 12.5px; color: var(--ink3); margin-top: 3px; }
+.pulse {
+  fill: none;
+  stroke: var(--ink);
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: sonar 3.6s ease-out infinite;
+}
+.pulse2 { animation-delay: 1.2s; }
+.pulse3 { animation-delay: 2.4s; }
+@keyframes sonar {
+  0%   { transform: scale(0.28); opacity: 0.22; }
+  75%  { transform: scale(1); opacity: 0; }
+  100% { transform: scale(1); opacity: 0; }
+}
 
-.rungs { margin-top: 11px; display: flex; flex-direction: column; gap: 9px; }
-.rung { display: flex; align-items: center; gap: 10px; min-height: 22px; }
-.orbWrap { flex: 0 0 26px; height: 26px; display: grid; place-items: center; }
-.orbWrap i { display: block; border-radius: 50%; }
-.word { font-family: var(--serif, 'Newsreader', Georgia, serif); font-size: 14.5px; font-weight: 300; line-height: 1; color: var(--ink); }
-.rungOff .word { color: var(--ink4); }
-.count { margin-left: auto; font-family: var(--mono); font-size: var(--type-floor); color: var(--ink4); font-variant-numeric: tabular-nums; }
-.rungOff .count { color: rgba(0, 0, 0, 0.18); }
+.you { fill: var(--card); stroke: var(--ink); stroke-width: 1.2; }
+.youLabel {
+  font-family: var(--mono);
+  font-size: var(--type-floor);
+  letter-spacing: 0.1em;
+  fill: var(--ink3);
+  text-anchor: middle;
+}
 
+.ringHit { stroke: transparent; cursor: pointer; }
+.ringSeg { transition: opacity 260ms ease, stroke-width 260ms ease; }
+.ringSegEmpty { fill: none; stroke: rgba(0,0,0,.18); stroke-dasharray: 1.5 4; }
+.ringGroup { transition: opacity 300ms ease; cursor: pointer; }
+.ringDim { opacity: 0.5; }
+.ringOn .ringSeg { filter: saturate(1.08); }
+
+/* small sparks drifting along a segment's own radial direction — outward for
+   good arcs (growing, reaching away from you), inward for bad arcs
+   (pressing in); mid arcs never get one, which is itself the "neutral" cue */
+.spark {
+  pointer-events: none;
+  animation-name: sparkDrift;
+  animation-timing-function: ease-out;
+  animation-iteration-count: infinite;
+}
+@keyframes sparkDrift {
+  0%   { transform: translate(0, 0); opacity: 0; }
+  15%  { opacity: 0.9; }
+  /* --dx / --dy are set inline per spark (its own radial direction and
+     distance) rather than declared here as design tokens */
+  100% { transform: translate(var(--dx, 0px), var(--dy, 0px)); opacity: 0; }
+}
+
+/* ── Leader-line labels — named by the word you reach for most, not the
+   category ── */
+.labelGroup { cursor: pointer; }
+.labelLine { stroke: rgba(0,0,0,.32); stroke-width: 1; stroke-dasharray: 1 3; }
+.labelDot { fill: rgba(0,0,0,.4); }
+.labelText {
+  font-family: var(--mono); font-size: var(--type-floor); letter-spacing: 0.13em;
+  text-transform: uppercase; fill: var(--ink2);
+}
+.labelOn .labelText { fill: var(--ink); }
+.labelOn .labelLine { stroke: rgba(0,0,0,.55); }
+.labelOn .labelDot { fill: var(--ink); }
+
+/* ── Legend / selector list ── */
+.legend { margin-top: 22px; display: flex; flex-direction: column; }
+.legendRow { border-top: 0.5px solid var(--hairline); }
+.legend .legendRow:last-child { border-bottom: 0.5px solid var(--hairline); }
+.legendHead {
+  display: flex; align-items: center; gap: 11px; width: 100%;
+  padding: 13px 2px; border: none; background: none; cursor: pointer;
+  font: inherit; color: inherit; text-align: left;
+  -webkit-tap-highlight-color: transparent;
+}
+.legendDot { flex: 0 0 12px; width: 12px; height: 12px; border-radius: 50%; }
+.legendName {
+  font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--ink2);
+}
+.legendShape {
+  font-family: var(--serif, 'Newsreader', Georgia, serif); font-style: italic; font-size: 13px;
+  color: var(--ink3); margin-left: 4px; flex: 1;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.legendN {
+  font-family: var(--mono); font-size: 12px; color: var(--ink4);
+  font-variant-numeric: tabular-nums; margin-left: auto; flex-shrink: 0;
+}
+.legendCaret {
+  flex: 0 0 auto; font-size: var(--type-floor); color: var(--ink4);
+  transition: transform 260ms ease; margin-left: 2px;
+}
+.legendOn .legendCaret { transform: rotate(90deg); }
+.legendOn .legendName { color: var(--ink); }
+
+.rungsPanel {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 300ms ease, opacity 240ms ease;
+}
+.legendOn .rungsPanel { grid-template-rows: 1fr; opacity: 1; }
+.rungsPanelInner { overflow: hidden; }
+.rungs { margin: 0 0 14px 23px; display: flex; flex-direction: column; gap: 8px; }
+.rung { display: flex; align-items: center; gap: 10px; }
+.rungDot { flex: 0 0 8px; width: 8px; height: 8px; border-radius: 50%; }
+.rungOff .rungDot { box-shadow: inset 0 0 0 1px rgba(0,0,0,.22); background: transparent; }
+.rungWord { font-family: var(--serif, 'Newsreader', Georgia, serif); font-size: 14.5px; font-weight: 300; color: var(--ink); }
+.rungOff .rungWord { color: var(--ink4); }
+.rungCount { margin-left: auto; font-family: var(--mono); font-size: var(--type-floor); color: var(--ink4); font-variant-numeric: tabular-nums; }
+.rungOff .rungCount { color: rgba(0, 0, 0, 0.18); }
+
+/* ── Key ── */
 .key {
   display: flex; gap: 14px; margin-top: 20px; padding-top: 15px;
   border-top: 0.5px solid var(--hairline);
   font-family: var(--mono); font-size: var(--type-floor); color: var(--ink4); letter-spacing: 0.02em;
+  flex-wrap: wrap;
 }
 .key span { display: flex; align-items: center; gap: 6px; }
 .key i { width: 9px; height: 9px; border-radius: 50%; display: block; }
 .keyRight { margin-left: auto; }
-.foot { font-family: var(--mono); font-size: var(--type-floor); line-height: 1.64; color: var(--ink4); margin: 14px 0 0; }
