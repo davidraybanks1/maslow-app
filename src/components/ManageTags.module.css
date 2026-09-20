@@ -32,7 +32,6 @@
 /* ── Header ── */
 .header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   padding: 10px 22px 4px;
   flex-shrink: 0;
@@ -44,13 +43,21 @@
   line-height: 1;
   color: var(--ink);
 }
+/* Fixed to the screen's own corner - see ManageDeck.module.css's .closeBtn
+   for why: a space-between button in this same header row ended up
+   stranded far from the title once the content column below it widened
+   past ~760px on desktop. */
 .closeBtn {
-  width: 30px;
-  height: 30px;
-  border-radius: 15px;
-  border: 1px solid rgba(0,0,0,.14);
-  background: transparent;
-  color: rgba(0,0,0,.5);
+  position: fixed;
+  top: calc(var(--safe-top) + 14px);
+  right: 20px;
+  z-index: 5;
+  width: 32px;
+  height: 32px;
+  border-radius: 16px;
+  border: 1px solid rgba(0,0,0,.22);
+  background: var(--paper);
+  color: rgba(0,0,0,.68);
   font-family: var(--font-mono);
   font-size: 13px;
   line-height: 1;
@@ -59,6 +66,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: 0 1px 5px rgba(0,0,0,.1);
   -webkit-tap-highlight-color: transparent;
 }
 .closeBtn:hover { background: var(--track); }

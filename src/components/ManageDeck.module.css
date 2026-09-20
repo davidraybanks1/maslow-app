@@ -32,7 +32,6 @@
 /* ── App bar ── */
 .header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   padding: 10px 22px 4px;
   flex-shrink: 0;
@@ -44,13 +43,26 @@
   line-height: 1;
   color: var(--ink);
 }
+/* Fixed to the screen's own corner rather than pushed to the far end of the
+   header row - .header's content (title text) is short, but the row itself
+   is only as wide as the row of note cards below it, which grows past
+   ~760px on desktop, so a space-between close button ended up stranded in a
+   wide gap of empty air, disconnected from anything nearby. Anchoring it to
+   the viewport instead means it's always in the same predictable top-right
+   corner, whatever the content width - the usual place a reader looks for
+   an exit. It needs its own background + shadow now that content scrolls
+   underneath it. */
 .closeBtn {
-  width: 30px;
-  height: 30px;
-  border-radius: 15px;
-  border: 1px solid rgba(0,0,0,.14);
-  background: transparent;
-  color: rgba(0,0,0,.5);
+  position: fixed;
+  top: calc(var(--safe-top) + 14px);
+  right: 20px;
+  z-index: 5;
+  width: 32px;
+  height: 32px;
+  border-radius: 16px;
+  border: 1px solid rgba(0,0,0,.22);
+  background: var(--paper);
+  color: rgba(0,0,0,.68);
   font-family: var(--font-mono);
   font-size: 13px;
   line-height: 1;
@@ -59,6 +71,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: 0 1px 5px rgba(0,0,0,.1);
   -webkit-tap-highlight-color: transparent;
 }
 .closeBtn:hover { background: var(--track); }

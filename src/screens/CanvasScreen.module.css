@@ -104,13 +104,15 @@
   gap: 12px;
 }
 
+/* Same weight as the exit on the note-deck and tags overlays - all three
+   read as one "this is how you leave" language, not a faint afterthought. */
 .closeBtn {
-  width: 30px;
-  height: 30px;
-  border-radius: 15px;
-  border: 1px solid rgba(0,0,0,.14);
+  width: 32px;
+  height: 32px;
+  border-radius: 16px;
+  border: 1px solid rgba(0,0,0,.22);
   background: transparent;
-  color: rgba(0,0,0,.5);
+  color: rgba(0,0,0,.68);
   font-family: var(--font-mono);
   font-size: 13px;
   line-height: 1;
