@@ -5,7 +5,7 @@ import { currentSlot } from '../lib/slots'
 import { todayKey, addJournalEntry, uploadNoteImage, loadCustomTags, loadRevisitQueue } from '../lib/store'
 import { normalizeBand } from '../lib/frequency'
 import { useIsDesktop } from '../lib/useIsDesktop'
-import { getInViewCharts } from '../lib/chartRegistry'
+import { getSeenCharts } from '../lib/chartRegistry'
 import FrequencyCard, { MOOD_PIP_COLOR } from './FrequencyCard'
 // Reuses Today's composer chip/picker/attach/quote styling verbatim so the
 // global composer is pixel-identical to the one it replaces there — see
@@ -61,11 +61,13 @@ export default function GlobalComposer({ state, logMood, open, onClose }) {
   const [customTags, setCustomTags] = useState([])
   const [saveError, setSaveError] = useState(null)
   const [saving, setSaving] = useState(false)
-  // The one smart, context-aware attach trigger: whatever chart(s) were in
-  // view on the screen behind the composer when it opened (e.g. scrolled
-  // into view on the Almanac) show up as a row of tappable thumbnails right
-  // above the tag chips — not tucked behind the attach menu, since the
-  // whole point is that it's the thing you were just looking at.
+  // The one smart, context-aware attach trigger: every chart on the screen
+  // behind the composer that's been scrolled past so far (e.g. on the
+  // Almanac — the pool only grows as you scroll further down, so by the
+  // bottom everything above is still offered) shows up as a row of tappable
+  // thumbnails right above the tag chips — not tucked behind the attach
+  // menu, since the whole point is that it's something you were just
+  // looking at.
   const [chartThumbs, setChartThumbs] = useState([])
   const [chartThumbsLoading, setChartThumbsLoading] = useState(false)
   const [selectedChartId, setSelectedChartId] = useState(null)
@@ -85,21 +87,25 @@ export default function GlobalComposer({ state, logMood, open, onClose }) {
     if (open) setTimeout(() => textareaRef.current?.focus(), isDesktop ? 80 : 320)
   }, [open, isDesktop])
 
-  // Snapshot which chart(s) were in view the moment the composer opened —
-  // opening the sheet covers (mobile) or dims (desktop) the screen behind
-  // it, so there's no further scrolling to track while it's up — and
-  // capture a thumbnail for each right away so they're ready to tap.
+  // Offer every chart scrolled past so far on the screen behind the
+  // composer, not just whatever's in view the instant it opens — scroll
+  // past the first chart and it's offered; scroll past the second and both
+  // are offered; by the bottom of the Almanac everything above is still
+  // there to pick from. Opening the sheet covers (mobile) or dims (desktop)
+  // the screen behind it, so there's no further scrolling to track once
+  // it's up — this just snapshots the accumulated pool and captures a
+  // thumbnail for each right away so they're ready to tap.
   useEffect(() => {
     if (!open) { setChartThumbs([]); setSelectedChartId(null); return }
-    const inView = getInViewCharts()
-    if (inView.length === 0) { setChartThumbs([]); return }
+    const seen = getSeenCharts()
+    if (seen.length === 0) { setChartThumbs([]); return }
     setChartThumbsLoading(true)
     let cancelled = false
     // Chart cards don't paint their own background — it's the paper color
     // behind them — so a capture of just the card, in isolation, otherwise
     // comes back on a plain white canvas.
     const paper = getComputedStyle(document.documentElement).getPropertyValue('--paper').trim() || '#fff'
-    Promise.all(inView.map(async c => {
+    Promise.all(seen.map(async c => {
       try {
         const blob = await toBlob(c.node, { pixelRatio: 2, backgroundColor: paper })
         return blob ? { id: c.id, label: c.label, url: URL.createObjectURL(blob), blob } : null
