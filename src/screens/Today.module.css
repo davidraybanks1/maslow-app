@@ -31,7 +31,7 @@
 /* A thin row above the greeting, not inline beside it — the bloom (see
    .headerRingWrap below) bleeds across nearly the whole right two-thirds
    of this header, so anything placed inline there lands in the petals. */
-.headerTopRow { display: flex; justify-content: flex-end; margin-bottom: 6px; }
+.headerTopRow { display: flex; justify-content: flex-end; margin-bottom: 4px; }
 .headerAccount { flex-shrink: 0; }
 .headerAccount:empty { display: none; }
 
@@ -2111,15 +2111,21 @@
     --bloom-w: 260px;
     /* Anchored to .header's own top edge, not to .headerRow — the account
        row (.headerTopRow) sits above .headerRow inside this same box, so the
-       bloom needs to drop by that row's own height (~50px: its avatar plus
-       margin-bottom) to stay level with the greeting text below it. Without
-       this offset the crown floats up next to the account avatar instead of
-       "good morning.". At 0 here (i.e. flush with .header's top) the box
-       carries ~13pt of empty space above the first petal, which is what
-       originally kept the crown clear of the app-shell boundary — 50px
-       preserves that same clearance, just measured from the lower start. */
-    --bloom-top: 50px;
+       bloom needs to drop by that row's own height to stay level with the
+       greeting text below it. Without this offset the crown floats up next
+       to the account avatar instead of "good morning.". At 0 here (i.e.
+       flush with .header's top) the box carries ~13pt of empty space above
+       the first petal, which is what originally kept the crown clear of the
+       app-shell boundary — this offset preserves that same clearance, just
+       measured from the lower start (avatar height + row margin + this
+       header's own reduced top padding, below). */
+    --bloom-top: 40px;
     --bloom-right: -34px;
+    /* Trimmed from 14px — this used to be the gap below the old app-header
+       bar; now .content's own safe-area inset is the only thing above this
+       box, so a big top padding here just piled more dead space on top of
+       the notch clearance that's already unavoidable. */
+    padding-top: 6px;
     padding-bottom: 28px;
   }
 
