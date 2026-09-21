@@ -116,105 +116,59 @@
   .mobileScrim, .mobileSheet, .deskScrim, .deskSheet { animation: none; }
 }
 
-/* ── chart attach: capture whatever's in view behind the composer ──
-   Matches the visual language of Today's quotePicker (see Today.module.css)
-   since it's the same "pick one from a short list" pattern. */
-.chartPicker {
-  position: fixed;
-  inset: 0;
-  z-index: 300;
-  background: rgba(0,0,0,.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
+/* ── chart attach: whatever's in view behind the composer, right where you
+   can see it — a row of tappable thumbnails above the tag chips, not a
+   menu item you have to go looking for. */
+.chartSuggestRow {
+  margin-bottom: 10px;
 }
-.chartPickerPanel {
-  background: var(--card);
-  border-radius: 12px;
-  width: min(420px, 94vw);
-  max-height: min(80vh, 640px);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-.chartPickerHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 16px 10px;
-  border-bottom: 1px solid rgba(0,0,0,.08);
-}
-.chartPickerTitle {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: rgba(0,0,0,.5);
-}
-.chartPickerClose {
-  background: none;
-  border: none;
-  font-size: 18px;
-  color: rgba(0,0,0,.4);
-  cursor: pointer;
-  line-height: 1;
-}
-.chartPickerClose:hover { color: rgba(0,0,0,.7); }
-.chartPickerLoading {
-  padding: 32px 16px;
-  text-align: center;
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  color: rgba(0,0,0,.35);
-}
-.chartPickerPreview {
-  margin: 12px 16px 0;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid rgba(0,0,0,.1);
-  background: var(--paper);
-}
-.chartPickerPreviewImg {
+.chartSuggestLabel {
   display: block;
-  width: 100%;
-  max-height: 320px;
-  object-fit: contain;
-}
-.chartPickerLabel {
-  margin: 8px 16px 0;
   font-family: var(--font-mono);
   font-size: var(--type-floor);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--ink4);
+  margin-bottom: 6px;
 }
-.chartPickerThumbs {
+.chartSuggestThumbs {
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  margin: 10px 16px 0;
   padding-bottom: 2px;
 }
-.chartPickerThumb {
+.chartSuggestLoading {
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  color: rgba(0,0,0,.35);
+  align-self: center;
+}
+.chartThumb {
+  position: relative;
   flex: 0 0 auto;
-  width: 52px;
-  height: 52px;
-  border-radius: 6px;
+  width: 84px;
+  height: 64px;
+  border-radius: 8px;
   border: 2px solid transparent;
   padding: 0;
   overflow: hidden;
   cursor: pointer;
   background: var(--paper);
-  opacity: 0.6;
 }
-.chartPickerThumb img { width: 100%; height: 100%; object-fit: cover; }
-.chartPickerThumb:hover { opacity: 0.85; }
-.chartPickerThumbActive {
-  border-color: var(--ink);
-  opacity: 1;
-}
-.chartPickerFooter {
+/* contain, not cover — these cards are mostly whitespace around a title and
+   a chart that isn't always centered (e.g. only "today" filled in early in
+   the week), so a center-crop can hide the one thing worth showing. */
+.chartThumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.chartThumb:hover { border-color: rgba(0,0,0,.15); }
+.chartThumbActive { border-color: var(--ink); }
+.chartThumbBusy, .chartThumbCheck {
+  position: absolute;
+  inset: 0;
   display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  padding: 14px 16px 16px;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: #fff;
+  background: rgba(0,0,0,.4);
 }
