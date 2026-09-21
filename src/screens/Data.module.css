@@ -42,6 +42,8 @@
   margin: 0 0 4px;
 }
 
+.pageHeaderAccount { flex-shrink: 0; }
+
 /* ── Groups: the titled bands of the page ─────────────────────────────── */
 .group { margin-top: 32px; border-top: 0.5px solid var(--hairline); padding-top: 26px; }
 .groupFirst { margin-top: 18px; border-top: 0; padding-top: 0; }
@@ -615,7 +617,7 @@
 
 /* ── New wrapper classes (mobile base — transparent wrappers) ─────────────── */
 .desktopWrap { padding: 14px 22px; }
-.pageHeaderRow { }
+.pageHeaderRow { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .dRow3 { }
 .sectionCard { }
 .allNumsCards { }
@@ -633,13 +635,13 @@
 
   /* Row 1: title+subhead left, toggle right */
   .pageHeaderRow {
-    display: flex;
     align-items: baseline;
-    justify-content: space-between;
     gap: 24px;
     padding: 32px 0 20px;
   }
   .pageTitle { font-size: 42px; margin-bottom: 2px; }
+  /* The desktop sidebar already carries its own account menu. */
+  .pageHeaderAccount { display: none; }
   .groupTitle { font-size: 28px; }
 
   .insightDeckWrapper { width: 100%; margin-inline: 0; padding: 0; gap: 0; }

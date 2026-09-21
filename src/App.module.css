@@ -32,7 +32,13 @@
   min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  /* .appHeader normally clears the notch/status bar with its own top
+     padding. On the screens that skip that bar entirely (no data-appheader
+     — see App.jsx), .content is the first thing under the top of the
+     screen, so it takes over that clearance instead. */
+  padding-top: var(--safe-top);
 }
+.shell[data-appheader] .content { padding-top: 0; }
 
 @media (max-width: 899px) {
   /* --kb is the height the software keyboard is covering, measured off the

@@ -114,6 +114,9 @@
   line-height: 1.5;
 }
 
+.pageTitleRow { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.pageTitleAccount { flex-shrink: 0; }
+
 .pageTitle {
   font-family: var(--font-serif);
   font-size: 30px;
@@ -1542,6 +1545,8 @@
     grid-row: 1;
     padding-top: 32px;
   }
+  /* The desktop sidebar already carries its own account menu. */
+  .pageTitleAccount { display: none; }
 
   .colLeft {
     display: block;

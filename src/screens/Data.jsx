@@ -655,7 +655,7 @@ function Group({ title, sub, aside, first, children }) {
   )
 }
 
-export default function Data({ state }) {
+export default function Data({ state, profileMenu }) {
   const [period, setPeriodRaw] = useState(7)
   const [offset, setOffset] = useState(0)
   const setPeriod = p => { setPeriodRaw(p); setOffset(0) }
@@ -713,6 +713,7 @@ export default function Data({ state }) {
       <div className={styles.desktopWrap}>
         <div className={styles.pageHeaderRow}>
           <h1 className={styles.pageTitle}>almanac.</h1>
+          <div className={styles.pageHeaderAccount}>{profileMenu}</div>
         </div>
 
         {!hasCanvas && (

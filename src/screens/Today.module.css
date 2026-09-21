@@ -28,9 +28,12 @@
   color: var(--ink3);
 }
 .greeting { font-family: var(--font-serif); font-size: 30px; font-weight: 300; letter-spacing: -0.01em; line-height: 1.1; color: var(--ink); }
-.headerRight {
-  flex-shrink: 0;
-}
+/* A thin row above the greeting, not inline beside it — the bloom (see
+   .headerRingWrap below) bleeds across nearly the whole right two-thirds
+   of this header, so anything placed inline there lands in the petals. */
+.headerTopRow { display: flex; justify-content: flex-end; margin-bottom: 6px; }
+.headerAccount { flex-shrink: 0; }
+.headerAccount:empty { display: none; }
 
 /* Header: ring shown mobile, bar shown desktop */
 .headerRingWrap { flex-shrink: 0; }
@@ -1606,6 +1609,10 @@
   .header { flex-shrink: 0; padding: 40px 0 0; }
   .headerRow { align-items: center; justify-content: space-between; gap: 40px; }
   .headerLeft { flex: 0 0 auto; }
+  /* The desktop sidebar already carries its own account menu (see
+     DesktopNav.jsx) — this copy only exists to fill the app-header's old
+     spot on mobile. */
+  .headerTopRow { display: none; }
   .greeting { font-size: 40px; }
   .dateLabel { letter-spacing: 0.10em; }
   /* Same bloom graphic as mobile now - one consistent header across
@@ -2102,11 +2109,16 @@
        space at the new scale (1.266). Setting 367/-70/-30 here would render the
        form ~4% large and sitting ~38px too high. */
     --bloom-w: 260px;
-    /* 0, not negative: at -32 the box started above .header's top, which is the
-       top of .screen's content — anything above that is clipped by the app shell,
-       which flat-topped the crown. The box carries ~13pt of empty space above the
-       first petal, so 0 keeps the crown clear of the boundary. */
-    --bloom-top: 0px;
+    /* Anchored to .header's own top edge, not to .headerRow — the account
+       row (.headerTopRow) sits above .headerRow inside this same box, so the
+       bloom needs to drop by that row's own height (~50px: its avatar plus
+       margin-bottom) to stay level with the greeting text below it. Without
+       this offset the crown floats up next to the account avatar instead of
+       "good morning.". At 0 here (i.e. flush with .header's top) the box
+       carries ~13pt of empty space above the first petal, which is what
+       originally kept the crown clear of the app-shell boundary — 50px
+       preserves that same clearance, just measured from the lower start. */
+    --bloom-top: 50px;
     --bloom-right: -34px;
     padding-bottom: 28px;
   }

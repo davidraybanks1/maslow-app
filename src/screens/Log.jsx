@@ -569,7 +569,7 @@ function FullLogAccordion({ state }) {
   )
 }
 
-export default function Log({ state, syncCheckinDay }) {
+export default function Log({ state, syncCheckinDay, profileMenu }) {
   const navigate = useNavigate()
 
   const [showFullLog, setShowFullLog] = useState(false)
@@ -1099,7 +1099,10 @@ export default function Log({ state, syncCheckinDay }) {
           </div>
         )}
 
-        <div className={styles.pageTitle}>drafts.</div>
+        <div className={styles.pageTitleRow}>
+          <div className={styles.pageTitle}>drafts.</div>
+          <div className={styles.pageTitleAccount}>{profileMenu}</div>
+        </div>
 
         {ritualDue ? (
           <div className={styles.ritualDueCard}>

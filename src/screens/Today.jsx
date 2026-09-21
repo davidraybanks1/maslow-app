@@ -162,7 +162,7 @@ if (typeof document !== 'undefined') {
   window.addEventListener('pageshow', clearReviewedNotes)
 }
 
-export default function Today({ state, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood, onActiveDeckChanged, onCustomTagsChanged }) {
+export default function Today({ state, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood, onActiveDeckChanged, onCustomTagsChanged, profileMenu }) {
   const navigate = useNavigate()
   const location = useLocation()
   const isDesktop = useIsDesktop()
@@ -607,6 +607,13 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
 
       {/* ── Greeting ── */}
       <div className={styles.header}>
+        {/* The bloom bleeds across nearly the whole right side of this
+            header (see .headerRingWrap below), so the account control gets
+            its own thin row above the greeting rather than sitting inline
+            beside it, where it would land in the middle of the petals. */}
+        <div className={styles.headerTopRow}>
+          <div className={styles.headerAccount}>{profileMenu}</div>
+        </div>
         <div className={styles.headerRow}>
           <div className={styles.headerLeft}>
             <div className={styles.dateLabel}>{dateLabel}</div>
