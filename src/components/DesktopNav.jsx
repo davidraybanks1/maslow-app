@@ -11,7 +11,7 @@ const ITEMS = [
   ['/log', 'drafts'],
 ]
 
-export default function DesktopNav({ name, email, reviewCadence, updateReviewCadence, reviewDay, reviewTime, updateReviewSchedule, remindersEnabled, updateRemindersEnabled, reviewReminderEnabled, updateReviewReminderEnabled, moodReminders, updateMoodReminder, notifTypes, updateNotifType, noteDeckCount, customTagCount, resetTour }) {
+export default function DesktopNav({ name, email, reviewCadence, updateReviewCadence, reviewDay, reviewTime, updateReviewSchedule, remindersEnabled, updateRemindersEnabled, reviewReminderEnabled, updateReviewReminderEnabled, moodReminders, updateMoodReminder, notifTypes, updateNotifType, noteDeckCount, customTagCount, resetTour, onOpenComposer }) {
   const linkClass = ({ isActive }) => `${styles.item} ${isActive ? styles.itemActive : ''}`
   return (
     <aside className={styles.nav} aria-label="Primary" data-tour="nav">
@@ -24,6 +24,14 @@ export default function DesktopNav({ name, email, reviewCadence, updateReviewCad
         ))}
       </nav>
       <div className={styles.footer}>
+        {/* Sticky "add a draft" — same button, same spot, on every screen;
+            see GlobalComposer.jsx for the mobile equivalent and the sheet
+            it opens. */}
+        <button className={styles.composerFab} onClick={onOpenComposer} aria-label="Add a draft">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
         <ProfileMenu
           name={name} email={email}
           reviewCadence={reviewCadence} updateReviewCadence={updateReviewCadence}

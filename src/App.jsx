@@ -22,6 +22,7 @@ import AppHeader from './components/AppHeader'
 import DesktopNav from './components/DesktopNav'
 import TabBar from './components/TabBar'
 import UpdateToast from './components/UpdateToast'
+import GlobalComposer, { ComposerFab } from './components/GlobalComposer'
 import styles from './App.module.css'
 
 class AppErrorBoundary extends Component {
@@ -104,6 +105,11 @@ function AppInner() {
     () => onSignInRef.current?.()
   )
 
+  // Sticky "add a draft" — one composer, opened from the same button on
+  // every screen (Today/Data/Log), rather than only living at the bottom
+  // of Today. See GlobalComposer.jsx.
+  const [composerOpen, setComposerOpen] = useState(false)
+
   const [customTagCount, setCustomTagCount] = useState(0)
   useEffect(() => {
     if (!state.userId) return
@@ -183,7 +189,7 @@ function AppInner() {
   return (
     <HeaderSlotContext.Provider value={setHeaderSlot}>
     <div className={styles.shell} style={{ '--kb': kbInset + 'px' }} {...(state.onboarded && { 'data-tabbar': '' })}>
-      {state.onboarded && <DesktopNav name={state.profile.name} email={state.email} reviewCadence={state.reviewCadence} updateReviewCadence={updateReviewCadence} reviewDay={state.reviewDay} reviewTime={state.reviewTime} updateReviewSchedule={updateReviewSchedule} remindersEnabled={state.remindersEnabled} updateRemindersEnabled={updateRemindersEnabled} reviewReminderEnabled={state.reviewReminderEnabled} updateReviewReminderEnabled={updateReviewReminderEnabled} moodReminders={state.moodReminders} updateMoodReminder={updateMoodReminder} notifTypes={state.notifTypes} updateNotifType={updateNotifType} noteDeckCount={(state.noteDeck || []).length} customTagCount={customTagCount} resetTour={resetTour} />}
+      {state.onboarded && <DesktopNav name={state.profile.name} email={state.email} reviewCadence={state.reviewCadence} updateReviewCadence={updateReviewCadence} reviewDay={state.reviewDay} reviewTime={state.reviewTime} updateReviewSchedule={updateReviewSchedule} remindersEnabled={state.remindersEnabled} updateRemindersEnabled={updateRemindersEnabled} reviewReminderEnabled={state.reviewReminderEnabled} updateReviewReminderEnabled={updateReviewReminderEnabled} moodReminders={state.moodReminders} updateMoodReminder={updateMoodReminder} notifTypes={state.notifTypes} updateNotifType={updateNotifType} noteDeckCount={(state.noteDeck || []).length} customTagCount={customTagCount} resetTour={resetTour} onOpenComposer={() => setComposerOpen(true)} />}
       <div className={styles.column}>
       {state.onboarded && (
         <div className={styles.appHeader}>
@@ -206,6 +212,10 @@ function AppInner() {
       </div>
       </div>
       {state.onboarded && !typing && <TabBar />}
+      {state.onboarded && !typing && <ComposerFab onClick={() => setComposerOpen(true)} />}
+      {state.onboarded && (
+        <GlobalComposer state={state} logMood={logMood} open={composerOpen} onClose={() => setComposerOpen(false)} />
+      )}
       {isNative() && state.onboarded && state.userId && state.notifPrimedAt == null && state.tourSeenAt != null && (
         <NotifPrimingSheet updateRemindersEnabled={updateRemindersEnabled} markNotifPrimed={markNotifPrimed} />
       )}

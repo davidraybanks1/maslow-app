@@ -2,13 +2,12 @@ import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { NEEDS, MODES, MODE_ORDER, MODE_MAX_BUBBLES, MODE_WEIGHTS, JOURNAL_TRUNCATE } from '../lib/constants'
 import { currentSlot, precedingSlots, SLOTS, SLOT_NOUN, SLOT_GREETING } from '../lib/slots'
-import { todayKey, loadJournalEntries, addJournalEntry, deleteJournalEntry, loadNoteDeck, loadCustomTags, uploadNoteImage, loadRevisitQueue } from '../lib/store'
+import { todayKey, loadJournalEntries, deleteJournalEntry, loadNoteDeck, loadCustomTags } from '../lib/store'
 import { createDataStats, getCanvasGuidance } from '../lib/dataStats'
 import { hapticTick, isNative, pendingNotifSlot } from '../lib/native'
 import { normalizeBand, BAND_LABEL } from '../lib/frequency'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import FrequencyCard, { MOOD_PIP_COLOR } from '../components/FrequencyCard'
-import { revealWhenSettled } from '../lib/keyboard'
 import Glyph from '../lib/glyphs'
 import Bloom from '../components/Bloom'
 import NoteStack from '../components/NoteStack'
@@ -362,108 +361,25 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   }
 
   const [journalEntries, setJournalEntries] = useState([])
-  const [journalSaveError, setJournalSaveError] = useState(null)
   const [pendingDeleteId, setPendingDeleteId] = useState(null)
   const [expandedTodayEntries, setExpandedTodayEntries] = useState(() => new Set())
-  const [draftText, setDraftText] = useState('')
-  const [draftNeedId, setDraftNeedId] = useState(null)
-  const [draftCustom, setDraftCustom] = useState(null)
-  const [draftMoodBand, setDraftMoodBand] = useState(null)
-  const [draftMoodFeeling, setDraftMoodFeeling] = useState(null)
-  const [draftMoodInherited, setDraftMoodInherited] = useState(true)
-  const [freqPickerOpen, setFreqPickerOpen] = useState(false)
-  const freqPickerNewSlot = useRef(false)
-  const [draftImage, setDraftImage] = useState(null)
-  const [uploadingJournalImage, setUploadingJournalImage] = useState(false)
-  const [quotedText, setQuotedText] = useState(null)
-  const [quotedDate, setQuotedDate] = useState(null)
-  const [quotePicker, setQuotePicker] = useState(false)
-  const [quoteEntries, setQuoteEntries] = useState([])
-  const [quoteLoading, setQuoteLoading] = useState(false)
-  const [composerOpen, setComposerOpen] = useState(false)
-  const composerRef = useRef(null)
-
-  /* The textarea autofocuses, so the keyboard comes up before the browser has
-     laid out the composer at its new position. iOS then decides the field is
-     "visible" because it is inside the layout viewport — which extends behind
-     the keys. This puts it above them for real. */
-  useEffect(() => {
-    if (!composerOpen) return
-    return revealWhenSettled(() => composerRef.current)
-  }, [composerOpen])
-  const [needPickerOpen, setNeedPickerOpen] = useState(false)
-  const [customPickerOpen, setCustomPickerOpen] = useState(false)
-  const [attachMenuOpen, setAttachMenuOpen] = useState(false)
   const journalEntriesRef = useRef(null)
-  const journalFileRef = useRef(null)
-  const attachMenuRef = useRef(null)
-  const desktopTextareaRef = useRef(null)
 
   useEffect(() => {
     if (!state.userId) return
     loadJournalEntries(state.userId, today).then(setJournalEntries)
   }, [state.userId, today])
 
-  async function handleAddEntry() {
-    const text = draftText.trim()
-    if (!text || !state.userId) return
-    const entryBand = draftMoodInherited ? (moodSelections[slot] || null) : draftMoodBand
-    const entryFeeling = draftMoodInherited ? (moodFeelings[slot] || null) : draftMoodFeeling
-    const { data, error } = await addJournalEntry(state.userId, today, {
-      entry: text,
-      slot: currentSlot(),
-      needId: draftNeedId,
-      custom: draftCustom,
-      imageUrl: draftImage,
-      quotedText,
-      quotedDate,
-      moodBand: entryBand,
-      moodFeeling: entryFeeling,
-    })
-    if (error) { setJournalSaveError('save failed — try again'); return }
-    setJournalEntries(prev => [...prev, data])
-    setDraftText('')
-    setDraftNeedId(null)
-    setDraftCustom(null)
-    setDraftImage(null)
-    setQuotedText(null)
-    setQuotedDate(null)
-    setJournalSaveError(null)
-    setNeedPickerOpen(false)
-    setCustomPickerOpen(false)
-    setAttachMenuOpen(false)
-    setDraftMoodInherited(true)
-    setDraftMoodBand(null)
-    setDraftMoodFeeling(null)
-    setFreqPickerOpen(false)
-  }
-
-  async function handleJournalFilePick(e) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setUploadingJournalImage(true)
-    const { url } = await uploadNoteImage(state.userId, file)
-    if (url) setDraftImage(url)
-    setUploadingJournalImage(false)
-    e.target.value = ''
-  }
-
-  async function openQuotePicker() {
-    setQuotePicker(true)
-    if (state.userId) {
-      setQuoteLoading(true)
-      setQuoteEntries(await loadRevisitQueue(state.userId))
-      setQuoteLoading(false)
+  // The sticky global composer (same button, any screen — see GlobalComposer.jsx)
+  // dispatches this after a successful save so Today's own list stays live
+  // without needing a remount.
+  useEffect(() => {
+    function onEntryAdded(e) {
+      if (e.detail?.dateKey === today) setJournalEntries(prev => [...prev, e.detail.entry])
     }
-  }
-
-  function handleComposerKeyDown(e) {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-      e.preventDefault()
-      handleAddEntry()
-    }
-    if (e.key === 'Escape') setAttachMenuOpen(false)
-  }
+    window.addEventListener('maslow:entry-added', onEntryAdded)
+    return () => window.removeEventListener('maslow:entry-added', onEntryAdded)
+  }, [today])
 
   useEffect(() => {
     if (!pendingDeleteId) return
@@ -471,17 +387,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     document.addEventListener('mousedown', onDocMouseDown)
     return () => document.removeEventListener('mousedown', onDocMouseDown)
   }, [pendingDeleteId])
-
-  useEffect(() => {
-    if (!attachMenuOpen) return
-    function onDown(e) {
-      if (attachMenuRef.current && !attachMenuRef.current.contains(e.target)) {
-        setAttachMenuOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', onDown)
-    return () => document.removeEventListener('mousedown', onDown)
-  }, [attachMenuOpen])
 
   async function handleDeleteEntry(id) {
     if (pendingDeleteId === id) {
@@ -494,27 +399,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     }
   }
 
-
-  function autosizeDesktopTextarea() {
-    if (!isDesktop) return
-    const el = desktopTextareaRef.current
-    if (!el) return
-    el.style.height = 'auto'
-    const top = el.getBoundingClientRect().top
-    const max = Math.max(112, window.innerHeight - top - 24)
-    el.style.height = Math.min(el.scrollHeight, max) + 'px'
-  }
-
-  useEffect(() => {
-    if (!isDesktop) return
-    autosizeDesktopTextarea()
-  }, [draftText, isDesktop]) // draftText drives height; isDesktop gates the effect
-
-  useEffect(() => {
-    if (!isDesktop) return
-    window.addEventListener('resize', autosizeDesktopTextarea)
-    return () => window.removeEventListener('resize', autosizeDesktopTextarea)
-  }, [isDesktop])
 
   const [justTapped, setJustTapped] = useState(null)
   const [openTier, setOpenTier] = useState(null)
@@ -660,9 +544,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     })
   }, [state.moods])
 
-  const chipBand = draftMoodInherited ? (moodSelections[slot] || null) : draftMoodBand
-  const chipFeeling = draftMoodInherited ? (moodFeelings[slot] || null) : draftMoodFeeling
-
   async function handleFrequencySettle(promptTime, band, feeling) {
     if (!band) return  // blank station → no write
     const priorBand = moodSelections[promptTime]
@@ -711,8 +592,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   }
 
   const journalEntryCount = journalEntries.length
-  const activeNeeds = NEEDS.filter(n => state.canvas[n.id])
-
 
   const daypartsData = SLOTS.map(s => ({
     name: s,
@@ -721,50 +600,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     hasFeeling: !!(moodFeelings[s]),
     onTap: precedingSlots(slot).includes(s) ? () => setOpenRetroSlot(o => o === s ? null : s) : null,
   }))
-
-  const renderAttachControl = () => {
-    const hasPhoto = !!draftImage
-    const hasQuote = !!quotedText
-    const offerPhoto = !hasPhoto
-    const offerQuote = !hasQuote
-    const noItems = !offerPhoto && !offerQuote
-    return (
-      <div className={styles.attachWrap} ref={attachMenuRef}>
-        {attachMenuOpen && !noItems && (
-          <div className={styles.attachMenu}>
-            {offerPhoto && (
-              <button
-                className={styles.attachMenuItem}
-                onClick={() => { journalFileRef.current?.click(); setAttachMenuOpen(false) }}
-              >{uploadingJournalImage ? 'uploading…' : 'photo'}</button>
-            )}
-            {offerQuote && (
-              <button
-                className={styles.attachMenuItem}
-                onClick={() => { openQuotePicker(); setAttachMenuOpen(false) }}
-              >revisit</button>
-            )}
-          </div>
-        )}
-        <button
-          className={styles.attachBtn}
-          onClick={() => !noItems && setAttachMenuOpen(o => !o)}
-          aria-label="attach photo or quote"
-          disabled={noItems}
-        >⊕</button>
-        {hasPhoto && (
-          <button className={styles.attachChip} onClick={() => setDraftImage(null)}>
-            <img src={draftImage} className={styles.attachThumb} alt="" />×
-          </button>
-        )}
-        {hasQuote && (
-          <button className={styles.attachChip} onClick={() => { setQuotedText(null); setQuotedDate(null) }}>
-            ↩ {formatQuoteDate(quotedDate)} ×
-          </button>
-        )}
-      </div>
-    )
-  }
 
   return (
     <div className={styles.screen}>
@@ -1159,7 +994,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
             <div className={styles.journalScroll} ref={journalEntriesRef}>
               <div className={styles.journalEntries}>
                 {journalEntries.length === 0 ? (
-                  <span className={styles.journalEntriesEmpty}>nothing written yet — start typing below</span>
+                  <span className={styles.journalEntriesEmpty}>nothing written yet — the ✎ button in the sidebar starts a draft</span>
                 ) : journalEntries.map(e => {
                   return (
                   <div key={e.id} className={styles.journalEntryCard}>
@@ -1206,80 +1041,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 })}
               </div>
             </div>
-            <div className={styles.journalBottom}>
-              <div className={styles.journalComposerCard} data-tour="journal">
-                <div className={styles.composerChips}>
-                  <span className={styles.composerTimeChip}>{formatEntryTime(new Date().toISOString())}</span>
-                  <span className={styles.composerSlotChip}>{slot}</span>
-                  {chipBand ? (
-                    <button className={styles.composerTagActive} onClick={() => { freqPickerNewSlot.current = !moodSelections[slot]; setFreqPickerOpen(o => !o); setNeedPickerOpen(false); setCustomPickerOpen(false) }}>
-                      <span className={styles.composerFreqDot} style={draftMoodInherited ? { border: `1.5px solid ${MOOD_PIP_COLOR[chipBand]}` } : { background: MOOD_PIP_COLOR[chipBand] }} />
-                      {chipFeeling || chipBand}
-                      {!draftMoodInherited && <span className={styles.composerFreqClear} onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); setDraftMoodInherited(true); setDraftMoodBand(null); setDraftMoodFeeling(null); setFreqPickerOpen(false) }}>×</span>}
-                    </button>
-                  ) : (
-                    <button className={styles.composerTagBtn} onClick={() => { freqPickerNewSlot.current = !moodSelections[slot]; setFreqPickerOpen(o => !o); setNeedPickerOpen(false); setCustomPickerOpen(false) }}>+ vibration</button>
-                  )}
-                  {draftNeedId ? (
-                    <button className={styles.composerTagActive} onClick={() => setDraftNeedId(null)}>{draftNeedId} ×</button>
-                  ) : (
-                    <button className={styles.composerTagBtn} onClick={() => { setNeedPickerOpen(o => !o); setCustomPickerOpen(false); setFreqPickerOpen(false) }}>+ need</button>
-                  )}
-                  {customTags.length > 0 && (draftCustom ? (
-                    <button className={styles.composerTagActive} onClick={() => setDraftCustom(null)}>{draftCustom} ×</button>
-                  ) : (
-                    <button className={styles.composerTagBtn} onClick={() => { setCustomPickerOpen(o => !o); setNeedPickerOpen(false); setFreqPickerOpen(false) }}>+ custom</button>
-                  ))}
-                </div>
-                {freqPickerOpen && (
-                  <div className={styles.composerFreqPicker}>
-                    <FrequencyCard
-                      initialBand={chipBand}
-                      initialFeeling={chipFeeling}
-                      compact
-                      onSettle={(band, feeling) => {
-                        setDraftMoodBand(band)
-                        setDraftMoodFeeling(feeling || null)
-                        setDraftMoodInherited(false)
-                        if (feeling) setFreqPickerOpen(false)
-                        if (freqPickerNewSlot.current) handleFrequencySettle(slot, band, feeling)
-                      }}
-                    />
-                  </div>
-                )}
-                {needPickerOpen && activeNeeds.length > 0 && (
-                  <div className={styles.composerPicker}>
-                    {activeNeeds.map(n => (
-                      <button key={n.id} className={styles.composerPickerItem} onClick={() => { setDraftNeedId(n.id); setNeedPickerOpen(false) }}>{n.name}</button>
-                    ))}
-                  </div>
-                )}
-                {customPickerOpen && customTags.length > 0 && (
-                  <div className={styles.composerPicker}>
-                    {customTags.map(t => (
-                      <button key={t.id} className={styles.composerPickerItem} onClick={() => { setDraftCustom(t.label); setCustomPickerOpen(false) }}>{t.label}</button>
-                    ))}
-                  </div>
-                )}
-                <div className={styles.journalComposerWrap}>
-                  <textarea
-                    ref={desktopTextareaRef}
-                    className={styles.journalComposerInput}
-                    placeholder="create a draft…"
-                    value={draftText}
-                    onChange={e => setDraftText(e.target.value)}
-                    onKeyDown={handleComposerKeyDown}
-                    rows={3}
-                  />
-                  <div className={styles.journalComposerFooter}>
-                    {renderAttachControl()}
-                    <span className={styles.journalHint}>⌘↵</span>
-                    <button className={styles.journalAddBtn} onClick={handleAddEntry} disabled={!draftText.trim()}>add</button>
-                  </div>
-                </div>
-                {journalSaveError && <div className={styles.journalSaveError}>{journalSaveError}</div>}
-              </div>
-            </div>
           </div>
         ) : (
           <div className={styles.cardJournal} data-tour="journal">
@@ -1290,6 +1051,9 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               </span>
             </div>
             <>
+              {journalEntries.length === 0 && (
+                <span className={styles.journalEmptyMobile}>nothing written yet — the ✎ button below starts a draft</span>
+              )}
               {journalEntries.length > 0 && (
                 <div className={styles.journalMobileEntries}>
                   {journalEntries.map(e => {
@@ -1337,81 +1101,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                   })}
                 </div>
               )}
-              {!composerOpen ? (
-                <button className={styles.composerCollapsed} onClick={() => setComposerOpen(true)}>
-                  + create a draft…
-                </button>
-              ) : (
-                <div className={styles.journalComposer} ref={composerRef}>
-                  <div className={styles.composerChips}>
-                    <span className={styles.composerSlotChip}>{slot}</span>
-                    {chipBand ? (
-                      <button className={styles.composerTagActive} onClick={() => { freqPickerNewSlot.current = !moodSelections[slot]; setFreqPickerOpen(o => !o); setNeedPickerOpen(false); setCustomPickerOpen(false) }}>
-                        <span className={styles.composerFreqDot} style={draftMoodInherited ? { border: `1.5px solid ${MOOD_PIP_COLOR[chipBand]}` } : { background: MOOD_PIP_COLOR[chipBand] }} />
-                        {chipFeeling || chipBand}
-                        {!draftMoodInherited && <span className={styles.composerFreqClear} onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); setDraftMoodInherited(true); setDraftMoodBand(null); setDraftMoodFeeling(null); setFreqPickerOpen(false) }}>×</span>}
-                      </button>
-                    ) : (
-                      <button className={styles.composerTagBtn} onClick={() => { freqPickerNewSlot.current = !moodSelections[slot]; setFreqPickerOpen(o => !o); setNeedPickerOpen(false); setCustomPickerOpen(false) }}>+ vibration</button>
-                    )}
-                    {draftNeedId ? (
-                      <button className={styles.composerTagActive} onClick={() => setDraftNeedId(null)}>{draftNeedId} ×</button>
-                    ) : (
-                      <button className={styles.composerTagBtn} onClick={() => { setNeedPickerOpen(o => !o); setCustomPickerOpen(false); setFreqPickerOpen(false) }}>+ need</button>
-                    )}
-                    {customTags.length > 0 && (draftCustom ? (
-                      <button className={styles.composerTagActive} onClick={() => setDraftCustom(null)}>{draftCustom} ×</button>
-                    ) : (
-                      <button className={styles.composerTagBtn} onClick={() => { setCustomPickerOpen(o => !o); setNeedPickerOpen(false); setFreqPickerOpen(false) }}>+ custom</button>
-                    ))}
-                  </div>
-                  {freqPickerOpen && (
-                    <div className={styles.composerFreqPicker}>
-                      <FrequencyCard
-                        initialBand={chipBand}
-                        initialFeeling={chipFeeling}
-                        compact
-                        onSettle={(band, feeling) => {
-                          setDraftMoodBand(band)
-                          setDraftMoodFeeling(feeling || null)
-                          setDraftMoodInherited(false)
-                          if (feeling) setFreqPickerOpen(false)
-                          if (freqPickerNewSlot.current) handleFrequencySettle(slot, band, feeling)
-                        }}
-                      />
-                    </div>
-                  )}
-                  {needPickerOpen && activeNeeds.length > 0 && (
-                    <div className={styles.composerPicker}>
-                      {activeNeeds.map(n => (
-                        <button key={n.id} className={styles.composerPickerItem} onClick={() => { setDraftNeedId(n.id); setNeedPickerOpen(false) }}>{n.name}</button>
-                      ))}
-                    </div>
-                  )}
-                  {customPickerOpen && customTags.length > 0 && (
-                    <div className={styles.composerPicker}>
-                      {customTags.map(t => (
-                        <button key={t.id} className={styles.composerPickerItem} onClick={() => { setDraftCustom(t.label); setCustomPickerOpen(false) }}>{t.label}</button>
-                      ))}
-                    </div>
-                  )}
-                  <textarea
-                    autoFocus
-                    className={styles.journalInput}
-                    placeholder="what's on your mind?"
-                    value={draftText}
-                    onChange={e => setDraftText(e.target.value)}
-                    onKeyDown={handleComposerKeyDown}
-                    rows={4}
-                  />
-                  <div className={styles.composerMobileFooter}>
-                    {renderAttachControl()}
-                    <button className={styles.composerCancelBtn} onClick={() => { setComposerOpen(false); setNeedPickerOpen(false); setCustomPickerOpen(false); setAttachMenuOpen(false) }}>cancel</button>
-                    <button className={styles.journalAddBtn} onClick={handleAddEntry} disabled={!draftText.trim()}>add</button>
-                  </div>
-                  {journalSaveError && <div className={styles.journalSaveError}>{journalSaveError}</div>}
-                </div>
-              )}
             </>
           </div>
         )}
@@ -1451,45 +1140,12 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         />
       )}
 
-      {quotePicker && (
-        <div className={styles.quotePicker} onClick={() => setQuotePicker(false)}>
-          <div className={styles.quotePickerPanel} onClick={e => e.stopPropagation()}>
-            <div className={styles.quotePickerHeader}>
-              <span className={styles.quotePickerTitle}>revisit queue</span>
-              <button className={styles.quotePickerClose} onClick={() => setQuotePicker(false)}>×</button>
-            </div>
-            <div className={styles.quotePickerList}>
-              {quoteLoading && <div className={styles.quotePickerEmpty}>loading…</div>}
-              {!quoteLoading && quoteEntries.length === 0 && (
-                <div className={styles.quotePickerEmpty}>mark entries ↩ on Reflect to queue them here</div>
-              )}
-              {!quoteLoading && quoteEntries.map(e => (
-                <button
-                  key={e.id}
-                  className={styles.quotePickerItem}
-                  onClick={() => {
-                    setQuotedText(e.entry)
-                    setQuotedDate(e.date_key)
-                    setQuotePicker(false)
-                  }}
-                >
-                  <span className={styles.quotePickerItemDate}>{formatQuoteDate(e.date_key)}</span>
-                  <span className={styles.quotePickerItemText}>{(e.entry || '').length > 120 ? (e.entry || '').slice(0, 120) + '…' : (e.entry || '')}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
       {lightboxImage && (
         <div className={styles.lightboxOverlay} onClick={() => setLightboxImage(null)}>
           <button className={styles.lightboxClose} onClick={() => setLightboxImage(null)}>×</button>
           <img src={lightboxImage} alt="" className={styles.lightboxImage} onClick={e => e.stopPropagation()} />
         </div>
       )}
-
-      <input ref={journalFileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleJournalFilePick} />
 
     </div>
   )

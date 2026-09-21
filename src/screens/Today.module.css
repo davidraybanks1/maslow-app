@@ -127,6 +127,14 @@
   background: var(--card);
 }
 
+.journalEmptyMobile {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink4);
+  padding-top: 2px;
+}
+
 /* ── Note to self deck wrapper ── */
 .reflectiveSection {
   background: var(--card);

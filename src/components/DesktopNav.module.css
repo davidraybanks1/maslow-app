@@ -51,5 +51,25 @@
   .footer {
     margin-top: auto;
     padding: 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
+  .composerFab {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: var(--card);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 14px rgba(0,0,0,.22);
+    transition: transform var(--motion-hover);
+  }
+  .composerFab:hover { transform: scale(1.05); }
+  .composerFab svg { width: 17px; height: 17px; }
 }

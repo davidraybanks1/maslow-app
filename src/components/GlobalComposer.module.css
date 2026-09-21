@@ -1,0 +1,117 @@
+/* Sticky global "add a draft" — the button lives the same place on every
+   screen (see App.jsx / DesktopNav.jsx); this file is the chrome around the
+   composer itself. Chip/picker/attach/textarea styling is reused verbatim
+   from Today.module.css so the content looks identical to what it replaces. */
+
+.fab {
+  position: fixed;
+  left: 50%;
+  bottom: calc(76px + var(--safe-bottom) + 16px);
+  transform: translateX(-50%);
+  z-index: 45;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--card);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(0,0,0,.28);
+  transition: transform 160ms ease, opacity 160ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.fab:active { transform: translateX(-50%) scale(0.94); }
+.fab svg { width: 21px; height: 21px; }
+
+@media (min-width: 900px) {
+  .fab { display: none; }
+}
+
+.sheetHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.sheetDate {
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink4);
+}
+.sheetClose {
+  width: 28px;
+  height: 28px;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,.2);
+  background: var(--card);
+  color: rgba(0,0,0,.6);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── mobile: bottom sheet ── */
+.mobileScrim {
+  position: fixed;
+  inset: 0;
+  z-index: 250;
+  background: rgba(20,18,12,.32);
+  animation: scrimIn 220ms ease;
+}
+.mobileSheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 251;
+  background: var(--paper);
+  border-radius: 20px 20px 0 0;
+  padding: 16px 18px calc(18px + var(--safe-bottom));
+  box-shadow: 0 -10px 30px rgba(0,0,0,.18);
+  max-height: 82vh;
+  overflow-y: auto;
+  animation: sheetUp 260ms cubic-bezier(.2,.7,.2,1);
+}
+
+@media (min-width: 900px) {
+  .mobileScrim, .mobileSheet { display: none; }
+}
+
+/* ── desktop: centered modal ── */
+.deskScrim {
+  position: fixed;
+  inset: 0;
+  z-index: 250;
+  background: rgba(20,18,12,.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: scrimIn 200ms ease;
+}
+.deskSheet {
+  width: min(480px, 92vw);
+  max-height: 82vh;
+  overflow-y: auto;
+  background: var(--card);
+  border-radius: 16px;
+  padding: 18px 20px 20px;
+  box-shadow: 0 20px 50px rgba(0,0,0,.3);
+  animation: modalIn 200ms ease;
+}
+
+@keyframes scrimIn { from { opacity: 0 } to { opacity: 1 } }
+@keyframes sheetUp { from { transform: translateY(100%) } to { transform: translateY(0) } }
+@keyframes modalIn { from { transform: scale(0.94); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+
+@media (prefers-reduced-motion: reduce) {
+  .mobileScrim, .mobileSheet, .deskScrim, .deskSheet { animation: none; }
+}
