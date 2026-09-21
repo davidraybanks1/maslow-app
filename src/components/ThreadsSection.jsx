@@ -1,6 +1,7 @@
 import { useEffect, useId, useMemo, useState } from 'react'
 import { FEELINGS, THREADS, BANDS, threadOf } from '../lib/frequency'
 import { loadAllJournalMeta } from '../lib/store'
+import { useChartCapture } from '../lib/useChartCapture'
 import FinePrint from './FinePrint'
 import styles from './ThreadsSection.module.css'
 
@@ -152,6 +153,7 @@ export default function ThreadsSection({ userId, moods }) {
 
   const sorted = useMemo(() => [...grid].sort((a, b) => b.total - a.total), [grid])
   const maxTotal = Math.max(1, ...sorted.map(t => t.total))
+  const chartRef = useChartCapture('data-vibrations', 'your vibrations')
 
   if (journal === null) return null
   if (total < 3) return null
@@ -162,7 +164,7 @@ export default function ThreadsSection({ userId, moods }) {
   const activeKey = selected ?? loudest.key
 
   return (
-    <section className={styles.section}>
+    <section ref={chartRef} className={styles.section}>
       <div className={styles.pad}>
         <h2 className={styles.title}>Your vibrations</h2>
         <p className={styles.sub}>

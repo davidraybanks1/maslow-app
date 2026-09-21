@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
+import { toBlob } from 'html-to-image'
 import { NEEDS } from '../lib/constants'
 import { currentSlot } from '../lib/slots'
 import { todayKey, addJournalEntry, uploadNoteImage, loadCustomTags, loadRevisitQueue } from '../lib/store'
 import { normalizeBand } from '../lib/frequency'
 import { useIsDesktop } from '../lib/useIsDesktop'
+import { getInViewCharts } from '../lib/chartRegistry'
 import FrequencyCard, { MOOD_PIP_COLOR } from './FrequencyCard'
 // Reuses Today's composer chip/picker/attach/quote styling verbatim so the
 // global composer is pixel-identical to the one it replaces there — see
@@ -59,6 +61,16 @@ export default function GlobalComposer({ state, logMood, open, onClose }) {
   const [customTags, setCustomTags] = useState([])
   const [saveError, setSaveError] = useState(null)
   const [saving, setSaving] = useState(false)
+  // The one smart, context-aware attach trigger: whatever chart(s) were in
+  // view on the screen behind the composer when it opened (e.g. scrolled
+  // into view on the Almanac) can be captured straight into the draft,
+  // alongside the existing photo/quote attach options.
+  const [chartsInView, setChartsInView] = useState([])
+  const [chartPickerOpen, setChartPickerOpen] = useState(false)
+  const [chartThumbs, setChartThumbs] = useState([])
+  const [chartThumbsLoading, setChartThumbsLoading] = useState(false)
+  const [selectedChartIdx, setSelectedChartIdx] = useState(0)
+  const [attachingChart, setAttachingChart] = useState(false)
 
   const freqPickerNewSlot = useRef(false)
   const fileInputRef = useRef(null)
@@ -74,6 +86,13 @@ export default function GlobalComposer({ state, logMood, open, onClose }) {
     if (open) setTimeout(() => textareaRef.current?.focus(), isDesktop ? 80 : 320)
   }, [open, isDesktop])
 
+  // Snapshot which chart(s) were in view the moment the composer opened —
+  // opening the sheet covers (mobile) or dims (desktop) the screen behind
+  // it, so there's no further scrolling to track while it's up.
+  useEffect(() => {
+    if (open) setChartsInView(getInViewCharts())
+  }, [open])
+
   useEffect(() => {
     if (!attachMenuOpen) return
     function onDown(e) {
@@ -82,6 +101,12 @@ export default function GlobalComposer({ state, logMood, open, onClose }) {
     document.addEventListener('mousedown', onDown)
     return () => document.removeEventListener('mousedown', onDown)
   }, [attachMenuOpen])
+
+  function closeChartPicker() {
+    chartThumbs.forEach(t => URL.revokeObjectURL(t.url))
+    setChartThumbs([])
+    setChartPickerOpen(false)
+  }
 
   function resetDraft() {
     setDraftText('')
@@ -98,6 +123,8 @@ export default function GlobalComposer({ state, logMood, open, onClose }) {
     setDraftMoodInherited(true)
     setDraftMoodBand(null)
     setDraftMoodFeeling(null)
+    closeChartPicker()
+    setChartsInView([])
   }
 
   function handleClose() {
@@ -160,9 +187,39 @@ export default function GlobalComposer({ state, logMood, open, onClose }) {
     }
   }
 
+  async function openChartPicker() {
+    setChartPickerOpen(true)
+    setSelectedChartIdx(0)
+    setChartThumbsLoading(true)
+    const thumbs = await Promise.all(chartsInView.map(async c => {
+      try {
+        const blob = await toBlob(c.node, { pixelRatio: 2 })
+        return blob ? { id: c.id, label: c.label, url: URL.createObjectURL(blob), blob } : null
+      } catch {
+        return null
+      }
+    }))
+    setChartThumbs(thumbs.filter(Boolean))
+    setChartThumbsLoading(false)
+  }
+
+  async function handleUseChart() {
+    const chosen = chartThumbs[selectedChartIdx]
+    if (!chosen || !state.userId) return
+    setAttachingChart(true)
+    const file = new File([chosen.blob], `chart-${chosen.id}-${Date.now()}.png`, { type: 'image/png' })
+    const { url } = await uploadNoteImage(state.userId, file)
+    setAttachingChart(false)
+    if (url) setDraftImage(url)
+    closeChartPicker()
+  }
+
   function handleKeyDown(e) {
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); handleAddEntry() }
-    if (e.key === 'Escape') { attachMenuOpen ? setAttachMenuOpen(false) : handleClose() }
+    if (e.key === 'Escape') {
+      if (chartPickerOpen) { closeChartPicker(); return }
+      attachMenuOpen ? setAttachMenuOpen(false) : handleClose()
+    }
   }
 
   function renderAttachControl() {
@@ -170,7 +227,8 @@ export default function GlobalComposer({ state, logMood, open, onClose }) {
     const hasQuote = !!quotedText
     const offerPhoto = !hasPhoto
     const offerQuote = !hasQuote
-    const noItems = !offerPhoto && !offerQuote
+    const offerChart = !hasPhoto && chartsInView.length > 0
+    const noItems = !offerPhoto && !offerQuote && !offerChart
     return (
       <div className={todayStyles.attachWrap} ref={attachMenuRef}>
         {attachMenuOpen && !noItems && (
@@ -180,12 +238,17 @@ export default function GlobalComposer({ state, logMood, open, onClose }) {
                 {uploadingImage ? 'uploading…' : 'photo'}
               </button>
             )}
+            {offerChart && (
+              <button className={todayStyles.attachMenuItem} onClick={() => { openChartPicker(); setAttachMenuOpen(false) }}>
+                chart{chartsInView.length > 1 ? ` (${chartsInView.length})` : ''}
+              </button>
+            )}
             {offerQuote && (
               <button className={todayStyles.attachMenuItem} onClick={() => { openQuotePicker(); setAttachMenuOpen(false) }}>revisit</button>
             )}
           </div>
         )}
-        <button className={todayStyles.attachBtn} onClick={() => !noItems && setAttachMenuOpen(o => !o)} aria-label="attach photo or quote" disabled={noItems}>⊕</button>
+        <button className={todayStyles.attachBtn} onClick={() => !noItems && setAttachMenuOpen(o => !o)} aria-label="attach photo, chart, or quote" disabled={noItems}>⊕</button>
         {hasPhoto && (
           <button className={todayStyles.attachChip} onClick={() => setDraftImage(null)}>
             <img src={draftImage} className={todayStyles.attachThumb} alt="" />×
@@ -297,6 +360,49 @@ export default function GlobalComposer({ state, logMood, open, onClose }) {
                 </button>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {chartPickerOpen && (
+        <div className={styles.chartPicker} onClick={closeChartPicker}>
+          <div className={styles.chartPickerPanel} onClick={e => e.stopPropagation()}>
+            <div className={styles.chartPickerHeader}>
+              <span className={styles.chartPickerTitle}>attach a chart</span>
+              <button className={styles.chartPickerClose} onClick={closeChartPicker}>×</button>
+            </div>
+            {chartThumbsLoading && <div className={styles.chartPickerLoading}>capturing…</div>}
+            {!chartThumbsLoading && chartThumbs.length === 0 && (
+              <div className={styles.chartPickerLoading}>couldn't capture that chart — try a photo instead</div>
+            )}
+            {!chartThumbsLoading && chartThumbs.length > 0 && (
+              <>
+                <div className={styles.chartPickerPreview}>
+                  <img src={chartThumbs[selectedChartIdx]?.url} alt="" className={styles.chartPickerPreviewImg} />
+                </div>
+                <span className={styles.chartPickerLabel}>{chartThumbs[selectedChartIdx]?.label}</span>
+                {chartThumbs.length > 1 && (
+                  <div className={styles.chartPickerThumbs}>
+                    {chartThumbs.map((t, i) => (
+                      <button
+                        key={t.id}
+                        className={`${styles.chartPickerThumb}${i === selectedChartIdx ? ` ${styles.chartPickerThumbActive}` : ''}`}
+                        onClick={() => setSelectedChartIdx(i)}
+                        aria-label={`use ${t.label} instead`}
+                      >
+                        <img src={t.url} alt="" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <div className={styles.chartPickerFooter}>
+                  <button className={todayStyles.composerCancelBtn} onClick={closeChartPicker}>cancel</button>
+                  <button className={todayStyles.journalAddBtn} onClick={handleUseChart} disabled={attachingChart}>
+                    {attachingChart ? 'attaching…' : 'use this'}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

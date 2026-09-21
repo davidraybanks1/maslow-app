@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { buildLadder, openSecondDoor, walkLadder, tierCounts, oneIn } from '../lib/ladder'
 import { MODE_ORDER } from '../lib/constants'
+import { useChartCapture } from '../lib/useChartCapture'
 import FinePrint from './FinePrint'
 import styles from './RootsSection.module.css'
 
@@ -178,6 +179,7 @@ export default function RootsSection({ canvas, checkins, moods, practicesDB }) {
   }, [canvas, checkins, moods, practicesDB])
 
   const geo = useMemo(() => layout(tree), [tree])
+  const chartRef = useChartCapture('data-roots', 'your roots')
   if (!tree.length) return null
 
   const shows = LEVELS.find(l => l.v === level).shows
@@ -253,7 +255,7 @@ export default function RootsSection({ canvas, checkins, moods, practicesDB }) {
   const H = Math.max(...geo.nodes.map(n => n.y1 + 20), ...labels.map(l => l.bottom || 0)) + 12
 
   return (
-    <section className={styles.section}>
+    <section ref={chartRef} className={styles.section}>
       <div className={styles.pad}>
         <h2 className={styles.title}>Your roots</h2>
         <p className={styles.sub}>{days} days · {counts.total - tree.length - geo.nodes.filter(n => n.depth === 2).length} needs · {geo.nodes.filter(n => n.depth === 2).length} practices</p>

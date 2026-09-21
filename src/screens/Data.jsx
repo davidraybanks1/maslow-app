@@ -3,6 +3,7 @@ import { NEEDS, MODE_ORDER } from '../lib/constants'
 import { createDataStats } from '../lib/dataStats'
 import { normalizeBand, BAND_LABEL } from '../lib/frequency'
 import { useIsDesktop } from '../lib/useIsDesktop'
+import { useChartCapture } from '../lib/useChartCapture'
 import RootsSection from '../components/RootsSection'
 import ThreadsSection from '../components/ThreadsSection'
 import StreaksRail from '../components/StreaksRail'
@@ -223,6 +224,7 @@ const MOOD_LIT = Object.fromEntries(Object.entries(MOOD_RAMP).map(([k, [a, b]]) 
 function RhythmSection({ canvas, checkins, moods, range }) {
   const monthly = range.keys.length > 7
   const { keys, todayKey } = range
+  const chartRef = useChartCapture('data-rhythm', 'your rhythm')
   // in the month view a Monday is labelled with its date; the rest stay blank
   const dayLabel = (dk, i) => {
     if (!monthly) return WEEKDAY_LETTERS[i]
@@ -231,7 +233,7 @@ function RhythmSection({ canvas, checkins, moods, range }) {
   }
 
   return (
-    <section className={`${styles.section} ${styles.sectionCard} ${styles.rhythmCard}`}>
+    <section ref={chartRef} className={`${styles.section} ${styles.sectionCard} ${styles.rhythmCard}`}>
       <div className={styles.sectionHeader}>
         <span className={styles.sectionLabel}>YOUR RHYTHM</span>
       </div>
@@ -275,6 +277,7 @@ const DESKTOP_WINDOW = 30
 function FeelsSection({ moods, range }) {
   const monthly = range.keys.length > 7
   const { keys, prevKeys, todayKey } = range
+  const chartRef = useChartCapture('data-feels', 'your feels')
 
   const { days, total } = useMemo(() => {
     const tally = keys.map(dk => ({ dk, good: 0, mid: 0, bad: 0, n: 0 }))
@@ -312,7 +315,7 @@ function FeelsSection({ moods, range }) {
   }
 
   return (
-    <section className={`${styles.section} ${styles.sectionCard}`}>
+    <section ref={chartRef} className={`${styles.section} ${styles.sectionCard}`}>
       <div className={styles.sectionHeader}>
         <span className={styles.sectionLabel}>YOUR FEELS</span>
         <span className={styles.sectionMeta}>
@@ -355,6 +358,7 @@ function RibbonsSection({ canvas, checkins, practicesDB, days, windowLen, isDesk
   const [openNeed, setOpenNeed] = useState(null)
   const [tooltipInfo, setTooltipInfo] = useState(null)
   const ribbonTimerRef = useRef(null)
+  const chartRef = useChartCapture('data-ledger', 'your ledger')
   const recent30 = useMemo(() => buildWindowKeys(30, 0), [])
   const recent90 = useMemo(() => buildWindowKeys(90, 0), [])
   const todayKey = buildWindowKeys(1, 0)[0]
@@ -383,7 +387,7 @@ function RibbonsSection({ canvas, checkins, practicesDB, days, windowLen, isDesk
   useEffect(() => () => clearTimeout(ribbonTimerRef.current), [])
 
   return (
-    <section className={`${styles.section} ${styles.sectionCard}`}>
+    <section ref={chartRef} className={`${styles.section} ${styles.sectionCard}`}>
       <div className={styles.sectionHeader}>
         <span className={styles.sectionLabel}>EACH NEED, DAY BY DAY</span>
         <span className={styles.sectionMeta}>lit = running now</span>

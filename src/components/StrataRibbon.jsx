@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { normalizeBand } from '../lib/frequency'
+import { useChartCapture } from '../lib/useChartCapture'
 import FinePrint from './FinePrint'
 import styles from './StrataRibbon.module.css'
 
@@ -123,6 +124,7 @@ export default function StrataRibbon({ moods }) {
     const good = raw.reduce((s, p) => s + p.good, 0)
     return { pts, total, good, from: days[0], to: days[days.length - 1], story: tellStory(raw, good, total) }
   }, [moods, range])
+  const chartRef = useChartCapture('data-strata', 'your strata')
 
   if (pts.length < 3) return null
 
@@ -144,7 +146,7 @@ export default function StrataRibbon({ moods }) {
   })
 
   return (
-    <section className={styles.section}>
+    <section ref={chartRef} className={styles.section}>
       <div className={styles.pad}>
         <div className={styles.titleRow}>
           <h2 className={styles.title}>Your strata</h2>
