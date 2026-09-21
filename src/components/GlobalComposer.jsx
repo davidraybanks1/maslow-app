@@ -6,6 +6,7 @@ import { todayKey, addJournalEntry, uploadNoteImage, loadCustomTags, loadRevisit
 import { normalizeBand } from '../lib/frequency'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import { getSeenCharts } from '../lib/chartRegistry'
+import Glyph from '../lib/glyphs'
 import FrequencyCard, { MOOD_PIP_COLOR } from './FrequencyCard'
 // Reuses Today's composer chip/picker/attach/quote styling verbatim so the
 // global composer is pixel-identical to the one it replaces there — see
@@ -21,13 +22,13 @@ function formatQuoteDate(dateKey) {
 
 /* The sticky "add a draft" entry point — same spot on every screen. Mobile
    gets a floating circle centered above the tab bar; the desktop button
-   lives inline in DesktopNav's footer (see DesktopNav.jsx). */
+   lives inline in DesktopNav's footer (see DesktopNav.jsx). Same glyph as
+   the "drafts" tab and the "drafts" section header on Today — one mark for
+   the one idea, everywhere it shows up. */
 export function ComposerFab({ onClick }) {
   return (
     <button className={styles.fab} onClick={onClick} aria-label="Add a draft">
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
+      <Glyph kind="note" height={18} />
     </button>
   )
 }

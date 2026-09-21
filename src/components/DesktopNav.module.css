@@ -71,5 +71,4 @@
     transition: transform var(--motion-hover);
   }
   .composerFab:hover { transform: scale(1.05); }
-  .composerFab svg { width: 17px; height: 17px; }
 }

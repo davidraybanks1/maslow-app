@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom'
 import styles from './DesktopNav.module.css'
 import BrandMark from './BrandMark'
 import ProfileMenu from './ProfileMenu'
+import Glyph from '../lib/glyphs'
 
 /* Persistent sidebar for ≥900px viewports. */
 
@@ -26,11 +27,9 @@ export default function DesktopNav({ name, email, reviewCadence, updateReviewCad
       <div className={styles.footer}>
         {/* Sticky "add a draft" — same button, same spot, on every screen;
             see GlobalComposer.jsx for the mobile equivalent and the sheet
-            it opens. */}
+            it opens. Same glyph as the mobile fab and the "drafts" tab. */}
         <button className={styles.composerFab} onClick={onOpenComposer} aria-label="Add a draft">
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          <Glyph kind="note" height={14} />
         </button>
         <ProfileMenu
           name={name} email={email}

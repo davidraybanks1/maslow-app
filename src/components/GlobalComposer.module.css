@@ -24,7 +24,6 @@
   -webkit-tap-highlight-color: transparent;
 }
 .fab:active { transform: translateX(-50%) scale(0.94); }
-.fab svg { width: 21px; height: 21px; }
 
 @media (min-width: 900px) {
   .fab { display: none; }

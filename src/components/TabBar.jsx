@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import Glyph from '../lib/glyphs'
 import styles from './TabBar.module.css'
 
 function TodayIcon({ active }) {
@@ -24,23 +25,17 @@ function DataIcon({ active }) {
   )
 }
 
-function ReflectIcon({ active }) {
-  return (
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-      {active
-        ? <circle cx="9" cy="9" r="1.5" fill="currentColor"/>
-        : <circle cx="9" cy="9" r="1.5" stroke="currentColor" strokeWidth="1.5"/>
-      }
-      <path d="M5.5 11.5 A5 5 0 0 1 12.5 11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
-      <path d="M2.5 14 A9 9 0 0 1 15.5 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
-    </svg>
-  )
+// Same mark as the "drafts" section header on Today, and the compose
+// button everywhere else — one glyph for the one idea, not a different
+// icon per place it shows up. See lib/glyphs.jsx.
+function DraftsIcon() {
+  return <Glyph kind="note" height={15} />
 }
 
 const TABS = [
   { to: '/today',  label: 'today',   Icon: TodayIcon },
   { to: '/data',   label: 'almanac', Icon: DataIcon },
-  { to: '/log',    label: 'drafts', Icon: ReflectIcon },
+  { to: '/log',    label: 'drafts', Icon: DraftsIcon },
 ]
 
 export default function TabBar() {
