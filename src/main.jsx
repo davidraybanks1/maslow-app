@@ -43,7 +43,15 @@ Sentry.init(
   SentryReact.init,
 )
 
+// navigator.standalone is Apple's own (non-standard, iOS-only) flag for a
+// page launched from a home-screen icon; display-mode covers the same case
+// on Android/other browsers that support the standard media feature.
+const isStandalonePwa = () =>
+  typeof window !== 'undefined' &&
+  (window.navigator.standalone === true || window.matchMedia?.('(display-mode: standalone)').matches)
+
 if (isNative()) document.documentElement.classList.add('native')
+else if (isStandalonePwa()) document.documentElement.classList.add('pwa-standalone')
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

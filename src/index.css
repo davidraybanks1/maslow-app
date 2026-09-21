@@ -197,6 +197,14 @@ button { touch-action: manipulation; }
 /* Capacitor sets this class at boot — content is already inset by the OS */
 html.native { --safe-top: 0px; --safe-bottom: 0px; }
 
+/* iOS "Add to Home Screen" standalone mode has a WebKit bug where
+   env(safe-area-inset-bottom) reports Safari's own bottom-toolbar height
+   instead of just the home-indicator height — 80-100px+ instead of ~34px.
+   main.jsx sets this class at boot when it detects standalone mode; clamp
+   to the real, constant home-indicator height on every current Face-ID
+   iPhone rather than trusting that reading here. */
+html.pwa-standalone { --safe-bottom: 34px; }
+
 html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
