@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useId, useMemo, useState } from 'react'
 import { normalizeBand } from '../lib/frequency'
 import { useChartCapture } from '../lib/useChartCapture'
 import FinePrint from './FinePrint'
@@ -8,13 +8,24 @@ import styles from './StrataRibbon.module.css'
    rectangle, and the whole point is that the silhouette should undulate.
    Thickness is how much you logged; the layers are how it felt. */
 
-/* Drawn the way the roots are: a full-colour ridge line over a light fill,
-   on the paper, rather than a solid gradient block. */
-const BAND_C = {
-  good: { line: '#3FA87A', fill: 'rgba(63,168,122,.30)' },   // the top of a significant root
-  mid: { line: '#9DB394', fill: 'rgba(157,179,148,.26)' },   // appreciation's mark
-  bad: { line: '#F03C10', fill: 'rgba(240,60,16,.24)' },     // survival's disc
+/* The same light-at-34%/26% ramps that light the bloom, the rhythm bars and
+   the feels stacks — this used to be a full-colour ridge line over a pale
+   wash instead, which read as chalky next to those. Each band is one big
+   shape rather than many small beads, so the radial gradient reads here as
+   one soft sheen across the whole layer rather than a single hard glint. */
+const MOOD_RAMP = {
+  good: ['#3FA87A', '#07301F'],
+  mid: ['#B4C4AC', '#3E5238'],
+  bad: ['#FF8A66', '#A81F06'],
 }
+const BAND_C = {
+  good: { line: MOOD_RAMP.good[0], fill: MOOD_RAMP.good },
+  mid: { line: MOOD_RAMP.mid[0], fill: MOOD_RAMP.mid },
+  bad: { line: MOOD_RAMP.bad[0], fill: MOOD_RAMP.bad },
+}
+const BAND_LIT = Object.fromEntries(
+  Object.entries(MOOD_RAMP).map(([b, [a, c]]) => [b, `radial-gradient(circle at 34% 26%, ${a}, ${c})`])
+)
 const BANDS = ['good', 'mid', 'bad']
 const RANGES = [
   { v: 7, label: 'week' }, { v: 14, label: '2 weeks' },
@@ -100,6 +111,8 @@ function tellStory(raw, good, total) {
 
 export default function StrataRibbon({ moods }) {
   const [range, setRange] = useState(30)
+  const rawId = useId()
+  const uid = rawId.replace(/[^a-z0-9]/gi, '') || 's0'
 
   const { pts, from, to, story } = useMemo(() => {
     const byDay = new Map()
@@ -153,7 +166,7 @@ export default function StrataRibbon({ moods }) {
           <div className={styles.legend}>
             {BANDS.map(b => (
               <span key={b}>
-                <i style={{ background: BAND_C[b].fill, boxShadow: `inset 0 1.5px 0 ${BAND_C[b].line}` }} />
+                <i style={{ background: BAND_LIT[b] }} />
                 {b === 'mid' ? 'fine' : b}
               </span>
             ))}
@@ -167,7 +180,15 @@ export default function StrataRibbon({ moods }) {
 
       <figure className={styles.fig}>
         <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="How your days have layered up">
-          {layers.map(l => <path key={l.band} d={l.d} fill={BAND_C[l.band].fill} />)}
+          <defs>
+            {BANDS.map(b => (
+              <radialGradient key={b} id={`strata-${b}-${uid}`} cx="34%" cy="26%" r="75%">
+                <stop offset="0%" stopColor={BAND_C[b].fill[0]} />
+                <stop offset="100%" stopColor={BAND_C[b].fill[1]} />
+              </radialGradient>
+            ))}
+          </defs>
+          {layers.map(l => <path key={l.band} d={l.d} fill={`url(#strata-${l.band}-${uid})`} />)}
           {/* ridges drawn top layer first, so where a band is empty the one beneath shows through in its own colour */}
           {[...layers].reverse().map(l => <path key={`${l.band}-r`} d={l.ridge} fill="none" stroke={BAND_C[l.band].line} strokeWidth="1.6" strokeLinejoin="round" />)}
         </svg>
