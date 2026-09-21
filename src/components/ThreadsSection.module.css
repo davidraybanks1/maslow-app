@@ -14,8 +14,11 @@
 .claim em { font-style: italic; color: var(--expl-deep, #0C5038); }
 
 /* ── Rings stage ── */
-.ringsWrap { margin-top: 18px; display: flex; justify-content: center; }
-.rings { width: 100%; max-width: 380px; height: auto; overflow: visible; }
+/* full bleed, same as the strata ribbon and the roots tree — the rings are
+   the point of this card, not a chart boxed into the text column, so they
+   run past the card's own side padding out toward the screen edges. */
+.ringsWrap { margin: 18px -22px 0; width: calc(100% + 44px); display: flex; justify-content: center; overflow: visible; }
+.rings { width: 100%; height: auto; overflow: visible; }
 
 .pulse {
   fill: none;
@@ -137,3 +140,7 @@
 .key span { display: flex; align-items: center; gap: 6px; }
 .key i { width: 9px; height: 9px; border-radius: 50%; display: block; }
 .keyRight { margin-left: auto; }
+
+@media (min-width: 900px) {
+  .ringsWrap { margin-inline: 0; width: 100%; }
+}
