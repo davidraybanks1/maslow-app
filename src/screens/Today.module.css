@@ -2176,10 +2176,13 @@
     box-shadow: 0 2px 16px rgba(0,0,0,0.08);
   }
 
-  /* With the deck reviewed and its section gone, the vibrations card would
-     slide up under the bloom (its lowest petal is 178px below the header's
-     top; the card would start at 117px). This holds it clear. */
-  .deckReviewedSpace { height: 80px; }
+  /* With the deck reviewed and its section gone, the vibrations card moves
+     up to sit closer to the header — deliberately letting the bloom's lowest
+     petal dip a little into the white card's top-right corner, the same
+     layered look the note-to-self card gets above (its eyebrow label stays
+     clear on the left, same as VIBRATIONS' does here). Too little height and
+     the flower buries the card's content; this is tuned to just graze it. */
+  .deckReviewedSpace { height: 30px; }
 
   /* One header for the section, on the paper, matching Drafts. The rail is
      fullbleed here, so the label needs the page gutter put back. */
