@@ -173,15 +173,16 @@ export default function ThreadsSection({ userId, moods }) {
   if (journal === null) return null
   if (total < 3) return null
 
-  const loudest = sorted[0]
   const split = grid.find(g => g.shape === 'it splits')
   // the single word you reach for most, across all twelve — not just the
   // top word within your busiest thread, which isn't always the same one
   const topOverall = grid
     .flatMap(g => g.rungs.map(r => ({ ...r, thread: g.key })))
     .reduce((a, b) => (b.n > a.n ? b : a))
-  // default to the thread you lead with until you pick one yourself
-  const activeKey = selected ?? loudest.key
+  // nothing is picked until you tap one — every ring starts equal, at full
+  // opacity and showing just its own leading arc; only a tap dims the rest
+  // and fills the picked one in
+  const activeKey = selected
 
   return (
     <section ref={chartRef} className={styles.section}>
@@ -235,6 +236,9 @@ export default function ThreadsSection({ userId, moods }) {
               const circumference = 2 * Math.PI * r
               const arcLen = t.share * circumference
               const on = activeKey === t.key
+              // only dim the others once something is actually picked —
+              // with nothing selected, every ring sits at full opacity
+              const dimmed = activeKey != null && !on
               // picked: the full ring, broken into every band that has a
               // reading — "fill in the rest of the ring" once you tap in.
               // otherwise: just the leading feeling's own share, as before.
@@ -242,7 +246,7 @@ export default function ThreadsSection({ userId, moods }) {
               return (
                 <g
                   key={t.key}
-                  className={`${styles.ringGroup} ${on ? styles.ringOn : styles.ringDim}`}
+                  className={`${styles.ringGroup}${on ? ` ${styles.ringOn}` : ''}${dimmed ? ` ${styles.ringDim}` : ''}`}
                   transform={`translate(${CX},${CY})`}
                   onClick={() => setSelected(t.key)}
                 >
