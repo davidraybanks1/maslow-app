@@ -39,7 +39,7 @@ export const THREAD_COPY = {
 // introduces "frequency" and points at the almanac chart that has the full
 // picture. Today-only: pointing someone at the almanac only makes sense
 // from outside it.
-export const FREQUENCY_INTRO = 'Good, fine, and bad refer to your general mood. Each mood includes four unique "frequencies" that capture more detail about it. These frequencies fall into the four categories below and help you identify what your moods are telling you. Review "Your vibrations" in your Almanac to monitor your trends.'
+export const FREQUENCY_INTRO = 'Good, fine, and bad refer to your general mood. Each mood includes four unique "vibrations" that capture more detail about it. These vibrations fall into the four categories below and help you identify what your moods are telling you. Review "Your vibrations" in your Almanac to monitor your trends.'
 
 const ALL_FEELINGS = Object.values(FEELINGS).flat()
 const FEELING_RE = new RegExp(`\\b(${ALL_FEELINGS.join('|')})\\b`, 'gi')

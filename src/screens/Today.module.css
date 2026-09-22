@@ -1580,21 +1580,20 @@
   justify-content: space-between;
   margin-bottom: 10px;
 }
-/* small round toggle for "what do these mean" — filled with the app's
-   amber (the same --nour token as the nourishment mode) rather than a
-   quiet hairline outline, so it actually reads as tappable next to the
-   header label instead of disappearing into it */
+/* small round toggle for "what do these mean" — filled solid black (--ink)
+   rather than a quiet hairline outline, so it actually reads as tappable
+   next to the header label instead of disappearing into it */
 .freqInfoBtn {
   flex: 0 0 auto;
   width: 20px; height: 20px; border-radius: 50%;
-  border: none; background: var(--nour);
+  border: none; background: var(--ink);
   box-shadow: 0 0 0 0.5px rgba(0,0,0,.14);
   font-family: var(--serif, 'Newsreader', Georgia, serif); font-style: italic; font-weight: 500; font-size: 13px;
-  color: var(--ink); cursor: pointer; line-height: 1;
+  color: #fff; cursor: pointer; line-height: 1;
   display: grid; place-items: center; padding: 0;
   -webkit-tap-highlight-color: transparent;
 }
-.freqInfoBtn[aria-expanded="true"] { background: var(--nourishment-deep, #C9930C); color: #fff; }
+.freqInfoBtn[aria-expanded="true"] { background: var(--ink2); color: #fff; }
 /* same register as FinePrint's body — quiet mono prose, one line per thread.
    Sits below the vibration card now, so it needs its own top margin to clear
    the card's edge (it used to butt straight up against .freqHeader above,
