@@ -45,6 +45,13 @@ const R_LABEL = 202
 const CX = 340
 const CY = 240
 const SPARK_FRACS = [0.15, 0.38, 0.62, 0.85]
+// This SVG's viewBox (680 wide) renders far narrower than that on an actual
+// phone screen — full-bleed inside the app it lands around 390 real CSS px,
+// so 1 viewBox unit paints as only ~0.57 real px. A spark radius or font-size
+// entered as a raw viewBox number quietly ends up well under --type-floor.
+// SVG_SCALE inverts that ratio so the sizes below can be set to the real
+// on-screen size they should read as, not the pre-shrink number.
+const SVG_SCALE = 680 / 390
 
 function shapeOf(counts) {
   const [g, m, b] = counts
@@ -221,13 +228,13 @@ export default function ThreadsSection({ userId, moods }) {
                       />
                       {sparksForRing(t.leadBand, shareDeg, r).map(sp => sp.pulse ? (
                         <circle
-                          key={sp.key} className={styles.sparkPulse} r="2.1"
+                          key={sp.key} className={styles.sparkPulse} r={(2.3 * SVG_SCALE).toFixed(1)}
                           cx={sp.x} cy={sp.y} fill={sp.fill}
                           style={{ animationDelay: sp.delay }}
                         />
                       ) : (
                         <circle
-                          key={sp.key} className={styles.spark} r="1.9"
+                          key={sp.key} className={styles.spark} r={(2 * SVG_SCALE).toFixed(1)}
                           cx={sp.x} cy={sp.y} fill={sp.fill}
                           style={{ '--dx': sp.dx, '--dy': sp.dy, animationDuration: sp.dur, animationDelay: sp.delay }}
                         />
@@ -257,15 +264,22 @@ export default function ThreadsSection({ userId, moods }) {
                   <line className={styles.labelTick} x1={tickFrom.x} y1={tickFrom.y} x2={lp.x} y2={lp.y} />
                   {g.total > 0 ? (
                     <>
-                      <text className={styles.labelWord} x={lp.x} y={lp.y - 3} textAnchor={anchor}>
+                      <text className={styles.labelWord} x={lp.x} y={lp.y - 8} textAnchor={anchor}>
                         {g.topWord}
                       </text>
+                      {/* category name and count stack on their own lines rather than
+                          sharing one wide row — at a size that actually clears
+                          --type-floor once the SVG shrinks it, "CAPACITY · 19/30"
+                          run together is wider than the quadrant has room for */}
                       <text className={styles.labelSub} x={lp.x} y={lp.y + 13} textAnchor={anchor}>
-                        {g.key.toUpperCase()} · {g.leadN}/{g.total}
+                        {g.key.toUpperCase()}
+                      </text>
+                      <text className={styles.labelCount} x={lp.x} y={lp.y + 32} textAnchor={anchor}>
+                        {g.leadN}/{g.total}
                       </text>
                     </>
                   ) : (
-                    <text className={styles.labelSub} x={lp.x} y={lp.y + 5} textAnchor={anchor}>
+                    <text className={styles.labelSub} x={lp.x} y={lp.y + 8} textAnchor={anchor}>
                       {g.key.toUpperCase()} · —
                     </text>
                   )}

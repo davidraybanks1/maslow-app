@@ -39,7 +39,11 @@
 .you { fill: var(--card); stroke: var(--ink); stroke-width: 1.2; }
 .youLabel {
   font-family: var(--mono);
-  font-size: var(--type-floor);
+  /* the rings SVG renders at ~0.57x its own viewBox units on a real phone
+     screen (viewBox 680 wide vs. ~390 real CSS px) — var(--type-floor) here
+     would paint at under 7 real px, so this is sized up to still read at the
+     app's real type floor once the SVG shrinks it back down. */
+  font-size: 22px;
   letter-spacing: 0.1em;
   fill: var(--ink3);
   text-anchor: middle;
@@ -88,14 +92,22 @@
 .labelTick { stroke: var(--hairline); stroke-width: 1.5; }
 .labelWord {
   font-family: var(--serif, 'Newsreader', Georgia, serif); font-style: italic; font-weight: 300;
-  font-size: 17px; fill: var(--ink);
+  /* same SVG-shrink compensation as .youLabel above: 28px here reads as
+     ~16px on an actual phone screen, not the 17px it used to be entered as
+     (which was rendering closer to 9-10 real px). */
+  font-size: 28px; fill: var(--ink);
 }
 .labelSub {
-  font-family: var(--mono); font-size: var(--type-floor); letter-spacing: 0.09em;
+  font-family: var(--mono); font-size: 22px; letter-spacing: 0.09em;
   text-transform: uppercase; fill: var(--ink3);
+}
+.labelCount {
+  font-family: var(--mono); font-size: 22px; letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums; fill: var(--ink4);
 }
 .labelOn .labelWord { fill: var(--expl-deep, #0C5038); }
 .labelOn .labelSub { fill: var(--ink2); }
+.labelOn .labelCount { fill: var(--ink3); }
 .labelOn .labelTick { stroke: rgba(0,0,0,.4); }
 
 /* ── Legend / selector list ── */
