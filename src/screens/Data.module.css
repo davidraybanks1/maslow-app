@@ -54,12 +54,6 @@
 }
 .groupSub { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink4); margin: 0; line-height: 1.5; }
 
-/* full-bleed white bar behind a group's head — opt-in via Group's barHead
-   prop (only "Your ledger" uses it today), same -22px/22px bleed
-   convention as the roots/vibrations/strata title bars, cancelled on
-   desktop the same way. Overrides .groupHead's own margin-bottom. */
-.groupHeadBar { margin: 0 -22px 18px; padding: 14px 22px; background: var(--card); }
-
 /* stepping the range: the arrows are buttons you can see, the span sits between them */
 .rangeNav { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
 .rangeBtn {
@@ -637,7 +631,6 @@
   /* The desktop sidebar already carries its own account menu. */
   .pageHeaderAccount { display: none; }
   .groupTitle { font-size: 28px; }
-  .groupHeadBar { margin-inline: 0; }
 
   .insightDeckWrapper { width: 100%; margin-inline: 0; padding: 0; gap: 0; }
   .insightCard { flex: 0 0 100%; width: auto; height: auto; scroll-snap-align: start; border-radius: 16px; padding: 18px 20px; box-shadow: none; border: 0.5px solid var(--hairline); }

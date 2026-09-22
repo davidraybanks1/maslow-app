@@ -2,12 +2,8 @@
 .pad { padding-inline: 0; }
 .title {
   font-family: var(--serif, 'Newsreader', Georgia, serif);
-  font-size: 23px; font-weight: 300; letter-spacing: -0.015em; margin: 0;
+  font-size: 23px; font-weight: 300; letter-spacing: -0.015em; margin: 0 0 3px;
 }
-/* full-bleed white bar behind the title — same -22px/22px bleed convention
-   used for the vibrations/strata title bars and this file's own .box zoom
-   surface, cancelled on desktop the same way */
-.titleBar { margin: 0 -22px 18px; padding: 14px 22px; background: var(--card); }
 .sub { font-family: var(--mono); font-size: var(--type-floor); color: var(--ink4); margin: 0 0 14px; }
 .head {
   font-family: var(--serif, 'Newsreader', Georgia, serif);
@@ -57,9 +53,5 @@
   border: 0.5px solid var(--hairline); background: none; color: var(--ink3); cursor: pointer;
 }
 .levelOn { background: var(--ink); color: #F2F0E8; border-color: var(--ink); }
-
-@media (min-width: 900px) {
-  .titleBar { margin-inline: 0; }
-}
 .note { font-family: var(--mono); font-size: var(--type-floor); line-height: 1.6; color: var(--ink4); margin: 14px 0 0; }
 .note b { color: var(--ink2); font-weight: 400; }

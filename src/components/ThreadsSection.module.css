@@ -4,14 +4,7 @@
 
 .section { margin-top: 32px; border-top: 0.5px solid var(--hairline); padding-top: 26px; }
 .pad { padding-inline: 0; }
-/* full-bleed white bar behind the title + good/fine/bad key — same -22px/
-   22px bleed convention as .ringsWrap below, cancelled on desktop the same
-   way, so the header reads as its own band rather than sitting loose on
-   the page's cream ground */
-.titleRow {
-  display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap;
-  margin: 0 -22px 18px; padding: 14px 22px; background: var(--card);
-}
+.titleRow { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 0 0 12px; }
 .title { font-family: var(--serif, 'Newsreader', Georgia, serif); font-size: 23px; font-weight: 300; letter-spacing: -0.015em; margin: 0; }
 .titleKey { display: flex; gap: 11px; font-family: var(--mono); font-size: var(--type-floor); color: var(--ink4); letter-spacing: 0.02em; }
 .titleKey span { display: flex; align-items: center; gap: 5px; }
@@ -200,5 +193,4 @@
 
 @media (min-width: 900px) {
   .ringsWrap { margin-inline: 0; width: 100%; }
-  .titleRow { margin-inline: 0; }
 }

@@ -608,13 +608,14 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
 
       {/* ── Greeting ── */}
       <div className={styles.header}>
-        {/* The bloom bleeds across nearly the whole right side of this
-            header (see .headerRingWrap below), so the account control gets
-            its own thin row above the greeting rather than sitting inline
-            beside it, where it would land in the middle of the petals. */}
-        <div className={styles.headerTopRow}>
-          <div className={styles.headerAccount}>{profileMenu}</div>
-        </div>
+        {/* Absolutely positioned rather than inline in .headerRow — the
+            bloom (see .headerRingWrap below) bleeds across nearly the whole
+            right side of this header, and floating the account control
+            above it (instead of flowing it through the row) is what lets
+            the greeting itself sit flush with .header's top edge, on the
+            same line as almanac's/drafts' page title + account control,
+            without the bloom pushing the account control out of the way. */}
+        <div className={styles.headerAccount}>{profileMenu}</div>
         <div className={styles.headerRow}>
           <div className={styles.headerLeft}>
             <div className={styles.greeting}>good {SLOT_GREETING[slot]}.</div>
@@ -754,6 +755,16 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               onClick={() => setShowFreqInfo(v => !v)}
             >i</button>
           </div>
+          <div className={styles.freqShell}>
+            <FrequencyCard
+              key={slot}
+              initialBand={moodSelections[slot] || null}
+              initialFeeling={moodFeelings[slot] || null}
+              onSettle={(band, feeling) => handleFrequencySettle(slot, band, feeling)}
+              dayparts={isDesktop ? daypartsData : null}
+              bandAsBack={!isDesktop}
+            />
+          </div>
           {showFreqInfo && (
             <div className={styles.freqInfoPanel}>
               <p className={styles.freqInfoIntro}>{FREQUENCY_INTRO}</p>
@@ -766,16 +777,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               ))}
             </div>
           )}
-          <div className={styles.freqShell}>
-            <FrequencyCard
-              key={slot}
-              initialBand={moodSelections[slot] || null}
-              initialFeeling={moodFeelings[slot] || null}
-              onSettle={(band, feeling) => handleFrequencySettle(slot, band, feeling)}
-              dayparts={isDesktop ? daypartsData : null}
-              bandAsBack={!isDesktop}
-            />
-          </div>
           {!isDesktop && (
             <div className={styles.freqHeaderDayparts}>
               {daypartsData.map(dp => {

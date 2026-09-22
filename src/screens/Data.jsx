@@ -639,10 +639,10 @@ function AllNumbersSection({ range, canvas, checkins }) {
 
 /* A titled band of the page. The four drawn sections carry their own; these
    wrap the cards that live in this file. */
-function Group({ title, sub, aside, first, barHead, children }) {
+function Group({ title, sub, aside, first, children }) {
   return (
     <section className={`${styles.group}${first ? ` ${styles.groupFirst}` : ''}`}>
-      <div className={`${styles.groupHead}${barHead ? ` ${styles.groupHeadBar}` : ''}`}>
+      <div className={styles.groupHead}>
         <div>
           <h2 className={styles.groupTitle}>{title}</h2>
           {sub && <div className={styles.groupSub}>{sub}</div>}
@@ -743,7 +743,7 @@ export default function Data({ state, profileMenu }) {
             <ThreadsSection userId={state?.userId} moods={moods} />
             <StrataRibbon moods={moods} />
 
-            <Group title="Your ledger" barHead>
+            <Group title="Your ledger">
               <RibbonsSection canvas={canvas} checkins={checkins} practicesDB={practicesDB} days={dayKeys} windowLen={windowLen} isDesktop={isDesktop} />
               <AllNumbersSection range={range} canvas={canvas} checkins={checkins} />
             </Group>

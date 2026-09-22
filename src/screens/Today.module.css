@@ -9,6 +9,7 @@
 /* ── Greeting ── */
 .header {
   padding: 14px 0 16px;
+  position: relative;
 }
 .headerRow {
   display: flex;
@@ -28,11 +29,15 @@
   color: var(--ink3);
 }
 .greeting { font-family: var(--font-serif); font-size: 30px; font-weight: 300; letter-spacing: -0.01em; line-height: 1.1; color: var(--ink); }
-/* A thin row above the greeting, not inline beside it — the bloom (see
+/* Floated top-right rather than inline in .headerRow — the bloom (see
    .headerRingWrap below) bleeds across nearly the whole right two-thirds
-   of this header, so anything placed inline there lands in the petals. */
-.headerTopRow { display: flex; justify-content: flex-end; margin-bottom: 4px; }
-.headerAccount { flex-shrink: 0; }
+   of this header, so an inline flex item there lands in the petals.
+   Absolute positioning against .header's own top+right edge instead puts
+   it on the same line as the greeting (matching where almanac's/drafts'
+   page title sits beside their own account control) without competing
+   with the bloom for row space. top is set per breakpoint, alongside
+   .header's own padding-top, in the media queries below. */
+.headerAccount { position: absolute; top: 14px; right: 0; z-index: 3; }
 .headerAccount:empty { display: none; }
 
 /* Header: ring shown mobile, bar shown desktop */
@@ -1590,9 +1595,12 @@
   -webkit-tap-highlight-color: transparent;
 }
 .freqInfoBtn[aria-expanded="true"] { background: var(--nourishment-deep, #C9930C); color: #fff; }
-/* same register as FinePrint's body — quiet mono prose, one line per thread */
+/* same register as FinePrint's body — quiet mono prose, one line per thread.
+   Sits below the vibration card now, so it needs its own top margin to clear
+   the card's edge (it used to butt straight up against .freqHeader above,
+   which already carried that gap via its own margin-bottom). */
 .freqInfoPanel {
-  margin: 0 0 14px;
+  margin: 14px 0 14px;
   padding-bottom: 12px;
   border-bottom: 0.5px solid var(--hairline);
   font-family: var(--mono); font-size: var(--type-floor); line-height: 1.62; color: var(--ink3);
@@ -1660,7 +1668,7 @@
   /* The desktop sidebar already carries its own account menu (see
      DesktopNav.jsx) — this copy only exists to fill the app-header's old
      spot on mobile. */
-  .headerTopRow { display: none; }
+  .headerAccount { display: none; }
   .greeting { font-size: 40px; }
   .dateLabel { letter-spacing: 0.10em; }
   /* Same bloom graphic as mobile now - one consistent header across
@@ -2157,16 +2165,15 @@
        space at the new scale (1.266). Setting 367/-70/-30 here would render the
        form ~4% large and sitting ~38px too high. */
     --bloom-w: 260px;
-    /* Anchored to .header's own top edge, not to .headerRow — the account
-       row (.headerTopRow) sits above .headerRow inside this same box, so the
-       bloom needs to drop by that row's own height to stay level with the
-       greeting text below it. Without this offset the crown floats up next
-       to the account avatar instead of "good morning.". At 0 here (i.e.
-       flush with .header's top) the box carries ~13pt of empty space above
-       the first petal, which is what originally kept the crown clear of the
-       app-shell boundary — this offset preserves that same clearance, just
-       measured from the lower start (avatar height + row margin + this
-       header's own reduced top padding, below). */
+    /* Anchored to .header's own top edge, not to .headerRow. The account
+       control (.headerAccount) floats at this same top edge, right: 0, at
+       roughly avatar-height (30px) + a few px clearance — 40px keeps the
+       crown just clear of it rather than landing under the avatar badge.
+       At 0 here (i.e. flush with .header's top) the box carries ~13pt of
+       empty space above the first petal, which is what originally kept the
+       crown clear of the app-shell boundary — this offset preserves that
+       same clearance, just measured from the avatar's own footprint now
+       that nothing else reserves space above the row. */
     --bloom-top: 40px;
     --bloom-right: -34px;
     /* Trimmed from 14px — this used to be the gap below the old app-header
@@ -2176,6 +2183,10 @@
     padding-top: 6px;
     padding-bottom: 28px;
   }
+
+  /* Same top edge as .header's own (reduced) padding-top, so the account
+     control lines up with wherever the greeting now starts. */
+  .headerAccount { top: 6px; }
 
   .headerRingWrap {
     position: absolute;
