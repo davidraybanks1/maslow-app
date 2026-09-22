@@ -158,7 +158,10 @@
 .rungsPanelInner { overflow: hidden; }
 .rungs { margin: 0 0 14px 23px; display: flex; flex-direction: column; gap: 8px; }
 .rung { display: flex; align-items: center; gap: 10px; }
-.rungDot { flex: 0 0 8px; width: 8px; height: 8px; border-radius: 50%; }
+/* base/fallback size only — actual width/height are set inline per rung,
+   scaled to that word's share of readings within its own thread (see
+   rungDotSize in ThreadsSection.jsx) */
+.rungDot { flex: 0 0 8px; width: 8px; height: 8px; border-radius: 50%; transition: width 200ms ease, height 200ms ease; }
 .rungOff .rungDot { box-shadow: inset 0 0 0 1px rgba(0,0,0,.22); background: transparent; }
 .rungWord { font-family: var(--serif, 'Newsreader', Georgia, serif); font-size: 14.5px; font-weight: 300; color: var(--ink); }
 .rungOff .rungWord { color: var(--ink4); }
@@ -175,6 +178,10 @@
 }
 .threadCopy p { margin: 0 0 8px; }
 .threadCopy p:last-child { margin-bottom: 0; }
+/* the frequency words themselves (calm, steady, …) inside the prose — a
+   real medium weight from the mono family, not the browser's synthetic
+   bold, so they stay scannable without shouting */
+.threadCopy b { color: var(--ink2); font-weight: 500; }
 
 /* ── Footnote — the good/fine/bad key itself now lives beside the title;
    this is just the ring-size/arc explainer that's left ── */

@@ -5,7 +5,7 @@ import { currentSlot, precedingSlots, SLOTS, SLOT_NOUN, SLOT_GREETING } from '..
 import { todayKey, loadJournalEntries, deleteJournalEntry, loadNoteDeck, loadCustomTags } from '../lib/store'
 import { createDataStats, getCanvasGuidance } from '../lib/dataStats'
 import { hapticTick, isNative, pendingNotifSlot } from '../lib/native'
-import { normalizeBand, BAND_LABEL, THREADS, THREAD_COPY } from '../lib/frequency'
+import { normalizeBand, BAND_LABEL, THREADS, THREAD_COPY, FREQUENCY_INTRO, splitFrequencyWords } from '../lib/frequency'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import FrequencyCard, { MOOD_PIP_COLOR } from '../components/FrequencyCard'
 import Glyph from '../lib/glyphs'
@@ -756,8 +756,13 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
           </div>
           {showFreqInfo && (
             <div className={styles.freqInfoPanel}>
+              <p className={styles.freqInfoIntro}>{FREQUENCY_INTRO}</p>
               {THREADS.map(t => (
-                <p key={t}><b>{t}</b> — {THREAD_COPY[t].definition}</p>
+                <p key={t}>
+                  <span className={styles.freqInfoCat}>{t}</span> — {splitFrequencyWords(THREAD_COPY[t].definition).map((seg, i) =>
+                    seg.bold ? <b key={i}>{seg.text}</b> : seg.text
+                  )}
+                </p>
               ))}
             </div>
           )}

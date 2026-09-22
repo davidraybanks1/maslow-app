@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useState } from 'react'
-import { FEELINGS, THREADS, BANDS, THREAD_COPY, threadOf } from '../lib/frequency'
+import { FEELINGS, THREADS, BANDS, THREAD_COPY, threadOf, splitFrequencyWords } from '../lib/frequency'
 import { loadAllJournalMeta } from '../lib/store'
 import { useChartCapture } from '../lib/useChartCapture'
 import FinePrint from './FinePrint'
@@ -112,6 +112,15 @@ function ringSegments(rungs, r) {
 }
 function swatch(band) {
   return `linear-gradient(135deg,${RAMP[band][0]},${RAMP[band][1]})`
+}
+// area-scaled so the biggest of a thread's three rung dots reads as clearly
+// bigger, not just barely — sqrt because it's a circle's AREA that should
+// track the count, not its diameter. Zero readings keep the pre-existing
+// 8px size; rungOff's hollow-ring treatment already marks those as quiet.
+const RUNG_DOT_MIN = 8, RUNG_DOT_MAX = 18
+function rungDotSize(n, maxN) {
+  if (!n || !maxN) return RUNG_DOT_MIN
+  return Math.round(RUNG_DOT_MIN + (RUNG_DOT_MAX - RUNG_DOT_MIN) * Math.sqrt(n / maxN))
 }
 
 export default function ThreadsSection({ userId, moods }) {
@@ -371,20 +380,33 @@ export default function ThreadsSection({ userId, moods }) {
                 <div className={styles.rungsPanel}>
                   <div className={styles.rungsPanelInner}>
                     <div className={styles.rungs}>
-                      {g.rungs.map(r => (
-                        <div key={r.word} className={`${styles.rung}${r.n ? '' : ` ${styles.rungOff}`}`}>
-                          <span className={styles.rungDot} style={r.n ? { background: swatch(r.band) } : undefined} />
-                          <span className={styles.rungWord}>{r.word}</span>
-                          <span className={styles.rungCount}>{r.n || '—'}</span>
-                        </div>
-                      ))}
+                      {(() => {
+                        const maxRungN = Math.max(...g.rungs.map(r => r.n))
+                        return g.rungs.map(r => {
+                          const size = rungDotSize(r.n, maxRungN)
+                          return (
+                            <div key={r.word} className={`${styles.rung}${r.n ? '' : ` ${styles.rungOff}`}`}>
+                              <span
+                                className={styles.rungDot}
+                                style={{ width: size, height: size, flex: '0 0 auto', ...(r.n ? { background: swatch(r.band) } : null) }}
+                              />
+                              <span className={styles.rungWord}>{r.word}</span>
+                              <span className={styles.rungCount}>{r.n || '—'}</span>
+                            </div>
+                          )
+                        })
+                      })()}
                     </div>
                     {/* what this thread means, and what to do about its bad-band
                         word — same panel you land in from a tap on the ring,
                         its SVG label, or this row, since all three share activeKey */}
                     <div className={styles.threadCopy}>
-                      <p>{THREAD_COPY[g.key].definition}</p>
-                      <p>{THREAD_COPY[g.key].guidance}</p>
+                      <p>{splitFrequencyWords(THREAD_COPY[g.key].definition).map((seg, i) =>
+                        seg.bold ? <b key={i}>{seg.text}</b> : seg.text
+                      )}</p>
+                      <p>{splitFrequencyWords(THREAD_COPY[g.key].guidance).map((seg, i) =>
+                        seg.bold ? <b key={i}>{seg.text}</b> : seg.text
+                      )}</p>
                     </div>
                   </div>
                 </div>

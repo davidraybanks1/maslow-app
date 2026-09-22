@@ -1575,19 +1575,21 @@
   justify-content: space-between;
   margin-bottom: 10px;
 }
-/* small round toggle for "what do these mean" — same visual language as
-   the roots chart's zoom buttons: a plain hairline circle, not a filled
-   button, so it reads as auxiliary rather than a primary action */
+/* small round toggle for "what do these mean" — filled with the app's
+   amber (the same --nour token as the nourishment mode) rather than a
+   quiet hairline outline, so it actually reads as tappable next to the
+   header label instead of disappearing into it */
 .freqInfoBtn {
   flex: 0 0 auto;
-  width: 18px; height: 18px; border-radius: 50%;
-  border: 0.5px solid var(--hairline); background: none;
-  font-family: var(--serif, 'Newsreader', Georgia, serif); font-style: italic; font-size: 12px;
-  color: var(--ink3); cursor: pointer; line-height: 1;
+  width: 20px; height: 20px; border-radius: 50%;
+  border: none; background: var(--nour);
+  box-shadow: 0 0 0 0.5px rgba(0,0,0,.14);
+  font-family: var(--serif, 'Newsreader', Georgia, serif); font-style: italic; font-weight: 500; font-size: 13px;
+  color: var(--ink); cursor: pointer; line-height: 1;
   display: grid; place-items: center; padding: 0;
   -webkit-tap-highlight-color: transparent;
 }
-.freqInfoBtn[aria-expanded="true"] { color: var(--ink); border-color: var(--ink3); }
+.freqInfoBtn[aria-expanded="true"] { background: var(--nourishment-deep, #C9930C); color: #fff; }
 /* same register as FinePrint's body — quiet mono prose, one line per thread */
 .freqInfoPanel {
   margin: 0 0 14px;
@@ -1597,7 +1599,20 @@
 }
 .freqInfoPanel p { margin: 0 0 8px; }
 .freqInfoPanel p:last-child { margin-bottom: 0; }
-.freqInfoPanel b { color: var(--ink2); font-weight: 400; text-transform: uppercase; letter-spacing: 0.04em; }
+.freqInfoCat { color: var(--ink2); font-weight: 400; text-transform: uppercase; letter-spacing: 0.04em; }
+/* the frequency words themselves (calm, steady, …) inside the prose — a
+   real medium weight from the mono family, not the browser's synthetic
+   bold, so they stay scannable without shouting */
+.freqInfoPanel b { color: var(--ink2); font-weight: 500; }
+/* the framing paragraph ahead of the four category lines — set off with
+   its own rule so "here's what good/fine/bad and frequencies even mean"
+   reads as a preamble, not just one more list item */
+.freqInfoPanel p.freqInfoIntro {
+  padding-bottom: 12px;
+  margin-bottom: 4px;
+  border-bottom: 0.5px solid var(--hairline);
+  color: var(--ink2);
+}
 
 /* ── Mobile visual order ── */
 /* .list is flex-column; colLeft/colRight are display:contents so their

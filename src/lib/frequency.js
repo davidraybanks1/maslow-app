@@ -34,6 +34,32 @@ export const THREAD_COPY = {
   },
 }
 
+// The framing line ahead of the four thread definitions on Today — starts
+// from the band words you already check in with (good/fine/bad), then
+// introduces "frequency" and points at the almanac chart that has the full
+// picture. Today-only: pointing someone at the almanac only makes sense
+// from outside it.
+export const FREQUENCY_INTRO = 'Good, fine, and bad refer to your general mood. Each mood includes four unique "frequencies" that capture more detail about it. These frequencies fall into the four categories below and help you identify what your moods are telling you. Review "Your vibrations" in your Almanac to monitor your trends.'
+
+const ALL_FEELINGS = Object.values(FEELINGS).flat()
+const FEELING_RE = new RegExp(`\\b(${ALL_FEELINGS.join('|')})\\b`, 'gi')
+const FEELING_SET = new Set(ALL_FEELINGS)
+
+/**
+ * Splits a piece of THREAD_COPY prose into { text, bold } segments, one per
+ * run of plain text or single frequency word (calm, steady, overwhelmed, …),
+ * wherever that word appears as its own word. Today's info panel and the
+ * almanac's per-thread panel both render from this, so the twelve words stay
+ * visually distinct — the same ones you're already tracking from the ring or
+ * the legend — wherever the prose uses them.
+ */
+export function splitFrequencyWords(text) {
+  return text
+    .split(FEELING_RE)
+    .filter(part => part !== '')
+    .map(part => ({ text: part, bold: FEELING_SET.has(part.toLowerCase()) }))
+}
+
 /** Thread name for a feeling — its index within its band. Not rendered; used by the Data screen. */
 export function threadOf(feeling) {
   for (const b of BANDS) {
