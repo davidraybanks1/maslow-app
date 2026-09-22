@@ -70,20 +70,21 @@ function polar(r, deg) {
 function radiusFor(sortedIndex) {
   return RADII[RADII.length - 1 - sortedIndex]
 }
-// small points along the leading arc, staggered so they read as a
-// continuous drift rather than one blinking dot — outward for good,
-// inward for bad, holding still and breathing in place for fine
-function sparksForRing(leadBand, shareDeg, r) {
-  const fill = SPARK_COLOR[leadBand]
+// small points along an arc, staggered so they read as a continuous drift
+// rather than one blinking dot — outward for good, inward for bad, holding
+// still and breathing in place for fine. startDeg lets this be reused for
+// a segment that doesn't begin at the top (the exploded, full-ring view).
+function sparksForRing(band, startDeg, shareDeg, r) {
+  const fill = SPARK_COLOR[band]
   return SPARK_FRACS.map((f, k) => {
-    const angle = f * shareDeg
+    const angle = startDeg + f * shareDeg
     const p0 = polar(r, angle)
-    if (leadBand === 'mid') {
-      return { key: `mid-${k}`, x: p0.x, y: p0.y, pulse: true, delay: `${(k * 0.6).toFixed(2)}s`, fill }
+    if (band === 'mid') {
+      return { key: `${band}-${k}`, x: p0.x, y: p0.y, pulse: true, delay: `${(k * 0.6).toFixed(2)}s`, fill }
     }
-    const p1 = polar(leadBand === 'good' ? r + 16 : r - 16, angle)
+    const p1 = polar(band === 'good' ? r + 16 : r - 16, angle)
     return {
-      key: `${leadBand}-${k}`,
+      key: `${band}-${k}`,
       x: p0.x, y: p0.y,
       dx: `${(p1.x - p0.x).toFixed(2)}px`,
       dy: `${(p1.y - p0.y).toFixed(2)}px`,
@@ -92,6 +93,22 @@ function sparksForRing(leadBand, shareDeg, r) {
       fill,
     }
   })
+}
+// the full breakdown for an expanded ring: each band with any readings gets
+// its own consecutive slice — good, then fine, then bad — tiling the whole
+// circle instead of just the leading feeling's share of it
+function ringSegments(rungs, r) {
+  const circumference = 2 * Math.PI * r
+  const total = rungs.reduce((s, rg) => s + rg.n, 0)
+  let cum = 0
+  const segs = []
+  for (const rung of rungs) {
+    if (!rung.n) continue
+    const len = (rung.n / total) * circumference
+    segs.push({ band: rung.band, word: rung.word, n: rung.n, len, startDeg: (cum / circumference) * 360, shareDeg: (len / circumference) * 360 })
+    cum += len
+  }
+  return { segs, circumference }
 }
 function swatch(band) {
   return `linear-gradient(135deg,${RAMP[band][0]},${RAMP[band][1]})`
@@ -112,7 +129,7 @@ export default function ThreadsSection({ userId, moods }) {
     return () => { alive = false }
   }, [userId])
 
-  const { grid, total, wordsUsed, since } = useMemo(() => {
+  const { grid, total } = useMemo(() => {
     const tally = {}
     let first = null
     const add = (feeling, day) => {
@@ -169,11 +186,17 @@ export default function ThreadsSection({ userId, moods }) {
   return (
     <section ref={chartRef} className={styles.section}>
       <div className={styles.pad}>
-        <h2 className={styles.title}>Your vibrations</h2>
-        <p className={styles.sub}>
-          {total} reading{total === 1 ? '' : 's'}
-          {since ? ` since ${since}` : ''} · {wordsUsed} of 12 words used
-        </p>
+        <div className={styles.titleRow}>
+          <h2 className={styles.title}>Your vibrations</h2>
+          <div className={styles.titleKey}>
+            {BANDS.map(b => (
+              <span key={b}>
+                <i style={{ background: swatch(b) }} />
+                {b === 'mid' ? 'fine' : b}
+              </span>
+            ))}
+          </div>
+        </div>
         {split ? (
           <p className={styles.claim}>
             <em>{split.key}</em> is the one that splits. {split.total} readings and not one landed
@@ -189,10 +212,13 @@ export default function ThreadsSection({ userId, moods }) {
         <div className={styles.ringsWrap}>
           <svg className={styles.rings} viewBox="0 0 680 480" aria-hidden="true">
             <defs>
-              {sorted.map(t => t.total > 0 && (
-                <radialGradient key={t.key} id={`${gid}-grad-${t.key}`} cx="34%" cy="26%" r="75%">
-                  <stop offset="0%" stopColor={RAMP[t.leadBand][0]} />
-                  <stop offset="100%" stopColor={RAMP[t.leadBand][1]} />
+              {/* one gradient per band, shared by every ring — a thread's
+                  leading-arc color and, once expanded, each of its other
+                  slices all draw from the same three */}
+              {BANDS.map(b => (
+                <radialGradient key={b} id={`${gid}-band-${b}`} cx="34%" cy="26%" r="75%">
+                  <stop offset="0%" stopColor={RAMP[b][0]} />
+                  <stop offset="100%" stopColor={RAMP[b][1]} />
                 </radialGradient>
               ))}
             </defs>
@@ -209,6 +235,10 @@ export default function ThreadsSection({ userId, moods }) {
               const circumference = 2 * Math.PI * r
               const arcLen = t.share * circumference
               const on = activeKey === t.key
+              // picked: the full ring, broken into every band that has a
+              // reading — "fill in the rest of the ring" once you tap in.
+              // otherwise: just the leading feeling's own share, as before.
+              const { segs } = on && t.total > 0 ? ringSegments(t.rungs, r) : { segs: null }
               return (
                 <g
                   key={t.key}
@@ -217,16 +247,42 @@ export default function ThreadsSection({ userId, moods }) {
                   onClick={() => setSelected(t.key)}
                 >
                   <circle className={styles.ringTrack} r={r} strokeWidth={STROKE} fill="none" />
-                  {t.total > 0 && arcLen > 0.5 && (
+                  {segs ? (
+                    segs.map(seg => (
+                      <g key={seg.band}>
+                        <circle
+                          className={styles.ringArc}
+                          r={r} fill="none" strokeWidth={STROKE} strokeLinecap="butt"
+                          stroke={`url(#${gid}-band-${seg.band})`}
+                          strokeDasharray={`${seg.len.toFixed(1)} ${(circumference - seg.len).toFixed(1)}`}
+                          strokeDashoffset={(-(seg.startDeg / 360) * circumference).toFixed(1)}
+                          transform="rotate(-90)"
+                        />
+                        {sparksForRing(seg.band, seg.startDeg, seg.shareDeg, r).map(sp => sp.pulse ? (
+                          <circle
+                            key={sp.key} className={styles.sparkPulse} r={(2.3 * SVG_SCALE).toFixed(1)}
+                            cx={sp.x} cy={sp.y} fill={sp.fill}
+                            style={{ animationDelay: sp.delay }}
+                          />
+                        ) : (
+                          <circle
+                            key={sp.key} className={styles.spark} r={(2 * SVG_SCALE).toFixed(1)}
+                            cx={sp.x} cy={sp.y} fill={sp.fill}
+                            style={{ '--dx': sp.dx, '--dy': sp.dy, animationDuration: sp.dur, animationDelay: sp.delay }}
+                          />
+                        ))}
+                      </g>
+                    ))
+                  ) : t.total > 0 && arcLen > 0.5 && (
                     <>
                       <circle
                         className={styles.ringArc}
                         r={r} fill="none" strokeWidth={STROKE} strokeLinecap="round"
-                        stroke={`url(#${gid}-grad-${t.key})`}
+                        stroke={`url(#${gid}-band-${t.leadBand})`}
                         strokeDasharray={`${arcLen.toFixed(1)} ${(circumference - arcLen).toFixed(1)}`}
                         transform="rotate(-90)"
                       />
-                      {sparksForRing(t.leadBand, shareDeg, r).map(sp => sp.pulse ? (
+                      {sparksForRing(t.leadBand, 0, shareDeg, r).map(sp => sp.pulse ? (
                         <circle
                           key={sp.key} className={styles.sparkPulse} r={(2.3 * SVG_SCALE).toFixed(1)}
                           cx={sp.x} cy={sp.y} fill={sp.fill}
@@ -268,13 +324,13 @@ export default function ThreadsSection({ userId, moods }) {
                           actually lead with underneath it, count last — the
                           category is the label for the quadrant itself, so it
                           reads before the specific word it's naming */}
-                      <text className={styles.labelSub} x={lp.x} y={lp.y - 8} textAnchor={anchor}>
+                      <text className={styles.labelSub} x={lp.x} y={lp.y - 10} textAnchor={anchor}>
                         {g.key.toUpperCase()}
                       </text>
-                      <text className={styles.labelWord} x={lp.x} y={lp.y + 13} textAnchor={anchor}>
+                      <text className={styles.labelWord} x={lp.x} y={lp.y + 18} textAnchor={anchor}>
                         {g.topWord}
                       </text>
-                      <text className={styles.labelCount} x={lp.x} y={lp.y + 32} textAnchor={anchor}>
+                      <text className={styles.labelCount} x={lp.x} y={lp.y + 40} textAnchor={anchor}>
                         {g.leadN}/{g.total}
                       </text>
                     </>
@@ -326,15 +382,7 @@ export default function ThreadsSection({ userId, moods }) {
           })}
         </div>
 
-        <div className={styles.key}>
-          {BANDS.map(b => (
-            <span key={b}>
-              <i style={{ background: swatch(b) }} />
-              {b === 'mid' ? 'fine' : b}
-            </span>
-          ))}
-          <span className={styles.keyRight}>ring size = how active you are there · arc = your leading feeling's share</span>
-        </div>
+        <p className={styles.footnote}>ring size = how active you are there · arc = your leading feeling's share</p>
 
         <FinePrint>
           <p>The twelve feeling words you pick from are really four threads, each at three depths. <b>Capacity</b> runs calm, steady, overwhelmed. <b>Engagement</b> runs curious, flat, apathetic. <b>Drive</b> runs creative, restless, frenetic. <b>Posture</b> runs confident, braced, small.</p>

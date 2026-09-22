@@ -4,8 +4,11 @@
 
 .section { margin-top: 32px; border-top: 0.5px solid var(--hairline); padding-top: 26px; }
 .pad { padding-inline: 0; }
-.title { font-family: var(--serif, 'Newsreader', Georgia, serif); font-size: 23px; font-weight: 300; letter-spacing: -0.015em; margin: 0 0 3px; }
-.sub { font-family: var(--mono); font-size: var(--type-floor); color: var(--ink4); margin: 0 0 14px; }
+.titleRow { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 0 0 12px; }
+.title { font-family: var(--serif, 'Newsreader', Georgia, serif); font-size: 23px; font-weight: 300; letter-spacing: -0.015em; margin: 0; }
+.titleKey { display: flex; gap: 11px; font-family: var(--mono); font-size: var(--type-floor); color: var(--ink4); letter-spacing: 0.02em; }
+.titleKey span { display: flex; align-items: center; gap: 5px; }
+.titleKey i { width: 9px; height: 9px; border-radius: 50%; display: block; }
 .claim {
   font-family: var(--serif, 'Newsreader', Georgia, serif);
   font-weight: 300; font-size: 19px; line-height: 1.36; letter-spacing: -0.01em;
@@ -162,16 +165,13 @@
 .rungCount { margin-left: auto; font-family: var(--mono); font-size: var(--type-floor); color: var(--ink4); font-variant-numeric: tabular-nums; }
 .rungOff .rungCount { color: rgba(0, 0, 0, 0.18); }
 
-/* ── Key ── */
-.key {
-  display: flex; gap: 14px; margin-top: 20px; padding-top: 15px;
+/* ── Footnote — the good/fine/bad key itself now lives beside the title;
+   this is just the ring-size/arc explainer that's left ── */
+.footnote {
+  margin: 20px 0 0; padding-top: 15px;
   border-top: 0.5px solid var(--hairline);
   font-family: var(--mono); font-size: var(--type-floor); color: var(--ink4); letter-spacing: 0.02em;
-  flex-wrap: wrap;
 }
-.key span { display: flex; align-items: center; gap: 6px; }
-.key i { width: 9px; height: 9px; border-radius: 50%; display: block; }
-.keyRight { margin-left: auto; }
 
 @media (min-width: 900px) {
   .ringsWrap { margin-inline: 0; width: 100%; }
