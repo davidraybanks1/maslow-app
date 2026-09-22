@@ -339,13 +339,6 @@ export default function RootsSection({ canvas, checkins, moods, practicesDB }) {
               onClick={() => setLevel(l.v)}>{l.label}</button>
           ))}
         </div>
-        <div className={styles.key}>
-          <span><i style={{ borderTopWidth: 3, borderTopColor: '#2E8A64' }} />significant</span>
-          <span><i style={{ borderTopWidth: 2, borderTopColor: 'rgba(12,80,56,.55)' }} />close</span>
-          <span><i style={{ borderTopWidth: 1.3, borderTopColor: 'rgba(12,80,56,.32)' }} />worth testing</span>
-          <span><i style={{ borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,.2)' }} />quiet</span>
-          <span><i style={{ borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,.28)', borderTopStyle: 'dotted' }} />too new</span>
-        </div>
         <FinePrint>
           <p>Every mode, need and practice here is a root, and the deeper it goes the surer I am that it actually moves your mood. Depth is evidence, nothing else.</p>
           <p>A root can only grow from where the one above it stopped. So a practice can't get credit until its need and its mode have earned some first. That's deliberate: it stops one lucky week from looking like a discovery.</p>

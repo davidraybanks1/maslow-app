@@ -53,8 +53,5 @@
   border: 0.5px solid var(--hairline); background: none; color: var(--ink3); cursor: pointer;
 }
 .levelOn { background: var(--ink); color: #F2F0E8; border-color: var(--ink); }
-.key { display: flex; flex-wrap: wrap; gap: 10px 16px; margin-top: 16px; font-family: var(--mono); font-size: var(--type-floor); color: var(--ink4); }
-.key span { display: flex; align-items: center; gap: 6px; }
-.key i { display: block; width: 18px; height: 0; border-top-style: solid; }
 .note { font-family: var(--mono); font-size: var(--type-floor); line-height: 1.6; color: var(--ink4); margin: 14px 0 0; }
 .note b { color: var(--ink2); font-weight: 400; }

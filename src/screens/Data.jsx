@@ -560,7 +560,6 @@ function InsightsCard({ insights }) {
       {insights.length > 1 && (
         <div className={styles.insightDeckFooter}>
           <span className={styles.insightDeckCounter}>{activeIdx + 1}/{insights.length}</span>
-          <button className={styles.insightSeeAnother} onClick={() => advance(1)}>see another</button>
           <div className={styles.insightDeckNav}>
             <button className={styles.insightDeckArrow} onClick={() => advance(-1)} aria-label="previous insight">‹</button>
             <button className={styles.insightDeckArrow} onClick={() => advance(1)} aria-label="next insight">›</button>
@@ -740,9 +739,9 @@ export default function Data({ state, profileMenu }) {
               <InsightsCard insights={insights} />
             </Group>
 
-            <StrataRibbon moods={moods} />
             <RootsSection canvas={canvas} checkins={checkins} moods={moods} practicesDB={practicesDB} />
             <ThreadsSection userId={state?.userId} moods={moods} />
+            <StrataRibbon moods={moods} />
 
             <Group title="Your ledger">
               <RibbonsSection canvas={canvas} checkins={checkins} practicesDB={practicesDB} days={dayKeys} windowLen={windowLen} isDesktop={isDesktop} />
