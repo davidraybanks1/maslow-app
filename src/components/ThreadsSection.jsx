@@ -264,15 +264,15 @@ export default function ThreadsSection({ userId, moods }) {
                   <line className={styles.labelTick} x1={tickFrom.x} y1={tickFrom.y} x2={lp.x} y2={lp.y} />
                   {g.total > 0 ? (
                     <>
-                      <text className={styles.labelWord} x={lp.x} y={lp.y - 8} textAnchor={anchor}>
-                        {g.topWord}
-                      </text>
-                      {/* category name and count stack on their own lines rather than
-                          sharing one wide row — at a size that actually clears
-                          --type-floor once the SVG shrinks it, "CAPACITY · 19/30"
-                          run together is wider than the quadrant has room for */}
-                      <text className={styles.labelSub} x={lp.x} y={lp.y + 13} textAnchor={anchor}>
+                      {/* category first (which thread this is), the word you
+                          actually lead with underneath it, count last — the
+                          category is the label for the quadrant itself, so it
+                          reads before the specific word it's naming */}
+                      <text className={styles.labelSub} x={lp.x} y={lp.y - 8} textAnchor={anchor}>
                         {g.key.toUpperCase()}
+                      </text>
+                      <text className={styles.labelWord} x={lp.x} y={lp.y + 13} textAnchor={anchor}>
+                        {g.topWord}
                       </text>
                       <text className={styles.labelCount} x={lp.x} y={lp.y + 32} textAnchor={anchor}>
                         {g.leadN}/{g.total}
