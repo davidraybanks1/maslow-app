@@ -257,7 +257,9 @@ export default function RootsSection({ canvas, checkins, moods, practicesDB }) {
   return (
     <section ref={chartRef} className={styles.section}>
       <div className={styles.pad}>
-        <h2 className={styles.title}>Your roots</h2>
+        <div className={styles.titleBar}>
+          <h2 className={styles.title}>Your roots</h2>
+        </div>
         <p className={styles.sub}>{days} days · {counts.total - tree.length - geo.nodes.filter(n => n.depth === 2).length} needs · {geo.nodes.filter(n => n.depth === 2).length} practices</p>
         <p className={styles.head}>{head}</p>
         <p className={styles.headSub}>{sub}</p>

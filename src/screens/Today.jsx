@@ -617,8 +617,8 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         </div>
         <div className={styles.headerRow}>
           <div className={styles.headerLeft}>
-            <div className={styles.dateLabel}>{dateLabel}</div>
             <div className={styles.greeting}>good {SLOT_GREETING[slot]}.</div>
+            <div className={styles.dateLabel}>{dateLabel}</div>
           </div>
           <div className={styles.headerRingWrap} data-tour="space">
             <Bloom
