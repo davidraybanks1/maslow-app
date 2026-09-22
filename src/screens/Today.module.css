@@ -1566,6 +1566,39 @@
 }
 .practicesCard { margin-bottom: 12px; }
 
+/* ── Frequency section header — base (mobile) layout. Desktop restates the
+   same shape at the 900px breakpoint below, since it used to render only
+   on mobile and needed its own copy there. ── */
+.freqHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+/* small round toggle for "what do these mean" — same visual language as
+   the roots chart's zoom buttons: a plain hairline circle, not a filled
+   button, so it reads as auxiliary rather than a primary action */
+.freqInfoBtn {
+  flex: 0 0 auto;
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 0.5px solid var(--hairline); background: none;
+  font-family: var(--serif, 'Newsreader', Georgia, serif); font-style: italic; font-size: 12px;
+  color: var(--ink3); cursor: pointer; line-height: 1;
+  display: grid; place-items: center; padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.freqInfoBtn[aria-expanded="true"] { color: var(--ink); border-color: var(--ink3); }
+/* same register as FinePrint's body — quiet mono prose, one line per thread */
+.freqInfoPanel {
+  margin: 0 0 14px;
+  padding-bottom: 12px;
+  border-bottom: 0.5px solid var(--hairline);
+  font-family: var(--mono); font-size: var(--type-floor); line-height: 1.62; color: var(--ink3);
+}
+.freqInfoPanel p { margin: 0 0 8px; }
+.freqInfoPanel p:last-child { margin-bottom: 0; }
+.freqInfoPanel b { color: var(--ink2); font-weight: 400; text-transform: uppercase; letter-spacing: 0.04em; }
+
 /* ── Mobile visual order ── */
 /* .list is flex-column; colLeft/colRight are display:contents so their
    children are direct flex items. Order places cards in the desired
@@ -2259,14 +2292,9 @@
     background: var(--card);
   }
 
-  /* ── Frequency section header ── */
-  .freqHeader {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
-  }
-
+  /* ── Frequency section header — layout itself now lives in the base
+     .freqHeader rule (it renders on both mobile and desktop); this is
+     just the desktop-specific label typography. ── */
   .freqHeaderLabel {
     font-family: var(--font-mono);
     font-size: var(--type-floor);

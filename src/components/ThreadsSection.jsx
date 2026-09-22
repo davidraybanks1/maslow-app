@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useState } from 'react'
-import { FEELINGS, THREADS, BANDS, threadOf } from '../lib/frequency'
+import { FEELINGS, THREADS, BANDS, THREAD_COPY, threadOf } from '../lib/frequency'
 import { loadAllJournalMeta } from '../lib/store'
 import { useChartCapture } from '../lib/useChartCapture'
 import FinePrint from './FinePrint'
@@ -378,6 +378,13 @@ export default function ThreadsSection({ userId, moods }) {
                           <span className={styles.rungCount}>{r.n || '—'}</span>
                         </div>
                       ))}
+                    </div>
+                    {/* what this thread means, and what to do about its bad-band
+                        word — same panel you land in from a tap on the ring,
+                        its SVG label, or this row, since all three share activeKey */}
+                    <div className={styles.threadCopy}>
+                      <p>{THREAD_COPY[g.key].definition}</p>
+                      <p>{THREAD_COPY[g.key].guidance}</p>
                     </div>
                   </div>
                 </div>

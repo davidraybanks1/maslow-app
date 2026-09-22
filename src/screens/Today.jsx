@@ -5,7 +5,7 @@ import { currentSlot, precedingSlots, SLOTS, SLOT_NOUN, SLOT_GREETING } from '..
 import { todayKey, loadJournalEntries, deleteJournalEntry, loadNoteDeck, loadCustomTags } from '../lib/store'
 import { createDataStats, getCanvasGuidance } from '../lib/dataStats'
 import { hapticTick, isNative, pendingNotifSlot } from '../lib/native'
-import { normalizeBand, BAND_LABEL } from '../lib/frequency'
+import { normalizeBand, BAND_LABEL, THREADS, THREAD_COPY } from '../lib/frequency'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import FrequencyCard, { MOOD_PIP_COLOR } from '../components/FrequencyCard'
 import Glyph from '../lib/glyphs'
@@ -503,6 +503,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     }
   }, [state.canvas]) // eslint-disable-line react-hooks/exhaustive-deps
   const [openRetroSlot, setOpenRetroSlot] = useState(null)
+  const [showFreqInfo, setShowFreqInfo] = useState(false)
 
   const [moodSelections, setMoodSelections] = useState(() => {
     const init = {}
@@ -743,9 +744,21 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
 
         {/* ── Frequency section ── */}
         <div className={styles.moodCard} data-tour="mood">
-          {!isDesktop && (
-            <div className={styles.freqHeader}>
-              <span className={styles.freqHeaderLabel}><Glyph kind="frequency" />VIBRATIONS</span>
+          <div className={styles.freqHeader}>
+            <span className={styles.freqHeaderLabel}><Glyph kind="frequency" />VIBRATIONS</span>
+            <button
+              type="button"
+              className={styles.freqInfoBtn}
+              aria-expanded={showFreqInfo}
+              aria-label={showFreqInfo ? 'hide what these mean' : 'what these mean'}
+              onClick={() => setShowFreqInfo(v => !v)}
+            >i</button>
+          </div>
+          {showFreqInfo && (
+            <div className={styles.freqInfoPanel}>
+              {THREADS.map(t => (
+                <p key={t}><b>{t}</b> — {THREAD_COPY[t].definition}</p>
+              ))}
             </div>
           )}
           <div className={styles.freqShell}>
