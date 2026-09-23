@@ -20,7 +20,9 @@ export default function JournalQuote({ text, dateLabel, blockClass, dateClass, t
     >
       <span className={dateClass}>↩ {dateLabel}</span>
       <span className={textClass}>{display}</span>
-      {isLong && <span className={readMoreClass}>{expanded ? 'collapse' : 'read more'}</span>}
+      {isLong && (
+        <span className={readMoreClass}>{expanded ? '⌃ show less' : '⌄ read full entry'}</span>
+      )}
     </span>
   )
 }
