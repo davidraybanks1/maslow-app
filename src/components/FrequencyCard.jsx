@@ -30,20 +30,50 @@ export const PIPS_FOR = tone =>
   tone === 'amber' ? MOOD_PIP_COLOR_AMBER : tone === 'dark' ? MOOD_PIP_COLOR_DARK : MOOD_PIP_COLOR
 
 // Props: initialBand, initialFeeling, onSettle(band, feeling), compact, pastTense, dayparts,
-//        tone: 'dark' | 'amber' | undefined (paper)
+//        tone: 'dark' | 'amber' | undefined (paper), slotName: 'morning' | 'midday' | 'evening'
 // dayparts: [{ name, isCurrent, band, hasFeeling, onTap }]
-export default function FrequencyCard({ initialBand, initialFeeling, onSettle, compact, pastTense, dayparts, bandAsBack, tone }) {
+// slotName drives the opening prompt ("How are you this {slotName}?") before a band is
+// picked. Only the non-compact card uses it — compact's tiny picker (the retro tag row,
+// the draft composer) never shows the sentence at all.
+export default function FrequencyCard({ initialBand, initialFeeling, onSettle, compact, pastTense, dayparts, bandAsBack, tone, slotName }) {
   const [band, setBand] = useState(initialBand || null)
   const [feeling, setFeeling] = useState(initialFeeling || null)
+  // Whether the feeling sub-list is open. Starts open once a band is picked
+  // (so you can refine it) and rolls up the moment a specific feeling is
+  // chosen; retapping the active band toggles it back open to revise.
+  const [expanded, setExpanded] = useState(!!(initialBand && !initialFeeling))
   const touchedRef = useRef(false)
 
   useEffect(() => {
     if (touchedRef.current) return
     setBand(initialBand || null)
     setFeeling(initialFeeling || null)
+    setExpanded(!!(initialBand && !initialFeeling))
   }, [initialBand, initialFeeling])
 
   function pickBand(b) {
+    if (!compact) {
+      const isActive = b === band
+      if (isActive && feeling) {
+        // already answered — retap reopens the list to revise it, rather
+        // than clearing what was picked
+        touchedRef.current = true
+        setExpanded(e => !e)
+        return
+      }
+      if (bandAsBack && isActive) {
+        goBack()
+        return
+      }
+      touchedRef.current = true
+      hapticTick()
+      setBand(b)
+      setFeeling(null)
+      setExpanded(true)
+      onSettle(b, null)
+      return
+    }
+    // compact (retro tag row, draft composer) — unchanged
     if (bandAsBack && b === band) {
       goBack()
       return
@@ -58,6 +88,7 @@ export default function FrequencyCard({ initialBand, initialFeeling, onSettle, c
   function pickFeeling(f) {
     hapticTick()
     setFeeling(f)
+    if (!compact) setExpanded(false)
     onSettle(band, f)
   }
 
@@ -65,19 +96,26 @@ export default function FrequencyCard({ initialBand, initialFeeling, onSettle, c
     touchedRef.current = false
     setBand(null)
     setFeeling(null)
+    setExpanded(false)
   }
-
-  const displayLabel = feeling || (band ? BAND_LABEL[band] : null)
 
   return (
     <div className={`${styles.freqCard}${tone && styles[tone] ? ` ${styles[tone]}` : ''}`}>
       {!compact && (
         <p className={styles.freqSentence}>
-          {pastTense ? 'I was feeling' : "I'm feeling"}{' '}
-          {displayLabel
-            ? <span className={styles.freqFilled}>{displayLabel}</span>
-            : <span className={styles.freqBlank}>?</span>
-          }{'.'}
+          {band ? (
+            <>
+              {pastTense ? 'I was feeling' : "I'm feeling"}{' '}
+              <span className={styles.freqFilled}>{feeling || BAND_LABEL[band]}</span>.
+            </>
+          ) : slotName ? (
+            pastTense ? `How was your ${slotName}?` : `How are you this ${slotName}?`
+          ) : (
+            <>
+              {pastTense ? 'I was feeling' : "I'm feeling"}{' '}
+              <span className={styles.freqBlank}>?</span>.
+            </>
+          )}
         </p>
       )}
 
@@ -108,44 +146,42 @@ export default function FrequencyCard({ initialBand, initialFeeling, onSettle, c
         <>
           {/* The sentence above is the receipt; these are the control. The band
               row stays visible after a pick so what you chose is always in view
-              and one tap away from changing - the chips carry the same colour
-              dot the draft will show an hour later, so input and output are the
-              same object. */}
-          <div className={styles.chipRow}>
+              and one tap away from changing. Bigger targets, solid-ink selected
+              state — matches the onboarding mood screen this was restyled to
+              follow. The feeling list rolls up once a specific one is chosen;
+              retapping the active band reopens it to revise. */}
+          <div className={styles.bandRow}>
             {BANDS.map(b => {
               const on = b === band
               return (
                 <button
                   key={b}
-                  className={`${styles.chip}${on ? ` ${styles.chipOn}` : ''}`}
+                  className={`${styles.bandBtn}${on ? ` ${styles.bandBtnOn}` : ''}`}
                   onClick={() => pickBand(b)}
                   aria-pressed={on}
-                >
-                  <span className={styles.chipDot} style={{ background: (on ? MOOD_PIP_COLOR_DARK : MOOD_PIP_COLOR)[b] }} />
-                  {BAND_LABEL[b]}
-                </button>
+                >{BAND_LABEL[b]}</button>
               )
             })}
           </div>
           {band && (
-            <>
+            <div className={`${styles.feelWrap}${expanded ? '' : ` ${styles.feelWrapCollapsed}`}`}>
               <p className={styles.freqTextureQ}>
                 What type of {BAND_LABEL[band]} {pastTense ? 'was' : 'is'} it?
               </p>
-              <div className={`${styles.chipRow} ${styles.chipRowFit}`}>
+              <div className={styles.wordList}>
                 {FEELINGS[band].map(f => {
                   const on = f === feeling
                   return (
                     <button
                       key={f}
-                      className={`${styles.chip} ${styles.chipFit}${on ? ` ${styles.chipOn}` : ''}`}
+                      className={`${styles.wordRow}${on ? ` ${styles.wordRowOn}` : ''}`}
                       onClick={() => pickFeeling(f)}
                       aria-pressed={on}
                     >{f}</button>
                   )
                 })}
               </div>
-            </>
+            </div>
           )}
         </>
       )}

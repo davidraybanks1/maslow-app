@@ -36,68 +36,86 @@
   margin: 14px 0 8px;
 }
 
-/* ── chips ──────────────────────────────────────────────────────────────────
-   The same dialect as the chip on a draft (.journalFreqChip: 10px mono, 1px
-   rule at .22, a 6px dot) at a size a thumb can hit three times a day. 40px
-   is the height most iOS chip controls settle on; the 8px row gap keeps
-   neighbours from being one target. Selected is the same black as the
-   "+ create a draft" pill, so there is one meaning for black on this screen. */
-.chipRow {
+/* ── band row + feeling list ───────────────────────────────────────────────
+   Restyled to match the onboarding mood screen: big mono band buttons and
+   full-width serif rows for the feeling words, solid-ink selected state,
+   no card behind any of it — sits straight on the paper background. */
+.bandRow {
   display: flex;
-  flex-wrap: wrap;
   gap: 8px;
+  margin-bottom: 18px;
 }
 
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 40px;
-  padding: 0 14px;
+.bandBtn {
+  flex: 1;
+  min-height: 52px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  background: var(--card);
   font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  letter-spacing: 0.02em;
-  color: rgba(0, 0, 0, 0.62);
-  background: none;
-  border: 1px solid rgba(0, 0, 0, 0.22);
-  border-radius: 999px;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink2);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: background 0.12s, color 0.12s, border-color 0.12s;
 }
-.chip:hover { border-color: rgba(0, 0, 0, 0.4); color: var(--ink); }
+.bandBtn:hover { border-color: rgba(0, 0, 0, 0.35); color: var(--ink); }
 
-.chipOn {
+.bandBtnOn {
+  background: var(--ink);
+  color: #F2F0E8;
+  border-color: var(--ink);
+  font-weight: 500;
+}
+.bandBtnOn:hover { border-color: var(--ink); color: #F2F0E8; }
+
+/* Rolls the feeling list up once a specific one is picked, so the card
+   settles back to just the sentence + band row. Retapping the active band
+   toggles it back open (see FrequencyCard.jsx) to revise the pick. */
+.feelWrap {
+  overflow: hidden;
+  max-height: 600px;
+  opacity: 1;
+  transition: max-height 0.32s ease, opacity 0.22s ease, margin-top 0.32s ease;
+}
+.feelWrapCollapsed {
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
+}
+
+.wordList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wordRow {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 16px 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  background: var(--card);
+  font-family: var(--font-serif);
+  font-weight: 300;
+  font-size: 17px;
+  color: var(--ink);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.wordRow:hover { border-color: rgba(0, 0, 0, 0.3); }
+
+.wordRowOn {
   background: var(--ink);
   color: #F2F0E8;
   border-color: var(--ink);
 }
-.chipOn:hover { border-color: var(--ink); color: #F2F0E8; }
-
-.chipDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-/* The four feelings need to read as one set, so they stay on one line
-   instead of stranding one ("braced") alone on a second row - tighter gap
-   and padding than the default chip, and letting a chip shrink below its own
-   content width (min-width: 0) rather than wrap, since these are single
-   words with nowhere sensible to break. */
-.chipRowFit {
-  flex-wrap: nowrap;
-  gap: 5px;
-}
-
-.chipFit {
-  flex: 0 1 auto;
-  min-width: 0;
-  padding: 0 8px;
-  letter-spacing: 0;
-  justify-content: center;
-}
+.wordRowOn:hover { border-color: var(--ink); color: #F2F0E8; }
 
 .freqOptionsRow {
   display: flex;

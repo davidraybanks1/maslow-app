@@ -2394,25 +2394,18 @@
   }
 
   /* ── The frequency section ────────────────────────────────────────────
-     A section in the same grammar as MODES: an eyebrow on the paper, then a
-     card in .tier's exact clothes - 10px radius, hairline, --card. The
-     white band this replaces was the one element on the page speaking a
-     third language (a square stripe cut through the paper, neither an object
-     on it nor text set on it), which is why no colour ever fixed it. */
+     Restyled to match the onboarding mood screen: no card at all, on either
+     breakpoint — the section sits straight on the paper background, same as
+     mobile always has, with the bigger band buttons and feeling rows
+     supplying their own visual weight instead of a white band around them. */
   .moodCard {
     margin: 26px 0 0;
     padding: 0;
     background: none;
   }
-  .freqShell {
-    background: var(--card);
-    border: 0.5px solid var(--hairline);
-    border-radius: 10px;
-    padding: 14px 14px 14px;
-  }
 
-  /* the card's own lower edge separates it from the modes — but the divider
-     was also carrying 36px of air, so the gap moves onto the section below */
+  /* the card's own lower edge used to separate it from the modes — with no
+     card, that gap moves onto the section below instead */
   .moodDivider { display: none; }
   .practicesCard { margin-top: 26px; }
 

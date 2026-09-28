@@ -763,6 +763,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               onSettle={(band, feeling) => handleFrequencySettle(slot, band, feeling)}
               dayparts={isDesktop ? daypartsData : null}
               bandAsBack={!isDesktop}
+              slotName={slot}
             />
           </div>
           {showFreqInfo && (
@@ -807,6 +808,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 initialFeeling={moodFeelings[openRetroSlot] || null}
                 onSettle={(band, feeling) => { handleFrequencySettle(openRetroSlot, band, feeling); setOpenRetroSlot(null) }}
                 pastTense
+                slotName={openRetroSlot}
               />
             </div>
           )}
