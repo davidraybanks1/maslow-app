@@ -44,6 +44,48 @@ const PETALS_WIDE = [
   { mode: 'exploration', cx: 96.3,  cy: 179.3, r: 16 },
 ]
 
+/* Same 13 circles as PETALS_CLASSIC again - same mode order, same radii -
+   but repositioned (and, further down, re-rotated) into a packed, uneven
+   "plot of dirt" pile: the big petals form a connected spine along the
+   bottom, the smaller ones tuck into the thin spots between/above them
+   instead of tapering to a round mound. It's wider than tall (roughly a
+   1.6:1 box) and the exploration cluster's rightmost petals deliberately
+   run past this box's own right edge - mobile's .screen has overflow-x:
+   hidden precisely so content like this (see ModeShapesRow) can bleed off
+   the device edge instead of being squeezed to fit. Mocked up and refined
+   interactively in .mockups/bloom-pile.html before shipping here. */
+const PETALS_PLOT = [
+  { mode: 'survival',    cx: 50,  cy: 160, r: 26 },
+  { mode: 'survival',    cx: 35,  cy: 148, r: 14 },
+  { mode: 'nourishment', cx: 95,  cy: 165, r: 46 },
+  { mode: 'nourishment', cx: 85,  cy: 115, r: 30 },
+  { mode: 'nourishment', cx: 112, cy: 85,  r: 19 },
+  { mode: 'appreciation',cx: 160, cy: 160, r: 52 },
+  { mode: 'appreciation',cx: 150, cy: 100, r: 34 },
+  { mode: 'appreciation',cx: 183, cy: 75,  r: 14 },
+  { mode: 'exploration', cx: 220, cy: 165, r: 62 },
+  { mode: 'exploration', cx: 225, cy: 105, r: 40 },
+  { mode: 'exploration', cx: 255, cy: 170, r: 34 },
+  { mode: 'exploration', cx: 268, cy: 140, r: 15 },
+  { mode: 'exploration', cx: 262, cy: 195, r: 16 },
+]
+
+/* Small, mode-less accent clumps tucked into the plot's own bottom edge -
+   filler, not habit data: they draw behind the 13 real petals (only
+   peeking out between/under them) and always render in the unlit/dark
+   gradient at full strength, regardless of pct, so they read as background
+   soil texture rather than implying extra progress to track. Each picks
+   its own shape kind and rotation directly instead of going through
+   kindForPetal/phiForPetal, since those are keyed by index into the real
+   13-petal array. */
+const PLOT_FILLER = [
+  { cx: 40,  cy: 200, r: 12, kind: 'circle', phi: 0.4  },
+  { cx: 70,  cy: 206, r: 10, kind: 'fine',   phi: 2.1  },
+  { cx: 128, cy: 208, r: 9,  kind: 'square', phi: -0.9 },
+  { cx: 242, cy: 214, r: 11, kind: 'circle', phi: 1.6  },
+  { cx: 270, cy: 205, r: 8,  kind: 'fine',   phi: -2.3 },
+]
+
 const MODE_ORDER = ['exploration', 'appreciation', 'nourishment', 'survival']
 
 const MODE_LIT = {
@@ -110,6 +152,16 @@ const phiForPetal = i => {
   const frac = (i * 2.399963) % 1
   return 0.6 + (frac - 0.5) * 1.3
 }
+// Plot-only rotation: phiForPetal above (reused as-is by classic/wide) keeps
+// every petal within a tidy ±0.65 rad band - a consistent lean. The plot
+// pile instead wants each petal dropped at its own, uncorrelated angle, so
+// this walks a different irrational step across a full turn (±π) rather
+// than reusing phiForPetal's band. Same kindForPetal/paramsForPetal/
+// nForPetal either way - only which angle feeds orbPathD() changes.
+const phiForPetalPlot = i => {
+  const frac = (i * 0.732 + 0.15) % 1
+  return (frac - 0.5) * Math.PI * 2
+}
 const paramsForPetal = i => KIND_SPEC[kindForPetal(i)].params
 const nForPetal = i => KIND_SPEC[kindForPetal(i)].n
 
@@ -136,7 +188,8 @@ export function orbPathD(cx, cy, R, phi, params, n = 2, steps = 72) {
   return d + 'Z'
 }
 
-const petalPathsFor = petals => petals.map((p, i) => orbPathD(p.cx, p.cy, p.r, phiForPetal(i), paramsForPetal(i), nForPetal(i)))
+const petalPathsFor = (petals, phiFn = phiForPetal) => petals.map((p, i) => orbPathD(p.cx, p.cy, p.r, phiFn(i), paramsForPetal(i), nForPetal(i)))
+const fillerPathsFor = filler => filler.map(f => orbPathD(f.cx, f.cy, f.r, f.phi, KIND_SPEC[f.kind].params, KIND_SPEC[f.kind].n))
 
 function mixHex(h1, h2, t) {
   return '#' + [1, 3, 5].map(o => {
@@ -176,6 +229,18 @@ const VARIANTS = {
     viewBox: '-16 44 330 185',
     textX: 149, textY: 136, textSize: 48, pctSize: 21, pctDy: -12,
   },
+  // Same crop window as classic - the right-edge bleed comes from the SVG's
+  // own overflow:visible (below) plus .screen's overflow-x:hidden, not from
+  // a wider viewBox, so the pct text lands in the same spot either way.
+  plot: {
+    petals: PETALS_PLOT,
+    byMode: buildByMode(PETALS_PLOT),
+    petalPaths: petalPathsFor(PETALS_PLOT, phiForPetalPlot),
+    filler: PLOT_FILLER,
+    fillerPaths: fillerPathsFor(PLOT_FILLER),
+    viewBox: '-5 30 280 220',
+    textX: 143, textY: 160, textSize: 58, pctSize: 25, pctDy: -14,
+  },
 }
 
 function litSet(fillByMode, byMode) {
@@ -199,8 +264,10 @@ function litSet(fillByMode, byMode) {
 }
 
 // Props: arcs [{color, fill}] in MODE_ORDER, pct (0–100), variant
-// ('classic' | 'wide' — same petal count/sizes either way, just laid out
-// wider/flatter for the desktop header)
+// ('classic' | 'wide' | 'plot' — same 13-petal count/sizes throughout, just
+// laid out differently: 'wide' spreads classic for the desktop header,
+// 'plot' packs them into the bottom-heavy garden-bed pile for mobile, with
+// a handful of extra mode-less filler clumps of its own)
 export default function Bloom({ arcs, pct, variant = 'classic' }) {
   const rawId = useId()
   const uid = rawId.replace(/[^a-z0-9]/gi, '') || 'b0'
@@ -210,7 +277,7 @@ export default function Bloom({ arcs, pct, variant = 'classic' }) {
     document.fonts?.ready?.then(() => bump(n => n + 1))
   }, [])
 
-  const { petals: PETALS, byMode, petalPaths, viewBox, textX, textY, textSize, pctSize, pctDy } =
+  const { petals: PETALS, byMode, petalPaths, filler, fillerPaths, viewBox, textX, textY, textSize, pctSize, pctDy } =
     VARIANTS[variant] || VARIANTS.classic
 
   // Map arc fill to each mode
@@ -277,13 +344,22 @@ export default function Bloom({ arcs, pct, variant = 'classic' }) {
 
       {/* Shadow layer — alpha-only blur; fill colour is irrelevant */}
       <g filter={`url(#${fid})`} aria-hidden="true">
+        {filler?.map((f, i) => (
+          <path key={`f${i}`} d={fillerPaths[i]} fill="#000" />
+        ))}
         {PETALS.map((p, i) => (
           <path key={i} d={petalPaths[i]} fill="#000" />
         ))}
       </g>
 
-      {/* Main bloom — knockout mask cuts pct% text through the petals */}
+      {/* Main bloom — knockout mask cuts pct% text through the petals.
+          Filler clumps (plot only) draw first, so the real petals sit on
+          top and they only ever peek out along the base; they always use
+          the unlit gradient since they carry no fill/progress of their own. */}
       <g mask={`url(#${mid})`}>
+        {filler?.map((f, i) => (
+          <path key={`f${i}`} d={fillerPaths[i]} fill={`url(#ug-${uid})`} />
+        ))}
         {PETALS.map((p, i) => (
           <path
             key={i}
