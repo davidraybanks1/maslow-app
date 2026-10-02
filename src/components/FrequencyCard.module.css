@@ -39,15 +39,20 @@
 /* ── vibration ring ─────────────────────────────────────────────────────
    Carried over from the onboarding check-in — same formula, same per-band
    params (see FrequencyCard.jsx), just scaled down to sit above the
-   sentence here instead of the full 180px onboarding treatment. */
+   sentence here instead of the full 180px onboarding treatment. Rendered
+   as a single filled orb using Bloom's own radial-gradient + soft-shadow
+   materials rather than a stroked outline (see Bloom.jsx and the
+   vibration-as-bloom mockup) — mood still reads off the shape/speed only,
+   never a color change, so --orb-hi/--orb-lo stay fixed across all three
+   bands and only shift per tone, same as the rest of the card's ink. */
 .vibeRing {
   display: block;
   width: 120px;
   height: 120px;
-  margin: 0 0 10px -4px;
+  margin: 0 0 6px -4px;
+  --orb-hi: #4A4A46;
+  --orb-lo: #0A0A08;
 }
-.ringOuter { stroke: var(--ink); }
-.ringInner { stroke: rgba(0, 0, 0, .18); }
 
 /* ── band row + feeling list ───────────────────────────────────────────────
    Restyled to match the onboarding mood screen: big mono band buttons and
@@ -244,8 +249,9 @@
 .dark .freqOptionActive { color: #FFFDF7; }
 .dark .freqOptionDim { color: rgba(242, 240, 232, 0.5); }
 
-.dark .ringOuter { stroke: var(--on-dark, #F2F0E8); }
-.dark .ringInner { stroke: rgba(242, 240, 232, .22); }
+/* a black orb would vanish on the near-black card, so the dark tone gets
+   the same cream-on-black inversion as the rest of its ink here */
+.dark .vibeRing { --orb-hi: var(--on-dark, #F2F0E8); --orb-lo: #6B6861; }
 
 .dark .freqRule { background: rgba(242, 240, 232, 0.16); }
 .dark .freqBackBtn { color: rgba(242, 240, 232, 0.45); }
@@ -285,8 +291,9 @@
 .amber .freqOptionActive { color: #150F00; }
 .amber .freqOptionDim { color: rgba(36, 26, 2, 0.5); }
 
-.amber .ringOuter { stroke: #241A02; }
-.amber .ringInner { stroke: rgba(36, 26, 2, .22); }
+/* amber's ground is light, so the orb keeps reading as ink-on-colour,
+   just the amber-specific ink rather than the paper default */
+.amber .vibeRing { --orb-hi: #5C4420; --orb-lo: #241A02; }
 
 .amber .freqRule { background: rgba(36, 26, 2, 0.18); }
 .amber .freqBackBtn { color: rgba(36, 26, 2, 0.5); }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useId } from 'react'
 import { hapticTick } from '../lib/native'
 import { BANDS, FEELINGS, BAND_LABEL } from '../lib/frequency'
 import styles from './FrequencyCard.module.css'
@@ -35,6 +35,11 @@ export const PIPS_FOR = tone =>
 // (0.7+0.3·sin(2φ+θ)), with the wobble amplitude/speed easing toward
 // whichever band is picked — calm and nearly still for "good", a rougher,
 // faster shimmer for "bad". Rests on the "fine" shape before an answer.
+// Rendered as a single filled shape (Bloom's own radial-gradient + soft-
+// shadow materials — see Bloom.jsx) rather than a stroked outline: mood is
+// still read entirely off the shape and speed, same as before, never off a
+// color change, so the fill stays one ink tone (tone-adjusted via CSS vars
+// below) across all three bands.
 const RING_PARAMS = {
   good: { a3: 2.5, a5: 0, a7: 0, speed: .6 },
   mid:  { a3: 2,   a5: 3, a7: .6, speed: 1.2 },
@@ -72,8 +77,10 @@ function ringPathD(R, p, phi) {
 // and a 60fps setState here would re-render the whole card forever for no
 // visual gain (nothing else in the tree depends on the ring's frame).
 function VibeRing({ band }) {
-  const outerRef = useRef(null)
-  const innerRef = useRef(null)
+  const rawId = useId()
+  const uid = rawId.replace(/[^a-z0-9]/gi, '') || 'vr0'
+  const shadowRef = useRef(null)
+  const blobRef = useRef(null)
   const bandRef = useRef(band)
   useEffect(() => { bandRef.current = band }, [band])
 
@@ -82,8 +89,8 @@ function VibeRing({ band }) {
   // effect never needs to restart when the band changes).
   useEffect(() => {
     if (PREFERS_REDUCED_MOTION) return
-    const outer = outerRef.current, inner = innerRef.current
-    if (!outer || !inner) return
+    const shadow = shadowRef.current, blob = blobRef.current
+    if (!shadow || !blob) return
 
     const current = { ...RING_REST }
     let phi = 0
@@ -100,8 +107,9 @@ function VibeRing({ band }) {
       current.a7 += (target.a7 - current.a7) * ease
       current.speed += (target.speed - current.speed) * ease
       phi += current.speed * dt
-      inner.setAttribute('d', ringPathD(50, current, phi))
-      outer.setAttribute('d', ringPathD(62, current, phi))
+      const d = ringPathD(60, current, phi)
+      shadow.setAttribute('d', d)
+      blob.setAttribute('d', d)
       rafId = requestAnimationFrame(frame)
     }
     return () => cancelAnimationFrame(rafId)
@@ -112,17 +120,34 @@ function VibeRing({ band }) {
   // check-in's own "vibration ring static" accessibility note.
   useEffect(() => {
     if (!PREFERS_REDUCED_MOTION) return
-    const outer = outerRef.current, inner = innerRef.current
-    if (!outer || !inner) return
+    const shadow = shadowRef.current, blob = blobRef.current
+    if (!shadow || !blob) return
     const target = band ? RING_PARAMS[band] : RING_REST
-    inner.setAttribute('d', ringPathD(50, target, 0.6))
-    outer.setAttribute('d', ringPathD(62, target, 0.6))
+    const d = ringPathD(60, target, 0.6)
+    shadow.setAttribute('d', d)
+    blob.setAttribute('d', d)
   }, [band])
+
+  const gradId = `vr-grad-${uid}`
+  const filterId = `vr-shadow-${uid}`
 
   return (
     <svg className={styles.vibeRing} viewBox="0 0 180 180" width="180" height="180" aria-hidden="true">
-      <path ref={innerRef} className={styles.ringInner} fill="none" strokeWidth="1.5" />
-      <path ref={outerRef} className={styles.ringOuter} fill="none" strokeWidth="1.5" />
+      <defs>
+        <radialGradient id={gradId} cx="34%" cy="26%">
+          <stop offset="0%" style={{ stopColor: 'var(--orb-hi)' }} />
+          <stop offset="100%" style={{ stopColor: 'var(--orb-lo)' }} />
+        </radialGradient>
+        <filter id={filterId} x="-60%" y="-60%" width="220%" height="220%" colorInterpolationFilters="sRGB">
+          <feGaussianBlur in="SourceAlpha" stdDeviation="7" />
+          <feOffset dy="5" />
+          <feComponentTransfer><feFuncA type="linear" slope="0.22" /></feComponentTransfer>
+        </filter>
+      </defs>
+      <g filter={`url(#${filterId})`} aria-hidden="true">
+        <path ref={shadowRef} fill="#000" />
+      </g>
+      <path ref={blobRef} fill={`url(#${gradId})`} />
     </svg>
   )
 }
