@@ -36,6 +36,19 @@
   margin: 14px 0 8px;
 }
 
+/* ── vibration ring ─────────────────────────────────────────────────────
+   Carried over from the onboarding check-in — same formula, same per-band
+   params (see FrequencyCard.jsx), just scaled down to sit above the
+   sentence here instead of the full 180px onboarding treatment. */
+.vibeRing {
+  display: block;
+  width: 120px;
+  height: 120px;
+  margin: 0 0 10px -4px;
+}
+.ringOuter { stroke: var(--ink); }
+.ringInner { stroke: rgba(0, 0, 0, .18); }
+
 /* ── band row + feeling list ───────────────────────────────────────────────
    Restyled to match the onboarding mood screen: big mono band buttons and
    full-width serif rows for the feeling words, solid-ink selected state,
@@ -231,6 +244,9 @@
 .dark .freqOptionActive { color: #FFFDF7; }
 .dark .freqOptionDim { color: rgba(242, 240, 232, 0.5); }
 
+.dark .ringOuter { stroke: var(--on-dark, #F2F0E8); }
+.dark .ringInner { stroke: rgba(242, 240, 232, .22); }
+
 .dark .freqRule { background: rgba(242, 240, 232, 0.16); }
 .dark .freqBackBtn { color: rgba(242, 240, 232, 0.45); }
 .dark .freqDot { border-color: rgba(242, 240, 232, 0.32); }
@@ -268,6 +284,9 @@
 .amber .freqOptionBtn:hover { color: rgba(36, 26, 2, 0.8); }
 .amber .freqOptionActive { color: #150F00; }
 .amber .freqOptionDim { color: rgba(36, 26, 2, 0.5); }
+
+.amber .ringOuter { stroke: #241A02; }
+.amber .ringInner { stroke: rgba(36, 26, 2, .22); }
 
 .amber .freqRule { background: rgba(36, 26, 2, 0.18); }
 .amber .freqBackBtn { color: rgba(36, 26, 2, 0.5); }

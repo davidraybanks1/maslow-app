@@ -29,6 +29,104 @@ export const MOOD_PIP_COLOR_AMBER = {
 export const PIPS_FOR = tone =>
   tone === 'amber' ? MOOD_PIP_COLOR_AMBER : tone === 'dark' ? MOOD_PIP_COLOR_DARK : MOOD_PIP_COLOR
 
+// ── Vibration ring ───────────────────────────────────────────────────────
+// Carried over from the onboarding check-in mock: a closed curve wobbling
+// around a circle, r = R + a3·sin(3θ+φ) + a5·sin(5θ−1.3φ) + a7·sin(7θ+1.9φ)·
+// (0.7+0.3·sin(2φ+θ)), with the wobble amplitude/speed easing toward
+// whichever band is picked — calm and nearly still for "good", a rougher,
+// faster shimmer for "bad". Rests on the "fine" shape before an answer.
+const RING_PARAMS = {
+  good: { a3: 2.5, a5: 0, a7: 0, speed: .6 },
+  mid:  { a3: 2,   a5: 3, a7: .6, speed: 1.2 },
+  bad:  { a3: 2.5, a5: 4, a7: 6,  speed: 2.6 },
+}
+const RING_REST = RING_PARAMS.mid
+
+// Mirrors App.jsx's own PREFERS_REDUCED_MOTION — read once at module load
+// rather than re-queried per render.
+const PREFERS_REDUCED_MOTION = typeof window !== 'undefined' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+function ringRadiusAt(theta, R, p, phi) {
+  return R
+    + p.a3 * Math.sin(3 * theta + phi)
+    + p.a5 * Math.sin(5 * theta - 1.3 * phi)
+    + p.a7 * Math.sin(7 * theta + 1.9 * phi) * (0.7 + 0.3 * Math.sin(2 * phi + theta))
+}
+
+function ringPathD(R, p, phi) {
+  const steps = 96
+  let d = ''
+  for (let i = 0; i <= steps; i++) {
+    const theta = (i / steps) * Math.PI * 2
+    const r = ringRadiusAt(theta, R, p, phi)
+    const x = 90 + r * Math.cos(theta)
+    const y = 90 + r * Math.sin(theta)
+    d += (i === 0 ? 'M' : 'L') + x.toFixed(2) + ',' + y.toFixed(2)
+  }
+  return d + 'Z'
+}
+
+// Writes straight to the <path> DOM nodes via refs instead of through React
+// state — this animates indefinitely for as long as the card is on screen,
+// and a 60fps setState here would re-render the whole card forever for no
+// visual gain (nothing else in the tree depends on the ring's frame).
+function VibeRing({ band }) {
+  const outerRef = useRef(null)
+  const innerRef = useRef(null)
+  const bandRef = useRef(band)
+  useEffect(() => { bandRef.current = band }, [band])
+
+  // Animated case: one rAF loop for the life of the card, always easing
+  // toward whatever pickBand() most recently set (read via bandRef so this
+  // effect never needs to restart when the band changes).
+  useEffect(() => {
+    if (PREFERS_REDUCED_MOTION) return
+    const outer = outerRef.current, inner = innerRef.current
+    if (!outer || !inner) return
+
+    const current = { ...RING_REST }
+    let phi = 0
+    let lastT = null
+    let rafId = requestAnimationFrame(frame)
+    function frame(t) {
+      if (lastT === null) lastT = t
+      const dt = Math.min((t - lastT) / 1000, .05)
+      lastT = t
+      const target = bandRef.current ? RING_PARAMS[bandRef.current] : RING_REST
+      const ease = 1 - Math.exp(-dt / 0.5)
+      current.a3 += (target.a3 - current.a3) * ease
+      current.a5 += (target.a5 - current.a5) * ease
+      current.a7 += (target.a7 - current.a7) * ease
+      current.speed += (target.speed - current.speed) * ease
+      phi += current.speed * dt
+      inner.setAttribute('d', ringPathD(50, current, phi))
+      outer.setAttribute('d', ringPathD(62, current, phi))
+      rafId = requestAnimationFrame(frame)
+    }
+    return () => cancelAnimationFrame(rafId)
+  }, [])
+
+  // Reduced-motion case: no loop, but it should still reflect a changed
+  // band — snap straight to the new target shape, per the onboarding
+  // check-in's own "vibration ring static" accessibility note.
+  useEffect(() => {
+    if (!PREFERS_REDUCED_MOTION) return
+    const outer = outerRef.current, inner = innerRef.current
+    if (!outer || !inner) return
+    const target = band ? RING_PARAMS[band] : RING_REST
+    inner.setAttribute('d', ringPathD(50, target, 0.6))
+    outer.setAttribute('d', ringPathD(62, target, 0.6))
+  }, [band])
+
+  return (
+    <svg className={styles.vibeRing} viewBox="0 0 180 180" width="180" height="180" aria-hidden="true">
+      <path ref={innerRef} className={styles.ringInner} fill="none" strokeWidth="1.5" />
+      <path ref={outerRef} className={styles.ringOuter} fill="none" strokeWidth="1.5" />
+    </svg>
+  )
+}
+
 // Props: initialBand, initialFeeling, onSettle(band, feeling), compact, pastTense, dayparts,
 //        tone: 'dark' | 'amber' | undefined (paper), slotName: 'morning' | 'midday' | 'evening'
 // dayparts: [{ name, isCurrent, band, hasFeeling, onTap }]
@@ -102,21 +200,24 @@ export default function FrequencyCard({ initialBand, initialFeeling, onSettle, c
   return (
     <div className={`${styles.freqCard}${tone && styles[tone] ? ` ${styles[tone]}` : ''}`}>
       {!compact && (
-        <p className={styles.freqSentence}>
-          {band ? (
-            <>
-              {pastTense ? 'I was feeling' : "I'm feeling"}{' '}
-              <span className={styles.freqFilled}>{feeling || BAND_LABEL[band]}</span>.
-            </>
-          ) : slotName ? (
-            pastTense ? `How was your ${slotName}?` : `How are you this ${slotName}?`
-          ) : (
-            <>
-              {pastTense ? 'I was feeling' : "I'm feeling"}{' '}
-              <span className={styles.freqBlank}>?</span>.
-            </>
-          )}
-        </p>
+        <>
+          <VibeRing band={band} />
+          <p className={styles.freqSentence}>
+            {band ? (
+              <>
+                {pastTense ? 'I was feeling' : "I'm feeling"}{' '}
+                <span className={styles.freqFilled}>{feeling || BAND_LABEL[band]}</span>.
+              </>
+            ) : slotName ? (
+              pastTense ? `How was your ${slotName}?` : `How are you this ${slotName}?`
+            ) : (
+              <>
+                {pastTense ? 'I was feeling' : "I'm feeling"}{' '}
+                <span className={styles.freqBlank}>?</span>.
+              </>
+            )}
+          </p>
+        </>
       )}
 
       {compact ? (
