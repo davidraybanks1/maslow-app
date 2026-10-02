@@ -57,45 +57,70 @@ const MODE_LIT = {
 const UNLIT_DARK  = ['#4A453E', '#191612', '#060505']
 const UNLIT_EASED = ['#4A453E', '#2E2A25', '#231F1A']
 
-// ── petal silhouettes: the vibration ring's own "good"-rooted wobble ────
-// r = R + a3·sin(3θ+φ) + a5·sin(5θ−1.3φ) + a7·sin(7θ+1.9φ)·(0.7+0.3·sin(2φ+θ)),
+// ── petal silhouettes: a mixture of four distinct shapes ────────────────
+// Each petal commits fully to one of four named shapes rather than a single
+// blended wobble. "Good orb" and "fine orb" use the vibration ring's own
+// formula, r = R + a3·sin(3θ+φ) + a5·sin(5θ−1.3φ) + a7·sin(7θ+1.9φ)·(0.7+0.3·sin(2φ+θ)),
 // the identical formula FrequencyCard's VibeRing uses, so the two check-in
-// visuals read as the same family. Every petal mostly sits at "good"'s own
-// params (a5 = a7 = 0, the calmest shape the ring ever takes) scaled into
-// its own radius; a golden-angle sequence (2.399963 rad ≈ 137.5°, the same
-// angle sunflower seeds spiral by) rotates each petal by up to ±0.65 rad so
-// they don't read as one shape stamped thirteen times, and a second, offset
-// golden-angle sequence lets roughly a third of the petals drift up to 45%
-// of the way toward "fine"'s busier a5/a7 wobble, so a few read as
-// genuinely different shapes rather than just turned copies. Bloom never
-// animates, so each petal's path is fixed by its index and built once
-// below (see VARIANTS), not recomputed per render.
+// visuals read as the same family — "good" at the ring's mildest,
+// single-harmonic params, "fine" at its busier three-harmonic ones. "Square"
+// and "circle" carry no wobble at all (a3=a5=a7=0); square instead follows a
+// superellipse ("squircle") base radius, r(θ) = R / (|cos θ|^n + |sin θ|^n)^(1/n)
+// — an exact circle at n=2, a rounded square at n=4.5. Which petal gets which
+// shape: rank all thirteen by a golden-angle fraction (2.399963 rad ≈ 137.5°,
+// the same angle sunflower seeds spiral by) and slice the ranked order into
+// four groups as evenly as 13 allows (4/3/3/3) — ranking first, rather than
+// bucketing the raw fraction into quarters, guarantees that split, and the
+// golden angle's own spread keeps same-shape petals from landing next to
+// each other. A second, offset golden-angle sequence still rotates every
+// petal's own φ by up to ±0.65 rad, so petals sharing a shape don't read as
+// stamped copies either. Bloom never animates, so each petal's path is
+// fixed by its index and built once below (see VARIANTS), not recomputed
+// per render.
 const GOOD_RATIOS = { a3: 2.5 / 62, a5: 0, a7: 0 }
 const FINE_RATIOS = { a3: 2 / 62, a5: 3 / 62, a7: 0.6 / 62 }
+
+const SHAPE_KINDS = ['good', 'fine', 'square', 'circle']
+const KIND_SPEC = {
+  good:   { params: GOOD_RATIOS,             n: 2   },
+  fine:   { params: FINE_RATIOS,             n: 2   },
+  square: { params: { a3: 0, a5: 0, a7: 0 }, n: 4.5 },
+  circle: { params: { a3: 0, a5: 0, a7: 0 }, n: 2   },
+}
+const KIND_OF_PETAL = (petalCount => {
+  const ranked = Array.from({ length: petalCount }, (_, i) => i)
+  ranked.sort((a, b) => ((a * 2.399963 + 0.2) % 1) - ((b * 2.399963 + 0.2) % 1))
+  const kindOf = {}
+  const base = Math.floor(petalCount / 4), extra = petalCount % 4
+  let pos = 0
+  SHAPE_KINDS.forEach((kind, k) => {
+    const count = base + (k < extra ? 1 : 0)
+    for (let c = 0; c < count; c++) kindOf[ranked[pos++]] = kind
+  })
+  return kindOf
+})(PETALS_CLASSIC.length)
+const kindForPetal = i => KIND_OF_PETAL[i]
 
 const phiForPetal = i => {
   const frac = (i * 2.399963) % 1
   return 0.6 + (frac - 0.5) * 1.3
 }
-const veerForPetal = i => {
-  const frac = (i * 2.399963 + 0.5) % 1
-  return Math.max(0, (frac - 0.62) / 0.38) * 0.45
-}
-const paramsForPetal = i => {
-  const t = veerForPetal(i)
-  return {
-    a3: GOOD_RATIOS.a3 * (1 - t) + FINE_RATIOS.a3 * t,
-    a5: FINE_RATIOS.a5 * t,
-    a7: FINE_RATIOS.a7 * t,
-  }
+const paramsForPetal = i => KIND_SPEC[kindForPetal(i)].params
+const nForPetal = i => KIND_SPEC[kindForPetal(i)].n
+
+function squircleR(theta, R, n) {
+  if (n <= 2) return R
+  const c = Math.abs(Math.cos(theta)), s = Math.abs(Math.sin(theta))
+  return R / Math.pow(Math.pow(c, n) + Math.pow(s, n), 1 / n)
 }
 
-function orbPathD(cx, cy, R, phi, params, steps = 72) {
+function orbPathD(cx, cy, R, phi, params, n = 2, steps = 72) {
   const a3 = R * params.a3, a5 = R * params.a5, a7 = R * params.a7
   let d = ''
   for (let i = 0; i <= steps; i++) {
     const theta = (i / steps) * Math.PI * 2
-    const r = R
+    const baseR = squircleR(theta - phi, R, n)
+    const r = baseR
       + a3 * Math.sin(3 * theta + phi)
       + a5 * Math.sin(5 * theta - 1.3 * phi)
       + a7 * Math.sin(7 * theta + 1.9 * phi) * (0.7 + 0.3 * Math.sin(2 * phi + theta))
@@ -106,7 +131,7 @@ function orbPathD(cx, cy, R, phi, params, steps = 72) {
   return d + 'Z'
 }
 
-const petalPathsFor = petals => petals.map((p, i) => orbPathD(p.cx, p.cy, p.r, phiForPetal(i), paramsForPetal(i)))
+const petalPathsFor = petals => petals.map((p, i) => orbPathD(p.cx, p.cy, p.r, phiForPetal(i), paramsForPetal(i), nForPetal(i)))
 
 function mixHex(h1, h2, t) {
   return '#' + [1, 3, 5].map(o => {
