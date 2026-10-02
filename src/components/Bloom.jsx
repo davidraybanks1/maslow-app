@@ -1,132 +1,17 @@
-import { useId, useState, useEffect } from 'react'
+import { useId, useMemo, useState, useEffect } from 'react'
 
-/* Petals per mode, big to small. The small ones at the edges give each mode
-   finer steps, so lighting can track how much of the mode is actually done
-   rather than jumping a whole big sphere on the first practice. They stay
-   inside the original bloom's box (44..246 across, 44..222 down), which the
-   mobile header layout depends on. */
-const PETALS_CLASSIC = [
-  { mode: 'survival',    cx: 70,  cy: 150, r: 26 },
-  { mode: 'survival',    cx: 58,  cy: 176, r: 14 },
-  { mode: 'nourishment', cx: 104, cy: 106, r: 46 },
-  { mode: 'nourishment', cx: 76,  cy: 126, r: 30 },
-  { mode: 'nourishment', cx: 132, cy: 70,  r: 19 },
-  { mode: 'appreciation',cx: 176, cy: 96,  r: 52 },
-  { mode: 'appreciation',cx: 216, cy: 124, r: 34 },
-  { mode: 'appreciation',cx: 204, cy: 58,  r: 14 },
-  { mode: 'exploration', cx: 146, cy: 160, r: 62 },
-  { mode: 'exploration', cx: 206, cy: 174, r: 40 },
-  { mode: 'exploration', cx: 96,  cy: 180, r: 34 },
-  { mode: 'exploration', cx: 232, cy: 140, r: 15 },
-  { mode: 'exploration', cx: 112, cy: 206, r: 16 },
-]
-
-/* Same 13 circles as PETALS_CLASSIC - same mode order, same radii - just
-   spread wider and flatter around the classic cluster's own centroid
-   (140.6, 135.8, the unweighted average of its 13 centers): cx' = cx0 +
-   (cx-cx0)*1.55, cy' = cy0 + (cy-cy0)*0.62. For the desktop header, which
-   has width to spare but not much height, so the bloom reads as a wide
-   spray instead of a round cluster while every petal keeps its size and
-   its mode. */
-const PETALS_WIDE = [
-  { mode: 'survival',    cx: 31.2,  cy: 144.6, r: 26 },
-  { mode: 'survival',    cx: 12.6,  cy: 160.7, r: 14 },
-  { mode: 'nourishment', cx: 83.9,  cy: 117.3, r: 46 },
-  { mode: 'nourishment', cx: 40.5,  cy: 129.7, r: 30 },
-  { mode: 'nourishment', cx: 127.3, cy: 95.0,  r: 19 },
-  { mode: 'appreciation',cx: 195.5, cy: 111.1, r: 52 },
-  { mode: 'appreciation',cx: 257.5, cy: 128.5, r: 34 },
-  { mode: 'appreciation',cx: 238.9, cy: 87.6,  r: 14 },
-  { mode: 'exploration', cx: 149.0, cy: 150.8, r: 62 },
-  { mode: 'exploration', cx: 242.0, cy: 159.5, r: 40 },
-  { mode: 'exploration', cx: 71.5,  cy: 163.2, r: 34 },
-  { mode: 'exploration', cx: 282.3, cy: 138.4, r: 15 },
-  { mode: 'exploration', cx: 96.3,  cy: 179.3, r: 16 },
-]
-
-/* Same 13 circles as PETALS_CLASSIC again - same mode order, same radii -
-   but repositioned (and, further down, re-rotated) into a packed, uneven
-   "plot of dirt" pile: the big petals form a connected spine along the
-   bottom, the smaller ones tuck into the thin spots between/above them
-   instead of tapering to a round mound. It's wider than tall (roughly a
-   1.6:1 box) and the exploration cluster's rightmost petals deliberately
-   run past this box's own right edge - mobile's .screen has overflow-x:
-   hidden precisely so content like this (see ModeShapesRow) can bleed off
-   the device edge instead of being squeezed to fit. Mocked up and refined
-   interactively in .mockups/bloom-pile.html before shipping here. */
-const PETALS_PLOT = [
-  { mode: 'survival',    cx: 50,  cy: 160, r: 26 },
-  { mode: 'survival',    cx: 35,  cy: 148, r: 14 },
-  { mode: 'nourishment', cx: 95,  cy: 165, r: 46 },
-  { mode: 'nourishment', cx: 85,  cy: 115, r: 30 },
-  { mode: 'nourishment', cx: 112, cy: 85,  r: 19 },
-  { mode: 'appreciation',cx: 160, cy: 160, r: 52 },
-  { mode: 'appreciation',cx: 150, cy: 100, r: 34 },
-  { mode: 'appreciation',cx: 183, cy: 75,  r: 14 },
-  { mode: 'exploration', cx: 220, cy: 165, r: 62 },
-  { mode: 'exploration', cx: 225, cy: 105, r: 40 },
-  { mode: 'exploration', cx: 255, cy: 170, r: 34 },
-  { mode: 'exploration', cx: 268, cy: 140, r: 15 },
-  { mode: 'exploration', cx: 262, cy: 195, r: 16 },
-]
-
-/* Small, mode-less accent clumps tucked into the plot's own bottom edge -
-   filler, not habit data: they draw behind the 13 real petals (only
-   peeking out between/under them) and always render in the unlit/dark
-   gradient at full strength, regardless of pct, so they read as background
-   soil texture rather than implying extra progress to track. Each picks
-   its own shape kind and rotation directly instead of going through
-   kindForPetal/phiForPetal, since those are keyed by index into the real
-   13-petal array. */
-const PLOT_FILLER = [
-  { cx: 40,  cy: 200, r: 12, kind: 'circle', phi: 0.4  },
-  { cx: 70,  cy: 206, r: 10, kind: 'fine',   phi: 2.1  },
-  { cx: 128, cy: 208, r: 9,  kind: 'square', phi: -0.9 },
-  { cx: 242, cy: 214, r: 11, kind: 'circle', phi: 1.6  },
-  { cx: 270, cy: 205, r: 8,  kind: 'fine',   phi: -2.3 },
-]
-
-const MODE_ORDER = ['exploration', 'appreciation', 'nourishment', 'survival']
-
-const MODE_LIT = {
-  exploration:  ['#2E8A64', '#0C5038'],
-  appreciation: ['#C7D4C1', '#9DB394'],
-  nourishment:  ['#FFD166', '#F0A800'],
-  survival:     ['#FF7A55', '#F03C10'],
-}
-
-// Unlit 3-stop: stop[0] pinned (same in both arrays), stops[1] and [2] interpolate with pct.
-// UNLIT_DARK exported too — it's the "shiny black" material other static,
-// non-progress-tracking shapes (ModeShapesRow) borrow at full strength.
-export const UNLIT_DARK = ['#4A453E', '#191612', '#060505']
-const UNLIT_EASED = ['#4A453E', '#2E2A25', '#231F1A']
-
-// ── petal silhouettes: a mixture of four distinct shapes ────────────────
-// Each petal commits fully to one of four named shapes rather than a single
-// blended wobble. "Good orb" and "fine orb" use the vibration ring's own
-// formula, r = R + a3·sin(3θ+φ) + a5·sin(5θ−1.3φ) + a7·sin(7θ+1.9φ)·(0.7+0.3·sin(2φ+θ)),
-// the identical formula FrequencyCard's VibeRing uses, so the two check-in
-// visuals read as the same family — "good" at the ring's mildest,
-// single-harmonic params, "fine" at its busier three-harmonic ones. "Square"
-// and "circle" carry no wobble at all (a3=a5=a7=0); square instead follows a
-// superellipse ("squircle") base radius, r(θ) = R / (|cos θ|^n + |sin θ|^n)^(1/n)
-// — an exact circle at n=2, a rounded square at n=4.5. Which petal gets which
-// shape: rank all thirteen by a golden-angle fraction (2.399963 rad ≈ 137.5°,
-// the same angle sunflower seeds spiral by) and slice the ranked order into
-// four groups as evenly as 13 allows (4/3/3/3) — ranking first, rather than
-// bucketing the raw fraction into quarters, guarantees that split, and the
-// golden angle's own spread keeps same-shape petals from landing next to
-// each other. A second, offset golden-angle sequence still rotates every
-// petal's own φ by up to ±0.65 rad, so petals sharing a shape don't read as
-// stamped copies either. Bloom never animates, so each petal's path is
-// fixed by its index and built once below (see VARIANTS), not recomputed
-// per render.
+/* ── shared shape vocabulary — also used by ModeShapesRow ─────────────────
+   Four named silhouettes (good orb, fine orb, rounded square, circle) built
+   from one polar formula: a squircle base radius (exact circle at n=2, a
+   rounded square at n=4.5) plus an optional 3/5/7-harmonic wobble, r(θ) =
+   squircleR(θ) + a3·sin(3θ+φ) + a5·sin(5θ−1.3φ) + a7·sin(7θ+1.9φ)·(0.7+0.3·
+   sin(2φ+θ)). "Good" uses the vibration ring's own mild single-harmonic
+   params (FrequencyCard's VibeRing), "fine" its busier three-harmonic ones.
+   These are exported so other components (ModeShapesRow's icon frieze) can
+   reuse the exact shapes without duplicating the math. */
 const GOOD_RATIOS = { a3: 2.5 / 62, a5: 0, a7: 0 }
 const FINE_RATIOS = { a3: 2 / 62, a5: 3 / 62, a7: 0.6 / 62 }
 
-// Exported so other components can reuse these exact four shapes (and the
-// formula behind them) without duplicating the math — see ModeShapesRow,
-// which reuses them at a fixed small size for the Modes header's icon row.
 export const SHAPE_KINDS = ['good', 'fine', 'square', 'circle']
 export const KIND_SPEC = {
   good:   { params: GOOD_RATIOS,             n: 2   },
@@ -134,36 +19,10 @@ export const KIND_SPEC = {
   square: { params: { a3: 0, a5: 0, a7: 0 }, n: 4.5 },
   circle: { params: { a3: 0, a5: 0, a7: 0 }, n: 2   },
 }
-const KIND_OF_PETAL = (petalCount => {
-  const ranked = Array.from({ length: petalCount }, (_, i) => i)
-  ranked.sort((a, b) => ((a * 2.399963 + 0.2) % 1) - ((b * 2.399963 + 0.2) % 1))
-  const kindOf = {}
-  const base = Math.floor(petalCount / 4), extra = petalCount % 4
-  let pos = 0
-  SHAPE_KINDS.forEach((kind, k) => {
-    const count = base + (k < extra ? 1 : 0)
-    for (let c = 0; c < count; c++) kindOf[ranked[pos++]] = kind
-  })
-  return kindOf
-})(PETALS_CLASSIC.length)
-const kindForPetal = i => KIND_OF_PETAL[i]
 
-const phiForPetal = i => {
-  const frac = (i * 2.399963) % 1
-  return 0.6 + (frac - 0.5) * 1.3
-}
-// Plot-only rotation: phiForPetal above (reused as-is by classic/wide) keeps
-// every petal within a tidy ±0.65 rad band - a consistent lean. The plot
-// pile instead wants each petal dropped at its own, uncorrelated angle, so
-// this walks a different irrational step across a full turn (±π) rather
-// than reusing phiForPetal's band. Same kindForPetal/paramsForPetal/
-// nForPetal either way - only which angle feeds orbPathD() changes.
-const phiForPetalPlot = i => {
-  const frac = (i * 0.732 + 0.15) % 1
-  return (frac - 0.5) * Math.PI * 2
-}
-const paramsForPetal = i => KIND_SPEC[kindForPetal(i)].params
-const nForPetal = i => KIND_SPEC[kindForPetal(i)].n
+// "Shiny black" material other static, non-progress-tracking shapes
+// (ModeShapesRow) borrow at full strength.
+export const UNLIT_DARK = ['#4A453E', '#191612', '#060505']
 
 export function squircleR(theta, R, n) {
   if (n <= 2) return R
@@ -188,86 +47,181 @@ export function orbPathD(cx, cy, R, phi, params, n = 2, steps = 72) {
   return d + 'Z'
 }
 
-const petalPathsFor = (petals, phiFn = phiForPetal) => petals.map((p, i) => orbPathD(p.cx, p.cy, p.r, phiFn(i), paramsForPetal(i), nForPetal(i)))
-const fillerPathsFor = filler => filler.map(f => orbPathD(f.cx, f.cy, f.r, f.phi, KIND_SPEC[f.kind].params, KIND_SPEC[f.kind].n))
+// ── "Clod" (direction 2a) — the bloom's own layout/render system ─────────
+// Replaces the old petal-cluster system below this line. The shipped orb
+// cluster, settled under a seeded gravity simulation onto a ground line into
+// a compact mound, with a soft contact shadow; a dark, mode-less "loam core"
+// sits at the bottom centre and holds the knocked-out overall %. No bleed,
+// no stray pebbles, nothing animates — the physics run once per (width,
+// height), not per frame. Built to the "Bloom — Clod (direction 2a)" spec;
+// mocked up and verified in .mockups/bloom-clod.html before shipping here.
 
-function mixHex(h1, h2, t) {
-  return '#' + [1, 3, 5].map(o => {
-    const a = parseInt(h1.slice(o, o + 2), 16)
-    const b = parseInt(h2.slice(o, o + 2), 16)
-    return Math.round(a + (b - a) * t).toString(16).padStart(2, '0')
-  }).join('')
+const MODE_ORDER = ['exploration', 'appreciation', 'nourishment', 'survival']
+
+// Same lit-mode gradient stops the old cluster shipped with.
+const MODE_LIT = {
+  exploration:  ['#2E8A64', '#0C5038'],
+  appreciation: ['#C7D4C1', '#9DB394'],
+  nourishment:  ['#FFD166', '#F0A800'],
+  survival:     ['#FF7A55', '#F03C10'],
+}
+// Distinct from the exported UNLIT_DARK above (which ModeShapesRow's icons
+// still use at their own fixed strength) — the clod's own unlit/core colour,
+// always this dark regardless of pct.
+const CLOD_UNLIT = ['#514A40', '#15130F']
+const CLOD_CORE = ['#514A40', '#15130F']
+
+// Pieces, area-weighted so the area units sum per mode to exactly 4:3:2:1.
+const MODE_DEFS = [
+  { mode: 'exploration',  areas: [1.36, 1.12, 0.88, 0.64] },
+  { mode: 'appreciation', areas: [1.26, 0.99, 0.75] },
+  { mode: 'nourishment',  areas: [0.84, 0.66, 0.50] },
+  { mode: 'survival',     areas: [0.60, 0.40] },
+]
+// Total area units across the 12 pieces (≈9.94) plus the core (1.35² · π-ish
+// weight of 1.82 in the packing-density formula below) ≈ 11.8.
+const TOTAL_AREA_UNITS = 11.8
+
+function buildPieces() {
+  const pieces = []
+  let n = 0
+  MODE_DEFS.forEach(md => {
+    md.areas.forEach(a => {
+      pieces.push({ mode: md.mode, a, kind: n % 4, rot: (n * 37) % 50 - 25, seed: n * 1.37 + 0.5 })
+      n++
+    })
+  })
+  return pieces
 }
 
-/* Lit petals per mode: light from the smallest up, taking the set whose
-   area comes closest to the mode's share done. Anything done lights at
-   least the smallest petal; only a finished mode lights them all. Built
-   once per layout (not per render) since it only depends on each petal's
-   fixed radius. */
-function buildByMode(petals) {
-  const byMode = {}
-  petals.forEach((p, i) => { (byMode[p.mode] ||= []).push({ i, a: p.r * p.r }) })
-  Object.values(byMode).forEach(list => list.sort((x, y) => x.a - y.a))
-  return byMode
-}
-
-// Per-variant layout: petal positions, the SVG's own crop, and the pct-text
-// mask sized/centered for that crop. "wide" is the same shape, just spread
-// out - see PETALS_WIDE above.
-const VARIANTS = {
-  classic: {
-    petals: PETALS_CLASSIC,
-    byMode: buildByMode(PETALS_CLASSIC),
-    petalPaths: petalPathsFor(PETALS_CLASSIC),
-    viewBox: '-5 30 280 220',
-    textX: 143, textY: 160, textSize: 58, pctSize: 25, pctDy: -14,
-  },
-  wide: {
-    petals: PETALS_WIDE,
-    byMode: buildByMode(PETALS_WIDE),
-    petalPaths: petalPathsFor(PETALS_WIDE),
-    viewBox: '-16 44 330 185',
-    textX: 149, textY: 136, textSize: 48, pctSize: 21, pctDy: -12,
-  },
-  // Same crop window as classic - the right-edge bleed comes from the SVG's
-  // own overflow:visible (below) plus .screen's overflow-x:hidden, not from
-  // a wider viewBox, so the pct text lands in the same spot either way.
-  plot: {
-    petals: PETALS_PLOT,
-    byMode: buildByMode(PETALS_PLOT),
-    petalPaths: petalPathsFor(PETALS_PLOT, phiForPetalPlot),
-    filler: PLOT_FILLER,
-    fillerPaths: fillerPathsFor(PLOT_FILLER),
-    viewBox: '-5 30 280 220',
-    textX: 143, textY: 160, textSize: 58, pctSize: 25, pctDy: -14,
-  },
-}
-
-function litSet(fillByMode, byMode) {
-  const lit = new Set()
-  for (const mode in byMode) {
-    const list = byMode[mode]
-    const fill = Math.max(0, Math.min(1, fillByMode[mode] || 0))
-    if (fill <= 0) continue
-    if (fill >= 1) { list.forEach(p => lit.add(p.i)); continue }
-    const total = list.reduce((s, p) => s + p.a, 0)
-    const target = fill * total
-    let best = 1, bestDiff = Infinity, cum = 0
-    for (let k = 1; k < list.length; k++) {   // never all of them short of done
-      cum += list[k - 1].a
-      const diff = Math.abs(cum - target)
-      if (diff < bestDiff) { bestDiff = diff; best = k }
-    }
-    for (let k = 0; k < best; k++) lit.add(list[k].i)
+// Superellipse + wobble, sampled parametrically (independent rx/ry, unlike
+// orbPathD's single-radius polar formula above — that's what lets "good orb"
+// and "fine orb" read as slightly flattened rather than perfectly round).
+function sp(cx, cy, rx, ry, n, rotDeg, wob, seed, steps = 96) {
+  const rot = rotDeg * Math.PI / 180
+  let d = ''
+  for (let i = 0; i < steps; i++) {
+    const t = (i / steps) * 2 * Math.PI, c = Math.cos(t), s = Math.sin(t)
+    const k = 1 + wob * (0.5 * Math.sin(3 * t + seed) + 0.3 * Math.sin(5 * t + seed * 2.1) + 0.2 * Math.sin(7 * t + seed * 3.3))
+    const x = Math.sign(c) * Math.pow(Math.abs(c), 2 / n) * rx * k
+    const y = Math.sign(s) * Math.pow(Math.abs(s), 2 / n) * ry * k
+    d += (i ? 'L' : 'M') + (cx + x * Math.cos(rot) - y * Math.sin(rot)).toFixed(1) + ' ' + (cy + x * Math.sin(rot) + y * Math.cos(rot)).toFixed(1)
   }
+  return d + 'Z'
+}
+function pathForPiece(p) {
+  switch (p.kind) {
+    case 0: return sp(p.x, p.y, p.r, p.r * 0.96, 2.2, p.rot, 0.05, p.seed) // good orb
+    case 1: return sp(p.x, p.y, p.r * 0.9, p.r * 0.9, 4, p.rot, 0.02, p.seed) // rounded square
+    case 2: return sp(p.x, p.y, p.r, p.r, 2, 0, 0, 0) // circle
+    default: return sp(p.x, p.y, p.r, p.r * 0.94, 2.6, p.rot, 0.03, p.seed) // fine orb
+  }
+}
+function pathForCore(core) {
+  return sp(core.x, core.y, core.r, core.r * 0.97, 2.2, 0, 0.03, 4.1)
+}
+
+// Seeded so the layout is identical on every render for a given (W, H) —
+// never Math.random().
+function mulberry32(seed) {
+  let a = seed >>> 0
+  return () => {
+    a |= 0; a = a + 0x6D2B79F5 | 0
+    let t = Math.imul(a ^ a >>> 15, 1 | a)
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t
+    return ((t ^ t >>> 14) >>> 0) / 4294967296
+  }
+}
+
+// Deterministic gravity packing: seed random init positions, then 420
+// iterations of pairwise collision resolution (14% allowed overlap) +
+// gravity + a gentle pull to centre (the last 80 iterations only relax, no
+// new forces), clamped to the frame/floor throughout. The core participates
+// in collisions but never moves itself — all of the push-apart goes to the
+// other body. Memoized on (W, H) alone: only the lighting depends on fills.
+function layout(W, H) {
+  const u = Math.min(Math.sqrt(W * H * 0.85 / (Math.PI * TOTAL_AREA_UNITS)), H / 4.6)
+  const floor = H - 10
+  const core = { x: W / 2, y: floor - 1.35 * u, r: 1.35 * u, pinned: true }
+
+  const pieces = buildPieces()
+  pieces.forEach(p => { p.r = Math.sqrt(p.a) * u })
+
+  const rand = mulberry32(11)
+  pieces.forEach(p => {
+    p.x = W / 2 + (rand() - 0.5) * W * 0.6
+    p.y = H / 2 + (rand() - 0.5) * H * 0.6
+  })
+
+  const bodies = pieces.concat([core])
+  for (let iter = 0; iter < 420; iter++) {
+    for (let i = 0; i < bodies.length; i++) {
+      for (let j = i + 1; j < bodies.length; j++) {
+        const bi = bodies[i], bj = bodies[j]
+        let dx = bj.x - bi.x, dy = bj.y - bi.y
+        let d = Math.sqrt(dx * dx + dy * dy)
+        const minD = (bi.r + bj.r) * 0.86
+        if (d < minD) {
+          if (d < 1e-6) { d = 1e-6; dx = 0.001; dy = 0.001 }
+          const nx = dx / d, ny = dy / d
+          const overlap = minD - d
+          if (bi.pinned || bj.pinned) {
+            if (bi.pinned) { bj.x += nx * overlap; bj.y += ny * overlap }
+            else { bi.x -= nx * overlap; bi.y -= ny * overlap }
+          } else {
+            bi.x -= nx * overlap * 0.5; bi.y -= ny * overlap * 0.5
+            bj.x += nx * overlap * 0.5; bj.y += ny * overlap * 0.5
+          }
+        }
+      }
+    }
+    if (iter <= 340) {
+      pieces.forEach(p => {
+        p.y += 1.4
+        p.x += (W / 2 - p.x) * 0.05
+      })
+    }
+    pieces.forEach(p => {
+      p.x = Math.min(W - p.r, Math.max(p.r, p.x))
+      p.y = Math.min(floor - p.r, Math.max(p.r, p.y))
+    })
+  }
+
+  return { pieces, core, floor }
+}
+
+// Lighting rule — smallest to largest, area-honest: a piece lights once the
+// mode's fill covers at least half of that piece's own area, so lit area
+// tracks fill, quantized to the nearest piece. Returns a boolean array
+// aligned to `pieces` rather than mutating them, so the memoized layout
+// stays a pure function of (W, H).
+function computeLit(pieces, fillByMode) {
+  const byMode = {}
+  pieces.forEach((p, i) => { (byMode[p.mode] ||= []).push({ i, a: p.a }) })
+  const lit = new Array(pieces.length).fill(false)
+  Object.keys(byMode).forEach(mode => {
+    const list = byMode[mode].slice().sort((x, y) => x.a - y.a)
+    const modeTotal = list.reduce((s, p) => s + p.a, 0)
+    const fill = Math.max(0, Math.min(1, fillByMode[mode] || 0))
+    let cum = 0
+    list.forEach(({ i, a }) => {
+      lit[i] = (cum + a / 2) <= fill * modeTotal
+      cum += a
+    })
+  })
   return lit
 }
 
-// Props: arcs [{color, fill}] in MODE_ORDER, pct (0–100), variant
-// ('classic' | 'wide' | 'plot' — same 13-petal count/sizes throughout, just
-// laid out differently: 'wide' spreads classic for the desktop header,
-// 'plot' packs them into the bottom-heavy garden-bed pile for mobile, with
-// a handful of extra mode-less filler clumps of its own)
+const SIZE_BY_VARIANT = {
+  wide: { w: 520, h: 150 },   // desktop
+  plot: { w: 280, h: 220 },   // mobile
+  classic: { w: 280, h: 220 },
+}
+
+// Props: arcs [{color, fill}] in MODE_ORDER, pct (0–100, already rounded by
+// the caller), variant ('wide' selects the desktop 520×150 canvas; anything
+// else uses the mobile 280×220 one — same two sizes the header's own CSS is
+// tuned for).
 export default function Bloom({ arcs, pct, variant = 'classic' }) {
   const rawId = useId()
   const uid = rawId.replace(/[^a-z0-9]/gi, '') || 'b0'
@@ -277,96 +231,89 @@ export default function Bloom({ arcs, pct, variant = 'classic' }) {
     document.fonts?.ready?.then(() => bump(n => n + 1))
   }, [])
 
-  const { petals: PETALS, byMode, petalPaths, filler, fillerPaths, viewBox, textX, textY, textSize, pctSize, pctDy } =
-    VARIANTS[variant] || VARIANTS.classic
+  const { w: W, h: H } = SIZE_BY_VARIANT[variant] || SIZE_BY_VARIANT.classic
 
-  // Map arc fill to each mode
   const fillByMode = {}
   arcs.forEach((a, i) => { fillByMode[MODE_ORDER[i]] = a.fill })
 
-  // Unlit gradient stops interpolated from pct
-  const t = Math.max(0, Math.min(1, pct / 100))
-  const u0 = UNLIT_DARK[0]
-  const u1 = mixHex(UNLIT_DARK[1], UNLIT_EASED[1], t)
-  const u2 = mixHex(UNLIT_DARK[2], UNLIT_EASED[2], t)
+  const { pieces, core, floor } = useMemo(() => layout(W, H), [W, H])
+  const lit = computeLit(pieces, fillByMode)
 
-  const lit = litSet(fillByMode, byMode)
-  const litMap = PETALS.map((_, i) => lit.has(i))
+  const sorted = useMemo(
+    () => pieces.map((p, i) => i).sort((a, b) => pieces[a].y - pieces[b].y),
+    [pieces]
+  )
 
-  const fid = `bs-${uid}`  // shadow filter
-  const mid = `bm-${uid}`  // knockout mask
+  const minX = Math.min(...pieces.map(b => b.x - b.r), core.x - core.r)
+  const maxX = Math.max(...pieces.map(b => b.x + b.r), core.x + core.r)
+
+  const size = core.r * 0.82
+
+  const fid = `cb-${uid}`   // blur filter
+  const mid = `ck-${uid}`   // knockout mask
+
+  const ariaLabel = `Today ${pct}% complete. Exploration ${Math.round((fillByMode.exploration || 0) * 100)}%, ` +
+    `appreciation ${Math.round((fillByMode.appreciation || 0) * 100)}%, nourishment ${Math.round((fillByMode.nourishment || 0) * 100)}%, ` +
+    `survival ${Math.round((fillByMode.survival || 0) * 100)}%.`
 
   return (
     <svg
-      viewBox={viewBox}
+      viewBox={`0 0 ${W} ${H}`}
       style={{ width: '100%', height: 'auto', display: 'block', overflow: 'visible' }}
-      aria-label={`${pct}% complete today`}
+      aria-label={ariaLabel}
       role="img"
     >
       <defs>
         {MODE_ORDER.map(mode => (
-          <radialGradient key={mode} id={`lg-${mode}-${uid}`} cx="34%" cy="26%">
+          <radialGradient key={mode} id={`lg-${mode}-${uid}`} cx="0.36" cy="0.30" r="0.80">
             <stop offset="0%"   stopColor={MODE_LIT[mode][0]} />
             <stop offset="100%" stopColor={MODE_LIT[mode][1]} />
           </radialGradient>
         ))}
-
-        <radialGradient id={`ug-${uid}`} cx="34%" cy="26%">
-          <stop offset="0%"   stopColor={u0} />
-          <stop offset="45%"  stopColor={u1} />
-          <stop offset="100%" stopColor={u2} />
+        <radialGradient id={`ug-${uid}`} cx="0.36" cy="0.30" r="0.80">
+          <stop offset="0%"   stopColor={CLOD_UNLIT[0]} />
+          <stop offset="100%" stopColor={CLOD_UNLIT[1]} />
+        </radialGradient>
+        <radialGradient id={`cg-${uid}`} cx="0.36" cy="0.30" r="0.80">
+          <stop offset="0%"   stopColor={CLOD_CORE[0]} />
+          <stop offset="100%" stopColor={CLOD_CORE[1]} />
         </radialGradient>
 
-        <filter id={fid} x="-30%" y="-30%" width="160%" height="160%"
-                colorInterpolationFilters="sRGB">
-          <feGaussianBlur in="SourceAlpha" stdDeviation="9" />
-          <feOffset dy="6" />
-          <feComponentTransfer><feFuncA type="linear" slope="0.13" /></feComponentTransfer>
+        <filter id={fid} x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="4" />
         </filter>
 
         <mask id={mid}>
-          <rect x="-200" y="-200" width="700" height="700" fill="white" />
+          <rect x={-100} y={-100} width={W + 200} height={H + 200} fill="white" />
           <text
-            x={textX} y={textY}
+            x={core.x} y={core.y + size * 0.36}
             textAnchor="middle"
-            dominantBaseline="middle"
-            style={{
-              fontFamily: 'var(--font-serif)',
-              fontWeight: 300,
-              fontSize: `${textSize}px`,
-              letterSpacing: '-1px',
-              fontFeatureSettings: "'tnum' 1",
-            }}
+            style={{ fontFamily: 'var(--font-serif)', fontWeight: 500, fontSize: `${size}px`, letterSpacing: '-0.02em' }}
             fill="black"
-          >{pct}<tspan fontSize={`${pctSize}px`} dy={pctDy}>%</tspan></text>
+          >{pct}<tspan fontSize={size * 0.48} dx={1} dy={-size * 0.38}>%</tspan></text>
         </mask>
       </defs>
 
-      {/* Shadow layer — alpha-only blur; fill colour is irrelevant */}
-      <g filter={`url(#${fid})`} aria-hidden="true">
-        {filler?.map((f, i) => (
-          <path key={`f${i}`} d={fillerPaths[i]} fill="#000" />
-        ))}
-        {PETALS.map((p, i) => (
-          <path key={i} d={petalPaths[i]} fill="#000" />
-        ))}
-      </g>
+      {/* Contact shadow — one soft ellipse under the whole mound, drawn
+          outside the knockout mask so it never dims the % text. */}
+      <ellipse
+        cx={(minX + maxX) / 2} cy={floor + 1}
+        rx={(maxX - minX) / 2 * 0.92} ry={6}
+        fill="#1B1A17" opacity={0.22} filter={`url(#${fid})`}
+      />
 
-      {/* Main bloom — knockout mask cuts pct% text through the petals.
-          Filler clumps (plot only) draw first, so the real petals sit on
-          top and they only ever peek out along the base; they always use
-          the unlit gradient since they carry no fill/progress of their own. */}
       <g mask={`url(#${mid})`}>
-        {filler?.map((f, i) => (
-          <path key={`f${i}`} d={fillerPaths[i]} fill={`url(#ug-${uid})`} />
-        ))}
-        {PETALS.map((p, i) => (
-          <path
-            key={i}
-            d={petalPaths[i]}
-            fill={litMap[i] ? `url(#lg-${p.mode}-${uid})` : `url(#ug-${uid})`}
-          />
-        ))}
+        {sorted.map(i => {
+          const p = pieces[i]
+          return (
+            <path
+              key={i}
+              d={pathForPiece(p)}
+              fill={lit[i] ? `url(#lg-${p.mode}-${uid})` : `url(#ug-${uid})`}
+            />
+          )
+        })}
+        <path d={pathForCore(core)} fill={`url(#cg-${uid})`} />
       </g>
     </svg>
   )
