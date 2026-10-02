@@ -53,8 +53,10 @@ const MODE_LIT = {
   survival:     ['#FF7A55', '#F03C10'],
 }
 
-// Unlit 3-stop: stop[0] pinned (same in both arrays), stops[1] and [2] interpolate with pct
-const UNLIT_DARK  = ['#4A453E', '#191612', '#060505']
+// Unlit 3-stop: stop[0] pinned (same in both arrays), stops[1] and [2] interpolate with pct.
+// UNLIT_DARK exported too — it's the "shiny black" material other static,
+// non-progress-tracking shapes (ModeShapesRow) borrow at full strength.
+export const UNLIT_DARK = ['#4A453E', '#191612', '#060505']
 const UNLIT_EASED = ['#4A453E', '#2E2A25', '#231F1A']
 
 // ── petal silhouettes: a mixture of four distinct shapes ────────────────
@@ -80,8 +82,11 @@ const UNLIT_EASED = ['#4A453E', '#2E2A25', '#231F1A']
 const GOOD_RATIOS = { a3: 2.5 / 62, a5: 0, a7: 0 }
 const FINE_RATIOS = { a3: 2 / 62, a5: 3 / 62, a7: 0.6 / 62 }
 
-const SHAPE_KINDS = ['good', 'fine', 'square', 'circle']
-const KIND_SPEC = {
+// Exported so other components can reuse these exact four shapes (and the
+// formula behind them) without duplicating the math — see ModeShapesRow,
+// which reuses them at a fixed small size for the Modes header's icon row.
+export const SHAPE_KINDS = ['good', 'fine', 'square', 'circle']
+export const KIND_SPEC = {
   good:   { params: GOOD_RATIOS,             n: 2   },
   fine:   { params: FINE_RATIOS,             n: 2   },
   square: { params: { a3: 0, a5: 0, a7: 0 }, n: 4.5 },
@@ -108,13 +113,13 @@ const phiForPetal = i => {
 const paramsForPetal = i => KIND_SPEC[kindForPetal(i)].params
 const nForPetal = i => KIND_SPEC[kindForPetal(i)].n
 
-function squircleR(theta, R, n) {
+export function squircleR(theta, R, n) {
   if (n <= 2) return R
   const c = Math.abs(Math.cos(theta)), s = Math.abs(Math.sin(theta))
   return R / Math.pow(Math.pow(c, n) + Math.pow(s, n), 1 / n)
 }
 
-function orbPathD(cx, cy, R, phi, params, n = 2, steps = 72) {
+export function orbPathD(cx, cy, R, phi, params, n = 2, steps = 72) {
   const a3 = R * params.a3, a5 = R * params.a5, a7 = R * params.a7
   let d = ''
   for (let i = 0; i <= steps; i++) {

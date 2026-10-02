@@ -10,6 +10,7 @@ import { useIsDesktop } from '../lib/useIsDesktop'
 import FrequencyCard, { MOOD_PIP_COLOR } from '../components/FrequencyCard'
 import Glyph from '../lib/glyphs'
 import Bloom from '../components/Bloom'
+import ModeShapesRow from '../components/ModeShapesRow'
 import NoteStack from '../components/NoteStack'
 import JournalQuote from '../components/JournalQuote'
 import ManageDeck from '../components/ManageDeck'
@@ -818,8 +819,12 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         {/* ── Needs & Practices ── */}
         <div className={styles.practicesCard} data-tour="modes">
           <div className={styles.tierSectionHeader}>
-            <span className={styles.tierSectionLabel}><Glyph kind="mode" />{isDesktop ? 'CANVAS' : 'MODES'}</span>
+            <span className={styles.tierSectionLabel}>
+              {isDesktop && <Glyph kind="mode" />}
+              {isDesktop ? 'CANVAS' : 'MODES'}
+            </span>
             {isDesktop && <span className={styles.tierSectionHint}>tap a mode to fill it</span>}
+            {!isDesktop && <ModeShapesRow />}
           </div>
           <div className={styles.tierList}>
             {MODE_ORDER.map((mode, mi) => {

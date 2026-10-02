@@ -1,0 +1,14 @@
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding-left: 14px;
+}
+
+.icon {
+  flex: none;
+  display: block;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.22));
+}

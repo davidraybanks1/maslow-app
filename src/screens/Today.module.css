@@ -4,6 +4,8 @@
   background: var(--paper);
   min-height: 100vh;
   padding: 0 22px;
+  overflow-x: hidden; /* lets ModeShapesRow bleed past the 22px padding and
+                          run off the right edge without widening the page */
 }
 
 /* ── Greeting ── */
@@ -669,7 +671,11 @@
 .tierSectionHeader {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  /* was baseline — fine for the label/hint text pair, but a plain SVG (the
+     mobile ModeShapesRow) has no text baseline to align to, so this is
+     center now; label and hint are the same font/size, so this is a no-op
+     for them */
+  align-items: center;
   margin-bottom: 10px;
 }
 
