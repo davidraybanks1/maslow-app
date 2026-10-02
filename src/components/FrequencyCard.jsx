@@ -147,7 +147,13 @@ function VibeRing({ band }) {
       <g filter={`url(#${filterId})`} aria-hidden="true">
         <path ref={shadowRef} fill="#000" />
       </g>
-      <path ref={blobRef} fill={`url(#${gradId})`} />
+      <path
+        ref={blobRef}
+        fill={`url(#${gradId})`}
+        stroke="var(--orb-stroke)"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
     </svg>
   )
 }

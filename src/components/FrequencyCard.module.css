@@ -52,6 +52,13 @@
   margin: 0 0 6px -4px;
   --orb-hi: #4A4A46;
   --orb-lo: #0A0A08;
+  /* A thin contour line along the blob's own edge — the fill alone reads as
+     a shiny ball first and a wobbling shape second; this rim brings the
+     undulation itself back, the way the original stroked-outline ring
+     showed it before the shape was filled in (see the comment above). Light
+     against this orb's own dark fill (--orb-hi/--orb-lo here are both quite
+     dark); the dark tone below inverts that, since its fill runs light. */
+  --orb-stroke: rgba(255, 255, 255, 0.35);
 }
 
 /* ── band row + feeling list ───────────────────────────────────────────────
@@ -251,7 +258,9 @@
 
 /* a black orb would vanish on the near-black card, so the dark tone gets
    the same cream-on-black inversion as the rest of its ink here */
-.dark .vibeRing { --orb-hi: var(--on-dark, #F2F0E8); --orb-lo: #6B6861; }
+/* This fill runs light (cream to a mid grey-brown), the opposite of the
+   other two tones, so its contour line inverts to dark too. */
+.dark .vibeRing { --orb-hi: var(--on-dark, #F2F0E8); --orb-lo: #6B6861; --orb-stroke: rgba(0, 0, 0, 0.3); }
 
 .dark .freqRule { background: rgba(242, 240, 232, 0.16); }
 .dark .freqBackBtn { color: rgba(242, 240, 232, 0.45); }

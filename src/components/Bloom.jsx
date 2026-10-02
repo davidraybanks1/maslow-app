@@ -65,11 +65,10 @@ const MODE_LIT = {
   nourishment:  ['#FFD166', '#F0A800'],
   survival:     ['#FF7A55', '#F03C10'],
 }
-// Distinct from the exported UNLIT_DARK above (which ModeShapesRow's icons
-// still use at their own fixed strength) — the clod's own unlit/core colour,
-// always this dark regardless of pct.
-const CLOD_UNLIT = ['#514A40', '#15130F']
-const CLOD_CORE = ['#514A40', '#15130F']
+// Unlit pieces and the core both borrow the exported UNLIT_DARK material
+// above (same rich three-stop near-black ModeShapesRow's icons use at full
+// strength) rather than a flatter two-stop local colour — same reasoning:
+// it's "shiny black", not just dark.
 
 // Pieces, area-weighted so the area units sum per mode to exactly 4:3:2:1.
 const MODE_DEFS = [
@@ -139,8 +138,12 @@ function mulberry32(seed) {
 // new forces), clamped to the frame/floor throughout. The core participates
 // in collisions but never moves itself — all of the push-apart goes to the
 // other body. Memoized on (W, H) alone: only the lighting depends on fills.
+// Overall scale of the mound — pieces and the whole packed shape shrink or
+// grow together since every radius derives from this one factor on `u`.
+const SIZE_SCALE = 0.85
+
 function layout(W, H) {
-  const u = Math.min(Math.sqrt(W * H * 0.85 / (Math.PI * TOTAL_AREA_UNITS)), H / 4.6)
+  const u = SIZE_SCALE * Math.min(Math.sqrt(W * H * 0.85 / (Math.PI * TOTAL_AREA_UNITS)), H / 4.6)
   const floor = H - 10
   const core = { x: W / 2, y: floor - 1.35 * u, r: 1.35 * u, pinned: true }
 
@@ -264,19 +267,29 @@ export default function Bloom({ arcs, pct, variant = 'classic' }) {
       role="img"
     >
       <defs>
+        {/* cx/cy/r match the old petal cluster's own highlight — a tighter
+            radius than the Clod spec's original 0.80 concentrates the
+            highlight instead of spreading it thin, which is what reads as
+            "shiny" rather than flat. */}
         {MODE_ORDER.map(mode => (
-          <radialGradient key={mode} id={`lg-${mode}-${uid}`} cx="0.36" cy="0.30" r="0.80">
+          <radialGradient key={mode} id={`lg-${mode}-${uid}`} cx="0.34" cy="0.26" r="0.55">
             <stop offset="0%"   stopColor={MODE_LIT[mode][0]} />
             <stop offset="100%" stopColor={MODE_LIT[mode][1]} />
           </radialGradient>
         ))}
-        <radialGradient id={`ug-${uid}`} cx="0.36" cy="0.30" r="0.80">
-          <stop offset="0%"   stopColor={CLOD_UNLIT[0]} />
-          <stop offset="100%" stopColor={CLOD_UNLIT[1]} />
+        {/* Unlit pieces and the core share the same rich, three-stop near-
+            black UNLIT_DARK material ModeShapesRow's icons use — the Clod
+            spec's own flatter two-stop grey read dull and muddy by
+            comparison. */}
+        <radialGradient id={`ug-${uid}`} cx="0.34" cy="0.26" r="0.55">
+          <stop offset="0%"   stopColor={UNLIT_DARK[0]} />
+          <stop offset="45%"  stopColor={UNLIT_DARK[1]} />
+          <stop offset="100%" stopColor={UNLIT_DARK[2]} />
         </radialGradient>
-        <radialGradient id={`cg-${uid}`} cx="0.36" cy="0.30" r="0.80">
-          <stop offset="0%"   stopColor={CLOD_CORE[0]} />
-          <stop offset="100%" stopColor={CLOD_CORE[1]} />
+        <radialGradient id={`cg-${uid}`} cx="0.34" cy="0.26" r="0.55">
+          <stop offset="0%"   stopColor={UNLIT_DARK[0]} />
+          <stop offset="45%"  stopColor={UNLIT_DARK[1]} />
+          <stop offset="100%" stopColor={UNLIT_DARK[2]} />
         </radialGradient>
 
         <filter id={fid} x="-50%" y="-50%" width="200%" height="200%">
