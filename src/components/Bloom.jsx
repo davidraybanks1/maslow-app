@@ -57,6 +57,57 @@ const MODE_LIT = {
 const UNLIT_DARK  = ['#4A453E', '#191612', '#060505']
 const UNLIT_EASED = ['#4A453E', '#2E2A25', '#231F1A']
 
+// ── petal silhouettes: the vibration ring's own "good"-rooted wobble ────
+// r = R + a3·sin(3θ+φ) + a5·sin(5θ−1.3φ) + a7·sin(7θ+1.9φ)·(0.7+0.3·sin(2φ+θ)),
+// the identical formula FrequencyCard's VibeRing uses, so the two check-in
+// visuals read as the same family. Every petal mostly sits at "good"'s own
+// params (a5 = a7 = 0, the calmest shape the ring ever takes) scaled into
+// its own radius; a golden-angle sequence (2.399963 rad ≈ 137.5°, the same
+// angle sunflower seeds spiral by) rotates each petal by up to ±0.65 rad so
+// they don't read as one shape stamped thirteen times, and a second, offset
+// golden-angle sequence lets roughly a third of the petals drift up to 45%
+// of the way toward "fine"'s busier a5/a7 wobble, so a few read as
+// genuinely different shapes rather than just turned copies. Bloom never
+// animates, so each petal's path is fixed by its index and built once
+// below (see VARIANTS), not recomputed per render.
+const GOOD_RATIOS = { a3: 2.5 / 62, a5: 0, a7: 0 }
+const FINE_RATIOS = { a3: 2 / 62, a5: 3 / 62, a7: 0.6 / 62 }
+
+const phiForPetal = i => {
+  const frac = (i * 2.399963) % 1
+  return 0.6 + (frac - 0.5) * 1.3
+}
+const veerForPetal = i => {
+  const frac = (i * 2.399963 + 0.5) % 1
+  return Math.max(0, (frac - 0.62) / 0.38) * 0.45
+}
+const paramsForPetal = i => {
+  const t = veerForPetal(i)
+  return {
+    a3: GOOD_RATIOS.a3 * (1 - t) + FINE_RATIOS.a3 * t,
+    a5: FINE_RATIOS.a5 * t,
+    a7: FINE_RATIOS.a7 * t,
+  }
+}
+
+function orbPathD(cx, cy, R, phi, params, steps = 72) {
+  const a3 = R * params.a3, a5 = R * params.a5, a7 = R * params.a7
+  let d = ''
+  for (let i = 0; i <= steps; i++) {
+    const theta = (i / steps) * Math.PI * 2
+    const r = R
+      + a3 * Math.sin(3 * theta + phi)
+      + a5 * Math.sin(5 * theta - 1.3 * phi)
+      + a7 * Math.sin(7 * theta + 1.9 * phi) * (0.7 + 0.3 * Math.sin(2 * phi + theta))
+    const x = cx + r * Math.cos(theta)
+    const y = cy + r * Math.sin(theta)
+    d += (i === 0 ? 'M' : 'L') + x.toFixed(2) + ',' + y.toFixed(2) + ' '
+  }
+  return d + 'Z'
+}
+
+const petalPathsFor = petals => petals.map((p, i) => orbPathD(p.cx, p.cy, p.r, phiForPetal(i), paramsForPetal(i)))
+
 function mixHex(h1, h2, t) {
   return '#' + [1, 3, 5].map(o => {
     const a = parseInt(h1.slice(o, o + 2), 16)
@@ -84,12 +135,14 @@ const VARIANTS = {
   classic: {
     petals: PETALS_CLASSIC,
     byMode: buildByMode(PETALS_CLASSIC),
+    petalPaths: petalPathsFor(PETALS_CLASSIC),
     viewBox: '-5 30 280 220',
     textX: 143, textY: 160, textSize: 58, pctSize: 25, pctDy: -14,
   },
   wide: {
     petals: PETALS_WIDE,
     byMode: buildByMode(PETALS_WIDE),
+    petalPaths: petalPathsFor(PETALS_WIDE),
     viewBox: '-16 44 330 185',
     textX: 149, textY: 136, textSize: 48, pctSize: 21, pctDy: -12,
   },
@@ -127,7 +180,7 @@ export default function Bloom({ arcs, pct, variant = 'classic' }) {
     document.fonts?.ready?.then(() => bump(n => n + 1))
   }, [])
 
-  const { petals: PETALS, byMode, viewBox, textX, textY, textSize, pctSize, pctDy } =
+  const { petals: PETALS, byMode, petalPaths, viewBox, textX, textY, textSize, pctSize, pctDy } =
     VARIANTS[variant] || VARIANTS.classic
 
   // Map arc fill to each mode
@@ -195,16 +248,16 @@ export default function Bloom({ arcs, pct, variant = 'classic' }) {
       {/* Shadow layer — alpha-only blur; fill colour is irrelevant */}
       <g filter={`url(#${fid})`} aria-hidden="true">
         {PETALS.map((p, i) => (
-          <circle key={i} cx={p.cx} cy={p.cy} r={p.r} fill="#000" />
+          <path key={i} d={petalPaths[i]} fill="#000" />
         ))}
       </g>
 
       {/* Main bloom — knockout mask cuts pct% text through the petals */}
       <g mask={`url(#${mid})`}>
         {PETALS.map((p, i) => (
-          <circle
+          <path
             key={i}
-            cx={p.cx} cy={p.cy} r={p.r}
+            d={petalPaths[i]}
             fill={litMap[i] ? `url(#lg-${p.mode}-${uid})` : `url(#ug-${uid})`}
           />
         ))}
