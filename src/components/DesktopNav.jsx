@@ -12,7 +12,7 @@ const ITEMS = [
   ['/log', 'drafts'],
 ]
 
-export default function DesktopNav({ name, email, reviewCadence, updateReviewCadence, reviewDay, reviewTime, updateReviewSchedule, remindersEnabled, updateRemindersEnabled, reviewReminderEnabled, updateReviewReminderEnabled, moodReminders, updateMoodReminder, notifTypes, updateNotifType, noteDeckCount, customTagCount, resetTour, onOpenComposer }) {
+export default function DesktopNav({ name, email, reviewCadence, updateReviewCadence, reviewDay, reviewTime, updateReviewSchedule, remindersEnabled, updateRemindersEnabled, reviewReminderEnabled, updateReviewReminderEnabled, moodReminders, updateMoodReminder, notifTypes, updateNotifType, noteDeckCount, customTagCount, resetTour, onOpenComposer, hideComposer }) {
   const linkClass = ({ isActive }) => `${styles.item} ${isActive ? styles.itemActive : ''}`
   return (
     <aside className={styles.nav} aria-label="Primary" data-tour="nav">
@@ -25,12 +25,16 @@ export default function DesktopNav({ name, email, reviewCadence, updateReviewCad
         ))}
       </nav>
       <div className={styles.footer}>
-        {/* Sticky "add a draft" — same button, same spot, on every screen;
-            see GlobalComposer.jsx for the mobile equivalent and the sheet
-            it opens. Same glyph as the mobile fab and the "drafts" tab. */}
-        <button className={styles.composerFab} onClick={onOpenComposer} aria-label="Add a draft">
-          <Glyph kind="note" height={14} />
-        </button>
+        {/* Sticky "add a draft" — same button, same spot, on the Almanac
+            and Drafts screens; see GlobalComposer.jsx for the mobile
+            equivalent and the sheet it opens. Same glyph as the mobile fab
+            and the "drafts" tab. Hidden on Today, which has its own
+            always-visible composer at the bottom of the drafts section. */}
+        {!hideComposer && (
+          <button className={styles.composerFab} onClick={onOpenComposer} aria-label="Add a draft">
+            <Glyph kind="note" height={14} />
+          </button>
+        )}
         <ProfileMenu
           name={name} email={email}
           reviewCadence={reviewCadence} updateReviewCadence={updateReviewCadence}

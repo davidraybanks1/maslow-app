@@ -2424,3 +2424,180 @@
     padding: 26px 0 0;
   }
 }
+
+/* ── "Shiny black" drafts section — Today only ───────────────────────────
+   Same rich, three-stop near-black material as the Bloom's unlit pieces
+   (UNLIT_DARK in Bloom.jsx: #4A453E → #191612 → #060505, lit from the same
+   high-left point) rather than a flat grey, so the whole journal/drafts
+   area reads as one deliberate, glossy surface instead of a plain dark
+   fill. Combined selectors (.cardJournal.journalShiny etc.) so this always
+   outranks the plain-on-paper rules above regardless of source order. */
+.journalSection.journalShiny,
+.cardJournal.journalShiny {
+  background: radial-gradient(circle at 34% 26%, #4A453E 0%, #191612 45%, #060505 100%);
+  border: none;
+  border-top: none;
+}
+
+.journalSection.journalShiny {
+  border-radius: 20px;
+  padding: 20px 20px 18px;
+}
+
+.cardJournal.journalShiny {
+  border-radius: 20px;
+  padding: 18px 18px 20px;
+  margin-top: 26px;
+}
+
+/* Section label + count */
+.journalShiny .journalDeskLabel,
+.journalShiny .journalDeskCount,
+.journalShiny .sectionLabel,
+.journalShiny .journalEntryCount,
+.journalShiny .journalEntriesEmpty,
+.journalShiny .journalEmptyMobile,
+.journalShiny .journalReadMore,
+.journalShiny .journalQuoteReadMore,
+.journalShiny .composerCancelBtn,
+.journalShiny .journalHint {
+  color: rgba(243, 239, 230, 0.52);
+}
+.journalShiny .sectionLabel > svg { color: rgba(243, 239, 230, 0.45); }
+
+/* Entry cards */
+.journalShiny .journalEntryCard { border-bottom-color: rgba(243, 239, 230, 0.12); }
+.journalShiny .journalEntryText { color: #F3EFE6; }
+.journalShiny .journalEntryTime { color: rgba(243, 239, 230, 0.5); }
+/* Tags/badges stay solid paper-white pills — same "white on black" surface
+   as the writing field below, rather than dissolving into ghost outlines. */
+.journalShiny .journalSlotChip,
+.journalShiny .journalStateTag,
+.journalShiny .journalNeedTag,
+.journalShiny .journalFreqChip {
+  background: #F3EFE6;
+  color: #191612;
+  border-color: #F3EFE6;
+}
+.journalShiny .journalEntryDelete { color: rgba(243, 239, 230, 0.35); }
+.journalShiny .journalEntryDelete:hover { color: rgba(243, 239, 230, 0.75); }
+
+/* Quoted text block */
+.journalShiny .journalQuoteBlock {
+  background: rgba(243, 239, 230, 0.07);
+  border-left-color: rgba(243, 239, 230, 0.22);
+}
+.journalShiny .journalQuoteDate { color: rgba(243, 239, 230, 0.45); }
+.journalShiny .journalQuoteText { color: rgba(243, 239, 230, 0.68); }
+
+/* Composer: sits flush on the shiny surface, no nested card chrome */
+.journalShiny .journalComposerCard {
+  background: none;
+  border: none;
+  padding: 0;
+}
+.journalShiny .journalComposer {
+  border-top-color: rgba(243, 239, 230, 0.14);
+}
+
+/* Chips row + pickers — solid paper-white pills, same surface as the
+   writing field, so a tag reads as something set down on the black rather
+   than cut out of it. The slot chip (read-only "evening" etc.) stays a
+   ghost outline since it's not a tag, just a label. */
+.journalShiny .composerTagActive,
+.journalShiny .composerPickerItem {
+  background: #F3EFE6;
+  color: #191612;
+  border-color: #F3EFE6;
+}
+.journalShiny .composerSlotChip {
+  color: rgba(243, 239, 230, 0.78);
+  border-color: rgba(243, 239, 230, 0.26);
+}
+/* "+" add buttons stay dashed ghosts on black — not yet a tag */
+.journalShiny .composerTagBtn {
+  color: rgba(243, 239, 230, 0.45);
+  border-color: rgba(243, 239, 230, 0.26);
+}
+.journalShiny .composerTagBtn:hover {
+  color: rgba(243, 239, 230, 0.7);
+  border-color: rgba(243, 239, 230, 0.45);
+}
+/* FrequencyCard (the compact mood picker) keeps its own light-on-paper
+   styling unmodified — host it on a small paper inset rather than
+   recolouring its internals for a dark surface it wasn't designed for. */
+.journalShiny .composerFreqPicker {
+  background: var(--paper);
+  border-radius: 12px;
+  padding: 10px 12px 2px;
+}
+
+/* Textarea — a solid paper-white field set into the black, like a sheet
+   of paper laid on a dark desk, rather than a dark-on-dark well. */
+.journalShiny .journalComposerInput,
+.journalShiny .journalInput {
+  color: #191612;
+  caret-color: #191612;
+  border-color: transparent;
+  background: #F3EFE6;
+}
+.journalShiny .journalComposerInput:focus,
+.journalShiny .journalInput:focus {
+  border-color: rgba(25, 22, 18, 0.25);
+}
+.journalShiny .journalComposerInput::placeholder,
+.journalShiny .journalInput::placeholder {
+  color: rgba(25, 22, 18, 0.4);
+}
+
+/* "add" button — on mobile this sits directly on the black surface (below
+   the field), so it stays a lit paper-white pill; on desktop it's docked
+   inside the now paper-white textarea, where the same fill needs its own
+   edge (border+shadow below) to read as a separate control. */
+.journalShiny .journalAddBtn {
+  background: transparent;
+  color: rgba(243, 239, 230, 0.4);
+  border-color: rgba(243, 239, 230, 0.22);
+}
+.journalShiny .journalAddBtn:not(:disabled) {
+  background: #F3EFE6;
+  color: #191612;
+  border-color: #F3EFE6;
+}
+
+/* Attach control + its popover menu — tag-style pill, same paper-white as
+   the other tags. */
+.journalShiny .attachBtn { color: rgba(243, 239, 230, 0.5); }
+.journalShiny .attachBtn:hover { color: #F3EFE6; }
+.journalShiny .attachChip {
+  background: #F3EFE6;
+  color: #191612;
+  border-color: rgba(25, 22, 18, 0.15);
+}
+.journalShiny .attachChip:hover { border-color: rgba(25, 22, 18, 0.3); }
+.journalShiny .attachMenu {
+  background: #221F1A;
+  border-color: rgba(243, 239, 230, 0.18);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+.journalShiny .attachMenuItem { color: #F3EFE6; }
+.journalShiny .attachMenuItem:hover { background: rgba(243, 239, 230, 0.08); }
+
+.journalShiny .journalSaveError { color: #FF8F6B; }
+
+/* Desktop only: .journalComposerFooter is docked inside the paper-white
+   textarea (see .journalComposerWrap/.journalComposerInput above), so its
+   controls need dark ink instead of the light-on-black defaults above,
+   which are tuned for the mobile footer sitting directly on black. */
+.journalShiny .journalComposerFooter .attachBtn { color: rgba(25, 22, 18, 0.4); }
+.journalShiny .journalComposerFooter .attachBtn:hover { color: #191612; }
+.journalShiny .journalComposerFooter .journalHint { color: rgba(25, 22, 18, 0.35); }
+.journalShiny .journalComposerFooter .journalAddBtn:disabled {
+  color: rgba(25, 22, 18, 0.32);
+  border-color: rgba(25, 22, 18, 0.2);
+}
+.journalShiny .journalComposerFooter .journalAddBtn:not(:disabled) {
+  color: #191612;
+  border-color: rgba(25, 22, 18, 0.15);
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.18);
+}
