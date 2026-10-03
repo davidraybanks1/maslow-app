@@ -1112,6 +1112,14 @@
   margin-bottom: 10px;
 }
 
+/* Mobile: the composer sits directly under the header, above the logged
+   drafts, with a hairline + breathing room separating the two. */
+.journalComposer {
+  padding-bottom: 20px;
+  margin-bottom: 8px;
+  border-bottom: 0.5px solid var(--hairline);
+}
+
 .journalEntryCard {
   padding: 10px 0;
   border-bottom: 0.5px solid var(--track);
@@ -2423,32 +2431,4 @@
     margin-top: 26px;
     padding: 26px 0 0;
   }
-}
-
-/* ── Drafts header "plate" — Today only ──────────────────────────────────
-   Black confined to a small floating plate around the section label +
-   count (same rich three-stop near-black material as the Bloom's unlit
-   pieces — UNLIT_DARK in Bloom.jsx: #4A453E → #191612 → #060505). Everything
-   below it — entries, tags, the writing field — stays on the ordinary
-   light paper/card surface, nice and airy. On mobile the plate sits inset
-   inside the existing white .cardJournal (its own padding supplies the
-   margin around the plate); on desktop, which has no card, it floats
-   directly on the page as a rounded dark bar. */
-.journalDeskHeader.journalHeaderPlate,
-.sectionHeader.journalHeaderPlate {
-  background: radial-gradient(circle at 34% 26%, #4A453E 0%, #191612 45%, #060505 100%);
-  border-radius: 14px;
-  padding: 12px 16px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
-  justify-content: space-between;
-}
-
-.journalHeaderPlate .journalDeskLabel,
-.journalHeaderPlate .sectionLabel {
-  color: #F3EFE6;
-}
-.journalHeaderPlate .sectionLabel > svg { color: rgba(243, 239, 230, 0.75); }
-.journalHeaderPlate .journalDeskCount,
-.journalHeaderPlate .journalEntryCount {
-  color: rgba(243, 239, 230, 0.6);
 }

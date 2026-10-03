@@ -1251,7 +1251,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         {/* ── Journal ── */}
         {isDesktop ? (
           <div className={styles.journalSection}>
-            <div className={`${styles.journalDeskHeader} ${styles.journalHeaderPlate}`}>
+            <div className={styles.journalDeskHeader}>
               <span className={styles.journalDeskLabel}>JOURNAL</span>
               {journalEntryCount > 0 && (
                 <span className={styles.journalDeskCount}> / {journalEntryCount} {journalEntryCount === 1 ? 'entry' : 'entries'} today</span>
@@ -1282,7 +1282,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
             <div className={styles.journalScroll} ref={journalEntriesRef}>
               <div className={styles.journalEntries}>
                 {journalEntries.length === 0 ? (
-                  <span className={styles.journalEntriesEmpty}>nothing written yet — write below to start a draft</span>
+                  <span className={styles.journalEntriesEmpty}>nothing written yet — start a draft on the left</span>
                 ) : journalEntries.map(e => {
                   return (
                   <div key={e.id} className={styles.journalEntryCard}>
@@ -1332,15 +1332,32 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
           </div>
         ) : (
           <div className={styles.cardJournal} data-tour="journal">
-            <div className={`${styles.sectionHeader} ${styles.journalHeaderPlate}`}>
+            <div className={styles.sectionHeader}>
               <span className={styles.sectionLabel}><Glyph kind="note" />drafts</span>
               <span className={styles.journalEntryCount}>
                 {journalEntryCount > 0 ? `${journalEntryCount} ${journalEntryCount === 1 ? 'entry' : 'entries'} today` : ''}
               </span>
             </div>
+            <div className={styles.journalComposer}>
+              {draftChips}
+              <textarea
+                className={styles.journalInput}
+                placeholder="what's on your mind?"
+                value={draftText}
+                onChange={e => setDraftText(e.target.value)}
+                onKeyDown={handleDraftKeyDown}
+                rows={4}
+              />
+              <div className={styles.composerMobileFooter}>
+                {renderAttachControl()}
+                <button className={styles.journalAddBtn} onClick={handleAddEntry} disabled={!draftText.trim() || draftSaving}>add</button>
+              </div>
+              {draftSaveError && <div className={styles.journalSaveError}>{draftSaveError}</div>}
+              {draftFileInput}
+            </div>
             <>
               {journalEntries.length === 0 && (
-                <span className={styles.journalEmptyMobile}>nothing written yet — write below to start a draft</span>
+                <span className={styles.journalEmptyMobile}>nothing written yet — write above to start a draft</span>
               )}
               {journalEntries.length > 0 && (
                 <div className={styles.journalMobileEntries}>
@@ -1390,23 +1407,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 </div>
               )}
             </>
-            <div className={styles.journalComposer}>
-              {draftChips}
-              <textarea
-                className={styles.journalInput}
-                placeholder="what's on your mind?"
-                value={draftText}
-                onChange={e => setDraftText(e.target.value)}
-                onKeyDown={handleDraftKeyDown}
-                rows={4}
-              />
-              <div className={styles.composerMobileFooter}>
-                {renderAttachControl()}
-                <button className={styles.journalAddBtn} onClick={handleAddEntry} disabled={!draftText.trim() || draftSaving}>add</button>
-              </div>
-              {draftSaveError && <div className={styles.journalSaveError}>{draftSaveError}</div>}
-              {draftFileInput}
-            </div>
           </div>
         )}
         {draftQuotePickerOverlay}
