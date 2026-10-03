@@ -2289,6 +2289,23 @@
     padding: 104px 18px 6px 20px;
   }
 
+  /* "NOTE / TO SELF" on two lines - the same label type as VIBRATIONS and
+     MODES, pinned inside the card's top-left corner (the bloom takes the
+     top-right, and one line would run under its left-most petals). */
+  .noteStackLabel {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    font-family: var(--font-mono);
+    font-size: var(--type-floor);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    line-height: 1.5;
+    white-space: nowrap;
+    color: var(--ink3);
+    pointer-events: none;
+  }
+
   .noteDeckAddCard {
     display: flex;
     flex-direction: column;

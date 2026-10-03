@@ -938,6 +938,8 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                       onDismiss={handleNoteDismissed}
                       onCommit={hapticTick}
                       renderCard={card => (
+                        <>
+                        <div className={styles.noteStackLabel}>NOTE<br />TO SELF</div>
                         <div className={`${styles.noteDeckBody} ${styles.noteStackBody}`}>
                           <span className={styles.noteText} data-len={noteLenAttr(card.text)}>{card.text}</span>
                           {card.image_url && (
@@ -949,6 +951,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                             />
                           )}
                         </div>
+                        </>
                       )}
                     />
                     <div className={styles.deckFooterRow}>
