@@ -2,15 +2,15 @@
    Fixed footprint so the peeking cards have somewhere known to sit. */
 .stack {
   position: relative;
-  height: 296px;
+  height: 262px;
 }
 
 .card {
   position: absolute;
   inset: 0;
   margin: 0 auto;
-  width: 282px;
-  height: 296px;
+  width: 316px;
+  height: 262px;
   box-sizing: border-box;
   overflow: hidden;
   background: var(--surface-reflective);

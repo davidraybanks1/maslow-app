@@ -889,11 +889,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         {deckReviewed && <div className={styles.deckReviewedSpace} aria-hidden="true" />}
         {!deckReviewed && <div className={styles.reflectiveSection} data-tour="note">
             <div className={styles.noteDeckSection}>
-              {!isDesktop && (
-                <div className={styles.noteSectionHeader}>
-                  <span className={styles.sectionLabel}>notes to self</span>
-                </div>
-              )}
               {noteDeck.length > 0 ? (
                 isDesktop ? (
                   <div

@@ -200,8 +200,8 @@
 /* Matches the almanac's observation cards (Data.module.css's .insightFinding)
    face for face: Newsreader at the same weight and leading, stepping down at
    the same two length thresholds (noteLenAttr in Today.jsx mirrors Data.jsx's
-   own > 150 / > 90 split). The two card types share a 282x296 footprint, and
-   unlike the almanac card this one keeps that footprint - and its overflow:
+   own > 150 / > 90 split). The almanac's card is 282x296 and this one 316x262, and
+   unlike the almanac card this one keeps its footprint - and its overflow:
    hidden - at every width (NoteStack.module.css's .card), so the step-down
    stays active here at all sizes rather than flattening on mobile the way
    .insightFinding does once its own card goes full-width/auto-height there.
@@ -2237,15 +2237,15 @@
   }
 
   .noteDeckWrapper {
-    padding: 6px calc((100% - 282px) / 2);
+    padding: 6px calc((100% - 316px) / 2);
     gap: 12px;
     /* height driven by fixed-size cards, no JS height needed */
   }
 
   .noteDeckCard {
-    flex: 0 0 282px;
-    width: 282px;
-    height: 296px;
+    flex: 0 0 316px;
+    width: 316px;
+    height: 262px;
     scroll-snap-align: center;
     scroll-snap-stop: always;
     border-radius: 20px;
@@ -2262,13 +2262,6 @@
      the flower buries the card's content; this is tuned to just graze it. */
   .deckReviewedSpace { height: 30px; }
 
-  /* One header for the section, on the paper, matching Drafts. The rail is
-     fullbleed here, so the label needs the page gutter put back. */
-  .noteSectionHeader {
-    padding-inline: 22px;
-    margin-bottom: 14px;
-  }
-
   .noteDeckBody {
     /* height, not flex: 1 - the swipe deck's own card (NoteStack.module.css)
        isn't a flex container, so flex:1 had nothing to stretch against and
@@ -2283,18 +2276,17 @@
   }
 
   /* The actual swipeable note-to-self card only (not the "+ add a note"
-     empty state, which keeps the rule above). height:100% above centers
-     within the space left after NoteStack's card reserves 66px up top for
-     the bloom, which sits noticeably below the card's true middle. Taking
-     this out of flow and sizing it to the card's full box - padding
-     included - centers on the card itself instead; NoteStack's .card is
-     already position:absolute, so inset:0 here resolves against its full
-     padding box, not the padded-down content area. */
+     empty state, which keeps the rule above). Taken out of flow and sized to
+     the card's full box so it is not squeezed by NoteStack's own padding,
+     then given a top inset instead: with the section header gone the card
+     rides up under the bloom, whose lowest petals reach ~100px into it, so
+     the text centers in the clear space below that rather than the card's
+     true middle. */
   .noteDeckBody.noteStackBody {
     position: absolute;
     inset: 0;
     height: auto;
-    padding: 0 18px 0 20px;
+    padding: 104px 18px 6px 20px;
   }
 
   .noteDeckAddCard {
@@ -2392,7 +2384,7 @@
     justify-content: space-between;
     /* 10px read as flush against the card's own shadow/bottom edge — bumped
        for clearer breathing room between the two. */
-    padding: 20px calc((100% - 282px) / 2) 0;
+    padding: 20px calc((100% - 316px) / 2) 0;
     /* mirrors the deck's centering padding so counter aligns with card centre */
   }
 
