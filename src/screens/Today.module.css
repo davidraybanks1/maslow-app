@@ -2432,22 +2432,13 @@
   }
 }
 
-/* ── Exploration = pure white (temporary) ────────────────────────────────
-   Flat white, no shine — none of the other mode colours on this card use a
-   gradient. White on the white card needs a hairline warm-grey rim to read
-   at all, and the empty check circle outlines in warm grey instead of the
-   old green. Applied only to the exploration tier. */
-.tierDot.exploreWhite {
-  background: #FFFFFF;
-  box-shadow: 0 0 0 0.5px rgba(138, 130, 110, 0.7);
+/* ── Exploration = flat black (temporary) ────────────────────────────────
+   Flat black, no shine — none of the other mode colours on this card use a
+   gradient. Same ink as the app's unlit pieces (#191612). Applied only to
+   the exploration tier: its dot, progress fill, and check circles (empty
+   = black outline, done = solid black). */
+.tierDot.exploreBlack,
+.tierBarFill.exploreBlack {
+  background: #191612;
 }
-.tierBarFill.exploreWhite {
-  background: #FFFFFF;
-  box-shadow: inset 0 0 0 0.5px rgba(138, 130, 110, 0.7);
-}
-.practiceCheckWhite { border-color: #B4AE9C; }
-/* A done check is white-filled like the rest, so it has to be told apart
-   from an empty one by the rim alone: a firmer, darker ring. */
-.practiceCheckWhite.practiceCheckFilled {
-  box-shadow: 0 0 0 1px #7C7461;
-}
+.practiceCheckBlack { border-color: #191612; }
