@@ -58,9 +58,12 @@ export function orbPathD(cx, cy, R, phi, params, n = 2, steps = 72) {
 
 const MODE_ORDER = ['exploration', 'appreciation', 'nourishment', 'survival']
 
-// Same lit-mode gradient stops the old cluster shipped with.
+// Lit-mode gradient stops (2 or 3, spread evenly across the radial gradient).
+// Exploration is a crisp, glossy white: bright through most of the sphere,
+// with a firmer warm-grey edge so it keeps its shape against the paper.
+// (The old forest green was ['#2E8A64', '#0C5038'].)
 const MODE_LIT = {
-  exploration:  ['#2E8A64', '#0C5038'],
+  exploration:  ['#FFFFFF', '#FFFFFF', '#C9C4B5'],
   appreciation: ['#C7D4C1', '#9DB394'],
   nourishment:  ['#FFD166', '#F0A800'],
   survival:     ['#FF7A55', '#F03C10'],
@@ -362,8 +365,9 @@ export default function Bloom({ arcs, pct, variant = 'classic' }) {
             "shiny" rather than flat. */}
         {MODE_ORDER.map(mode => (
           <radialGradient key={mode} id={`lg-${mode}-${uid}`} cx="0.34" cy="0.26" r="0.55">
-            <stop offset="0%"   stopColor={MODE_LIT[mode][0]} />
-            <stop offset="100%" stopColor={MODE_LIT[mode][1]} />
+            {MODE_LIT[mode].map((c, i, a) => (
+              <stop key={i} offset={`${(i / (a.length - 1)) * 100}%`} stopColor={c} />
+            ))}
           </radialGradient>
         ))}
         {/* Unlit pieces and the core share the same rich, three-stop near-
