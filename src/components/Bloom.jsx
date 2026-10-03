@@ -344,7 +344,6 @@ export default function Bloom({ arcs, pct, variant = 'classic' }) {
 
   const size = core.r * 0.82
 
-  const fid = `cb-${uid}`   // blur filter
   const mid = `ck-${uid}`   // knockout mask
 
   const ariaLabel = `Today ${pct}% complete. Exploration ${Math.round((fillByMode.exploration || 0) * 100)}%, ` +
@@ -385,10 +384,6 @@ export default function Bloom({ arcs, pct, variant = 'classic' }) {
           <stop offset="100%" stopColor={UNLIT_DARK[2]} />
         </radialGradient>
 
-        <filter id={fid} x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="4" />
-        </filter>
-
         <mask id={mid}>
           <rect x={-100} y={-100} width={W + 200} height={H + 200} fill="white" />
           <text
@@ -399,14 +394,6 @@ export default function Bloom({ arcs, pct, variant = 'classic' }) {
           >{pct}<tspan fontSize={size * 0.48} dx={1} dy={-size * 0.38}>%</tspan></text>
         </mask>
       </defs>
-
-      {/* Contact shadow — one soft ellipse under the whole mound, drawn
-          outside the knockout mask so it never dims the % text. */}
-      <ellipse
-        cx={(minX + maxX) / 2} cy={floor + 1}
-        rx={(maxX - minX) / 2 * 0.92} ry={6}
-        fill="#1B1A17" opacity={0.22} filter={`url(#${fid})`}
-      />
 
       <g mask={`url(#${mid})`}>
         {drawable.map(({ p, filler: isFiller, litIndex }, i) => (

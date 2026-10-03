@@ -150,9 +150,6 @@ function VibeRing({ band }) {
       <path
         ref={blobRef}
         fill={`url(#${gradId})`}
-        stroke="var(--orb-stroke)"
-        strokeWidth="1.5"
-        strokeLinejoin="round"
       />
     </svg>
   )
