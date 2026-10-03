@@ -206,7 +206,7 @@
 .freqDot {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border-radius: 2px;
   border: 1.5px solid rgba(0,0,0,.2);
   flex-shrink: 0;
   background: transparent;

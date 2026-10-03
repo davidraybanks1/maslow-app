@@ -156,12 +156,13 @@ function VibeRing({ band }) {
 }
 
 // Props: initialBand, initialFeeling, onSettle(band, feeling), compact, pastTense, dayparts,
+//        editing (bool: reopens a finished answer — band row + feeling list — for revising),
 //        tone: 'dark' | 'amber' | undefined (paper), slotName: 'morning' | 'midday' | 'evening'
 // dayparts: [{ name, isCurrent, band, hasFeeling, onTap }]
 // slotName drives the opening prompt ("How are you this {slotName}?") before a band is
 // picked. Only the non-compact card uses it — compact's tiny picker (the retro tag row,
 // the draft composer) never shows the sentence at all.
-export default function FrequencyCard({ initialBand, initialFeeling, onSettle, compact, pastTense, dayparts, bandAsBack, tone, slotName }) {
+export default function FrequencyCard({ initialBand, initialFeeling, onSettle, compact, pastTense, dayparts, bandAsBack, tone, slotName, editing }) {
   const [band, setBand] = useState(initialBand || null)
   const [feeling, setFeeling] = useState(initialFeeling || null)
   // Whether the feeling sub-list is open. Starts open once a band is picked
@@ -176,6 +177,15 @@ export default function FrequencyCard({ initialBand, initialFeeling, onSettle, c
     setFeeling(initialFeeling || null)
     setExpanded(!!(initialBand && !initialFeeling))
   }, [initialBand, initialFeeling])
+
+  // A parent can reopen a finished answer (editing): bring the feeling list
+  // back so it can be revised; closing it again rolls the list up.
+  useEffect(() => {
+    if (compact) return
+    if (editing) { if (band) setExpanded(true) }
+    else if (feeling) setExpanded(false)
+    // band/feeling are read at the moment editing flips, not triggers.
+  }, [editing])
 
   function pickBand(b) {
     if (!compact) {
@@ -281,8 +291,9 @@ export default function FrequencyCard({ initialBand, initialFeeling, onSettle, c
               too, rather than staying up as a lingering set of controls for
               something already answered. It comes back on its own next
               period, since a new slot remounts this card with a clean
-              initialBand/initialFeeling. */}
-          {!(band && feeling) && (
+              initialBand/initialFeeling, or on demand when the parent sets
+              `editing` (tapping the current period's daypart). */}
+          {(!(band && feeling) || editing) && (
             <div className={styles.bandRow}>
               {BANDS.map(b => {
                 const on = b === band

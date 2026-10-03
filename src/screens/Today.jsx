@@ -737,6 +737,12 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     }
   }, [state.canvas]) // eslint-disable-line react-hooks/exhaustive-deps
   const [openRetroSlot, setOpenRetroSlot] = useState(null)
+  // Reopens the *current* period's answer for editing (tapping its daypart).
+  // Past periods use openRetroSlot's own row instead; this one expands the
+  // main vibration card in place, since a finished answer hides its buttons.
+  const [editingCurrent, setEditingCurrent] = useState(false)
+  // A new period brings a fresh, unanswered card — never carry an open edit over.
+  useEffect(() => { setEditingCurrent(false) }, [slot])
   const [showFreqInfo, setShowFreqInfo] = useState(false)
 
   const [moodSelections, setMoodSelections] = useState(() => {
@@ -833,7 +839,11 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     isCurrent: s === slot,
     band: moodSelections[s] || null,
     hasFeeling: !!(moodFeelings[s]),
-    onTap: precedingSlots(slot).includes(s) ? () => setOpenRetroSlot(o => o === s ? null : s) : null,
+    onTap: s === slot
+      ? () => { setOpenRetroSlot(null); setEditingCurrent(e => !e) }
+      : precedingSlots(slot).includes(s)
+        ? () => { setEditingCurrent(false); setOpenRetroSlot(o => o === s ? null : s) }
+        : null,
   }))
 
   return (
@@ -994,7 +1004,8 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               key={slot}
               initialBand={moodSelections[slot] || null}
               initialFeeling={moodFeelings[slot] || null}
-              onSettle={(band, feeling) => handleFrequencySettle(slot, band, feeling)}
+              onSettle={(band, feeling) => { handleFrequencySettle(slot, band, feeling); if (feeling) setEditingCurrent(false) }}
+              editing={editingCurrent}
               dayparts={isDesktop ? daypartsData : null}
               bandAsBack={!isDesktop}
               slotName={slot}
