@@ -50,7 +50,7 @@ function buildRingGradient(arcs) {
 
 // Practice check gradient stops — hi/lo per mode, matches Bloom petal lighting
 const MODE_CHECK_COLORS = {
-  exploration:  ['#2E8A64', '#0C5038'],
+  exploration:  ['#FFFFFF', '#FFFFFF'],
   appreciation: ['#C7D4C1', '#9DB394'],
   nourishment:  ['#FFD166', '#F0A800'],
   survival:     ['#FF7A55', '#F03C10'],
@@ -1091,14 +1091,14 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                       ref={el => { tierBtnElems.current[mode] = el }}
                     >
                       <div className={styles.tierHeaderTop}>
-                        <div className={styles.tierDot} style={{ background: pip }} />
+                        <div className={`${styles.tierDot}${mode === 'exploration' ? ` ${styles.exploreWhite}` : ''}`} style={mode === 'exploration' ? undefined : { background: pip }} />
                         <span className={styles.tierName}>{mode}</span>
                         <span className={styles.tierCount}>{modeDone}/{totalPossible}</span>
                       </div>
                       <div className={styles.tierBar}>
                         <div
-                          className={styles.tierBarFill}
-                          style={{ width: `${progressPct}%`, background: pip }}
+                          className={`${styles.tierBarFill}${mode === 'exploration' ? ` ${styles.exploreWhite}` : ''}`}
+                          style={{ width: `${progressPct}%`, ...(mode === 'exploration' ? {} : { background: pip }) }}
                         />
                       </div>
                       <div className={styles.tierNeedLabels}>
@@ -1153,14 +1153,14 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                     aria-expanded={isOpen}
                   >
                     <div className={styles.tierHeaderTop}>
-                      <div className={styles.tierDot} style={{ background: pip }} />
+                      <div className={`${styles.tierDot}${mode === 'exploration' ? ` ${styles.exploreWhite}` : ''}`} style={mode === 'exploration' ? undefined : { background: pip }} />
                       <span className={styles.tierName}>{mode}</span>
                       <i className={`${styles.tierChevron} ${isOpen ? styles.tierChevronOpen : ''}`} aria-hidden="true" />
                     </div>
                     <div className={styles.tierBar}>
                       <div
-                        className={styles.tierBarFill}
-                        style={{ width: `${progressPct}%`, background: pip }}
+                        className={`${styles.tierBarFill}${mode === 'exploration' ? ` ${styles.exploreWhite}` : ''}`}
+                        style={{ width: `${progressPct}%`, ...(mode === 'exploration' ? {} : { background: pip }) }}
                       />
                     </div>
                     {!isOpen && (
@@ -1200,10 +1200,10 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                                   onClick={e => { e.stopPropagation(); handlePracticeTap(n.id, mode, practice.label, practice.id) }}
                                 >
                                   <div
-                                    className={`${styles.practiceCheck} ${count > 0 ? styles.practiceCheckFilled : ''}`}
+                                    className={`${styles.practiceCheck} ${count > 0 ? styles.practiceCheckFilled : ''}${mode === 'exploration' ? ` ${styles.practiceCheckWhite}` : ''}`}
                                     style={count > 0
                                       ? { '--practice-paint-hi': (MODE_CHECK_COLORS[mode] || [])[0] || pip, '--practice-paint-lo': (MODE_CHECK_COLORS[mode] || [])[1] || pip, borderColor: 'transparent' }
-                                      : { borderColor: pip }}
+                                      : (mode === 'exploration' ? undefined : { borderColor: pip })}
                                   />
                                   <span className={styles.practiceLabel}>{practice.label}</span>
                                   <div className={styles.practiceMeta}>
