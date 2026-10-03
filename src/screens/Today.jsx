@@ -1250,8 +1250,8 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
 
         {/* ── Journal ── */}
         {isDesktop ? (
-          <div className={`${styles.journalSection} ${styles.journalShiny}`}>
-            <div className={styles.journalDeskHeader}>
+          <div className={styles.journalSection}>
+            <div className={`${styles.journalDeskHeader} ${styles.journalHeaderPlate}`}>
               <span className={styles.journalDeskLabel}>JOURNAL</span>
               {journalEntryCount > 0 && (
                 <span className={styles.journalDeskCount}> / {journalEntryCount} {journalEntryCount === 1 ? 'entry' : 'entries'} today</span>
@@ -1331,8 +1331,8 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
             </div>
           </div>
         ) : (
-          <div className={`${styles.cardJournal} ${styles.journalShiny}`} data-tour="journal">
-            <div className={styles.sectionHeader}>
+          <div className={styles.cardJournal} data-tour="journal">
+            <div className={`${styles.sectionHeader} ${styles.journalHeaderPlate}`}>
               <span className={styles.sectionLabel}><Glyph kind="note" />drafts</span>
               <span className={styles.journalEntryCount}>
                 {journalEntryCount > 0 ? `${journalEntryCount} ${journalEntryCount === 1 ? 'entry' : 'entries'} today` : ''}
