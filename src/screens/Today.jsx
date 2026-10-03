@@ -986,6 +986,28 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         <div className={styles.moodCard} data-tour="mood">
           <div className={styles.freqHeader}>
             <span className={styles.freqHeaderLabel}>VIBRATIONS</span>
+            {!isDesktop && (
+              <div className={styles.freqHeaderDayparts}>
+                {daypartsData.map(dp => {
+                  const color = dp.band ? MOOD_PIP_COLOR[dp.band] : null
+                  const dotStyle = !color ? undefined
+                    : dp.hasFeeling
+                      ? { background: color, borderColor: color }
+                      : { background: `linear-gradient(to right, ${color} 50%, transparent 50%)`, borderColor: color }
+                  return (
+                    <button
+                      key={dp.name}
+                      className={`${styles.freqHeaderDp} ${dp.isCurrent ? styles.freqHeaderDpCurrent : ''}`}
+                      onClick={dp.onTap || undefined}
+                      style={!dp.onTap ? { cursor: 'default' } : undefined}
+                    >
+                      <span className={styles.freqHeaderDot} style={dotStyle} />
+                      <span className={styles.freqHeaderDpName}>{dp.name}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
             <button
               type="button"
               className={styles.freqInfoBtn}
@@ -1016,28 +1038,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                   )}
                 </p>
               ))}
-            </div>
-          )}
-          {!isDesktop && (
-            <div className={styles.freqHeaderDayparts}>
-              {daypartsData.map(dp => {
-                const color = dp.band ? MOOD_PIP_COLOR[dp.band] : null
-                const dotStyle = !color ? undefined
-                  : dp.hasFeeling
-                    ? { background: color, borderColor: color }
-                    : { background: `linear-gradient(to right, ${color} 50%, transparent 50%)`, borderColor: color }
-                return (
-                  <button
-                    key={dp.name}
-                    className={`${styles.freqHeaderDp} ${dp.isCurrent ? styles.freqHeaderDpCurrent : ''}`}
-                    onClick={dp.onTap || undefined}
-                    style={!dp.onTap ? { cursor: 'default' } : undefined}
-                  >
-                    <span className={styles.freqHeaderDot} style={dotStyle} />
-                    <span className={styles.freqHeaderDpName}>{dp.name}</span>
-                  </button>
-                )
-              })}
             </div>
           )}
           {openRetroSlot && (

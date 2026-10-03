@@ -2334,14 +2334,15 @@
     color: var(--ink3);
   }
 
-  /* Below the white card now, not beside the eyebrow label - its own row,
-     left-aligned with the orb, sentence and buttons above it. */
+  /* Sits on the header line itself: the label on the left, the three dayparts
+     pushed right, and the (i) at the far right edge. */
+  .freqHeader { justify-content: flex-start; gap: 8px; }
   .freqHeaderDayparts {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
-    gap: 14px;
-    margin-top: 14px;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-left: auto;
   }
 
   .freqHeaderDp {
@@ -2375,6 +2376,16 @@
 
   .freqHeaderDpCurrent .freqHeaderDpName {
     color: var(--ink2);
+  }
+
+  /* Phones under ~390px wide: the label, (i) and three dayparts together run
+     a little past the row, so the spacing tightens until they fit. */
+  @media (max-width: 389px) {
+    .freqHeader { gap: 6px; }
+    .freqHeader .freqHeaderLabel { letter-spacing: 0.08em; }
+    .freqHeaderDayparts { gap: 8px; }
+    .freqHeaderDp { gap: 4px; }
+    .freqHeaderDpName { letter-spacing: 0.02em; }
   }
 
   /* ── Deck footer — rendered once below the rail, not inside each card ── */
