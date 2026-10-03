@@ -318,28 +318,20 @@ export default function Bloom({ arcs, pct, variant = 'classic' }) {
   const minY = Math.min(...pieces.map(b => b.y - b.r), ...filler.map(b => b.y - b.r), core.y - core.r)
   const maxY = Math.max(...pieces.map(b => b.y + b.r), ...filler.map(b => b.y + b.r), core.y + core.r)
 
-  // The grounded "core" built by layout() stays exactly where the physics
-  // settled it (bottom-centre, load-bearing for the rest of the mound's
-  // packing — moving it breaks the already-tuned silhouette). The number
-  // itself, though, reads better at the bloom's actual visual centre than
-  // pinned down in that one shape, so it gets its own small dark "plate" —
-  // same material, same knockout approach — placed at the bounding-box
-  // centre of the whole settled mound (pieces + filler + core) and layered
-  // into the normal draw order like any other piece. Purely an overlay: it
-  // never participates in the settle pass, so it can't disturb packing.
-  const plate = useMemo(() => ({
-    x: core.x,
-    y: core.y - (core.y - (minY + maxY) / 2) * 0.5,
-    r: core.r * 0.8,
-  }), [core.x, core.y, core.r, minY, maxY])
+  // The number knocks out of whatever's actually sitting at the bloom's
+  // true visual centre (bounding box of pieces + filler + core) — no
+  // dedicated host shape. It'll cross several pieces' boundaries, same as
+  // any other knockout here; that's the point, it reads as centred in the
+  // whole mound rather than confined to one shape. The grounded "core"
+  // itself stays exactly where the physics settled it (bottom-centre,
+  // load-bearing for the rest of the mound's packing) — only the text
+  // position moves.
+  const textX = (minX + maxX) / 2
+  const textY = (minY + maxY) / 2
 
   // Real pieces and the filler draw together, sorted by y so the mound
   // layers correctly regardless of which group a piece belongs to; filler
-  // is tagged so it always renders unlit, never checked against `lit`. The
-  // number plate is deliberately left out of this sort and drawn last,
-  // alongside the core — at the bloom's centre it would otherwise land
-  // underneath whichever real piece happens to sit lower there, hiding the
-  // plate (and the knockout text with it) behind that piece's own colour.
+  // is tagged so it always renders unlit, never checked against `lit`.
   const drawable = useMemo(
     () => pieces.map((p, i) => ({ p, filler: false, litIndex: i }))
       .concat(filler.map(p => ({ p, filler: true })))
@@ -347,7 +339,7 @@ export default function Bloom({ arcs, pct, variant = 'classic' }) {
     [pieces, filler]
   )
 
-  const size = plate.r * 0.82
+  const size = core.r * 0.82
 
   const fid = `cb-${uid}`   // blur filter
   const mid = `ck-${uid}`   // knockout mask
@@ -396,7 +388,7 @@ export default function Bloom({ arcs, pct, variant = 'classic' }) {
         <mask id={mid}>
           <rect x={-100} y={-100} width={W + 200} height={H + 200} fill="white" />
           <text
-            x={plate.x} y={plate.y + size * 0.36}
+            x={textX} y={textY + size * 0.36}
             textAnchor="middle"
             style={{ fontFamily: 'var(--font-serif)', fontWeight: 500, fontSize: `${size}px`, letterSpacing: '-0.02em' }}
             fill="black"
@@ -421,7 +413,6 @@ export default function Bloom({ arcs, pct, variant = 'classic' }) {
           />
         ))}
         <path d={pathForCore(core)} fill={`url(#cg-${uid})`} />
-        <path d={pathForCore(plate)} fill={`url(#cg-${uid})`} />
       </g>
     </svg>
   )
