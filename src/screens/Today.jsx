@@ -980,7 +980,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         {/* ── Frequency section ── */}
         <div className={styles.moodCard} data-tour="mood">
           <div className={styles.freqHeader}>
-            <span className={styles.freqHeaderLabel}><Glyph kind="frequency" />VIBRATIONS</span>
+            <span className={styles.freqHeaderLabel}>VIBRATIONS</span>
             <button
               type="button"
               className={styles.freqInfoBtn}

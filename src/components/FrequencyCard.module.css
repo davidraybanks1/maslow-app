@@ -96,9 +96,9 @@
 }
 .bandBtnOn:hover { border-color: var(--ink); color: #F2F0E8; }
 
-/* Rolls the feeling list up once a specific one is picked, so the card
-   settles back to just the sentence + band row. Retapping the active band
-   toggles it back open (see FrequencyCard.jsx) to revise the pick. */
+/* Rolls the feeling list up once a specific one is picked. The band row
+   itself then also hides (see FrequencyCard.jsx) once both are set, so a
+   completed answer settles back to just the sentence until the next period. */
 .feelWrap {
   overflow: hidden;
   max-height: 600px;

@@ -276,25 +276,30 @@ export default function FrequencyCard({ initialBand, initialFeeling, onSettle, c
         </>
       ) : (
         <>
-          {/* The sentence above is the receipt; these are the control. The band
-              row stays visible after a pick so what you chose is always in view
-              and one tap away from changing. Bigger targets, solid-ink selected
-              state — matches the onboarding mood screen this was restyled to
-              follow. The feeling list rolls up once a specific one is chosen;
-              retapping the active band reopens it to revise. */}
-          <div className={styles.bandRow}>
-            {BANDS.map(b => {
-              const on = b === band
-              return (
-                <button
-                  key={b}
-                  className={`${styles.bandBtn}${on ? ` ${styles.bandBtnOn}` : ''}`}
-                  onClick={() => pickBand(b)}
-                  aria-pressed={on}
-                >{BAND_LABEL[b]}</button>
-              )
-            })}
-          </div>
+          {/* The sentence above is the receipt; these are the control. Bigger
+              targets, solid-ink selected state — matches the onboarding mood
+              screen this was restyled to follow. The feeling list rolls up
+              once a specific one is chosen, and once it has (band + feeling
+              both set — the selection is complete), the band row itself hides
+              too, rather than staying up as a lingering set of controls for
+              something already answered. It comes back on its own next
+              period, since a new slot remounts this card with a clean
+              initialBand/initialFeeling. */}
+          {!(band && feeling) && (
+            <div className={styles.bandRow}>
+              {BANDS.map(b => {
+                const on = b === band
+                return (
+                  <button
+                    key={b}
+                    className={`${styles.bandBtn}${on ? ` ${styles.bandBtnOn}` : ''}`}
+                    onClick={() => pickBand(b)}
+                    aria-pressed={on}
+                  >{BAND_LABEL[b]}</button>
+                )
+              })}
+            </div>
+          )}
           {band && (
             <div className={`${styles.feelWrap}${expanded ? '' : ` ${styles.feelWrapCollapsed}`}`}>
               <p className={styles.freqTextureQ}>
