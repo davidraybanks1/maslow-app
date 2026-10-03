@@ -133,14 +133,24 @@ function mulberry32(seed) {
 }
 
 // Deterministic gravity packing: seed random init positions, then 420
-// iterations of pairwise collision resolution (14% allowed overlap) +
-// gravity + a gentle pull to centre (the last 80 iterations only relax, no
-// new forces), clamped to the frame/floor throughout. The core participates
-// in collisions but never moves itself — all of the push-apart goes to the
-// other body. Memoized on (W, H) alone: only the lighting depends on fills.
+// iterations of pairwise collision resolution (18% allowed overlap, tighter
+// than the Clod spec's original 14% so neighbours interlock with less gap
+// between them) + gravity + a light pull to centre (the last 80 iterations
+// only relax, no new forces), clamped to the frame/floor throughout. The
+// core participates in collisions but never moves itself — all of the
+// push-apart goes to the other body. Memoized on (W, H) alone: only the
+// lighting depends on fills.
 // Overall scale of the mound — pieces and the whole packed shape shrink or
 // grow together since every radius derives from this one factor on `u`.
 const SIZE_SCALE = 0.85
+// How hard pieces get pulled back toward the horizontal centre each settling
+// iteration. The Clod spec's original 0.05 fights the sideways push-apart
+// from collisions hard enough that the mound piles up tall and narrow near
+// the centre instead of spreading; this weaker pull still keeps the pile
+// roughly centred overall (so it doesn't drift to one edge) while letting
+// collisions carry pieces much further out, which is what actually widens
+// the footprint and lets it settle flatter.
+const CENTER_PULL = 0.015
 
 function layout(W, H) {
   const u = SIZE_SCALE * Math.min(Math.sqrt(W * H * 0.85 / (Math.PI * TOTAL_AREA_UNITS)), H / 4.6)
@@ -152,7 +162,7 @@ function layout(W, H) {
 
   const rand = mulberry32(11)
   pieces.forEach(p => {
-    p.x = W / 2 + (rand() - 0.5) * W * 0.6
+    p.x = W / 2 + (rand() - 0.5) * W * 0.8
     p.y = H / 2 + (rand() - 0.5) * H * 0.6
   })
 
@@ -163,7 +173,7 @@ function layout(W, H) {
         const bi = bodies[i], bj = bodies[j]
         let dx = bj.x - bi.x, dy = bj.y - bi.y
         let d = Math.sqrt(dx * dx + dy * dy)
-        const minD = (bi.r + bj.r) * 0.86
+        const minD = (bi.r + bj.r) * 0.76
         if (d < minD) {
           if (d < 1e-6) { d = 1e-6; dx = 0.001; dy = 0.001 }
           const nx = dx / d, ny = dy / d
@@ -181,7 +191,7 @@ function layout(W, H) {
     if (iter <= 340) {
       pieces.forEach(p => {
         p.y += 1.4
-        p.x += (W / 2 - p.x) * 0.05
+        p.x += (W / 2 - p.x) * CENTER_PULL
       })
     }
     pieces.forEach(p => {
@@ -190,7 +200,67 @@ function layout(W, H) {
     })
   }
 
-  return { pieces, core, floor }
+  return { pieces, core, floor, u }
+}
+
+// Rounds out the mound's right side: a few small-to-medium, mode-less accent
+// pieces — sized the same way as the real mode pieces (area units through
+// the same `u` scale), not shrunk-down marbles — dropped in between the
+// current right-side dome peak and the lower-right anchor piece, then
+// settled by gravity/collision against the already-fixed mound so the whole
+// right profile reads as one continuous curve instead of stepping down to a
+// single low piece with a gap above it. These never light (no mode, no
+// progress of their own) and are purely compositional, the same reasoning
+// as the old petal cluster's PLOT_FILLER clumps. The real pieces and core
+// are treated as fixed obstacles here — only the filler itself moves — so
+// this never disturbs the already-settled main layout; it's still fully
+// deterministic, just a second, smaller settle pass run against the first
+// one's result.
+function buildFiller(pieces, core, W, floor, u) {
+  const rightHalf = pieces.filter(p => p.x > W / 2)
+  const domePeak = rightHalf.reduce((a, p) => (p.y < a.y ? p : a))
+  const rightmost = pieces.reduce((a, p) => (p.x + p.r > a.x + a.r ? p : a))
+  const obstacles = pieces.concat([core])
+
+  const targetX = (domePeak.x + rightmost.x) / 2 + rightmost.r * 0.25
+  const areas = [0.72, 0.56, 0.44]
+  const filler = areas.map((a, i) => ({
+    r: Math.sqrt(a) * u,
+    x: targetX + (i - 1) * u * 0.25,
+    y: domePeak.y - u * (1.2 + i * 0.35),
+    kind: (i + 1) % 4, rot: (i * 41) % 50 - 25, seed: i * 1.91 + 0.9,
+  }))
+
+  const bodies = obstacles.concat(filler)
+  for (let iter = 0; iter < 240; iter++) {
+    for (let i = 0; i < bodies.length; i++) {
+      for (let j = 0; j < filler.length; j++) {
+        const bj = filler[j]
+        if (bodies[i] === bj) continue
+        const bi = bodies[i]
+        let dx = bj.x - bi.x, dy = bj.y - bi.y
+        let d = Math.sqrt(dx * dx + dy * dy)
+        const minD = (bi.r + bj.r) * 0.74
+        if (d < minD) {
+          if (d < 1e-6) { d = 1e-6; dx = 0.001; dy = 0.001 }
+          const nx = dx / d, ny = dy / d
+          const overlap = minD - d
+          if (obstacles.includes(bi)) { bj.x += nx * overlap; bj.y += ny * overlap }
+          else { bi.x -= nx * overlap * 0.5; bi.y -= ny * overlap * 0.5; bj.x += nx * overlap * 0.5; bj.y += ny * overlap * 0.5 }
+        }
+      }
+    }
+    filler.forEach(p => {
+      p.y += 1.3
+      p.x += (targetX - p.x) * 0.02
+    })
+    filler.forEach(p => {
+      p.x = Math.min(W - p.r, Math.max(p.r, p.x))
+      p.y = Math.max(p.r, Math.min(floor - p.r, p.y))
+    })
+  }
+
+  return filler
 }
 
 // Lighting rule — smallest to largest, area-honest: a piece lights once the
@@ -239,18 +309,45 @@ export default function Bloom({ arcs, pct, variant = 'classic' }) {
   const fillByMode = {}
   arcs.forEach((a, i) => { fillByMode[MODE_ORDER[i]] = a.fill })
 
-  const { pieces, core, floor } = useMemo(() => layout(W, H), [W, H])
+  const { pieces, core, floor, u } = useMemo(() => layout(W, H), [W, H])
+  const filler = useMemo(() => buildFiller(pieces, core, W, floor, u), [pieces, core, W, floor, u])
   const lit = computeLit(pieces, fillByMode)
 
-  const sorted = useMemo(
-    () => pieces.map((p, i) => i).sort((a, b) => pieces[a].y - pieces[b].y),
-    [pieces]
+  const minX = Math.min(...pieces.map(b => b.x - b.r), ...filler.map(b => b.x - b.r), core.x - core.r)
+  const maxX = Math.max(...pieces.map(b => b.x + b.r), ...filler.map(b => b.x + b.r), core.x + core.r)
+  const minY = Math.min(...pieces.map(b => b.y - b.r), ...filler.map(b => b.y - b.r), core.y - core.r)
+  const maxY = Math.max(...pieces.map(b => b.y + b.r), ...filler.map(b => b.y + b.r), core.y + core.r)
+
+  // The grounded "core" built by layout() stays exactly where the physics
+  // settled it (bottom-centre, load-bearing for the rest of the mound's
+  // packing — moving it breaks the already-tuned silhouette). The number
+  // itself, though, reads better at the bloom's actual visual centre than
+  // pinned down in that one shape, so it gets its own small dark "plate" —
+  // same material, same knockout approach — placed at the bounding-box
+  // centre of the whole settled mound (pieces + filler + core) and layered
+  // into the normal draw order like any other piece. Purely an overlay: it
+  // never participates in the settle pass, so it can't disturb packing.
+  const plate = useMemo(() => ({
+    x: core.x,
+    y: core.y - (core.y - (minY + maxY) / 2) * 0.5,
+    r: core.r * 0.8,
+  }), [core.x, core.y, core.r, minY, maxY])
+
+  // Real pieces and the filler draw together, sorted by y so the mound
+  // layers correctly regardless of which group a piece belongs to; filler
+  // is tagged so it always renders unlit, never checked against `lit`. The
+  // number plate is deliberately left out of this sort and drawn last,
+  // alongside the core — at the bloom's centre it would otherwise land
+  // underneath whichever real piece happens to sit lower there, hiding the
+  // plate (and the knockout text with it) behind that piece's own colour.
+  const drawable = useMemo(
+    () => pieces.map((p, i) => ({ p, filler: false, litIndex: i }))
+      .concat(filler.map(p => ({ p, filler: true })))
+      .sort((a, b) => a.p.y - b.p.y),
+    [pieces, filler]
   )
 
-  const minX = Math.min(...pieces.map(b => b.x - b.r), core.x - core.r)
-  const maxX = Math.max(...pieces.map(b => b.x + b.r), core.x + core.r)
-
-  const size = core.r * 0.82
+  const size = plate.r * 0.82
 
   const fid = `cb-${uid}`   // blur filter
   const mid = `ck-${uid}`   // knockout mask
@@ -299,7 +396,7 @@ export default function Bloom({ arcs, pct, variant = 'classic' }) {
         <mask id={mid}>
           <rect x={-100} y={-100} width={W + 200} height={H + 200} fill="white" />
           <text
-            x={core.x} y={core.y + size * 0.36}
+            x={plate.x} y={plate.y + size * 0.36}
             textAnchor="middle"
             style={{ fontFamily: 'var(--font-serif)', fontWeight: 500, fontSize: `${size}px`, letterSpacing: '-0.02em' }}
             fill="black"
@@ -316,17 +413,15 @@ export default function Bloom({ arcs, pct, variant = 'classic' }) {
       />
 
       <g mask={`url(#${mid})`}>
-        {sorted.map(i => {
-          const p = pieces[i]
-          return (
-            <path
-              key={i}
-              d={pathForPiece(p)}
-              fill={lit[i] ? `url(#lg-${p.mode}-${uid})` : `url(#ug-${uid})`}
-            />
-          )
-        })}
+        {drawable.map(({ p, filler: isFiller, litIndex }, i) => (
+          <path
+            key={i}
+            d={pathForPiece(p)}
+            fill={!isFiller && lit[litIndex] ? `url(#lg-${p.mode}-${uid})` : `url(#ug-${uid})`}
+          />
+        ))}
         <path d={pathForCore(core)} fill={`url(#cg-${uid})`} />
+        <path d={pathForCore(plate)} fill={`url(#cg-${uid})`} />
       </g>
     </svg>
   )
