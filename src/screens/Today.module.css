@@ -39,7 +39,10 @@
    page title sits beside their own account control) without competing
    with the bloom for row space. top is set per breakpoint, alongside
    .header's own padding-top, in the media queries below. */
-.headerAccount { position: absolute; top: 14px; right: 0; z-index: 3; }
+/* z-index 4 (above .headerLeft's 3 and the bloom's 2): the profile sheet and its
+   scrim render inside this box, so it has to out-stack the greeting or the
+   greeting paints over the open sheet. */
+.headerAccount { position: absolute; top: 14px; right: 0; z-index: 4; }
 .headerAccount:empty { display: none; }
 
 /* Header: ring shown mobile, bar shown desktop */
@@ -2231,13 +2234,12 @@
     box-shadow: 0 2px 16px rgba(0,0,0,0.08);
   }
 
-  /* With the deck reviewed and its section gone, the vibrations card moves
-     up to sit closer to the header — deliberately letting the bloom's lowest
-     petal dip a little into the white card's top-right corner, the same
-     layered look the note-to-self card gets above (its eyebrow label stays
-     clear on the left, same as VIBRATIONS' does here). Too little height and
-     the flower buries the card's content; this is tuned to just graze it. */
-  .deckReviewedSpace { height: 30px; }
+  /* With the deck reviewed and its section gone, the vibrations section moves
+     up under the header. Vibrations is no longer a white card the bloom can
+     tuck behind — its header row carries the daypart dots on the right, which
+     sit exactly where the bloom's lowest pebbles hang — so this has to be tall
+     enough to start the row below the bloom's bottom edge. */
+  .deckReviewedSpace { height: 84px; }
 
   .noteDeckBody {
     /* height, not flex: 1 - the swipe deck's own card (NoteStack.module.css)
