@@ -15,7 +15,7 @@ import JournalQuote from '../components/JournalQuote'
 import ManageDeck from '../components/ManageDeck'
 import ManageTags from '../components/ManageTags'
 import NeedsPopup from '../components/NeedsPopup'
-import NeedPills from '../components/NeedPills'
+import NeedPills, { NeedPill } from '../components/NeedPills'
 import styles from './Today.module.css'
 
 const MODE_THRESHOLDS = { exploration: 80, appreciation: 60, nourishment: 50, survival: 20 }
@@ -1184,7 +1184,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                         return (
                           <div key={n.id} className={styles.needGroup}>
                             <div className={styles.needSubHeader}>
-                              <span className={styles.needSubName}>{n.name}</span>
+                              <NeedPill mode={mode} name={n.name} />
                               <span className={styles.needSubCount}>{needDone}/{maxBubbles}</span>
                             </div>
                             {sorted.length === 0 ? (

@@ -824,16 +824,9 @@
 
   .needSubHeader {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
     margin-bottom: 2px;
-  }
-
-  .needSubName {
-    font-family: var(--font-serif);
-    font-size: 14px;
-    font-weight: 300;
-    color: var(--ink);
   }
 
   .needSubCount {
