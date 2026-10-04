@@ -15,6 +15,7 @@ import JournalQuote from '../components/JournalQuote'
 import ManageDeck from '../components/ManageDeck'
 import ManageTags from '../components/ManageTags'
 import NeedsPopup from '../components/NeedsPopup'
+import NeedPills from '../components/NeedPills'
 import styles from './Today.module.css'
 
 const MODE_THRESHOLDS = { exploration: 80, appreciation: 60, nourishment: 50, survival: 20 }
@@ -1108,9 +1109,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                           style={{ width: `${progressPct}%`, ...(mode === 'exploration' ? {} : { background: pip }) }}
                         />
                       </div>
-                      <div className={styles.tierNeedLabels}>
-                        {modeNeeds.map(n => n.name).join(', ')}
-                      </div>
+                      <NeedPills mode={mode} needs={modeNeeds} />
                     </button>
                   </div>
                 )
@@ -1171,9 +1170,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                       />
                     </div>
                     {!isOpen && (
-                      <div className={styles.tierNeedLabels}>
-                        {modeNeeds.map(n => n.name).join(', ')}
-                      </div>
+                      <NeedPills mode={mode} needs={modeNeeds} />
                     )}
                   </button>
 
@@ -1363,9 +1360,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               {draftFileInput}
             </div>
             <>
-              {journalEntries.length === 0 && (
-                <span className={styles.journalEmptyMobile}>nothing written yet — write above to start a draft</span>
-              )}
               {journalEntries.length > 0 && (
                 <div className={styles.journalMobileEntries}>
                   {journalEntries.map(e => {

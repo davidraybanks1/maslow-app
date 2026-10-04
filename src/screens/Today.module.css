@@ -137,14 +137,6 @@
   background: var(--card);
 }
 
-.journalEmptyMobile {
-  display: block;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--ink4);
-  padding-top: 2px;
-}
-
 /* ── Note to self deck wrapper ── */
 .reflectiveSection {
   background: var(--card);
@@ -778,19 +770,6 @@
   height: 100%;
   border-radius: 5px;
   transition: width 300ms ease;
-}
-
-.tierNeedLabels {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  color: var(--ink3);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-align: left;
-  width: 100%;
-  margin-top: 5px;
-  letter-spacing: 0.01em;
 }
 
 @media (prefers-reduced-motion: reduce) {
