@@ -14,7 +14,7 @@ import { MODE_NEED_CAP, MODE_DESCS } from '../../lib/constants'
 
 const MODES = {
   survival:     { name: 'survival',     bg: '#FFF0EC', text: '#D93B1C' },
-  nourishment:  { name: 'nourishment',  bg: 'rgba(232,184,31,0.12)', text: '#854F0B' },
+  nourishment:  { name: 'nourishment',  bg: 'rgba(245,182,34,0.12)', text: '#854F0B' },
   appreciation: { name: 'appreciation', bg: '#F2F5F3', text: '#4A6860' },
   exploration:  { name: 'exploration',  bg: '#E8EFE9', text: '#1B3A2D' },
 }
@@ -154,7 +154,7 @@ const FLEXIBILITY_OPTIONS = [
     name: 'some',
     desc: "there's room for intentional change but it has to stay realistic and sustainable.",
     tag: 'a steady start',
-    tagBg: 'rgba(232,184,31,0.12)',
+    tagBg: 'rgba(245,182,34,0.12)',
     tagColor: '#854F0B',
   },
   {

@@ -51,7 +51,7 @@
 /* Option cards (energy / anxiety type) */
 .options { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
 .optionCard { position: relative; border: 1.5px solid var(--border); border-radius: 14px; background: var(--card); padding: 16px; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none; }
-.optionCardSelected { border: 2px solid var(--nourishment); background: rgba(232,184,31,0.10); }
+.optionCardSelected { border: 2px solid var(--nourishment); background: rgba(245,182,34,0.10); }
 .optionCardSelected::after { content: ''; position: absolute; top: 12px; right: 12px; width: 10px; height: 10px; border-radius: 50%; background: var(--nourishment); }
 .optionName { font-family: var(--font-serif); font-size: 18px; font-weight: 400; color: var(--ink); margin-bottom: 6px; }
 .optionDesc { font-family: var(--font-mono); font-size: 12px; font-weight: 200; color: var(--ink2); line-height: 1.6; }
@@ -166,11 +166,11 @@
   font-weight: 400;
   color: var(--ink);
 }
-.gridCardSelected { border: 2px solid var(--nourishment); background: rgba(232,184,31,0.10); }
+.gridCardSelected { border: 2px solid var(--nourishment); background: rgba(245,182,34,0.10); }
 .gridCardSelected::after { content: ''; position: absolute; top: 10px; right: 10px; width: 10px; height: 10px; border-radius: 50%; background: var(--nourishment); }
 
 /* Season: multi-select with numbered badges — no ::after dot */
-.gridCardSelectedNum { border: 2px solid var(--nourishment); background: rgba(232,184,31,0.10); }
+.gridCardSelectedNum { border: 2px solid var(--nourishment); background: rgba(245,182,34,0.10); }
 .seasonBadge {
   position: absolute;
   top: 8px;
@@ -202,7 +202,7 @@
   touch-action: manipulation;
   user-select: none;
 }
-.needGridCardSelected { border: 2px solid var(--nourishment); background: rgba(232,184,31,0.10); }
+.needGridCardSelected { border: 2px solid var(--nourishment); background: rgba(245,182,34,0.10); }
 .needGridCardSelected::after { content: ''; position: absolute; top: 12px; right: 12px; width: 10px; height: 10px; border-radius: 50%; background: var(--nourishment); }
 .needGridName {
   font-family: var(--font-serif);
@@ -334,8 +334,8 @@
 /* energy map: nudge the first card until the first tap */
 .situationNudge { animation: nudgePulse 1.6s ease-in-out infinite; }
 @keyframes nudgePulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(232, 184, 31, 0); }
-  50%      { box-shadow: 0 0 0 3px rgba(232, 184, 31, 0.35); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245,182,34, 0); }
+  50%      { box-shadow: 0 0 0 3px rgba(245,182,34, 0.35); }
 }
 
 /* account screen */
