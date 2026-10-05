@@ -3,8 +3,8 @@ export const ON_CLAY = '#F6EFE9'
 
 export const MODES = {
   exploration:  { name: 'exploration',  color: '#1B3A2D', pip: '#1B3A2D' },
-  appreciation: { name: 'appreciation', color: '#B8C3B1', pip: '#B8C3B1' },
-  nourishment:  { name: 'nourishment',  color: '#E8B81F', pip: '#E8B81F' },
+  appreciation: { name: 'appreciation', color: '#ABBEA3', pip: '#ABBEA3' },
+  nourishment:  { name: 'nourishment',  color: '#F5B622', pip: '#F5B622' },
   survival:     { name: 'survival',     color: '#F55127', pip: '#F55127' },
 }
 

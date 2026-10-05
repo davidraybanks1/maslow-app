@@ -23,15 +23,15 @@ const MODE_THRESHOLDS = { exploration: 80, appreciation: 60, nourishment: 50, su
 // 7px dots use deep sage for appreciation (< 12px threshold)
 const TIER_DOT = {
   exploration: '#1B3A2D',
-  appreciation: '#9DB394',
-  nourishment: '#E8B81F',
+  appreciation: '#ABBEA3',
+  nourishment: '#F5B622',
   survival: '#F55127',
 }
 // bars keep brand sage for appreciation
 const TIER_BAR = {
   exploration: '#1B3A2D',
-  appreciation: '#B8C3B1',
-  nourishment: '#E8B81F',
+  appreciation: '#ABBEA3',
+  nourishment: '#F5B622',
   survival: '#F55127',
 }
 // One light source at 34% / 26%, the way every other object in the app is lit.

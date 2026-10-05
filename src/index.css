@@ -122,7 +122,7 @@ button { touch-action: manipulation; }
   --appr-border: #A8B8B0;
   --appr-text: #4A6860;
 
-  --nour: #E8B81F;
+  --nour: #F5B622;
   --nour-border: #CC9C00;
   --nour-text: #8A6A00;
 
@@ -143,8 +143,8 @@ button { touch-action: manipulation; }
 
   /* Mode identity tokens — unchanged */
   --exploration:  #1B3A2D;
-  --appreciation: #B8C3B1;
-  --nourishment:  #E8B81F;
+  --appreciation: #ABBEA3;
+  --nourishment:  #F5B622;
   --survival:     #F55127;
 
   /* Loading screen */

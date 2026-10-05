@@ -23,8 +23,8 @@ const CARD_MODE_ORDER = ['exploration', 'appreciation', 'nourishment', 'survival
 
 const MODE_COLORS = {
   exploration:  '#1B3A2D',
-  appreciation: '#B8C3B1',
-  nourishment:  '#E8B81F',
+  appreciation: '#ABBEA3',
+  nourishment:  '#F5B622',
   survival:     '#F55127',
 }
 
