@@ -25,7 +25,7 @@ const MODE_COLORS = {
   exploration:  '#1B3A2D',
   appreciation: '#B8C3B1',
   nourishment:  '#E8B81F',
-  survival:     '#D93B1C',
+  survival:     '#F55127',
 }
 
 const UNIVERSAL_IDS = new Set(['movement', 'nutrition', 'rest'])

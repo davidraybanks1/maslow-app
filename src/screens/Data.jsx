@@ -25,14 +25,14 @@ const TIER_DOT = {
   exploration: '#1B3A2D',
   appreciation: '#9DB394',
   nourishment: '#E8B81F',
-  survival: '#D93B1C',
+  survival: '#F55127',
 }
 // bars keep brand sage for appreciation
 const TIER_BAR = {
   exploration: '#1B3A2D',
   appreciation: '#B8C3B1',
   nourishment: '#E8B81F',
-  survival: '#D93B1C',
+  survival: '#F55127',
 }
 // One light source at 34% / 26%, the way every other object in the app is lit.
 // Appreciation runs to ink because sage on paper is about 1.8:1.

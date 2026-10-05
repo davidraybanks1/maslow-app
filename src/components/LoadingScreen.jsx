@@ -20,7 +20,7 @@ const STEP_EASE = 'cubic-bezier(0.3, 0.9, 0.3, 1)'
 const EXIT_EASE = 'cubic-bezier(0.65, 0, 0.35, 1)'
 const PUSH_TIMES = [450, 1100, 1750, 2400]
 const CENTER_TIME = 3050
-const BURST_COLORS = ['#1B3A2D', '#B8C3B1', '#E8B81F', '#D93B1C']
+const BURST_COLORS = ['#1B3A2D', '#B8C3B1', '#E8B81F', '#F55127']
 
 function fireBurst(container) {
   if (!container || typeof container.appendChild !== 'function') return

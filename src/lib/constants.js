@@ -5,7 +5,7 @@ export const MODES = {
   exploration:  { name: 'exploration',  color: '#1B3A2D', pip: '#1B3A2D' },
   appreciation: { name: 'appreciation', color: '#B8C3B1', pip: '#B8C3B1' },
   nourishment:  { name: 'nourishment',  color: '#E8B81F', pip: '#E8B81F' },
-  survival:     { name: 'survival',     color: '#D93B1C', pip: '#D93B1C' },
+  survival:     { name: 'survival',     color: '#F55127', pip: '#F55127' },
 }
 
 export const MODE_ORDER = ['exploration', 'appreciation', 'nourishment', 'survival']

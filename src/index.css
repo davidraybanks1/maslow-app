@@ -126,7 +126,7 @@ button { touch-action: manipulation; }
   --nour-border: #CC9C00;
   --nour-text: #8A6A00;
 
-  --surv: #D93B1C;
+  --surv: #F55127;
   --surv-text: #D93B1C;
 
   --anxiety: #2C2820;
@@ -145,7 +145,7 @@ button { touch-action: manipulation; }
   --exploration:  #1B3A2D;
   --appreciation: #B8C3B1;
   --nourishment:  #E8B81F;
-  --survival:     #D93B1C;
+  --survival:     #F55127;
 
   /* Loading screen */
   --loader-lavender: #C9C1E0;

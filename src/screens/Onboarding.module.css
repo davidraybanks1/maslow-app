@@ -177,7 +177,7 @@
 
 .error {
   font-size: 13px;
-  color: var(--surv);
+  color: var(--surv-text);
   margin-top: 8px;
 }
 

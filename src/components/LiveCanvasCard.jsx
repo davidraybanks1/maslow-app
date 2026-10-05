@@ -5,7 +5,7 @@ const LC_MODE_COLORS = {
   exploration: '#1B3A2D',
   appreciation: '#B8C3B1',
   nourishment: '#E8B81F',
-  survival: '#D93B1C',
+  survival: '#F55127',
 }
 
 export default function LiveCanvasCard({ stats, range }) {

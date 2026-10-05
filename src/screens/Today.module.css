@@ -484,7 +484,7 @@
   flex-shrink: 0;
   -webkit-tap-highlight-color: transparent;
 }
-.deckListDelete:hover { color: var(--survival); }
+.deckListDelete:hover { color: var(--surv-text); }
 
 .noteHistoryCard {
   display: flex;
@@ -549,7 +549,7 @@
 .composerError {
   font-family: var(--font-mono);
   font-size: var(--type-floor);
-  color: var(--survival);
+  color: var(--surv-text);
   margin-bottom: 10px;
 }
 
@@ -1182,7 +1182,7 @@
 .journalEntryDeletePending {
   font-family: var(--font-mono);
   font-size: var(--type-floor);
-  color: var(--survival);
+  color: var(--surv-text);
   border: 0.5px solid var(--survival);
   border-radius: 4px;
   padding: 2px 6px;
@@ -1508,7 +1508,7 @@
 .journalSaveError {
   font-family: var(--font-mono);
   font-size: var(--type-floor);
-  color: var(--survival);
+  color: var(--surv-text);
   margin-top: 4px;
 }
 

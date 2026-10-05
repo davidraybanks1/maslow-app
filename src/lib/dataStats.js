@@ -601,7 +601,7 @@ export function createDataStats({ canvas, checkins, moods, practices, practicesD
   function getLiveCanvas(rangeDays) {
     const days = dayRange(rangeDays, 0)
     const MODE_THRESHOLDS = { exploration: 80, appreciation: 60, nourishment: 50, survival: 20 }
-    const MODE_COLORS = { exploration: '#1B3A2D', appreciation: '#B8C3B1', nourishment: '#E8B81F', survival: '#D93B1C' }
+    const MODE_COLORS = { exploration: '#1B3A2D', appreciation: '#B8C3B1', nourishment: '#E8B81F', survival: '#F55127' }
 
     const activeNeeds = NEEDS.filter(n => canvas[n.id])
     const totalDays = activeNeeds.length * days.length
