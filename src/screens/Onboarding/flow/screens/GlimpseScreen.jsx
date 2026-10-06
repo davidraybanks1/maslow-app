@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import styles from '../Flow.module.css'
 import ScreenLayout from '../ScreenLayout'
 import { REDUCED_MOTION } from '../Typed'
@@ -7,12 +7,26 @@ import { splitSentences } from '../useTimeline'
 // A real render of one of the app's screens after a week of use, in a window
 // that scrolls itself slowly, then rests. Touch, wheel or a key press hands
 // control back to the viewer.
-export default function GlimpseScreen({ src, alt, body, onNext }) {
+export default function GlimpseScreen({ slices, alt, body, onNext }) {
   const frame = useRef(null)
+  const [loaded, setLoaded] = useState(() => new Set())
+  const ready = loaded.size >= slices.length
+  const markLoaded = useCallback(i => setLoaded(prev => (prev.has(i) ? prev : new Set(prev).add(i))), [])
 
+  // A slice that was already cached can finish before React has attached its
+  // onLoad, so look for the ones that are complete once on mount.
   useEffect(() => {
     const el = frame.current
-    if (!el || REDUCED_MOTION) return undefined
+    if (!el) return
+    Array.from(el.querySelectorAll('img')).forEach((img, i) => {
+      if (img.complete && img.naturalHeight > 0) markLoaded(i)
+    })
+  }, [markLoaded])
+
+  // The pan starts once every slice is in, so there is always something to scroll through.
+  useEffect(() => {
+    const el = frame.current
+    if (!el || REDUCED_MOTION || !ready) return undefined
     let cancelled = false
     let raf = null
     const stop = () => { cancelled = true }
@@ -39,7 +53,7 @@ export default function GlimpseScreen({ src, alt, body, onNext }) {
       if (raf) cancelAnimationFrame(raf)
       events.forEach(ev => el.removeEventListener(ev, stop))
     }
-  }, [])
+  }, [ready])
 
   return (
     <ScreenLayout cta={{ arrow: true, onClick: onNext }}>
@@ -51,7 +65,21 @@ export default function GlimpseScreen({ src, alt, body, onNext }) {
         <div className={styles.glimpseCaption}>sample data {'·'} scroll to explore</div>
         <div className={styles.glimpseWrap}>
           <div className={styles.glimpseFrame} ref={frame}>
-            <img src={src} alt={alt} />
+            <div className={styles.glimpseStack} role="img" aria-label={alt}>
+              {slices.map((s, i) => (
+                <img
+                  key={s.src}
+                  src={s.src}
+                  width={s.width}
+                  height={s.height}
+                  alt=""
+                  draggable={false}
+                  loading="eager"
+                  onLoad={() => markLoaded(i)}
+                  onError={() => markLoaded(i)}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>

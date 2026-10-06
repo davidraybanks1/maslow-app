@@ -18,8 +18,7 @@ import GlimpseScreen from './flow/screens/GlimpseScreen'
 import DraftEntryScreen from './flow/screens/DraftEntryScreen'
 import NotesScreen from './flow/screens/NotesScreen'
 import OnboardingAccount from './OnboardingAccount'
-import almanacPreview from './flow/preview-almanac.jpg'
-import draftsPreview from './flow/preview-drafts.jpg'
+import { ALMANAC_PREVIEW, DRAFTS_PREVIEW, warmPreviews } from './flow/previews'
 
 const OLD_SS_KEY = 'maslow_onboarding_v1' // the retired diagnostic flow's saved answers
 const EXIT_MS = 160
@@ -37,6 +36,13 @@ export default function OnboardingFlow({ updateCanvas, completeOnboarding }) {
   const busy = useRef(false)
   const timer = useRef(null)
   useEffect(() => () => clearTimeout(timer.current), [])
+  // The two "after a week" renders are fetched while the sorting is going on.
+  useEffect(() => {
+    if (step === 'sort' || step === 'rank' || step === 'recap' || step === 'checkin') {
+      warmPreviews(ALMANAC_PREVIEW)
+      warmPreviews(DRAFTS_PREVIEW)
+    }
+  }, [step])
 
   const [placed, setPlaced] = useState(emptyPlaced)
   const [sortedCount, setSortedCount] = useState(0)
@@ -159,7 +165,7 @@ export default function OnboardingFlow({ updateCanvas, completeOnboarding }) {
     case 'almanac':
       screen = (
         <GlimpseScreen
-          src={almanacPreview}
+          slices={ALMANAC_PREVIEW}
           alt="The almanac screen after some use: streaks, daily rhythm, moods, roots, vibrations and strata."
           body={'Your tracked practices and vibration check-ins turn into data visualizations that help you see what’s working and what to tweak.'}
           onNext={() => go('draftEntry')}
@@ -172,7 +178,7 @@ export default function OnboardingFlow({ updateCanvas, completeOnboarding }) {
     case 'drafts':
       screen = (
         <GlimpseScreen
-          src={draftsPreview}
+          slices={DRAFTS_PREVIEW}
           alt="The drafts screen after a week of use: a weekly review, most active threads, a wild card and the archive."
           body="Every draft is stored, tagged, and organized so you can identify patterns, challenge the negative ones, and connect the positives."
           onNext={() => go('notes')}
@@ -186,10 +192,14 @@ export default function OnboardingFlow({ updateCanvas, completeOnboarding }) {
       screen = null
   }
 
+  // The screens holding the big preview windows fade without sliding, so the
+  // images are never painted inside a moving layer.
+  const plain = step === 'almanac' || step === 'drafts'
+
   return (
     <div className={styles.root}>
       <Progress value={progress} />
-      <div key={key} className={`${styles.screen} ${leaving ? styles.screenOut : styles.screenIn}`}>
+      <div key={key} className={`${styles.screen} ${leaving ? styles.screenOut : styles.screenIn}${plain ? ` ${styles.screenPlain}` : ''}`}>
         {screen}
       </div>
     </div>
