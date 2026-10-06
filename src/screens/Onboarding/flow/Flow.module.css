@@ -1,0 +1,898 @@
+/* Onboarding flow. Styles are lifted from the approved prototype; the tokens
+   (paper, ink, mode colors) are the app's own from index.css. */
+
+/* The index.css Newsreader face is declared for weights 300-400 only; the
+   file itself is a 200-800 variable font, so the flow gets its own family
+   name that unlocks the heavier weights without touching the rest of the app. */
+@font-face {
+  font-family: 'NewsreaderFlow';
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url('/fonts/newsreader.woff2') format('woff2');
+}
+
+.root {
+  --font-serif: 'NewsreaderFlow', 'Newsreader', Georgia, serif;
+  /* stronger variants for small dots/outlines drawn directly on paper: the
+     pastel appreciation/nourishment fills read fine as chip backgrounds but
+     fall under ~1.5:1 as bare dots */
+  --appreciation-strong: #7E8F75;
+  --nourishment-strong:  #C99A00;
+  position: relative;
+  height: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  overflow: hidden;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+/* Progress: a thin bar under the status area, outside the screen so it stays
+   put (and animates) while screens slide. */
+.progress {
+  position: absolute;
+  top: calc(var(--safe-top) + 16px);
+  left: 22px;
+  right: 22px;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(0,0,0,.08);
+  overflow: hidden;
+  z-index: 3;
+  pointer-events: none;
+}
+.progressFill {
+  height: 100%;
+  width: 0;
+  border-radius: 2px;
+  background: var(--ink);
+  transition: width .6s cubic-bezier(.2,.7,.2,1);
+}
+
+/* Screen transitions: a calm fade + slight slide around every step. */
+.screen { height: 100%; display: flex; flex-direction: column; }
+.screenIn { animation: flowIn 380ms cubic-bezier(.2,.7,.2,1); }
+.screenOut { opacity: 0; transform: translateX(-14px); transition: opacity 160ms ease-in, transform 160ms ease-in; }
+@keyframes flowIn {
+  from { opacity: 0; transform: translateX(18px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Layout: top row (counter), scrolling body, pinned button row. */
+.layout { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.top { flex-shrink: 0; padding: calc(var(--safe-top) + 19px) 22px 0; }
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 22px;
+  display: flex;
+  flex-direction: column;
+}
+.ctaRow {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 22px calc(var(--safe-bottom) + 24px);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Typewriter characters: invisible until their turn, the caret riding the
+   last one typed. */
+.chWord { display: inline-block; white-space: nowrap; }
+.ch { position: relative; opacity: 0; }
+.chOn { opacity: 1; }
+.chCaret::after {
+  content: '';
+  position: absolute;
+  left: calc(100% + 1px);
+  top: 0.08em;
+  bottom: -0.02em;
+  width: 1.5px;
+  background: currentColor;
+  opacity: .85;
+}
+.chBlink::after { animation: caretBlink 500ms steps(1) infinite; }
+@keyframes caretBlink { 50% { opacity: 0; } }
+
+/* A block that fades in on its turn. */
+.fadeBlock { opacity: 0; transition: opacity 450ms cubic-bezier(.2,.7,.2,1); }
+.fadeBlockOn { opacity: 1; }
+
+
+
+
+
+/* ── Screens (from the prototype) ── */
+  .topRow {
+    display: flex;
+    align-items: baseline;
+    justify-content: flex-end;
+    margin: 14px 0 4px;
+  }
+  .counter {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink4);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /*  The card / rank header stage  */
+  .cardStage {
+    flex-shrink: 0;
+    height: 168px;
+    position: relative;
+    margin-bottom: 22px;
+  }
+  /* Design pass: shrunk to a compact card (was 208px) so the whole sort
+     screen -  card, all 5 category rows, and the button -  fits on one
+     screen without the list needing to scroll for most people. */
+  .cardStage.sortStage {
+    height: 150px;
+    margin-bottom: 18px;
+  }
+  /* Opening hook only: let the stage grow and center its text in whatever
+     vertical space is left, instead of sitting in the fixed 168px box near
+     the top -  there's no card below it competing for room on this screen. */
+  /* Reading screens are vertically centered in the space above the button
+     (back to the earlier centered call, per review). */
+  .cardStage.introStage {
+    height: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  /* The hook's text-only beats read left-aligned, not centered like the
+     brief headlines elsewhere that sit above interactive content. */
+  .cardStage.introStage .doneCard {
+    position: static;
+    align-items: flex-start;
+    text-align: left;
+    justify-content: center;
+  }
+  .introSame { margin-top: 22px; }
+  
+  /* "Two hypotheses" screen: the stage splits into a text half and a bloom
+     half so the text can sit centered above the bloom. */
+  .hypHalf { flex: 1; display: flex; flex-direction: column; justify-content: center; min-height: 0; }
+  .hypBottom { align-items: center; padding-bottom: 8px; }
+  .hypBloom { width: 100%; max-width: 330px; }
+  .hypHead {
+    font-family: var(--font-serif);
+    font-weight: 300;
+    font-size: 24px;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+    color: var(--ink);
+  }
+  .hypItem {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+    max-width: 320px;
+    font-family: var(--font-serif);
+    font-weight: 300;
+    font-size: 19px;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+  .hypItem .hookListNum { flex-shrink: 0; margin-top: 5px; color: var(--ink); font-weight: 300; }
+  .hypItem .hypPartB { display: block; font-weight: 600; }
+  /* Typewriter caret: zero-width so it never shifts layout, drawn with ::after. */
+  /* Body copy on the reading screens: one sentence per line, with a little
+     extra air between them. */
+  .sent { display: block; }
+  .sent + .sent { margin-top: 0.7em; }
+  
+  
+  @keyframes caretBlink { 50% { opacity: 0; } }
+  
+  /* Lower half stacks the bloom and the draft field in the same space so one can
+     hand off to the other. */
+  .hypBottom { display: grid; grid-template-columns: minmax(0, 330px); justify-content: center; justify-items: stretch; align-items: center; }
+  .hypBottom > * { grid-area: 1 / 1; }
+  .hypTop { flex: 1; padding-bottom: 140px; }
+  .hypBottom { position: absolute; left: 0; right: 0; bottom: 8px; padding-bottom: 0; align-items: end; }
+  .cardStage.introStage { position: relative; }
+  .hypBottom .hypBloom { max-width: 290px; justify-self: center; }
+  .hypBottom .hypDraft { align-self: start; margin-top: 40px; }
+  .hypDraft {
+    width: 100%; max-width: 330px; box-sizing: border-box;
+    border: 0.5px solid var(--hairline); border-radius: 12px; background: var(--card);
+    padding: 14px 16px 18px; min-height: 96px;
+    box-shadow: 0 6px 16px rgba(0,0,0,.05);
+    opacity: 0; transform: translateY(14px);
+    transition: opacity 620ms cubic-bezier(.2,.7,.2,1), transform 620ms cubic-bezier(.2,.7,.2,1);
+  }
+  .hypDraftOn { opacity: 1; transform: translateY(0); }
+  .hypDraftLabel { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; font-family: var(--font-mono); font-size: 12px; color: var(--ink2); }
+  .hypLines { display: flex; flex-direction: column; gap: 15px; padding-top: 4px; }
+  .hypLine { display: flex; align-items: center; height: 8px; }
+  .hypBar {
+    height: 8px; width: 0; margin-right: 0; border-radius: 4px; flex-shrink: 0; position: relative;
+    background: rgba(26,26,24,.2);
+    transition: width var(--bw, 200ms) linear, margin-right var(--bw, 200ms) linear, background 500ms ease;
+  }
+  .hypBarW { margin-right: 7px; }
+  .hypSeg { position: relative; display: flex; align-items: center; }
+  .hypSeg::after {
+    content: ''; position: absolute; left: 0; top: 50%; height: 2px; margin-top: -1px; width: 0;
+    background: var(--survival); border-radius: 1px;
+    transition: width 750ms cubic-bezier(.4,0,.2,1);
+  }
+  .hypSegOn::after { width: calc(100% - 7px); }
+  .hypSegOn .hypBar { background: rgba(217,59,28,.4); }
+  .hypBarCur::after {
+  content: '';
+  position: absolute;
+  left: calc(100% + 3px);
+  top: -3px;
+  width: 1.5px;
+  height: 14px;
+  background: var(--ink);
+  animation: hypBlink 1s steps(1) infinite;
+}
+@keyframes hypBlink { 50% { opacity: 0; } }
+  .cta.ctaHidden { opacity: 0; pointer-events: none; }
+.hypGroup { display: flex; align-items: center; }
+  .hypBloomOut { opacity: 0 !important; transform: translateY(8px); transition: opacity 600ms ease, transform 600ms ease; }
+
+  /* Numbered hypotheses on the hook's 4th beat -  the only place in the hook
+     that needs left-aligned reading rather than a single centered line. */
+  
+  
+  .hookListNum {
+    flex-shrink: 0;
+    margin-top: 3px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink3);
+  }
+  /* Concept-intro beats in the hook (e.g. "Needs") -  a bold label acting
+     as the concept's name, then lighter prose explaining it. */
+  
+  /* Design pass: the "Concept N: X" screens (needs/vibrations/drafts/notes)
+     now split into a small mono eyebrow and a real serif title, instead of
+     one bolded serif line doing both jobs. */
+  .conceptLabel {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink2);
+  }
+  .conceptTitle {
+    margin-top: 8px;
+    font-family: var(--font-serif);
+    font-weight: 500;
+    font-size: 36px;
+    line-height: 1.1;
+    color: var(--ink);
+  }
+  .hookBody {
+    margin-top: 14px;
+    font-family: var(--font-serif);
+    font-weight: 300;
+    font-size: 17px;
+    line-height: 1.55;
+    /* Design pass: body copy promoted to full ink everywhere -  it's the
+       core reading content, so it gets the highest-contrast text rather
+       than the secondary grey. */
+    color: var(--ink);
+  }
+  /* The pivot line in the hook's long-read beat ("But, like, how?") - 
+     bolded per review feedback so it reads as the turn from context into
+     the payoff, rather than blending into the surrounding prose. */
+  
+  
+  
+  .hookBody.hookEmphasis {
+    font-weight: 600;
+    color: var(--ink);
+  }
+  /* Inline pill callouts on key terms in the hook's long-read beat, pulled
+     from the app's own mode-tier palette per review feedback -  each term
+     gets its own color so the three call out as distinct, not a set. */
+  .inlinePill {
+    display: inline-block;
+    border-radius: 20px;
+    padding: 1px 10px;
+    font-weight: 500;
+  }
+  .inlinePillExploration { background: var(--exploration); color: #fff; }
+  .inlinePillNourishment { background: var(--nourishment); color: var(--ink); }
+  .inlinePillAppreciation { background: var(--appreciation); color: var(--ink); }
+  .needCard {
+    position: absolute;
+    inset: 0;
+    background: var(--card);
+    border: 0.5px solid var(--hairline);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 14px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 8px 24px rgba(0,0,0,.05);
+    transition: transform .28s cubic-bezier(.2,.8,.2,1), opacity .28s, box-shadow .15s;
+    user-select: none;
+    z-index: 1;
+  }
+  .needCard.leaving { opacity: 0; transform: scale(.92) translateY(-6px); }
+  /* Design pass: a couple of cards "peek" behind the current one while
+     there's more in the queue, so the stack reads as a stack that runs
+     out -  rather than one card that just changes its name each tap. */
+  .needCardPeek {
+    position: absolute;
+    inset: 0;
+    background: var(--card);
+    border-radius: 16px;
+  }
+  .needCardPeek.peek1 { transform: translateY(6px) scale(.96); opacity: .8; }
+  .needCardPeek.peek2 { transform: translateY(12px) scale(.92); opacity: .5; }
+  .needName {
+    font-family: var(--font-serif);
+    font-weight: 300;
+    font-size: 30px;
+    letter-spacing: -0.01em;
+  }
+  .needCard .needName { font-size: 26px; }
+  .needTags { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+  .needTag {
+    font-family: var(--font-mono);
+    font-size: var(--type-floor);
+    letter-spacing: .04em;
+    color: var(--ink3);
+    border: 0.5px solid var(--hairline);
+    border-radius: 20px;
+    padding: 3px 9px;
+  }
+  .tapHint {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    /* Design pass: raised from ink4 to ink2 -  this is what actually helps
+       someone decide where to sort the need, so it shouldn't be the
+       faintest text on the card. */
+    color: var(--ink2);
+    letter-spacing: .02em;
+    line-height: 1.5;
+    max-width: 260px;
+    text-align: center;
+  }
+
+  /*  Sort screen header, sits above the card and persists across every
+     need -  the rank/done screens that follow don't use it.  */
+  .sortHead {
+    text-align: center;
+    margin-top: 18px;
+    margin-bottom: 22px;
+  }
+  .sortHeadTitle {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-size: 21px;
+    letter-spacing: -0.005em;
+    color: var(--ink);
+  }
+  .sortHeadSub {
+    margin-top: 8px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: .02em;
+    color: var(--ink3);
+  }
+
+  /*  Done state / rank header, same stage footprint as the card  */
+  /* Design pass: "left-align everything" -  task-screen headlines (rank,
+     done, the vibe check-in question, the draft prompt) all used this
+     centered card; only the intro-stage override above still needed its
+     own left-align rule, since this is now the shared default. */
+  .doneCard {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 6px;
+    text-align: left;
+  }
+  .doneCard .needName { font-size: 24px; }
+  /* Design pass: the vibration ring on the "how are you feeling?" check-in
+     (screen 14) -  a small wobbling closed curve, calmer or more agitated
+     depending on the picked tone. Sits above the heading, left-aligned like
+     everything else on the screen; only the curve itself is centered. */
+  
+  
+  
+  .rankSub {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink2);
+    letter-spacing: .02em;
+    max-width: 260px;
+    line-height: 1.5;
+  }
+
+  /*  Zones (sort + done phases)  */
+  .zones { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+  .zone {
+    border-radius: 14px;
+    border: 0.5px solid var(--hairline);
+    background: var(--card);
+    padding: 12px 14px;
+    transition: opacity .2s, background .15s, border-color .15s;
+    position: relative;
+  }
+  .zone.enabled { cursor: pointer; }
+  .zone.enabled:hover { background: #FBFAF6; }
+  .zone.enabled:active { border-color: var(--ink); background: #FBFAF6; }
+  .zone.disabled { opacity: .38; }
+  /* Design pass: a full/over-target bucket used to just fade out (opacity
+     .55), which read as "broken" rather than "done." Now it tints instead
+     of dimming, and the count text itself carries the state via a
+     ".  full" / ".  we'll trim" suffix -  set in JS since it's copy, not
+     styling. */
+  .zone.full,
+.zone.overTarget {
+    opacity: 1;
+    background: rgba(255,255,255,.55);
+  }
+
+  .zoneHead {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .zoneSwatch {
+    width: 9px; height: 9px; border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 0.5px rgba(0,0,0,.15) inset;
+  }
+  .zoneSwatch.unassigned {
+    background: none;
+    border: 1.5px dashed var(--ink4);
+    box-shadow: none;
+  }
+  .zoneLabel {
+    font-family: var(--font-serif);
+    font-weight: 300;
+    font-size: 17px;
+    color: var(--ink);
+    flex: 1;
+    min-width: 0;
+  }
+  .zoneLabel.dimmed { color: var(--ink2); }
+  .zoneCount {
+    font-family: var(--font-mono);
+    font-size: var(--type-floor);
+    color: var(--ink4);
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+  }
+  .zoneCount.over { color: var(--ink); font-weight: 500; }
+  .zoneWhy {
+    font-family: var(--font-mono);
+    font-size: var(--type-floor);
+    color: var(--ink3);
+    margin: 2px 0 0 17px;
+  }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin: 8px 0 0 17px;
+  }
+  .chip {
+    font-family: var(--font-mono);
+    font-size: var(--type-floor);
+    letter-spacing: .02em;
+    border-radius: 20px;
+    padding: 4px 9px 4px 10px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    border: none;
+  }
+  .chip:hover .chipX { opacity: 1; }
+  .chipX { opacity: .55; font-size: var(--type-floor); }
+
+  .chip.exploration { background: var(--exploration);  color: #fff; }
+  .chip.appreciation { background: var(--appreciation); color: var(--ink); }
+  .chip.nourishment { background: var(--nourishment);  color: var(--ink); }
+  .chip.survival { background: var(--survival);     color: #fff; }
+  .chip.unassigned { background: var(--paper); color: var(--ink3); border: 0.5px solid var(--hairline); }
+
+  /*  Done screen recap (design pass addition)  */
+  .doneRecap { margin-top: 22px; display: flex; flex-direction: column; gap: 10px; }
+  .doneGroup { background: var(--card); border-radius: 14px; border: 1px solid rgba(0,0,0,.08); padding: 13px 16px 14px; }
+  .doneGroupHead { display: flex; align-items: center; gap: 8px; }
+  .doneGroupDot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .doneGroupLabel {
+    font-family: var(--font-mono);
+    font-size: var(--type-floor);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--ink);
+    flex: 1;
+  }
+  .doneGroupCount {
+    font-family: var(--font-mono);
+    font-size: var(--type-floor);
+    color: var(--ink2);
+  }
+  .doneChips { margin: 8px 0 0 0; }
+  .doneEmpty {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-weight: 300;
+    font-size: 13px;
+    color: var(--ink2);
+  }
+
+  /*  Rank & cut list (rank phase)  */
+  .rankList { display: flex; flex-direction: column; flex: 1; }
+  .rankRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--card);
+    border: 0.5px solid var(--hairline);
+    border-left: 3px solid var(--ink4);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    font-family: var(--font-serif);
+    font-weight: 300;
+    font-size: 16px;
+    color: var(--ink);
+  }
+  .rankRow.pinned { opacity: .78; }
+  .rankName { flex: 1; min-width: 0; }
+  .rankPinTag {
+    font-family: var(--font-mono);
+    font-size: var(--type-floor);
+    letter-spacing: .03em;
+    color: var(--ink3);
+    border: 0.5px solid var(--hairline);
+    border-radius: 20px;
+    padding: 2px 8px;
+    flex-shrink: 0;
+  }
+  /* Design pass: the arrow button moves to bottom-right (thumb reach)
+     instead of centered; a full-width bar still fills this same row since
+     it sets its own width: 100%. */
+  /* Design pass: rank/trim used to reuse the notes-picker's checkmark
+     option for selection, which reads as "on/off," not "in what order."
+     This is a genuine ranking, so selecting now fills a numbered badge in
+     tap order instead. */
+  .rankRow2 {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    height: 60px;
+    padding: 0 16px;
+    background: var(--card);
+    border: 1.5px solid transparent;
+    border-radius: 14px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .rankRow2.active { border-color: var(--ink); box-shadow: 0 6px 16px rgba(0,0,0,.08); }
+  .rankRow2.atCap:not(.active) { opacity: .45; cursor: default; }
+  .rankBadge {
+    flex-shrink: 0;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ink);
+    border: 1.5px solid rgba(0,0,0,.3);
+  }
+  .rankRow2.active .rankBadge {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: transparent;
+  }
+  .rankRow2Name {
+    font-family: var(--font-serif);
+    font-weight: 300;
+    font-size: 19px;
+    color: var(--ink);
+  }
+  .rankStatus {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink2);
+    text-align: right;
+    margin-bottom: 10px;
+  }
+
+  .ctaRow { margin-top: 20px; display: flex; justify-content: flex-end; }
+  .cta {
+    width: 100%;
+    background: var(--ink);
+    color: #fff;
+    border: 1.5px solid transparent;
+    border-radius: 12px;
+    padding: 14px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: opacity .25s ease, background .15s, color .15s, border-color .15s;
+  }
+  /* Design pass: disabled is an outline, not a grey fill -  a filled-but-
+     faded button reads as "loading," an outline reads as "not yet." */
+  .cta:disabled {
+    cursor: not-allowed;
+    opacity: 1;
+    background: transparent;
+    color: rgba(0,0,0,.4);
+    border-color: rgba(0,0,0,.2);
+  }
+  /* A quieter continue, for beats in the opening hook that don't need a
+     full-width command -  just an acknowledgment to move on. */
+  .cta.ctaArrow {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  
+  
+  
+  
+  
+  
+
+  /*  Vibrations check-in  (mirrors the app's FrequencyCard) */
+  .cardStage.introStage.vibeStage { justify-content: flex-start; padding-top: 24px; }
+  /* Notes picker: header types out in the stage like the other reading screens,
+     the picker itself sits beneath it. */
+  .cardStage.introStage.notesStage { flex: 0 0 auto; justify-content: flex-start; padding-top: 24px; padding-bottom: 22px; }
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+
+  /*  Drafts first entry  */
+  
+  .draftEchoDot { width: 6px; height: 6px; border-radius: 50%; background: var(--ink4); flex-shrink: 0; }
+  .draftChips { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 22px 0 8px; }
+  .draftChip {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: var(--font-mono); font-size: 12px; color: rgba(0,0,0,.60);
+    border: 1px solid rgba(0,0,0,.22); border-radius: 999px; padding: 3.5px 11px;
+  }
+  .draftChipPip { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .draftField {
+    width: 100%; min-height: 150px; box-sizing: border-box;
+    border: 1px solid rgba(0,0,0,.14); border-radius: 14px; background: var(--card);
+    padding: 16px 18px;
+  }
+  .draftSample { font-family: var(--font-serif); font-weight: 300; font-size: 17px; line-height: 1.5; color: var(--ink); }
+
+  /*  Notes-to-self picker  */
+  
+  
+  /* Design pass: bumped to the same badge size as the rank list's numbered
+     circles (22px) and shows an actual check mark  glyph rather than a plain filled
+     dot, so "selected" looks the same everywhere in the flow. */
+  
+  
+  
+  
+  
+
+  /* Notes to self carousel: the app's own note card (white, 20px radius, small
+     NOTE / TO SELF label, light serif text) in a scroll-snap row. */
+  .noteCarousel {
+    display: flex; gap: 12px; overflow-x: auto; overflow-y: hidden;
+    scroll-snap-type: x mandatory; scroll-padding-left: 22px;
+    scrollbar-width: none; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain;
+    margin: 0 -22px; padding: 6px 22px 16px;
+  }
+  .noteCarousel::-webkit-scrollbar { display: none; }
+  .deckCard {
+    flex: 0 0 316px; scroll-snap-align: start; position: relative; box-sizing: border-box;
+    height: 190px; padding: 56px 18px 18px 20px; overflow: hidden; cursor: pointer;
+    background: var(--card); border: 0.5px solid rgba(0,0,0,.07); border-radius: 20px;
+    box-shadow: 0 2px 16px rgba(0,0,0,.08), inset 0 0 0 0 var(--ink);
+    transition: box-shadow .15s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .deckCard.picked { box-shadow: 0 2px 16px rgba(0,0,0,.08), inset 0 0 0 1.5px var(--ink); }
+  
+  .deckText {
+    font-family: var(--font-serif); font-size: 20px; font-weight: 300; line-height: 1.32;
+    letter-spacing: -0.01em; text-align: left; color: var(--ink);
+  }
+  .deckText[data-len="mid"] { font-size: 17.5px; line-height: 1.36; }
+  .deckText[data-len="long"] { font-size: 15.5px; line-height: 1.40; }
+  .deckPick {
+    position: absolute; top: 16px; right: 16px;
+    font-family: var(--font-mono); font-size: 12px; color: rgba(0,0,0,.60);
+    background: transparent; border: 1px solid rgba(0,0,0,.22); border-radius: 999px;
+    padding: 3.5px 11px; cursor: pointer; transition: background .12s, color .12s, border-color .12s;
+  }
+  .deckCard.picked .deckPick { background: var(--ink); border-color: var(--ink); color: #F2F0E8; }
+  .deckMeta {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: -6px; font-family: var(--font-mono); font-size: 12px; color: var(--ink3); letter-spacing: .04em;
+  }
+  .deckCtrls { display: flex; align-items: center; gap: 6px; }
+  .deckArrow {
+    font-family: var(--font-mono); font-size: 16px; line-height: 1; color: var(--ink2);
+    background: none; border: none; padding: 4px 8px; cursor: pointer;
+  }
+  .deckArrow:disabled { opacity: .3; cursor: default; }
+
+  .notesSectionLabel {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--ink2);
+    margin: 0 0 10px 0;
+  }
+  .notesSectionLabelSecond { margin-top: 22px; }
+  .noteInputRow {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .noteInput {
+    flex: 1;
+    border: 1px solid rgba(0,0,0,.14);
+    border-radius: 14px;
+    background: var(--card);
+    padding: 14px 16px;
+    min-width: 0;
+    font-family: var(--font-serif);
+    font-weight: 300;
+    font-size: 16px;
+    color: var(--ink);
+  }
+  .noteInput::placeholder { color: var(--ink4); }
+  .noteAddBtn {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: .02em;
+    color: var(--ink);
+    background: var(--card);
+    border: 1px solid rgba(0,0,0,.14);
+    border-radius: 14px;
+    padding: 0 18px;
+    cursor: pointer;
+  }
+  .noteAddBtn:disabled { opacity: .35; cursor: default; }
+  .ownNotesList {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+  .ownNoteChip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    border: 1px solid rgba(0,0,0,.14);
+    background: var(--card);
+    border-radius: 14px;
+    padding: 12px 14px 12px 16px;
+    font-family: var(--font-serif);
+    font-weight: 300;
+    font-size: 16px;
+    line-height: 1.4;
+    color: var(--ink);
+  }
+  .ownNoteRemove {
+    flex-shrink: 0;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    border: none;
+    background: none;
+    color: var(--ink4);
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .ownNoteRemove:hover { color: var(--ink); }
+
+  
+
+
+  /* After-a-week glimpse screens: a real render of the app, auto-scrolling
+     slowly inside a rounded window. */
+  .glimpseFrame {
+    margin-top: 10px;
+    height: 430px;
+    border-radius: 18px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid rgba(0,0,0,.10);
+    box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 10px 28px rgba(0,0,0,.08);
+    background: #EFE8DC;
+  }
+  .glimpseFrame::-webkit-scrollbar { display: none; }
+  .glimpseFrame img { display: block; width: 100%; height: auto; }
+  .glimpseWrap { position: relative; }
+  .glimpseWrap::after {
+    content: ''; position: absolute; left: 1px; right: 1px; bottom: 1px; height: 46px;
+    border-radius: 0 0 17px 17px; pointer-events: none;
+    background: linear-gradient(to bottom, rgba(239,232,220,0), rgba(239,232,220,.92));
+  }
+  .glimpseCaption {
+    margin-top: 18px; font-family: var(--font-mono); font-size: var(--type-floor);
+    letter-spacing: .06em; color: var(--ink3);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .needCard, .zone { transition: none !important; }
+}
+
+.howLead { margin-top: 0; font-size: 24px; }
+
+/* Recap cards arrive one after another. */
+.arrive { animation: arriveIn 450ms cubic-bezier(.2,.7,.2,1) backwards; animation-delay: calc(200ms + var(--i, 0) * 220ms); }
+@keyframes arriveIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* Returning users: a quiet way out on the very first screen. */
+.signInLink {
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  letter-spacing: .04em;
+  color: var(--ink3);
+  background: none;
+  border: none;
+  padding: 4px 0 4px 8px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.signInLink:hover { color: var(--ink); }

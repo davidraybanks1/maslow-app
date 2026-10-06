@@ -10,7 +10,7 @@ import { createDataStats } from './lib/dataStats'
 import NotifPrimingSheet from './components/NotifPrimingSheet'
 import OnboardingTour from './components/OnboardingTour'
 import LoadingScreen from './components/LoadingScreen'
-import DiagnosticFlow from './screens/Onboarding/DiagnosticFlow'
+import OnboardingFlow from './screens/Onboarding/OnboardingFlow'
 import Practices from './screens/Practices'
 import Today from './screens/Today'
 import CanvasScreen from './screens/CanvasScreen'
@@ -221,7 +221,7 @@ function AppInner() {
       <div className={styles.content} ref={contentRef} data-scroll>
         <Routes>
           <Route path="/" element={state.onboarded ? <Navigate to="/today" replace /> : <Navigate to="/onboarding" replace />} />
-          <Route path="/onboarding" element={state.onboarded ? <Navigate to="/today" replace /> : <DiagnosticFlow updateCanvas={updateCanvas} completeOnboarding={completeOnboarding} />} />
+          <Route path="/onboarding" element={state.onboarded ? <Navigate to="/today" replace /> : <OnboardingFlow updateCanvas={updateCanvas} completeOnboarding={completeOnboarding} />} />
           <Route path="/today" element={<Protected onboarded={state.onboarded} userId={state.userId}><Today state={state} checkIn={checkIn} removeCheckin={removeCheckin} clearPracticeCheckins={clearPracticeCheckins} incrementCheckinCount={incrementCheckinCount} logMood={logMood} onActiveDeckChanged={updateNoteDeck} onCustomTagsChanged={setCustomTagCount} profileMenu={profileMenuEl} /></Protected>} />
           <Route path="/practices" element={<Protected onboarded={state.onboarded} userId={state.userId}><Practices state={state} addPractice={addPractice} renamePractice={renamePractice} archivePractice={archivePractice} setPracticeReminder={setPracticeReminder} stampReminderOffered={stampReminderOffered} incrementOffersDeclined={incrementOffersDeclined} completeOnboarding={completeOnboarding} /></Protected>} />
           <Route path="/data" element={<Protected onboarded={state.onboarded} userId={state.userId}><Data state={state} archivePractice={archivePractice} profileMenu={profileMenuEl} /></Protected>} />

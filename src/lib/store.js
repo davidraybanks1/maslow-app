@@ -1278,7 +1278,9 @@ export async function deleteDebriefType(userId, { category, name }) {
   return { error }
 }
 
-export async function seedStarterContent(userId, canvasObj, overrides = {}) {
+// `overrides` swaps a need's starter practices; `notes` (an array of strings)
+// swaps the starter notes to self. At most five go in: the deck caps active cards.
+export async function seedStarterContent(userId, canvasObj, overrides = {}, notes = null) {
   async function doSeed() {
     // Practices: idempotency guard is separate from notes guard
     const { data: existingPractices } = await supabase
@@ -1323,7 +1325,8 @@ export async function seedStarterContent(userId, canvasObj, overrides = {}) {
     const { data: existingNotes } = await supabase
       .from('note_deck').select('id').eq('user_id', userId).limit(1)
     if (!existingNotes || existingNotes.length === 0) {
-      const noteRows = STARTER_NOTES.map((text, position) => ({
+      const chosen = (notes || []).map(t => (t || '').trim()).filter(Boolean).slice(0, 5)
+      const noteRows = (chosen.length > 0 ? chosen : STARTER_NOTES).map((text, position) => ({
         user_id: userId, text, position, archived_at: null,
       }))
       const { data: insertedNotes, error: nErr } = await supabase

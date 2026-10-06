@@ -15,6 +15,15 @@
   margin: 0 0 12px;
 }
 
+.freqIntroNote {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  font-weight: 300;
+  line-height: 1.5;
+  color: var(--ink2);
+  margin: -2px 0 20px;
+}
+
 .freqBlank {
   display: inline-block;
   min-width: 72px;
