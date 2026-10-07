@@ -13,6 +13,8 @@ import JournalQuote from '../components/JournalQuote'
 import { supabase } from '../lib/supabase'
 import ThreadTiles from '../components/ThreadTiles'
 import FirstWeekCard from '../components/FirstWeekCard'
+import GhostPreview from '../components/GhostPreview'
+import { SAMPLE_THREADS } from '../lib/previewSamples'
 import styles from './Log.module.css'
 
 const MOOD_PILL = {
@@ -1146,7 +1148,13 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
                 <span className={styles.threadSectionMeta}>most active threads · last 30 days</span>
               </div>
               {activeThreads.length === 0 ? (
-                <p className={styles.threadInterpretive} style={{ fontStyle: 'italic' }}>threads appear as you write — entries from the last 30 days shape this list.</p>
+                archiveAllJournalDays.size < 7 ? (
+                  <GhostPreview>
+                    <ThreadTiles threads={SAMPLE_THREADS} openId={null} onPick={() => {}} />
+                  </GhostPreview>
+                ) : (
+                  <p className={styles.threadInterpretive} style={{ fontStyle: 'italic' }}>threads appear as you write — entries from the last 30 days shape this list.</p>
+                )
               ) : (
                 <ThreadTiles
                   threads={activeThreads}

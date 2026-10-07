@@ -10,6 +10,8 @@ import StreaksRail from '../components/StreaksRail'
 import StrataRibbon from '../components/StrataRibbon'
 import FinePrint from '../components/FinePrint'
 import FirstWeekCard from '../components/FirstWeekCard'
+import GhostPreview from '../components/GhostPreview'
+import { sampleAlmanacData } from '../lib/previewSamples'
 import { buildLadder } from '../lib/ladder'
 import { buildInsights } from '../lib/insights'
 import styles from './Data.module.css'
@@ -742,9 +744,15 @@ export default function Data({ state, profileMenu }) {
               <InsightsCard insights={insights} />
             </Group>
 
-            <RootsSection canvas={canvas} checkins={checkins} moods={moods} practicesDB={practicesDB} />
-            <ThreadsSection userId={state?.userId} moods={moods} />
-            <StrataRibbon moods={moods} />
+            {totalCheckinDays < 7 ? (
+              <GhostAlmanac />
+            ) : (
+              <>
+                <RootsSection canvas={canvas} checkins={checkins} moods={moods} practicesDB={practicesDB} />
+                <ThreadsSection userId={state?.userId} moods={moods} />
+                <StrataRibbon moods={moods} />
+              </>
+            )}
 
             <Group title="Your ledger">
               <RibbonsSection canvas={canvas} checkins={checkins} practicesDB={practicesDB} days={dayKeys} windowLen={windowLen} isDesktop={isDesktop} />
@@ -754,5 +762,24 @@ export default function Data({ state, profileMenu }) {
         )}
       </div>
     </div>
+  )
+}
+
+// What roots, vibrations and strata will look like once there's a week of
+// data behind them: the real drawings on made-up readings, washed out.
+function GhostAlmanac() {
+  const sample = useMemo(() => sampleAlmanacData(), [])
+  return (
+    <>
+      <GhostPreview>
+        <RootsSection canvas={sample.canvas} checkins={sample.checkins} moods={sample.moods} practicesDB={sample.practicesDB} ghost />
+      </GhostPreview>
+      <GhostPreview>
+        <ThreadsSection moods={sample.moods} ghost />
+      </GhostPreview>
+      <GhostPreview>
+        <StrataRibbon moods={sample.moods} ghost />
+      </GhostPreview>
+    </>
   )
 }

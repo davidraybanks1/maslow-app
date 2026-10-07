@@ -127,7 +127,7 @@ function verdict(tree, wild) {
   }
 }
 
-export default function RootsSection({ canvas, checkins, moods, practicesDB }) {
+export default function RootsSection({ canvas, checkins, moods, practicesDB, ghost }) {
   const [level, setLevel] = useState('testing')
   const [picked, setPicked] = useState(null)
 
@@ -179,7 +179,7 @@ export default function RootsSection({ canvas, checkins, moods, practicesDB }) {
   }, [canvas, checkins, moods, practicesDB])
 
   const geo = useMemo(() => layout(tree), [tree])
-  const chartRef = useChartCapture('data-roots', 'your roots')
+  const chartRef = useChartCapture('data-roots', 'your roots', !ghost)
   if (!tree.length) return null
 
   const shows = LEVELS.find(l => l.v === level).shows

@@ -109,7 +109,7 @@ function tellStory(raw, good, total) {
   return { text: `A heavy stretch. Good took only ${pct}% of these ${total} check-ins,`, em: rest }
 }
 
-export default function StrataRibbon({ moods }) {
+export default function StrataRibbon({ moods, ghost }) {
   const [range, setRange] = useState(30)
   const rawId = useId()
   const uid = rawId.replace(/[^a-z0-9]/gi, '') || 's0'
@@ -137,7 +137,7 @@ export default function StrataRibbon({ moods }) {
     const good = raw.reduce((s, p) => s + p.good, 0)
     return { pts, total, good, from: days[0], to: days[days.length - 1], story: tellStory(raw, good, total) }
   }, [moods, range])
-  const chartRef = useChartCapture('data-strata', 'your strata')
+  const chartRef = useChartCapture('data-strata', 'your strata', !ghost)
 
   if (pts.length < 3) return null
 

@@ -123,7 +123,7 @@ function rungDotSize(n, maxN) {
   return Math.round(RUNG_DOT_MIN + (RUNG_DOT_MAX - RUNG_DOT_MIN) * Math.sqrt(n / maxN))
 }
 
-export default function ThreadsSection({ userId, moods }) {
+export default function ThreadsSection({ userId, moods, ghost }) {
   const [journal, setJournal] = useState(null)
   const [selected, setSelected] = useState(null)
   const gid = useId().replace(/:/g, '')
@@ -177,7 +177,7 @@ export default function ThreadsSection({ userId, moods }) {
     () => Object.fromEntries(sorted.map((t, i) => [t.key, radiusFor(i)])),
     [sorted]
   )
-  const chartRef = useChartCapture('data-vibrations', 'your vibrations')
+  const chartRef = useChartCapture('data-vibrations', 'your vibrations', !ghost)
 
   if (journal === null) return null
   if (total < 3) return null

@@ -16,7 +16,8 @@ import { registerChart, unregisterChart, setChartInView } from './chartRegistry'
 // doesn't have that gap: React invokes it again whenever the DOM node it's
 // attached to changes, including from null to real on that later render, so
 // registration happens whenever there's actually something to register.
-export function useChartCapture(id, label) {
+// Pass enabled=false for a sample drawing so it is never offered as an attachment.
+export function useChartCapture(id, label, enabled = true) {
   const observerRef = useRef(null)
 
   const ref = useCallback(node => {
@@ -25,7 +26,7 @@ export function useChartCapture(id, label) {
       observerRef.current = null
       unregisterChart(id)
     }
-    if (node) {
+    if (node && enabled) {
       registerChart(id, label, node)
       const io = new IntersectionObserver(
         ([entry]) => setChartInView(id, entry.isIntersecting),
@@ -34,7 +35,7 @@ export function useChartCapture(id, label) {
       io.observe(node)
       observerRef.current = io
     }
-  }, [id, label])
+  }, [id, label, enabled])
 
   return ref
 }
