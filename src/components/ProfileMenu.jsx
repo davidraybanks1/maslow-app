@@ -11,16 +11,6 @@ const DEFAULT_SLOT_TIMES = { morning: '09:00', midday: '13:00', evening: '19:00'
 const FEEDBACK_EMAIL = 'hello@mymaslow.com'
 const BUILD_TIME = import.meta.env.VITE_BUILD_TIME
 
-const REVIEW_DAYS = [
-  { value: 0, label: 'mon' },
-  { value: 1, label: 'tue' },
-  { value: 2, label: 'wed' },
-  { value: 3, label: 'thu' },
-  { value: 4, label: 'fri' },
-  { value: 5, label: 'sat' },
-  { value: 6, label: 'sun' },
-]
-
 function formatBuildTime(iso) {
   if (!iso) return null
   try {
@@ -59,7 +49,6 @@ export default function ProfileMenu({
   const isOpen = phase === 'open'
 
   const initial = ((name || email || '').trim()[0] || '?').toUpperCase()
-  const cadence = reviewCadence || 'weekly'
   const builtAt = formatBuildTime(BUILD_TIME)
 
   // Cleanup timer on unmount
@@ -220,7 +209,7 @@ export default function ProfileMenu({
                 onClick={() => close(() => navigate('/canvas', { state: { fromProfile: true, returnTo: location.pathname } }))}
               >
                 <div className={styles.rowContent}>
-                  <div className={styles.rowTitle}>your canvas</div>
+                  <div className={styles.rowTitle}>needs</div>
                   <div className={styles.rowSub}>needs, modes &amp; practices</div>
                 </div>
               </button>
@@ -229,7 +218,7 @@ export default function ProfileMenu({
                 onClick={() => close(() => navigate('/today', { state: { openDeck: true, fromProfile: true, returnTo: location.pathname } }))}
               >
                 <div className={styles.rowContent}>
-                  <div className={styles.rowTitle}>your note deck</div>
+                  <div className={styles.rowTitle}>notes to self</div>
                   <div className={styles.rowSub}>
                     {noteDeckCount} on your today screen
                   </div>
@@ -240,7 +229,7 @@ export default function ProfileMenu({
                 onClick={() => close(() => navigate('/today', { state: { openTags: true, fromProfile: true, returnTo: location.pathname } }))}
               >
                 <div className={styles.rowContent}>
-                  <div className={styles.rowTitle}>your tags</div>
+                  <div className={styles.rowTitle}>tags</div>
                   <div className={styles.rowSub}>
                     {customTagCount} custom tag{customTagCount !== 1 ? 's' : ''}
                   </div>
@@ -260,36 +249,12 @@ export default function ProfileMenu({
                 className={styles.row}
                 onClick={() => { setConfirmSignOut(false); setCadenceOpen(o => !o) }}
               >
-                <span className={styles.rowTitle}>review cadence</span>
-                <span className={styles.rowMeta}>&nbsp;· {cadence}</span>
+                <span className={styles.rowTitle}>daily review</span>
+                <span className={styles.rowMeta}>&nbsp;· {reviewTime || '10:00'}</span>
                 <span className={styles.rowChevron}>›</span>
               </button>
               {cadenceOpen && (
                 <div className={styles.cadencePicker}>
-                  <div className={styles.cadenceSection}>
-                    <button
-                      className={`${styles.cadenceBtn} ${cadence === 'weekly' ? styles.cadenceBtnActive : ''}`}
-                      onClick={() => updateReviewCadence?.('weekly')}
-                    >weekly</button>
-                    <button
-                      className={`${styles.cadenceBtn} ${cadence === 'daily' ? styles.cadenceBtnActive : ''}`}
-                      onClick={() => updateReviewCadence?.('daily')}
-                    >daily</button>
-                  </div>
-                  {cadence === 'weekly' && (
-                    <>
-                      <div className={styles.cadenceFieldLabel}>day</div>
-                      <div className={styles.cadenceDayRow}>
-                        {REVIEW_DAYS.map(d => (
-                          <button
-                            key={d.value}
-                            className={`${styles.cadenceDayBtn} ${reviewDay === d.value ? styles.cadenceBtnActive : ''}`}
-                            onClick={() => updateReviewSchedule?.(d.value, reviewTime || '10:00')}
-                          >{d.label}</button>
-                        ))}
-                      </div>
-                    </>
-                  )}
                   <div className={styles.cadenceFieldLabel}>time</div>
                   <input
                     type="time"
@@ -371,7 +336,7 @@ export default function ProfileMenu({
                     className={styles.row}
                     onClick={() => updateReviewReminderEnabled?.(!reviewReminderEnabled)}
                   >
-                    <span className={styles.rowTitle}>{reviewCadence === 'daily' ? 'daily review' : 'weekly review'}</span>
+                    <span className={styles.rowTitle}>daily review</span>
                     {reviewReminderEnabled && <span className={styles.rowMeta}>&nbsp;· {reviewTime}</span>}
                     <div className={styles.toggleSwitch}>
                       <div className={`${styles.toggleTrack} ${reviewReminderEnabled ? styles.toggleTrackOn : ''}`}>

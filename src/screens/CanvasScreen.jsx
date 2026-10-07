@@ -191,13 +191,13 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
 
         <div className={styles.titleBlock}>
           <div className={styles.titleRow}>
-            <h1 className={styles.pageTitle}>your canvas.</h1>
+            <h1 className={styles.pageTitle}>needs.</h1>
             {!onboarding && (
-              <button className={styles.closeBtn} onClick={handleClose} aria-label="close canvas">✕</button>
+              <button className={styles.closeBtn} onClick={handleClose} aria-label="close needs">✕</button>
             )}
           </div>
           <p className={styles.pageSubhead}>
-            add needs to your canvas. move needs between modes. set your daily practices.
+            add needs. move needs between modes. set your daily practices.
           </p>
         </div>
 
@@ -216,7 +216,7 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
                 <div className={styles.libraryHeader}>
                   <span className={styles.libraryTitle}>needs library</span>
                   <span className={styles.librarySubhead}>
-                    {unplacedNeeds.length} {unplacedNeeds.length === 1 ? 'need' : 'needs'} not on your canvas yet
+                    {unplacedNeeds.length} {unplacedNeeds.length === 1 ? 'need' : 'needs'} not in a mode yet
                   </span>
                 </div>
               )}
@@ -523,7 +523,7 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
                 <div className={styles.libraryHeader}>
                   <span className={styles.libraryTitle}>needs library</span>
                   <span className={styles.librarySubhead}>
-                    {unplacedNeeds.length} {unplacedNeeds.length === 1 ? 'need' : 'needs'} not on your canvas yet
+                    {unplacedNeeds.length} {unplacedNeeds.length === 1 ? 'need' : 'needs'} not in a mode yet
                   </span>
                 </div>
               )}
@@ -624,7 +624,7 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
           <div className={styles.sheet}>
             <h2 className={styles.sheetTitle}>add a need to {showAddNeedFor}</h2>
             {unplacedNeeds.length === 0 ? (
-              <p className={styles.sheetSubtitle}>every need is already on your canvas.</p>
+              <p className={styles.sheetSubtitle}>every need is already in a mode.</p>
             ) : (
               unplacedNeeds.map(need => (
                 <div key={need.id} className={styles.swapRow}>

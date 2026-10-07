@@ -1226,6 +1226,11 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               )
             })}
           </div>
+          <button
+            type="button"
+            className={styles.editNeeds}
+            onClick={() => navigate('/canvas', { state: { returnTo: '/today' } })}
+          >edit</button>
           {isDesktop && popupMode && (() => {
             const pNeeds = NEEDS.filter(n => state.canvas[n.id] === popupMode)
             return (

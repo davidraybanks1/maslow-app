@@ -107,7 +107,7 @@ export async function scheduleReminders({
   remindersEnabled,
   moodReminders = DEFAULT_MOOD_REMINDERS,
   reviewReminderEnabled = true,
-  reviewCadence = 'weekly',
+  reviewCadence = 'daily',
   reviewDay = 0,
   reviewTime = '10:00',
   practicesDB = [],

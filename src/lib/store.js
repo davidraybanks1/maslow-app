@@ -67,7 +67,8 @@ function migrateState(saved) {
     if (saved.onboardedAt === undefined) saved.onboardedAt = null
     if (saved.reviewDay === undefined) saved.reviewDay = 0
     if (saved.reviewTime === undefined) saved.reviewTime = '10:00'
-    if (saved.reviewCadence === undefined) saved.reviewCadence = 'weekly'
+    // The weekly review is retired: everyone reviews daily.
+    saved.reviewCadence = 'daily'
     if (saved.remindersEnabled === undefined) saved.remindersEnabled = null
     if (saved.reviewReminderEnabled === undefined) saved.reviewReminderEnabled = true
     if (saved.notifPrimedAt === undefined) saved.notifPrimedAt = null
@@ -128,7 +129,7 @@ export function initialState() {
     email: '',
     reviewDay: 0,
     reviewTime: '10:00',
-    reviewCadence: 'weekly',
+    reviewCadence: 'daily',
     remindersEnabled: null,
     reviewReminderEnabled: true,
     notifPrimedAt: null,
@@ -219,7 +220,7 @@ async function restoreFromSupabase(userId, email) {
       onboardedAt: user.onboarded_at || null,
       reviewDay: user.review_day ?? 0,
       reviewTime: user.review_time || '10:00',
-      reviewCadence: user.review_cadence || 'weekly',
+      reviewCadence: 'daily', // weekly review is retired; the stored value is ignored
       remindersEnabled: user.reminders_enabled ?? null,
       reviewReminderEnabled: user.review_reminder_enabled !== false,
       notifPrimedAt: user.notif_primed_at || null,

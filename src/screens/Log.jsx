@@ -794,7 +794,7 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
     setReviewStep(1)
 
     if (!state.userId) { console.error('[startReview] called without userId — session may be invalid'); setReviewStep(null); return }
-    const cadence = state.reviewCadence || 'weekly'
+    const cadence = state.reviewCadence || 'daily'
     const days = reviewWindowKeys(cadence)
     setReviewWindowDays(days)
 
@@ -823,7 +823,7 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
   }
 
   function advance(fromStep) {
-    const cadence = state.reviewCadence || 'weekly'
+    const cadence = state.reviewCadence || 'daily'
     const skip = cadence === 'daily' && skipDecisionSteps
     if (fromStep === 1 && skip) {
       if (insightText) { setReviewStep(4) } else { handleFinishReview() }
@@ -841,7 +841,7 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
   }
 
   function handleBack(fromStep) {
-    const cadence = state.reviewCadence || 'weekly'
+    const cadence = state.reviewCadence || 'daily'
     if (fromStep === 1) { setReviewStep(null); return }
     if (fromStep === 4 && cadence === 'daily' && skipDecisionSteps) { setReviewStep(1); return }
     if (fromStep === 5 && !insightText) { setReviewStep(3); return }
@@ -855,7 +855,7 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
     if (trimmed) {
       await addNoteDeckCard(state.userId, { text: trimmed })
     }
-    const cadence = state.reviewCadence || 'weekly'
+    const cadence = state.reviewCadence || 'daily'
     const windowStart = reviewWindowDays[0] || weekKey()
     await saveWeeklyReview(state.userId, {
       weekStarting: windowStart,
@@ -1024,7 +1024,7 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
 
   // ── Step 4: Insight (auto-skipped if no qualifying pattern) ──────────────
   if (reviewStep === 4 && insightText) {
-    const isLastStep = (state.reviewCadence || 'weekly') === 'daily' && skipDecisionSteps
+    const isLastStep = (state.reviewCadence || 'daily') === 'daily' && skipDecisionSteps
     return (
       <ReviewStepShell
         pct={REVIEW_PROGRESS[4]}
@@ -1078,7 +1078,7 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
   }
 
   // ── Default state ─────────────────────────────────────────────────────────
-  const cadence = state.reviewCadence || 'weekly'
+  const cadence = state.reviewCadence || 'daily'
   const isScheduledDay = cadence === 'daily' || todayWeekdayMonday() === (state.reviewDay ?? 0)
   const periodAlreadyReviewed = weeklyReviews.some(r => r.week_starting === periodKey(cadence))
   const ritualDue = isScheduledDay && !ritualDismissed && !periodAlreadyReviewed && state.onboardedAt !== todayKey()

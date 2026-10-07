@@ -76,7 +76,7 @@ export default function ManageTags({ userId, onClose }) {
     <div className={`${styles.overlay} ${closing ? styles.overlayClosing : ''}`}>
       <div className={styles.inner}>
       <div className={styles.header}>
-        <span className={styles.title}>your tags.</span>
+        <span className={styles.title}>tags.</span>
         <button className={styles.closeBtn} onClick={handleClose}>✕</button>
       </div>
 

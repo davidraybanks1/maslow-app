@@ -1558,6 +1558,24 @@
 }
 .practicesCard { margin-bottom: 12px; }
 
+/* "edit" under the modes card: goes to the needs screen. */
+.editNeeds {
+  display: block;
+  margin: 10px 0 0 auto;
+  padding: 7px 14px;
+  background: none;
+  border: 0.5px solid var(--hairline);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  letter-spacing: 0.04em;
+  color: var(--ink3);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--motion-hover), border-color var(--motion-hover);
+}
+.editNeeds:hover { color: var(--ink); border-color: var(--ink3); }
+
 /* ── Frequency section header — base (mobile) layout. Desktop restates the
    same shape at the 900px breakpoint below, since it used to render only
    on mobile and needed its own copy there. ── */
