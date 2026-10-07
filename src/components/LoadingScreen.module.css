@@ -1,4 +1,4 @@
-/* ── Daily ritual: take / up / space. push the black away ── */
+/* ── Daily open: the Loam splash over the paper ── */
 
 .overlay {
   position: fixed;
@@ -6,55 +6,15 @@
   z-index: 9999;
   background: var(--paper);
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* sits a touch above true centre, the way a mark reads as centred */
+  padding-bottom: calc(6vh + var(--safe-bottom));
+  padding-top: var(--safe-top);
   transition: opacity var(--motion-page) ease;
 }
 .overlayFading { opacity: 0; pointer-events: none; }
-
-/* anxiety's black — stepped upward by each word, then pushed off entirely */
-.blackPanel {
-  position: absolute;
-  inset: 0;
-  background: var(--ink);
-}
-
-/* bottom-anchored word stack; JS opens each slot in sequence */
-.stack {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: calc(40px + var(--safe-bottom));
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.stackStatic {
-  bottom: auto;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.wordSlot { height: 0; overflow: hidden; }
-.word {
-  font-family: var(--font-serif);
-  font-size: clamp(38px, 11vw, 46px);
-  line-height: 54px;
-  transform: translateY(100%);
-}
-
-.logoSlot { height: 0; overflow: hidden; padding-top: 0; }
-.logoSvg { display: block; transform: translateY(110%); }
-
-/* the slow celebratory burst */
-.burst {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-.burstDot {
-  position: absolute;
-  bottom: -14px;
-  border-radius: 50%;
-}
 
 .srOnly {
   position: absolute;
@@ -63,9 +23,4 @@
   overflow: hidden;
   clip: rect(0 0 0 0);
   white-space: nowrap;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .blackPanel { display: none; }
-  .burst { display: none; }
 }

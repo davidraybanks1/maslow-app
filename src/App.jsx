@@ -54,7 +54,7 @@ function Protected({ children, onboarded, userId }) {
 }
 
 const PREFERS_REDUCED_MOTION = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-const RITUAL_MS    = PREFERS_REDUCED_MOTION ? 1200 : 4800 // full choreography: pushes 0.45–2.95s, center+burst 3.05–4.8s
+const RITUAL_MS    = PREFERS_REDUCED_MOTION ? 1000 : 3400 // splash: builds in ~2.9s, then a beat to rest
 const LOADER_FADE_MS = 350 // matches --motion-page
 
 function AppInner() {
@@ -182,7 +182,9 @@ function AppInner() {
     return () => clearTimeout(scheduleTimerRef.current)
   }, [state.onboarded, state.userId, state.remindersEnabled, state.moodReminders, state.reviewReminderEnabled, state.reviewCadence, state.reviewDay, state.reviewTime, state.practicesDB, state.checkins, state.canvas, state.notifTypes])
 
-  if (showLoader) {
+  // Someone who hasn't onboarded gets the same splash as the first onboarding
+  // screen, so the daily loader stays out of their way.
+  if (showLoader && state.onboarded) {
     const firstName = (state.profile?.name || '').trim().split(' ')[0]
     return <LoadingScreen greeting={firstName ? `Hey, ${firstName}` : 'Hey, you'} fading={loaderFading} />
   }

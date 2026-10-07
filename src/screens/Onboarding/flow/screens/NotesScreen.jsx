@@ -56,7 +56,7 @@ export default function NotesScreen({ notes, onChange, onDone }) {
     : total > NOTES_NEEDED ? `${total} picked` : `${total} of ${NOTES_NEEDED} picked`
 
   return (
-    <ScreenLayout cta={{ label: 'open the app', disabled: total < NOTES_NEEDED, onClick: onDone }}>
+    <ScreenLayout cta={{ label: 'continue', disabled: total < NOTES_NEEDED, onClick: onDone }}>
       <div className={`${styles.cardStage} ${styles.introStage} ${styles.notesStage}`}>
         <div className={styles.conceptLabel}>Last step</div>
         <div className={styles.conceptTitle} style={{ fontSize: 30 }}>Notes to self</div>

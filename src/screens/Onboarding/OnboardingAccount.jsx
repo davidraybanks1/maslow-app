@@ -2,71 +2,48 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { signInNavRef, seedStarterContent, logSupabaseError } from '../../lib/store'
-import OtpDisclosure from '../../components/OtpDisclosure'
+import ScreenLayout from './flow/ScreenLayout'
 import styles from './OnboardingAccount.module.css'
 
-// The last screen of onboarding: create the account (or sign in), then save
-// what the flow gathered: the canvas, starter practices, and the notes to self.
+// The last screen of onboarding: create the account, then save what the flow
+// gathered: the needs sorted into modes (the canvas), starter practices, and
+// the notes to self. Someone who already has an account signs in on /signin.
 //   recommendation  { universal: {needId: mode}, personal: {needId: mode} }
 //   practicesDraft  per-need practice overrides ({} keeps the starter set)
 //   notes           the person's notes to self (array of strings; falls back to the starter three when empty)
 //   onDone(destination, userId, canvasObj, seeded)
 
-const CARD_MODE_ORDER = ['exploration', 'appreciation', 'nourishment', 'survival']
+const MODE_ORDER = ['exploration', 'appreciation', 'nourishment', 'survival']
+const STARTER_NOTES = 3
 
-const MODE_COLORS = {
-  exploration:  '#1B3A2D',
-  appreciation: '#ABBEA3',
-  nourishment:  '#F5B622',
-  survival:     '#F55127',
-}
-
-// Daily practice count per mode (for the little canvas bar below).
-const MODE_DAILY_PRACTICES = { exploration: 3, appreciation: 2, nourishment: 1, survival: 0.5 }
-
-function canvasModeWeights(recommendation) {
-  const weights = { exploration: 0, appreciation: 0, nourishment: 0, survival: 0 }
-  for (const mode of Object.values({ ...recommendation.universal, ...recommendation.personal })) {
-    if (weights[mode] != null) weights[mode] += MODE_DAILY_PRACTICES[mode] || 0.5
-  }
-  return weights
-}
-
-// Static mini bar — the thing being saved on the account screen.
-function CanvasMiniBar({ recommendation }) {
-  if (!recommendation) return null
-  const weights = canvasModeWeights(recommendation)
+// One dot per need, grouped by mode, drawn in the mode's own colour.
+function SavingCard({ recommendation, notes }) {
+  const modes = Object.values({ ...(recommendation?.universal || {}), ...(recommendation?.personal || {}) })
+  if (modes.length === 0) return null
+  const dots = MODE_ORDER.flatMap(m => modes.filter(x => x === m).map((_, i) => ({ m, i })))
+  const noteCount = notes && notes.length ? notes.length : STARTER_NOTES
   return (
-    <div className={styles.miniBar} aria-hidden="true">
-      {CARD_MODE_ORDER.map(m => weights[m] > 0 && (
-        <div key={m} className={styles.miniBarSeg} style={{ flexGrow: weights[m], background: MODE_COLORS[m] }} />
-      ))}
+    <div className={styles.saving}>
+      <div className={styles.dots} aria-hidden="true">
+        {dots.map(d => <span key={`${d.m}-${d.i}`} className={`${styles.dot} ${styles[d.m]}`} />)}
+      </div>
+      <div className={styles.savingText}>
+        {modes.length} {modes.length === 1 ? 'need' : 'needs'} {'·'} {noteCount} {noteCount === 1 ? 'note' : 'notes'} to self
+      </div>
     </div>
   )
 }
 
-function ProgressBar({ pct }) {
-  return (
-    <div className={styles.progressBar}>
-      <div className={styles.progressFill} style={{ width: `${pct}%` }} />
-    </div>
-  )
-}
 export default function OnboardingAccount({ destination, recommendation, practicesDraft, notes, onDone, onBack }) {
   const navigate = useNavigate()
-  const [mode, setMode]             = useState('create')
-
   // Create form
   const [name, setName]             = useState('')
   const [email, setEmail]           = useState('')
   const [password, setPassword]     = useState('')
-  // Sign-in form
-  const [siEmail, setSiEmail]       = useState('')
-  const [siPassword, setSiPassword] = useState('')
-
   const [loading, setLoading]       = useState(false)
   const [error, setError]           = useState(null)
   const [duplicateAccount, setDuplicateAccount] = useState(false)
+  const [showPw, setShowPw]       = useState(false)
 
   async function handleSignUp() {
     setLoading(true)
@@ -98,7 +75,7 @@ export default function OnboardingAccount({ destination, recommendation, practic
     if (!signUpData.session) {
       signInNavRef.skip = false
       setLoading(false)
-      setError('check your email to confirm your account, then sign in.')
+      setError('Check your email to confirm your account, then sign in.')
       return
     }
 
@@ -134,7 +111,7 @@ export default function OnboardingAccount({ destination, recommendation, practic
       if (!confirmRow) {
         signInNavRef.skip = false
         setLoading(false)
-        setError('account setup didn\'t complete — please try again.')
+        setError('Account setup didn’t complete. Please try again.')
         return
       }
 
@@ -150,140 +127,73 @@ export default function OnboardingAccount({ destination, recommendation, practic
     onDone(destination, userId, canvasObj, null)
   }
 
-  async function handleSignIn() {
-    setLoading(true)
-    setError(null)
-
-    const { error: authErr } = await supabase.auth.signInWithPassword({
-      email: siEmail.trim().toLowerCase(),
-      password: siPassword,
-    })
-
-    if (authErr) {
-      setError(authErr.message)
-      setLoading(false)
-      return
-    }
-
-    setLoading(false)
-    // onAuthStateChange in store restores state and navigates to /today
-  }
-
-  if (mode === 'create') {
-    const canSubmit = name.trim() && email.trim() && password.length >= 8
-
-    return (
-      <div className={styles.screen}>
-        <ProgressBar pct={100} />
-        <div className={styles.content}>
-          <button className={styles.backBtn} onClick={onBack}>← back</button>
-          <div className={styles.eyebrow}>SAVE YOUR CANVAS</div>
-          <div className={styles.headline}>create your account.</div>
-          <CanvasMiniBar recommendation={recommendation} />
-          <div className={styles.sub}>your canvas, practices, and data are tied to your account.</div>
-
-          <form className={styles.accountForm} onSubmit={e => { e.preventDefault(); if (canSubmit && !loading) handleSignUp() }}>
-            <input
-              className={styles.accountInput}
-              type="text"
-              placeholder="your name"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              autoComplete="name"
-            />
-            <input
-              className={styles.accountInput}
-              type="email"
-              placeholder="your email"
-              value={email}
-              onChange={e => { setEmail(e.target.value); setError(null); setDuplicateAccount(false) }}
-              autoComplete="email"
-            />
-            <div>
-              <input
-                className={styles.accountInput}
-                type="password"
-                placeholder="create a password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                autoComplete="new-password"
-              />
-              <div className={styles.inputHintNote}>8+ characters</div>
-            </div>
-            <button type="submit" style={{ display: 'none' }} aria-hidden="true" />
-          </form>
-
-          {error && <div className={styles.formError}>{error}</div>}
-        </div>
-
-        <div className={styles.footer}>
-          <div className={styles.privacyNote}>your answers stay yours — never shared, never sold.</div>
-          <button className="btn-primary" onClick={handleSignUp} disabled={!canSubmit || loading}>
-            {loading ? 'creating account…' : 'create account →'}
-          </button>
-          {duplicateAccount && (
-            <div className={styles.duplicateNote}>
-              looks like you already have an account. <span className={styles.duplicateLink} onClick={() => { setMode('signin'); setError(null); setDuplicateAccount(false) }}>sign in instead →</span>
-            </div>
-          )}
-          <div className={styles.signInPrompt}>
-            already have an account? <span className={styles.signInLink} onClick={() => { setMode('signin'); setError(null); setDuplicateAccount(false) }}>sign in →</span>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // ── Sign-in mode ──
-  const canSignIn = siEmail.trim() && siPassword.length > 0
+  const canSubmit = name.trim() && email.trim() && password.length >= 8
+  const submit = () => { if (canSubmit && !loading) handleSignUp() }
 
   return (
-    <div className={styles.screen}>
-      <ProgressBar pct={100} />
-      <div className={styles.content}>
-        <div className={styles.eyebrow}>WELCOME BACK</div>
-        <div className={styles.headline}>sign in.</div>
-        <div className={styles.sub}>your canvas and data are waiting.</div>
+    <ScreenLayout
+      cta={{ label: loading ? 'Creating your account…' : 'Create your account', disabled: !canSubmit || loading, onClick: submit }}
+    >
+      <div className={styles.wrap}>
+        <button type="button" className={styles.back} onClick={onBack}>{'←'} Back</button>
+        <h1 className={styles.title}>Save and get started.</h1>
+        <p className={styles.sub}>Create your account with your needs and notes ready to go.</p>
 
-        <div className={styles.accountForm}>
+        <SavingCard recommendation={recommendation} notes={notes} />
+
+        <form className={styles.form} onSubmit={e => { e.preventDefault(); submit() }}>
           <input
-            className={styles.accountInput}
+            className={styles.input}
+            type="text"
+            placeholder="What should we call you?"
+            aria-label="Your name"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            autoComplete="name"
+          />
+          <input
+            className={styles.input}
             type="email"
-            placeholder="your email"
-            value={siEmail}
-            onChange={e => { setSiEmail(e.target.value); setError(null) }}
+            placeholder="Email"
+            aria-label="Email"
+            value={email}
+            onChange={e => { setEmail(e.target.value); setError(null); setDuplicateAccount(false) }}
             autoComplete="email"
           />
-          <input
-            className={styles.accountInput}
-            type="password"
-            placeholder="your password"
-            value={siPassword}
-            onChange={e => { setSiPassword(e.target.value); setError(null) }}
-            autoComplete="current-password"
-          />
-        </div>
+          <div className={styles.pwWrap}>
+            <input
+              className={`${styles.input} ${styles.pwInput}`}
+              type={showPw ? 'text' : 'password'}
+              placeholder="Password"
+              aria-label="Password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              autoComplete="new-password"
+            />
+            <button type="button" className={styles.pwToggle} onClick={() => setShowPw(v => !v)} aria-pressed={showPw}>
+              {showPw ? 'Hide' : 'Show'}
+            </button>
+          </div>
+          <div className={styles.hint}>At least 8 characters.</div>
+          <button type="submit" className={styles.srOnly} tabIndex={-1} aria-hidden="true" />
+        </form>
 
-        {error && <div className={styles.formError}>{error}</div>}
+        {error && <div className={styles.error} role="alert">{error}</div>}
+        {duplicateAccount && (
+          <div className={styles.error} role="alert">
+            That email already has an account.{' '}
+            <button type="button" className={styles.link} onClick={() => navigate('/signin')}>Sign in instead</button>
+          </div>
+        )}
 
-        <div className={styles.authSecondarySection}>
-          <OtpDisclosure
-            email={siEmail}
-            onSuccess={() => navigate('/password')}
-            linkClass={styles.authSecondaryLink}
-            hairlineClass={styles.authHairline}
-          />
+        <div className={styles.fine}>
+          <p>Your answers stay yours. Never shared, never sold.</p>
+          <p>
+            Already have an account?{' '}
+            <button type="button" className={styles.link} onClick={() => navigate('/signin')}>Sign in</button>
+          </p>
         </div>
       </div>
-
-      <div className={styles.footer}>
-        <button className="btn-primary" onClick={handleSignIn} disabled={!canSignIn || loading}>
-          {loading ? 'signing in…' : 'sign in →'}
-        </button>
-        <div className={styles.authToggle} onClick={() => { setMode('create'); setError(null) }}>
-          don't have an account? create one
-        </div>
-      </div>
-    </div>
+    </ScreenLayout>
   )
 }

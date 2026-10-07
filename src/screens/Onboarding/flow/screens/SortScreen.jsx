@@ -47,15 +47,11 @@ export default function SortScreen({ onProgress, onDone }) {
     setQueue(q => [id, ...q])
   }
 
-  const tags = []
-  if (need && need.mandatory) tags.push('always tracked')
-  if (need && need.id === 'rest') tags.push('tops out at routine')
-
   return (
     <ScreenLayout counter={`${sortedCount} / ${FLOW_NEEDS.length}`} cta={{ label: 'continue', disabled: true }}>
       <div className={styles.sortHead}>
-        <div className={styles.sortHeadTitle}>Let{'’'}s get an idea of your needs</div>
-        <div className={styles.sortHeadSub}>for each need, tap how you would describe it.</div>
+        <div className={styles.sortHeadTitle}>Go with your gut here</div>
+        <div className={styles.sortHeadSub}>Tap the color that describes the thing</div>
       </div>
 
       <div className={`${styles.cardStage} ${styles.sortStage}`}>
@@ -64,11 +60,6 @@ export default function SortScreen({ onProgress, onDone }) {
         {need && (
           <div className={`${styles.needCard}${leaving ? ` ${styles.leaving}` : ''}`}>
             <div className={styles.needName}>{need.name}</div>
-            {tags.length > 0 && (
-              <div className={styles.needTags}>
-                {tags.map(t => <span key={t} className={styles.needTag}>{t}</span>)}
-              </div>
-            )}
             <div className={styles.tapHint}>{NEED_DESCS[need.id] || 'tap a bucket below'}</div>
           </div>
         )}
@@ -104,9 +95,7 @@ export default function SortScreen({ onProgress, onDone }) {
 
               {disabled && need && (
                 <div className={styles.zoneWhy}>
-                  {zone.key === 'unassigned'
-                    ? `${need.name} is always tracked`
-                    : need.id === 'rest' ? 'rest tops out at routine' : 'not available for this need'}
+                  {need.id === 'rest' && zone.key !== 'unassigned' ? 'rest tops out at routine' : 'not available for this need'}
                 </div>
               )}
 

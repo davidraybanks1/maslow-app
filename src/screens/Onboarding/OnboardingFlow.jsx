@@ -5,49 +5,45 @@ import Progress from './flow/Progress'
 import { REDUCED_MOTION } from './flow/Typed'
 import {
   FLOW_NEEDS, PROGRESS_AT, SORT_FROM, SORT_TO, NOTES_NEEDED, NOTES_MAX,
-  applyRank, rankQueueFor, recommendationFrom, ZONE_BY_KEY, emptyPlaced,
+  applyRank, settleRanks, countRankScreens, recommendationFrom, ZONE_BY_KEY, emptyPlaced,
 } from './flow/data'
+import WelcomeScreen from './flow/screens/WelcomeScreen'
 import IntroScreen from './flow/screens/IntroScreen'
 import HypothesesScreen from './flow/screens/HypothesesScreen'
 import HowScreen from './flow/screens/HowScreen'
 import SortScreen from './flow/screens/SortScreen'
 import RankScreen from './flow/screens/RankScreen'
 import RecapScreen from './flow/screens/RecapScreen'
-import CheckinScreen from './flow/screens/CheckinScreen'
 import GlimpseScreen from './flow/screens/GlimpseScreen'
-import DraftEntryScreen from './flow/screens/DraftEntryScreen'
 import NotesScreen from './flow/screens/NotesScreen'
 import OnboardingAccount from './OnboardingAccount'
-import { ALMANAC_PREVIEW, DRAFTS_PREVIEW, warmPreviews } from './flow/previews'
+import { ALMANAC_PREVIEW, warmPreviews } from './flow/previews'
 
 const OLD_SS_KEY = 'maslow_onboarding_v1' // the retired diagnostic flow's saved answers
 const EXIT_MS = 160
 
-// The first-run flow: a short hook, sorting the 13 needs into modes, a taste of
-// check-ins, the almanac and drafts, then picking notes to self, and finally
-// the account step, which saves everything.
+// The first-run flow: the Loam welcome splash, a short hook, sorting the needs
+// into modes, a glimpse of the almanac, then picking notes to self, and
+// finally the account step, which saves everything.
 //
 // Saved: the canvas (needs in modes) with its starter practices, and the notes
-// to self. The vibration check-in and the sample draft are demos only.
+// to self.
 export default function OnboardingFlow({ updateCanvas, completeOnboarding }) {
   const navigate = useNavigate()
-  const [step, setStep] = useState('intro')
+  const [step, setStep] = useState('welcome')
   const [leaving, setLeaving] = useState(false)
   const busy = useRef(false)
   const timer = useRef(null)
   useEffect(() => () => clearTimeout(timer.current), [])
-  // The two "after a week" renders are fetched while the sorting is going on.
+  // The "after a week" render is fetched while the sorting is going on.
   useEffect(() => {
-    if (step === 'sort' || step === 'rank' || step === 'recap' || step === 'checkin') {
-      warmPreviews(ALMANAC_PREVIEW)
-      warmPreviews(DRAFTS_PREVIEW)
-    }
+    if (step === 'sort' || step === 'rank' || step === 'recap') warmPreviews(ALMANAC_PREVIEW)
   }, [step])
 
   const [placed, setPlaced] = useState(emptyPlaced)
   const [sortedCount, setSortedCount] = useState(0)
-  const [rank, setRank] = useState({ queue: [], index: 0 })
-  const [vibe, setVibe] = useState({ band: null, feeling: null })
+  const [rank, setRank] = useState({ zoneKey: null, index: 0, total: 0 })
+  const [origin, setOrigin] = useState({})
   const [notes, setNotes] = useState({ picked: [], own: [] })
 
   // Fade out, swap the step (and any state that belongs to it) at the moment
@@ -67,20 +63,23 @@ export default function OnboardingFlow({ updateCanvas, completeOnboarding }) {
   }, [])
 
   const onSortDone = useCallback(finished => {
-    const queue = rankQueueFor(finished).map(z => z.key)
-    go(queue.length ? 'rank' : 'recap', () => {
-      setPlaced(finished)
-      setRank({ queue, index: 0 })
+    const settled = settleRanks(finished)
+    const total = countRankScreens(finished)
+    const from = {}
+    for (const [zoneKey, ids] of Object.entries(finished)) ids.forEach(id => { from[id] = zoneKey })
+    go(settled.zone ? 'rank' : 'recap', () => {
+      setPlaced(settled.placed)
+      setOrigin(from)
+      setRank({ zoneKey: settled.zone ? settled.zone.key : null, index: 0, total })
     })
   }, [go])
 
   function onRankConfirm(selected) {
-    const zoneKey = rank.queue[rank.index]
-    const next = applyRank(placed, zoneKey, selected)
-    const more = rank.index + 1 < rank.queue.length
-    go(more ? 'rank' : 'recap', () => {
-      setPlaced(next)
-      if (more) setRank(r => ({ ...r, index: r.index + 1 }))
+    const next = applyRank(placed, rank.zoneKey, selected)
+    const settled = settleRanks(next)
+    go(settled.zone ? 'rank' : 'recap', () => {
+      setPlaced(settled.placed)
+      if (settled.zone) setRank(r => ({ ...r, zoneKey: settled.zone.key, index: r.index + 1 }))
     })
   }
 
@@ -110,27 +109,18 @@ export default function OnboardingFlow({ updateCanvas, completeOnboarding }) {
     navigate(dest)
   }
 
-  if (step === 'account') {
-    return (
-      <OnboardingAccount
-        destination="/today"
-        recommendation={recommendationFrom(placed)}
-        practicesDraft={{}}
-        notes={[...notes.picked, ...notes.own].slice(0, NOTES_MAX)}
-        onDone={handleAccountDone}
-        onBack={() => go('notes')}
-      />
-    )
-  }
-
   let progress
   if (step === 'sort') progress = SORT_FROM + (SORT_TO - SORT_FROM) * (sortedCount / FLOW_NEEDS.length)
+  else if (step === 'account') progress = 1
   else if (step === 'notes') progress = notesTotal >= NOTES_NEEDED ? 1 : 0.96
   else progress = PROGRESS_AT[step] ?? 0
 
   let screen
   let key = step
   switch (step) {
+    case 'welcome':
+      screen = <WelcomeScreen onNext={() => go('intro')} />
+      break
     case 'intro':
       screen = <IntroScreen onNext={() => go('hypotheses')} onSignIn={() => navigate('/signin')} />
       break
@@ -147,41 +137,38 @@ export default function OnboardingFlow({ updateCanvas, completeOnboarding }) {
       key = `rank-${rank.index}`
       screen = (
         <RankScreen
-          zone={ZONE_BY_KEY[rank.queue[rank.index]]}
+          zone={ZONE_BY_KEY[rank.zoneKey]}
+          origin={origin}
           placed={placed}
           step={rank.index + 1}
-          total={rank.queue.length}
+          total={rank.total}
           onConfirm={onRankConfirm}
         />
       )
       break
     }
     case 'recap':
-      screen = <RecapScreen placed={placed} onNext={() => go('checkin')} />
-      break
-    case 'checkin':
-      screen = <CheckinScreen vibe={vibe} onVibe={setVibe} onNext={() => go('almanac')} />
+      screen = <RecapScreen placed={placed} onNext={() => go('almanac')} />
       break
     case 'almanac':
       screen = (
         <GlimpseScreen
           slices={ALMANAC_PREVIEW}
           alt="The almanac screen after some use: streaks, daily rhythm, moods, roots, vibrations and strata."
-          body={'Your tracked practices and vibration check-ins turn into data visualizations that help you see what’s working and what to tweak.'}
-          onNext={() => go('draftEntry')}
+          body="You’ll start to see a bunch of insights in the app that help show what’s working and what to tweak."
+          onNext={() => go('notes')}
         />
       )
       break
-    case 'draftEntry':
-      screen = <DraftEntryScreen vibe={vibe} onNext={() => go('drafts')} />
-      break
-    case 'drafts':
+    case 'account':
       screen = (
-        <GlimpseScreen
-          slices={DRAFTS_PREVIEW}
-          alt="The drafts screen after a week of use: a weekly review, most active threads, a wild card and the archive."
-          body="Every draft is stored, tagged, and organized so you can identify patterns, challenge the negative ones, and connect the positives."
-          onNext={() => go('notes')}
+        <OnboardingAccount
+          destination="/today"
+          recommendation={recommendationFrom(placed)}
+          practicesDraft={{}}
+          notes={[...notes.picked, ...notes.own].slice(0, NOTES_MAX)}
+          onDone={handleAccountDone}
+          onBack={() => go('notes')}
         />
       )
       break
@@ -192,9 +179,9 @@ export default function OnboardingFlow({ updateCanvas, completeOnboarding }) {
       screen = null
   }
 
-  // The screens holding the big preview windows fade without sliding, so the
-  // images are never painted inside a moving layer.
-  const plain = step === 'almanac' || step === 'drafts'
+  // The welcome splash and the screens holding the big preview windows fade
+  // without sliding, so their artwork is never painted inside a moving layer.
+  const plain = step === 'welcome' || step === 'almanac'
 
   return (
     <div className={styles.root}>

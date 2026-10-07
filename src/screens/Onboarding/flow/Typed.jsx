@@ -32,10 +32,12 @@ export function typingMs(text) {
 //   run    — starts when this turns true (the text is invisible until then)
 //   delay  — ms to wait after `run` before the first character
 //   hold   — ms the caret keeps blinking after the last character
+//   linger — with no hold, how long the caret stays after the last character (0 hands
+//            the caret straight to whatever types next)
 //   onDone — fires once the typing and the hold have both finished
 // The characters are plain spans whose visibility is toggled through refs, so
 // typing never re-renders the component.
-export default function Typed({ text, run = true, delay = 0, hold = 0, onDone, as: Tag = 'span', className }) {
+export default function Typed({ text, run = true, delay = 0, hold = 0, linger = 420, onDone, as: Tag = 'span', className, style }) {
   const rootRef = useRef(null)
   const doneRef = useRef(onDone)
   useEffect(() => { doneRef.current = onDone })
@@ -77,14 +79,14 @@ export default function Typed({ text, run = true, delay = 0, hold = 0, onDone, a
     if (hold) timers.push(setTimeout(() => { if (caretOn) caretOn.classList.add(styles.chBlink) }, delay + total))
     timers.push(setTimeout(() => {
       if (caretOn) caretOn.classList.remove(styles.chCaret, styles.chBlink)
-    }, delay + total + (hold || 420)))
+    }, delay + total + (hold || linger)))
     timers.push(setTimeout(() => { if (doneRef.current) doneRef.current() }, delay + total + hold))
     return () => timers.forEach(clearTimeout)
     // `text`, `delay` and `hold` are read at the moment `run` flips.
   }, [run])
 
   return (
-    <Tag className={className} ref={rootRef}>
+    <Tag className={className} style={style} ref={rootRef}>
       <span className={styles.srOnly}>{text}</span>
       <span aria-hidden="true">
         {words.map((w, wi) => w.space !== undefined

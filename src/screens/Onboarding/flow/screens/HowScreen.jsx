@@ -1,42 +1,50 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import styles from '../Flow.module.css'
 import ScreenLayout from '../ScreenLayout'
 import Typed, { typingMs, REDUCED_MOTION } from '../Typed'
-import useTimeline from '../useTimeline'
 
 const LEAD = 'But, like, how?'
+const P1 = 'Well, you’re going to sort out what matters to you–those things actually deserve your attention.'
+const P2 = 'Then Loam will help you track what’s working and what to tweak, with data and stuff.'
 
-// "But, like, how?" types out, then the three lines arrive one at a time.
+const START = 120      // before the lead starts
+const GAP = 480        // beat between one block and the next (the caret waits through it)
+
+// Everything types out, one block after another with the caret handed along:
+// "But, like, how?", then the two paragraphs, then the arrow.
 export default function HowScreen({ onNext }) {
-  const at = useTimeline()
-  const [shown, setShown] = useState(REDUCED_MOTION ? 3 : 0)
+  const [arrow, setArrow] = useState(REDUCED_MOTION)
 
-  useEffect(() => {
-    if (REDUCED_MOTION) return
-    const first = 120 + typingMs(LEAD) + 500
-    for (let i = 0; i < 3; i++) at(first + i * 1100, () => setShown(n => Math.max(n, i + 1)))
-  }, [at])
-
-  const pill = (cls, word) => <span className={`${styles.inlinePill} ${styles[cls]}`}>{word}</span>
-  const line = (i, mt, children) => (
-    <div
-      className={`${styles.hookBody} ${styles.fadeBlock}${shown > i ? ` ${styles.fadeBlockOn}` : ''}`}
-      style={{ marginTop: mt }}
-    >{children}</div>
-  )
+  const d1 = START + typingMs(LEAD) + GAP
+  const d2 = d1 + typingMs(P1) + GAP
 
   return (
-    <ScreenLayout cta={{ arrow: true, onClick: onNext }}>
+    <ScreenLayout cta={{ arrow: true, hidden: !arrow, onClick: onNext }}>
       <div className={`${styles.cardStage} ${styles.introStage}`}>
         <Typed
           as="div"
           className={`${styles.hookBody} ${styles.hookEmphasis} ${styles.howLead}`}
           text={LEAD}
-          delay={120}
+          delay={START}
+          linger={GAP}
         />
-        {line(0, 22, <>First, you{'’'}ll sort your {pill('inlinePillExploration', 'needs')}{'—'}the things that give you energy.</>)}
-        {line(1, 18, <>Each one lands in a {pill('inlinePillNourishment', 'mode')}{'—'}this sets how much attention it gets.</>)}
-        {line(2, 18, <>Then you{'’'}ll set daily {pill('inlinePillAppreciation', 'practices')} to meet them.</>)}
+        <Typed
+          as="div"
+          className={styles.hookBody}
+          style={{ marginTop: 22 }}
+          text={P1}
+          delay={d1}
+          linger={GAP}
+        />
+        <Typed
+          as="div"
+          className={styles.hookBody}
+          style={{ marginTop: 18 }}
+          text={P2}
+          delay={d2}
+          hold={600}
+          onDone={() => setArrow(true)}
+        />
       </div>
     </ScreenLayout>
   )

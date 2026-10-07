@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import styles from '../Flow.module.css'
 import ScreenLayout from '../ScreenLayout'
-import { NEED_BY_ID, RANK_INTRO, NUMBER_WORDS, rankKeepFor } from '../data'
+import { NEED_BY_ID, RANK_INTRO, NUMBER_WORDS, NEXT_ZONE, DROP_LABEL, rankKeepFor } from '../data'
 
-// A bucket that ended up over its real target: pick which needs stay, in the
-// order you care about them. Always-kept needs sit on top, locked in.
-export default function RankScreen({ zone, placed, step, total, onConfirm }) {
+// A bucket that ended up over its real target: pick which needs matter most.
+// Always-kept needs sit on top, locked in; the rest of the needs drop to the
+// next mode down. `origin` is where each need was first sorted, so the ones
+// that arrived from a higher bucket can say so.
+export default function RankScreen({ zone, placed, step, total, origin, onConfirm }) {
   const members = placed[zone.key]
   const pinned = members.filter(id => NEED_BY_ID[id].mandatory)
   const options = members.filter(id => !NEED_BY_ID[id].mandatory)
@@ -34,8 +36,8 @@ export default function RankScreen({ zone, placed, step, total, onConfirm }) {
           <div className={styles.needName}>{RANK_INTRO[zone.key] || zone.label}</div>
           <div className={styles.rankSub}>
             {keep === 0
-              ? 'no room left here — all of these move to "doesn’t matter"'
-              : `select your top ${NUMBER_WORDS[keep]}.`}
+              ? `No room left here, so these move to “${DROP_LABEL[NEXT_ZONE[zone.key]]}”`
+              : `Pick the ${NUMBER_WORDS[keep]} that matter most. The rest move to “${DROP_LABEL[NEXT_ZONE[zone.key]]}”`}
           </div>
         </div>
       </div>
@@ -61,6 +63,7 @@ export default function RankScreen({ zone, placed, step, total, onConfirm }) {
               >
                 <span className={styles.rankBadge}>{active ? String(idx + 1) : ''}</span>
                 <span className={styles.rankRow2Name}>{NEED_BY_ID[id].name}</span>
+                {origin && origin[id] && origin[id] !== zone.key && <span className={styles.rankMoved}>moved down</span>}
               </button>
             )
           })}

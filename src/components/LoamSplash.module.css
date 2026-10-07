@@ -1,0 +1,72 @@
+/* ── Loam splash: the symbol builds itself, then a line of welcome ── */
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 34px;
+  width: min(78vw, 340px);
+}
+.symbol {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+/* each piece animates around its own centre; every animation below is `both`
+   so nothing shows before its turn */
+.lump, .roll, .sprout { transform-box: fill-box; }
+
+/* 1. the gold orb rolls in from the right and comes to rest */
+.roll {
+  transform-origin: 50% 50%;
+  animation: roll 700ms cubic-bezier(0.2, 0.8, 0.25, 1) 120ms both;
+}
+@keyframes roll {
+  0%   { opacity: 0; transform: translateX(120px) rotate(80deg) scale(0.9); }
+  35%  { opacity: 1; }
+  100% { opacity: 1; transform: none; }
+}
+
+/* 2. the lumps drop into the pile, bottom of the pile first */
+.lump {
+  transform-origin: 50% 100%;
+  animation: settle 620ms cubic-bezier(0.22, 1.25, 0.36, 1) var(--d, 0ms) both;
+}
+@keyframes settle {
+  0%   { opacity: 0; transform: translateY(-60px) scale(0.8); }
+  45%  { opacity: 1; }
+  100% { opacity: 1; transform: none; }
+}
+
+/* 3. growth: the green orb sprouts in the notch */
+.sprout {
+  transform-origin: 50% 50%;
+  animation: sprout 620ms cubic-bezier(0.3, 1.5, 0.45, 1) 1750ms both;
+}
+@keyframes sprout {
+  0%   { opacity: 0; transform: scale(0); }
+  100% { opacity: 1; transform: none; }
+}
+
+/* 4. then a quiet line of welcome */
+.welcome {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(30px, 10.2vw, 40px);
+  line-height: 1.15;
+  white-space: nowrap;
+  font-weight: 400;
+  letter-spacing: 0.005em;
+  color: var(--ink);
+  animation: rise 600ms cubic-bezier(0.2, 0.8, 0.25, 1) 2250ms both;
+}
+@keyframes rise {
+  0%   { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lump, .roll, .sprout, .welcome { animation: none; }
+}

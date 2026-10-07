@@ -3,7 +3,8 @@
 
 import { UNIVERSAL_NEEDS } from '../../../lib/constants'
 
-// The 13 needs, in the order the sort deals them. `mandatory` needs can never
+// The 11 needs the onboarding sort deals, in order. (information and touch live
+// in the app's need library but are left out of onboarding on purpose.) `mandatory` needs can never
 // be parked in "doesn't matter"; `restrict` limits which buckets a need can
 // land in (rest tops out at routine).
 export const FLOW_NEEDS = [
@@ -17,8 +18,6 @@ export const FLOW_NEEDS = [
   { id: 'play',        name: 'play' },
   { id: 'money',       name: 'money' },
   { id: 'dwelling',    name: 'dwelling' },
-  { id: 'information', name: 'information' },
-  { id: 'touch',       name: 'touch' },
   { id: 'thrill',      name: 'thrill' },
 ]
 
@@ -30,8 +29,8 @@ export const NEED_BY_ID = Object.fromEntries(FLOW_NEEDS.map(n => [n.id, n]))
 export const ZONES = [
   { key: 'exploration',  label: 'It’s my passion.',                   cap: 1, liveCapped: true },
   { key: 'appreciation', label: 'It brings me joy.',                       cap: 2 },
-  { key: 'nourishment',  label: 'It needs to be part of my routine.',      cap: 3 },
-  { key: 'survival',     label: 'Just need to get it done.',               cap: 4 },
+  { key: 'nourishment',  label: 'I need it to function.',                  cap: 3 },
+  { key: 'survival',     label: 'It’s just something I need to survive.', cap: 4 },
   { key: 'unassigned',   label: 'It doesn’t matter to me right now.', cap: Infinity },
 ]
 
@@ -64,12 +63,11 @@ export const RANK_INTRO = {
 }
 export const NUMBER_WORDS = ['zero', 'one', 'two', 'three', 'four']
 
-// Sample draft shown on the "What's on your mind?" screen, matched to the band
-// just picked on the check-in. Demo only: it is never saved.
-export const DRAFT_SAMPLES = {
-  good: 'Woke up early and actually had time to sit with my coffee. Feeling like I have room today. I want to protect that and not fill every gap.',
-  mid:  'Not bad, not great. Got through the morning on autopilot. I think I skipped lunch again, which probably explains the flat feeling.',
-  bad:  'Woke up already behind. My chest has been tight all morning over a meeting that is probably fine. Going to walk before lunch and see if that loosens things up.',
+// Where the others go, in words, for the trim screen.
+export const DROP_LABEL = {
+  nourishment: 'I need it to function.',
+  survival: 'It’s just something I need to survive.',
+  unassigned: 'It doesn’t matter to me right now.',
 }
 
 export const NOTES_NEEDED = 3
@@ -87,9 +85,8 @@ export const NOTE_LIBRARY = [
 // continuously between SORT_FROM and SORT_TO; the notes screen goes 0.96 -> 1
 // once three notes are chosen.
 export const PROGRESS_AT = {
-  intro: 0.04, hypotheses: 0.10, how: 0.16,
-  rank: 0.58, recap: 0.62, checkin: 0.70,
-  almanac: 0.78, draftEntry: 0.86, drafts: 0.92,
+  welcome: 0, intro: 0.04, hypotheses: 0.10, how: 0.16,
+  rank: 0.58, recap: 0.62, almanac: 0.78,
 }
 export const SORT_FROM = 0.16
 export const SORT_TO = 0.56
@@ -111,13 +108,18 @@ export function isZoneFull(zone, placed) {
   return !!zone.liveCapped && placed[zone.key].length >= zone.cap
 }
 
-// Buckets that came out over their real target and need trimming, in the
-// order they are asked. A bucket that is over only because of always-kept
-// needs has nothing to decide, so it is skipped.
-export function rankQueueFor(placed) {
-  return ZONES.filter(z =>
+// Where a need lands when it doesn't make the cut in its bucket: the next mode
+// down. Survival is the last mode, so what doesn't fit there is parked in
+// "doesn't matter".
+export const NEXT_ZONE = { appreciation: 'nourishment', nourishment: 'survival', survival: 'unassigned' }
+
+// The first bucket that is over its real target and has something to decide.
+// A bucket that is over only because of always-kept needs has nothing to
+// decide, so it is skipped.
+function overflowZone(placed) {
+  return ZONES.find(z =>
     z.cap !== Infinity && !z.liveCapped && placed[z.key].length > z.cap &&
-    placed[z.key].some(id => !NEED_BY_ID[id].mandatory))
+    placed[z.key].some(id => !NEED_BY_ID[id].mandatory)) || null
 }
 
 // How many of a bucket's optional needs can stay once the always-kept ones
@@ -127,17 +129,53 @@ export function rankKeepFor(zone, placed) {
   return Math.max(zone.cap - pinned, 0)
 }
 
-// The picked needs stay in the bucket; everything else moves to
-// "doesn't matter".
+// The picked needs stay in the bucket; everything else drops to the next mode
+// down (and may be trimmed again there).
 export function applyRank(placed, zoneKey, keepIds) {
   const members = placed[zoneKey]
   const pinned = members.filter(id => NEED_BY_ID[id].mandatory)
   const cut = members.filter(id => !NEED_BY_ID[id].mandatory && keepIds.indexOf(id) === -1)
+  const to = NEXT_ZONE[zoneKey] || 'unassigned'
   return {
     ...placed,
     [zoneKey]: pinned.concat(keepIds),
-    unassigned: placed.unassigned.concat(cut),
+    [to]: placed[to].concat(cut),
   }
+}
+
+// Walk the trimming forward. A bucket with no room at all has nothing for the
+// person to choose, so its needs drop straight down and the choice happens in
+// the next bucket, where they compete with what is already there. Returns the
+// placement so far and the bucket that needs a pick (null when done). Survival
+// always gets its screen, since what doesn't fit there leaves the modes.
+export function settleRanks(placed) {
+  let cur = placed
+  for (let guard = 0; guard < 8; guard++) {
+    const zone = overflowZone(cur)
+    if (!zone) return { placed: cur, zone: null }
+    if (rankKeepFor(zone, cur) === 0 && zone.key !== 'survival') {
+      cur = applyRank(cur, zone.key, [])
+      continue
+    }
+    return { placed: cur, zone }
+  }
+  return { placed: cur, zone: null }
+}
+
+// How many trim screens the person will see from here. The count of needs
+// that drop, not which ones, decides it, so it can be known up front.
+export function countRankScreens(placed) {
+  let cur = placed
+  let n = 0
+  for (let guard = 0; guard < 8; guard++) {
+    const s = settleRanks(cur)
+    if (!s.zone) return n
+    n += 1
+    const keep = rankKeepFor(s.zone, s.placed)
+    const optional = s.placed[s.zone.key].filter(id => !NEED_BY_ID[id].mandatory)
+    cur = applyRank(s.placed, s.zone.key, optional.slice(0, keep))
+  }
+  return n
 }
 
 // { universal: {needId: mode}, personal: {needId: mode} } — what the account

@@ -154,9 +154,9 @@ export default function HypothesesScreen({ onNext }) {
             </span>
           </div>
           <div className={styles.hypItem}>
-            <Typed className={styles.hookListNum} text={NUM2} run={!!b.two} />
+            <Typed className={styles.hookListNum} text={NUM2} run={!!b.two} linger={0} />
             <span>
-              <Typed text={A2} run={!!b.two} delay={60} />
+              <Typed text={A2} run={!!b.two} delay={typingMs(NUM2) + 80} />
               <Typed className={styles.hypPartB} text={B2} run={!!b.partB2} />
             </span>
           </div>
