@@ -584,15 +584,6 @@
   text-align: center;
 }
 
-.historyNote {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 300;
-  color: var(--ink3);
-  line-height: 1.6;
-  margin: 0 0 16px;
-}
-
 .dateHint {
   font-family: var(--font-mono);
   font-size: var(--type-floor);

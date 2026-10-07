@@ -12,6 +12,7 @@ import LiveCanvasCard from '../components/LiveCanvasCard'
 import JournalQuote from '../components/JournalQuote'
 import { supabase } from '../lib/supabase'
 import ThreadTiles from '../components/ThreadTiles'
+import FirstWeekCard from '../components/FirstWeekCard'
 import styles from './Log.module.css'
 
 const MOOD_PILL = {
@@ -1123,6 +1124,11 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
             </div>
           </div>
         ) : null}
+        {archiveLoaded && archiveAllJournalDays.size < 7 && (
+          <FirstWeekCard
+            title="After about a week, you’ll start to see patterns in your writing."
+          />
+        )}
         </div>
         <div className={styles.colLeft}>
         {/* Threads, resurfacing, and the calendar all wait on the journal

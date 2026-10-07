@@ -9,6 +9,7 @@ import ThreadsSection from '../components/ThreadsSection'
 import StreaksRail from '../components/StreaksRail'
 import StrataRibbon from '../components/StrataRibbon'
 import FinePrint from '../components/FinePrint'
+import FirstWeekCard from '../components/FirstWeekCard'
 import { buildLadder } from '../lib/ladder'
 import { buildInsights } from '../lib/insights'
 import styles from './Data.module.css'
@@ -720,7 +721,9 @@ export default function Data({ state, profileMenu }) {
         )}
 
         {hasCanvas && totalCheckinDays < 7 && (
-          <p className={styles.historyNote}>as you complete your practices and mood check-ins, your data starts filling in. it takes about a week before the patterns get interesting.</p>
+          <FirstWeekCard
+            title="After about a week, you’ll see your data start to tell a story."
+          />
         )}
 
         {hasCanvas && (
