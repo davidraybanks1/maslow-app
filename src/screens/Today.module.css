@@ -1086,11 +1086,10 @@
 }
 
 /* Mobile: the composer sits directly under the header, above the logged
-   drafts, with a hairline + breathing room separating the two. */
+   drafts, with breathing room (no rule) separating the two. */
 .journalComposer {
   padding-bottom: 20px;
   margin-bottom: 8px;
-  border-bottom: 0.5px solid var(--hairline);
 }
 
 .journalEntryCard {
@@ -2435,10 +2434,9 @@
   .cardJournal {
     background: none;
     border: none;
-    border-top: 0.5px solid var(--hairline);
     border-radius: 0;
     margin-top: 26px;
-    padding: 26px 0 0;
+    padding: 0;
   }
 }
 
