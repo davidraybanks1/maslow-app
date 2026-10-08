@@ -1,12 +1,12 @@
 import styles from './AppHeader.module.css'
-import BrandMark from './BrandMark'
+import LoamMark from './LoamMark'
 import ProfileMenu from './ProfileMenu'
 
 export default function AppHeader({ slot, name, email, remindersEnabled, updateRemindersEnabled, moodReminders, updateMoodReminder, notifTypes, updateNotifType, needCount, noteDeckCount, customTagCount, resetTour }) {
   return (
     <header className={styles.header}>
       <div className={styles.left}>
-        <BrandMark size={20} />
+        <span role="img" aria-label="Loam"><LoamMark width={40} /></span>
       </div>
       <div className={styles.right}>
         {slot}

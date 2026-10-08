@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import styles from './DesktopNav.module.css'
-import BrandMark from './BrandMark'
+import LoamMark from './LoamMark'
 import ProfileMenu from './ProfileMenu'
 import Glyph from '../lib/glyphs'
 
@@ -17,7 +17,7 @@ export default function DesktopNav({ name, email, remindersEnabled, updateRemind
   return (
     <aside className={styles.nav} aria-label="Primary" data-tour="nav">
       <div className={styles.brand}>
-        <BrandMark size={17} />
+        <span role="img" aria-label="Loam"><LoamMark width={40} /></span>
       </div>
       <nav className={styles.items}>
         {ITEMS.map(([to, label]) => (

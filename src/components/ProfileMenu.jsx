@@ -283,7 +283,7 @@ export default function ProfileMenu({
             {resetTour && (
               <button type="button" className={styles.moreRow} onClick={() => { resetTour(); close() }}>show hints again</button>
             )}
-            <a className={styles.moreRow} href={`mailto:${FEEDBACK_EMAIL}?subject=maslow%20feedback`} onClick={() => close()}>suggest something</a>
+            <a className={styles.moreRow} href={`mailto:${FEEDBACK_EMAIL}?subject=Loam%20feedback`} onClick={() => close()}>suggest something</a>
             <div className={styles.legalRow}>
               <a href="https://mymaslow.com/privacy" target="_blank" rel="noopener noreferrer">privacy</a>
               <a href="https://mymaslow.com/terms" target="_blank" rel="noopener noreferrer">terms</a>
@@ -309,7 +309,7 @@ export default function ProfileMenu({
         </div>
         <div className={styles.mono}>
           {permissionDenied
-            ? 'turn on notifications for maslow in your ios settings.'
+            ? 'turn on notifications for Loam in your ios settings.'
             : on ? 'nudges arrive on your iphone' : 'off · you won’t get any nudges'}
         </div>
       </div>
@@ -386,7 +386,7 @@ export default function ProfileMenu({
   const confirmEl = confirmSignOut && (
     <div className={styles.confirmScrim} onClick={() => setConfirmSignOut(false)}>
       <div className={`${styles.card} ${styles.dialog}`} role="dialog" aria-modal="true" aria-label="sign out" onClick={e => e.stopPropagation()}>
-        <div className={styles.dialogTitle}>sign out of your daybook?</div>
+        <div className={styles.dialogTitle}>sign out of Loam?</div>
         <div className={styles.dialogBody}>
           {email ? `everything stays saved to ${email}. you can sign back in any time.` : 'everything stays saved. you can sign back in any time.'}
         </div>

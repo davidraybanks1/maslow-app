@@ -1,7 +1,7 @@
 {
-  "name": "MyMaslow",
-  "short_name": "mymaslow",
-  "description": "practice becoming yourself",
+  "name": "Loam",
+  "short_name": "Loam",
+  "description": "Get better at the habit of living.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#EFEADD",

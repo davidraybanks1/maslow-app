@@ -1,6 +1,6 @@
 {
   "appId": "com.mymaslow.ios",
-  "appName": "MyMaslow",
+  "appName": "Loam",
   "webDir": "dist",
   "ios": {
     "contentInset": "automatic",
