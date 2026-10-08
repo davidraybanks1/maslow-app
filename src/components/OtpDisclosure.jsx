@@ -21,18 +21,18 @@ export default function OtpDisclosure({ email, onSuccess, linkClass, hairlineCla
             onSuccess={open === 'recovery' ? onSuccess : undefined}
           />
           <div className={hairlineClass} />
-          <button type="button" className={linkClass} onClick={() => setOpen(null)}>
-            ← back to password sign-in
+          <button type="button" className={linkClass} data-back="true" onClick={() => setOpen(null)}>
+            ← Back to password sign-in
           </button>
         </>
       ) : (
         <>
           <button type="button" className={linkClass} onClick={() => setOpen('otp')}>
-            email me a code instead
+            Email me a code instead
           </button>
           <div className={hairlineClass} />
           <button type="button" className={linkClass} onClick={() => setOpen('recovery')}>
-            forgot your password?
+            Forgot your password?
           </button>
         </>
       )}

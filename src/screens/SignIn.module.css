@@ -1,42 +1,143 @@
-.screen { display: flex; flex-direction: column; justify-content: space-between; height: 100%; padding: 80px 32px 48px; background: var(--paper); }
+/* Sign in: the same voice as the account step of onboarding (serif title,
+   14px-radius fields, the ink button) with the Loam symbol standing in for the
+   old wordmark, and the code / reset options in a white card. */
 
-.top { display: flex; flex-direction: column; align-items: center; gap: 14px; }
-.wordmark { font-family: var(--font-serif); font-size: 36px; font-weight: 300; color: var(--ink); letter-spacing: -0.01em; }
-.wordmarkDot { color: var(--surv-text); }
+.screen {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  box-sizing: border-box;
+  padding: calc(var(--safe-top, 0px) + 20px) 28px calc(var(--safe-bottom, 0px) + 32px);
+  background: var(--paper);
+  overflow-y: auto;
+}
 
-.body { display: flex; flex-direction: column; gap: 20px; }
-.heading { font-family: var(--font-serif); font-size: 28px; font-weight: 300; color: var(--ink); letter-spacing: -0.01em; }
-
-.form { display: flex; flex-direction: column; gap: 12px; }
-.input { width: 100%; padding: 13px 16px; border-radius: 999px; border: 0.5px solid var(--hairline); background: var(--card); font-family: var(--font-mono); font-size: 16px; color: var(--ink); outline: none; transition: border-color var(--motion-hover); box-sizing: border-box; }
-.input:focus { border-color: var(--ink); }
-.input::placeholder { color: var(--ink4); }
-
-.error { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--surv-text); }
-
-.secondary { margin-top: 24px; }
-.hairline { height: 0.5px; background: var(--hairline); }
-.secondaryLink {
-  display: block;
-  width: 100%;
-  padding: 13px 0;
+.back {
+  align-self: flex-start;
   background: none;
   border: none;
+  padding: 4px 0;
   font-family: var(--font-mono);
   font-size: 12px;
   color: var(--ink3);
   cursor: pointer;
-  letter-spacing: 0.02em;
-  text-align: left;
+  -webkit-tap-highlight-color: transparent;
 }
-.secondaryLink:hover { color: var(--ink); }
-.secondaryConfirm { color: var(--exploration); cursor: default; }
-.secondaryConfirm:hover { color: var(--exploration); }
-
-.back { background: none; border: none; font-family: var(--font-mono); font-size: 12px; color: var(--ink3); cursor: pointer; text-align: left; padding: 0; letter-spacing: 0.02em; }
 .back:hover { color: var(--ink); }
 
-/* desktop tier: center the screen at a comfortable reading width */
+.mark { display: flex; justify-content: center; margin: 28px 0 30px; }
+
+.title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 34px;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+.form { display: flex; flex-direction: column; gap: 10px; margin-top: 22px; }
+.input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 15px 16px;
+  border-radius: 14px;
+  border: 0.5px solid var(--hairline);
+  background: var(--card);
+  font-family: var(--font-serif);
+  font-weight: 300;
+  font-size: 17px;
+  color: var(--ink);
+  outline: none;
+  -webkit-appearance: none;
+  transition: border-color var(--motion-hover);
+}
+.input::placeholder { color: var(--ink4); }
+.input:focus { border-color: var(--ink); }
+.pwWrap { position: relative; }
+.pwInput { padding-right: 64px; }
+.pwToggle {
+  position: absolute;
+  right: 6px; top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 10px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink3);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.pwToggle:hover { color: var(--ink); }
+
+.error { font-family: var(--font-mono); font-size: 12px; line-height: 1.6; color: var(--surv-text); }
+
+.cta {
+  width: 100%;
+  margin-top: 6px;
+  background: var(--ink);
+  color: #fff;
+  border: 1.5px solid transparent;
+  border-radius: 12px;
+  padding: 14px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.cta:disabled {
+  cursor: not-allowed;
+  background: transparent;
+  color: rgba(0,0,0,.4);
+  border-color: rgba(0,0,0,.2);
+}
+
+/* the code / reset options: rows in a white card */
+.secondary {
+  position: relative;
+  margin-top: 26px;
+  border-radius: 20px;
+  border: 0.5px solid var(--hairline);
+  background: linear-gradient(128deg, #FFFFFF 0%, #FFFFFF 36%, #FBF5E9 50%, #FFFFFF 64%);
+  box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+  padding: 4px 18px;
+}
+.hairline { height: 0.5px; background: var(--hairline); margin: 0 -18px; }
+.hairline:first-child, .hairline:last-child { display: none; }
+.secondaryLink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 16px 0;
+  background: none;
+  border: none;
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 17px;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+}
+.secondaryLink::after { content: '→'; font-family: var(--font-mono); font-size: 13px; color: var(--ink3); }
+.secondaryLink[data-back]::after { content: none; }
+.secondaryLink:hover::after { color: var(--ink); }
+
+.fine { margin: 26px 0 0; font-family: var(--font-mono); font-size: 12px; line-height: 1.6; color: var(--ink3); text-align: center; }
+.link {
+  background: none; border: none; padding: 0;
+  font: inherit; color: var(--ink); text-decoration: underline; text-underline-offset: 3px;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.link:hover { opacity: .7; }
+
+/* desktop tier: centre the screen at a comfortable reading width */
 @media (min-width: 1024px) {
-  .screen { max-width: 480px; margin: 0 auto; width: 100%; background: transparent; }
+  .screen { max-width: 440px; margin: 0 auto; width: 100%; background: transparent; padding-top: 64px; }
 }

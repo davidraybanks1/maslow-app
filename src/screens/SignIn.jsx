@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import BrandMark from '../components/BrandMark'
+import LoamMark from '../components/LoamMark'
 import OtpDisclosure from '../components/OtpDisclosure'
 import styles from './SignIn.module.css'
 
@@ -9,6 +9,7 @@ export default function SignIn() {
   const navigate = useNavigate()
   const [email, setEmail]           = useState('')
   const [password, setPassword]     = useState('')
+  const [showPw, setShowPw]         = useState(false)
   const [loading, setLoading]       = useState(false)
   const [error, setError]           = useState(null)
   // Tracks whether a sign-in request is still in flight after the timeout fired.
@@ -73,54 +74,57 @@ export default function SignIn() {
 
   return (
     <div className={styles.screen}>
-      <div className={styles.top}>
-        <BrandMark size={56} />
-        <div className={styles.wordmark}>maslow<span className={styles.wordmarkDot}>.</span></div>
-      </div>
+      <button type="button" className={styles.back} onClick={() => navigate('/onboarding')}>{'←'} Back</button>
 
-      <div className={styles.body}>
-        <div className={styles.heading}>sign in.</div>
+      <div className={styles.mark}><LoamMark width={112} /></div>
 
-        <form className={styles.form} onSubmit={handleSignIn}>
+      <h1 className={styles.title}>Welcome back.</h1>
+
+      <form className={styles.form} onSubmit={handleSignIn}>
+        <input
+          className={styles.input}
+          type="email"
+          placeholder="Email"
+          aria-label="Email"
+          value={email}
+          onChange={e => { setEmail(e.target.value); setError(null) }}
+          autoComplete="email"
+        />
+        <div className={styles.pwWrap}>
           <input
-            className={styles.input}
-            type="email"
-            placeholder="your email"
-            value={email}
-            onChange={e => { setEmail(e.target.value); setError(null) }}
-            autoComplete="email"
-            autoFocus
-          />
-          <input
-            className={styles.input}
-            type="password"
-            placeholder="your password"
+            className={`${styles.input} ${styles.pwInput}`}
+            type={showPw ? 'text' : 'password'}
+            placeholder="Password"
+            aria-label="Password"
             value={password}
             onChange={e => { setPassword(e.target.value); setError(null) }}
             autoComplete="current-password"
           />
-
-          {error && <div className={styles.error}>{error}</div>}
-
-          <button className="btn-primary" type="submit" disabled={loading || !canSubmit}>
-            {loading ? 'signing in…' : 'sign in →'}
+          <button type="button" className={styles.pwToggle} onClick={() => setShowPw(v => !v)} aria-pressed={showPw}>
+            {showPw ? 'Hide' : 'Show'}
           </button>
-        </form>
-
-        <div className={styles.secondary}>
-          <OtpDisclosure
-            email={email}
-            onSuccess={() => navigate('/password')}
-            linkClass={styles.secondaryLink}
-            hairlineClass={styles.hairline}
-          />
         </div>
+
+        {error && <div className={styles.error} role="alert">{error}</div>}
+
+        <button className={styles.cta} type="submit" disabled={loading || !canSubmit}>
+          {loading ? 'Signing in…' : 'Sign in'}
+        </button>
+      </form>
+
+      <div className={styles.secondary}>
+        <OtpDisclosure
+          email={email}
+          onSuccess={() => navigate('/password')}
+          linkClass={styles.secondaryLink}
+          hairlineClass={styles.hairline}
+        />
       </div>
 
-      <button className={styles.back} onClick={() => navigate('/onboarding')}>
-        ← back to start
-      </button>
-
+      <p className={styles.fine}>
+        New here?{' '}
+        <button type="button" className={styles.link} onClick={() => navigate('/onboarding')}>Create an account</button>
+      </p>
     </div>
   )
 }
