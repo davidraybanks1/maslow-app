@@ -68,10 +68,10 @@ export function sampleAlmanacData(days = 56) {
 
 // stand-ins for the drafts screen's "most active threads" grid
 export const SAMPLE_THREADS = [
-  { id: 'sample:evening', label: 'evenings', windowCount: 14, band: 'mid', dim: 'slot' },
-  { id: 'sample:calm', label: 'calm', windowCount: 11, band: 'good', dim: 'feeling' },
+  { id: 'sample:evening', label: 'evenings', windowCount: 12, band: 'mid', dim: 'slot' },
+  { id: 'sample:calm', label: 'calm', windowCount: 10, band: 'good', dim: 'feeling' },
   { id: 'sample:reflection', label: 'reflection', windowCount: 9, band: null, dim: 'need', needId: 'reflection' },
-  { id: 'sample:morning', label: 'mornings', windowCount: 7, band: 'good', dim: 'slot' },
-  { id: 'sample:community', label: 'community', windowCount: 5, band: null, dim: 'need', needId: 'community' },
-  { id: 'sample:small', label: 'small', windowCount: 3, band: 'bad', dim: 'feeling' },
+  { id: 'sample:morning', label: 'mornings', windowCount: 8, band: 'good', dim: 'slot' },
+  { id: 'sample:community', label: 'community', windowCount: 7, band: null, dim: 'need', needId: 'community' },
+  { id: 'sample:small', label: 'small', windowCount: 6, band: 'bad', dim: 'feeling' },
 ]
