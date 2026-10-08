@@ -173,7 +173,13 @@ function computeActiveThreads(archiveEntries, canvas, customTags) {
         for (const e of inWindow) if (e.mood_band) tally[e.mood_band] = (tally[e.mood_band] || 0) + 1
         band = Object.entries(tally).sort((a, b) => b[1] - a[1])[0]?.[0] || null
       }
-      return { ...c, windowCount, lastDate, band }
+      // the last twelve days, oldest first: a day lights if anything was written on it
+      const strip = Array.from({ length: 12 }, (_, i) => {
+        const d = new Date(today); d.setDate(d.getDate() - (11 - i))
+        const key = dateKeyFor(d)
+        return inWindow.some(e => e.date_key === key)
+      })
+      return { ...c, windowCount, lastDate, band, strip }
     })
     .filter(c => c.windowCount >= 2)
     .sort((a, b) => b.windowCount - a.windowCount || b.lastDate.localeCompare(a.lastDate))

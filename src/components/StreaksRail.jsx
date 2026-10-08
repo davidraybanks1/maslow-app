@@ -21,7 +21,7 @@ const UNLIT = ['#4A453E', '#0A0807']
 const rampFor = s => RAMP[s.kind === 'frequency' ? s.name : s.mode] || RAMP.exploration
 
 let uid = 0
-function Glyph({ streak }) {
+export function Glyph({ streak }) {
   const id = useMemo(() => `sg${++uid}`, [])
   const [a, b] = streak.quiet ? UNLIT : rampFor(streak)
   const [w, h] = GLYPH_BOX[streak.kind] || GLYPH_BOX.mode
@@ -42,7 +42,7 @@ function Glyph({ streak }) {
 }
 
 /** Twelve days, drawn in the shape of the thing it belongs to. */
-function Meter({ streak }) {
+export function Meter({ streak }) {
   const [a, b] = streak.quiet ? UNLIT : rampFor(streak)
   const on = streak.kind === 'need' || streak.kind === 'mode'
     ? `radial-gradient(circle at 34% 26%, ${a}, ${b})`

@@ -67,11 +67,13 @@ export function sampleAlmanacData(days = 56) {
 }
 
 // stand-ins for the drafts screen's "most active threads" grid
+const sampleStrip = (seed, density) => { const r = rng(seed); return Array.from({ length: 12 }, () => r() < density) }
+const daysAgo = n => { const d = new Date(); d.setDate(d.getDate() - n); return keyFor(d) }
 export const SAMPLE_THREADS = [
-  { id: 'sample:evening', label: 'evenings', windowCount: 12, band: 'mid', dim: 'slot' },
-  { id: 'sample:calm', label: 'calm', windowCount: 10, band: 'good', dim: 'feeling' },
-  { id: 'sample:reflection', label: 'reflection', windowCount: 9, band: null, dim: 'need', needId: 'reflection' },
-  { id: 'sample:morning', label: 'mornings', windowCount: 8, band: 'good', dim: 'slot' },
-  { id: 'sample:community', label: 'community', windowCount: 7, band: null, dim: 'need', needId: 'community' },
-  { id: 'sample:small', label: 'small', windowCount: 6, band: 'bad', dim: 'feeling' },
+  { id: 'sample:evening', label: 'evenings', windowCount: 12, band: 'mid', dim: 'slot', strip: sampleStrip(11, .75), lastDate: daysAgo(0) },
+  { id: 'sample:calm', label: 'calm', windowCount: 10, band: 'good', dim: 'feeling', strip: sampleStrip(12, .6), lastDate: daysAgo(1) },
+  { id: 'sample:reflection', label: 'reflection', windowCount: 9, band: null, modeName: 'nourishment', dim: 'need', needId: 'reflection', strip: sampleStrip(13, .55), lastDate: daysAgo(0) },
+  { id: 'sample:morning', label: 'mornings', windowCount: 8, band: 'good', dim: 'slot', strip: sampleStrip(14, .5), lastDate: daysAgo(2) },
+  { id: 'sample:community', label: 'community', windowCount: 7, band: null, modeName: 'appreciation', dim: 'need', needId: 'community', strip: sampleStrip(15, .45), lastDate: daysAgo(1) },
+  { id: 'sample:small', label: 'small', windowCount: 6, band: 'bad', dim: 'feeling', strip: sampleStrip(16, .4), lastDate: daysAgo(3) },
 ]

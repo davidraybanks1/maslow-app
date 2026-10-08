@@ -1,155 +1,46 @@
-import { useMemo } from 'react'
+import { Glyph, Meter } from './StreaksRail'
 import styles from './ThreadTiles.module.css'
 
-/* Your threads as a plot of tiles: one rectangle divided so that each thread
-   gets an area in proportion to how much you have written on it lately. The
-   division is squarified, so tiles stay close to square and the biggest
-   threads sit top-left. Each tile is one of our white cards: rounded, with a
-   faint warm sheen and a hairline edge, floating on the page with cream
-   between them. Every tile carries its own name: if the smallest cannot, the
-   big ones give up a little area first (the scale is compressed) and, when
-   that is not enough, the smallest threads step off the plot into a line
-   beneath it. */
+/* Your most active threads, one white row each, set like a card in "Your
+   streaks and lulls": the mark, the thread's name, twelve days of writing in
+   the thread's colour, and the count of drafts. Most active first. The mark
+   says what kind of thread it is, so there is no label for it: a need's
+   petals, a feeling's signal, a checkbox for a time of day or a tag. */
 
-/* squarified treemap (Bruls, Huizing, van Wijk): lay rows of beds along the
-   shorter side, adding to a row while it keeps the beds nearest to square */
-function squarify(items, x, y, w, h) {
-  const out = []
-  const total = items.reduce((s, it) => s + it.v, 0)
-  const scale = (w * h) / total
-  let rest = items.map(it => ({ ...it, a: it.v * scale }))
-  let row = []
-  const worst = (r, side) => {
-    const s = r.reduce((q, it) => q + it.a, 0)
-    return Math.max(...r.map(it => Math.max((side * side * it.a) / (s * s), (s * s) / (side * side * it.a))))
-  }
-  const flush = () => {
-    const s = row.reduce((q, it) => q + it.a, 0)
-    if (w >= h) {
-      const rw = s / h
-      let yy = y
-      for (const it of row) { const ih = it.a / rw; out.push({ ...it, x, y: yy, w: rw, h: ih }); yy += ih }
-      x += rw; w -= rw
-    } else {
-      const rh = s / w
-      let xx = x
-      for (const it of row) { const iw = it.a / rh; out.push({ ...it, x: xx, y, w: iw, h: rh }); xx += iw }
-      y += rh; h -= rh
-    }
-    row = []
-  }
-  while (rest.length) {
-    const side = Math.min(w, h)
-    const cand = [...row, rest[0]]
-    if (!row.length || worst(cand, side) <= worst(row, side)) { row = cand; rest = rest.slice(1) }
-    else flush()
-  }
-  if (row.length) flush()
-  return out
-}
-
-const CH = 7.3   // mono glyph width at the type floor
-
-const PAD = 12   // inset of the name from the tile's edge
-const GAP = 8    // cream between tiles
-const R = 14     // tile corner radius
-
-/* how a name sits in a tile of this size, or null if it cannot */
-function fitLabel(label, w, h) {
-  const words = label.split(' ')
-  if (label.length * CH <= w - PAD * 2 && h >= 52) return { mode: 'flat', lines: [label] }
-  if (words.length > 1 && h >= 68) {
-    const cut = Math.ceil(words.length / 2)
-    const lines = [words.slice(0, cut).join(' '), words.slice(cut).join(' ')]
-    if (Math.max(...lines.map(l => l.length)) * CH <= w - PAD * 2) return { mode: 'wrap', lines }
-  }
-  return null
+/* a thread drawn as the streak it most resembles: needs are petals, feelings
+   the signal, dayparts and tags the checkbox; the colour is the mode, the
+   mood band, or (for a tag) sage */
+function asStreak(t) {
+  const strip = t.strip || Array(12).fill(false)
+  if (t.dim === 'need') return { kind: 'need', mode: t.modeName || 'exploration', strip }
+  if (t.dim === 'feeling') return { kind: 'frequency', name: t.band || 'mid', strip }
+  return { kind: 'practice', mode: t.band || 'mid', strip }
 }
 
 export default function ThreadTiles({ threads, openId, onPick }) {
-  const W = 346   // the content column on a phone (390 wide, 22px gutters), so type stays at 1:1
-  const geo = useMemo(() => {
-    if (!threads.length) return null
-    const G = GAP
-    // every name must fit. Prefer showing every thread: first compress the
-    // scale so the big tiles yield some area, then let the plot grow a
-    // little taller, and only then drop the smallest threads
-    const POWERS = [1, 0.85, 0.7, 0.55]
-    const baseH = n => (n <= 2 ? 110 : n <= 4 ? 160 : n <= 7 ? 210 : 240)
-    const layout = (list, p, H) => {
-      const tiles = squarify(list.map(t => ({ ...t, v: Math.pow(t.windowCount, p) })), 0, 0, W, H)
-      return tiles.map(t => {
-        // grout only between tiles: the plot's outer edges are the screen's
-        const l = t.x > 0.5 ? G / 2 : 0, r = t.x + t.w < W - 0.5 ? G / 2 : 0
-        const tp = t.y > 0.5 ? G / 2 : 0, bt = t.y + t.h < H - 0.5 ? G / 2 : 0
-        const w = t.w - l - r, h = t.h - tp - bt
-        return { ...t, x: t.x + l, y: t.y + tp, w, h, fit: fitLabel(t.label, w, h), }
-      })
-    }
-    let drawn = null
-    for (let n = threads.length; n >= 1 && !drawn; n--) {
-      const list = threads.slice(0, n)
-      for (const p of POWERS) {
-        for (const H of [baseH(n), baseH(n) + 30, baseH(n) + 60]) {
-          const tiles = layout(list, p, H)
-          if (tiles.every(t => t.fit)) { drawn = { H, tiles }; break }
-        }
-        if (drawn) break
-      }
-      if (!drawn && n === 1) drawn = { H: baseH(1), tiles: layout(list, 1, baseH(1)) }   // one thread always shows
-    }
-    const shown = new Set(drawn.tiles.map(t => t.id))
-    return { H: drawn.H, drawn: drawn.tiles, small: threads.filter(t => !shown.has(t.id)) }
-  }, [threads])
-  if (!geo) return null
-
-  const { H, drawn, small } = geo
+  if (!threads.length) return null
   return (
-    <div className={styles.wrap}>
-      <div className={styles.bleed}>
-      <svg className={styles.svg} viewBox={`0 0 ${W} ${H}`} style={{ height: H }} role="img" aria-label="your most active threads">
-        <defs>
-          {/* the bloom's white: crisp and glossy, lit from the top left, with a
-              soft warm shade toward the far corner */}
-          <radialGradient id="tt-white" cx="0.3" cy="0.22" r="0.95">
-            <stop offset="0%" stopColor="#FFFFFF" />
-            <stop offset="55%" stopColor="#FFFFFF" />
-            <stop offset="100%" stopColor="#E6E1D3" />
-          </radialGradient>
-        </defs>
-        {drawn.map(t => {
-          const open = openId === t.id
-          const x = t.x, y = t.y
-          return (
-            <g key={t.id} className={styles.bed} onClick={() => onPick(t.id)} style={{ cursor: 'pointer' }}>
-              <rect x={x} y={y} width={t.w} height={t.h} rx={R} className={styles.tile} fill="url(#tt-white)" />
-              {open && <rect x={x + 4} y={y + 4} width={t.w - 8} height={t.h - 8} rx={R - 4} className={styles.ring} />}
-              {t.fit ? (
-                <>
-                  {t.fit.lines.map((ln, i) => <text key={i} x={x + PAD} y={y + 24 + i * 14} className={styles.lab}>{ln}</text>)}
-                  <text x={x + PAD} y={y + t.h - 12} className={styles.num}>{t.windowCount}</text>
-                </>
-              ) : (
-                <text x={x + PAD} y={y + t.h - 12} className={styles.num}>{t.windowCount}</text>
-              )}
-            </g>
-          )
-        })}
-      </svg>
-      </div>
-      {small.length > 0 && (
-        <p className={styles.small}>
-          {'also: '}
-          {small.map((t, i) => (
-            <span key={t.id}>
-              {i > 0 && ' · '}
-              <button type="button" className={styles.smallBtn} onClick={() => onPick(t.id)}>
-                <b>{t.windowCount}</b> {t.label}
-              </button>
+    <div className={styles.wrap} role="group" aria-label="your most active threads">
+      {threads.map(t => {
+        const streak = asStreak(t)
+        return (
+          <button
+            key={t.id}
+            type="button"
+            className={`${styles.row}${openId === t.id ? ` ${styles.open}` : ''}`}
+            onClick={() => onPick(t.id)}
+          >
+            <span className={styles.main}>
+              <span className={styles.top}>
+                <span className={styles.mark}><Glyph streak={streak} /></span>
+                <span className={styles.name}>{t.label}</span>
+              </span>
+              <span className={styles.meter}><Meter streak={streak} /></span>
             </span>
-          ))}
-        </p>
-      )}
+            <span className={styles.num}>{t.windowCount}<i>drafts</i></span>
+          </button>
+        )
+      })}
     </div>
   )
 }
