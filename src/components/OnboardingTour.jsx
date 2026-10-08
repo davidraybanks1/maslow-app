@@ -1,21 +1,28 @@
 import { useState, useEffect, useRef, useLayoutEffect } from 'react'
 import styles from './OnboardingTour.module.css'
 
+// Listed top to bottom, the order they sit on Today. A step whose target is not
+// on screen right now (e.g. the note deck once every note has been read) is
+// skipped, and the eyebrow counts whatever is left.
 const ALL_STEPS = [
   {
     target: 'space',
     body: [
-      "This is your space. It starts at 0 and fills as you check off daily practices.",
-      "The goal isn't always 100%. It's to figure out what works for you.",
+      "This is your loam. It fills as you check off your daily practices.",
+      "The goal isn’t always 100%. It’s to figure out what works for you.",
     ],
   },
   {
+    target: 'note',
+    body: ['Swipe through your notes to self to check off your first Reflection practice.'],
+  },
+  {
     target: 'modes',
-    body: ['Expand the modes to see your needs and daily practices. Tap a practice to mark it complete for the day.'],
+    body: ['Tap to show your needs and practices. Tap a practice to mark it complete.'],
   },
   {
     target: 'profile',
-    body: ['Open your profile to personalize your canvas, notes, and notifications.'],
+    body: ['Open your profile to customize your needs, notes, tags, and reminders.'],
   },
 ]
 
@@ -297,7 +304,7 @@ export default function OnboardingTour({ markTourSeen }) {
       )}
       <div className={styles.card} ref={cardRef} style={cardStyle}>
         <div className={styles.topRow}>
-          <span className={styles.eyebrow}>3 things to know</span>
+          <span className={styles.eyebrow}>{steps.length} thing{steps.length !== 1 ? 's' : ''} to know</span>
           <div className={styles.dots}>
             {steps.map((_, i) => (
               <div key={i} className={`${styles.dot} ${i === index ? styles.dotActive : ''}`} />

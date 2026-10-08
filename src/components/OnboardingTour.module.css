@@ -1,9 +1,12 @@
+/* The tour card wears the same clothes as the rest of Loam: the white shiny
+   card on the paper ground, a mono label, serif for the words, an ink pill for
+   the one thing to press. Only the scrim behind it is dark. */
 .overlay {
   position: fixed;
   inset: 0;
   z-index: 1000;
   pointer-events: auto;
-  background: rgba(24, 26, 22, 0.34);
+  background: rgba(29, 27, 22, 0.40);
 }
 
 .arrowSvg {
@@ -16,8 +19,10 @@
 
 .card {
   position: absolute;
-  background: #1F231D;
-  border-radius: 18px;
+  background: linear-gradient(128deg, #FFFFFF 0%, #FFFFFF 36%, #FBF5E9 50%, #FFFFFF 64%);
+  border: 0.5px solid rgba(60, 45, 20, 0.16);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(29, 27, 22, 0.22);
   padding: 20px 22px 18px;
   pointer-events: auto;
 }
@@ -26,7 +31,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .eyebrow {
@@ -34,7 +39,7 @@
   font-size: var(--type-floor);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(239, 236, 227, 0.38);
+  color: var(--ink3);
 }
 
 .dots {
@@ -46,23 +51,27 @@
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: rgba(239, 236, 227, 0.2);
+  background: var(--ink);
+  opacity: 0.16;
   flex-shrink: 0;
-  transition: background 200ms;
+  transition: opacity 200ms;
 }
 
 .dotActive {
-  background: rgba(239, 236, 227, 0.85);
+  opacity: 0.85;
 }
 
 .body {
-  font-family: var(--font-mono);
-  font-size: 13px;
+  font-family: var(--font-serif);
+  font-size: 19px;
   font-weight: 300;
-  line-height: 1.55;
-  color: rgba(239, 236, 227, 0.82);
-  margin: 0 0 20px;
+  line-height: 1.34;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin: 0 0 14px;
+  text-wrap: pretty;
 }
+.body:last-of-type { margin-bottom: 20px; }
 
 .actions {
   display: flex;
@@ -71,40 +80,46 @@
 }
 
 .primary {
-  background: rgba(239, 236, 227, 0.9);
-  color: #1F231D;
+  background: var(--ink);
+  color: var(--paper);
   border: none;
   border-radius: 999px;
-  padding: 9px 20px;
+  padding: 11px 22px;
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 500;
   line-height: 1;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  transition: opacity var(--motion-hover);
 }
 
 .primary:hover {
-  background: rgba(239, 236, 227, 1);
+  opacity: 0.88;
 }
 
 .secondary {
   background: none;
   border: none;
-  color: rgba(239, 236, 227, 0.38);
+  color: var(--ink3);
   font-family: var(--font-mono);
   font-size: var(--type-floor);
   font-weight: 400;
   line-height: 1;
   cursor: pointer;
-  padding: 0;
+  padding: 8px 0;
   -webkit-tap-highlight-color: transparent;
 }
 
 .secondary:hover {
-  color: rgba(239, 236, 227, 0.6);
+  color: var(--ink);
+}
+
+.primary:focus-visible, .secondary:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .dot { transition: none; }
+  .dot, .primary { transition: none; }
 }
