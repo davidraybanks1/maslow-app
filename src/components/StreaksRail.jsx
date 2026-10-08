@@ -77,7 +77,7 @@ export default function StreaksRail({ canvas, checkins, moods, practicesDB, firs
   return (
     <section className={`${styles.section}${first ? ` ${styles.first}` : ''}`}>
       <div className={styles.pad}>
-        <h2 className={styles.title}>Your streaks and lulls</h2>
+        <h2 className={styles.title}>Streaks and lulls</h2>
         <p className={styles.sub}>
           {running} streak{running === 1 ? '' : 's'} running · {lulled} lull{lulled === 1 ? '' : 's'}
         </p>
