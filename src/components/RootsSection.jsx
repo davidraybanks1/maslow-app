@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { buildLadder, openSecondDoor, walkLadder, tierCounts, oneIn } from '../lib/ladder'
+import { buildLadder, openSecondDoor, walkLadder, oneIn } from '../lib/ladder'
 import { MODE_ORDER } from '../lib/constants'
 import { useChartCapture } from '../lib/useChartCapture'
-import FinePrint from './FinePrint'
 import styles from './RootsSection.module.css'
 
 /* ── The ladder, drawn as a root system ──────────────────────────────────
@@ -26,9 +25,9 @@ const STROKE = {
 }
 const ORDER = ['significant', 'close', 'testing', 'quiet', 'new']
 const LEVELS = [
-  { v: 'significant', label: 'significant', shows: ['significant'] },
-  { v: 'close',       label: '+ close',     shows: ['significant', 'close'] },
-  { v: 'testing',     label: '+ testing',   shows: ['significant', 'close', 'testing'] },
+  { v: 'significant', label: 'strong', shows: ['significant'] },
+  { v: 'close',       label: '+ growing',   shows: ['significant', 'close'] },
+  { v: 'testing',     label: '+ light',     shows: ['significant', 'close', 'testing'] },
 ]
 const MODE_FILL = {
   exploration: 'var(--exploration)', appreciation: 'var(--appreciation-deep)',
@@ -102,31 +101,6 @@ const modeLabX = m => {
   return Math.max(-34 + half, Math.min(W + 34 - half, m.x)).toFixed(1)
 }
 
-const cap = s => s.charAt(0).toUpperCase() + s.slice(1)
-
-/** The sentence at the top: the deepest thing that held, said plainly. */
-function verdict(tree, wild) {
-  if (wild.length) {
-    const w = wild[0]
-    return { head: <><em>{cap(w.name)}</em> is a wild root — it carries a need that hasn&rsquo;t held on its own.</>, sub: `luck would do that ${oneIn(w.p)} · cleared the flat bar without its parents` }
-  }
-  const sigModes = tree.filter(m => m.tier === 'significant')
-  if (!sigModes.length) {
-    let best = null
-    walkLadder(tree, n => { if (n.p != null && (!best || n.p < best.p)) best = n })
-    return { head: <>No root has reached bottom yet.</>, sub: best ? `${best.name} is closest, at ${best.gap > 0 ? '+' : ''}${Math.round(best.gap)} · luck would do that ${oneIn(best.p)}` : 'keep logging' }
-  }
-  const m = sigModes[0]
-  const need = (m.children || []).find(n => n.tier === 'significant')
-  if (!need) return { head: <><em>{cap(m.name)}</em> holds, but no single need carries it yet.</>, sub: `+${Math.round(m.gap)} · luck would do that ${oneIn(m.p)}` }
-  const prac = (need.children || []).find(p => p.tier === 'significant')
-  if (!prac) return { head: <><em>{cap(need.name)}</em> is the root. It comes down through {m.name}.</>, sub: `+${Math.round(need.gap)} · luck would do that ${oneIn(need.p)}` }
-  return {
-    head: <><em>{cap(need.name)}</em> is the root. It comes down through {m.name} and reaches bottom at <em>{prac.name}</em>.</>,
-    sub: `${prac.name} +${Math.round(prac.gap)} · luck would do that ${oneIn(prac.p)}`,
-  }
-}
-
 export default function RootsSection({ canvas, checkins, moods, practicesDB, ghost }) {
   const [level, setLevel] = useState('testing')
   const [picked, setPicked] = useState(null)
@@ -170,12 +144,12 @@ export default function RootsSection({ canvas, checkins, moods, practicesDB, gho
     prevZoom.current = zoom
   }, [zoom, level])
 
-  const { tree, wild } = useMemo(() => {
+  const { tree } = useMemo(() => {
     const t = buildLadder({ canvas, checkins, moods, practicesDB, modeOrder: DRAW_ORDER })
-    const w = openSecondDoor(t, practicesDB)
+    openSecondDoor(t, practicesDB)   // marks the wild roots on the tree
     // buildLadder sorts by tier; the drawing wants the pyramid order
     t.sort((a, b) => DRAW_ORDER.indexOf(a.name) - DRAW_ORDER.indexOf(b.name))
-    return { tree: t, wild: w }
+    return { tree: t }
   }, [canvas, checkins, moods, practicesDB])
 
   const geo = useMemo(() => layout(tree), [tree])
@@ -184,9 +158,6 @@ export default function RootsSection({ canvas, checkins, moods, practicesDB, gho
 
   const shows = LEVELS.find(l => l.v === level).shows
   const lit = n => shows.includes(n.tier)
-  const counts = tierCounts(tree)
-  const { head, sub } = verdict(tree, wild)
-  const days = tree[0].days + tree[0].off
 
 
   /* labels, with the collision rule: a label may not sit on another label,
@@ -258,9 +229,7 @@ export default function RootsSection({ canvas, checkins, moods, practicesDB, gho
     <section ref={chartRef} className={styles.section}>
       <div className={styles.pad}>
         <h2 className={styles.title}>Your roots</h2>
-        <p className={styles.sub}>{days} days · {counts.total - tree.length - geo.nodes.filter(n => n.depth === 2).length} needs · {geo.nodes.filter(n => n.depth === 2).length} practices</p>
-        <p className={styles.head}>{head}</p>
-        <p className={styles.headSub}>{sub}</p>
+        <p className={styles.sub}>The longer and greener the root, the more it correlates to better vibrations.</p>
 
         <div ref={boxRef} className={`${styles.box}${zoom > 1 ? ` ${styles.boxZoomed}` : ''}`}
           style={zoom > 1 && baseH ? { maxHeight: baseH } : undefined}>
@@ -339,11 +308,6 @@ export default function RootsSection({ canvas, checkins, moods, practicesDB, gho
               onClick={() => setLevel(l.v)}>{l.label}</button>
           ))}
         </div>
-        <FinePrint>
-          <p>Every mode, need and practice here is a root, and the deeper it goes the surer I am that it actually moves your mood. Depth is evidence, nothing else.</p>
-          <p>A root can only grow from where the one above it stopped. So a practice can't get credit until its need and its mode have earned some first. That's deliberate: it stops one lucky week from looking like a discovery.</p>
-          <p>The exception is a <b>wild root</b>: a practice so strong it clears a much higher bar all on its own, even though its need didn't. Those are drawn in green hanging off grey.{wild.length ? ` You have ${wild.length}.` : ' You have none yet.'} Tap anything to see its numbers.</p>
-        </FinePrint>
       </div>
     </section>
   )

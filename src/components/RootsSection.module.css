@@ -4,7 +4,7 @@
   font-family: var(--serif, 'Newsreader', Georgia, serif);
   font-size: 23px; font-weight: 300; letter-spacing: -0.015em; margin: 0 0 3px;
 }
-.sub { font-family: var(--mono); font-size: var(--type-floor); color: var(--ink4); margin: 0 0 14px; }
+.sub { font-family: var(--mono); font-size: var(--type-floor); color: var(--ink3); margin: 0; line-height: 1.5; max-width: 44ch; }
 .head {
   font-family: var(--serif, 'Newsreader', Georgia, serif);
   font-weight: 300; font-size: 19px; line-height: 1.3; letter-spacing: -0.01em; margin: 0; max-width: 30ch;
