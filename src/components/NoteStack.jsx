@@ -2,9 +2,9 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import styles from './NoteStack.module.css'
 
 /* A tinder-style deck: one note on top, a couple peeking behind it. The top
-   note is dragged with a finger and let go - up, down, or to the left carries
+   note is dragged with a finger and let go - up, down, left or right carries
    it off the screen and it is gone for the session; a release that falls
-   short, or a drag to the right, springs back to centre. Everything below
+   short springs back to centre. Everything below
    pointerdown is imperative (direct style writes on the DOM node), so a drag
    never waits on a re-render - React only hears about it once a note has
    actually left, via onDismiss.
@@ -21,8 +21,13 @@ import styles from './NoteStack.module.css'
    removal), the browser's own transition carries it up to full size with a
    small overshoot - the "next card" pop needs no timer of its own. */
 
-const THRESH = { left: 96, up: 88, down: 110 }
-const FLING = { left: 640, up: 760, down: 760 }
+const THRESH = { left: 64, right: 64, up: 60, down: 72 }
+const FLING = { left: 640, right: 640, up: 760, down: 760 }
+// a quick flick counts even when it is short: this fast (px/ms), over at least
+// this far (px), measured across the last VELOCITY_WINDOW ms of the drag
+const FLICK_SPEED = 0.35
+const FLICK_MIN = 18
+const VELOCITY_WINDOW = 110
 const DEADZONE = 5
 const FLING_MS = 260   // slightly slower than the original 200ms toss
 const FLING_FALLBACK_MS = 320
@@ -33,6 +38,10 @@ const FLOURISH_TINT = 'rgba(255,209,102,.85)'
 
 export default function NoteStack({ cards, onDismiss, onCommit, renderCard }) {
   const [order, setOrder] = useState(cards)
+  // Cards already thrown but still mid-flight. They leave `order` the instant
+  // the swipe commits (so the next card is live and draggable straight away)
+  // and are only kept in the tree - inert - until their animation finishes.
+  const [leaving, setLeaving] = useState([])
   const idsKey = cards.map(c => c.id).join('|')
 
   // Only resync from the parent when the actual set of ids changes (a note
@@ -45,10 +54,15 @@ export default function NoteStack({ cards, onDismiss, onCommit, renderCard }) {
   const drag = useRef(null)
   const justDragged = useRef(false)
 
-  const settle = useCallback((id) => {
-    setOrder(o => o.filter(c => c.id !== id))
-    onDismiss(id)
+  const commitOut = useCallback((card) => {
+    setOrder(o => o.filter(c => c.id !== card.id))
+    setLeaving(l => [...l, card])
+    onDismiss(card.id)
   }, [onDismiss])
+
+  const land = useCallback((id) => {
+    setLeaving(l => l.filter(c => c.id !== id))
+  }, [])
 
   function onPointerDown(e, id) {
     if (order[0]?.id !== id) return
@@ -76,6 +90,7 @@ export default function NoteStack({ cards, onDismiss, onCommit, renderCard }) {
     // fade a little as the drag nears whichever dismiss threshold it is closest to
     const prog = Math.min(1, Math.max(
       d.dx < 0 ? -d.dx / THRESH.left : 0,
+      d.dx > 0 ? d.dx / THRESH.right : 0,
       d.dy < 0 ? -d.dy / THRESH.up : 0,
       d.dy > 0 ? d.dy / THRESH.down : 0,
     ))
@@ -92,15 +107,28 @@ export default function NoteStack({ cards, onDismiss, onCommit, renderCard }) {
     if (Math.hypot(d.dx, d.dy) < DEADZONE) { justDragged.current = false; return }
     setTimeout(() => { justDragged.current = false }, 0)
 
-    const first = d.samples[0], last = d.samples[d.samples.length - 1]
-    const dt = Math.max(1, last.t - first.t)
+    // speed over the final stretch of the drag only - a slow start must not
+    // drag down a flick that ended fast
+    const last = d.samples[d.samples.length - 1]
+    let first = last
+    for (let k = d.samples.length - 2; k >= 0; k--) {
+      if (last.t - d.samples[k].t > VELOCITY_WINDOW) break
+      first = d.samples[k]
+    }
+    const dt = Math.max(8, last.t - first.t)
     const vx = (last.dx - first.dx) / dt, vy = (last.dy - first.dy) / dt   // px/ms
+    // a finger that has stopped before lifting is a placement, not a flick
+    const idle = performance.now() - last.t > 120
 
-    const leftScore = (d.dx < -THRESH.left || (vx < -0.5 && d.dx < -24)) ? -d.dx / THRESH.left : 0
-    const upScore = (d.dy < -THRESH.up || (vy < -0.5 && d.dy < -24)) ? -d.dy / THRESH.up : 0
-    const downScore = (d.dy > THRESH.down || (vy > 0.5 && d.dy > 24)) ? d.dy / THRESH.down : 0
-    const best = Math.max(leftScore, upScore, downScore)
-    const dir = best === 0 ? null : best === leftScore ? 'left' : best === upScore ? 'up' : 'down'
+    const leftScore = (d.dx < -THRESH.left || (!idle && vx < -FLICK_SPEED && d.dx < -FLICK_MIN)) ? -d.dx / THRESH.left : 0
+    const rightScore = (d.dx > THRESH.right || (!idle && vx > FLICK_SPEED && d.dx > FLICK_MIN)) ? d.dx / THRESH.right : 0
+    const upScore = (d.dy < -THRESH.up || (!idle && vy < -FLICK_SPEED && d.dy < -FLICK_MIN)) ? -d.dy / THRESH.up : 0
+    const downScore = (d.dy > THRESH.down || (!idle && vy > FLICK_SPEED && d.dy > FLICK_MIN)) ? d.dy / THRESH.down : 0
+    const best = Math.max(leftScore, rightScore, upScore, downScore)
+    const dir = best === 0 ? null
+      : best === leftScore ? 'left'
+      : best === rightScore ? 'right'
+      : best === upScore ? 'up' : 'down'
 
     if (dir) {
       // the haptic and the throw fire together - the tick is the moment of
@@ -113,6 +141,7 @@ export default function NoteStack({ cards, onDismiss, onCommit, renderCard }) {
       const rot = Math.max(-28, Math.min(28, d.dx / 7))
       const targets = {
         left: `translate(-${FLING.left}px, ${d.dy - 30}px) rotate(${Math.min(rot, -20)}deg) scale(.9)`,
+        right: `translate(${FLING.right}px, ${d.dy - 30}px) rotate(${Math.max(rot, 20)}deg) scale(.9)`,
         up: `translate(${d.dx}px, -${FLING.up}px) rotate(${rot}deg) scale(.88)`,
         down: `translate(${d.dx}px, ${FLING.down}px) rotate(${rot}deg) scale(.88)`,
       }
@@ -120,16 +149,32 @@ export default function NoteStack({ cards, onDismiss, onCommit, renderCard }) {
       el.style.opacity = '0'
       el.style.boxShadow = FLOURISH_GLOW_LIT
       el.style.backgroundColor = FLOURISH_TINT
+      // the card leaves the deck right now - the next one is live for the
+      // very next touch - and the thrown one just finishes its flight inert
+      const card = order.find(c => c.id === d.id)
+      if (card) commitOut(card)
       const id = d.id
       let done = false
-      const finish = () => { if (done) return; done = true; el.removeEventListener('transitionend', finish); settle(id) }
+      const finish = (ev) => {
+        if (ev && ev.target !== el) return   // a child's transition bubbling up
+        if (done) return
+        done = true
+        el.removeEventListener('transitionend', finish)
+        land(id)
+      }
       el.addEventListener('transitionend', finish)
-      setTimeout(finish, FLING_FALLBACK_MS)
+      setTimeout(() => finish(), FLING_FALLBACK_MS)
     } else {
       el.style.transition = 'transform 340ms cubic-bezier(.34,1.4,.4,1), opacity 200ms ease-out'
       el.style.transform = 'translate(0px, 0px) rotate(0deg)'
       el.style.opacity = '1'
-      const clear = () => { el.style.transition = 'none'; el.removeEventListener('transitionend', clear) }
+      // only the spring itself (transform) ends the spring-back - the opacity
+      // fade finishes sooner and must not cut the transform off mid-bounce
+      const clear = (ev) => {
+        if (ev.target !== el || ev.propertyName !== 'transform') return
+        el.style.transition = 'none'
+        el.removeEventListener('transitionend', clear)
+      }
       el.addEventListener('transitionend', clear)
     }
   }
@@ -147,9 +192,27 @@ export default function NoteStack({ cards, onDismiss, onCommit, renderCard }) {
     if (justDragged.current) { e.preventDefault(); e.stopPropagation() }
   }
 
+  // One flat, keyed list - thrown cards first, then the live deck - so a card
+  // keeps its DOM node (and its in-flight transition) when it moves from the
+  // deck to the leaving set. Ghosts sit first so the live cards never get
+  // re-ordered around them.
+  const items = [
+    ...leaving.map(card => ({ card, ghost: true })),
+    ...order.slice(0, 3).map((card, i) => ({ card, i })),
+  ]
+
   return (
     <div className={styles.stack}>
-      {order.slice(0, 3).map((card, i) => (
+      {items.map(({ card, ghost, i }) => ghost ? (
+        <div
+          key={card.id}
+          className={styles.card}
+          style={{ zIndex: 2, pointerEvents: 'none' }}
+          aria-hidden="true"
+        >
+          {renderCard(card)}
+        </div>
+      ) : (
         <div
           key={card.id}
           ref={i === 0 ? topRef : null}
