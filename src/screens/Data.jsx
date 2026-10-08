@@ -717,6 +717,7 @@ export default function Data({ state, profileMenu }) {
           <h1 className={styles.pageTitle}>data.</h1>
           <div className={styles.pageHeaderAccount}>{profileMenu}</div>
         </div>
+        <p className={styles.pageSubhead}>Your practices and vibrations, shown from different angles.</p>
 
         {!hasCanvas && (
           <p className={styles.emptyState}>set up your canvas to see your data.</p>

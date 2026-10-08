@@ -44,6 +44,16 @@
 
 .pageHeaderAccount { flex-shrink: 0; }
 
+/* One line under the title, set like the drafts page's subhead. */
+.pageSubhead {
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  font-weight: 300;
+  color: var(--ink3);
+  line-height: 1.5;
+  margin: 0 0 8px;
+}
+
 /* ── Groups: the titled bands of the page ─────────────────────────────── */
 .group { margin-top: 32px; border-top: 0.5px solid var(--hairline); padding-top: 26px; }
 .groupFirst { margin-top: 18px; border-top: 0; padding-top: 0; }
