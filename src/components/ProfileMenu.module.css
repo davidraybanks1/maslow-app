@@ -322,7 +322,14 @@ button.card, .tile, .remCard {
 }
 .moreText { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .moreText .mono { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.moreTitle { font-family: var(--font-serif); font-size: 17px; font-weight: 300; }
+.moreTitle {
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--pf-muted);
+}
 .moreChevron { display: flex; flex: none; transition: transform var(--motion-hover); }
 .moreChevronOpen { transform: rotate(180deg); }
 .moreList { display: flex; flex-direction: column; padding: 0 4px 12px; }
