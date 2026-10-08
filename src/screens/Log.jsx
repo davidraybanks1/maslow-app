@@ -726,6 +726,7 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
           <div className={styles.pageTitle}>drafts.</div>
           <div className={styles.pageTitleAccount}>{profileMenu}</div>
         </div>
+        <p className={styles.pageSubhead}>Your drafts organized, ready to review and revisit</p>
 
         {archiveLoaded && archiveAllJournalDays.size < 7 && (
           <FirstWeekCard
