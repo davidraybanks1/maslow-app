@@ -36,7 +36,7 @@ const FLING_FALLBACK_MS = 320
 const FLOURISH_GLOW_LIT = '0 0 48px 16px rgba(240,168,0,.55), 0 10px 30px rgba(240,168,0,.25)'
 const FLOURISH_TINT = 'rgba(255,209,102,.85)'
 
-export default function NoteStack({ cards, onDismiss, onCommit, renderCard }) {
+export default function NoteStack({ cards, onDismiss, onCommit, renderCard, dataTour }) {
   const [order, setOrder] = useState(cards)
   // Cards already thrown but still mid-flight. They leave `order` the instant
   // the swipe commits (so the next card is live and draggable straight away)
@@ -216,6 +216,8 @@ export default function NoteStack({ cards, onDismiss, onCommit, renderCard }) {
         <div
           key={card.id}
           ref={i === 0 ? topRef : null}
+          // the tour frames the top card itself, not the full-width box around the deck
+          data-tour={i === 0 ? dataTour : undefined}
           className={`${styles.card}${i > 0 ? ` ${styles.cardBehind}` : ''}`}
           // Kept low on purpose: the bloom sits at z-index 2 (Today.module.css's
           // .headerRingWrap), and neither .stack nor its ancestors isolate a

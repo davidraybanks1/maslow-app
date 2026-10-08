@@ -191,6 +191,8 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   }, [])
 
   // Completion ring: segments pack contiguously from 12 o'clock in mode order.
+  // the tour points at the first mode that has needs in it (the one it opens)
+  const firstTierMode = MODE_ORDER.find(m => NEEDS.some(n => state.canvas[n.id] === m))
   const ringArcs = []
   let totalRingFraction = 0
   for (const mode of MODE_ORDER) {
@@ -887,12 +889,13 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
 
         {/* ── Note to self deck ── */}
         {deckReviewed && <div className={styles.deckReviewedSpace} aria-hidden="true" />}
-        {!deckReviewed && <div className={styles.reflectiveSection} data-tour="note">
+        {!deckReviewed && <div className={styles.reflectiveSection}>
             <div className={styles.noteDeckSection}>
               {noteDeck.length > 0 ? (
                 isDesktop ? (
                   <div
                     className={styles.noteDeckWrapper}
+                    data-tour="note"
                     ref={deckWrapperRef}
                     onScroll={handleDeckScroll}
                   >
@@ -934,6 +937,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 ) : (
                   <>
                     <NoteStack
+                      dataTour="note"
                       cards={visibleDeck}
                       onDismiss={handleNoteDismissed}
                       onCommit={hapticTick}
@@ -1059,7 +1063,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         <div className={styles.moodDivider} />
 
         {/* ── Needs & Practices ── */}
-        <div className={styles.practicesCard} data-tour="modes">
+        <div className={styles.practicesCard}>
           <div className={styles.tierSectionHeader}>
             <span className={styles.tierSectionLabel}>
               {isDesktop && <Glyph kind="mode" />}
@@ -1089,6 +1093,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                   <div
                     key={mode}
                     className={styles.tier}
+                    data-tour={mode === firstTierMode ? 'modes' : undefined}
                     ref={el => { tierElems.current[mode] = el }}
                   >
                     <button
@@ -1144,6 +1149,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 <div
                   key={mode}
                   className={`${styles.tier} ${isOpen ? styles.tierOpen : ''}`}
+                  data-tour={mode === firstTierMode ? 'modes' : undefined}
                 >
                   <button
                     className={styles.tierHeader}

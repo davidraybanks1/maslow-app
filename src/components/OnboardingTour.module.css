@@ -17,6 +17,14 @@
   pointer-events: none;
 }
 
+.ring {
+  position: absolute;
+  border: 1.5px solid rgba(239, 234, 221, 0.9);
+  border-radius: 22px;
+  pointer-events: none;
+  transition: left 200ms ease, top 200ms ease, width 200ms ease, height 200ms ease;
+}
+
 .card {
   position: absolute;
   background: linear-gradient(128deg, #FFFFFF 0%, #FFFFFF 36%, #FBF5E9 50%, #FFFFFF 64%);
@@ -121,5 +129,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .dot, .primary { transition: none; }
+  .dot, .primary, .ring { transition: none; }
 }

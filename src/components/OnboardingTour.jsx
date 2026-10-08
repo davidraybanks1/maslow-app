@@ -7,6 +7,7 @@ import styles from './OnboardingTour.module.css'
 const ALL_STEPS = [
   {
     target: 'space',
+    top: true,            // lives in the header: always scroll back to the top first
     body: [
       "This is your loam. It fills as you check off your daily practices.",
       "The goal isn’t always 100%. It’s to figure out what works for you.",
@@ -14,19 +15,37 @@ const ALL_STEPS = [
   },
   {
     target: 'note',
+    ring: true,
     body: ['Swipe through your notes to self to check off your first Reflection practice.'],
   },
   {
     target: 'modes',
+    ring: true,
     body: ['Tap to show your needs and practices. Tap a practice to mark it complete.'],
   },
   {
     target: 'profile',
+    top: true,
+    ring: true,
     body: ['Open your profile to customize your needs, notes, tags, and reminders.'],
   },
 ]
 
-const CARD_MARGIN = 56
+const CARD_MARGIN = 40   // room for the arrow between the card and what it points at
+const RING_PAD = 5       // the outline sits this far outside the thing it frames
+
+// The part of the screen under the status bar / notch, so a target scrolled
+// "into view" is never left tucked behind the clock.
+function safeInsetTop() {
+  const p = document.createElement('div')
+  p.style.cssText = 'position:fixed;top:0;left:0;height:0;padding-top:env(safe-area-inset-top,0px);visibility:hidden;pointer-events:none'
+  document.body.appendChild(p)
+  const v = p.getBoundingClientRect().height
+  document.body.removeChild(p)
+  return v || 0
+}
+
+const grow = (r, pad) => ({ left: r.left - pad, right: r.right + pad, top: r.top - pad, bottom: r.bottom + pad, width: r.width + pad * 2, height: r.height + pad * 2 })
 
 // Returns the first [data-tour="X"] element with a non-zero painted rect.
 // Handles duplicate attribute names across mutually-exclusive branches
@@ -84,20 +103,32 @@ export default function OnboardingTour({ markTourSeen }) {
     if (!match) return
 
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const behavior = reduceMotion ? 'auto' : 'smooth'
+    const scroller = findScrollParent(match.el)
+    const scrolledY = scroller === window ? window.scrollY : scroller.scrollTop
     const { top, bottom, left, right } = match.rect
-    const alreadyInView = top >= 0 && bottom <= window.innerHeight && left >= 0 && right <= window.innerWidth
+    const vh = window.innerHeight
 
-    if (alreadyInView || reduceMotion) {
-      if (!alreadyInView) match.el.scrollIntoView({ behavior: 'auto', block: 'nearest' })
-      measureStep(index, steps)
-      return
+    // What is actually visible: below the status bar, above the tab bar.
+    const nav = findLiveEl('nav')
+    const floor = nav && nav.rect.top > vh / 2 ? nav.rect.top : vh
+    const ceiling = safeInsetTop() + 12
+    const inView = top >= ceiling && bottom <= floor - 12 && left >= 0 && right <= window.innerWidth
+
+    let moves = false
+    if (step.top) {
+      // header targets: back to the very top, however far the last step scrolled
+      if (scrolledY > 1) { scroller.scrollTo({ top: 0, behavior }); moves = true }
+    } else if (!inView) {
+      // centre it, so the card has room on whichever side it lands
+      match.el.scrollIntoView({ behavior, block: 'center' })
+      moves = true
     }
 
-    match.el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    if (!moves) { measureStep(index, steps); return }
+    if (reduceMotion) { measureStep(index, steps); return }
 
-    const scroller = findScrollParent(match.el)
     let settled = false
-
     function settle() {
       if (settled) return
       settled = true
@@ -175,7 +206,7 @@ export default function OnboardingTour({ markTourSeen }) {
   function computeArrow() {
     if (!cardRef.current || !spotRect) { setArrowPath(null); return }
     const c = cardRef.current.getBoundingClientRect()
-    const t = spotRect
+    const t = steps[index]?.ring ? grow(spotRect, RING_PAD) : spotRect
     const tCX = t.left + t.width / 2
     const tCY = t.top + t.height / 2
     const cCX = c.left + c.width / 2
@@ -222,7 +253,7 @@ export default function OnboardingTour({ markTourSeen }) {
     // Quadratic control point: midpoint + perpendicular offset (30% of length).
     const mx = (sx + ex) / 2, my = (sy + ey) / 2
     const perpX = -dy / len, perpY = dx / len
-    const bow = len * 0.3
+    const bow = len * 0.18
     const cx = (mx + perpX * bow).toFixed(1)
     const cy = (my + perpY * bow).toFixed(1)
 
@@ -243,7 +274,7 @@ export default function OnboardingTour({ markTourSeen }) {
   const isMobile = vw < 900
   const DESKTOP_W = 320
 
-  const t = spotRect
+  const t = step.ring ? grow(spotRect, RING_PAD) : spotRect
   let cardStyle
 
   if (isMobile) {
@@ -301,6 +332,13 @@ export default function OnboardingTour({ markTourSeen }) {
             markerEnd="url(#tour-arrowhead)"
           />
         </svg>
+      )}
+      {step.ring && (
+        <div
+          className={styles.ring}
+          aria-hidden="true"
+          style={{ left: t.left, top: t.top, width: t.width, height: t.height }}
+        />
       )}
       <div className={styles.card} ref={cardRef} style={cardStyle}>
         <div className={styles.topRow}>
