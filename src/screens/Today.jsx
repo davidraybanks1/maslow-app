@@ -1342,7 +1342,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         ) : (
           <div className={styles.cardJournal} data-tour="journal">
             <div className={styles.sectionHeader}>
-              <span className={styles.sectionLabel}><Glyph kind="note" />drafts</span>
+              <span className={styles.sectionLabel}>drafts</span>
               <span className={styles.journalEntryCount}>
                 {journalEntryCount > 0 ? `${journalEntryCount} ${journalEntryCount === 1 ? 'entry' : 'entries'} today` : ''}
               </span>
