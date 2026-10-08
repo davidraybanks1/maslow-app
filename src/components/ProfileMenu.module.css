@@ -1,3 +1,4 @@
+/* ── Avatar (the round "D" in every screen's title row) ── */
 .wrapper {
   position: relative;
   flex-shrink: 0;
@@ -34,405 +35,566 @@
 /* ── Keyframes ── */
 @keyframes sheetIn  { from { transform: translateY(100%); } to { transform: translateY(0); } }
 @keyframes sheetOut { from { transform: translateY(0); } to { transform: translateY(100%); } }
+@keyframes panelIn  { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes panelOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(24px); } }
 @keyframes scrimIn  { from { opacity: 0; } to { opacity: 1; } }
 @keyframes scrimOut { from { opacity: 1; } to { opacity: 0; } }
-/* Dropdown that opens downward (header, small-screen): settles down from above */
-@keyframes dropdownIn  { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes dropdownOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-4px); } }
-/* Rail dropdown that opens upward: settles up from slightly below */
-@keyframes dropUpIn  { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes dropUpOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(4px); } }
+@keyframes viewIn   { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: translateX(0); } }
 
-/* ── Mobile scrim ── */
-.scrim {
+/* ── Container ──
+   Mobile: the profile is its own full screen below the status bar.
+   Desktop: a 460px panel down the right side over a light scrim. */
+.layer {
   position: fixed;
   inset: 0;
-  z-index: 150;
-  background: rgba(20,18,12,.28);
+  z-index: 300;
+  pointer-events: none;
+}
+.layer > * { pointer-events: auto; }
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(29, 27, 22, 0.16);
   animation: scrimIn 200ms ease both;
 }
 .scrimClosing { animation: scrimOut 220ms ease both; }
 
-/* ── Mobile: bottom sheet ── */
-.menu {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 151;
-  background: var(--card);
-  border-radius: 26px 26px 0 0;
-  padding-top: 0;
+.panel {
+  --pf-ink: #1d1b16;
+  --pf-ink2: #3d392f;
+  --pf-muted: #6f685a;
+  --pf-faint: #8a8273;
+  --pf-inset: #F7F3EA;
+  --pf-track: #E2DCCE;
+  --pf-rule: rgba(60, 45, 20, 0.12);
+  --pf-line: rgba(60, 45, 20, 0.16);
+  --pf-xl: 'Newsreader Extralight', var(--font-serif);
+
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
-  max-height: 90vh;
-  overflow: hidden;
+  background: var(--paper);
+  color: var(--pf-ink);
+  font-family: var(--font-serif);
+  -webkit-font-smoothing: antialiased;
+  outline: none;
   animation: sheetIn 300ms cubic-bezier(0.32, 0.72, 0.28, 1) both;
 }
-.menuClosing { animation: sheetOut 220ms cubic-bezier(0.32, 0.72, 0.28, 1) both; }
+.panelClosing { animation: sheetOut 220ms cubic-bezier(0.32, 0.72, 0.28, 1) both; }
 
-/* Bottom-fade: dissolves the last rows into the tab-bar zone.
-   Doubles as a scroll affordance — rows visibly melt as they approach the edge. */
-@media (max-width: 899px) {
-  .menu::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 56px;
-    background: linear-gradient(to bottom, rgba(255,255,255,0), var(--paper));
-    pointer-events: none;
-    z-index: 1;
+@media (min-width: 900px) {
+  .panel {
+    left: auto;
+    width: 460px;
+    border-left: 0.5px solid var(--pf-line);
+    box-shadow: -8px 0 40px rgba(0, 0, 0, 0.08);
+    animation: panelIn 180ms ease both;
   }
+  .panelClosing { animation: panelOut 150ms ease both; }
 }
 
-/* ── Inner scroll body ──
-   Mobile: owns the scroll + bottom clearance.
-   Desktop: transparent pass-through; .menu handles overflow there. */
-.scrollBody {
+.scroll {
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: calc(var(--safe-bottom) + 96px);
-}
-@media (min-width: 900px) {
-  .scrollBody { overflow: visible; padding-bottom: 0; }
+  padding: calc(var(--safe-top) + 20px) 16px calc(var(--safe-bottom) + 36px);
 }
 
-/* ── Desktop: rail dropdown ── */
-@media (min-width: 900px) {
-  /* position:absolute clears mobile fixed/bottom:0/left:0; JS overrides to
-     fixed+bottom+left via inline style for the rail anchor. */
-  .menu {
-    position: absolute;
-    bottom: auto;
-    left: auto;
-    border: 0.5px solid var(--hairline);
-    padding: 10px 0 10px;
-    z-index: 200;
-    max-height: 80vh;
-    overflow-y: auto;
-  }
-
-  /* Rail dropdown: JS applies position:fixed+bottom+left; CSS sets size, shape, animation. */
-  .menuDropUp {
-    width: 320px;
-    border-radius: 16px;
-    animation: dropUpIn 150ms ease both;
-  }
-  .menuDropUp.menuClosing { animation: dropUpOut 150ms ease both; }
-}
-
-/* ── Reduced motion: instant both ways ── */
-@media (prefers-reduced-motion: reduce) {
-  .menu, .menuClosing, .scrim, .scrimClosing { animation: none !important; }
-}
-
-/* ── Drag handle (mobile sheet only) ── */
-.dragHandle {
-  width: 36px;
-  height: 4px;
-  border-radius: 2px;
-  background: rgba(0,0,0,.15);
-  margin: 12px auto 0;
-  flex-shrink: 0;
-}
-@media (min-width: 900px) { .dragHandle { display: none; } }
-
-/* ── Sheet header (mobile only) ── */
-.sheetHeader {
+.view {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 20px 6px;
-  flex-shrink: 0;
+  flex-direction: column;
+  gap: 12px;
 }
-@media (min-width: 900px) { .sheetHeader { display: none; } }
+.viewIn { animation: viewIn 180ms ease both; }
 
-.sheetTitle {
+/* ── Shared bits ── */
+.title {
+  margin: 0;
   font-family: var(--font-serif);
+  font-size: 30px;
   font-weight: 300;
-  font-size: 22px;
-  line-height: 1;
-  color: var(--ink);
+  line-height: 1.1;
 }
 
-.closeBtn {
-  width: 30px;
-  height: 30px;
-  border-radius: 15px;
-  border: 1px solid rgba(0,0,0,.14);
-  background: transparent;
-  color: rgba(0,0,0,.5);
+.mono {
   font-family: var(--font-mono);
-  font-size: 13px;
-  line-height: 1;
-  cursor: pointer;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--pf-muted);
+}
+
+/* the white shiny card */
+.card {
+  background: linear-gradient(128deg, #FFFFFF 0%, #FFFFFF 36%, #FBF5E9 50%, #FFFFFF 64%);
+  border: 0.5px solid var(--pf-line);
+  border-radius: 20px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+}
+
+button.card, .tile, .remCard {
+  font: inherit;
+  color: inherit;
+}
+
+/* ── Home: title row ── */
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 6px;
+}
+.closeBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 0.5px solid rgba(60, 45, 20, 0.22);
+  background: #FFFFFF;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
+  cursor: pointer;
+  padding: 0;
+  transition: background var(--motion-hover);
   -webkit-tap-highlight-color: transparent;
 }
-.closeBtn:hover { background: var(--track); }
+.closeBtn:hover { background: var(--pf-inset); }
 
-/* ── Section label wrapper — owns gutter and vertical rhythm only ── */
-.sectionLabel {
-  padding: 0 20px;
-  margin-top: 16px;
-  margin-bottom: 5px;
-}
-.sectionLabel:first-of-type { margin-top: 8px; }
-@media (min-width: 900px) {
-  .sectionLabel { padding: 0 14px; margin-top: 12px; }
-  .sectionLabel:first-of-type { margin-top: 4px; }
-}
-
-/* ── Highlighter pills — inline-block so they hug the word, not full-width bars ── */
-.sectionLabelPersonalize,
-.sectionLabelNotifications,
-.sectionLabelAccount,
-.sectionLabelAbout {
-  display: inline-block;
-  padding: 3px 9px;
-  border-radius: 5px;
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  font-weight: 500;
-  font-variant: small-caps;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-.sectionLabelPersonalize    { background: rgba(245,182,34,.35);  color: var(--ink); }
-.sectionLabelNotifications  { background: rgba(90,130,180,.25);  color: var(--ink); }
-.sectionLabelAccount        { background: rgba(27,58,45,.35);    color: var(--ink); }
-.sectionLabelAbout          { background: rgba(171,190,163,.35); color: var(--ink); }
-
-/* ── Section container (no card borders) ── */
-.section {
+/* ── Home: identity ── */
+.identity {
+  padding: 22px 20px;
   display: flex;
   flex-direction: column;
+  gap: 8px;
+}
+.name {
+  font-family: var(--pf-xl);
+  font-size: 40px;
+  font-weight: 200;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
 }
 
-/* ── Row ── */
-.row {
+/* ── Home: tiles ── */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.tile {
   display: flex;
-  align-items: center;
-  min-height: 46px;
-  padding: 10px 20px;
-  font-family: var(--font-serif);
-  font-weight: 300;
-  font-size: 16px;
-  color: var(--ink);
-  text-decoration: none;
-  background: none;
-  border: none;
-  border-top: 0.5px solid rgba(0,0,0,.09);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 16px 14px;
   cursor: pointer;
   text-align: left;
-  width: 100%;
-  box-sizing: border-box;
+  transition: transform var(--motion-hover);
   -webkit-tap-highlight-color: transparent;
 }
-.row:first-child { border-top: none; }
-.row:hover { background: rgba(26,26,26,.03); }
-@media (min-width: 900px) {
-  .row { padding: 8px 14px; font-size: 15px; min-height: 38px; }
+.tile:hover, .remCard:hover { transform: translateY(-1px); }
+.spheres {
+  display: flex;
+  gap: 3px;
+  height: 34px;
+  align-items: center;
 }
-
-/* ── Row content wrapper (for rows with title + sub) ── */
-.rowContent {
+.sphere9 {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+.tileNum {
+  font-family: var(--pf-xl);
+  font-size: 34px;
+  font-weight: 200;
+  line-height: 1;
+  height: 34px;
+}
+.tileText {
   display: flex;
   flex-direction: column;
-  flex: 1;
-  min-width: 0;
+  gap: 2px;
 }
-.rowTitle {
-  flex: 1;
-}
-.rowSub {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  color: rgba(0,0,0,.38);
-  margin-top: 2px;
+.tileLabel {
+  font-family: var(--font-serif);
+  font-size: 19px;
+  font-weight: 300;
+  line-height: 1.15;
 }
 
-.rowMeta {
+/* ── Home: reminders summary ── */
+.remCard {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 18px 18px 16px;
+  cursor: pointer;
+  text-align: left;
+  transition: transform var(--motion-hover);
+  -webkit-tap-highlight-color: transparent;
+}
+.remHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+.remTitleCol { display: flex; flex-direction: column; gap: 3px; }
+.remTitle { font-family: var(--font-serif); font-size: 22px; font-weight: 300; }
+
+.dayLine {
+  position: relative;
+  height: 54px;
+  width: 100%;
+}
+.dayRule {
+  position: absolute;
+  left: 0; right: 0; top: 6px;
+  height: 0.5px;
+  background: rgba(60, 45, 20, 0.3);
+}
+.dayEnd {
+  position: absolute;
+  top: 38px;
   font-family: var(--font-mono);
   font-size: 12px;
-  color: rgba(0,0,0,.45);
-  margin-right: 8px;
+  color: var(--pf-faint);
 }
-.rowChevron {
+.dayEndL { left: 0; }
+.dayEndR { right: 0; }
+.dayStop {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+.daySphere {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+.daySphereOff { background: #FFFFFF; border: 1px solid var(--pf-faint); }
+.dayTime {
   font-family: var(--font-mono);
-  color: rgba(0,0,0,.35);
-  margin-left: 4px;
+  font-size: 12px;
+  color: var(--pf-ink);
+  white-space: nowrap;
+}
+.dayTimeOff { color: var(--pf-faint); }
+
+/* ── Home: account, help & about ── */
+.more {
+  margin-top: 14px;
+  border-top: 0.5px solid var(--pf-line);
+  border-bottom: 0.5px solid var(--pf-line);
+}
+.moreHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 4px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+.moreText { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.moreText .mono { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.moreTitle { font-family: var(--font-serif); font-size: 17px; font-weight: 300; }
+.moreChevron { display: flex; flex: none; transition: transform var(--motion-hover); }
+.moreChevronOpen { transform: rotate(180deg); }
+.moreList { display: flex; flex-direction: column; padding: 0 4px 12px; }
+.moreRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 10px 0;
+  border: 0;
+  border-top: 0.5px solid rgba(60, 45, 20, 0.1);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-serif);
   font-size: 16px;
-  line-height: 1;
+  font-weight: 300;
+  color: inherit;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
 }
-
-.rowStatic {
-  cursor: default;
-  pointer-events: none;
+div.moreRow { cursor: default; }
+.moreRow .mono { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.legalRow {
+  display: flex;
+  gap: 16px;
+  padding-top: 10px;
+  border-top: 0.5px solid rgba(60, 45, 20, 0.1);
 }
-.rowStatic:hover { background: none; }
-
-.rowEmail {
+.legalRow a {
   font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  color: rgba(0,0,0,.38);
-  cursor: default;
-  word-break: break-all;
+  font-size: 12px;
+  color: var(--pf-muted);
 }
-.rowEmail:hover { background: none; }
+.legalRow a:hover { color: var(--pf-ink); }
 
-/* Sign out — default state: serif, --destructive color */
-.rowSignOut {
-  color: var(--destructive);
+/* ── Home: sign out ── */
+.signOut {
+  align-self: center;
+  margin-top: 22px;
+  padding: 10px 18px;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-serif);
+  font-size: 17px;
+  font-weight: 300;
+  color: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 5px;
+  text-decoration-thickness: 0.5px;
+  transition: opacity var(--motion-hover);
+  -webkit-tap-highlight-color: transparent;
 }
-/* Sign out — confirm state: destructive fill */
-.rowSignOutConfirm {
-  background: var(--destructive);
-  color: var(--card);
-}
-.rowSignOutConfirm:hover { background: var(--destructive); opacity: .9; }
+.signOut:hover { opacity: 0.6; }
 
-/* ── Toggle switch (show note to self) — 42×24, accent track ── */
-.toggleSwitch {
-  flex-shrink: 0;
-  pointer-events: none;
+/* ── Reminders page ── */
+.remPageHead {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 4px 6px;
 }
-.toggleTrack {
-  width: 42px;
-  height: 24px;
-  border-radius: 12px;
-  border: 1px solid rgba(0,0,0,.14);
-  background: rgba(0,0,0,.08);
+.back {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--pf-ink2);
+  -webkit-tap-highlight-color: transparent;
+}
+.remPageRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.remBody {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: opacity var(--motion-hover);
+}
+.remBodyOff { opacity: 0.4; pointer-events: none; }
+
+.listCard { padding: 8px 18px; }
+.cardLabel { padding: 10px 0 4px; }
+.rule { border-bottom: 0.5px solid var(--pf-rule); }
+.foot { padding: 4px 6px; }
+
+/* toggle */
+.toggle {
+  flex: none;
   position: relative;
-  transition: background 150ms ease-out, border-color 150ms ease-out;
+  width: 44px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 13px;
+  background: var(--pf-track);
+  cursor: pointer;
+  transition: background var(--motion-toggle);
+  -webkit-tap-highlight-color: transparent;
 }
-.toggleTrackOn {
-  background: var(--exploration);
-  border-color: var(--exploration);
-}
+.toggleOn { background: var(--exploration); }
 .toggleKnob {
   position: absolute;
   top: 2px;
   left: 2px;
-  width: 18px;
-  height: 18px;
-  border-radius: 9px;
-  background: white;
-  transition: left 150ms ease-out;
-  display: block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform var(--motion-toggle);
 }
-.toggleKnobOn { left: 21px; }
-@media (prefers-reduced-motion: reduce) {
-  .toggleTrack { transition: none; }
-  .toggleKnob  { transition: none; }
+.toggleOn .toggleKnob { transform: translateX(18px); }
+.toggle:focus-visible, .pill:focus-visible, .preset:focus-visible, .stepBtn:focus-visible,
+.tile:focus-visible, .remCard:focus-visible, .moreHead:focus-visible, .closeBtn:focus-visible {
+  outline: 2px solid rgba(26, 26, 26, .35);
+  outline-offset: 2px;
 }
 
-/* ── Cadence picker (inline expansion) ── */
-.cadencePicker {
+/* mood check-in rows */
+.slot {
+  padding: 12px 0;
   display: flex;
   flex-direction: column;
-  padding: 4px 20px 14px;
-  border-top: none;
+  gap: 14px;
 }
-@media (min-width: 900px) {
-  .cadencePicker { padding: 4px 14px 10px; }
+.slotRow { display: flex; align-items: center; gap: 12px; }
+.slotText { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.slotLabel { font-family: var(--font-serif); font-size: 21px; font-weight: 300; }
+.pill {
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 0.5px solid rgba(60, 45, 20, 0.18);
+  background: var(--pf-inset);
+  font-family: var(--font-serif);
+  font-size: 19px;
+  font-weight: 300;
+  color: var(--pf-ink);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color var(--motion-hover);
+  -webkit-tap-highlight-color: transparent;
 }
+.pillOff { color: var(--pf-faint); }
+.pillEditing { border: 1px solid var(--pf-ink); padding: 6.5px 13.5px; }
 
-.cadenceSection {
+.editor {
   display: flex;
-  gap: 8px;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--pf-inset);
 }
-
-.cadenceBtn {
+.stepper { display: flex; align-items: center; gap: 8px; }
+.stepBtn {
   flex: 1;
-  padding: 8px;
-  border-radius: 8px;
-  border: 0.5px solid var(--hairline);
-  background: none;
+  height: 44px;
+  border-radius: 12px;
+  border: 0.5px solid rgba(60, 45, 20, 0.2);
+  background: #FFFFFF;
   font-family: var(--font-mono);
   font-size: 12px;
-  color: var(--ink2);
+  color: var(--pf-ink);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.cadenceBtnActive {
-  background: var(--ink);
-  color: var(--card);
-  border-color: var(--ink);
+.stepTime {
+  flex: 1.3;
+  text-align: center;
+  font-family: var(--pf-xl);
+  font-size: 30px;
+  font-weight: 200;
+  white-space: nowrap;
 }
-
-.cadenceFieldLabel {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(0,0,0,.38);
-  margin-top: 10px;
-  margin-bottom: 6px;
-}
-
-.cadenceDayRow {
-  display: flex;
-  gap: 4px;
-}
-
-.cadenceDayBtn {
-  flex: 1;
-  padding: 7px 0;
-  border-radius: 8px;
-  border: 0.5px solid var(--hairline);
-  background: none;
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  color: var(--ink2);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.cadenceTimeInput {
-  width: 100%;
-  box-sizing: border-box;
+.presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.preset {
   padding: 8px 12px;
-  border: 0.5px solid var(--hairline);
   border-radius: 999px;
+  border: 0.5px solid rgba(60, 45, 20, 0.2);
+  background: #FFFFFF;
+  color: var(--pf-ink2);
   font-family: var(--font-mono);
   font-size: 12px;
-  color: var(--ink);
-  background: transparent;
-  outline: none;
+  cursor: pointer;
+  transition: background var(--motion-hover);
+  -webkit-tap-highlight-color: transparent;
 }
+.presetActive { background: var(--pf-ink); color: var(--paper); }
 
-/* Inline time input for notification slot rows — same styling as cadenceTimeInput but auto-width */
-.notifTimeInput {
-  padding: 4px 10px;
-  border: 0.5px solid var(--hairline);
-  border-radius: 999px;
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  color: var(--ink);
-  background: transparent;
-  outline: none;
-  width: auto;
-  flex-shrink: 0;
-  margin-right: 8px;
-  cursor: default;
-}
-
-/* ── Footer / build stamp ── */
-.footer {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  color: rgba(0,0,0,.32);
-  padding: 12px 20px 0;
+/* practice reminder rows */
+.tone {
   display: flex;
-  gap: 6px;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 14px 0;
 }
-@media (min-width: 900px) {
-  .footer { padding: 10px 14px 0; }
+.tone .toggle { margin-top: 2px; }
+.toneText { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.toneLabel { font-family: var(--font-serif); font-size: 20px; font-weight: 300; }
+.toneDesc { line-height: 1.5; }
+.toneExample {
+  margin-top: 4px;
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-style: italic;
+  font-weight: 300;
+  color: var(--pf-ink2);
+}
+
+/* ── Sign-out confirm ── */
+.confirmScrim {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  box-sizing: border-box;
+  background: rgba(29, 27, 22, 0.3);
+  animation: scrimIn 150ms ease both;
+}
+.dialog {
+  width: 100%;
+  max-width: 340px;
+  box-sizing: border-box;
+  padding: 26px 22px 20px;
+  border-radius: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+.dialogTitle { font-family: var(--pf-xl); font-size: 28px; font-weight: 200; line-height: 1.15; }
+.dialogBody {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 1.45;
+  color: var(--pf-ink2);
+  text-wrap: pretty;
+  overflow-wrap: anywhere;
+}
+.dialogBtns { display: flex; flex-direction: column; gap: 8px; width: 100%; margin-top: 8px; }
+.dialogPrimary {
+  height: 48px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--pf-ink);
+  color: var(--paper);
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 300;
+  cursor: pointer;
+  transition: opacity var(--motion-hover);
+}
+.dialogPrimary:hover { opacity: 0.85; }
+.dialogCancel {
+  height: 44px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font-family: var(--font-serif);
+  font-size: 17px;
+  font-weight: 300;
+  cursor: pointer;
+}
+
+/* ── Reduced motion: no slides, no fades ── */
+@media (prefers-reduced-motion: reduce) {
+  .panel, .panelClosing, .scrim, .scrimClosing, .viewIn, .confirmScrim { animation: none !important; }
+  .tile, .remCard, .toggle, .toggleKnob, .moreChevron, .remBody, .pill, .preset, .closeBtn, .signOut, .dialogPrimary { transition: none !important; }
 }

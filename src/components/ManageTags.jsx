@@ -116,7 +116,7 @@ export default function ManageTags({ userId, onClose }) {
         {/* ── Teaching illustration: caption + facsimile entry card ── */}
         <div className={styles.illustration} aria-hidden="true">
           <p className={styles.illustrationCaption}>
-            your tags appear on journal entries alongside time, state, and need — and become filters in your review archive.
+            your tags appear on journal entries alongside time, state, and need — and become filters in your drafts.
           </p>
           <div className={styles.facsimile}>
             <div className={styles.facsimileMeta}>

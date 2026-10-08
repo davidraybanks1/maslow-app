@@ -102,7 +102,7 @@ function AppInner() {
     if (['/', '/signin', '/onboarding'].includes(location.pathname)) navigate('/today')
   }
 
-  const { state, authLoading, updateCanvas, replaceCanvas, addPractice, renamePractice, archivePractice, removePractice, setPracticeReminder, stampReminderOffered, incrementOffersDeclined, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood, completeOnboarding, updateReviewSchedule, updateReviewCadence, updateRemindersEnabled, updateReviewReminderEnabled, updateMoodReminder, updateNotifType, markNotifPrimed, markTourSeen, resetTour, updateNoteDeck, syncCheckinDay } = useAppState(
+  const { state, authLoading, updateCanvas, replaceCanvas, addPractice, renamePractice, archivePractice, removePractice, setPracticeReminder, stampReminderOffered, incrementOffersDeclined, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood, completeOnboarding, updateRemindersEnabled, updateMoodReminder, updateNotifType, markNotifPrimed, markTourSeen, resetTour, updateNoteDeck, syncCheckinDay } = useAppState(
     () => onSignInRef.current?.()
   )
 
@@ -129,7 +129,7 @@ function AppInner() {
   }, [authLoading, hasCachedSession, ritualElapsed])
 
   // Native shell: dismiss the iOS splash once we're rendering (loader or app),
-  // and keep the local reminder schedule in sync with the review settings.
+  // and keep the local reminder schedule in sync with the reminder settings.
   useEffect(() => { hideSplash() }, [])
 
   // Mood reminder tap → navigate to Today and scroll the mood card into view.
@@ -169,10 +169,6 @@ function AppInner() {
         scheduleReminders({
           remindersEnabled: state.remindersEnabled,
           moodReminders: state.moodReminders,
-          reviewReminderEnabled: state.reviewReminderEnabled,
-          reviewCadence: state.reviewCadence,
-          reviewDay: state.reviewDay ?? 0,
-          reviewTime: state.reviewTime || '10:00',
           practicesDB: state.practicesDB,
           practiceStats: stats.getPracticeStats(),
           notifTypes: state.notifTypes,
@@ -180,7 +176,7 @@ function AppInner() {
       }, 600)
     }
     return () => clearTimeout(scheduleTimerRef.current)
-  }, [state.onboarded, state.userId, state.remindersEnabled, state.moodReminders, state.reviewReminderEnabled, state.reviewCadence, state.reviewDay, state.reviewTime, state.practicesDB, state.checkins, state.canvas, state.notifTypes])
+  }, [state.onboarded, state.userId, state.remindersEnabled, state.moodReminders, state.practicesDB, state.checkins, state.canvas, state.notifTypes])
 
   // Someone who hasn't onboarded gets the same splash as the first onboarding
   // screen, so the daily loader stays out of their way.
@@ -195,15 +191,14 @@ function AppInner() {
   // it was a full-width row holding nothing but the mark and this menu, so
   // those screens render the menu themselves, up in their own title row,
   // instead of paying for a whole extra bar.
+  const needCount = Object.values(state.canvas || {}).filter(Boolean).length
   const profileMenuEl = (
     <ProfileMenu
       name={state.profile?.name} email={state.email}
-      reviewCadence={state.reviewCadence} updateReviewCadence={updateReviewCadence}
-      reviewDay={state.reviewDay} reviewTime={state.reviewTime} updateReviewSchedule={updateReviewSchedule}
       remindersEnabled={state.remindersEnabled} updateRemindersEnabled={updateRemindersEnabled}
-      reviewReminderEnabled={state.reviewReminderEnabled} updateReviewReminderEnabled={updateReviewReminderEnabled}
       moodReminders={state.moodReminders} updateMoodReminder={updateMoodReminder}
       notifTypes={state.notifTypes} updateNotifType={updateNotifType}
+      needCount={needCount}
       noteDeckCount={(state.noteDeck || []).length}
       customTagCount={customTagCount}
       resetTour={resetTour}
@@ -213,11 +208,11 @@ function AppInner() {
   return (
     <HeaderSlotContext.Provider value={setHeaderSlot}>
     <div className={styles.shell} style={{ '--kb': kbInset + 'px' }} {...(state.onboarded && { 'data-tabbar': '' })} {...(headerSlot && { 'data-appheader': '' })}>
-      {state.onboarded && <DesktopNav name={state.profile.name} email={state.email} reviewCadence={state.reviewCadence} updateReviewCadence={updateReviewCadence} reviewDay={state.reviewDay} reviewTime={state.reviewTime} updateReviewSchedule={updateReviewSchedule} remindersEnabled={state.remindersEnabled} updateRemindersEnabled={updateRemindersEnabled} reviewReminderEnabled={state.reviewReminderEnabled} updateReviewReminderEnabled={updateReviewReminderEnabled} moodReminders={state.moodReminders} updateMoodReminder={updateMoodReminder} notifTypes={state.notifTypes} updateNotifType={updateNotifType} noteDeckCount={(state.noteDeck || []).length} customTagCount={customTagCount} resetTour={resetTour} onOpenComposer={() => setComposerOpen(true)} hideComposer={location.pathname === '/today'} />}
+      {state.onboarded && <DesktopNav name={state.profile.name} email={state.email} remindersEnabled={state.remindersEnabled} updateRemindersEnabled={updateRemindersEnabled} moodReminders={state.moodReminders} updateMoodReminder={updateMoodReminder} notifTypes={state.notifTypes} updateNotifType={updateNotifType} needCount={needCount} noteDeckCount={(state.noteDeck || []).length} customTagCount={customTagCount} resetTour={resetTour} onOpenComposer={() => setComposerOpen(true)} hideComposer={location.pathname === '/today'} />}
       <div className={styles.column}>
       {state.onboarded && headerSlot && (
         <div className={styles.appHeader}>
-          <AppHeader slot={headerSlot} name={state.profile.name} email={state.email} reviewCadence={state.reviewCadence} updateReviewCadence={updateReviewCadence} reviewDay={state.reviewDay} reviewTime={state.reviewTime} updateReviewSchedule={updateReviewSchedule} remindersEnabled={state.remindersEnabled} updateRemindersEnabled={updateRemindersEnabled} reviewReminderEnabled={state.reviewReminderEnabled} updateReviewReminderEnabled={updateReviewReminderEnabled} moodReminders={state.moodReminders} updateMoodReminder={updateMoodReminder} notifTypes={state.notifTypes} updateNotifType={updateNotifType} noteDeckCount={(state.noteDeck || []).length} customTagCount={customTagCount} resetTour={resetTour} />
+          <AppHeader slot={headerSlot} name={state.profile.name} email={state.email} remindersEnabled={state.remindersEnabled} updateRemindersEnabled={updateRemindersEnabled} moodReminders={state.moodReminders} updateMoodReminder={updateMoodReminder} notifTypes={state.notifTypes} updateNotifType={updateNotifType} needCount={needCount} noteDeckCount={(state.noteDeck || []).length} customTagCount={customTagCount} resetTour={resetTour} />
         </div>
       )}
       <div className={styles.content} ref={contentRef} data-scroll>

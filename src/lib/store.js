@@ -65,12 +65,7 @@ function migrateState(saved) {
     if (!saved.practicesDB) saved.practicesDB = []
     if (!saved.noteDeck) saved.noteDeck = []
     if (saved.onboardedAt === undefined) saved.onboardedAt = null
-    if (saved.reviewDay === undefined) saved.reviewDay = 0
-    if (saved.reviewTime === undefined) saved.reviewTime = '10:00'
-    // The weekly review is retired: everyone reviews daily.
-    saved.reviewCadence = 'daily'
     if (saved.remindersEnabled === undefined) saved.remindersEnabled = null
-    if (saved.reviewReminderEnabled === undefined) saved.reviewReminderEnabled = true
     if (saved.notifPrimedAt === undefined) saved.notifPrimedAt = null
     if (saved.tourSeenAt === undefined) saved.tourSeenAt = null
     if (!saved.moodReminders) saved.moodReminders = { morning: { on: true, time: '09:00' }, midday: { on: true, time: '13:00' }, evening: { on: true, time: '19:00' } }
@@ -127,11 +122,7 @@ export function initialState() {
     noteDeck: [],
     profile: { name: '' },
     email: '',
-    reviewDay: 0,
-    reviewTime: '10:00',
-    reviewCadence: 'daily',
     remindersEnabled: null,
-    reviewReminderEnabled: true,
     notifPrimedAt: null,
     tourSeenAt: null,
     moodReminders: { morning: { on: true, time: '09:00' }, midday: { on: true, time: '13:00' }, evening: { on: true, time: '19:00' } },
@@ -218,11 +209,7 @@ async function restoreFromSupabase(userId, email) {
       profile: { name: user.name || '' },
       email: email,
       onboardedAt: user.onboarded_at || null,
-      reviewDay: user.review_day ?? 0,
-      reviewTime: user.review_time || '10:00',
-      reviewCadence: 'daily', // weekly review is retired; the stored value is ignored
       remindersEnabled: user.reminders_enabled ?? null,
-      reviewReminderEnabled: user.review_reminder_enabled !== false,
       notifPrimedAt: user.notif_primed_at || null,
       tourSeenAt: user.tour_seen_at || null,
       moodReminders: user.mood_reminders || { morning: { on: true, time: '09:00' }, midday: { on: true, time: '13:00' }, evening: { on: true, time: '19:00' } },
@@ -627,28 +614,6 @@ export function useAppState(onSignIn) {
     }))
   }
 
-  function updateReviewSchedule(day, time) {
-    setState(prev => {
-      if (prev.userId) {
-        supabase.from('users').update({ review_day: day, review_time: time }).eq('id', prev.userId).then(({ error }) => {
-          if (error) logSupabaseError('updateReviewSchedule', error)
-        })
-      }
-      return { ...prev, reviewDay: day, reviewTime: time }
-    })
-  }
-
-  function updateReviewCadence(cadence) {
-    setState(prev => {
-      if (prev.userId) {
-        supabase.from('users').update({ review_cadence: cadence }).eq('id', prev.userId).then(({ error }) => {
-          if (error) logSupabaseError('updateReviewCadence', error)
-        })
-      }
-      return { ...prev, reviewCadence: cadence }
-    })
-  }
-
   function updateRemindersEnabled(value) {
     setState(prev => {
       if (prev.userId) {
@@ -657,17 +622,6 @@ export function useAppState(onSignIn) {
         })
       }
       return { ...prev, remindersEnabled: value }
-    })
-  }
-
-  function updateReviewReminderEnabled(value) {
-    setState(prev => {
-      if (prev.userId) {
-        supabase.from('users').update({ review_reminder_enabled: value }).eq('id', prev.userId).then(({ error }) => {
-          if (error) logSupabaseError('updateReviewReminderEnabled', error)
-        })
-      }
-      return { ...prev, reviewReminderEnabled: value }
     })
   }
 
@@ -826,7 +780,7 @@ export function useAppState(onSignIn) {
     })
   }
 
-  return { state, authLoading, updateCanvas, replaceCanvas, addPractice, renamePractice, archivePractice, removePractice, setPracticeReminder, stampReminderOffered, incrementOffersDeclined, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood, completeOnboarding, updateReviewSchedule, updateReviewCadence, updateRemindersEnabled, updateReviewReminderEnabled, updateMoodReminder, updateNotifType, markNotifPrimed, markTourSeen, resetTour, updateNoteDeck, syncCheckinDay }
+  return { state, authLoading, updateCanvas, replaceCanvas, addPractice, renamePractice, archivePractice, removePractice, setPracticeReminder, stampReminderOffered, incrementOffersDeclined, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood, completeOnboarding, updateRemindersEnabled, updateMoodReminder, updateNotifType, markNotifPrimed, markTourSeen, resetTour, updateNoteDeck, syncCheckinDay }
 }
 
 export function todayKey() {
@@ -1157,17 +1111,6 @@ export async function uploadNoteImage(userId, file) {
   return { url: data.publicUrl, error: null }
 }
 
-export async function loadWeeklyReviews(userId, limit) {
-  let query = supabase
-    .from('weekly_reviews')
-    .select('*')
-    .eq('user_id', userId)
-    .order('week_starting', { ascending: false })
-  if (limit) query = query.limit(limit)
-  const { data } = await query
-  return data || []
-}
-
 export async function loadUserCreatedAt(userId) {
   const { data } = await supabase
     .from('users')
@@ -1175,26 +1118,6 @@ export async function loadUserCreatedAt(userId) {
     .eq('id', userId)
     .single()
   return data?.created_at || null
-}
-
-export async function saveWeeklyReview(userId, { weekStarting, weeklyMood, stepsCompleted, reviewDate, cadence }) {
-  const { data, error } = await supabase
-    .from('weekly_reviews')
-    .upsert(
-      {
-        user_id: userId,
-        week_starting: weekStarting,
-        weekly_mood: weeklyMood,
-        steps_completed: stepsCompleted,
-        review_date: reviewDate || null,
-        cadence: cadence || 'weekly',
-      },
-      { onConflict: 'user_id,week_starting' }
-    )
-    .select()
-    .single()
-  if (error) logSupabaseError('saveWeeklyReview', error)
-  return { data, error }
 }
 
 export async function loadPracticeCompletionStats(userId) {

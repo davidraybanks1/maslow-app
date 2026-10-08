@@ -12,7 +12,7 @@ const ITEMS = [
   ['/log', 'drafts'],
 ]
 
-export default function DesktopNav({ name, email, reviewCadence, updateReviewCadence, reviewDay, reviewTime, updateReviewSchedule, remindersEnabled, updateRemindersEnabled, reviewReminderEnabled, updateReviewReminderEnabled, moodReminders, updateMoodReminder, notifTypes, updateNotifType, noteDeckCount, customTagCount, resetTour, onOpenComposer, hideComposer }) {
+export default function DesktopNav({ name, email, remindersEnabled, updateRemindersEnabled, moodReminders, updateMoodReminder, notifTypes, updateNotifType, needCount, noteDeckCount, customTagCount, resetTour, onOpenComposer, hideComposer }) {
   const linkClass = ({ isActive }) => `${styles.item} ${isActive ? styles.itemActive : ''}`
   return (
     <aside className={styles.nav} aria-label="Primary" data-tour="nav">
@@ -37,16 +37,13 @@ export default function DesktopNav({ name, email, reviewCadence, updateReviewCad
         )}
         <ProfileMenu
           name={name} email={email}
-          reviewCadence={reviewCadence} updateReviewCadence={updateReviewCadence}
-          reviewDay={reviewDay} reviewTime={reviewTime} updateReviewSchedule={updateReviewSchedule}
           remindersEnabled={remindersEnabled} updateRemindersEnabled={updateRemindersEnabled}
-          reviewReminderEnabled={reviewReminderEnabled} updateReviewReminderEnabled={updateReviewReminderEnabled}
           moodReminders={moodReminders} updateMoodReminder={updateMoodReminder}
           notifTypes={notifTypes} updateNotifType={updateNotifType}
+          needCount={needCount}
           noteDeckCount={noteDeckCount}
           customTagCount={customTagCount}
           resetTour={resetTour}
-          dropUp
         />
       </div>
     </aside>

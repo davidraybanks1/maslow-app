@@ -1,14 +1,10 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { hapticTick } from '../lib/native'
 import { normalizeBand, BAND_LABEL, FEELINGS, BANDS } from '../lib/frequency'
 import FrequencyCard from '../components/FrequencyCard'
 import { IconHeart, IconHeartFilled } from '@tabler/icons-react'
 import { NEEDS, MODE_MAX_BUBBLES, JOURNAL_TRUNCATE } from '../lib/constants'
-import { weekKey, todayKey, loadWeeklyReviews, loadJournalEntry, loadDebriefs, loadDebriefTypes, addNoteDeckCard, saveWeeklyReview, loadAllJournalMeta, loadJournalArchive, updateJournalEntryTags, toggleJournalFavorite, toggleJournalRevisit, loadDayCheckins, loadCustomTags } from '../lib/store'
-import { createDataStats } from '../lib/dataStats'
+import { loadJournalEntry, loadDebriefs, loadDebriefTypes, loadAllJournalMeta, loadJournalArchive, updateJournalEntryTags, toggleJournalFavorite, toggleJournalRevisit, loadDayCheckins, loadCustomTags } from '../lib/store'
 import { natureTagStyle, peakTagStyle, ENVIRONMENT_TAG_STYLE, parseDebriefEntry } from '../lib/debriefTypes'
-import LiveCanvasCard from '../components/LiveCanvasCard'
 import JournalQuote from '../components/JournalQuote'
 import { supabase } from '../lib/supabase'
 import ThreadTiles from '../components/ThreadTiles'
@@ -27,68 +23,10 @@ const MOOD_PERIODS = ['morning', 'midday', 'evening']
 const ANXIETY_SECTION_LABELS = ['1. NAME IT', '2. FEEL IT', '3. EXAMINE IT', '4. RECLAIM IT']
 const PEAK_SECTION_LABELS = ['1. NAME IT', '2. FEEL IT', '3. EXAMINE IT', '4. ANCHOR IT']
 
-const REVIEW_DAY_LABELS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-const REVIEW_PROGRESS = { 1: 20, 2: 40, 3: 60, 4: 80, 5: 100 }
-
-const WEEKLY_MOOD_OPTIONS = [
-  { id: 'strong', name: 'strong', desc: 'real momentum — most days felt like progress.' },
-  { id: 'steady', name: 'steady', desc: 'consistent. nothing dramatic either way.' },
-  { id: 'mixed', name: 'mixed', desc: 'some real highs, some real lows.' },
-  { id: 'hard', name: 'hard', desc: 'this week took more than it gave.' },
-]
-
-const NOTE_MAX_LENGTH = 120
-const NOTE_LIBRARY = [
-  'everything can be appreciated. most things can be enjoyed. everything else can be learned from.',
-  'take up space.',
-  'anxiety is just a misfired neurotransmission that was given room to grow.',
-  'everything you want is on the other side of discomfort.',
-  "don't play it safe.",
-]
-
 const EMPTY_DEBRIEF_TYPES = { nature: [], environment: [], peak: [] }
 
 function dateKeyFor(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
-// Returns 7 day keys oldest-first for the review window.
-// daily: rolling previous 7 days ending today.
-// weekly: fixed calendar week Mon–Sun anchored on the current Monday.
-function reviewWindowKeys(cadence) {
-  if (cadence === 'daily') {
-    const days = []
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date()
-      d.setDate(d.getDate() - i)
-      days.push(dateKeyFor(d))
-    }
-    return days
-  }
-  const monday = new Date()
-  monday.setHours(0, 0, 0, 0)
-  monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7))
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(monday)
-    d.setDate(d.getDate() + i)
-    return dateKeyFor(d)
-  })
-}
-
-function todayWeekdayMonday() {
-  return (new Date().getDay() + 6) % 7
-}
-
-// The key stored as week_starting when a review is saved for the current period.
-// weekly: Monday of the current calendar week (matches weekKey()).
-// daily: 6 days ago — the oldest day in the rolling 7-day window (matches reviewWindowKeys('daily')[0]).
-function periodKey(cadence) {
-  if (cadence === 'daily') {
-    const d = new Date()
-    d.setDate(d.getDate() - 6)
-    return dateKeyFor(d)
-  }
-  return weekKey()
 }
 
 function formatCardDate(dateKey) {
@@ -146,13 +84,6 @@ function formatRangeLabel(start, end) {
   return `${formatRangeDateStr(start)} – ${formatRangeDateStr(end)}`
 }
 
-
-function ritualMetaLine(cadence) {
-  const days = reviewWindowKeys(cadence)
-  const first = new Date(days[0] + 'T12:00:00')
-  const last = new Date(days[days.length - 1] + 'T12:00:00')
-  return `${WDAYS[first.getDay()]} ${first.getDate()} — ${WDAYS[last.getDay()]} ${last.getDate()} ${MONTHS_LONG[last.getMonth()]} · ~8 min`
-}
 
 function matchesPredicate(e, pred, afterKey, beforeKey) {
   if (pred.fav     && !e.favorite) return false
@@ -250,28 +181,6 @@ function computeActiveThreads(archiveEntries, canvas, customTags) {
   return scored.slice(0, 10)
 }
 
-// Monday-indexed (0=Mon..6=Sun) review day -> the matching JS Date.getDay() value (0=Sun..6=Sat)
-function reviewDayToJsDay(reviewDay) {
-  return (reviewDay + 1) % 7
-}
-
-function firstScheduledDateOnOrAfter(startDate, reviewDay) {
-  const targetJsDay = reviewDayToJsDay(reviewDay)
-  const d = new Date(startDate)
-  d.setHours(12, 0, 0, 0)
-  while (d.getDay() !== targetJsDay) d.setDate(d.getDate() + 1)
-  return d
-}
-
-
-function formatReviewTime(time) {
-  const [hStr, m] = (time || '10:00').split(':')
-  let h = parseInt(hStr, 10)
-  const ampm = h >= 12 ? 'pm' : 'am'
-  h = h % 12 || 12
-  return `${h}:${m}${ampm}`
-}
-
 function dominantMoodForDay(moods, dateKey) {
   const dayMoods = moods.filter(m => m.date_key === dateKey)
   if (dayMoods.length === 0) return null
@@ -326,38 +235,6 @@ function practicesByNeedForDay(checkins, dateKey) {
     byNeed[needId].push(checkinPracticeText(c))
   }
   return byNeed
-}
-
-function computeInsight(stats, allDebriefs) {
-  const { patternAnxiety, patternPeak } = stats.getDebriefStats(allDebriefs)
-  if (patternAnxiety) return patternAnxiety
-  if (patternPeak) return patternPeak
-  const ratio = stats.getPattern()
-  if (ratio !== null) {
-    return `on days you complete 80%+ of your practices, you log good ${ratio.toFixed(1)}× more often than on days below 50%.`
-  }
-  return null
-}
-
-function ReviewStepShell({ pct, eyebrow, headline, sub, onBack, onContinue, onSkip, continueLabel, hideSkip, children }) {
-  return (
-    <div className={styles.screen}>
-      <div className={styles.reviewProgressBar}>
-        <div className={styles.reviewProgressFill} style={{ width: `${pct}%` }} />
-      </div>
-      <div className={styles.reviewContent}>
-        <button className={styles.reviewBackBtn} onClick={onBack}>← back</button>
-        <div className={styles.reviewEyebrow}>{eyebrow}</div>
-        <div className={styles.reviewHeadline}>{headline}</div>
-        <div className={styles.reviewSub}>{sub}</div>
-        {children}
-      </div>
-      <div className={styles.reviewFooter}>
-        <button className={styles.reviewContinueBtn} onClick={onContinue}>{continueLabel || 'continue →'}</button>
-        {!hideSkip && <button className={styles.reviewSkipBtn} onClick={onSkip}>skip this step</button>}
-      </div>
-    </div>
-  )
 }
 
 function DayCardExpandedContent({ canvas, checkins, dateKey, moods, journal, debriefs, debriefTypes }) {
@@ -573,24 +450,7 @@ function FullLogAccordion({ state }) {
 }
 
 export default function Log({ state, syncCheckinDay, profileMenu }) {
-  const navigate = useNavigate()
-
   const [showFullLog, setShowFullLog] = useState(false)
-  const [reviewStep, setReviewStep] = useState(null) // null | 1-5
-  const [justFinished, setJustFinished] = useState(false)
-  const [expandedReviewDay, setExpandedReviewDay] = useState(null)
-
-  const [weekJournals, setWeekJournals] = useState({})
-  const [weekDebriefs, setWeekDebriefs] = useState([])
-  const [reviewDebriefTypes, setReviewDebriefTypes] = useState(EMPTY_DEBRIEF_TYPES)
-  const [insightText, setInsightText] = useState(null)
-
-  const [weeklyMood, setWeeklyMood] = useState(null)
-  const [stepsCompletedCount, setStepsCompletedCount] = useState(0)
-  const [noteDraft, setNoteDraft] = useState('')
-  const [finishing, setFinishing] = useState(false)
-  const [skipDecisionSteps, setSkipDecisionSteps] = useState(false)
-  const [reviewWindowDays, setReviewWindowDays] = useState([])
 
   const [calYear, setCalYear] = useState(() => new Date().getFullYear())
   const [calMonth, setCalMonth] = useState(() => new Date().getMonth())
@@ -602,11 +462,6 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
   useEffect(() => { setEditMode(false) }, [selectedDayKey])
 
   const [journalMeta, setJournalMeta] = useState([])
-  const [ritualDismissed, setRitualDismissed] = useState(() => {
-    try { return localStorage.getItem('maslow_ritual_dismissed') === new Date().toDateString() } catch { return false }
-  })
-  const [weeklyReviews, setWeeklyReviews] = useState([])
-
   const [archiveEntries, setArchiveEntries] = useState([])
   const [archiveLoaded, setArchiveLoaded] = useState(false)
   const [customTags, setCustomTags] = useState([])
@@ -634,8 +489,6 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
 
   const [resurfacePool, setResurfacePool] = useState([])
   const [resurfaceIdx, setResurfaceIdx] = useState(0)
-
-  const stats = createDataStats({ canvas: state.canvas || {}, checkins: state.checkins || {}, moods: state.moods || [], practices: state.practices || {} })
 
   // ── Memoised archive computations ──────────────────────────────────────────
   const activeThreads = useMemo(
@@ -713,7 +566,6 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
   useEffect(() => {
     if (!state.userId) return
     loadAllJournalMeta(state.userId).then(setJournalMeta)
-    loadWeeklyReviews(state.userId, 5).then(setWeeklyReviews)
   }, [state.userId])
 
   useEffect(() => {
@@ -788,92 +640,6 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
     if (error) setArchiveEntries(prev => prev.map(e => e.id === id ? { ...e, revisit: currentRevisit } : e))
   }
 
-  async function startReview() {
-    setWeeklyMood(null)
-    setNoteDraft('')
-    setStepsCompletedCount(0)
-    setExpandedReviewDay(null)
-    setInsightText(null)
-    setReviewStep(1)
-
-    if (!state.userId) { console.error('[startReview] called without userId — session may be invalid'); setReviewStep(null); return }
-    const cadence = state.reviewCadence || 'daily'
-    const days = reviewWindowKeys(cadence)
-    setReviewWindowDays(days)
-
-    setSkipDecisionSteps(false)
-
-    const [entries, allDebriefs, types] = await Promise.all([
-      Promise.all(days.map(d => loadJournalEntry(state.userId, d))),
-      loadDebriefs(state.userId),
-      loadDebriefTypes(state.userId),
-    ])
-    const journalMap = {}
-    days.forEach((d, i) => { journalMap[d] = entries[i] })
-    setWeekJournals(journalMap)
-    setWeekDebriefs(allDebriefs.filter(d => days.includes(d.date_key)))
-    setReviewDebriefTypes(types)
-    setInsightText(computeInsight(stats, allDebriefs))
-  }
-
-  function handleContinue(fromStep) {
-    setStepsCompletedCount(c => c + 1)
-    advance(fromStep)
-  }
-
-  function handleSkip(fromStep) {
-    advance(fromStep)
-  }
-
-  function advance(fromStep) {
-    const cadence = state.reviewCadence || 'daily'
-    const skip = cadence === 'daily' && skipDecisionSteps
-    if (fromStep === 1 && skip) {
-      if (insightText) { setReviewStep(4) } else { handleFinishReview() }
-      return
-    }
-    if (fromStep === 3 && !insightText) {
-      if (skip) { handleFinishReview(); return }
-      setReviewStep(5); return
-    }
-    if (fromStep === 4) {
-      if (skip) { handleFinishReview(); return }
-      setReviewStep(5); return
-    }
-    setReviewStep(fromStep + 1)
-  }
-
-  function handleBack(fromStep) {
-    const cadence = state.reviewCadence || 'daily'
-    if (fromStep === 1) { setReviewStep(null); return }
-    if (fromStep === 4 && cadence === 'daily' && skipDecisionSteps) { setReviewStep(1); return }
-    if (fromStep === 5 && !insightText) { setReviewStep(3); return }
-    setReviewStep(fromStep - 1)
-  }
-
-  async function handleFinishReview() {
-    setFinishing(true)
-    if (!state.userId) { console.error('[handleFinishReview] called without userId — session may be invalid'); setFinishing(false); return }
-    const trimmed = noteDraft.trim()
-    if (trimmed) {
-      await addNoteDeckCard(state.userId, { text: trimmed })
-    }
-    const cadence = state.reviewCadence || 'daily'
-    const windowStart = reviewWindowDays[0] || weekKey()
-    await saveWeeklyReview(state.userId, {
-      weekStarting: windowStart,
-      weeklyMood,
-      stepsCompleted: stepsCompletedCount + 1,
-      reviewDate: new Date().toLocaleDateString('en-CA'),
-      cadence,
-    })
-    setWeeklyReviews(prev => [...prev.filter(r => r.week_starting !== windowStart), { week_starting: windowStart, cadence }])
-    setFinishing(false)
-    setReviewStep(null)
-    setJustFinished(true)
-    setTimeout(() => setJustFinished(false), 3000)
-  }
-
   async function selectDay(dateKey) {
     if (selectedDayKey === dateKey) { setSelectedDayKey(null); return }
     setSelectedDayKey(dateKey)
@@ -941,151 +707,7 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
     }
   }
 
-  // ── Step 1: Last week's log ───────────────────────────────────────────────
-  if (reviewStep === 1) {
-    const days = [...reviewWindowDays].reverse()
-    const canvas = state.canvas || {}
-    const checkins = state.checkins || {}
-    const moods = state.moods || []
-
-    return (
-      <ReviewStepShell
-        pct={REVIEW_PROGRESS[1]}
-        eyebrow="STEP 1 OF 5 — LAST WEEK"
-        headline="how did last week go?"
-        sub="here's what the data shows. tap any day to see the full entry."
-        onBack={() => handleBack(1)}
-        onContinue={() => handleContinue(1)}
-        onSkip={() => handleSkip(1)}
-      >
-        <div className={styles.dayCardList}>
-          {days.map(dateKey => (
-            <DayCard
-              key={dateKey}
-              dateKey={dateKey}
-              canvas={canvas}
-              checkins={checkins}
-              moods={moods}
-              journal={weekJournals[dateKey]}
-              debriefs={weekDebriefs.filter(d => d.date_key === dateKey)}
-              debriefTypes={reviewDebriefTypes}
-              isExpanded={expandedReviewDay === dateKey}
-              onToggle={() => setExpandedReviewDay(expandedReviewDay === dateKey ? null : dateKey)}
-              loading={false}
-            />
-          ))}
-        </div>
-      </ReviewStepShell>
-    )
-  }
-
-  // ── Step 2: How the week felt ─────────────────────────────────────────────
-  if (reviewStep === 2) {
-    return (
-      <ReviewStepShell
-        pct={REVIEW_PROGRESS[2]}
-        eyebrow="STEP 2 OF 5 — THE WEEK"
-        headline="overall, how was last week?"
-        sub="one answer. your gut reaction."
-        onBack={() => handleBack(2)}
-        onContinue={() => handleContinue(2)}
-        onSkip={() => handleSkip(2)}
-      >
-        <div className={styles.weeklyMoodGrid}>
-          {WEEKLY_MOOD_OPTIONS.map(opt => (
-            <div
-              key={opt.id}
-              className={`${styles.weeklyMoodCard} ${weeklyMood === opt.id ? styles.weeklyMoodCardSelected : ''}`}
-              onClick={() => { hapticTick(); setWeeklyMood(opt.id) }}
-            >
-              <div className={styles.weeklyMoodName}>{opt.name}</div>
-              <div className={styles.weeklyMoodDesc}>{opt.desc}</div>
-            </div>
-          ))}
-        </div>
-      </ReviewStepShell>
-    )
-  }
-
-  // ── Step 3: Canvas check ──────────────────────────────────────────────────
-  if (reviewStep === 3) {
-    return (
-      <ReviewStepShell
-        pct={REVIEW_PROGRESS[3]}
-        eyebrow="STEP 3 OF 5 — CANVAS CHECK"
-        headline="does your canvas still fit?"
-        sub="here's how each need paced last week against its mode target."
-        onBack={() => handleBack(3)}
-        onContinue={() => handleContinue(3)}
-        onSkip={() => handleSkip(3)}
-      >
-        <LiveCanvasCard stats={stats} range={7} />
-        <button className={styles.canvasLinkBtn} onClick={() => navigate('/canvas')}>go to my canvas →</button>
-      </ReviewStepShell>
-    )
-  }
-
-  // ── Step 4: Insight (auto-skipped if no qualifying pattern) ──────────────
-  if (reviewStep === 4 && insightText) {
-    const isLastStep = (state.reviewCadence || 'daily') === 'daily' && skipDecisionSteps
-    return (
-      <ReviewStepShell
-        pct={REVIEW_PROGRESS[4]}
-        eyebrow="STEP 4 OF 5 — INSIGHT"
-        headline="one thing the data noticed."
-        sub="from your practices, mood, and debriefs this week."
-        onBack={() => handleBack(4)}
-        onContinue={() => handleContinue(4)}
-        continueLabel={isLastStep ? (finishing ? 'saving…' : 'finish review →') : undefined}
-        onSkip={() => handleSkip(4)}
-      >
-        <div className={styles.insightCard}>
-          <div className={styles.insightLabel}>pattern</div>
-          <div className={styles.insightBody}>{insightText}</div>
-        </div>
-      </ReviewStepShell>
-    )
-  }
-
-  // ── Step 5: Note to self ─────────────────────────────────────────────────
-  if (reviewStep === 5) {
-    return (
-      <ReviewStepShell
-        pct={REVIEW_PROGRESS[5]}
-        eyebrow="STEP 5 OF 5 — NOTE TO SELF"
-        headline="what does your future self need to remember this week?"
-        sub="this will appear at the top of your today screen every morning."
-        onBack={() => handleBack(5)}
-        onContinue={handleFinishReview}
-        continueLabel={finishing ? 'saving…' : 'finish review →'}
-        hideSkip
-      >
-        <textarea
-          className={styles.noteTextarea}
-          value={noteDraft}
-          onChange={e => setNoteDraft(e.target.value.slice(0, NOTE_MAX_LENGTH))}
-          maxLength={NOTE_MAX_LENGTH}
-          placeholder="what does your future self need to remember this week?"
-          rows={3}
-        />
-        <div className={styles.noteCharCount}>{NOTE_MAX_LENGTH - noteDraft.length} characters remaining</div>
-
-        <div className={styles.noteSectionLabel}>OR CHOOSE FROM THE LIBRARY</div>
-        <div className={styles.noteLibraryList}>
-          {NOTE_LIBRARY.map((text, i) => (
-            <div key={i} className={styles.noteCard} onClick={() => setNoteDraft(text)}>{text}</div>
-          ))}
-        </div>
-      </ReviewStepShell>
-    )
-  }
-
   // ── Default state ─────────────────────────────────────────────────────────
-  const cadence = state.reviewCadence || 'daily'
-  const isScheduledDay = cadence === 'daily' || todayWeekdayMonday() === (state.reviewDay ?? 0)
-  const periodAlreadyReviewed = weeklyReviews.some(r => r.week_starting === periodKey(cadence))
-  const ritualDue = isScheduledDay && !ritualDismissed && !periodAlreadyReviewed && state.onboardedAt !== todayKey()
-
   const entryCount = journalMeta.length
   const needCount = journalMeta.filter(e => e.need_id).length
   const stateCount = journalMeta.filter(e => e.mood_feeling).length
@@ -1094,38 +716,11 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
     <div className={styles.screen}>
       <div className={styles.content}>
         <div className={styles.headerBlock}>
-        {justFinished && (
-          <div className={styles.completeBanner}>
-            {cadence === 'daily'
-              ? 'review complete. see you tomorrow.'
-              : `review complete. see you ${REVIEW_DAY_LABELS[state.reviewDay ?? 0]}.`}
-          </div>
-        )}
-
         <div className={styles.pageTitleRow}>
           <div className={styles.pageTitle}>drafts.</div>
           <div className={styles.pageTitleAccount}>{profileMenu}</div>
         </div>
 
-        {ritualDue ? (
-          <div className={styles.ritualDueCard}>
-            <div className={styles.ritualEyebrow}>ready for you</div>
-            <div className={styles.ritualHeadline}>
-              {cadence === 'daily' ? "today's review is ready." : 'your week is ready to review.'}
-            </div>
-            <div className={styles.ritualMeta}>{ritualMetaLine(cadence)}</div>
-            <div className={styles.ritualBtns}>
-              <button className={styles.ritualStartBtn} onClick={startReview}>start the review</button>
-              <button
-                className={styles.ritualLaterBtn}
-                onClick={() => {
-                  try { localStorage.setItem('maslow_ritual_dismissed', new Date().toDateString()) } catch {}
-                  setRitualDismissed(true)
-                }}
-              >later</button>
-            </div>
-          </div>
-        ) : null}
         {archiveLoaded && archiveAllJournalDays.size < 7 && (
           <FirstWeekCard
             title="After about a week, you’ll start to see patterns in your writing."

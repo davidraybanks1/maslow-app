@@ -89,10 +89,6 @@ export default function Practices({ state, addPractice, renamePractice, archiveP
     scheduleReminders({
       remindersEnabled: state.remindersEnabled,
       moodReminders: state.moodReminders,
-      reviewReminderEnabled: state.reviewReminderEnabled,
-      reviewCadence: state.reviewCadence,
-      reviewDay: state.reviewDay ?? 0,
-      reviewTime: state.reviewTime || '10:00',
       practicesDB: overridePracticesDB ?? state.practicesDB,
       practiceStats: stats.getPracticeStats(),
       notifTypes: state.notifTypes,
@@ -104,9 +100,6 @@ export default function Practices({ state, addPractice, renamePractice, archiveP
     const mr = state.moodReminders || {}
     for (const [slot, data] of Object.entries(mr)) {
       if (data?.on && TIME_RE.test(data?.time)) taken.push({ time: data.time, label: `${slot} mood` })
-    }
-    if (state.reviewReminderEnabled && TIME_RE.test(state.reviewTime)) {
-      taken.push({ time: state.reviewTime, label: `${state.reviewCadence === 'daily' ? 'daily' : 'weekly'} review` })
     }
     for (const p of (state.practicesDB || [])) {
       if (p.id !== excludeId && p.reminder_on && TIME_RE.test(p.reminder_time)) {

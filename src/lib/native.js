@@ -52,6 +52,8 @@ export async function requestNotifPermission() {
   } catch (e) { console.warn('[native]', e); return 'prompt' }
 }
 
+// 1004 was the review reminder. It is retired, but stays in this list so the
+// cancel below clears it from phones that still have it scheduled.
 const REMINDER_IDS = [1001, 1002, 1003, 1004]
 const PRACTICE_REMINDER_IDS = [2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010]
 
@@ -101,15 +103,10 @@ export function groupReminders(practices) {
   return groups.map(({ time, practices }) => ({ time, practices }))
 }
 
-/* Daily mood prompts + the weekly/daily review reminder.
-   reviewDay is Monday-indexed (0=Mon..6=Sun); iOS weekday is 1=Sun..7=Sat. */
+/* Daily mood prompts + per-practice reminders. */
 export async function scheduleReminders({
   remindersEnabled,
   moodReminders = DEFAULT_MOOD_REMINDERS,
-  reviewReminderEnabled = true,
-  reviewCadence = 'daily',
-  reviewDay = 0,
-  reviewTime = '10:00',
   practicesDB = [],
   practiceStats = [],
   notifTypes = undefined,
@@ -141,24 +138,6 @@ export async function scheduleReminders({
         return { id: s.id, title: 'Mood check', body: s.body, schedule: { on: { hour: h, minute: m } } }
       })
 
-    const reviewNotifs = []
-    if (reviewReminderEnabled) {
-      if (!TIME_RE.test(reviewTime)) {
-        console.warn(`[native] skipping review reminder — invalid time: ${JSON.stringify(reviewTime)}`)
-      } else {
-        const [h, m] = reviewTime.split(':').map(n => parseInt(n, 10))
-        const on = reviewCadence === 'daily'
-          ? { hour: h, minute: m }
-          : { weekday: ((reviewDay + 1) % 7) + 1, hour: h, minute: m }
-        reviewNotifs.push({
-          id: 1004,
-          title: reviewCadence === 'daily' ? 'Daily review' : 'Weekly review',
-          body: reviewCadence === 'daily' ? 'Your day is ready to look at.' : 'Your week is ready to look at.',
-          schedule: { on },
-        })
-      }
-    }
-
     const practiceGroups = groupReminders(practicesDB)
     const practiceNotifs = []
     let idIdx = 0
@@ -176,7 +155,7 @@ export async function scheduleReminders({
       practiceNotifs.push({ id: PRACTICE_REMINDER_IDS[idIdx++], title: copy.title, body: copy.body, schedule: { on: { hour: h, minute: m } } })
     }
 
-    const notifications = [...moodNotifs, ...reviewNotifs, ...practiceNotifs]
+    const notifications = [...moodNotifs, ...practiceNotifs]
     if (notifications.length > 0) {
       await LocalNotifications.schedule({ notifications })
     }

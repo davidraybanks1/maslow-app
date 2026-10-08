@@ -9,7 +9,7 @@
 
 /* ── Intro note ── */
 
-/* ── Shared day-card expanded content (review step 1 + full log accordion) ── */
+/* ── Shared day-card expanded content (full log accordion) ── */
 .detailLabel {
   font-family: var(--font-mono);
   font-size: var(--type-floor);
@@ -100,20 +100,6 @@
   white-space: nowrap;
 }
 
-/* ── Default state: review frame ── */
-.completeBanner {
-  background: rgba(27,58,45,0.07);
-  border: 0.5px solid var(--border);
-  border-left: 3px solid #1B3A2D;
-  border-radius: 0 12px 12px 0;
-  padding: 12px 14px;
-  margin-bottom: 14px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--ink2);
-  line-height: 1.5;
-}
-
 .pageTitleRow { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .pageTitleAccount { flex-shrink: 0; }
 
@@ -134,75 +120,6 @@
   color: var(--ink3);
   line-height: 1.5;
   margin: 0 0 24px;
-}
-
-/* ── Ritual card: due state ── */
-.ritualDueCard {
-  background: var(--exploration);
-  border-radius: 18px;
-  padding: 18px 18px 16px;
-  color: var(--card);
-  margin-bottom: 20px;
-}
-
-.ritualEyebrow {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  font-weight: 400;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: rgba(239,234,221,.55);
-}
-
-.ritualHeadline {
-  margin-top: 10px;
-  font-family: var(--font-serif);
-  font-size: 24px;
-  font-weight: 300;
-  line-height: 1.3;
-  color: var(--card);
-}
-
-.ritualMeta {
-  margin-top: 7px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 300;
-  line-height: 1.5;
-  color: rgba(239,234,221,.65);
-}
-
-.ritualBtns {
-  display: flex;
-  gap: 8px;
-  margin-top: 14px;
-}
-
-.ritualStartBtn {
-  flex: 1;
-  height: 46px;
-  border: none;
-  border-radius: 23px;
-  background: var(--paper);
-  color: var(--exploration);
-  font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.ritualLaterBtn {
-  height: 46px;
-  padding: 0 16px;
-  border: 1px solid rgba(255,255,255,.35);
-  border-radius: 23px;
-  background: transparent;
-  color: var(--card);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
 }
 
 /* ── Resurfacing ── */
@@ -270,7 +187,6 @@
   padding: 3.5px 11px;
 }
 
-
 .resurfaceBody {
   margin: 11px 0 0;
   font-family: var(--font-serif);
@@ -306,9 +222,6 @@
   -webkit-tap-highlight-color: transparent;
 }
 .resurfaceAnotherBtn:hover { opacity: 0.7; }
-
-
-
 
 /* ── Threads section ── */
 .threadSection {
@@ -512,7 +425,6 @@
   padding: 3.5px 11px;
 }
 
-
 .threadReadEntryDot {
   width: 5px;
   height: 5px;
@@ -626,8 +538,6 @@
 .facetChipActive .facetCount { color: rgba(242,240,232,.6); }
 .facetCount { margin-left: 6px; color: var(--ink4); font-variant-numeric: tabular-nums; }
 
-
-
 .archiveHeaderText {
   font-family: var(--font-serif);
   font-size: 13px;
@@ -636,7 +546,6 @@
   color: rgba(0,0,0,.55);
   line-height: 1.5;
 }
-
 
 .archiveCards {
   background: var(--card);
@@ -742,7 +651,6 @@
   border-radius: 999px;
   padding: 3.5px 11px;
 }
-
 
 .archiveTagBtn {
   padding: 3.5px 11px;
@@ -1186,7 +1094,6 @@
   padding: 3.5px 11px;
 }
 
-
 .calDetailEmpty {
   font-family: var(--font-serif);
   font-size: 13px;
@@ -1195,86 +1102,6 @@
   color: rgba(0,0,0,.4);
   padding: 8px 0;
 }
-
-/* ── Guided review shell ── */
-.reviewProgressBar { height: 1px; background: var(--hairline); flex-shrink: 0; }
-.reviewProgressFill { height: 100%; background: var(--ink); transition: width var(--motion-progress) ease; }
-
-.reviewContent { padding: 24px 16px 16px; }
-
-.reviewBackBtn {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  letter-spacing: 0.08em;
-  color: var(--ink3);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  margin-bottom: 18px;
-  -webkit-tap-highlight-color: transparent;
-}
-.reviewBackBtn:hover { color: var(--ink); }
-
-.reviewEyebrow {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--ink3);
-  margin-bottom: 10px;
-}
-.reviewHeadline {
-  font-family: var(--font-serif);
-  font-size: 26px;
-  font-weight: 300;
-  line-height: 1.2;
-  letter-spacing: -0.01em;
-  color: var(--ink);
-  margin-bottom: 8px;
-}
-.reviewSub {
-  font-family: var(--font-serif);
-  font-size: 14px;
-  font-weight: 300;
-  color: var(--ink2);
-  line-height: 1.6;
-  margin-bottom: 20px;
-}
-
-.reviewFooter {
-  flex-shrink: 0;
-  padding: 12px 16px 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.reviewContinueBtn {
-  width: 100%;
-  padding: 14px;
-  background: var(--nourishment);
-  color: var(--ink);
-  border: none;
-  border-radius: 999px;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  letter-spacing: 0.06em;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-.reviewSkipBtn {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  font-weight: 200;
-  color: var(--ink4);
-  background: none;
-  border: none;
-  text-align: center;
-  cursor: pointer;
-  padding: 0;
-  -webkit-tap-highlight-color: transparent;
-}
-.reviewSkipBtn:hover { color: var(--ink3); }
 
 /* ── Step 1: day cards ── */
 .dayCardList { display: flex; flex-direction: column; gap: 10px; }
@@ -1391,126 +1218,6 @@
   margin-top: 4px;
 }
 
-/* ── Step 2: weekly mood ── */
-.weeklyMoodGrid { display: flex; flex-direction: column; gap: 10px; }
-.weeklyMoodCard {
-  position: relative;
-  border: 0.5px solid var(--hairline);
-  border-radius: 16px;
-  background: var(--card);
-  padding: 16px;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-  user-select: none;
-}
-.weeklyMoodCardSelected { border: 1.5px solid var(--ink); background: var(--paper); }
-.weeklyMoodCardSelected::after { content: ''; position: absolute; top: 12px; right: 12px; width: 8px; height: 8px; border-radius: 50%; background: var(--ink); }
-.weeklyMoodName {
-  font-family: var(--font-serif);
-  font-size: 18px;
-  font-weight: 300;
-  color: var(--ink);
-  margin-bottom: 6px;
-}
-.weeklyMoodDesc {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 200;
-  color: var(--ink2);
-  line-height: 1.6;
-}
-
-/* ── Step 3: canvas check ── */
-.canvasLinkBtn {
-  width: 100%;
-  padding: 12px;
-  background: none;
-  border: 0.5px solid var(--hairline);
-  border-radius: 999px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--ink2);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-.canvasLinkBtn:hover { background: var(--paper); }
-
-/* ── Step 4: insight ── */
-.insightCard {
-  background: rgba(245,182,34,0.07);
-  border: 0.5px solid var(--hairline);
-  border-left: 2px solid var(--nourishment);
-  border-radius: 0 16px 16px 0;
-  padding: 14px 16px;
-}
-.insightLabel {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--ink3);
-  margin-bottom: 8px;
-}
-.insightBody {
-  font-family: var(--font-serif);
-  font-size: 15px;
-  font-weight: 300;
-  font-style: italic;
-  color: var(--ink);
-  line-height: 1.6;
-}
-
-/* ── Step 5: note to self ── */
-.noteTextarea {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 12px 14px;
-  border: 0.5px solid var(--hairline);
-  border-radius: 14px;
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: 16px;
-  font-weight: 300;
-  color: var(--ink);
-  background: var(--card);
-  outline: none;
-  resize: none;
-}
-.noteTextarea::placeholder { color: var(--ink4); font-style: italic; }
-.noteCharCount {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  color: var(--ink3);
-  text-align: right;
-  margin-top: 4px;
-}
-.noteSectionLabel {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--ink3);
-  margin: 20px 0 10px;
-}
-.noteLibraryList { display: flex; flex-direction: column; gap: 8px; }
-.noteCard {
-  background: var(--card);
-  border: 0.5px solid var(--hairline);
-  border-radius: 14px;
-  padding: 12px 14px;
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: 14px;
-  font-weight: 300;
-  color: var(--ink2);
-  line-height: 1.5;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-.noteCard:hover { background: var(--paper); }
-
-
 .headerBlock { display: contents; }
 .colLeft { display: contents; }
 
@@ -1518,9 +1225,6 @@
    so restoring mobile order (archive before calendar) requires flex + order.
    Margins that previously collapsed between siblings would sum in flex —
    zero the sending side on each affected pair to keep 20px gaps unchanged. */
-@media (max-width: 899px) {
-  .ritualDueCard { margin-bottom: 0; }
-}
 
 /* desktop grid */
 @media (min-width: 900px) {
@@ -1588,14 +1292,6 @@
 
   /* Paired right-hand meta — one step quieter than the label. */
   .threadSectionMeta, .archiveSectionMeta { font-size: 12px; }
-
-
-  /* Constrain review cards to the left-column width so they don't stretch
-     across the full two-column grid. 24px matches column-gap above. */
-  .ritualDueCard,
-  .completeBanner {
-    max-width: calc((100% - 24px) / 2);
-  }
 }
 
 /* ── Phase 3: Favourite + Revisit mark buttons ───────────────── */
