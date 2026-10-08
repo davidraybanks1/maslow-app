@@ -15,6 +15,8 @@
   margin: 4px 0 0; text-wrap: balance;
 }
 .claim em { font-style: italic; color: var(--expl-deep, #0C5038); }
+/* one quiet line under the title, set like the roots section's */
+.sub { font-family: var(--mono); font-size: var(--type-floor); color: var(--ink3); margin: -6px 0 0; line-height: 1.5; }
 
 /* ── Rings stage ── */
 /* full bleed, same as the strata ribbon and the roots tree — the rings are

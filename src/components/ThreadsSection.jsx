@@ -182,12 +182,6 @@ export default function ThreadsSection({ userId, moods, ghost }) {
   if (journal === null) return null
   if (total < 3) return null
 
-  const split = grid.find(g => g.shape === 'it splits')
-  // the single word you reach for most, across all twelve — not just the
-  // top word within your busiest thread, which isn't always the same one
-  const topOverall = grid
-    .flatMap(g => g.rungs.map(r => ({ ...r, thread: g.key })))
-    .reduce((a, b) => (b.n > a.n ? b : a))
   // nothing is picked until you tap one — every ring starts equal, at full
   // opacity and showing just its own leading arc; only a tap dims the rest
   // and fills the picked one in
@@ -207,17 +201,7 @@ export default function ThreadsSection({ userId, moods, ghost }) {
             ))}
           </div>
         </div>
-        {split ? (
-          <p className={styles.claim}>
-            <em>{split.key}</em> is the one that splits. {split.total} readings and not one landed
-            on {split.rungs[1].word} — you are {split.rungs[0].word}, or you are {split.rungs[2].word}.
-          </p>
-        ) : (
-          <p className={styles.claim}>
-            You lead with <em>{topOverall.word}</em>. {topOverall.n} of your {total} readings —
-            under {topOverall.thread}.
-          </p>
-        )}
+        <p className={styles.sub}>See what your vibration trends are telling you.</p>
 
         <div className={styles.ringsWrap}>
           <svg className={styles.rings} viewBox="0 0 680 480" aria-hidden="true">
