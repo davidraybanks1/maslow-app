@@ -109,13 +109,13 @@ export default function ThreadTiles({ threads, openId, onPick }) {
       <div className={styles.bleed}>
       <svg className={styles.svg} viewBox={`0 0 ${W} ${H}`} style={{ height: H }} role="img" aria-label="your most active threads">
         <defs>
-          {/* our white: a faint warm sheen across it, same as the white cards */}
-          <linearGradient id="tt-white" x1="0" y1="0" x2="1" y2="1">
+          {/* the bloom's white: crisp and glossy, lit from the top left, with a
+              soft warm shade toward the far corner */}
+          <radialGradient id="tt-white" cx="0.3" cy="0.22" r="0.95">
             <stop offset="0%" stopColor="#FFFFFF" />
-            <stop offset="36%" stopColor="#FFFFFF" />
-            <stop offset="50%" stopColor="#FBF5E9" />
-            <stop offset="64%" stopColor="#FFFFFF" />
-          </linearGradient>
+            <stop offset="55%" stopColor="#FFFFFF" />
+            <stop offset="100%" stopColor="#E6E1D3" />
+          </radialGradient>
         </defs>
         {drawn.map(t => {
           const open = openId === t.id
