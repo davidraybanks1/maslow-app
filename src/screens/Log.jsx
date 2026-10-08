@@ -745,7 +745,9 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
         {archiveLoaded && (() => {
           const openThread = activeThreads.find(t => t.id === openThreadId) || null
           return (
-            <div className={styles.threadSection}>
+            // when the "still filling in" card is not showing, the subhead's own
+            // divider is the only rule above the threads
+            <div className={`${styles.threadSection}${archiveAllJournalDays.size >= 7 ? ` ${styles.threadSectionFirst}` : ''}`}>
               <div className={styles.threadSectionHeader}>
                 <span className={styles.threadSectionMeta}>most active threads · last 30 days</span>
               </div>

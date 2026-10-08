@@ -232,6 +232,13 @@
   padding-top: 18px;
 }
 
+/* directly under the page subhead (whose divider already separates them) */
+.threadSectionFirst {
+  margin-top: 0;
+  border-top: 0;
+  padding-top: 0;
+}
+
 .threadSectionHeader {
   display: flex;
   align-items: baseline;
