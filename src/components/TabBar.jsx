@@ -34,7 +34,7 @@ function DraftsIcon() {
 
 const TABS = [
   { to: '/today',  label: 'today',   Icon: TodayIcon },
-  { to: '/data',   label: 'almanac', Icon: DataIcon },
+  { to: '/data',   label: 'data',   Icon: DataIcon },
   { to: '/log',    label: 'drafts', Icon: DraftsIcon },
 ]
 

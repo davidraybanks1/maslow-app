@@ -8,7 +8,7 @@ import Glyph from '../lib/glyphs'
 
 const ITEMS = [
   ['/today', 'today'],
-  ['/data', 'almanac'],
+  ['/data', 'data'],
   ['/log', 'drafts'],
 ]
 

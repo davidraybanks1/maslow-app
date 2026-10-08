@@ -154,7 +154,7 @@ export default function OnboardingFlow({ updateCanvas, completeOnboarding }) {
       screen = (
         <GlimpseScreen
           slices={ALMANAC_PREVIEW}
-          alt="The almanac screen after some use: streaks, daily rhythm, moods, roots, vibrations and strata."
+          alt="The data screen after some use: streaks, daily rhythm, moods, roots, vibrations and strata."
           body="You’ll start to see a bunch of insights in the app that help show what’s working and what to tweak."
           onNext={() => go('notes')}
         />

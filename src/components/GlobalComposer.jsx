@@ -265,7 +265,7 @@ export default function GlobalComposer({ state, logMood, open, onClose }) {
     <>
       {(chartThumbsLoading || chartThumbs.length > 0) && (
         <div className={styles.chartSuggestRow}>
-          <span className={styles.chartSuggestLabel}>from the almanac</span>
+          <span className={styles.chartSuggestLabel}>from the data</span>
           <div className={styles.chartSuggestThumbs}>
             {chartThumbsLoading && <span className={styles.chartSuggestLoading}>capturing…</span>}
             {chartThumbs.map(t => (

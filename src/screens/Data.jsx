@@ -714,7 +714,7 @@ export default function Data({ state, profileMenu }) {
     <div className={styles.screen}>
       <div className={styles.desktopWrap}>
         <div className={styles.pageHeaderRow}>
-          <h1 className={styles.pageTitle}>almanac.</h1>
+          <h1 className={styles.pageTitle}>data.</h1>
           <div className={styles.pageHeaderAccount}>{profileMenu}</div>
         </div>
 
