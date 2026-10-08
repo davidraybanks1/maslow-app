@@ -21,6 +21,7 @@ const ALL_STEPS = [
   {
     target: 'modes',
     ring: true,
+    place: 'above',       // the card stays above: the mode opens downward and must not move it
     body: ['Tap to show your needs and practices. Tap a practice to mark it complete.'],
   },
   {
@@ -60,17 +61,20 @@ function findLiveEl(target) {
   return null
 }
 
-// Walk up the DOM to find the nearest scrollable ancestor.
+// Walk up the DOM to find the ancestor that actually scrolls.
 // scrollend fires on the scrolling element (it doesn't bubble), so we need
-// the actual container — not document — to listen on.
+// the actual container — not document — to listen on. An element only counts
+// if it really has overflow to scroll: setting overflow-x:hidden makes the
+// browser compute overflow-y as auto too (Today's .screen does this), so the
+// computed style alone would point at a box that never moves.
 function findScrollParent(el) {
   let node = el.parentElement
   while (node && node !== document.documentElement) {
     const s = getComputedStyle(node)
-    if (/(auto|scroll)/.test(s.overflow + s.overflowY)) return node
+    if (/(auto|scroll)/.test(s.overflow + s.overflowY) && node.scrollHeight > node.clientHeight + 1) return node
     node = node.parentElement
   }
-  return window
+  return document.querySelector('[data-scroll]') || window
 }
 
 export default function OnboardingTour({ markTourSeen }) {
@@ -281,7 +285,7 @@ export default function OnboardingTour({ markTourSeen }) {
     const cardW = Math.min(380, vw - 32)
     const cardX = Math.max(16, (vw - cardW) / 2)
     const spCenterY = t.top + t.height / 2
-    if (spCenterY > vh / 2) {
+    if (step.place === 'above' || spCenterY > vh / 2) {
       cardStyle = {
         left: cardX, width: cardW,
         bottom: Math.max(16, vh - t.top + CARD_MARGIN),
