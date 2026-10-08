@@ -178,6 +178,16 @@ button.card, .tile, .remCard {
 }
 
 /* ── Home: tiles ── */
+.group { display: flex; flex-direction: column; gap: 10px; }
+.groupLabel {
+  margin: 4px 0 0 4px;
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--pf-muted);
+}
 .tiles {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

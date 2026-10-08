@@ -220,6 +220,8 @@ export default function ProfileMenu({
         </div>
       </div>
 
+      <div className={styles.group}>
+      <h3 className={styles.groupLabel}>customize</h3>
       <div className={styles.tiles}>
         <button type="button" className={`${styles.card} ${styles.tile}`} onClick={() => goTo('/canvas')}>
           <div className={styles.spheres} aria-hidden="true">
@@ -235,6 +237,7 @@ export default function ProfileMenu({
           <span className={styles.tileNum}>{customTagCount}</span>
           <div className={styles.tileText}><span className={styles.tileLabel}>tags</span><span className={styles.mono}>custom</span></div>
         </button>
+      </div>
       </div>
 
       <button type="button" className={`${styles.card} ${styles.remCard}`} onClick={() => setPage('reminders')}>
