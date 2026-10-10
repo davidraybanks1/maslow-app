@@ -337,7 +337,8 @@
 }
 
 .threadRead {
-  margin-top: 9px;
+  /* sits in the thread list's own flex gap, right under the selected row */
+  margin-top: 0;
   background: var(--card);
   border: 0.5px solid rgba(0,0,0,.1);
   border-radius: 18px;

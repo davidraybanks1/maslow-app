@@ -743,7 +743,61 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
 
         {/* ── Threads ── */}
         {archiveLoaded && (() => {
-          const openThread = activeThreads.find(t => t.id === openThreadId) || null
+          /* the open thread's drafts, set directly beneath its own row in the list */
+          const renderThreadDrafts = openThread => {
+            const openMatches = archiveEntries.filter(e => matchesPredicate(e, openThread.predicate))
+            return (
+                <div key={openThread.id} className={styles.threadRead}>
+                  <div className={styles.threadReadHeader}>
+                    <span className={styles.threadReadTitle}>{openThread.title}</span>
+                    <button className={styles.threadReadCloseBtn} onClick={() => setOpenThreadId(null)}>close</button>
+                  </div>
+                  <p className={styles.threadReadIntro}>{openThread.intro}</p>
+                  {openMatches.length === 0 ? (
+                    <p className={styles.threadReadEmpty}>nothing here yet.</p>
+                  ) : (
+                    openMatches.slice(0, threadVisible).map(e => {
+                      const slotMood = e.slot && !e.state
+                        ? normalizeBand((state.moods || []).find(m => m.date_key === e.date_key && m.prompt_time === e.slot)?.mood || null)
+                        : null
+                      const moodDotColor = slotMood ? MOOD_DOT_COLOR[slotMood] : null
+                      return (
+                        <div key={e.id} className={styles.threadReadEntry}>
+                          <div className={styles.threadReadEntryDate}>
+                            {moodDotColor && <span className={styles.threadReadEntryDot} style={{ background: moodDotColor }} />}
+                            {formatThreadDate(e.date_key, e.slot)}
+                          </div>
+                          <div className={styles.threadReadEntryTags}>
+                            {e.state && <span className={styles.threadReadTag}>{e.state}</span>}
+                            {e.need_id && <span className={styles.threadReadTag}>{NEEDS.find(n => n.id === e.need_id)?.name || e.need_id}</span>}
+                            {e.custom && <span className={styles.threadReadTag}>{e.custom}</span>}
+                            <span className={styles.archiveCardMarks}>
+                              <button
+                                className={`${styles.archiveRevisitBtn}${e.revisit ? ` ${styles.archiveRevisitBtnActive}` : ''}`}
+                                onClick={() => handleToggleRevisit(e.id, e.revisit)}
+                                aria-pressed={e.revisit}
+                              >↩ revisit</button>
+                              <button
+                                className={`${styles.archiveFavBtn}${e.favorite ? ` ${styles.archiveFavBtnActive}` : ''}`}
+                                onClick={() => handleToggleFav(e.id, e.favorite)}
+                                aria-pressed={e.favorite}
+                                aria-label={e.favorite ? 'remove from favorites' : 'add to favorites'}
+                              >{e.favorite ? <IconHeartFilled size={15} stroke={1.5} /> : <IconHeart size={15} stroke={1.5} />}</button>
+                            </span>
+                          </div>
+                          <p className={styles.threadReadEntryBody}>{e.entry}</p>
+                        </div>
+                      )
+                    })
+                  )}
+                  {openMatches.length > threadVisible && (
+                    <button className={styles.threadReadMore} onClick={() => setThreadVisible(v => v + 8)}>
+                      show {Math.min(8, openMatches.length - threadVisible)} more · {openMatches.length - threadVisible} left
+                    </button>
+                  )}
+                </div>
+            )
+          }
           return (
             // when the "still filling in" card is not showing, the subhead's own
             // divider is the only rule above the threads
@@ -764,62 +818,9 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
                   threads={activeThreads}
                   openId={openThreadId}
                   onPick={id => setOpenThreadId(cur => cur === id ? null : id)}
+                  renderOpen={renderThreadDrafts}
                 />
               )}
-              {openThread && (() => {
-                const openMatches = archiveEntries.filter(e => matchesPredicate(e, openThread.predicate))
-                return (
-                  <div key={openThread.id} className={styles.threadRead}>
-                    <div className={styles.threadReadHeader}>
-                      <span className={styles.threadReadTitle}>{openThread.title}</span>
-                      <button className={styles.threadReadCloseBtn} onClick={() => setOpenThreadId(null)}>close</button>
-                    </div>
-                    <p className={styles.threadReadIntro}>{openThread.intro}</p>
-                    {openMatches.length === 0 ? (
-                      <p className={styles.threadReadEmpty}>nothing here yet.</p>
-                    ) : (
-                      openMatches.slice(0, threadVisible).map(e => {
-                        const slotMood = e.slot && !e.state
-                          ? normalizeBand((state.moods || []).find(m => m.date_key === e.date_key && m.prompt_time === e.slot)?.mood || null)
-                          : null
-                        const moodDotColor = slotMood ? MOOD_DOT_COLOR[slotMood] : null
-                        return (
-                          <div key={e.id} className={styles.threadReadEntry}>
-                            <div className={styles.threadReadEntryDate}>
-                              {moodDotColor && <span className={styles.threadReadEntryDot} style={{ background: moodDotColor }} />}
-                              {formatThreadDate(e.date_key, e.slot)}
-                            </div>
-                            <div className={styles.threadReadEntryTags}>
-                              {e.state && <span className={styles.threadReadTag}>{e.state}</span>}
-                              {e.need_id && <span className={styles.threadReadTag}>{NEEDS.find(n => n.id === e.need_id)?.name || e.need_id}</span>}
-                              {e.custom && <span className={styles.threadReadTag}>{e.custom}</span>}
-                              <span className={styles.archiveCardMarks}>
-                                <button
-                                  className={`${styles.archiveRevisitBtn}${e.revisit ? ` ${styles.archiveRevisitBtnActive}` : ''}`}
-                                  onClick={() => handleToggleRevisit(e.id, e.revisit)}
-                                  aria-pressed={e.revisit}
-                                >↩ revisit</button>
-                                <button
-                                  className={`${styles.archiveFavBtn}${e.favorite ? ` ${styles.archiveFavBtnActive}` : ''}`}
-                                  onClick={() => handleToggleFav(e.id, e.favorite)}
-                                  aria-pressed={e.favorite}
-                                  aria-label={e.favorite ? 'remove from favorites' : 'add to favorites'}
-                                >{e.favorite ? <IconHeartFilled size={15} stroke={1.5} /> : <IconHeart size={15} stroke={1.5} />}</button>
-                              </span>
-                            </div>
-                            <p className={styles.threadReadEntryBody}>{e.entry}</p>
-                          </div>
-                        )
-                      })
-                    )}
-                    {openMatches.length > threadVisible && (
-                      <button className={styles.threadReadMore} onClick={() => setThreadVisible(v => v + 8)}>
-                        show {Math.min(8, openMatches.length - threadVisible)} more · {openMatches.length - threadVisible} left
-                      </button>
-                    )}
-                  </div>
-                )
-              })()}
             </div>
           )
         })()}
