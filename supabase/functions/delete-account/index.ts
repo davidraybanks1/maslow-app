@@ -6,6 +6,8 @@ const ALLOWED_ORIGINS = new Set([
   'capacitor://localhost',
   'https://localhost',
   'https://app.mymaslow.com',
+  'https://app.loamdaybook.com',
+  'https://loamdaybook.com',
   'http://localhost:5173',
 ])
 
