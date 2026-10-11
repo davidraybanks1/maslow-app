@@ -5,6 +5,9 @@ import Capacitor
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
+    // Overlay placed over the key window when the app enters the background,
+    // preventing journal content from appearing in the iOS app switcher screenshot.
+    private var privacyOverlay: UIView?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
@@ -17,16 +20,28 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func applicationDidEnterBackground(_ application: UIApplication) {
-        // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
-        // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
+        guard let window = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .flatMap({ $0.windows })
+            .first(where: { $0.isKeyWindow }) else { return }
+
+        let overlay = UIView(frame: window.bounds)
+        overlay.backgroundColor = UIColor(red: 0.937, green: 0.918, blue: 0.867, alpha: 1) // --paper: #EFEADD
+        overlay.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        window.addSubview(overlay)
+        privacyOverlay = overlay
     }
 
     func applicationWillEnterForeground(_ application: UIApplication) {
-        // Called as part of the transition from the background to the active state; here you can undo many of the changes made on entering the background.
+        privacyOverlay?.removeFromSuperview()
+        privacyOverlay = nil
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
-        // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+        // Belt-and-suspenders: remove the overlay here too in case willEnterForeground
+        // was skipped (e.g. cold launch after termination in background).
+        privacyOverlay?.removeFromSuperview()
+        privacyOverlay = nil
     }
 
     func applicationWillTerminate(_ application: UIApplication) {
