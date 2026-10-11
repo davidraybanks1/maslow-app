@@ -7,8 +7,14 @@
  * Prerequisites:
  *   - PLAYWRIGHT_USER_A_EMAIL / PLAYWRIGHT_USER_A_PASSWORD  — test account A
  *   - PLAYWRIGHT_USER_B_EMAIL / PLAYWRIGHT_USER_B_PASSWORD  — test account B
- *   Both accounts must exist in the Supabase project. Use the Supabase dashboard
- *   to create them; they never appear in code commits.
+ *
+ *   Create both accounts in Supabase Dashboard → Authentication → Users →
+ *   "Add user" → "Create new user". Enter the email and password, and check
+ *   "Auto Confirm User". Do NOT use "Invite user" (that sends an email and
+ *   requires a link click before the password works).
+ *
+ *   After creating each account, sign in to the app once so onboarding runs
+ *   and a row is inserted into the public.users table.
  *
  * To run:
  *   npx playwright test tests/e2e/cross-user-isolation.spec.js
