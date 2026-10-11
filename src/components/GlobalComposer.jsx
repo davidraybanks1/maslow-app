@@ -349,7 +349,7 @@ export default function GlobalComposer({ state, logMood, open, onClose }) {
         value={draftText}
         onChange={e => setDraftText(e.target.value)}
         onKeyDown={handleKeyDown}
-        maxLength={2000}
+        maxLength={10000}
         rows={4}
       />
       <div className={todayStyles.composerMobileFooter}>
