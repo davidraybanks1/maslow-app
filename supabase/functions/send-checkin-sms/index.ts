@@ -29,7 +29,8 @@ async function sendSMS(to: string, body: string) {
     }
   )
   const json = await res.json()
-  console.log('Twilio response:', JSON.stringify(json))
+  // Log only non-PII outcome fields — never the To/From phone numbers or Body.
+  console.log('Twilio response:', JSON.stringify({ sid: json.sid, status: json.status, error_code: json.error_code, error_message: json.error_message }))
   return json
 }
 
