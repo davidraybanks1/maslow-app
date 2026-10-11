@@ -1,33 +1,53 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.105.3'
 
-// Tables that hold rows scoped to a user_id, deleted in dependency order.
-// note_deck has a minimum-count trigger; we bypass it via a session setting.
-const USER_TABLES = [
-  'debriefs',
-  'debrief_types',
-  'custom_tags',
-  'moods',
-  'checkins',
-  'journal',
-  'journal_backup',
-  'practice_merges',
-  'practices',
-  'weekly_reviews',
-  'intentions',
-  'feelings',
-  'note_deck',
-]
+// Origins the Capacitor iOS app and the web app send requests from.
+// Capacitor wraps the web view at capacitor://localhost on iOS.
+const ALLOWED_ORIGINS = new Set([
+  'capacitor://localhost',
+  'https://localhost',
+  'https://app.mymaslow.com',
+  'http://localhost:5173',
+])
+
+const CORS_HEADERS = (origin: string | null) => ({
+  'Access-Control-Allow-Origin': (origin && ALLOWED_ORIGINS.has(origin)) ? origin : 'null',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Authorization, Content-Type',
+  'Access-Control-Max-Age': '86400',
+})
+
+function jsonResponse(body: unknown, status: number, origin: string | null): Response {
+  const requestId = crypto.randomUUID()
+  return new Response(JSON.stringify({ ...body as object, requestId }), {
+    status,
+    headers: {
+      'Content-Type': 'application/json',
+      ...CORS_HEADERS(origin),
+    },
+  })
+}
 
 Deno.serve(async (req) => {
-  // config.toml has verify_jwt = true; Supabase validates the JWT before we
-  // get here. We extract the caller's sub to scope all deletes to that user.
-  const authHeader = req.headers.get('Authorization')
-  if (!authHeader?.startsWith('Bearer ')) {
-    return json({ error: 'Missing authorization' }, 401)
+  const origin = req.headers.get('Origin')
+
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: CORS_HEADERS(origin) })
   }
 
-  // Use anon key + the caller's JWT to get the session user — never trust a
-  // user_id from the request body.
+  if (req.method !== 'POST') {
+    return jsonResponse({ error: 'Method not allowed' }, 405, origin)
+  }
+
+  // ── Auth: extract and verify the caller's JWT ─────────────────────────────
+  // config.toml verify_jwt = true means the gateway already validated the
+  // token's signature. We call auth.getUser() to confirm it is still live and
+  // to obtain the user id from Supabase's auth table — never from the request.
+  const authHeader = req.headers.get('Authorization')
+  if (!authHeader?.startsWith('Bearer ')) {
+    return jsonResponse({ error: 'Missing authorization' }, 401, origin)
+  }
+
   const userClient = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_ANON_KEY')!,
@@ -35,76 +55,64 @@ Deno.serve(async (req) => {
   )
   const { data: { user }, error: userErr } = await userClient.auth.getUser()
   if (userErr || !user) {
-    return json({ error: 'Unauthorized' }, 401)
+    return jsonResponse({ error: 'Unauthorized' }, 401, origin)
   }
   const userId = user.id
 
-  // Service-role client for privileged deletes.
   const admin = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   )
 
-  const errors: string[] = []
+  // ── Step 1: delete storage files ─────────────────────────────────────────
+  // List from offset 0 each iteration (never increment offset after removal;
+  // removing items shifts subsequent offsets). Cap at 50 pages to avoid an
+  // infinite loop on a pathological bucket.
+  const MAX_PAGES = 50
+  const PAGE_SIZE = 100
+  for (let page = 0; page < MAX_PAGES; page++) {
+    const { data: files, error: listErr } = await admin.storage
+      .from('note-images')
+      .list(userId, { limit: PAGE_SIZE, offset: 0 })
 
-  // ── Step 1: delete user-data rows ────────────────────────────────────────
-  // Bypass the note_deck minimum-count trigger for this session.
-  await admin.rpc('set_config', { setting: 'app.bypass_deck_min', value: 'true', is_local: true }).catch(() => {})
+    if (listErr) {
+      console.error(`delete-account storage list failed uid=${userId}:`, listErr.message)
+      return jsonResponse({ error: 'Failed to list storage files. Please try again.' }, 500, origin)
+    }
+    if (!files || files.length === 0) break
 
-  for (const table of USER_TABLES) {
-    const { error } = await admin.from(table).delete().eq('user_id', userId)
-    if (error && error.code !== 'PGRST116') {
-      // PGRST116 = relation does not exist — table may not be present in all envs
-      errors.push(`${table}: ${error.message}`)
+    const paths = files.map(f => `${userId}/${f.name}`)
+    const { error: removeErr } = await admin.storage.from('note-images').remove(paths)
+    if (removeErr) {
+      console.error(`delete-account storage remove failed uid=${userId}:`, removeErr.message)
+      return jsonResponse({ error: 'Failed to delete storage files. Please try again.' }, 500, origin)
+    }
+
+    if (page === MAX_PAGES - 1) {
+      // Still files remaining after cap — report rather than silently succeed.
+      console.error(`delete-account storage cap hit uid=${userId}: files may remain`)
+      return jsonResponse({ error: 'Too many storage files to delete in one request. Please try again.' }, 500, origin)
     }
   }
 
-  // users row itself (no user_id FK — keyed on id)
-  const { error: usersErr } = await admin.from('users').delete().eq('id', userId)
-  if (usersErr) errors.push(`users: ${usersErr.message}`)
-
-  // ── Step 2: delete storage files ─────────────────────────────────────────
-  const prefix = `${userId}/`
-  let storageErrors = 0
-  let nextOffset = 0
-  const pageSize = 100
-  while (true) {
-    const { data: files, error: listErr } = await admin.storage
-      .from('note-images')
-      .list(userId, { limit: pageSize, offset: nextOffset })
-
-    if (listErr) { errors.push(`storage list: ${listErr.message}`); break }
-    if (!files || files.length === 0) break
-
-    const paths = files.map(f => `${prefix}${f.name}`)
-    const { error: removeErr } = await admin.storage.from('note-images').remove(paths)
-    if (removeErr) { storageErrors++; errors.push(`storage remove: ${removeErr.message}`) }
-
-    if (files.length < pageSize) break
-    nextOffset += pageSize
+  // ── Step 2: purge all DB rows in one transaction ──────────────────────────
+  // purge_user_data is a SECURITY DEFINER function that sets bypass_deck_min,
+  // deletes all user rows in FK-safe order, and is executable only by service_role.
+  const { error: purgeErr } = await admin.rpc('purge_user_data', { p_user_id: userId })
+  if (purgeErr) {
+    console.error(`delete-account purge_user_data failed uid=${userId}:`, purgeErr.message)
+    return jsonResponse({ error: 'Failed to delete account data. Please try again.' }, 500, origin)
   }
 
-  if (errors.length > 0) {
-    // Surface errors so the UI can retry — don't silently succeed.
-    console.error(`delete-account partial failure for user ${userId}:`, errors)
-    return json({ error: 'Some data could not be deleted. Please try again or contact support.', details: errors }, 500)
+  // ── Step 3: delete the auth user ─────────────────────────────────────────
+  // Point of no return — data is already gone. If this fails the account is
+  // functionally empty; the user can retry and deleteUser is idempotent
+  // (returns 404 for an already-deleted user, which we swallow).
+  const { error: authErr } = await admin.auth.admin.deleteUser(userId)
+  if (authErr && !authErr.message.includes('User not found')) {
+    console.error(`delete-account deleteUser failed uid=${userId}:`, authErr.message)
+    return jsonResponse({ error: 'Account data deleted but sign-in removal failed. Contact support.' }, 500, origin)
   }
 
-  // ── Step 3: delete the auth user (point of no return) ────────────────────
-  const { error: deleteAuthErr } = await admin.auth.admin.deleteUser(userId)
-  if (deleteAuthErr) {
-    // If auth deletion fails after data is already gone, the account is
-    // functionally empty but the auth row remains. Log user id (not email).
-    console.error(`delete-account: auth.admin.deleteUser failed for ${userId}:`, deleteAuthErr.message)
-    return json({ error: 'Account data was deleted but auth removal failed. Contact support.' }, 500)
-  }
-
-  return json({ deleted: true }, 200)
+  return jsonResponse({ deleted: true }, 200, origin)
 })
-
-function json(body: unknown, status: number): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  })
-}
