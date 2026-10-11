@@ -1282,6 +1282,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                     value={draftText}
                     onChange={e => setDraftText(e.target.value)}
                     onKeyDown={handleDraftKeyDown}
+                    maxLength={2000}
                     rows={3}
                   />
                   <div className={styles.journalComposerFooter}>
@@ -1361,6 +1362,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 value={draftText}
                 onChange={e => setDraftText(e.target.value)}
                 onKeyDown={handleDraftKeyDown}
+                maxLength={2000}
                 rows={4}
               />
               <div className={styles.composerMobileFooter}>

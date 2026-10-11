@@ -282,6 +282,7 @@ export default function Practices({ state, addPractice, renamePractice, archiveP
                                 if (e.key === 'Enter') handleCommitRename(p.id)
                                 if (e.key === 'Escape') setEditingId(null)
                               }}
+                              maxLength={80}
                               autoFocus
                             />
                             <button className={styles.saveBtn} onClick={() => handleCommitRename(p.id)}>save</button>
@@ -382,6 +383,7 @@ export default function Practices({ state, addPractice, renamePractice, archiveP
                       value={inputs[n.id] || ''}
                       onChange={e => setInputs(prev => ({ ...prev, [n.id]: e.target.value }))}
                       onKeyDown={e => e.key === 'Enter' && handleAdd(n.id)}
+                      maxLength={80}
                       autoFocus
                     />
                     <button

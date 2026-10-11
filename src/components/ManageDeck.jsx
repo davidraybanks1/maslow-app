@@ -216,6 +216,7 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
               placeholder="a line to remind yourself of…"
               value={composerDraft}
               onChange={e => setComposerDraft(e.target.value)}
+              maxLength={500}
               autoFocus
             />
             <div className={styles.composerActions}>
@@ -291,6 +292,7 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
                       className={styles.noteTextarea}
                       value={editText}
                       onChange={e => setDrafts(prev => ({ ...prev, [card.id]: e.target.value }))}
+                      maxLength={500}
                       autoFocus
                     />
                     <div className={styles.editActions}>
