@@ -57,6 +57,7 @@ Deno.serve(async (req) => {
       .from('users')
       .select('id, phone')
       .not('phone', 'is', null)
+      .eq('reminders_enabled', true)
 
     if (error) throw error
 
