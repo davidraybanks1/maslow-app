@@ -1274,3 +1274,49 @@ export async function seedStarterContent(userId, canvasObj, overrides = {}, note
     return null
   }
 }
+
+export async function deleteAccount() {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session?.access_token) return { error: 'Not authenticated' }
+
+  const res = await fetch(
+    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-account`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+    }
+  )
+  const body = await res.json().catch(() => ({}))
+  if (!res.ok) return { error: body.error || 'Deletion failed' }
+  return { error: null }
+}
+
+export async function wipeLocalData() {
+  // Clear localStorage entirely (maslow_state + all sb-* auth keys)
+  try { localStorage.clear() } catch {}
+
+  // Clear all IndexedDB databases
+  try {
+    const dbs = await indexedDB.databases().catch(() => [])
+    await Promise.all(dbs.map(d => new Promise(res => {
+      const req = indexedDB.deleteDatabase(d.name)
+      req.onsuccess = res
+      req.onerror = res
+    })))
+  } catch {}
+
+  // Cancel all scheduled local notifications (native only)
+  try {
+    const { Capacitor } = await import('@capacitor/core')
+    if (Capacitor.isNativePlatform()) {
+      const { LocalNotifications } = await import('@capacitor/local-notifications')
+      const pending = await LocalNotifications.getPending()
+      if (pending.notifications?.length) {
+        await LocalNotifications.cancel({ notifications: pending.notifications })
+      }
+    }
+  } catch {}
+}

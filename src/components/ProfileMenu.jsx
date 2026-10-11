@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { isNative, checkNotifPermission, requestNotifPermission } from '../lib/native'
+import { deleteAccount, wipeLocalData } from '../lib/store'
 import styles from './ProfileMenu.module.css'
 
 const SLOTS = ['morning', 'midday', 'evening']
@@ -89,6 +90,10 @@ export default function ProfileMenu({
   const [moreOpen, setMoreOpen] = useState(false)
   const [editing, setEditing] = useState(null) // null | slot
   const [confirmSignOut, setConfirmSignOut] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [deleteTyped, setDeleteTyped] = useState('')
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState(null)
   const [notifPermission, setNotifPermission] = useState('prompt')
   const navigate = useNavigate()
   const location = useLocation()
@@ -136,6 +141,9 @@ export default function ProfileMenu({
     setMoreOpen(false)
     setEditing(null)
     setConfirmSignOut(false)
+    setShowDeleteDialog(false)
+    setDeleteTyped('')
+    setDeleteError(null)
   }
 
   function openMenu() {
@@ -163,6 +171,7 @@ export default function ProfileMenu({
     function onKey(e) {
       if (e.key !== 'Escape') return
       if (confirmSignOut) setConfirmSignOut(false)
+      else if (showDeleteDialog) { setShowDeleteDialog(false); setDeleteTyped(''); setDeleteError(null) }
       else close()
     }
     document.addEventListener('keydown', onKey)
@@ -172,6 +181,22 @@ export default function ProfileMenu({
   async function handleSignOut() {
     close()
     await supabase.auth.signOut()
+    navigate('/signin')
+  }
+
+  async function handleDeleteAccount() {
+    if (deleteTyped !== 'DELETE') return
+    setDeleting(true)
+    setDeleteError(null)
+    const { error } = await deleteAccount()
+    if (error) {
+      setDeleting(false)
+      setDeleteError(error)
+      return
+    }
+    // Wipe everything local, then go to sign-in
+    await wipeLocalData()
+    await supabase.auth.signOut().catch(() => {})
     navigate('/signin')
   }
 
@@ -296,6 +321,7 @@ export default function ProfileMenu({
       </div>
 
       <button type="button" className={styles.signOut} onClick={() => setConfirmSignOut(true)}>sign out</button>
+      <button type="button" className={styles.deleteAccountLink} onClick={() => { setShowDeleteDialog(true); setDeleteTyped(''); setDeleteError(null) }}>delete account</button>
     </div>
   )
 
@@ -401,6 +427,38 @@ export default function ProfileMenu({
     </div>
   )
 
+  const deleteDialogEl = showDeleteDialog && (
+    <div className={styles.confirmScrim} onClick={() => { if (!deleting) { setShowDeleteDialog(false); setDeleteTyped(''); setDeleteError(null) } }}>
+      <div className={`${styles.card} ${styles.dialog} ${styles.deleteDialog}`} role="dialog" aria-modal="true" aria-label="delete account" onClick={e => e.stopPropagation()}>
+        <div className={styles.dialogTitle}>delete your account?</div>
+        <div className={styles.dialogBody}>
+          <p>this permanently deletes your practices, check-ins, moods, journal, and notes to self. it cannot be undone.</p>
+          <p className={styles.dialogBodySmall}>type <strong>DELETE</strong> to confirm.</p>
+          <input
+            className={styles.deleteConfirmInput}
+            type="text"
+            value={deleteTyped}
+            onChange={e => setDeleteTyped(e.target.value)}
+            placeholder="DELETE"
+            autoComplete="off"
+            autoCapitalize="characters"
+            disabled={deleting}
+          />
+          {deleteError && <div className={styles.deleteError}>{deleteError}</div>}
+        </div>
+        <div className={styles.dialogBtns}>
+          <button
+            type="button"
+            className={styles.dialogDanger}
+            onClick={handleDeleteAccount}
+            disabled={deleteTyped !== 'DELETE' || deleting}
+          >{deleting ? 'deleting…' : 'delete my account'}</button>
+          <button type="button" className={styles.dialogCancel} onClick={() => { setShowDeleteDialog(false); setDeleteTyped(''); setDeleteError(null) }} disabled={deleting}>cancel</button>
+        </div>
+      </div>
+    </div>
+  )
+
   return (
     <div className={styles.wrapper}>
       <button
@@ -428,6 +486,7 @@ export default function ProfileMenu({
               {page === 'home' ? home : reminders}
             </div>
             {confirmEl}
+            {deleteDialogEl}
           </div>
         </div>,
         document.body

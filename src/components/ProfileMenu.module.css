@@ -610,8 +610,70 @@ div.moreRow { cursor: default; }
   cursor: pointer;
 }
 
+/* ── Delete account ── */
+.deleteAccountLink {
+  align-self: center;
+  margin-top: 4px;
+  padding: 6px 12px;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-mono, var(--font-serif));
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--pf-ink3, #9b9181);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 0.5px;
+  -webkit-tap-highlight-color: transparent;
+}
+.deleteAccountLink:hover { opacity: 0.65; }
+
+.deleteDialog { text-align: left; align-items: flex-start; }
+.dialogBodySmall {
+  font-size: 14px;
+  margin-top: 8px;
+}
+.deleteConfirmInput {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 8px;
+  padding: 10px 14px;
+  border: 1px solid var(--pf-border, #d8d2c4);
+  border-radius: 10px;
+  background: var(--paper);
+  font-family: var(--font-mono, monospace);
+  font-size: 16px;
+  color: var(--pf-ink);
+  letter-spacing: 0.04em;
+  outline: none;
+}
+.deleteConfirmInput:focus { border-color: var(--pf-ink2, #6b6356); }
+.deleteError {
+  margin-top: 8px;
+  font-size: 14px;
+  font-family: var(--font-serif);
+  color: #c0392b;
+  line-height: 1.4;
+}
+.dialogDanger {
+  height: 48px;
+  border: 0;
+  border-radius: 999px;
+  background: #c0392b;
+  color: #fff;
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 300;
+  cursor: pointer;
+  width: 100%;
+  transition: opacity var(--motion-hover);
+}
+.dialogDanger:disabled { opacity: 0.4; cursor: default; }
+.dialogDanger:not(:disabled):hover { opacity: 0.85; }
+
 /* ── Reduced motion: no slides, no fades ── */
 @media (prefers-reduced-motion: reduce) {
   .panel, .panelClosing, .scrim, .scrimClosing, .viewIn, .confirmScrim { animation: none !important; }
-  .tile, .remCard, .toggle, .toggleKnob, .moreChevron, .remBody, .pill, .preset, .closeBtn, .signOut, .dialogPrimary { transition: none !important; }
+  .tile, .remCard, .toggle, .toggleKnob, .moreChevron, .remBody, .pill, .preset, .closeBtn, .signOut, .dialogPrimary, .dialogDanger { transition: none !important; }
 }
