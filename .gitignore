@@ -10,3 +10,6 @@ ios/App/App/public/
 ios/App/output/
 ios/DerivedData/
 .claude/worktrees/
+
+# Vite dev-server timestamp cache files
+vite.config.js.timestamp-*.mjs
