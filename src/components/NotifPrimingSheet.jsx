@@ -1,21 +1,30 @@
 import { requestNotifPermission } from '../lib/native'
 import styles from './NotifPrimingSheet.module.css'
 
-export default function NotifPrimingSheet({ updateRemindersEnabled, markNotifPrimed }) {
+const DEVICE_FLAG_KEY = 'notifPrimedOnDevice'
+
+export { DEVICE_FLAG_KEY }
+
+export default function NotifPrimingSheet({ updateRemindersEnabled, markNotifPrimed, onAnswer }) {
   async function handleTurnOn() {
     try {
       const result = await requestNotifPermission()
       updateRemindersEnabled(result === 'granted')
+      onAnswer?.(result)
     } catch {
       updateRemindersEnabled(false)
+      onAnswer?.('denied')
     } finally {
       markNotifPrimed()
+      try { localStorage.setItem(DEVICE_FLAG_KEY, '1') } catch {}
     }
   }
 
   function handleNotNow() {
     updateRemindersEnabled(false)
     markNotifPrimed()
+    onAnswer?.('dismissed')
+    try { localStorage.setItem(DEVICE_FLAG_KEY, '1') } catch {}
   }
 
   return (

@@ -5,9 +5,9 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, useNa
 import { useAppState, loadCustomTags } from './lib/store'
 import { useIsDesktop } from './lib/useIsDesktop'
 import { useTypingFocus, useKeyboardInset } from './lib/keyboard'
-import { hideSplash, scheduleReminders, isNative, pendingNotifSlot, MOOD_SLOTS } from './lib/native'
+import { hideSplash, scheduleReminders, isNative, checkNotifPermission, pendingNotifSlot, MOOD_SLOTS } from './lib/native'
 import { createDataStats } from './lib/dataStats'
-import NotifPrimingSheet from './components/NotifPrimingSheet'
+import NotifPrimingSheet, { DEVICE_FLAG_KEY } from './components/NotifPrimingSheet'
 import OnboardingTour from './components/OnboardingTour'
 import LoadingScreen from './components/LoadingScreen'
 import OnboardingFlow from './screens/Onboarding/OnboardingFlow'
@@ -110,6 +110,14 @@ function AppInner() {
   // every screen (Today/Data/Log), rather than only living at the bottom
   // of Today. See GlobalComposer.jsx.
   const [composerOpen, setComposerOpen] = useState(false)
+
+  // Per-device OS notification permission. Checked once when onboarded so we
+  // can show the priming sheet even on a reinstall where notifPrimedAt is set.
+  const [deviceNotifPerm, setDeviceNotifPerm] = useState(null)
+  useEffect(() => {
+    if (!isNative() || !state.onboarded || !state.userId) return
+    checkNotifPermission().then(setDeviceNotifPerm)
+  }, [state.onboarded, state.userId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const [customTagCount, setCustomTagCount] = useState(0)
   useEffect(() => {
@@ -239,8 +247,15 @@ function AppInner() {
       {state.onboarded && (
         <GlobalComposer state={state} logMood={logMood} open={composerOpen} onClose={() => setComposerOpen(false)} />
       )}
-      {isNative() && state.onboarded && state.userId && state.notifPrimedAt == null && state.tourSeenAt != null && (
-        <NotifPrimingSheet updateRemindersEnabled={updateRemindersEnabled} markNotifPrimed={markNotifPrimed} />
+      {isNative() && state.onboarded && state.userId && state.tourSeenAt != null &&
+       deviceNotifPerm === 'prompt' &&
+       (() => { try { return !localStorage.getItem(DEVICE_FLAG_KEY) } catch { return true } })() &&
+       (state.notifPrimedAt == null || state.remindersEnabled) && (
+        <NotifPrimingSheet
+          updateRemindersEnabled={updateRemindersEnabled}
+          markNotifPrimed={markNotifPrimed}
+          onAnswer={setDeviceNotifPerm}
+        />
       )}
       {location.pathname === '/today' && state.onboarded && state.userId && state.tourSeenAt == null && (
         <OnboardingTour markTourSeen={markTourSeen} />

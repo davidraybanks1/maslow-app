@@ -3,6 +3,12 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./tests/unit/setup.js'],
+    include: ['tests/unit/**/*.test.{js,jsx}'],
+  },
   define: {
     // Stamped at build time; surfaces in Settings as "built <date>"
     'import.meta.env.VITE_BUILD_TIME': JSON.stringify(new Date().toISOString()),
