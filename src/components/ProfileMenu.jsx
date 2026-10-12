@@ -29,7 +29,7 @@ const SPHERES = [
 const lit = ([a, b, c]) => `radial-gradient(circle at 34% 26%, ${a} 0%, ${b} 55%, ${c} 100%)`
 const GREEN_SPHERE = lit(SPHERES[0])
 
-const FEEDBACK_EMAIL = 'hello@mymaslow.com'
+const FEEDBACK_EMAIL = 'hello@loamdaybook.com'
 const APP_VERSION = '1.0'
 const DAY_START = 360 // 6 am
 const DAY_SPAN = 1020 // 6 am to 11 pm
@@ -313,8 +313,8 @@ export default function ProfileMenu({
             )}
             <a className={styles.moreRow} href={`mailto:${FEEDBACK_EMAIL}?subject=Loam%20feedback`} onClick={() => close()}>suggest something</a>
             <div className={styles.legalRow}>
-              <a href="https://mymaslow.com/privacy" target="_blank" rel="noopener noreferrer">privacy</a>
-              <a href="https://mymaslow.com/terms" target="_blank" rel="noopener noreferrer">terms</a>
+              <a href="https://loamdaybook.com/privacy" target="_blank" rel="noopener noreferrer">privacy</a>
+              <a href="https://loamdaybook.com/terms" target="_blank" rel="noopener noreferrer">terms</a>
             </div>
           </div>
         )}
