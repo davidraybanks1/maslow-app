@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { normalizeBand, BAND_LABEL, FEELINGS, BANDS } from '../lib/frequency'
 import FrequencyCard from '../components/FrequencyCard'
 import { IconHeart, IconHeartFilled } from '@tabler/icons-react'
-import { NEEDS, MODE_MAX_BUBBLES, JOURNAL_TRUNCATE } from '../lib/constants'
+import { allNeeds, needName, MODE_MAX_BUBBLES, JOURNAL_TRUNCATE } from '../lib/constants'
 import { loadJournalEntry, loadDebriefs, loadDebriefTypes, loadAllJournalMeta, loadJournalArchive, updateJournalEntryTags, toggleJournalFavorite, toggleJournalRevisit, loadDayCheckins, loadCustomTags } from '../lib/store'
 import { natureTagStyle, peakTagStyle, ENVIRONMENT_TAG_STYLE, parseDebriefEntry } from '../lib/debriefTypes'
 import JournalQuote from '../components/JournalQuote'
@@ -121,7 +121,7 @@ function computeActiveThreads(archiveEntries, canvas, customTags) {
   const cutoff = new Date(today); cutoff.setDate(cutoff.getDate() - 30)
   const afterKey = dateKeyFor(cutoff)
 
-  const canvasNeeds = NEEDS.filter(n => canvas?.[n.id])
+  const canvasNeeds = allNeeds().filter(n => canvas?.[n.id])
 
   const candidates = [
     ...ARCHIVE_SLOTS.map(s => ({
@@ -221,7 +221,7 @@ function dayPracticeCount(canvas, checkins, dateKey) {
   const checked = checkins[dateKey] || []
   let total = 0
   let max = 0
-  for (const n of NEEDS) {
+  for (const n of allNeeds()) {
     const mode = canvas[n.id]
     if (!mode) continue
     const maxBubbles = MODE_MAX_BUBBLES[mode] || 0
@@ -245,7 +245,7 @@ function practicesByNeedForDay(checkins, dateKey) {
 
 function DayCardExpandedContent({ canvas, checkins, dateKey, moods, journal, debriefs, debriefTypes }) {
   const byNeed = practicesByNeedForDay(checkins, dateKey)
-  const needsWithPractices = NEEDS.filter(n => byNeed[n.id])
+  const needsWithPractices = allNeeds().filter(n => byNeed[n.id])
   const hasPractices = needsWithPractices.length > 0
   const hasJournal = !!journal
   const dayMoods = moods.filter(m => m.date_key === dateKey)
@@ -542,7 +542,7 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
 
   const archiveCounts = useMemo(() => {
     const { filterAfterKey, filterBeforeKey } = archiveDateRange
-    const canvasNeeds = NEEDS.filter(n => state.canvas?.[n.id])
+    const canvasNeeds = allNeeds().filter(n => state.canvas?.[n.id])
     const slotCounts = Object.fromEntries(ARCHIVE_SLOTS.map(s => [s,
       archiveEntries.filter(e => matchesPredicate(e, { fav: filterFav, revisit: filterRevisit, slot: s, need: filterNeed, feeling: filterFeeling, custom: filterCustom }, filterAfterKey, filterBeforeKey)).length
     ]))
@@ -769,7 +769,7 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
                           </div>
                           <div className={styles.threadReadEntryTags}>
                             {e.state && <span className={styles.threadReadTag}>{e.state}</span>}
-                            {e.need_id && <span className={styles.threadReadTag}>{NEEDS.find(n => n.id === e.need_id)?.name || e.need_id}</span>}
+                            {e.need_id && <span className={styles.threadReadTag}>{needName(e.need_id)}</span>}
                             {e.custom && <span className={styles.threadReadTag}>{e.custom}</span>}
                             <span className={styles.archiveCardMarks}>
                               <button
@@ -844,7 +844,7 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
           const entryTags = [
             entry.slot ? { label: entry.slot, isState: false } : null,
             (entry.mood_feeling || entry.mood_band) ? { label: entry.mood_feeling || entry.mood_band, isState: false } : null,
-            entry.need_id ? { label: NEEDS.find(n => n.id === entry.need_id)?.name || null, isState: false } : null,
+            entry.need_id ? { label: (needName(entry.need_id) || null), isState: false } : null,
             entry.custom ? { label: entry.custom, isState: false } : null,
           ].filter(t => t && t.label)
           return (
@@ -1035,7 +1035,7 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
                       {!detailLoading && metCount === 0 && !editMode && (
                         <p className={styles.calDetailEmpty}>no practices logged this day.</p>
                       )}
-                      {!detailLoading && NEEDS.filter(n => activePractices.some(p => p.need_id === n.id)).map(n => {
+                      {!detailLoading && allNeeds().filter(n => activePractices.some(p => p.need_id === n.id)).map(n => {
                         const modeName = state.canvas?.[n.id] || null
                         const all = activePractices.filter(p => p.need_id === n.id)
                         const met = all.filter(p => findCheckin(p)).length
@@ -1085,7 +1085,7 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
                       ? normalizeBand(detailMoods.find(m => m.prompt_time === e.slot)?.mood || null)
                       : null
                     const entryMoodDotColor = slotMood ? MOOD_DOT_COLOR[slotMood] : null
-                    const needName = e.need_id ? (NEEDS.find(n => n.id === e.need_id)?.name || e.need_id) : null
+                    const needTagName = e.need_id ? needName(e.need_id) : null
                     return (
                       <div key={e.id} className={styles.calDetailJournalEntry}>
                         <div className={styles.calDetailJournalMeta}>
@@ -1093,10 +1093,10 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
                           <span>{timeStr}</span>
                         </div>
                         <p className={styles.calDetailJournalBody}>{e.entry}</p>
-                        {(needName || e.state || e.custom) && (
+                        {(needTagName || e.state || e.custom) && (
                           <div className={styles.calDetailJournalTags}>
                             {e.state && <span className={styles.calDetailJournalTag}>{e.state}</span>}
-                            {needName && <span className={styles.calDetailJournalTag}>{needName}</span>}
+                            {needTagName && <span className={styles.calDetailJournalTag}>{needTagName}</span>}
                             {e.custom && <span className={styles.calDetailJournalTag}>{e.custom}</span>}
                           </div>
                         )}
@@ -1130,7 +1130,7 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
               {/* one row of facets; tap one to open its choices beneath */}
               {(() => {
                 const feelingLabel = filterFeeling || null
-                const needLabel = filterNeed ? (NEEDS.find(n => n.id === filterNeed)?.name || filterNeed) : null
+                const needLabel = filterNeed ? needName(filterNeed) : null
                 const facets = [
                   { key: 'slot', name: 'daypart', value: filterSlot, show: true },
                   { key: 'need', name: 'need', value: needLabel, show: canvasNeeds.length > 0 },
@@ -1329,7 +1329,7 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
                     const isExpanded = expandedEntries.has(e.id)
                     const isTruncatable = body.length > JOURNAL_TRUNCATE
                     const displayBody = !isExpanded && isTruncatable ? body.slice(0, JOURNAL_TRUNCATE).trimEnd() + '…' : body
-                    const needName = e.need_id ? (NEEDS.find(n => n.id === e.need_id)?.name || e.need_id) : null
+                    const needTagName = e.need_id ? needName(e.need_id) : null
                     const canAddNeed = !e.need_id && canvasNeeds.length > 0
                     const canAddFrequency = !e.mood_band
                     const canAddCustom = !e.custom && customTags.length > 0
@@ -1372,7 +1372,7 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
                         </button>
                         <span className={styles.archiveCardTags}>
                           {(e.mood_feeling || e.mood_band) && <span className={styles.archiveTag}>{e.mood_feeling || BAND_LABEL[normalizeBand(e.mood_band)] || e.mood_band}</span>}
-                          {needName && <span className={styles.archiveTag}>{needName}</span>}
+                          {needTagName && <span className={styles.archiveTag}>{needTagName}</span>}
                           {e.custom && <span className={styles.archiveTag}>{e.custom}</span>}
                           {(canAddNeed || canAddFrequency || canAddCustom) && (
                             <button

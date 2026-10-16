@@ -1,6 +1,6 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { NEEDS, MODES, MODE_ORDER, MODE_MAX_BUBBLES, MODE_WEIGHTS, JOURNAL_TRUNCATE } from '../lib/constants'
+import { allNeeds, MODES, MODE_ORDER, MODE_MAX_BUBBLES, MODE_WEIGHTS, JOURNAL_TRUNCATE } from '../lib/constants'
 import { currentSlot, precedingSlots, SLOTS, SLOT_NOUN, SLOT_GREETING } from '../lib/slots'
 import { todayKey, loadJournalEntries, deleteJournalEntry, loadNoteDeck, loadCustomTags, addJournalEntry, uploadNoteImage, loadRevisitQueue } from '../lib/store'
 import { createDataStats, getCanvasGuidance } from '../lib/dataStats'
@@ -194,11 +194,11 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
 
   // Completion ring: segments pack contiguously from 12 o'clock in mode order.
   // the tour points at the first mode that has needs in it (the one it opens)
-  const firstTierMode = MODE_ORDER.find(m => NEEDS.some(n => state.canvas[n.id] === m))
+  const firstTierMode = MODE_ORDER.find(m => allNeeds().some(n => state.canvas[n.id] === m))
   const ringArcs = []
   let totalRingFraction = 0
   for (const mode of MODE_ORDER) {
-    const modeNeeds = NEEDS.filter(n => state.canvas[n.id] === mode)
+    const modeNeeds = allNeeds().filter(n => state.canvas[n.id] === mode)
     const maxBubbles = MODE_MAX_BUBBLES[mode] || 0
     const modeTarget = maxBubbles * modeNeeds.length
     let modeCompletions = 0
@@ -218,7 +218,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   const spaceByMode = {}
   let spaceMax = 0
   let spaceDoneCount = 0
-  for (const n of NEEDS) {
+  for (const n of allNeeds()) {
     const mode = state.canvas[n.id]
     if (!mode) continue
     const maxBubbles = MODE_MAX_BUBBLES[mode] || 0
@@ -463,7 +463,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   const inheritedFeeling = slotMood?.feeling || null
   const chipBand = draftMoodInherited ? inheritedBand : draftMoodBand
   const chipFeeling = draftMoodInherited ? inheritedFeeling : draftMoodFeeling
-  const activeNeeds = NEEDS.filter(n => state.canvas[n.id])
+  const activeNeeds = allNeeds().filter(n => state.canvas[n.id])
 
   function openFreqPicker() {
     freqPickerNewSlot.current = !inheritedBand
@@ -721,7 +721,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   // at least one need on the canvas; dispatch nothing if canvas is empty.
   useEffect(() => {
     function onOpenTier() {
-      const modeToOpen = MODE_ORDER.find(m => NEEDS.some(n => state.canvas[n.id] === m))
+      const modeToOpen = MODE_ORDER.find(m => allNeeds().some(n => state.canvas[n.id] === m))
       if (!modeToOpen) return
       delete accordionSnapshots.current[modeToOpen]
       setOpenTier(modeToOpen)
@@ -1051,7 +1051,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
           </div>
           <div className={styles.tierList}>
             {MODE_ORDER.map((mode, mi) => {
-              const modeNeeds = NEEDS.filter(n => state.canvas[n.id] === mode)
+              const modeNeeds = allNeeds().filter(n => state.canvas[n.id] === mode)
               if (!modeNeeds.length) return null
               const pip = MODES[mode]?.pip
               const maxBubbles = MODE_MAX_BUBBLES[mode] || 0
@@ -1212,7 +1212,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
             onClick={() => navigate('/practices', { state: { returnTo: '/today' } })}
           >edit</button>
           {isDesktop && popupMode && (() => {
-            const pNeeds = NEEDS.filter(n => state.canvas[n.id] === popupMode)
+            const pNeeds = allNeeds().filter(n => state.canvas[n.id] === popupMode)
             return (
               <NeedsPopup
                 key={popupMode}

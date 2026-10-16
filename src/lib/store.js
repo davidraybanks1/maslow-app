@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from './supabase'
 import { STARTER_PRACTICES, STARTER_NOTES } from './starterContent.js'
-import { TIME_RE } from './constants'
+import { TIME_RE, setCustomNeeds, MAX_CUSTOM_NEEDS, MAX_CUSTOM_NEED_NAME, allNeeds } from './constants'
 import { sanitizeConfig } from './practiceTypes'
 import * as Sentry from '@sentry/capacitor'
 
@@ -44,6 +44,18 @@ function sanitizeCanvas(raw) {
   return out
 }
 
+// users.custom_needs: [{ id: 'c_xxxxxxxx', name }] - the person's own needs.
+function sanitizeCustomNeeds(raw) {
+  if (!Array.isArray(raw)) return []
+  const out = []
+  for (const c of raw) {
+    if (!c || typeof c.id !== 'string' || !c.id.startsWith('c_') || typeof c.name !== 'string') continue
+    const name = c.name.trim().slice(0, MAX_CUSTOM_NEED_NAME)
+    if (name && !out.some(o => o.id === c.id)) out.push({ id: c.id, name })
+  }
+  return out.slice(0, MAX_CUSTOM_NEEDS)
+}
+
 function migrateState(saved) {
   try {
     const version = saved._version || 1
@@ -73,6 +85,7 @@ function migrateState(saved) {
     if (saved.reminderOffersDeclined === undefined) saved.reminderOffersDeclined = 0
     if (!saved.notifTypes) saved.notifTypes = { streaks: true, skips: true, plain: true }
     saved.canvas = sanitizeCanvas(saved.canvas)
+    saved.customNeeds = sanitizeCustomNeeds(saved.customNeeds)
 
     // Migrate old checkin format (string array like 'movement_go for a run')
     // to new object array format [{ id, need_id, practice_text, mode, completed_at }]
@@ -99,6 +112,7 @@ function migrateState(saved) {
       onboarded: saved.onboarded || false,
       userId: saved.userId || null,
       canvas: sanitizeCanvas(saved.canvas),
+      customNeeds: [],
       practices: {},
       checkins: {},
       moods: [],
@@ -116,6 +130,7 @@ export function initialState() {
     onboarded: false,
     userId: null,
     canvas: {},
+    customNeeds: [],
     practices: {},
     practicesDB: [],
     checkins: {},
@@ -207,6 +222,7 @@ async function restoreFromSupabase(userId, email) {
       onboarded: user.onboarded,
       userId: user.id,
       canvas,
+      customNeeds: sanitizeCustomNeeds(user.custom_needs),
       practices: user.practices || {},
       practicesDB: practicesRows || [],
       checkins: checkinsMap,
@@ -233,6 +249,11 @@ export function useAppState(onSignIn) {
   const [authLoading, setAuthLoading] = useState(true)
   const checkinsRef = useRef(state.checkins)
   const userIdRef = useRef(state.userId)
+  const stateRef = useRef(state)
+  stateRef.current = state
+
+  // Everything that walks the needs reads them from constants; keep that in step with state.
+  setCustomNeeds(state.customNeeds)
 
   useEffect(() => { checkinsRef.current = state.checkins }, [state.checkins])
   useEffect(() => { userIdRef.current = state.userId }, [state.userId])
@@ -342,6 +363,57 @@ export function useAppState(onSignIn) {
         return { ...prev, canvas: newCanvas }
       })
     })
+  }
+
+  // ── Custom needs ───────────────────────────────────────────────────────────
+  // A custom need lives in users.custom_needs; where it sits (which mode) lives
+  // in users.canvas like any other need. New ones start in the library.
+
+  function saveCustomNeeds(next, previous) {
+    setState(prev => {
+      if (prev.userId) {
+        supabase.from('users').update({ custom_needs: next }).eq('id', prev.userId).then(({ error }) => {
+          if (error) {
+            logSupabaseError('saveCustomNeeds', error)
+            setState(p => ({ ...p, customNeeds: previous }))
+          }
+        })
+      }
+      return { ...prev, customNeeds: next }
+    })
+  }
+
+  // → { ok: true, id } | { ok: false, reason }
+  function addCustomNeed(rawName) {
+    const name = String(rawName || '').replace(/\s+/g, ' ').trim()
+    if (name.length < 2) return { ok: false, reason: 'give it a name.' }
+    if (name.length > MAX_CUSTOM_NEED_NAME) return { ok: false, reason: `keep it to ${MAX_CUSTOM_NEED_NAME} characters.` }
+    const current = stateRef.current.customNeeds || []
+    if (current.length >= MAX_CUSTOM_NEEDS) return { ok: false, reason: `${MAX_CUSTOM_NEEDS} of your own is the most.` }
+    if (allNeeds().some(n => n.name.toLowerCase() === name.toLowerCase())) return { ok: false, reason: 'you already have that one.' }
+    const id = `c_${Math.random().toString(36).slice(2, 10)}`
+    saveCustomNeeds([...current, { id, name }], current)
+    return { ok: true, id }
+  }
+
+  function renameCustomNeed(id, rawName) {
+    const name = String(rawName || '').replace(/\s+/g, ' ').trim()
+    const current = stateRef.current.customNeeds || []
+    if (!current.some(c => c.id === id)) return { ok: false, reason: 'not found.' }
+    if (name.length < 2) return { ok: false, reason: 'give it a name.' }
+    if (name.length > MAX_CUSTOM_NEED_NAME) return { ok: false, reason: `keep it to ${MAX_CUSTOM_NEED_NAME} characters.` }
+    if (allNeeds().some(n => n.id !== id && n.name.toLowerCase() === name.toLowerCase())) return { ok: false, reason: 'you already have that one.' }
+    saveCustomNeeds(current.map(c => c.id === id ? { ...c, name } : c), current)
+    return { ok: true }
+  }
+
+  // Takes it out of its mode and off the list. Its practices are archived by the
+  // caller first, so history stays and nothing is left dangling on Today.
+  function deleteCustomNeed(id) {
+    const current = stateRef.current.customNeeds || []
+    if (!current.some(c => c.id === id)) return
+    if (stateRef.current.canvas?.[id]) updateCanvas(id, null)
+    saveCustomNeeds(current.filter(c => c.id !== id), current)
   }
 
   // kind/config come from the type builder; a bare add is a plain check.
@@ -852,7 +924,7 @@ export function useAppState(onSignIn) {
     })
   }
 
-  return { state, authLoading, updateCanvas, replaceCanvas, addPractice, renamePractice, updatePractice, archivePractice, removePractice, setPracticeReminder, stampReminderOffered, incrementOffersDeclined, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, setCheckinDetail, logMood, completeOnboarding, updateRemindersEnabled, updateMoodReminder, updateNotifType, markNotifPrimed, markTourSeen, resetTour, updateNoteDeck, syncCheckinDay }
+  return { state, authLoading, updateCanvas, replaceCanvas, addCustomNeed, renameCustomNeed, deleteCustomNeed, addPractice, renamePractice, updatePractice, archivePractice, removePractice, setPracticeReminder, stampReminderOffered, incrementOffersDeclined, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, setCheckinDetail, logMood, completeOnboarding, updateRemindersEnabled, updateMoodReminder, updateNotifType, markNotifPrimed, markTourSeen, resetTour, updateNoteDeck, syncCheckinDay }
 }
 
 export function todayKey() {

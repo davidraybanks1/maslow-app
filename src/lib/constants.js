@@ -28,6 +28,32 @@ export const NEEDS = [
 
 export const UNIVERSAL_NEEDS = ['movement', 'nutrition', 'rest']
 
+// A person's own needs ({ id: 'c_xxxxxxxx', name }) sit beside the 13 above.
+// They arrive with the user's data, so the store hands them over here once per
+// render (setCustomNeeds) and everything that walks the needs asks allNeeds().
+// NEEDS itself stays the fixed built-in list.
+export const MAX_CUSTOM_NEEDS = 6
+export const MAX_CUSTOM_NEED_NAME = 24
+let customNeeds = []
+let allCache = NEEDS
+export function setCustomNeeds(list) {
+  const next = Array.isArray(list) ? list : []
+  if (next === customNeeds) return
+  customNeeds = next
+  allCache = next.length
+    ? [...NEEDS, ...next.map(c => ({ id: c.id, name: c.name, ring: 'custom', custom: true }))]
+    : NEEDS
+}
+export function allNeeds() { return allCache }
+
+// A need's name from its id. A custom need that was deleted reads as a plain
+// "removed need" in old history instead of showing its raw id.
+export function needName(id) {
+  const hit = allCache.find(n => n.id === id)
+  if (hit) return hit.name
+  return typeof id === 'string' && id.startsWith('c_') ? 'removed need' : id
+}
+
 export const MODE_MAX_BUBBLES = { exploration: 3, appreciation: 2, nourishment: 1, survival: 1 }
 export const MODE_NEED_CAP    = { exploration: 1, appreciation: 2, nourishment: 3, survival: 4 }
 export const MODE_DESCS = {

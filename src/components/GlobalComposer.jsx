@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { toBlob } from 'html-to-image'
-import { NEEDS } from '../lib/constants'
+import { allNeeds } from '../lib/constants'
 import { currentSlot } from '../lib/slots'
 import { todayKey, addJournalEntry, uploadNoteImage, loadCustomTags, loadRevisitQueue } from '../lib/store'
 import { normalizeBand } from '../lib/frequency'
@@ -161,7 +161,7 @@ export default function GlobalComposer({ state, logMood, open, onClose }) {
   const inheritedFeeling = slotMood?.feeling || null
   const chipBand = draftMoodInherited ? inheritedBand : draftMoodBand
   const chipFeeling = draftMoodInherited ? inheritedFeeling : draftMoodFeeling
-  const activeNeeds = NEEDS.filter(n => state.canvas?.[n.id])
+  const activeNeeds = allNeeds().filter(n => state.canvas?.[n.id])
 
   function openFreqPicker() {
     freqPickerNewSlot.current = !inheritedBand

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
-import { NEEDS, MODE_ORDER } from '../lib/constants'
+import { allNeeds, MODE_ORDER } from '../lib/constants'
 import { createDataStats } from '../lib/dataStats'
 import { normalizeBand, BAND_LABEL } from '../lib/frequency'
 import { useIsDesktop } from '../lib/useIsDesktop'
@@ -119,7 +119,7 @@ function buildRange(period, offset) {
 
 function buildNeedDeltas(canvas, checkins, cur, pri) {
   if (!cur.length || !pri.length) return []
-  return NEEDS.filter(n => canvas[n.id]).map(need => {
+  return allNeeds().filter(n => canvas[n.id]).map(need => {
     const pct = Math.round(
       cur.filter(dk => (checkins[dk] || []).some(e => e.need_id === need.id)).length / cur.length * 100
     )
@@ -200,7 +200,7 @@ function formatDkLabel(dk) {
 }
 
 function dayCompPct(canvas, checkins, dk) {
-  const active = NEEDS.filter(n => canvas[n.id])
+  const active = allNeeds().filter(n => canvas[n.id])
   if (!active.length) return 0
   const met = active.filter(n => (checkins[dk] || []).some(e => e.need_id === n.id)).length
   return Math.round(met / active.length * 100)
@@ -367,7 +367,7 @@ function RibbonsSection({ canvas, checkins, practicesDB, days, windowLen, isDesk
   const todayKey = buildWindowKeys(1, 0)[0]
 
   const needRows = useMemo(() => {
-    return NEEDS.filter(n => canvas[n.id]).map(need => {
+    return allNeeds().filter(n => canvas[n.id]).map(need => {
       const mode = canvas[need.id]
       const daysActive = days.filter(dk => (checkins[dk] || []).some(e => e.need_id === need.id)).length
       const isDormant = !recent30.some(dk => (checkins[dk] || []).some(e => e.need_id === need.id))
@@ -579,7 +579,7 @@ function AllNumbersSection({ range, canvas, checkins }) {
 
   const modeData = useMemo(() => {
     return MODE_ORDER.map(mode => {
-      const needsInMode = NEEDS.filter(n => canvas[n.id] === mode)
+      const needsInMode = allNeeds().filter(n => canvas[n.id] === mode)
       if (!needsInMode.length) return null
       let totalMet = 0, totalPossible = 0
       const needRows = needsInMode.map(need => {

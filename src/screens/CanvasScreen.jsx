@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { NEEDS, MODE_ORDER, MODES, MODE_NEED_CAP } from '../lib/constants'
+import { allNeeds, needName, MODE_ORDER, MODES, MODE_NEED_CAP, MAX_CUSTOM_NEEDS, MAX_CUSTOM_NEED_NAME } from '../lib/constants'
 import { canPlace } from '../lib/canvasRules'
 import { useNeedDrag } from '../lib/useNeedDrag'
 import Sheet from '../components/Sheet'
@@ -11,15 +11,17 @@ import styles from './CanvasScreen.module.css'
 // to the library to take it out of play. Tapping a need opens a list instead,
 // for anyone who'd rather not drag. Practices live on their own page.
 
-const needName = id => NEEDS.find(n => n.id === id)?.name || id
-
-export default function CanvasScreen({ state, updateCanvas }) {
+export default function CanvasScreen({ state, updateCanvas, addCustomNeed, renameCustomNeed, deleteCustomNeed, archivePractice }) {
   const navigate = useNavigate()
   const location = useLocation()
   const canvas = state.canvas || {}
 
   const [moving, setMoving] = useState(null)   // need id: "move {need} to…"
   const [filling, setFilling] = useState(null) // mode: "add a need to {mode}"
+  const [naming, setNaming] = useState(null)   // { id } to rename one, {} to create one
+  const [draft, setDraft] = useState('')
+  const [nameError, setNameError] = useState('')
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const [notice, setNotice] = useState(null)
   const noticeTimer = useRef(null)
   useEffect(() => () => clearTimeout(noticeTimer.current), [])
@@ -47,8 +49,32 @@ export default function CanvasScreen({ state, updateCanvas }) {
     },
   })
 
-  const placedIn = mode => NEEDS.filter(n => canvas[n.id] === mode)
-  const library = NEEDS.filter(n => !canvas[n.id])
+  const customNeeds = state.customNeeds || []
+  const isCustom = id => String(id).startsWith('c_')
+
+  function openCreate() { setDraft(''); setNameError(''); setNaming({}) }
+  function openRename(id) { setMoving(null); setDraft(needName(id)); setNameError(''); setNaming({ id }) }
+  function closeNaming() { setNaming(null); setNameError('') }
+
+  function submitName(e) {
+    e.preventDefault()
+    const res = naming?.id ? renameCustomNeed(naming.id, draft) : addCustomNeed(draft)
+    if (!res.ok) { setNameError(res.reason); return }
+    closeNaming()
+    if (!naming?.id) say('added. drag it into a mode.')
+  }
+
+  function removeCustom(id) {
+    ;(state.practicesDB || [])
+      .filter(p => p.need_id === id && !p.archived_at)
+      .forEach(p => archivePractice?.(p.id))
+    deleteCustomNeed(id)
+    setConfirmDelete(false)
+    setMoving(null)
+  }
+
+  const placedIn = mode => allNeeds().filter(n => canvas[n.id] === mode)
+  const library = allNeeds().filter(n => !canvas[n.id])
 
   function handleClose() {
     navigate(location.state?.returnTo || '/today', location.state?.fromProfile ? { state: { openProfile: true } } : undefined)
@@ -94,14 +120,18 @@ export default function CanvasScreen({ state, updateCanvas }) {
           aria-label="needs not in a mode"
           className={`${styles.library} ${zoneClass('library')}`}
         >
-          {library.length > 0
-            ? <div className={styles.pills}>{library.map(n => chip(n, 'pill'))}</div>
-            : <span className={styles.libraryEmpty}>drop here to remove</span>}
+          {library.length === 0 && <span className={styles.libraryEmpty}>drop here to remove</span>}
+          <div className={styles.pills}>
+            {library.map(n => chip(n, 'pill'))}
+            {customNeeds.length < MAX_CUSTOM_NEEDS && (
+              <button type="button" className={styles.createPill} onClick={openCreate}>+ create your own</button>
+            )}
+          </div>
         </div>
       </section>
 
       <section className={styles.section} aria-labelledby="modes-head">
-        <h2 id="modes-head" className={`${styles.sectionHead} ${styles.sectionHeadGap}`}>Your modes</h2>
+        <h2 id="modes-head" className={`${styles.sectionHead} ${styles.sectionHeadGap}`}>Edit your modes</h2>
         <div className={styles.cards}>
           {MODE_ORDER.map(mode => {
             const placed = placedIn(mode)
@@ -141,7 +171,7 @@ export default function CanvasScreen({ state, updateCanvas }) {
       </div>
 
       {moving && (
-        <Sheet label={`move ${needName(moving)}`} onClose={() => setMoving(null)}>
+        <Sheet label={`move ${needName(moving)}`} onClose={() => { setMoving(null); setConfirmDelete(false) }}>
           <h2 className={styles.sheetTitle}>Move {needName(moving)}</h2>
           <div className={styles.choices}>
             {MODE_ORDER.map(m => {
@@ -178,7 +208,41 @@ export default function CanvasScreen({ state, updateCanvas }) {
               </button>
             )}
           </div>
-          <button type="button" className={styles.sheetCancel} onClick={() => setMoving(null)}>cancel</button>
+          {isCustom(moving) && (
+            <div className={styles.ownActions}>
+              <button type="button" className={styles.ownBtn} onClick={() => openRename(moving)}>rename</button>
+              <button
+                type="button"
+                className={`${styles.ownBtn} ${confirmDelete ? styles.ownBtnArmed : ''}`}
+                onClick={() => (confirmDelete ? removeCustom(moving) : setConfirmDelete(true))}
+              >{confirmDelete ? 'tap again to delete' : 'delete'}</button>
+              {confirmDelete && <p className={styles.ownHint}>its practices are archived. history is kept.</p>}
+            </div>
+          )}
+          <button type="button" className={styles.sheetCancel} onClick={() => { setMoving(null); setConfirmDelete(false) }}>cancel</button>
+        </Sheet>
+      )}
+
+      {naming && (
+        <Sheet label={naming.id ? 'rename need' : 'create a need'} onClose={closeNaming}>
+          <h2 className={styles.sheetTitle}>{naming.id ? 'Rename' : 'Create your own'}</h2>
+          <form onSubmit={submitName}>
+            <label htmlFor="own-need-name" className={styles.srOnly}>need name</label>
+            <input
+              id="own-need-name"
+              className={styles.nameInput}
+              value={draft}
+              maxLength={MAX_CUSTOM_NEED_NAME}
+              placeholder="e.g. creativity"
+              autoComplete="off"
+              autoCapitalize="none"
+              autoFocus
+              onChange={e => { setDraft(e.target.value); setNameError('') }}
+            />
+            <p className={styles.nameError} role="alert">{nameError}</p>
+            <button type="submit" className={styles.primaryBtn}>{naming.id ? 'Save' : 'Create'}</button>
+          </form>
+          <button type="button" className={styles.sheetCancel} onClick={closeNaming}>not now</button>
         </Sheet>
       )}
 

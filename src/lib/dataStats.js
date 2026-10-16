@@ -1,4 +1,4 @@
-import { NEEDS, MODES, MODE_ORDER } from './constants'
+import { allNeeds, MODES, MODE_ORDER } from './constants'
 import { parseDebriefEntry } from './debriefTypes'
 import { normalizeBand } from './frequency'
 
@@ -90,7 +90,7 @@ function completedFor(checkins, needId, dateKey) {
 function dayCompletionPct(canvas, checkins, dateKey) {
   let totalRequired = 0
   let totalCompleted = 0
-  for (const need of NEEDS) {
+  for (const need of allNeeds()) {
     if (!canvas[need.id]) continue
     totalRequired++
     totalCompleted += Math.min(completedFor(checkins, need.id, dateKey), 1)
@@ -103,7 +103,7 @@ function hasCheckinData(checkins, dateKey) {
 }
 
 function isStreakDay(canvas, checkins, dateKey) {
-  const eligible = NEEDS.filter(n => canvas[n.id] && canvas[n.id] !== 'survival')
+  const eligible = allNeeds().filter(n => canvas[n.id] && canvas[n.id] !== 'survival')
   if (eligible.length === 0) return false
   const met = eligible.filter(n => completedFor(checkins, n.id, dateKey) > 0).length
   return met / eligible.length >= 0.5
@@ -189,7 +189,7 @@ export function createDataStats({ canvas, checkins, moods, practices, practicesD
       let totalRequired = 0
       let totalCompleted = 0
       for (const day of days) {
-        for (const need of NEEDS) {
+        for (const need of allNeeds()) {
           if (!canvas[need.id]) continue
           totalRequired++
           totalCompleted += Math.min(completedFor(checkins, need.id, day), 1)
@@ -242,7 +242,7 @@ export function createDataStats({ canvas, checkins, moods, practices, practicesD
       return Math.round((completed / days.length) * 100)
     }
 
-    return NEEDS.filter(n => canvas[n.id]).map(need => {
+    return allNeeds().filter(n => canvas[n.id]).map(need => {
       const sparkline = periodDays.map(day =>
         completedFor(checkins, need.id, day) > 0 ? 100 : 0
       )
@@ -259,7 +259,7 @@ export function createDataStats({ canvas, checkins, moods, practices, practicesD
   function getModeStats(rangeDays) {
     const days = dayRange(rangeDays, 0)
     return MODE_ORDER.map(mode => {
-      const needsInMode = NEEDS.filter(n => canvas[n.id] === mode)
+      const needsInMode = allNeeds().filter(n => canvas[n.id] === mode)
       if (needsInMode.length === 0) return { mode, pct: 0 }
       let completed = 0
       for (const day of days) {
@@ -388,7 +388,7 @@ export function createDataStats({ canvas, checkins, moods, practices, practicesD
 
     const candidates = []
 
-    for (const need of NEEDS) {
+    for (const need of allNeeds()) {
       if (!canvas[need.id]) continue
 
       const metDays = validDays.filter(day => isNeedMet(need, day))
@@ -455,7 +455,7 @@ export function createDataStats({ canvas, checkins, moods, practices, practicesD
     // fall back to legacy users.practices JSONB with practice_text matching.
     const useDB = Array.isArray(practicesDB) && practicesDB.length > 0
 
-    for (const need of NEEDS) {
+    for (const need of allNeeds()) {
       if (!canvas[need.id]) continue
 
       // Include archived practices so historical stats stay correct
@@ -565,7 +565,7 @@ export function createDataStats({ canvas, checkins, moods, practices, practicesD
 
       let domNeed = null
       let domNeedCount = 0
-      for (const need of NEEDS) {
+      for (const need of allNeeds()) {
         if (!canvas[need.id]) continue
         const count = subset.filter(d => isNeedMet(need, d.date_key) === metValue).length
         if (count > domNeedCount) { domNeedCount = count; domNeed = need }
@@ -603,7 +603,7 @@ export function createDataStats({ canvas, checkins, moods, practices, practicesD
     const MODE_THRESHOLDS = { exploration: 80, appreciation: 60, nourishment: 50, survival: 20 }
     const MODE_COLORS = { exploration: '#1B3A2D', appreciation: '#ABBEA3', nourishment: '#F5B622', survival: '#F55127' }
 
-    const activeNeeds = NEEDS.filter(n => canvas[n.id])
+    const activeNeeds = allNeeds().filter(n => canvas[n.id])
     const totalDays = activeNeeds.length * days.length
     let totalCompleted = 0
 
@@ -651,7 +651,7 @@ export function createDataStats({ canvas, checkins, moods, practices, practicesD
         let bestNeed = null
         let bestRatio = 0
         let bestMetDays = 0
-        for (const need of NEEDS) {
+        for (const need of allNeeds()) {
           if (!canvas[need.id]) continue
           let metDays = 0
           for (const day of days30) {
@@ -683,7 +683,7 @@ export function createDataStats({ canvas, checkins, moods, practices, practicesD
       if (daysWithAnyData >= 14) {
         let neglectNeed = null
         let neglectCount = 2
-        for (const need of NEEDS) {
+        for (const need of allNeeds()) {
           if (!canvas[need.id]) continue
           let count = 0
           for (const day of days30) {

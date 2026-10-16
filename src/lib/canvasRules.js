@@ -1,4 +1,4 @@
-import { NEEDS, MODE_NEED_CAP, UNIVERSAL_NEEDS } from './constants'
+import { allNeeds, needName, MODE_NEED_CAP, UNIVERSAL_NEEDS } from './constants'
 
 // What the needs page lets a need do. The store enforces the same two limits
 // (movement, nutrition and rest can't leave the canvas; rest can't sit above
@@ -6,10 +6,9 @@ import { NEEDS, MODE_NEED_CAP, UNIVERSAL_NEEDS } from './constants'
 // reason instead of quietly doing something different.
 const ABOVE_NOURISHMENT = ['exploration', 'appreciation']
 
-const nameOf = id => NEEDS.find(n => n.id === id)?.name || id
 
 export function countIn(canvas, mode, exceptId = null) {
-  return NEEDS.filter(n => canvas[n.id] === mode && n.id !== exceptId).length
+  return allNeeds().filter(n => canvas[n.id] === mode && n.id !== exceptId).length
 }
 
 // target: a mode key, or null to take the need off the canvas (the library).
@@ -20,7 +19,7 @@ export function canPlace(needId, target, canvas) {
 
   if (target == null) {
     if (UNIVERSAL_NEEDS.includes(needId)) {
-      return { ok: false, reason: `${nameOf(needId)} stays in a mode. you can move it.` }
+      return { ok: false, reason: `${needName(needId)} stays in a mode. you can move it.` }
     }
     return { ok: true }
   }

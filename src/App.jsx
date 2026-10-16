@@ -105,7 +105,7 @@ function AppInner() {
     if (['/', '/signin', '/onboarding'].includes(location.pathname)) navigate('/today')
   }
 
-  const { state, authLoading, updateCanvas, replaceCanvas, addPractice, renamePractice, updatePractice, archivePractice, removePractice, setPracticeReminder, stampReminderOffered, incrementOffersDeclined, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, setCheckinDetail, logMood, completeOnboarding, updateRemindersEnabled, updateMoodReminder, updateNotifType, markNotifPrimed, markTourSeen, resetTour, updateNoteDeck, syncCheckinDay } = useAppState(
+  const { state, authLoading, updateCanvas, replaceCanvas, addCustomNeed, renameCustomNeed, deleteCustomNeed, addPractice, renamePractice, updatePractice, archivePractice, removePractice, setPracticeReminder, stampReminderOffered, incrementOffersDeclined, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, setCheckinDetail, logMood, completeOnboarding, updateRemindersEnabled, updateMoodReminder, updateNotifType, markNotifPrimed, markTourSeen, resetTour, updateNoteDeck, syncCheckinDay } = useAppState(
     () => onSignInRef.current?.()
   )
 
@@ -238,7 +238,7 @@ function AppInner() {
           <Route path="/practices" element={<Protected onboarded={state.onboarded} userId={state.userId}><Practices state={state} addPractice={addPractice} renamePractice={renamePractice} updatePractice={updatePractice} archivePractice={archivePractice} setPracticeReminder={setPracticeReminder} stampReminderOffered={stampReminderOffered} incrementOffersDeclined={incrementOffersDeclined} completeOnboarding={completeOnboarding} /></Protected>} />
           <Route path="/data" element={<Protected onboarded={state.onboarded} userId={state.userId}><Data state={state} archivePractice={archivePractice} profileMenu={profileMenuEl} /></Protected>} />
           <Route path="/log" element={<Protected onboarded={state.onboarded} userId={state.userId}><Log state={state} syncCheckinDay={syncCheckinDay} profileMenu={profileMenuEl} /></Protected>} />
-          <Route path="/canvas" element={<Protected onboarded={state.onboarded} userId={state.userId}><CanvasScreen state={state} updateCanvas={updateCanvas} /></Protected>} />
+          <Route path="/canvas" element={<Protected onboarded={state.onboarded} userId={state.userId}><CanvasScreen state={state} updateCanvas={updateCanvas} addCustomNeed={addCustomNeed} renameCustomNeed={renameCustomNeed} deleteCustomNeed={deleteCustomNeed} archivePractice={archivePractice} /></Protected>} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/password" element={<UpdatePassword />} />
           <Route path="/settings" element={<Navigate to="/today" replace />} />

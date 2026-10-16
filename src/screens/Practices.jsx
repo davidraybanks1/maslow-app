@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { NEEDS, MODES, MODE_ORDER, TIME_RE } from '../lib/constants'
+import { allNeeds, MODES, MODE_ORDER, TIME_RE } from '../lib/constants'
 import { createDataStats, formatLastDone } from '../lib/dataStats'
 import { isNative, checkNotifPermission, requestNotifPermission, scheduleReminders } from '../lib/native'
 import { TYPES, TYPED_STARTERS, poolTag } from '../lib/practiceTypes'
@@ -193,7 +193,7 @@ export default function Practices({ state, addPractice, updatePractice, archiveP
     incrementOffersDeclined()
   }
 
-  const sheetNeeds = NEEDS.filter(n => state.canvas[n.id])
+  const sheetNeeds = allNeeds().filter(n => state.canvas[n.id])
   const fullNeeds = sheetNeeds.filter(n => {
     const count = useDB
       ? state.practicesDB.filter(p => p.need_id === n.id && !p.archived_at).length
@@ -254,7 +254,7 @@ export default function Practices({ state, addPractice, updatePractice, archiveP
 
       <div className={`${styles.list} ${showOnboardingCta ? styles.listWithCta : ''}`}>
         {MODE_ORDER.map(mode => {
-          const modeNeeds = NEEDS.filter(n => state.canvas[n.id] === mode)
+          const modeNeeds = allNeeds().filter(n => state.canvas[n.id] === mode)
           if (!modeNeeds.length) return null
           const modeColor = MODES[mode]?.pip
           const modeLit = TIER_LIT[mode]
