@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { isNative, checkNotifPermission, requestNotifPermission } from '../lib/native'
 import { deleteAccount, wipeLocalData } from '../lib/store'
+import { PracticesArt, NotesArt, TagsArt } from './ProfileArt'
 import styles from './ProfileMenu.module.css'
 
 const SLOTS = ['morning', 'midday', 'evening']
@@ -256,16 +257,16 @@ export default function ProfileMenu({
           <div className={styles.tileText}><span className={styles.tileLabel}>needs</span><span className={styles.mono}>{needCount} · modes</span></div>
         </button>
         <button type="button" className={`${styles.card} ${styles.tile}`} onClick={() => goTo('/practices')}>
-          <span className={styles.tileNum}>{practiceCount}</span>
-          <div className={styles.tileText}><span className={styles.tileLabel}>practices</span><span className={styles.mono}>types · reminders</span></div>
+          <PracticesArt />
+          <div className={styles.tileText}><span className={styles.tileLabel}>practices</span><span className={styles.mono}>{practiceCount} · types</span></div>
         </button>
         <button type="button" className={`${styles.card} ${styles.tile}`} onClick={() => goTo('/today', { openDeck: true })}>
-          <span className={styles.tileNum}>{noteDeckCount}</span>
-          <div className={styles.tileText}><span className={styles.tileLabel}>notes to self</span><span className={styles.mono}>on today</span></div>
+          <NotesArt />
+          <div className={styles.tileText}><span className={styles.tileLabel}>notes to self</span><span className={styles.mono}>{noteDeckCount} · on today</span></div>
         </button>
         <button type="button" className={`${styles.card} ${styles.tile}`} onClick={() => goTo('/today', { openTags: true })}>
-          <span className={styles.tileNum}>{customTagCount}</span>
-          <div className={styles.tileText}><span className={styles.tileLabel}>tags</span><span className={styles.mono}>custom</span></div>
+          <TagsArt />
+          <div className={styles.tileText}><span className={styles.tileLabel}>tags</span><span className={styles.mono}>{customTagCount} · custom</span></div>
         </button>
       </div>
       </div>

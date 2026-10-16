@@ -216,13 +216,6 @@ button.card, .tile, .remCard {
   height: 9px;
   border-radius: 50%;
 }
-.tileNum {
-  font-family: var(--pf-xl);
-  font-size: 34px;
-  font-weight: 200;
-  line-height: 1;
-  height: 34px;
-}
 .tileText {
   display: flex;
   flex-direction: column;
