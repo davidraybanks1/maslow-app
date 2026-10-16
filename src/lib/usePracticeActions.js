@@ -156,8 +156,8 @@ export function usePracticeActions({
     }
   }
 
+  // Called when a hold finishes (the press and the finish each buzz in useHold).
   function tap(need, mode, practice) {
-    hapticTick()
     const st = statusOf(need, practice)
     switch (st.kind) {
       case 'check':

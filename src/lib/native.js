@@ -18,6 +18,15 @@ export async function hapticTick() {
   } catch (e) { console.warn('[native]', e) }
 }
 
+/* Firmer haptic for a completed hold: the practice just checked off. */
+export async function hapticSuccess() {
+  if (!isNative()) return
+  try {
+    const { Haptics, NotificationType } = await import('@capacitor/haptics')
+    await Haptics.notification({ type: NotificationType.Success })
+  } catch (e) { console.warn('[native]', e) }
+}
+
 /* Hide the native splash once the app (or the daily ritual) has rendered. */
 export async function hideSplash() {
   if (!isNative()) return

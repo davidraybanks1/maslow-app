@@ -1188,6 +1188,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                                   lastDays={lastDoneMap.get(key) ?? null}
                                   expanded={!!practices.expanded[key]}
                                   onTap={() => practices.tap(n, mode, practice)}
+                                  onHint={() => practices.say('hold to check off')}
                                   onToggle={() => practices.toggleExpanded(key)}
                                   onToggleItem={i => practices.toggleItem(n, mode, practice, i)}
                                   onAddItem={text => practices.addItem(n, mode, practice, text)}

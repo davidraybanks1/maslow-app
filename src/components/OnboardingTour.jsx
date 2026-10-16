@@ -22,7 +22,7 @@ const ALL_STEPS = [
     target: 'modes',
     ring: true,
     place: 'above',       // the card stays above: the mode opens downward and must not move it
-    body: ['Tap to show your needs and practices. Tap a practice to mark it complete.'],
+    body: ['Tap to show your needs and practices. Press and hold a practice to mark it complete.'],
   },
   {
     target: 'profile',

@@ -4,6 +4,7 @@ import {
   isSplit, subLabel, fmtTime, STRETCH_WORDS, MAX_ITEMS,
 } from '../lib/practiceTypes'
 import PracticeIcon, { TIER_LIT } from './PracticeIcon'
+import { useHold } from '../lib/useHold'
 import styles from './PracticeRow.module.css'
 
 // Tier colours for a done practice live with the icon (TIER_LIT).
@@ -146,7 +147,7 @@ function StretchPanel({ st, onStretch, onEdit }) {
         </div>
       ) : (
         <div className={`${styles.text13} ${styles.hintText}`}>
-          after you do it, tap the circle and tell it how far you went.
+          after you do it, hold the practice and tell it how far you went.
         </div>
       )}
       <EditLink onClick={onEdit} />
@@ -160,7 +161,7 @@ function BoundaryPanel({ st, onEdit }) {
   const msg = st.done ? 'you kept it. nicely done.'
     : phase === 'before' ? 'it hasn’t started yet.'
     : phase === 'in' ? `you’re in it now. you’ll check it off once it ends at ${fmtTime(cfg.window.until)}.`
-    : 'it’s over. tap the circle if you kept it.'
+    : 'it’s over. hold the practice if you kept it.'
   return (
     <div className={styles.panel}>
       <Block label="the window">not {win}</Block>
@@ -172,94 +173,87 @@ function BoundaryPanel({ st, onEdit }) {
 
 export default function PracticeRow({
   need, mode, practice, status: st, lastDays, expanded,
-  onTap, onToggle, onToggleItem, onAddItem, onBegin, onStretch, onEdit,
+  onTap, onToggle, onToggleItem, onAddItem, onBegin, onStretch, onEdit, onHint,
 }) {
   const kind = st.kind
   const lit = LIT[mode] || LIT.nourishment
-  const pip = PIP[mode] || MODES[mode]?.pip
+  const split = isSplit(practice)
   const inert = kind === 'boundary' && !st.done && st.phase !== 'ended'
   const holding = kind === 'boundary' && !st.done && st.phase === 'in'
   const sub = subLabel(practice, { done: st.done, phase: st.phase, items: st.items })
   const stamp = stampFor(st, lastDays)
   const showX2 = (kind === 'check' && st.cfg.target <= 1 || kind === 'ritual') && st.count >= 2
 
-  const tile = (
-    <span
-      className={`${styles.tile} ${st.done ? styles.tileDone : ''} ${inert ? styles.tileInert : ''} ${holding ? styles.tileHolding : ''}`}
-      style={{ '--pip': pip }}
-    >
-      <PracticeIcon kind={kind} size={24} lit={st.done ? lit : null} />
-    </span>
-  )
-  const text = (
-    <span className={styles.text}>
-      <span className={styles.label}>{practice.label}</span>
-      {sub && <span className={styles.sub}>{sub}</span>}
-    </span>
-  )
-  const meta = (
-    <>
-      {showX2 && <span className={styles.x2}>×2</span>}
-      {stamp && <span className={styles.stamp}>{stamp}</span>}
-    </>
-  )
+  // Press and hold to check off (or undo). A quick tap opens the practice if it
+  // has something to open, and otherwise reminds you how this works.
+  const hold = useHold({
+    onComplete: onTap,
+    onTap: split ? onToggle : onHint,
+    fill: !inert,
+  })
 
-  if (!isSplit(practice)) {
-    return (
-      <div
-        className={`${styles.row} ${sub ? styles.two : ''}`}
-        role="button"
-        tabIndex={0}
-        aria-pressed={st.done}
-        aria-label={`${practice.label}${st.done ? ', done' : ''}`}
-        data-kind={kind}
-        onClick={e => { e.stopPropagation(); onTap() }}
-        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onTap() } }}
-      >
-        {tile}
-        {text}
-        <div className={styles.meta}>{meta}</div>
-      </div>
-    )
+  // a thin bar for practices that are partly done: a tally, or a checklist
+  let part = 0
+  if (!st.done) {
+    if (kind === 'check' && st.cfg.target > 1) part = st.tally / st.cfg.target
+    else if (kind === 'checklist' && st.required > 0) part = st.ticked / st.required
   }
 
+  const name = `${practice.label}${sub ? `, ${sub}` : ''}${st.done ? ', done' : ''}`
   const panelProps = { st, onEdit }
   return (
     <div className={expanded ? styles.open : undefined} data-kind={kind}>
-      <div className={styles.split}>
+      <div
+        ref={hold.cardRef}
+        className={`${styles.card} ${st.done ? styles.cardDone : ''} ${inert ? styles.cardInert : ''} ${holding ? styles.cardHolding : ''} ${split ? styles.cardSplit : ''}`}
+        style={{ '--mc': MODES[mode]?.color || '#ABBEA3' }}
+        data-undo={st.done ? '1' : undefined}
+      >
+        <span ref={hold.fillRef} className={styles.fill} aria-hidden="true" />
+        <span className={styles.icon}><PracticeIcon kind={kind} size={34} lit={st.done ? lit : null} /></span>
+        <span className={styles.text}>
+          <span className={styles.label}>{practice.label}</span>
+          {sub && <span className={styles.sub}>{sub}</span>}
+        </span>
+        <span className={styles.meta}>
+          {showX2 && <span className={styles.x2}>×2</span>}
+          {stamp && <span className={styles.stamp}>{stamp}</span>}
+        </span>
+        {part > 0 && <span className={styles.partial} aria-hidden="true"><i style={{ width: `${Math.min(1, part) * 100}%` }} /></span>}
         <button
           type="button"
           className={styles.hit}
-          aria-label={`mark ${practice.label} ${st.done ? 'not done' : 'done'}`}
-          onClick={e => { e.stopPropagation(); onTap() }}
-        >
-          {tile}
-        </button>
-        <button
-          type="button"
-          className={styles.main}
-          aria-expanded={!!expanded}
-          onClick={e => { e.stopPropagation(); onToggle() }}
-        >
-          {text}
-          <span className={styles.meta}>{meta}<i className={styles.chev} /></span>
-        </button>
+          aria-label={`${name}. hold to ${st.done ? 'undo' : 'check off'}`}
+          aria-pressed={st.done}
+          {...hold.press}
+        />
+        {split && (
+          <button
+            type="button"
+            className={styles.chevBtn}
+            aria-label={`${expanded ? 'close' : 'open'} ${practice.label}`}
+            aria-expanded={!!expanded}
+            onClick={e => { e.stopPropagation(); onToggle() }}
+          ><i className={styles.chev} /></button>
+        )}
       </div>
-      <div
-        className={`${styles.panelWrap} ${expanded ? styles.panelWrapOpen : ''}`}
-        aria-hidden={!expanded}
-        {...(expanded ? {} : { inert: '' })}
-      >
-        <div className={styles.panelClip}>
-          {kind === 'ritual' && <RitualPanel cfg={st.cfg} onEdit={onEdit} />}
-          {kind === 'timed' && <TimedPanel {...panelProps} onBegin={onBegin} />}
-          {kind === 'checklist' && (
-            <ChecklistPanel {...panelProps} mode={mode} onToggleItem={onToggleItem} onAddItem={onAddItem} />
-          )}
-          {kind === 'stretch' && <StretchPanel {...panelProps} onStretch={onStretch} />}
-          {kind === 'boundary' && <BoundaryPanel {...panelProps} />}
+      {split && (
+        <div
+          className={`${styles.panelWrap} ${expanded ? styles.panelWrapOpen : ''}`}
+          aria-hidden={!expanded}
+          {...(expanded ? {} : { inert: '' })}
+        >
+          <div className={styles.panelClip}>
+            {kind === 'ritual' && <RitualPanel cfg={st.cfg} onEdit={onEdit} />}
+            {kind === 'timed' && <TimedPanel {...panelProps} onBegin={onBegin} />}
+            {kind === 'checklist' && (
+              <ChecklistPanel {...panelProps} mode={mode} onToggleItem={onToggleItem} onAddItem={onAddItem} />
+            )}
+            {kind === 'stretch' && <StretchPanel {...panelProps} onStretch={onStretch} />}
+            {kind === 'boundary' && <BoundaryPanel {...panelProps} />}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
