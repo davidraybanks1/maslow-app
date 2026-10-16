@@ -1045,7 +1045,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
           <div className={styles.tierSectionHeader}>
             <span className={styles.tierSectionLabel}>
               {isDesktop && <Glyph kind="mode" />}
-              {isDesktop ? 'CANVAS' : 'MODES'}
+              {isDesktop ? 'CANVAS' : 'NEEDS'}
             </span>
             {isDesktop && <span className={styles.tierSectionHint}>tap a mode to fill it</span>}
           </div>
