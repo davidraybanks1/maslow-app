@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { NEEDS, MODES, MODE_ORDER, TIME_RE } from '../lib/constants'
 import { createDataStats, formatLastDone } from '../lib/dataStats'
 import { isNative, checkNotifPermission, requestNotifPermission, scheduleReminders } from '../lib/native'
-import { TYPES, TYPED_STARTERS, poolTag, typeOf } from '../lib/practiceTypes'
+import { TYPES, TYPED_STARTERS, poolTag } from '../lib/practiceTypes'
 import PracticeIcon, { TIER_LIT } from '../components/PracticeIcon'
 import PracticeSheet from '../components/PracticeSheet'
 import styles from './Practices.module.css'
@@ -27,15 +27,10 @@ const STARTERS = {
 }
 const OB_FLAG = 'onboardingPracticesDone'
 
-export default function Practices({ state, addPractice, renamePractice, updatePractice, archivePractice, setPracticeReminder, stampReminderOffered, incrementOffersDeclined, completeOnboarding }) {
+export default function Practices({ state, addPractice, updatePractice, archivePractice, setPracticeReminder, stampReminderOffered, incrementOffersDeclined, completeOnboarding }) {
   const navigate = useNavigate()
   const location = useLocation()
-  const [inputs, setInputs] = useState({})
-  const [openInputs, setOpenInputs] = useState({})
   const [editMode, setEditMode] = useState(false)
-  const [expandedId, setExpandedId] = useState(null)   // the one practice open in edit mode
-  const [confirmArchive, setConfirmArchive] = useState(null)
-  const [renameValue, setRenameValue] = useState('')
   const [obDone, setObDone] = useState(() => !!localStorage.getItem(OB_FLAG))
   // the type builder: null when closed, else what to open it with
   const [sheet, setSheet] = useState(null)
@@ -198,13 +193,6 @@ export default function Practices({ state, addPractice, renamePractice, updatePr
     incrementOffersDeclined()
   }
 
-  function handleAdd(needId) {
-    const text = (inputs[needId] || '').trim()
-    if (!text) return
-    addPractice(needId, text)
-    setInputs(prev => ({ ...prev, [needId]: '' }))
-  }
-
   const sheetNeeds = NEEDS.filter(n => state.canvas[n.id])
   const fullNeeds = sheetNeeds.filter(n => {
     const count = useDB
@@ -219,31 +207,8 @@ export default function Practices({ state, addPractice, renamePractice, updatePr
     setSheet(null)
   }
 
-  function handleToggleExpanded(practice) {
-    setConfirmArchive(null)
-    if (expandedId === practice.id) { setExpandedId(null); return }
-    setExpandedId(practice.id)
-    setRenameValue(practice.label)
-  }
-
-  function handleCommitRename(practice) {
-    const next = renameValue.trim()
-    if (next && next !== practice.label) renamePractice(practice.id, next)
-    else setRenameValue(practice.label)
-  }
-
-  function handleArchive(practiceId) {
-    if (confirmArchive !== practiceId) { setConfirmArchive(practiceId); return }
-    archivePractice(practiceId)
-    setConfirmArchive(null)
-    setExpandedId(null)
-  }
-
   function handleToggleEdit() {
-    setEditMode(e => {
-      if (e) { setExpandedId(null); setConfirmArchive(null) }
-      return !e
-    })
+    setEditMode(e => !e)
   }
 
   function handleOnboardingDone() {
@@ -298,7 +263,6 @@ export default function Practices({ state, addPractice, renamePractice, updatePr
               ? state.practicesDB.filter(p => p.need_id === n.id && !p.archived_at)
               : (state.practices[n.id] || []).map(label => ({ id: null, label }))
             const atMax = pool.length >= MAX
-            const showInput = !atMax && openInputs[n.id]
             return (
               <div key={n.id} className={styles.needGroup}>
                 <div className={styles.needHeader}>
@@ -311,10 +275,10 @@ export default function Practices({ state, addPractice, renamePractice, updatePr
                   {pool.length === 0 && (
                     (STARTERS[n.id] || []).length > 0 || (TYPED_STARTERS[n.id] || []).length > 0 ? (
                       <div className={styles.starterWrap}>
-                        <div className={styles.starterLabel}>starters — tap to add</div>
+                        <div className={styles.starterLabel}>starters — tap to start</div>
                         <div className={styles.starterChips}>
                           {(STARTERS[n.id] || []).map(t => (
-                            <button key={t} className={styles.starterChip} onClick={() => addPractice(n.id, t)}>+ {t}</button>
+                            <button key={t} className={styles.starterChip} onClick={() => setSheet({ needId: n.id, name: t })}>+ {t}</button>
                           ))}
                           {(TYPED_STARTERS[n.id] || []).map(t => (
                             <button
@@ -342,15 +306,16 @@ export default function Practices({ state, addPractice, renamePractice, updatePr
                               <button
                                 type="button"
                                 className={`${styles.poolRow} ${styles.poolRowBtn}`}
-                                aria-expanded={expandedId === p.id}
-                                onClick={() => handleToggleExpanded(p)}
+                                aria-haspopup="dialog"
+                                aria-label={`edit ${p.label}`}
+                                onClick={() => setSheet({ kind: p.kind || 'check', needId: n.id, name: p.label, config: p.config, editing: true, practice: p })}
                               >
                                 <PracticeIcon kind={p.kind || 'check'} size={22} lit={modeLit} className={styles.poolIcon} />
                                 <span className={styles.poolText}>
                                   {p.label}
                                   {poolTag(p) && <span className={styles.poolTag}>{poolTag(p)}</span>}
                                 </span>
-                                <i className={`${styles.chev} ${expandedId === p.id ? styles.chevOpen : ''}`} aria-hidden="true" />
+                                <i className={styles.chev} aria-hidden="true" />
                               </button>
                             ) : (
                             <div className={styles.poolRow}>
@@ -404,50 +369,6 @@ export default function Practices({ state, addPractice, renamePractice, updatePr
                             </div>
                             )}
 
-                            {/* The open practice: everything you can do to it lives here */}
-                            {editMode && p.id && expandedId === p.id && (
-                              <div className={styles.editPanel}>
-                                <label className={styles.editLabel} htmlFor={`rename-${p.id}`}>name</label>
-                                <div className={styles.renameRow}>
-                                  <input
-                                    id={`rename-${p.id}`}
-                                    className={styles.renameInput}
-                                    value={renameValue}
-                                    onChange={e => setRenameValue(e.target.value)}
-                                    onKeyDown={e => {
-                                      if (e.key === 'Enter') handleCommitRename(p)
-                                      if (e.key === 'Escape') { setRenameValue(p.label); setExpandedId(null) }
-                                    }}
-                                    maxLength={80}
-                                    autoComplete="off"
-                                  />
-                                  {renameValue.trim() && renameValue.trim() !== p.label && (
-                                    <button type="button" className={styles.panelBtn} onClick={() => handleCommitRename(p)}>save</button>
-                                  )}
-                                </div>
-                                <div className={styles.editActions}>
-                                  <button
-                                    type="button"
-                                    className={styles.panelBtn}
-                                    onClick={() => setSheet({ kind: p.kind || 'check', needId: n.id, name: p.label, config: p.config, editing: true, practice: p })}
-                                  >
-                                    change type or settings
-                                    <span className={styles.panelHint}>{typeOf(p.kind || 'check').label}</span>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className={`${styles.panelBtn} ${styles.panelBtnQuiet} ${confirmArchive === p.id ? styles.panelBtnConfirm : ''}`}
-                                    onClick={() => handleArchive(p.id)}
-                                  >
-                                    {confirmArchive === p.id ? 'tap again to archive' : 'archive'}
-                                    <span className={styles.panelHint}>
-                                      {confirmArchive === p.id ? 'history is kept' : 'history kept'}
-                                    </span>
-                                  </button>
-                                </div>
-                              </div>
-                            )}
-
                             {/* Taken times — shown while this practice's picker is focused */}
                             {takenTimes.length > 0 && (
                               <div className={styles.reminderTaken}>
@@ -476,37 +397,8 @@ export default function Practices({ state, addPractice, renamePractice, updatePr
 
                 {atMax ? (
                   <div className={styles.maxNote}>max {MAX} practices reached.</div>
-                ) : showInput ? (
-                  <div className={styles.addRow}>
-                    <input
-                      className={styles.addInput}
-                      placeholder="new practice…"
-                      value={inputs[n.id] || ''}
-                      onChange={e => setInputs(prev => ({ ...prev, [n.id]: e.target.value }))}
-                      onKeyDown={e => e.key === 'Enter' && handleAdd(n.id)}
-                      maxLength={80}
-                      autoFocus
-                    />
-                    <button
-                      className={styles.addBtn}
-                      onClick={() => handleAdd(n.id)}
-                      disabled={!(inputs[n.id] || '').trim()}
-                    >
-                      add
-                    </button>
-                  </div>
                 ) : (
-                  <button className={styles.addToggle} onClick={() => setOpenInputs(prev => ({ ...prev, [n.id]: true }))}>+ add practice</button>
-                )}
-                {showInput && (inputs[n.id] || '').trim() && (
-                  <div className={styles.upgrade}>
-                    or{' '}
-                    <button
-                      type="button"
-                      className={styles.upgradeBtn}
-                      onClick={() => setSheet({ needId: n.id, name: (inputs[n.id] || '').trim() })}
-                    >choose a type</button>
-                  </div>
+                  <button className={styles.addToggle} onClick={() => setSheet({ needId: n.id })}>+ add practice</button>
                 )}
               </div>
             )
@@ -520,6 +412,7 @@ export default function Practices({ state, addPractice, renamePractice, updatePr
           fullNeeds={fullNeeds}
           initial={sheet}
           onSave={handleSheetSave}
+          onArchive={sheet.practice?.id ? () => { archivePractice(sheet.practice.id); setSheet(null) } : undefined}
           onClose={() => setSheet(null)}
         />
       )}

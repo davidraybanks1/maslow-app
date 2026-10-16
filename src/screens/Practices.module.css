@@ -29,8 +29,7 @@
 .poolRow { display: flex; align-items: center; min-height: 38px; }
 .poolRowBtn { width: 100%; background: none; border: 0; padding: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .poolRowBtn:active .poolText { opacity: .6; }
-.chev { width: 7px; height: 7px; flex: none; margin: 0 6px 0 8px; border-right: 1.5px solid var(--ink3); border-bottom: 1.5px solid var(--ink3); transform: rotate(45deg) translateY(-2px); transition: transform .2s ease; }
-.chevOpen { transform: rotate(-135deg) translate(-2px, -1px); }
+.chev { width: 7px; height: 7px; flex: none; margin: 0 6px 0 8px; border-right: 1.5px solid var(--ink3); border-bottom: 1.5px solid var(--ink3); transform: rotate(-45deg); }
 .poolText { font-family: var(--font-serif); font-size: 15px; font-weight: 300; font-style: italic; color: var(--ink); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lastDone { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); flex-shrink: 0; }
 
@@ -60,21 +59,12 @@
 .offerSetTime:active { opacity: .6; }
 .offerNotNow { background: none; border: none; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink4); padding: 3px 6px; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
 .offerNotNow:active { opacity: .6; }
-.renameInput { flex: 1; padding: 4px 8px; border-radius: 6px; border: 0.5px solid var(--hairline); background: var(--paper); font-family: var(--font-serif); font-size: 15px; font-weight: 300; font-style: italic; color: var(--ink); outline: none; }
-.renameInput:focus { border-color: var(--ink2); }
 
 .empty { font-family: var(--font-mono); font-size: 12px; color: var(--ink4); padding: 4px 0 8px; }
 
 .addToggle { display: block; width: 100%; text-align: left; background: none; border: none; font-family: var(--font-mono); font-size: 12px; color: var(--ink3); cursor: pointer; padding: 4px 0 0; -webkit-tap-highlight-color: transparent; }
 .addToggle:hover { color: var(--ink2); }
 
-.addRow { display: flex; gap: 8px; padding-top: 4px; }
-.addInput { flex: 1; padding: 10px 12px; border-radius: 999px; border: 0.5px solid var(--hairline); background: var(--paper); font-family: var(--font-mono); font-size: 16px; color: var(--ink); outline: none; transition: border-color var(--motion-hover); }
-.addInput:focus { border-color: var(--ink2); }
-.addInput::placeholder { color: var(--ink4); }
-.addBtn { padding: 10px 16px; border-radius: 999px; border: 0.5px solid var(--hairline); background: transparent; font-family: var(--font-mono); font-size: 12px; color: var(--ink); cursor: pointer; white-space: nowrap; transition: background var(--motion-micro); }
-.addBtn:hover:not(:disabled) { background: var(--paper); }
-.addBtn:disabled { opacity: 0.35; cursor: not-allowed; }
 
 .maxNote { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink4); padding-top: 8px; }
 
@@ -177,19 +167,6 @@
   text-overflow: ellipsis;
 }
 .starterTag { margin-left: 6px; padding-left: 6px; border-left: 0.5px solid var(--hairline); color: var(--ink3); }
-.upgrade { font-family: var(--font-mono); font-size: 13px; color: var(--ink2); padding-top: 10px; }
-.upgradeBtn {
-  background: none;
-  border: none;
-  padding: 0;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--ink);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  text-decoration-color: var(--ink4);
-  cursor: pointer;
-}
 @media (prefers-reduced-motion: reduce) { .typeTile { transition: none; } }
 
 /* ── Edit your practices ── */
@@ -208,22 +185,3 @@
 }
 .editBtn[aria-pressed="true"] { background: var(--ink); color: var(--card); border-color: var(--ink); }
 
-/* ── an open practice (edit mode) ── */
-.editPanel { margin: 4px 0 8px 32px; padding: 12px 0 4px; display: grid; gap: 12px; }
-.editLabel { font-family: var(--font-mono); font-size: var(--type-floor); letter-spacing: .14em; text-transform: uppercase; color: var(--ink3); }
-.renameRow { display: flex; align-items: center; gap: 8px; margin-top: -6px; }
-.renameRow .renameInput { padding: 10px 12px; border-radius: 12px; font-size: 16px; min-width: 0; }
-.editActions { display: grid; gap: 8px; }
-.panelBtn {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  min-height: 46px; padding: 0 14px; box-sizing: border-box;
-  border-radius: 12px; border: 1px solid rgba(0,0,0,.14); background: var(--paper);
-  font-family: var(--font-mono); font-size: 13px; color: var(--ink); text-align: left;
-  cursor: pointer; -webkit-tap-highlight-color: transparent;
-}
-.panelBtn:active { background: var(--track); }
-.panelHint { font-size: var(--type-floor); color: var(--ink3); text-align: right; }
-.panelBtnQuiet { background: transparent; color: var(--ink2); }
-.panelBtnConfirm { background: var(--ink); color: var(--card); border-color: var(--ink); }
-.panelBtnConfirm .panelHint { color: var(--card); opacity: .8; }
-@media (prefers-reduced-motion: reduce) { .chev { transition: none; } }

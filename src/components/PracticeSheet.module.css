@@ -140,3 +140,13 @@
 @media (prefers-reduced-motion: reduce) {
   .tile { transition: none; }
 }
+
+/* archive: last, quiet, and two taps */
+.archive { margin-top: 22px; padding-top: 18px; border-top: 0.5px solid var(--hairline); display: grid; gap: 6px; justify-items: start; }
+.archiveBtn {
+  background: none; border: 0; padding: 8px 0; cursor: pointer;
+  font-family: var(--font-mono); font-size: 13px; color: var(--ink2);
+  text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--ink4);
+  -webkit-tap-highlight-color: transparent;
+}
+.archiveConfirm { color: var(--card); background: var(--ink); text-decoration: none; padding: 10px 16px; border-radius: 999px; }

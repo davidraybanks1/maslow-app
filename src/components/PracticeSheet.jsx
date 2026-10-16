@@ -145,11 +145,13 @@ function Field({ field, value, onChange }) {
 
 // needs: [{ id, name }] the person can file this under; fullNeeds: ids at the cap.
 // initial: { kind?, needId?, name?, config?, editing? }
-export default function PracticeSheet({ needs, fullNeeds = [], initial = {}, onSave, onClose }) {
+// onArchive: when given (and editing), the sheet also offers "archive", the one stop for everything.
+export default function PracticeSheet({ needs, fullNeeds = [], initial = {}, onSave, onArchive, onClose }) {
   const editing = !!initial.editing
   const [kind, setKind] = useState(initial.kind || null)
   const [needId, setNeedId] = useState(initial.needId || null)
   const [name, setName] = useState(initial.name || '')
+  const [confirmArchive, setConfirmArchive] = useState(false)
   const [vals, setVals] = useState(() => (initial.kind
     ? { ...defaultConfig(initial.kind), ...(initial.config || {}) }
     : {}))
@@ -231,6 +233,18 @@ export default function PracticeSheet({ needs, fullNeeds = [], initial = {}, onS
         </button>
         <button type="button" className={styles.secondary} onClick={onClose}>not now</button>
       </div>
+      {editing && onArchive && (
+        <div className={styles.archive}>
+          <button
+            type="button"
+            className={`${styles.archiveBtn} ${confirmArchive ? styles.archiveConfirm : ''}`}
+            onClick={() => { if (confirmArchive) onArchive(); else setConfirmArchive(true) }}
+          >
+            {confirmArchive ? 'tap again to archive' : 'archive this practice'}
+          </button>
+          <div className={styles.hint}>it stops appearing on Today. its history is kept.</div>
+        </div>
+      )}
     </Sheet>
   )
 }
