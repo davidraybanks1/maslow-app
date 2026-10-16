@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { NEEDS, MODES, MODE_ORDER, TIME_RE } from '../lib/constants'
 import { createDataStats, formatLastDone } from '../lib/dataStats'
 import { isNative, checkNotifPermission, requestNotifPermission, scheduleReminders } from '../lib/native'
-import { TYPES, TYPED_STARTERS, poolTag } from '../lib/practiceTypes'
+import { TYPES, TYPED_STARTERS, poolTag, typeOf } from '../lib/practiceTypes'
 import PracticeIcon, { TIER_LIT } from '../components/PracticeIcon'
 import PracticeSheet from '../components/PracticeSheet'
 import styles from './Practices.module.css'
@@ -33,7 +33,8 @@ export default function Practices({ state, addPractice, renamePractice, updatePr
   const [inputs, setInputs] = useState({})
   const [openInputs, setOpenInputs] = useState({})
   const [editMode, setEditMode] = useState(false)
-  const [editingId, setEditingId] = useState(null)
+  const [expandedId, setExpandedId] = useState(null)   // the one practice open in edit mode
+  const [confirmArchive, setConfirmArchive] = useState(null)
   const [renameValue, setRenameValue] = useState('')
   const [obDone, setObDone] = useState(() => !!localStorage.getItem(OB_FLAG))
   // the type builder: null when closed, else what to open it with
@@ -218,19 +219,29 @@ export default function Practices({ state, addPractice, renamePractice, updatePr
     setSheet(null)
   }
 
-  function handleStartRename(practice) {
-    setEditingId(practice.id)
+  function handleToggleExpanded(practice) {
+    setConfirmArchive(null)
+    if (expandedId === practice.id) { setExpandedId(null); return }
+    setExpandedId(practice.id)
     setRenameValue(practice.label)
   }
 
-  function handleCommitRename(practiceId) {
-    if (renameValue.trim()) renamePractice(practiceId, renameValue)
-    setEditingId(null)
+  function handleCommitRename(practice) {
+    const next = renameValue.trim()
+    if (next && next !== practice.label) renamePractice(practice.id, next)
+    else setRenameValue(practice.label)
+  }
+
+  function handleArchive(practiceId) {
+    if (confirmArchive !== practiceId) { setConfirmArchive(practiceId); return }
+    archivePractice(practiceId)
+    setConfirmArchive(null)
+    setExpandedId(null)
   }
 
   function handleToggleEdit() {
     setEditMode(e => {
-      if (e) setEditingId(null)
+      if (e) { setExpandedId(null); setConfirmArchive(null) }
       return !e
     })
   }
@@ -326,51 +337,30 @@ export default function Practices({ state, addPractice, renamePractice, updatePr
                     const hasPermError = native && permissionErrors.has(p.id)
                     return (
                       <div key={p.id || p.label} className={styles.poolItem}>
-                        {editMode && editingId === p.id ? (
-                          <div className={styles.poolRow}>
-                            <input
-                              className={styles.renameInput}
-                              value={renameValue}
-                              onChange={e => setRenameValue(e.target.value)}
-                              onKeyDown={e => {
-                                if (e.key === 'Enter') handleCommitRename(p.id)
-                                if (e.key === 'Escape') setEditingId(null)
-                              }}
-                              maxLength={80}
-                              autoFocus
-                            />
-                            <button className={styles.saveBtn} onClick={() => handleCommitRename(p.id)}>save</button>
-                          </div>
-                        ) : (
-                          <>
+                        <>
+                            {editMode && p.id ? (
+                              <button
+                                type="button"
+                                className={`${styles.poolRow} ${styles.poolRowBtn}`}
+                                aria-expanded={expandedId === p.id}
+                                onClick={() => handleToggleExpanded(p)}
+                              >
+                                <PracticeIcon kind={p.kind || 'check'} size={22} lit={modeLit} className={styles.poolIcon} />
+                                <span className={styles.poolText}>
+                                  {p.label}
+                                  {poolTag(p) && <span className={styles.poolTag}>{poolTag(p)}</span>}
+                                </span>
+                                <i className={`${styles.chev} ${expandedId === p.id ? styles.chevOpen : ''}`} aria-hidden="true" />
+                              </button>
+                            ) : (
                             <div className={styles.poolRow}>
                               <PracticeIcon kind={p.kind || 'check'} size={22} lit={modeLit} className={styles.poolIcon} />
-                              <span
-                                className={styles.poolText}
-                                onClick={editMode && p.id ? () => handleStartRename(p) : undefined}
-                                style={editMode && p.id ? { cursor: 'text' } : undefined}
-                              >
+                              <span className={styles.poolText}>
                                 {p.label}
                                 {poolTag(p) && <span className={styles.poolTag}>{poolTag(p)}</span>}
                               </span>
 
-                              {editMode ? (
-                                <>
-                                  {p.id && (
-                                    <button
-                                      className={styles.archiveBtn}
-                                      aria-label={`edit ${p.label}: type and settings`}
-                                      onClick={() => setSheet({ kind: p.kind || 'check', needId: n.id, name: p.label, config: p.config, editing: true, practice: p })}
-                                    >options</button>
-                                  )}
-                                  <button
-                                    className={styles.archiveBtn}
-                                    aria-label="archive — stops appearing, history kept"
-                                    onClick={() => archivePractice(p.id)}
-                                  >archive</button>
-                                </>
-
-                              ) : native ? (
+                              {editMode ? null : native ? (
                                 /* ── Reminder affordance (native only) ── */
                                 <div className={styles.reminderControl}>
                                   {hasPermError ? (
@@ -412,6 +402,51 @@ export default function Practices({ state, addPractice, renamePractice, updatePr
                                 <span className={styles.lastDone}>{formatLastDone(lastDoneByKey.get(p.id || `${n.id}_${p.label}`))}</span>
                               )}
                             </div>
+                            )}
+
+                            {/* The open practice: everything you can do to it lives here */}
+                            {editMode && p.id && expandedId === p.id && (
+                              <div className={styles.editPanel}>
+                                <label className={styles.editLabel} htmlFor={`rename-${p.id}`}>name</label>
+                                <div className={styles.renameRow}>
+                                  <input
+                                    id={`rename-${p.id}`}
+                                    className={styles.renameInput}
+                                    value={renameValue}
+                                    onChange={e => setRenameValue(e.target.value)}
+                                    onKeyDown={e => {
+                                      if (e.key === 'Enter') handleCommitRename(p)
+                                      if (e.key === 'Escape') { setRenameValue(p.label); setExpandedId(null) }
+                                    }}
+                                    maxLength={80}
+                                    autoComplete="off"
+                                  />
+                                  {renameValue.trim() && renameValue.trim() !== p.label && (
+                                    <button type="button" className={styles.panelBtn} onClick={() => handleCommitRename(p)}>save</button>
+                                  )}
+                                </div>
+                                <div className={styles.editActions}>
+                                  <button
+                                    type="button"
+                                    className={styles.panelBtn}
+                                    onClick={() => setSheet({ kind: p.kind || 'check', needId: n.id, name: p.label, config: p.config, editing: true, practice: p })}
+                                  >
+                                    change type or settings
+                                    <span className={styles.panelHint}>{typeOf(p.kind || 'check').label}</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className={`${styles.panelBtn} ${styles.panelBtnQuiet} ${confirmArchive === p.id ? styles.panelBtnConfirm : ''}`}
+                                    onClick={() => handleArchive(p.id)}
+                                  >
+                                    {confirmArchive === p.id ? 'tap again to archive' : 'archive'}
+                                    <span className={styles.panelHint}>
+                                      {confirmArchive === p.id ? 'history is kept' : 'history kept'}
+                                    </span>
+                                  </button>
+                                </div>
+                              </div>
+                            )}
 
                             {/* Taken times — shown while this practice's picker is focused */}
                             {takenTimes.length > 0 && (
@@ -434,7 +469,6 @@ export default function Practices({ state, addPractice, renamePractice, updatePr
                               </div>
                             )}
                           </>
-                        )}
                       </div>
                     )
                   })}
