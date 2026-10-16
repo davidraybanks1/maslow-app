@@ -20,18 +20,18 @@ export function canPlace(needId, target, canvas) {
 
   if (target == null) {
     if (UNIVERSAL_NEEDS.includes(needId)) {
-      return { ok: false, reason: `${nameOf(needId)} stays on your canvas. you can move it between modes.` }
+      return { ok: false, reason: `${nameOf(needId)} stays in a mode. you can move it.` }
     }
     return { ok: true }
   }
 
   if (needId === 'rest' && ABOVE_NOURISHMENT.includes(target)) {
-    return { ok: false, reason: 'rest can sit in nourishment or survival, no higher.' }
+    return { ok: false, reason: 'rest stays in nourishment or survival.' }
   }
 
   const cap = MODE_NEED_CAP[target]
   if (countIn(canvas, target, needId) >= cap) {
-    return { ok: false, reason: `${target} is full (${cap} of ${cap}). move one out first.` }
+    return { ok: false, reason: `${target} is full. move one out first.` }
   }
   return { ok: true }
 }

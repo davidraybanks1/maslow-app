@@ -1,275 +1,144 @@
-/* Needs: a library of needs and four mode cards to drag them into. */
+/* Needs: same shape as Practices. Little copy; the structure says the rest. */
 
-.screen {
-  display: flex;
-  flex-direction: column;
-  min-height: 100%;
-  background: var(--paper);
-}
+.screen { display: flex; flex-direction: column; min-height: 100%; background: var(--paper); }
 
-.header { padding: 20px 22px 4px; }
-.titleRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.title {
-  font-family: var(--font-serif);
-  font-size: 30px;
-  font-weight: 300;
-  line-height: 1.1;
-  letter-spacing: -0.01em;
-  color: var(--ink);
-  margin: 0 0 4px;
-}
-.sub {
+.header { padding: 20px 16px 0; }
+.eyebrowRow { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.link {
   font-family: var(--font-mono);
   font-size: var(--type-floor);
-  font-weight: 300;
-  line-height: 1.5;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: var(--ink3);
-  margin: 0;
-}
-.closeBtn {
-  width: 32px;
-  height: 32px;
-  border-radius: 16px;
-  border: 1px solid rgba(0,0,0,.22);
-  background: transparent;
-  color: rgba(0,0,0,.68);
-  font-family: var(--font-mono);
-  font-size: 13px;
-  line-height: 1;
+  background: none;
+  border: none;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  padding: 6px 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.link:hover { color: var(--ink); }
+.closeBtn {
+  width: 32px; height: 32px; border-radius: 16px;
+  border: 1px solid rgba(0,0,0,.22); background: transparent; color: rgba(0,0,0,.68);
+  font-family: var(--font-mono); font-size: 13px; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   -webkit-tap-highlight-color: transparent;
 }
 .closeBtn:hover { background: var(--track); }
+.title { font-family: var(--font-serif); font-size: 30px; font-weight: 300; line-height: 1.1; letter-spacing: -0.01em; color: var(--ink); margin: 0; }
 
-.body {
-  padding: 18px 22px 40px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
+.section { padding: 26px 16px 0; }
+.section:last-of-type { padding-bottom: 40px; }
+.sectionHead { font-family: var(--font-serif); font-weight: 300; font-size: 22px; line-height: 1.15; color: var(--ink); margin: 0; }
+.sectionHeadGap { margin-bottom: 14px; }
 
-/* ── drop zones ── */
-.library, .card {
-  --mc: var(--ink3);
-  border-radius: 16px;
-  padding: 14px 16px 16px;
-  transition: box-shadow 120ms ease, background 120ms ease;
-}
+/* ── Add a need: the ones not in a mode, and where to drop one to take it out ── */
 .library {
-  background: transparent;
+  margin-top: 14px;
+  min-height: 62px;
+  box-sizing: border-box;
+  border-radius: 16px;
   border: 1px dashed rgba(0,0,0,.2);
-}
-.card {
-  background: var(--card);
-  border: 1px solid rgba(0,0,0,.09);
-}
-.over { box-shadow: 0 0 0 2px var(--mc); }
-.library.over { box-shadow: 0 0 0 2px var(--ink2); background: rgba(0,0,0,.03); }
-.overBad { background: rgba(0,0,0,.04); box-shadow: 0 0 0 2px var(--ink4); }
-
-.zoneHead { display: flex; align-items: center; gap: 8px; }
-.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--mc); flex-shrink: 0; }
-.zoneName {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  letter-spacing: .16em;
-  text-transform: uppercase;
-  color: rgba(0,0,0,.55);
-  flex: 1;
-}
-.zoneCount {
-  font-family: var(--font-serif);
-  font-weight: 300;
-  font-size: 15px;
-  color: var(--ink);
-  white-space: nowrap;
-}
-.library .zoneCount { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); }
-.blurb {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  font-weight: 300;
-  line-height: 1.5;
-  color: var(--ink3);
-  margin: 6px 0 0;
-}
-.note {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  font-weight: 300;
-  color: var(--ink4);
-  margin: 12px 0 0;
-}
-
-/* ── chips ── */
-.pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-.pill, .row {
-  font-family: var(--font-mono);
-  font-weight: 300;
-  color: var(--ink);
-  cursor: grab;
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-touch-callout: none;
-  -webkit-tap-highlight-color: transparent;
-  transition: opacity 120ms ease, transform 80ms ease;
-}
-.pill:active, .row:active { transform: scale(.98); }
-.pill {
-  font-size: 13.5px;
-  padding: 11px 16px;
-  min-height: 44px;
-  border-radius: 999px;
-  background: var(--card);
-  border: 1px solid rgba(0,0,0,.14);
-}
-.slots { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
-.row, .openSlot {
+  padding: 12px;
   display: flex;
   align-items: center;
-  width: 100%;
-  min-height: 48px;
-  box-sizing: border-box;
-  border-radius: 12px;
-  padding: 0 14px;
-  text-align: left;
+  transition: box-shadow 120ms ease, background 120ms ease;
 }
+.libraryEmpty { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink4); padding: 0 4px; }
+.pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill {
+  font-family: var(--font-mono); font-weight: 300; font-size: 13.5px; color: var(--ink);
+  padding: 0 16px; min-height: 40px; border-radius: 999px;
+  background: var(--card); border: 1px solid rgba(0,0,0,.14);
+  cursor: grab; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent; transition: opacity 120ms ease, transform 80ms ease;
+}
+
+/* ── Your modes: a card per mode, needs as plain rows ── */
+.cards { display: flex; flex-direction: column; gap: 9px; }
+.card {
+  --mc: var(--ink3);
+  background: var(--card);
+  border: 0.5px solid var(--hairline);
+  border-radius: 16px;
+  padding: 14px 16px;
+  transition: box-shadow 120ms ease, background 120ms ease;
+}
+.cardHead { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--mc); flex-shrink: 0; }
+.modeName { font-family: var(--font-serif); font-size: 16px; font-weight: 300; color: var(--ink); letter-spacing: -0.01em; }
+.count { font-family: var(--font-mono); font-size: var(--type-floor); letter-spacing: 0.1em; color: var(--ink3); margin-left: auto; }
+
+.rows { display: flex; flex-direction: column; }
 .row {
-  background: var(--paper);
-  border: 1px solid rgba(0,0,0,.12);
-  font-size: 14px;
+  display: flex; align-items: center; width: 100%; min-height: 48px; padding: 0;
+  background: none; border: 0; border-top: 0.5px solid var(--hairline);
+  font-family: var(--font-serif); font-size: 15px; font-weight: 300; font-style: italic; color: var(--ink);
+  text-align: left; cursor: grab; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent; transition: opacity 120ms ease;
 }
+.row:first-child { border-top: none; }
+.row:active .chipName { opacity: .6; }
 .chipName { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .held { opacity: .3; }
 
 /* six dots: the "this moves" mark */
 .grip {
-  width: 10px;
-  height: 16px;
-  flex: none;
-  opacity: .4;
-  background:
-    radial-gradient(circle, var(--ink) 1.3px, transparent 1.6px) 0 0 / 5px 5.33px repeat;
+  width: 10px; height: 16px; flex: none; opacity: .4;
+  background: radial-gradient(circle, var(--ink) 1.3px, transparent 1.6px) 0 0 / 5px 5.33px repeat;
 }
 
-.openSlot {
-  justify-content: space-between;
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  color: var(--ink4);
-  background: transparent;
-  border: 1px dashed rgba(0,0,0,.16);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
+.addToggle {
+  display: block; width: 100%; text-align: left; background: none; border: none;
+  border-top: 0.5px solid var(--hairline);
+  font-family: var(--font-mono); font-size: 12px; color: var(--ink3);
+  cursor: pointer; padding: 14px 0 2px; -webkit-tap-highlight-color: transparent;
 }
-.openSlot:empty { color: transparent; }
-.plus { font-size: 16px; color: var(--ink3); }
+.addToggle:first-child { border-top: none; padding-top: 4px; }
+.addToggle:hover { color: var(--ink2); }
 
-.practicesLink {
-  align-self: flex-start;
-  margin-top: 6px;
-  padding: 10px 0;
-  background: none;
-  border: 0;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--ink2);
-  text-decoration: underline;
-  text-underline-offset: 4px;
-  text-decoration-color: var(--ink4);
-  cursor: pointer;
-}
+/* while a need is held over a card or the tray */
+.over { box-shadow: 0 0 0 2px var(--mc); }
+.library.over { box-shadow: 0 0 0 2px var(--ink2); background: rgba(0,0,0,.03); }
+.overBad { background: rgba(0,0,0,.04); box-shadow: 0 0 0 2px var(--ink4); }
 
-/* ── the thing under your finger ── */
+/* the thing under your finger */
 .ghost {
-  position: fixed;
-  left: 0;
-  top: 0;
-  z-index: 400;
-  display: flex;
-  align-items: center;
-  box-sizing: border-box;
-  padding: 0 16px;
-  border-radius: 12px;
-  background: var(--card);
-  border: 1px solid rgba(0,0,0,.2);
+  position: fixed; left: 0; top: 0; z-index: 400;
+  display: flex; align-items: center; box-sizing: border-box; padding: 0 16px;
+  border-radius: 12px; background: var(--card); border: 1px solid rgba(0,0,0,.2);
   box-shadow: 0 10px 28px rgba(20,18,12,.22);
-  font-family: var(--font-mono);
-  font-weight: 300;
-  font-size: 14px;
-  color: var(--ink);
-  pointer-events: none;
-  will-change: transform;
+  font-family: var(--font-mono); font-weight: 300; font-size: 14px; color: var(--ink);
+  pointer-events: none; will-change: transform;
 }
 
-/* ── bounce-back note ── */
+/* bounce-back note */
 .live { position: fixed; left: 0; right: 0; bottom: calc(var(--safe-bottom) + 84px); z-index: 250; display: flex; justify-content: center; pointer-events: none; padding: 0 16px; }
-.notice {
-  max-width: 340px;
-  padding: 11px 16px;
-  border-radius: 12px;
-  background: var(--ink);
-  color: var(--card);
-  font-family: var(--font-mono);
-  font-size: 13px;
-  line-height: 1.45;
-  text-align: center;
-}
+.notice { max-width: 340px; padding: 11px 16px; border-radius: 12px; background: var(--ink); color: var(--card); font-family: var(--font-mono); font-size: 13px; line-height: 1.45; text-align: center; }
 
-/* ── sheets ── */
-.sheetTitle {
-  font-family: var(--font-serif);
-  font-weight: 300;
-  font-size: 22px;
-  line-height: 1.15;
-  color: var(--ink);
-  margin: 0 0 16px;
-}
+/* sheets */
+.sheetTitle { font-family: var(--font-serif); font-weight: 300; font-size: 22px; line-height: 1.15; color: var(--ink); margin: 0 0 16px; }
 .sheetNote { font-family: var(--font-mono); font-size: 13px; line-height: 1.5; color: var(--ink3); margin: 0 0 8px; }
 .choices { display: flex; flex-direction: column; gap: 8px; }
 .choice {
   --mc: var(--ink3);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  min-height: 48px;
-  padding: 0 14px;
-  border-radius: 12px;
-  background: var(--paper);
-  border: 1px solid rgba(0,0,0,.12);
-  font-family: var(--font-mono);
-  font-size: 14px;
-  font-weight: 300;
-  color: var(--ink);
-  text-align: left;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
+  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 0 14px;
+  border-radius: 12px; background: var(--paper); border: 1px solid rgba(0,0,0,.12);
+  font-family: var(--font-mono); font-size: 14px; font-weight: 300; color: var(--ink); text-align: left;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
 }
 .choice[aria-pressed="true"] { border-color: var(--ink); }
 .choice:disabled { opacity: .45; cursor: default; }
 .choiceName { flex: 1; }
 .choiceHint { font-size: var(--type-floor); color: var(--ink3); }
 .sheetCancel {
-  display: block;
-  width: 100%;
-  margin-top: 14px;
-  min-height: 46px;
-  border-radius: 999px;
-  background: none;
-  border: 1px solid rgba(0,0,0,.16);
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--ink2);
-  cursor: pointer;
+  display: block; width: 100%; margin-top: 14px; min-height: 46px; border-radius: 999px;
+  background: none; border: 1px solid rgba(0,0,0,.16);
+  font-family: var(--font-mono); font-size: 13px; color: var(--ink2); cursor: pointer;
 }
 
 @media (min-width: 900px) {
-  .header, .body { width: 100%; max-width: 720px; margin: 0 auto; box-sizing: border-box; }
+  .header, .section { width: 100%; max-width: 720px; margin-left: auto; margin-right: auto; box-sizing: border-box; }
 }
 @media (prefers-reduced-motion: reduce) {
   .library, .card, .pill, .row { transition: none; }

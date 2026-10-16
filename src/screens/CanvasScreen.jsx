@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { NEEDS, MODE_ORDER, MODES, MODE_NEED_CAP, MODE_DESCS, MODE_MAX_BUBBLES } from '../lib/constants'
+import { NEEDS, MODE_ORDER, MODES, MODE_NEED_CAP } from '../lib/constants'
 import { canPlace } from '../lib/canvasRules'
 import { useNeedDrag } from '../lib/useNeedDrag'
 import Sheet from '../components/Sheet'
@@ -80,81 +80,61 @@ export default function CanvasScreen({ state, updateCanvas }) {
   return (
     <div className={styles.screen}>
       <div className={styles.header}>
-        <div className={styles.titleRow}>
-          <h1 className={styles.title}>needs.</h1>
+        <div className={styles.eyebrowRow}>
+          <button type="button" className={styles.link} onClick={() => navigate('/practices', { state: location.state })}>practices →</button>
           <button type="button" className={styles.closeBtn} onClick={handleClose} aria-label="close needs">✕</button>
         </div>
-        <p className={styles.sub}>drag each need into the mode that fits it right now. or tap one to pick from a list.</p>
+        <h1 className={styles.title}>Needs</h1>
       </div>
 
-      <div className={styles.body}>
-        <section
+      <section className={styles.section} aria-labelledby="add-need-head">
+        <h2 id="add-need-head" className={styles.sectionHead}>Add a need</h2>
+        <div
           data-drop="library"
-          aria-label="needs library"
+          aria-label="needs not in a mode"
           className={`${styles.library} ${zoneClass('library')}`}
         >
-          <div className={styles.zoneHead}>
-            <span className={styles.zoneName}>library</span>
-            <span className={styles.zoneCount}>
-              {library.length === 0 ? 'every need is in a mode' : `${library.length} not in a mode`}
-            </span>
-          </div>
-          {library.length > 0 && (
-            <div className={styles.pills}>
-              {library.map(n => chip(n, 'pill'))}
-            </div>
-          )}
-          <p className={styles.note}>drop a need here to take it out. its practices and history are kept.</p>
-        </section>
+          {library.length > 0
+            ? <div className={styles.pills}>{library.map(n => chip(n, 'pill'))}</div>
+            : <span className={styles.libraryEmpty}>drop here to remove</span>}
+        </div>
+      </section>
 
-        {MODE_ORDER.map(mode => {
-          const placed = placedIn(mode)
-          const cap = MODE_NEED_CAP[mode]
-          const perDay = MODE_MAX_BUBBLES[mode]
-          const open = placed.length < cap ? 1 : 0 // one open slot is enough; the count says how many fit
-          return (
-            <section
-              key={mode}
-              data-drop={mode}
-              aria-label={mode}
-              className={`${styles.card} ${zoneClass(mode)}`}
-              style={{ '--mc': MODES[mode].color }}
-            >
-              <div className={styles.zoneHead}>
-                <span className={styles.dot} />
-                <span className={styles.zoneName}>{mode}</span>
-                <span className={styles.zoneCount}>{placed.length} of {cap}</span>
+      <section className={styles.section} aria-labelledby="modes-head">
+        <h2 id="modes-head" className={`${styles.sectionHead} ${styles.sectionHeadGap}`}>Your modes</h2>
+        <div className={styles.cards}>
+          {MODE_ORDER.map(mode => {
+            const placed = placedIn(mode)
+            const cap = MODE_NEED_CAP[mode]
+            return (
+              <div
+                key={mode}
+                data-drop={mode}
+                role="group"
+                aria-label={mode}
+                className={`${styles.card} ${zoneClass(mode)}`}
+                style={{ '--mc': MODES[mode].color }}
+              >
+                <div className={styles.cardHead}>
+                  <span className={styles.dot} />
+                  <span className={styles.modeName}>{mode}</span>
+                  <span className={styles.count}>{placed.length}/{cap}</span>
+                </div>
+                <div className={styles.rows}>
+                  {placed.map(n => chip(n, 'row'))}
+                  {placed.length < cap && (
+                    <button
+                      type="button"
+                      className={styles.addToggle}
+                      onClick={() => setFilling(mode)}
+                    >+ add need</button>
+                  )}
+                </div>
               </div>
-              <p className={styles.blurb}>
-                {MODE_DESCS[mode]} · {perDay} {perDay === 1 ? 'practice' : 'practices'} a day each
-              </p>
-              <div className={styles.slots}>
-                {placed.map(n => chip(n, 'row'))}
-                {Array.from({ length: open }, (_, i) => (
-                  <button
-                    key={`open-${i}`}
-                    type="button"
-                    className={styles.openSlot}
-                    onClick={() => setFilling(mode)}
-                    aria-label={`add a need to ${mode}`}
-                  >
-                    {i === 0 && <span>drop a need here</span>}
-                    {i === 0 && <span className={styles.plus} aria-hidden="true">+</span>}
-                  </button>
-                ))}
-              </div>
-            </section>
-          )
-        })}
-
-        <button
-          type="button"
-          className={styles.practicesLink}
-          onClick={() => navigate('/practices', { state: location.state })}
-        >
-          next: set the practices for each need →
-        </button>
-      </div>
+            )
+          })}
+        </div>
+      </section>
 
       <div className={styles.live} role="status" aria-live="polite">
         {notice && <div className={styles.notice}>{notice}</div>}
@@ -162,14 +142,14 @@ export default function CanvasScreen({ state, updateCanvas }) {
 
       {moving && (
         <Sheet label={`move ${needName(moving)}`} onClose={() => setMoving(null)}>
-          <h2 className={styles.sheetTitle}>move {needName(moving)} to</h2>
+          <h2 className={styles.sheetTitle}>Move {needName(moving)}</h2>
           <div className={styles.choices}>
             {MODE_ORDER.map(m => {
               const here = canvas[moving] === m
               const res = canPlace(moving, m, canvas)
               const hint = here ? 'here'
                 : !res.ok ? (moving === 'rest' && (m === 'exploration' || m === 'appreciation') ? 'not for rest' : 'full')
-                : `${placedIn(m).length} of ${MODE_NEED_CAP[m]}`
+                : `${placedIn(m).length}/${MODE_NEED_CAP[m]}`
               return (
                 <button
                   key={m}
@@ -193,10 +173,8 @@ export default function CanvasScreen({ state, updateCanvas }) {
                 disabled={!canPlace(moving, null, canvas).ok}
                 onClick={() => { place(moving, null); setMoving(null) }}
               >
-                <span className={styles.choiceName}>back to the library</span>
-                <span className={styles.choiceHint}>
-                  {canPlace(moving, null, canvas).ok ? 'practices kept' : 'always on your canvas'}
-                </span>
+                <span className={styles.choiceName}>remove from modes</span>
+                {!canPlace(moving, null, canvas).ok && <span className={styles.choiceHint}>always on</span>}
               </button>
             )}
           </div>
@@ -206,9 +184,9 @@ export default function CanvasScreen({ state, updateCanvas }) {
 
       {filling && (
         <Sheet label={`add a need to ${filling}`} onClose={() => setFilling(null)}>
-          <h2 className={styles.sheetTitle}>add a need to {filling}</h2>
+          <h2 className={styles.sheetTitle}>Add to {filling}</h2>
           {library.length === 0 ? (
-            <p className={styles.sheetNote}>every need is already in a mode. drag one out of its mode to move it.</p>
+            <p className={styles.sheetNote}>every need is in a mode.</p>
           ) : (
             <div className={styles.choices}>
               {library.map(n => {

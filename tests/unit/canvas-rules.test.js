@@ -17,7 +17,7 @@ describe('canPlace', () => {
   it('bounces a drop on a full mode with a reason', () => {
     const r = canPlace('play', 'appreciation', canvas)
     expect(r.ok).toBe(false)
-    expect(r.reason).toMatch(/appreciation is full \(2 of 2\)/)
+    expect(r.reason).toMatch(/appreciation is full/)
   })
   it('lets a need swap within a mode that only looks full because of itself', () => {
     expect(canPlace('reflection', 'appreciation', canvas).ok).toBe(true)
@@ -30,7 +30,7 @@ describe('canPlace', () => {
     for (const id of ['movement', 'nutrition', 'rest']) {
       const r = canPlace(id, null, canvas)
       expect(r.ok).toBe(false)
-      expect(r.reason).toMatch(/stays on your canvas/)
+      expect(r.reason).toMatch(/stays in a mode/)
     }
   })
   it('keeps rest at nourishment or below', () => {
