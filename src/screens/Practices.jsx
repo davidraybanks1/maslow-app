@@ -247,30 +247,35 @@ export default function Practices({ state, addPractice, renamePractice, updatePr
       <div className={styles.header}>
         <div className={styles.eyebrowRow}>
           <button type="button" className={styles.needsLink} onClick={() => navigate('/canvas', { state: location.state })}>← needs</button>
-          <div className={styles.eyebrowRight}>
-            <button className={styles.editToggle} onClick={handleToggleEdit}>{editMode ? 'done' : 'edit'}</button>
-            <button
-              type="button"
-              className={styles.closeBtn}
-              onClick={() => navigate(location.state?.returnTo || '/today', location.state?.fromProfile ? { state: { openProfile: true } } : undefined)}
-              aria-label="close practices"
-            >✕</button>
-          </div>
+          <button
+            type="button"
+            className={styles.closeBtn}
+            onClick={() => navigate(location.state?.returnTo || '/today', location.state?.fromProfile ? { state: { openProfile: true } } : undefined)}
+            aria-label="close practices"
+          >✕</button>
         </div>
-        <div className={styles.title}>your practices.</div>
-        <div className={styles.sub}>add or remove practices available for each need.</div>
-        <div className={styles.typeBlock}>
-          <div className={styles.typeAsk}>what type of practice is it?</div>
-          <div className={styles.typeRow}>
-            {TYPES.map(t => (
-              <button type="button" key={t.id} className={styles.typeTile} onClick={() => setSheet({ kind: t.id })}>
-                <PracticeIcon kind={t.id} size={40} />
-                <span className={styles.typeLabel}>{t.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
+        <h1 className={styles.title}>Practices</h1>
       </div>
+
+      <section className={styles.addSection} aria-labelledby="add-practice-head">
+        <h2 id="add-practice-head" className={styles.sectionHead}>Add a new practice</h2>
+        <div className={styles.typeGrid}>
+          {TYPES.map(t => (
+            <button type="button" key={t.id} className={styles.typeTile} onClick={() => setSheet({ kind: t.id })}>
+              <PracticeIcon kind={t.id} size={40} />
+              <span className={styles.typeLabel}>{t.label}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <div className={styles.editHead}>
+        <h2 className={styles.sectionHead}>Edit your practices</h2>
+        <button type="button" className={styles.editBtn} aria-pressed={editMode} onClick={handleToggleEdit}>
+          {editMode ? 'Done' : 'Edit'}
+        </button>
+      </div>
+
       <div className={`${styles.list} ${showOnboardingCta ? styles.listWithCta : ''}`}>
         {MODE_ORDER.map(mode => {
           const modeNeeds = NEEDS.filter(n => state.canvas[n.id] === mode)

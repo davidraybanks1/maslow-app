@@ -1,16 +1,12 @@
 .screen { display: flex; flex-direction: column; min-height: 100%; background: var(--paper); }
 
-.header { padding: 20px 16px 16px; }
-.eyebrowRow { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-.eyebrowRight { display: flex; align-items: center; gap: 16px; }
+.header { padding: 20px 16px 0; }
+.eyebrowRow { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
 .needsLink { font-family: var(--font-mono); font-size: var(--type-floor); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink3); background: none; border: none; cursor: pointer; padding: 6px 0; -webkit-tap-highlight-color: transparent; }
 .needsLink:hover { color: var(--ink); }
 .closeBtn { width: 32px; height: 32px; border-radius: 16px; border: 1px solid rgba(0,0,0,.22); background: transparent; color: rgba(0,0,0,.68); font-family: var(--font-mono); font-size: 13px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; -webkit-tap-highlight-color: transparent; }
 .closeBtn:hover { background: var(--track); }
-.editToggle { font-family: var(--font-mono); font-size: var(--type-floor); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink3); background: none; border: none; cursor: pointer; padding: 0; -webkit-tap-highlight-color: transparent; }
-.editToggle:hover { color: var(--ink); }
-.title { font-family: var(--font-serif); font-size: 26px; font-weight: 300; letter-spacing: -0.01em; color: var(--ink); }
-.sub { font-family: var(--font-mono); font-size: 12px; color: var(--ink3); margin-top: 6px; }
+.title { font-family: var(--font-serif); font-size: 30px; font-weight: 300; line-height: 1.1; letter-spacing: -0.01em; color: var(--ink); margin: 0; }
 
 .list { padding: 0 16px 32px; }
 
@@ -149,22 +145,11 @@
 }
 
 /* ── Practice types: pick a type first, or upgrade a plain add ── */
-.typeBlock { margin-top: 22px; }
-.typeAsk { font-family: var(--font-serif); font-weight: 300; font-size: 22px; line-height: 1.15; color: var(--ink); }
-.typeRow {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  margin: 14px -16px 0;
-  padding: 2px 16px 6px;
-  scroll-snap-type: x proximity;
-  scroll-padding-left: 16px;
-  scrollbar-width: none;
-}
-.typeRow::-webkit-scrollbar { display: none; }
+/* ── Add a new practice: the six types, three across ── */
+.addSection { padding: 26px 16px 0; }
+.sectionHead { font-family: var(--font-serif); font-weight: 300; font-size: 22px; line-height: 1.15; color: var(--ink); margin: 0; }
+.typeGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
 .typeTile {
-  flex: none;
-  width: 82px;
   padding: 14px 6px 11px;
   border-radius: var(--radius);
   background: var(--card);
@@ -173,7 +158,6 @@
   flex-direction: column;
   align-items: center;
   gap: 9px;
-  scroll-snap-align: start;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: background 80ms ease;
@@ -206,3 +190,19 @@
   cursor: pointer;
 }
 @media (prefers-reduced-motion: reduce) { .typeTile { transition: none; } }
+
+/* ── Edit your practices ── */
+.editHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 30px 16px 14px; }
+.editBtn {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink);
+  background: none;
+  border: 1px solid rgba(0,0,0,.22);
+  border-radius: 999px;
+  min-height: 34px;
+  padding: 0 16px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.editBtn[aria-pressed="true"] { background: var(--ink); color: var(--card); border-color: var(--ink); }
