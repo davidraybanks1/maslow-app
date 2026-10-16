@@ -36,7 +36,7 @@ const FLING_FALLBACK_MS = 320
 const FLOURISH_GLOW_LIT = '0 0 48px 16px rgba(240,168,0,.55), 0 10px 30px rgba(240,168,0,.25)'
 const FLOURISH_TINT = 'rgba(255,209,102,.85)'
 
-export default function NoteStack({ cards, onDismiss, onCommit, renderCard, dataTour }) {
+export default function NoteStack({ cards, onDismiss, onCommit, renderCard, dataTour, footer }) {
   const [order, setOrder] = useState(cards)
   // Cards already thrown but still mid-flight. They leave `order` the instant
   // the swipe commits (so the next card is live and draggable straight away)
@@ -64,11 +64,17 @@ export default function NoteStack({ cards, onDismiss, onCommit, renderCard, data
     setLeaving(l => l.filter(c => c.id !== id))
   }, [])
 
-  function onPointerDown(e, id) {
-    if (order[0]?.id !== id) return
+  function onPointerDown(e) {
+    const id = order[0]?.id
+    if (id == null) return
     if (e.pointerType === 'mouse' && e.button !== 0) return
+    // controls in the footer (the edit pill) stay plain buttons: capturing the
+    // pointer would swallow their click
+    if (e.target.closest?.('button, a')) return
     const el = topRef.current
     if (!el) return
+    // the drag can start anywhere on the surface, not just on the card; the
+    // card is captured so it keeps following the finger wherever it goes
     el.setPointerCapture?.(e.pointerId)
     el.style.transition = 'none'
     drag.current = { id, x0: e.clientX, y0: e.clientY, dx: 0, dy: 0, samples: [{ t: performance.now(), dx: 0, dy: 0 }] }
@@ -202,6 +208,17 @@ export default function NoteStack({ cards, onDismiss, onCommit, renderCard, data
   ]
 
   return (
+    // The surface is bigger than the card: on a phone it spans the full width of
+    // the screen (the card is only 316px of it) and takes in the footer row
+    // under the card, so a swipe can start almost anywhere around the deck.
+    <div
+      className={styles.surface}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerCancel}
+      onClickCapture={onClickCapture}
+    >
     <div className={styles.stack}>
       {items.map(({ card, ghost, i }) => ghost ? (
         <div
@@ -226,15 +243,12 @@ export default function NoteStack({ cards, onDismiss, onCommit, renderCard, data
           // order (top card above its peeks) while staying under the bloom,
           // so the flower overlaps the card's corner instead of the reverse.
           style={i > 0 ? { transform: `translateY(${i * 14}px) scale(${1 - i * 0.045})`, opacity: i === 1 ? 0.9 : 0.55, zIndex: 1 - i } : { zIndex: 1 }}
-          onPointerDown={i === 0 ? e => onPointerDown(e, card.id) : undefined}
-          onPointerMove={i === 0 ? onPointerMove : undefined}
-          onPointerUp={i === 0 ? onPointerUp : undefined}
-          onPointerCancel={i === 0 ? onPointerCancel : undefined}
-          onClickCapture={i === 0 ? onClickCapture : undefined}
         >
           {renderCard(card)}
         </div>
       ))}
+    </div>
+    {footer}
     </div>
   )
 }

@@ -935,11 +935,13 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                         </div>
                         </>
                       )}
+                      footer={(
+                        <div className={styles.deckFooterRow}>
+                          <span className={styles.noteDeckCounter}>{Math.min(noteDeck.length - visibleDeck.length + 1, noteDeck.length)}/{noteDeck.length}</span>
+                          <button className={styles.noteEditPill} onClick={openManageDeck}>edit</button>
+                        </div>
+                      )}
                     />
-                    <div className={styles.deckFooterRow}>
-                      <span className={styles.noteDeckCounter}>{Math.min(noteDeck.length - visibleDeck.length + 1, noteDeck.length)}/{noteDeck.length}</span>
-                      <button className={styles.noteEditPill} onClick={openManageDeck}>edit</button>
-                    </div>
                   </>
                 )
               ) : deckLoaded ? (

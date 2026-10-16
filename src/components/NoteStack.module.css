@@ -5,6 +5,15 @@
   height: 262px;
 }
 
+/* The swipe surface: the stack plus the footer row under it, edge to edge.
+   On a phone the deck is full-bleed, so this is the full screen width (the
+   card is only 316px of it). A swipe can start anywhere in it, not only on the
+   card itself. */
+.surface {
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
 .card {
   position: absolute;
   inset: 0;
