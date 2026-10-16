@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from './supabase'
 import { STARTER_PRACTICES, STARTER_NOTES } from './starterContent.js'
 import { TIME_RE } from './constants'
+import { sanitizeConfig } from './practiceTypes'
 import * as Sentry from '@sentry/capacitor'
 
 const STORAGE_KEY = 'maslow_state'
@@ -158,6 +159,10 @@ async function fetchAllRows(table, userId) {
 const fetchMoods = userId => fetchAllRows('moods', userId)
 const fetchCheckins = userId => fetchAllRows('checkins', userId)
 
+// Practice columns the app reads. kind/config arrived with the practice-types
+// migration (20261016172826); a row without them reads as a plain check.
+const PRACTICE_COLS = 'id, label, need_id, kind, config, created_at, archived_at, reminder_on, reminder_time, reminder_offered_at'
+
 async function restoreFromSupabase(userId, email) {
   try {
     const { data: user } = await supabase.from('users').select('*').eq('email', email).single()
@@ -180,7 +185,7 @@ async function restoreFromSupabase(userId, email) {
       fetchCheckins(user.id),
       fetchMoods(user.id),
       loadNoteDeck(user.id),
-      supabase.from('practices').select('id, label, need_id, created_at, archived_at, reminder_on, reminder_time, reminder_offered_at').eq('user_id', user.id).order('created_at'),
+      supabase.from('practices').select(PRACTICE_COLS).eq('user_id', user.id).order('created_at'),
     ])
     const checkinsMap = {}
     for (const row of (checkins || [])) {
@@ -193,6 +198,7 @@ async function restoreFromSupabase(userId, email) {
         mode: row.mode || null,
         completed_at: row.completed_at || null,
         count: row.count || 1,
+        detail: row.detail || null,
       })
     }
     const canvas = sanitizeCanvas(user.canvas)
@@ -338,8 +344,10 @@ export function useAppState(onSignIn) {
     })
   }
 
-  function addPractice(needId, text) {
+  // kind/config come from the type builder; a bare add is a plain check.
+  function addPractice(needId, text, { kind = 'check', config = null } = {}) {
     if (!text.trim()) return
+    const cleanConfig = sanitizeConfig(kind, config)
     setState(prev => {
       const current = prev.practices[needId] || []
       if (current.length >= 10) return prev
@@ -348,11 +356,11 @@ export function useAppState(onSignIn) {
       const previousPracticesDB = prev.practicesDB
       const newPractices = { ...prev.practices, [needId]: [...current, label] }
       const tempId = `pending_${Date.now()}_${Math.random()}`
-      const tempRecord = { id: tempId, label, need_id: needId, created_at: new Date().toISOString(), archived_at: null, reminder_on: false, reminder_time: null, reminder_offered_at: null }
+      const tempRecord = { id: tempId, label, need_id: needId, kind, config: cleanConfig, created_at: new Date().toISOString(), archived_at: null, reminder_on: false, reminder_time: null, reminder_offered_at: null }
       if (prev.userId) {
         supabase.from('practices')
-          .insert({ user_id: prev.userId, label, need_id: needId })
-          .select('id, label, need_id, created_at, archived_at, reminder_on, reminder_time, reminder_offered_at')
+          .insert({ user_id: prev.userId, label, need_id: needId, kind, config: cleanConfig })
+          .select(PRACTICE_COLS)
           .single()
           .then(({ data, error }) => {
             if (error) {
@@ -390,6 +398,38 @@ export function useAppState(onSignIn) {
           }
         })
         supabase.from('users').update({ practices: newPractices }).eq('id', prev.userId)
+      }
+      return { ...prev, practicesDB: updatedDB, practices: newPractices }
+    })
+  }
+
+  // Change a practice's name, type, or settings in one go. A rename also
+  // updates the label in the users.practices JSON copy, same as renamePractice.
+  function updatePractice(practiceId, { label, kind, config }) {
+    setState(prev => {
+      const record = prev.practicesDB.find(p => p.id === practiceId)
+      if (!record) return prev
+      const nextLabel = label !== undefined && label.trim() ? label.trim() : record.label
+      const nextKind = kind || record.kind || 'check'
+      const nextConfig = sanitizeConfig(nextKind, config !== undefined ? config : record.config)
+      const previousPracticesDB = prev.practicesDB
+      const previousPractices = prev.practices
+      const updatedDB = prev.practicesDB.map(p => p.id === practiceId ? { ...p, label: nextLabel, kind: nextKind, config: nextConfig } : p)
+      let newPractices = prev.practices
+      if (nextLabel !== record.label) {
+        const needArr = (prev.practices[record.need_id] || []).map(t => t === record.label ? nextLabel : t)
+        newPractices = { ...prev.practices, [record.need_id]: needArr }
+      }
+      if (prev.userId && !String(practiceId).startsWith('pending_')) {
+        supabase.from('practices').update({ label: nextLabel, kind: nextKind, config: nextConfig }).eq('id', practiceId).then(({ error }) => {
+          if (error) {
+            logSupabaseError('updatePractice', error)
+            setState(p => ({ ...p, practicesDB: previousPracticesDB, practices: previousPractices }))
+          }
+        })
+        if (newPractices !== prev.practices) {
+          supabase.from('users').update({ practices: newPractices }).eq('id', prev.userId)
+        }
       }
       return { ...prev, practicesDB: updatedDB, practices: newPractices }
     })
@@ -438,7 +478,10 @@ export function useAppState(onSignIn) {
     })
   }
 
-  function checkIn(needId, practiceText, mode, date = todayKey(), practiceId = null) {
+  // `detail` is the per-day value a typed practice carries (minutes, ticks,
+  // stretch level, tally). count stays 1 here; the ×2 tap goes through
+  // incrementCheckinCount.
+  function checkIn(needId, practiceText, mode, date = todayKey(), practiceId = null, detail = null) {
     const uid = userIdRef.current
     if (!uid) {
       console.error('[checkIn] called without userId — practice not persisted')
@@ -447,7 +490,7 @@ export function useAppState(onSignIn) {
 
     const completedAt = new Date().toISOString()
     const tempId = `pending_${Date.now()}_${Math.random()}`
-    const newEntry = { id: tempId, need_id: needId, practice_text: practiceText, practice_id: practiceId, mode: mode || null, completed_at: completedAt, count: 1 }
+    const newEntry = { id: tempId, need_id: needId, practice_text: practiceText, practice_id: practiceId, mode: mode || null, completed_at: completedAt, count: 1, detail }
 
     const newCheckins = {
       ...checkinsRef.current,
@@ -457,7 +500,7 @@ export function useAppState(onSignIn) {
     setState(prev => ({ ...prev, checkins: newCheckins }))
 
     supabase.from('checkins')
-      .insert({ user_id: uid, date_key: date, need_id: needId, practice_text: practiceText, practice_id: practiceId, mode: mode || null, completed_at: completedAt, count: 1 })
+      .insert({ user_id: uid, date_key: date, need_id: needId, practice_text: practiceText, practice_id: practiceId, mode: mode || null, completed_at: completedAt, count: 1, ...(detail ? { detail } : {}) })
       .select('id, practice_id').single()
       .then(({ data, error }) => {
         if (error) {
@@ -564,6 +607,35 @@ export function useAppState(onSignIn) {
         })
       }
       return { ...prev, checkins: updated }
+    })
+  }
+
+  // Replace the detail on an existing check-in (a tick toggled, a stretch
+  // level changed). Optimistic, reverted if the write fails.
+  function setCheckinDetail(entryId, detail, date = todayKey()) {
+    const uid = userIdRef.current
+    let previous = null
+    setState(prev => {
+      const day = (prev.checkins[date] || []).map(e => {
+        if (e.id !== entryId) return e
+        previous = e.detail || null
+        return { ...e, detail }
+      })
+      const updated = { ...prev.checkins, [date]: day }
+      checkinsRef.current = updated
+      return { ...prev, checkins: updated }
+    })
+    if (!uid || !entryId || String(entryId).startsWith('pending_')) return
+    supabase.from('checkins').update({ detail }).eq('id', entryId).then(({ error }) => {
+      if (error) {
+        logSupabaseError('setCheckinDetail', error)
+        setState(p => {
+          const d = (p.checkins[date] || []).map(e => e.id === entryId ? { ...e, detail: previous } : e)
+          const rev = { ...p.checkins, [date]: d }
+          checkinsRef.current = rev
+          return { ...p, checkins: rev }
+        })
+      }
     })
   }
 
@@ -780,7 +852,7 @@ export function useAppState(onSignIn) {
     })
   }
 
-  return { state, authLoading, updateCanvas, replaceCanvas, addPractice, renamePractice, archivePractice, removePractice, setPracticeReminder, stampReminderOffered, incrementOffersDeclined, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood, completeOnboarding, updateRemindersEnabled, updateMoodReminder, updateNotifType, markNotifPrimed, markTourSeen, resetTour, updateNoteDeck, syncCheckinDay }
+  return { state, authLoading, updateCanvas, replaceCanvas, addPractice, renamePractice, updatePractice, archivePractice, removePractice, setPracticeReminder, stampReminderOffered, incrementOffersDeclined, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, setCheckinDetail, logMood, completeOnboarding, updateRemindersEnabled, updateMoodReminder, updateNotifType, markNotifPrimed, markTourSeen, resetTour, updateNoteDeck, syncCheckinDay }
 }
 
 export function todayKey() {
@@ -882,6 +954,7 @@ export async function loadDayCheckins(userId, dateKey) {
     mode: row.mode || null,
     completed_at: row.completed_at || null,
     count: row.count || 1,
+    detail: row.detail || null,
   }))
 }
 
@@ -1231,7 +1304,7 @@ export async function seedStarterContent(userId, canvasObj, overrides = {}, note
         const { data: inserted, error: pErr } = await supabase
           .from('practices')
           .insert(practicesRows)
-          .select('id, label, need_id, created_at, archived_at, reminder_on, reminder_time, reminder_offered_at')
+          .select(PRACTICE_COLS)
         if (pErr) {
           logSupabaseError('seedStarterContent:practices', pErr)
           return null

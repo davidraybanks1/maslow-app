@@ -1,0 +1,142 @@
+/* The practice builder: pick a type, then fill in what that type needs. */
+.top { display: flex; align-items: center; gap: 12px; }
+.head {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  font-size: 28px;
+  line-height: 1.05;
+  color: var(--ink);
+}
+.sub {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink2);
+  margin-top: 10px;
+}
+.field { margin-top: 24px; }
+.eyebrow {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  color: var(--ink3);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.eyebrow i { font-style: normal; text-transform: none; letter-spacing: 0; }
+.input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: .5px solid var(--border2);
+  background: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  color: var(--ink);
+}
+.num { width: 84px; text-align: center; }
+.hint {
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  color: var(--ink3);
+  margin: 8px 0 10px;
+  line-height: 1.5;
+}
+.hint:empty { margin: 0; }
+
+.typeGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 20px; }
+.tile {
+  padding: 14px 6px 11px;
+  border-radius: var(--radius);
+  background: var(--paper);
+  border: .5px solid var(--hairline);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+  transition: background 80ms ease;
+}
+.tile:active { background: #F6F2E8; }
+.tileLabel { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink2); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: .5px solid var(--border2);
+  color: var(--ink2);
+  background: transparent;
+  cursor: pointer;
+}
+.chip:active { background: rgba(0, 0, 0, .06); }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--card); border-color: var(--ink); }
+.chip:disabled { opacity: .35; cursor: default; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+.stepRow { display: grid; grid-template-columns: 22px 1fr auto auto; gap: 6px; align-items: center; margin-bottom: 8px; }
+.stepRowFlat { grid-template-columns: 22px 1fr auto; }
+.stepN { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink4); }
+.mini {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--ink3);
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  text-align: center;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.mini:active { background: rgba(0, 0, 0, .06); }
+.mini:disabled { opacity: .25; cursor: default; }
+.link {
+  background: none;
+  border: 0;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--ink4);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  cursor: pointer;
+}
+.stepper { display: inline-flex; align-items: center; gap: 6px; }
+.stepper b { font-family: var(--font-mono); font-weight: 400; font-size: 18px; min-width: 32px; text-align: center; color: var(--ink); }
+.stepper .mini { border: .5px solid var(--border2); border-radius: 999px; font-size: 18px; color: var(--ink); }
+.timeRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink2);
+}
+.timeRow .input { width: 128px; padding: 12px 10px; font-size: 15px; }
+
+.actions { display: grid; gap: 10px; margin-top: 30px; }
+.primary, .secondary {
+  width: 100%;
+  padding: 14px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  text-align: center;
+  cursor: pointer;
+}
+.primary { background: var(--ink); color: var(--card); border: 0; }
+.primary:disabled { opacity: .3; cursor: default; }
+.secondary { background: none; border: .5px solid var(--hairline); color: var(--ink2); }
+.note { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); margin-top: 8px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tile { transition: none; }
+}

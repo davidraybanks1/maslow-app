@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
+import PracticeRow from './PracticeRow'
+import { practiceKey } from '../lib/usePracticeActions'
 import styles from './NeedsPopup.module.css'
 
 function countAt(n, practice, checked) {
@@ -21,8 +23,8 @@ function buildSortedPools(modeNeeds, state, checked) {
 }
 
 export default function NeedsPopup({
-  mode, pip, modeNeeds, maxBubbles, checked, justTapped,
-  lastDoneMap, state, handlePracticeTap, navigate,
+  mode, pip, modeNeeds, maxBubbles, checked,
+  lastDoneMap, state, practices, onEdit, navigate,
   triggerEl, onClose,
 }) {
   const closeRef = useRef(null)
@@ -42,16 +44,6 @@ export default function NeedsPopup({
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [])
-
-  function getLiveCount(n, practice) {
-    return checked
-      .filter(e => {
-        if (e.need_id !== n.id) return false
-        if (practice.id && e.practice_id) return e.practice_id === practice.id
-        return e.practice_text === practice.label
-      })
-      .reduce((s, e) => s + (e.count || 1), 0)
-  }
 
   function getNeedDone(n) {
     return Math.min(
@@ -88,27 +80,24 @@ export default function NeedsPopup({
                   no practices — <span className={styles.noPracticeLink} onClick={() => { closeRef.current(); navigate('/canvas') }}>add some</span>
                 </div>
               ) : sorted.map(practice => {
-                const practiceKey = practice.id || `${n.id}_${practice.label}`
-                const count = getLiveCount(n, practice)
-                const isJustNow = justTapped === practiceKey
-                const lastDays = lastDoneMap.get(practiceKey) ?? null
-                const meta = isJustNow ? 'just now' : count >= 1 ? 'today' : (lastDays !== null && lastDays > 0 ? `${lastDays}d ago` : '')
+                const key = practiceKey(n, practice)
                 return (
-                  <div
-                    key={practiceKey}
-                    className={styles.practiceRow}
-                    onClick={() => handlePracticeTap(n.id, mode, practice.label, practice.id)}
-                  >
-                    <div
-                      className={`${styles.practiceCheck} ${count > 0 ? styles.practiceCheckFilled : ''}`}
-                      style={count > 0 ? { background: pip, borderColor: pip } : { borderColor: pip }}
-                    />
-                    <span className={styles.practiceLabel}>{practice.label}</span>
-                    <div className={styles.practiceMeta}>
-                      {count >= 2 && <span className={styles.practiceX2}>×2</span>}
-                      {meta && <span className={styles.practiceStamp}>{meta}</span>}
-                    </div>
-                  </div>
+                  <PracticeRow
+                    key={key}
+                    need={n}
+                    mode={mode}
+                    practice={practice}
+                    status={practices.statusOf(n, practice)}
+                    lastDays={lastDoneMap.get(key) ?? null}
+                    expanded={!!practices.expanded[key]}
+                    onTap={() => practices.tap(n, mode, practice)}
+                    onToggle={() => practices.toggleExpanded(key)}
+                    onToggleItem={i => practices.toggleItem(n, mode, practice, i)}
+                    onAddItem={text => practices.addItem(n, mode, practice, text)}
+                    onBegin={() => practices.beginTimer(n, mode, practice)}
+                    onStretch={() => practices.openStretch(n, mode, practice)}
+                    onEdit={practice.id ? () => onEdit(n, practice) : undefined}
+                  />
                 )
               })}
             </div>

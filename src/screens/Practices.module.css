@@ -142,3 +142,62 @@
     right: auto;
   }
 }
+
+/* ── Practice types: pick a type first, or upgrade a plain add ── */
+.typeBlock { margin-top: 22px; }
+.typeAsk { font-family: var(--font-serif); font-weight: 300; font-size: 22px; line-height: 1.15; color: var(--ink); }
+.typeRow {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  margin: 14px -16px 0;
+  padding: 2px 16px 6px;
+  scroll-snap-type: x proximity;
+  scroll-padding-left: 16px;
+  scrollbar-width: none;
+}
+.typeRow::-webkit-scrollbar { display: none; }
+.typeTile {
+  flex: none;
+  width: 82px;
+  padding: 14px 6px 11px;
+  border-radius: var(--radius);
+  background: var(--card);
+  border: 0.5px solid var(--hairline);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  scroll-snap-align: start;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 80ms ease;
+}
+.typeTile:active { background: #F6F2E8; }
+.typeLabel { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink2); }
+.poolIcon { flex: none; margin-right: 10px; opacity: .85; }
+.poolTag {
+  display: block;
+  font-family: var(--font-mono);
+  font-style: normal;
+  font-size: var(--type-floor);
+  color: var(--ink3);
+  margin-top: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.starterTag { margin-left: 6px; padding-left: 6px; border-left: 0.5px solid var(--hairline); color: var(--ink3); }
+.upgrade { font-family: var(--font-mono); font-size: 13px; color: var(--ink2); padding-top: 10px; }
+.upgradeBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--ink4);
+  cursor: pointer;
+}
+@media (prefers-reduced-motion: reduce) { .typeTile { transition: none; } }

@@ -1,0 +1,272 @@
+/* A practice on Today. Plain practices are one tap target; practices with
+   something to open (ritual, checklist, stretch, boundary, a timer) split in
+   two: the tile checks it off, the rest of the row opens it. */
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 54px;
+  padding: 0 2px;
+  margin: 0 -2px;
+  border-radius: 6px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 80ms ease;
+}
+.row.two { min-height: 60px; }
+.row:hover { background: rgba(0, 0, 0, .04); }
+.row:active { background: rgba(0, 0, 0, .07); }
+
+/* ── the check box: the type's own icon on a white tile ── */
+.tile {
+  --pip: #191612; /* set inline per tier */
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--card);
+  border: .5px solid var(--hairline);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.tileDone {
+  border-color: var(--pip);
+  box-shadow: 0 0 0 .5px var(--pip) inset;
+}
+/* a boundary whose window hasn't ended yet can't be checked off */
+.tileInert {
+  border-style: dashed;
+  border-color: var(--border2);
+  opacity: .6;
+}
+.tileHolding { animation: hold 3.2s ease-in-out infinite; }
+@keyframes hold { 0%, 100% { opacity: .45; } 50% { opacity: .8; } }
+
+.text { flex: 1; min-width: 0; }
+.label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 200;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sub {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  color: var(--ink3);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+}
+.x2 {
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  font-weight: 500;
+  color: var(--ink3);
+}
+.stamp {
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  color: var(--ink4);
+  white-space: nowrap;
+}
+
+/* ── split rows ── */
+.split {
+  display: flex;
+  align-items: stretch;
+  min-height: 60px;
+  margin: 0 -2px;
+  border-radius: 6px;
+}
+.hit {
+  flex: none;
+  width: 50px;
+  display: flex;
+  align-items: center;
+  padding-left: 2px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 2px 6px 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.main:active { background: rgba(0, 0, 0, .05); }
+.chev {
+  width: 7px;
+  height: 7px;
+  border-right: 1.5px solid var(--ink3);
+  border-bottom: 1.5px solid var(--ink3);
+  transform: rotate(45deg) translateY(-2px);
+  transition: transform .2s ease;
+  margin: 0 4px 0 2px;
+}
+.open .chev { transform: rotate(-135deg) translate(-2px, -1px); }
+
+.panelWrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows .25s ease;
+}
+.panelWrapOpen { grid-template-rows: 1fr; }
+.panelClip { overflow: hidden; min-height: 0; }
+.panel {
+  margin: 2px 0 14px 50px;
+  padding: 4px 0 2px;
+  display: grid;
+  gap: 16px;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  color: var(--ink3);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.listHead { display: flex; justify-content: space-between; }
+.text13 {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 200;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.hintText { color: var(--ink3); }
+.steps { list-style: none; display: grid; gap: 8px; margin: 0; padding: 0; }
+.steps li { display: grid; grid-template-columns: 22px 1fr; align-items: baseline; }
+.stepN {
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  color: var(--ink4);
+  font-variant-numeric: tabular-nums;
+}
+.editLink {
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  color: var(--ink3);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--ink4);
+  padding: 6px 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.pill {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 11px 20px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--card);
+  border: 0;
+  cursor: pointer;
+}
+
+/* ── checklist ── */
+.items { display: grid; }
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  width: 100%;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.item:active { background: rgba(0, 0, 0, .05); }
+.mini {
+  --hi: #C7D4C1; /* set inline per tier */
+  --lo: #9DB394;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid;
+  flex: none;
+  box-sizing: border-box;
+}
+.miniOn {
+  border-color: transparent !important;
+  background: radial-gradient(circle at 34% 26%, var(--hi), var(--lo));
+}
+.struck {
+  color: var(--ink3);
+  text-decoration: line-through;
+  text-decoration-color: var(--ink4);
+}
+.addItem { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
+.addInput {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: .5px solid var(--border2);
+  background: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  color: var(--ink);
+}
+.addBtn {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--ink3);
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.addBtn:active { background: rgba(0, 0, 0, .06); }
+.hint {
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  color: var(--ink3);
+  margin: 8px 0 0;
+}
+
+/* ── stretch ── */
+.meter { height: 4px; background: var(--track); border-radius: 2px; margin: 2px 0 8px; overflow: hidden; }
+.meterFill { display: block; height: 100%; background: var(--ink); }
+
+@media (prefers-reduced-motion: reduce) {
+  .row, .tile, .chev, .panelWrap { transition: none; }
+  .tileHolding { animation: none; opacity: .6; }
+}

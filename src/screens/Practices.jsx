@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { NEEDS, MODES, MODE_ORDER, TIME_RE } from '../lib/constants'
 import { createDataStats, formatLastDone } from '../lib/dataStats'
 import { isNative, checkNotifPermission, requestNotifPermission, scheduleReminders } from '../lib/native'
+import { TYPES, TYPED_STARTERS, poolTag } from '../lib/practiceTypes'
+import PracticeIcon from '../components/PracticeIcon'
+import PracticeSheet from '../components/PracticeSheet'
 import styles from './Practices.module.css'
 
 const MAX = 10
@@ -24,7 +27,7 @@ const STARTERS = {
 }
 const OB_FLAG = 'onboardingPracticesDone'
 
-export default function Practices({ state, addPractice, renamePractice, archivePractice, setPracticeReminder, stampReminderOffered, incrementOffersDeclined, completeOnboarding }) {
+export default function Practices({ state, addPractice, renamePractice, updatePractice, archivePractice, setPracticeReminder, stampReminderOffered, incrementOffersDeclined, completeOnboarding }) {
   const navigate = useNavigate()
   const [inputs, setInputs] = useState({})
   const [openInputs, setOpenInputs] = useState({})
@@ -32,6 +35,8 @@ export default function Practices({ state, addPractice, renamePractice, archiveP
   const [editingId, setEditingId] = useState(null)
   const [renameValue, setRenameValue] = useState('')
   const [obDone, setObDone] = useState(() => !!localStorage.getItem(OB_FLAG))
+  // the type builder: null when closed, else what to open it with
+  const [sheet, setSheet] = useState(null)
 
   // Reminder state — native only
   const [notifPermission, setNotifPermission] = useState('prompt')
@@ -197,6 +202,20 @@ export default function Practices({ state, addPractice, renamePractice, archiveP
     setInputs(prev => ({ ...prev, [needId]: '' }))
   }
 
+  const sheetNeeds = NEEDS.filter(n => state.canvas[n.id])
+  const fullNeeds = sheetNeeds.filter(n => {
+    const count = useDB
+      ? state.practicesDB.filter(p => p.need_id === n.id && !p.archived_at).length
+      : (state.practices[n.id] || []).length
+    return count >= MAX
+  }).map(n => n.id)
+
+  function handleSheetSave({ needId, label, kind, config }) {
+    if (sheet?.practice?.id) updatePractice(sheet.practice.id, { label, kind, config })
+    else addPractice(needId, label, { kind, config })
+    setSheet(null)
+  }
+
   function handleStartRename(practice) {
     setEditingId(practice.id)
     setRenameValue(practice.label)
@@ -229,6 +248,17 @@ export default function Practices({ state, addPractice, renamePractice, archiveP
         </div>
         <div className={styles.title}>your practices.</div>
         <div className={styles.sub}>add or remove practices available for each need.</div>
+        <div className={styles.typeBlock}>
+          <div className={styles.typeAsk}>what type of practice is it?</div>
+          <div className={styles.typeRow}>
+            {TYPES.map(t => (
+              <button type="button" key={t.id} className={styles.typeTile} onClick={() => setSheet({ kind: t.id })}>
+                <PracticeIcon kind={t.id} size={40} />
+                <span className={styles.typeLabel}>{t.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
       <div className={`${styles.list} ${showOnboardingCta ? styles.listWithCta : ''}`}>
         {MODE_ORDER.map(mode => {
@@ -251,12 +281,19 @@ export default function Practices({ state, addPractice, renamePractice, archiveP
 
                 <div className={styles.pool}>
                   {pool.length === 0 && (
-                    (STARTERS[n.id] || []).length > 0 ? (
+                    (STARTERS[n.id] || []).length > 0 || (TYPED_STARTERS[n.id] || []).length > 0 ? (
                       <div className={styles.starterWrap}>
                         <div className={styles.starterLabel}>starters — tap to add</div>
                         <div className={styles.starterChips}>
-                          {STARTERS[n.id].map(t => (
+                          {(STARTERS[n.id] || []).map(t => (
                             <button key={t} className={styles.starterChip} onClick={() => addPractice(n.id, t)}>+ {t}</button>
+                          ))}
+                          {(TYPED_STARTERS[n.id] || []).map(t => (
+                            <button
+                              key={t.label}
+                              className={styles.starterChip}
+                              onClick={() => setSheet({ kind: t.kind, needId: n.id, name: t.label, config: t.config })}
+                            >+ {t.label}<span className={styles.starterTag}>{t.kind}</span></button>
                           ))}
                         </div>
                       </div>
@@ -290,18 +327,31 @@ export default function Practices({ state, addPractice, renamePractice, archiveP
                         ) : (
                           <>
                             <div className={styles.poolRow}>
+                              <PracticeIcon kind={p.kind || 'check'} size={22} className={styles.poolIcon} />
                               <span
                                 className={styles.poolText}
                                 onClick={editMode && p.id ? () => handleStartRename(p) : undefined}
                                 style={editMode && p.id ? { cursor: 'text' } : undefined}
-                              >{p.label}</span>
+                              >
+                                {p.label}
+                                {poolTag(p) && <span className={styles.poolTag}>{poolTag(p)}</span>}
+                              </span>
 
                               {editMode ? (
-                                <button
-                                  className={styles.archiveBtn}
-                                  aria-label="archive — stops appearing, history kept"
-                                  onClick={() => archivePractice(p.id)}
-                                >archive</button>
+                                <>
+                                  {p.id && (
+                                    <button
+                                      className={styles.archiveBtn}
+                                      aria-label={`edit ${p.label}: type and settings`}
+                                      onClick={() => setSheet({ kind: p.kind || 'check', needId: n.id, name: p.label, config: p.config, editing: true, practice: p })}
+                                    >options</button>
+                                  )}
+                                  <button
+                                    className={styles.archiveBtn}
+                                    aria-label="archive — stops appearing, history kept"
+                                    onClick={() => archivePractice(p.id)}
+                                  >archive</button>
+                                </>
 
                               ) : native ? (
                                 /* ── Reminder affordance (native only) ── */
@@ -397,11 +447,31 @@ export default function Practices({ state, addPractice, renamePractice, archiveP
                 ) : (
                   <button className={styles.addToggle} onClick={() => setOpenInputs(prev => ({ ...prev, [n.id]: true }))}>+ add practice</button>
                 )}
+                {showInput && (inputs[n.id] || '').trim() && (
+                  <div className={styles.upgrade}>
+                    or{' '}
+                    <button
+                      type="button"
+                      className={styles.upgradeBtn}
+                      onClick={() => setSheet({ needId: n.id, name: (inputs[n.id] || '').trim() })}
+                    >choose a type</button>
+                  </div>
+                )}
               </div>
             )
           })
         })}
       </div>
+
+      {sheet && (
+        <PracticeSheet
+          needs={sheetNeeds}
+          fullNeeds={fullNeeds}
+          initial={sheet}
+          onSave={handleSheetSave}
+          onClose={() => setSheet(null)}
+        />
+      )}
 
       {showOnboardingCta && (
         <div className={styles.obFooter}>

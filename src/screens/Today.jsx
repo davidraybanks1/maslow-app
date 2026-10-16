@@ -16,6 +16,12 @@ import ManageDeck from '../components/ManageDeck'
 import ManageTags from '../components/ManageTags'
 import NeedsPopup from '../components/NeedsPopup'
 import NeedPills, { NeedPill } from '../components/NeedPills'
+import PracticeRow from '../components/PracticeRow'
+import PracticeSheet from '../components/PracticeSheet'
+import StretchSheet from '../components/StretchSheet'
+import TimerTakeover from '../components/TimerTakeover'
+import PracticeToast from '../components/PracticeToast'
+import { usePracticeActions, practiceKey } from '../lib/usePracticeActions'
 import styles from './Today.module.css'
 
 const MODE_THRESHOLDS = { exploration: 80, appreciation: 60, nourishment: 50, survival: 20 }
@@ -46,14 +52,6 @@ function buildRingGradient(arcs) {
   const segs = buildProgressSegments(arcs)
   const stops = segs.flatMap(s => [`${s.color} ${s.from.toFixed(2)}%`, `${s.color} ${s.to.toFixed(2)}%`])
   return `conic-gradient(from -90deg, ${stops.join(', ')})`
-}
-
-// Practice check gradient stops — hi/lo per mode, matches Bloom petal lighting
-const MODE_CHECK_COLORS = {
-  exploration:  ['#191612', '#191612'],
-  appreciation: ['#C7D4C1', '#9DB394'],
-  nourishment:  ['#FFD166', '#F0A800'],
-  survival:     ['#FF7A55', '#F03C10'],
 }
 
 function CompletionRing({ arcs, pct }) {
@@ -163,13 +161,17 @@ if (typeof document !== 'undefined') {
   window.addEventListener('pageshow', clearReviewedNotes)
 }
 
-export default function Today({ state, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, logMood, onActiveDeckChanged, onCustomTagsChanged, profileMenu }) {
+export default function Today({ state, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, setCheckinDetail, updatePractice, logMood, onActiveDeckChanged, onCustomTagsChanged, profileMenu }) {
   const navigate = useNavigate()
   const location = useLocation()
   const isDesktop = useIsDesktop()
   const [today, setToday] = useState(() => todayKey())
   const [slot, setSlot] = useState(() => currentSlot())
   const checked = state.checkins[today] || []
+  // Typed practices (timed, checklist, ritual, ...): what's done, what's in
+  // progress, and what a tap does. Shared by the accordion and the desktop popup.
+  const practices = usePracticeActions({ today, checked, checkIn, clearPracticeCheckins, incrementCheckinCount, setCheckinDetail })
+  const [editingPractice, setEditingPractice] = useState(null)
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -636,7 +638,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     </div>
   )
 
-  const [justTapped, setJustTapped] = useState(null)
   const [openTier, setOpenTier] = useState(null)
   const [popupMode, setPopupMode] = useState(null)
   const tierElems = useRef({})
@@ -808,29 +809,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         if (priorFeeling !== undefined) next[promptTime] = priorFeeling; else delete next[promptTime]
         return next
       })
-    }
-  }
-
-  function handlePracticeTap(needId, mode, practiceText, practiceId) {
-    hapticTick()
-    function matchEntry(e) {
-      if (e.need_id !== needId) return false
-      if (practiceId && e.practice_id) return e.practice_id === practiceId
-      return e.practice_text === practiceText
-    }
-    const practiceEntries = checked.filter(matchEntry)
-    const totalCount = practiceEntries.reduce((s, e) => s + (e.count || 1), 0)
-    const practiceKey = practiceId || `${needId}_${practiceText}`
-    if (totalCount === 0) {
-      checkIn(needId, practiceText, mode, undefined, practiceId)
-      setJustTapped(practiceKey)
-    } else if (totalCount === 1) {
-      const entry = practiceEntries[practiceEntries.length - 1]
-      incrementCheckinCount(entry.id)
-      setJustTapped(practiceKey)
-    } else {
-      clearPracticeCheckins(needId, practiceText)
-      setJustTapped(null)
     }
   }
 
@@ -1198,29 +1176,25 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                                 no practices — <span className={styles.noPracticeLink} onClick={() => navigate('/canvas')}>add some</span>
                               </div>
                             ) : sorted.map(practice => {
-                              const practiceKey = practice.id || `${n.id}_${practice.label}`
-                              const count = getPracticeCount(n, practice)
-                              const isJustNow = justTapped === practiceKey
-                              const lastDays = lastDoneMap.get(practiceKey) ?? null
-                              const meta = isJustNow ? 'just now' : count >= 1 ? 'today' : (lastDays !== null && lastDays > 0 ? `${lastDays}d ago` : '')
+                              const key = practiceKey(n, practice)
+                              const st = practices.statusOf(n, practice)
                               return (
-                                <div
-                                  key={practiceKey}
-                                  className={styles.practiceRow}
-                                  onClick={e => { e.stopPropagation(); handlePracticeTap(n.id, mode, practice.label, practice.id) }}
-                                >
-                                  <div
-                                    className={`${styles.practiceCheck} ${count > 0 ? styles.practiceCheckFilled : ''}${mode === 'exploration' ? ` ${styles.practiceCheckBlack}` : ''}`}
-                                    style={count > 0
-                                      ? { '--practice-paint-hi': (MODE_CHECK_COLORS[mode] || [])[0] || pip, '--practice-paint-lo': (MODE_CHECK_COLORS[mode] || [])[1] || pip, borderColor: 'transparent' }
-                                      : (mode === 'exploration' ? undefined : { borderColor: pip })}
-                                  />
-                                  <span className={styles.practiceLabel}>{practice.label}</span>
-                                  <div className={styles.practiceMeta}>
-                                    {count >= 2 && <span className={styles.practiceX2}>×2</span>}
-                                    {meta && <span className={styles.practiceStamp}>{meta}</span>}
-                                  </div>
-                                </div>
+                                <PracticeRow
+                                  key={key}
+                                  need={n}
+                                  mode={mode}
+                                  practice={practice}
+                                  status={st}
+                                  lastDays={lastDoneMap.get(key) ?? null}
+                                  expanded={!!practices.expanded[key]}
+                                  onTap={() => practices.tap(n, mode, practice)}
+                                  onToggle={() => practices.toggleExpanded(key)}
+                                  onToggleItem={i => practices.toggleItem(n, mode, practice, i)}
+                                  onAddItem={text => practices.addItem(n, mode, practice, text)}
+                                  onBegin={() => practices.beginTimer(n, mode, practice)}
+                                  onStretch={() => practices.openStretch(n, mode, practice)}
+                                  onEdit={practice.id ? () => setEditingPractice({ need: n, practice }) : undefined}
+                                />
                               )
                             })}
                           </div>
@@ -1247,10 +1221,10 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 modeNeeds={pNeeds}
                 maxBubbles={MODE_MAX_BUBBLES[popupMode] || 0}
                 checked={checked}
-                justTapped={justTapped}
                 lastDoneMap={lastDoneMap}
                 state={state}
-                handlePracticeTap={handlePracticeTap}
+                practices={practices}
+                onEdit={(need, practice) => setEditingPractice({ need, practice })}
                 navigate={navigate}
                 triggerEl={tierBtnElems.current[popupMode]}
                 onClose={() => setPopupMode(null)}
@@ -1466,6 +1440,44 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
           <img src={lightboxImage} alt="" className={styles.lightboxImage} onClick={e => e.stopPropagation()} />
         </div>
       )}
+
+      {practices.stretchFor && (
+        <StretchSheet
+          practice={practices.stretchFor.practice}
+          initialLevel={practices.statusOf(practices.stretchFor.need, practices.stretchFor.practice).detail?.level ?? null}
+          onSave={practices.saveStretch}
+          onClose={practices.closeStretch}
+        />
+      )}
+
+      {practices.timerFor && (
+        <TimerTakeover
+          label={practices.timerFor.practice.label}
+          minutes={practices.statusOf(practices.timerFor.need, practices.timerFor.practice).cfg.minutes}
+          onFinish={practices.finishTimer}
+          onClose={practices.endTimer}
+        />
+      )}
+
+      {editingPractice && (
+        <PracticeSheet
+          needs={[]}
+          initial={{
+            kind: editingPractice.practice.kind || 'check',
+            needId: editingPractice.need.id,
+            name: editingPractice.practice.label,
+            config: editingPractice.practice.config,
+            editing: true,
+          }}
+          onSave={({ label, kind, config }) => {
+            updatePractice(editingPractice.practice.id, { label, kind, config })
+            setEditingPractice(null)
+          }}
+          onClose={() => setEditingPractice(null)}
+        />
+      )}
+
+      <PracticeToast message={practices.notice} />
 
     </div>
   )
