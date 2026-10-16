@@ -5,16 +5,22 @@ import {
   archiveNoteDeckCard, restoreNoteDeckCard,
   reorderNoteDeck,
 } from '../lib/store'
+import Sheet from './Sheet'
 import styles from './ManageDeck.module.css'
+
+// Notes to self. Same shape as Practices and Needs: a few short sections, and a
+// tap on any note opens one sheet with everything for it. Today shows 3 to 5.
+const MIN_DECK = 3
+const MAX_DECK = 5
 
 export default function ManageDeck({ userId, onClose, onDeckChanged }) {
   const [deck, setDeck] = useState([])
   const [library, setLibrary] = useState([])
-  const [editingId, setEditingId] = useState(null)
-  const [drafts, setDrafts] = useState({})
-  const [deleteConfirmId, setDeleteConfirmId] = useState(null)
-  const [composerOpen, setComposerOpen] = useState(false)
-  const [composerDraft, setComposerDraft] = useState('')
+  const [loaded, setLoaded] = useState(false)
+  const [sheet, setSheet] = useState(null)        // { id } to edit, { isNew: true } to write
+  const [draft, setDraft] = useState('')
+  const [wantOn, setWantOn] = useState(true)
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const [errorMsg, setErrorMsg] = useState(null)
   const [closing, setClosing] = useState(false)
 
@@ -22,6 +28,7 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
     Promise.all([loadNoteDeck(userId), loadNoteLibrary(userId)]).then(([d, l]) => {
       setDeck(d)
       setLibrary(l)
+      setLoaded(true)
     })
   }, [userId])
 
@@ -30,289 +37,216 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
     setTimeout(() => onClose(), 200)
   }
 
-  // ── Reorder within deck ────────────────────────────────────────────────────
-  function handleMove(deckIndex, dir) {
+  const card = sheet?.id ? [...deck, ...library].find(c => c.id === sheet.id) : null
+  const cardOn = !!card && card.archived_at === null
+  const deckIndex = card ? deck.findIndex(c => c.id === card.id) : -1
+
+  function openNew() {
+    setDraft(''); setWantOn(deck.length < MAX_DECK); setConfirmDelete(false); setSheet({ isNew: true })
+  }
+  function openCard(c) {
+    setDraft(c.text); setWantOn(c.archived_at === null); setConfirmDelete(false); setSheet({ id: c.id })
+  }
+  function closeSheet() { setSheet(null); setConfirmDelete(false) }
+
+  // ── Deck membership ────────────────────────────────────────────────────────
+  async function deactivate(c) {
+    const prevDeck = deck, prevLib = library
+    const nd = deck.filter(x => x.id !== c.id)
+    setDeck(nd)
+    setLibrary([{ ...c, archived_at: new Date().toISOString() }, ...library])
+    onDeckChanged?.(nd)
+    const { error } = await archiveNoteDeckCard(c.id)
+    if (error) {
+      setDeck(prevDeck); setLibrary(prevLib); onDeckChanged?.(prevDeck)
+      setErrorMsg(error.message?.toLowerCase().includes('at least three')
+        ? `today keeps at least ${MIN_DECK} notes. write another first.`
+        : "couldn't take it off today. try again.")
+    }
+  }
+
+  async function activate(c, deckNow = deck, libNow = library) {
+    const nd = [...deckNow, { ...c, archived_at: null }]
+    setDeck(nd)
+    setLibrary(libNow.filter(x => x.id !== c.id))
+    onDeckChanged?.(nd)
+    const { error } = await restoreNoteDeckCard(userId, c.id)
+    if (error) {
+      setDeck(deckNow); setLibrary(libNow); onDeckChanged?.(deckNow)
+      setErrorMsg(deckNow.length >= MAX_DECK ? `today holds ${MAX_DECK} notes at most.` : "couldn't put it on today. try again.")
+    }
+  }
+
+  function move(dir) {
     const j = deckIndex + dir
     if (j < 0 || j >= deck.length) return
     const next = [...deck]
     ;[next[deckIndex], next[j]] = [next[j], next[deckIndex]]
+    const prev = deck
     setDeck(next)
     onDeckChanged?.(next)
-    reorderNoteDeck(next).catch(() => {
-      setDeck(deck)
-      onDeckChanged?.(deck)
-    })
+    reorderNoteDeck(next).catch(() => { setDeck(prev); onDeckChanged?.(prev) })
   }
 
-  // ── Toggle switch (archive ↔ restore) ─────────────────────────────────────
-  async function handleToggle(id) {
-    const deckCard = deck.find(c => c.id === id)
-    if (deckCard) {
-      // ON → OFF: archive
-      if (editingId === id) setEditingId(null)
-      setDeleteConfirmId(null)
-      const newDeck = deck.filter(c => c.id !== id)
-      const archived = { ...deckCard, archived_at: new Date().toISOString() }
-      setDeck(newDeck)
-      setLibrary(prev => [archived, ...prev])
-      onDeckChanged?.(newDeck)
-      const { error } = await archiveNoteDeckCard(id)
-      if (error) {
-        setDeck(deck)
-        setLibrary(prev => prev.filter(c => c.id !== id))
-        onDeckChanged?.(deck)
-        setErrorMsg(
-          error.message?.toLowerCase().includes('at least three')
-            ? 'a deck keeps at least three notes — write another before removing this one'
-            : 'failed to remove — try again'
-        )
-      }
-    } else {
-      // OFF → ON: restore
-      const libCard = library.find(c => c.id === id)
-      if (!libCard) return
-      const newLibrary = library.filter(c => c.id !== id)
-      const newDeck = [...deck, { ...libCard, archived_at: null }]
-      setDeck(newDeck)
-      setLibrary(newLibrary)
-      onDeckChanged?.(newDeck)
-      const { error } = await restoreNoteDeckCard(userId, id)
-      if (error) {
-        setDeck(deck)
-        setLibrary(library)
-        onDeckChanged?.(deck)
-        setErrorMsg('failed to add — try again')
-      }
-    }
-  }
-
-  // ── Edit panel open/close ──────────────────────────────────────────────────
-  function handleEditOpen(id, text) {
-
-    if (editingId === id) {
-      setEditingId(null)
-      setDeleteConfirmId(null)
-    } else {
-      setEditingId(id)
-      setDrafts(prev => ({ ...prev, [id]: text }))
-      setDeleteConfirmId(null)
-      setComposerOpen(false)
-    }
-  }
-
-  function handleCancelEdit() {
-
-    setEditingId(null)
-    setDeleteConfirmId(null)
-  }
-
-  // ── Save edit ──────────────────────────────────────────────────────────────
-  async function handleSaveEdit(id) {
-
-    const text = (drafts[id] || '').trim()
+  // ── Save (new or edited) ───────────────────────────────────────────────────
+  async function save() {
+    const text = draft.trim()
     if (!text) return
-    const card = [...deck, ...library].find(c => c.id === id)
-    const imageUrl = card?.image_url || null
-    const { error } = await updateNoteDeckCard(id, { text, imageUrl, userId, previousText: card?.text })
-    if (error) { setErrorMsg('failed to save — try again'); return }
-    const updater = c => c.id === id ? { ...c, text, image_url: imageUrl } : c
-    if (deck.find(c => c.id === id)) {
-      const updated = deck.map(updater)
-      setDeck(updated)
-      onDeckChanged?.(updated)
-    } else {
-      setLibrary(prev => prev.map(updater))
+    if (sheet.isNew) {
+      const { data, error } = await addNoteToLibrary(userId, { text, imageUrl: null })
+      if (error) { setErrorMsg("couldn't save. try again."); return }
+      const nl = [data, ...library]
+      closeSheet()
+      if (wantOn && deck.length < MAX_DECK) await activate(data, deck, nl)
+      else setLibrary(nl)
+      return
     }
-    setEditingId(null)
-  }
-
-  // ── Delete (all notes, two-step) ───────────────────────────────────────────
-  async function handleDeleteTap(id) {
-    if (deleteConfirmId === id) {
-      const card = [...deck, ...library].find(c => c.id === id)
-      if (!card) return
-      const isActive = !!deck.find(c => c.id === id)
-      if (isActive) {
-        const newDeck = deck.filter(c => c.id !== id)
-        setDeck(newDeck)
-        onDeckChanged?.(newDeck)
-      } else {
-        setLibrary(prev => prev.filter(c => c.id !== id))
-      }
-      setEditingId(null)
-      setDeleteConfirmId(null)
-      const { error } = await deleteNoteDeckCard(id, userId, card.text, card.image_url)
-      if (error && isActive) {
-        setDeck(deck)
-        onDeckChanged?.(deck)
-        setErrorMsg(
-          error.message?.toLowerCase().includes('at least three')
-            ? 'a deck keeps at least three notes — write another before removing this one'
-            : 'failed to delete — try again'
-        )
-      }
-    } else {
-      setDeleteConfirmId(id)
+    if (!card) return
+    const imageUrl = card.image_url || null
+    if (text !== card.text) {
+      const { error } = await updateNoteDeckCard(card.id, { text, imageUrl, userId, previousText: card.text })
+      if (error) { setErrorMsg("couldn't save. try again."); return }
+    }
+    const updated = { ...card, text, image_url: imageUrl }
+    const nd = cardOn ? deck.map(c => c.id === card.id ? updated : c) : deck
+    const nl = cardOn ? library : library.map(c => c.id === card.id ? updated : c)
+    closeSheet()
+    if (cardOn) { setDeck(nd); onDeckChanged?.(nd) } else setLibrary(nl)
+    if (wantOn !== cardOn) {
+      if (wantOn) await activate(updated, nd, nl)
+      else await deactivate(updated)
     }
   }
 
-  // ── Composer ───────────────────────────────────────────────────────────────
-  function handleComposerToggle() {
-
-    if (composerOpen) {
-      setComposerOpen(false)
-      setComposerDraft('')
-    } else {
-      setComposerOpen(true)
-      setComposerDraft('')
-      setEditingId(null)
-      setDeleteConfirmId(null)
+  async function remove() {
+    if (!card) return
+    if (!confirmDelete) { setConfirmDelete(true); return }
+    const prevDeck = deck, prevLib = library, wasOn = cardOn
+    if (wasOn) { const nd = deck.filter(c => c.id !== card.id); setDeck(nd); onDeckChanged?.(nd) }
+    else setLibrary(library.filter(c => c.id !== card.id))
+    closeSheet()
+    const { error } = await deleteNoteDeckCard(card.id, userId, card.text, card.image_url)
+    if (error) {
+      setDeck(prevDeck); setLibrary(prevLib)
+      if (wasOn) onDeckChanged?.(prevDeck)
+      setErrorMsg(error.message?.toLowerCase().includes('at least three')
+        ? `today keeps at least ${MIN_DECK} notes. write another first.`
+        : "couldn't delete. try again.")
     }
   }
 
-  async function handleSaveNew() {
-    const text = composerDraft.trim()
-    if (!text) return
-    const { data, error } = await addNoteToLibrary(userId, { text, imageUrl: null })
-    if (error) { setErrorMsg('failed to save — try again'); return }
-    setLibrary(prev => [data, ...prev])
-    setComposerOpen(false)
-    setComposerDraft('')
+  function row(c, n) {
+    return (
+      <button
+        key={c.id}
+        type="button"
+        className={`${styles.row} ${n ? '' : styles.rowOff}`}
+        aria-label={`edit note: ${c.text}`}
+        aria-haspopup="dialog"
+        onClick={() => openCard(c)}
+      >
+        {n != null && <span className={styles.badge}>{n}</span>}
+        {c.image_url && <img src={c.image_url} className={styles.thumb} alt="" />}
+        <span className={styles.rowText}>{c.text}</span>
+        <span className={styles.chev} aria-hidden="true" />
+      </button>
+    )
   }
 
-  const allNotes = [...deck, ...library]
+  // The switch is locked at the ends: today never drops under 3 or over 5.
+  const lockedOn = cardOn && deck.length <= MIN_DECK
+  const lockedOff = !cardOn && deck.length >= MAX_DECK
+  const switchLocked = sheet?.isNew ? deck.length >= MAX_DECK : (lockedOn || lockedOff)
+  const switchHint = sheet?.isNew
+    ? (deck.length >= MAX_DECK ? `today holds ${MAX_DECK} at most. saved for later.` : '')
+    : lockedOn ? `today keeps at least ${MIN_DECK}.` : lockedOff ? `today holds ${MAX_DECK} at most.` : ''
+  const on = switchLocked ? (sheet?.isNew ? false : cardOn) : wantOn
 
   return (
     <div className={`${styles.overlay} ${closing ? styles.overlayClosing : ''}`}>
       <div className={styles.inner}>
-      {/* ── App bar ── */}
-      <div className={styles.header}>
-        <span className={styles.title}>notes to self.</span>
-        <button className={styles.closeBtn} onClick={handleClose}>✕</button>
-      </div>
+        <div className={styles.header}>
+          <h1 className={styles.title}>Notes to self</h1>
+          <button type="button" className={styles.closeBtn} onClick={handleClose} aria-label="close notes to self">✕</button>
+        </div>
 
-      {/* ── Subhead (not scrollable) ── */}
-      <div className={styles.subhead}>
-        the phrases, mantras and quotes that put you in the right headspace. these show on your today screen. a deck keeps at least three.{' '}
-        <span>({deck.length})</span>
-      </div>
+        <div className={styles.body}>
+          {errorMsg && <div className={styles.errorBanner} role="alert" onClick={() => setErrorMsg(null)}>{errorMsg}</div>}
 
-      {/* ── Scrollable body ── */}
-      <div className={styles.body}>
-        {errorMsg && (
-          <div className={styles.errorBanner} onClick={() => setErrorMsg(null)}>{errorMsg}</div>
-        )}
+          <section className={styles.section} aria-labelledby="add-note-head">
+            <h2 id="add-note-head" className={styles.sectionHead}>Add a note</h2>
+            <button type="button" className={styles.addRow} onClick={openNew}>+ write a note</button>
+          </section>
 
-        {/* ── Composer opener ── */}
-        <button className={styles.newNoteBtn} onClick={handleComposerToggle}>
-          <span className={styles.newNotePlus}>+</span>
-          <span className={styles.newNoteLabel}>write a new note to self</span>
-        </button>
-
-        {composerOpen && (
-          <div className={styles.composerBox}>
-            <textarea
-              className={styles.noteTextarea}
-              placeholder="a line to remind yourself of…"
-              value={composerDraft}
-              onChange={e => setComposerDraft(e.target.value)}
-              maxLength={500}
-              autoFocus
-            />
-            <div className={styles.composerActions}>
-              <span className={styles.spacer} />
-              <button className={styles.cancelBtn} onClick={handleComposerToggle}>cancel</button>
-              <button
-                className={`${styles.savePrimaryBtn} ${!composerDraft.trim() ? styles.savePrimaryBtnDim : ''}`}
-                onClick={handleSaveNew}
-                disabled={!composerDraft.trim()}
-              >save</button>
+          <section className={styles.section} aria-labelledby="on-today-head">
+            <div className={styles.sectionHeadRow}>
+              <h2 id="on-today-head" className={styles.sectionHead}>On Today</h2>
+              <span className={styles.count}>{deck.length}/{MAX_DECK}</span>
             </div>
-          </div>
-        )}
+            <div className={styles.list}>
+              {deck.map((c, i) => row(c, i + 1))}
+              {loaded && deck.length === 0 && <p className={styles.empty}>nothing yet.</p>}
+            </div>
+          </section>
 
-        {/* ── Unified note list ── */}
-        <div className={styles.noteList}>
-          {allNotes.map(card => {
-            const isOn = card.archived_at === null
-            const deckIndex = isOn ? deck.findIndex(c => c.id === card.id) : -1
-            const pos = isOn ? deckIndex + 1 : null
-            const isEditing = editingId === card.id
-            const isConfirming = deleteConfirmId === card.id
-            const editText = drafts[card.id] ?? card.text
-            // floor: once the deck reaches 3, active cards can't be removed below 3
-            const atFloor = isOn && deck.length <= 3
-
-            return (
-              <div key={card.id} className={isOn ? styles.noteRowOn : styles.noteRowOff}>
-                <div className={styles.cardRow}>
-                  {isOn && <span className={styles.badge}>{pos}</span>}
-                  {card.image_url && (
-                    <img src={card.image_url} className={styles.thumb34} alt="" />
-                  )}
-                  <p className={isOn ? styles.noteTextOn : styles.noteTextOff}>{card.text}</p>
-                  <button
-                    className={styles.editPill}
-                    onClick={() => handleEditOpen(card.id, card.text)}
-                  >edit</button>
-                  <button
-                    className={`${styles.switch} ${isOn ? styles.switchOn : styles.switchOff}`}
-                    onClick={() => !atFloor && handleToggle(card.id)}
-                    aria-label={isOn ? 'remove from today' : 'add to today'}
-                    disabled={atFloor}
-                    title={atFloor ? 'a deck keeps at least three notes' : undefined}
-                  >
-                    <span className={styles.switchKnob} style={{ left: isOn ? '21px' : '2px' }} />
-                  </button>
-                </div>
-
-                {atFloor && (
-                  <div className={styles.floorNote}>
-                    a deck keeps at least three notes.
-                  </div>
-                )}
-
-                {isEditing && (
-                  <div className={styles.editPanel}>
-                    {isOn && (
-                      <div className={styles.moveRow}>
-                        <button
-                          className={`${styles.movePill} ${deckIndex === 0 ? styles.movePillDim : ''}`}
-                          onClick={() => handleMove(deckIndex, -1)}
-                          disabled={deckIndex === 0}
-                        >move earlier</button>
-                        <button
-                          className={`${styles.movePill} ${deckIndex === deck.length - 1 ? styles.movePillDim : ''}`}
-                          onClick={() => handleMove(deckIndex, 1)}
-                          disabled={deckIndex === deck.length - 1}
-                        >move later</button>
-                      </div>
-                    )}
-                    <textarea
-                      className={styles.noteTextarea}
-                      value={editText}
-                      onChange={e => setDrafts(prev => ({ ...prev, [card.id]: e.target.value }))}
-                      maxLength={500}
-                      autoFocus
-                    />
-                    <div className={styles.editActions}>
-                      <button className={styles.savePrimaryBtn} onClick={() => handleSaveEdit(card.id)}>save</button>
-                      <button className={styles.cancelBtn} onClick={handleCancelEdit}>cancel</button>
-                      <button
-                        className={isConfirming ? styles.deleteBtnConfirm : styles.deleteBtn}
-                        onClick={() => handleDeleteTap(card.id)}
-                        disabled={atFloor}
-                        title={atFloor ? 'a deck keeps at least three notes' : undefined}
-                      >{isConfirming ? 'confirm' : 'delete'}</button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )
-          })}
+          {library.length > 0 && (
+            <section className={styles.section} aria-labelledby="saved-head">
+              <h2 id="saved-head" className={styles.sectionHead}>Saved</h2>
+              <div className={styles.list}>{library.map(c => row(c, null))}</div>
+            </section>
+          )}
         </div>
       </div>
-      </div>
+
+      {sheet && (sheet.isNew || card) && (
+        <Sheet label={sheet.isNew ? 'write a note' : 'edit note'} onClose={closeSheet}>
+          <h2 className={styles.sheetTitle}>{sheet.isNew ? 'New note' : 'Edit note'}</h2>
+          <label htmlFor="note-text" className={styles.srOnly}>note</label>
+          <textarea
+            id="note-text"
+            className={styles.textarea}
+            value={draft}
+            onChange={e => setDraft(e.target.value)}
+            placeholder="a line to remind yourself of…"
+            maxLength={500}
+            autoFocus={!!sheet.isNew}
+          />
+
+          <div className={styles.switchRow}>
+            <span className={styles.switchLabel}>show on Today</span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={on}
+              aria-label="show on today"
+              disabled={switchLocked}
+              className={`${styles.switch} ${on ? styles.switchOn : ''}`}
+              onClick={() => setWantOn(!wantOn)}
+            ><span className={styles.knob} /></button>
+          </div>
+          {switchHint && <p className={styles.hint}>{switchHint}</p>}
+
+          {cardOn && deck.length > 1 && (
+            <div className={styles.moveRow}>
+              <button type="button" className={styles.pillBtn} disabled={deckIndex === 0} onClick={() => move(-1)}>earlier</button>
+              <button type="button" className={styles.pillBtn} disabled={deckIndex === deck.length - 1} onClick={() => move(1)}>later</button>
+            </div>
+          )}
+
+          <button type="button" className={styles.primaryBtn} disabled={!draft.trim()} onClick={save}>
+            Save
+          </button>
+          {card && (
+            <button
+              type="button"
+              className={`${styles.ghostBtn} ${confirmDelete ? styles.ghostBtnArmed : ''}`}
+              disabled={lockedOn}
+              onClick={remove}
+            >{confirmDelete ? 'tap again to delete' : 'delete'}</button>
+          )}
+          <button type="button" className={styles.ghostBtn} onClick={closeSheet}>not now</button>
+        </Sheet>
+      )}
     </div>
   )
 }
