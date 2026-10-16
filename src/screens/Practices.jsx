@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { NEEDS, MODES, MODE_ORDER, TIME_RE } from '../lib/constants'
 import { createDataStats, formatLastDone } from '../lib/dataStats'
 import { isNative, checkNotifPermission, requestNotifPermission, scheduleReminders } from '../lib/native'
@@ -29,6 +29,7 @@ const OB_FLAG = 'onboardingPracticesDone'
 
 export default function Practices({ state, addPractice, renamePractice, updatePractice, archivePractice, setPracticeReminder, stampReminderOffered, incrementOffersDeclined, completeOnboarding }) {
   const navigate = useNavigate()
+  const location = useLocation()
   const [inputs, setInputs] = useState({})
   const [openInputs, setOpenInputs] = useState({})
   const [editMode, setEditMode] = useState(false)
@@ -88,7 +89,8 @@ export default function Practices({ state, addPractice, renamePractice, updatePr
   const totalPractices = useDB
     ? state.practicesDB.filter(p => !p.archived_at).length
     : Object.values(state.practices || {}).flat().length
-  const showOnboardingCta = !obDone
+  // onboarding itself happens in its own flow; this only covers someone who somehow lands here mid-setup
+  const showOnboardingCta = !obDone && !state.onboarded
 
   function doSchedule(overridePracticesDB) {
     scheduleReminders({
@@ -244,7 +246,16 @@ export default function Practices({ state, addPractice, renamePractice, updatePr
     <div className={styles.screen}>
       <div className={styles.header}>
         <div className={styles.eyebrowRow}>
-          <button className={styles.editToggle} onClick={handleToggleEdit}>{editMode ? 'done' : 'edit'}</button>
+          <button type="button" className={styles.needsLink} onClick={() => navigate('/canvas', { state: location.state })}>← needs</button>
+          <div className={styles.eyebrowRight}>
+            <button className={styles.editToggle} onClick={handleToggleEdit}>{editMode ? 'done' : 'edit'}</button>
+            <button
+              type="button"
+              className={styles.closeBtn}
+              onClick={() => navigate(location.state?.returnTo || '/today', location.state?.fromProfile ? { state: { openProfile: true } } : undefined)}
+              aria-label="close practices"
+            >✕</button>
+          </div>
         </div>
         <div className={styles.title}>your practices.</div>
         <div className={styles.sub}>add or remove practices available for each need.</div>

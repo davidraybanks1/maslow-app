@@ -200,6 +200,9 @@ function AppInner() {
   // those screens render the menu themselves, up in their own title row,
   // instead of paying for a whole extra bar.
   const needCount = Object.values(state.canvas || {}).filter(Boolean).length
+  const practiceCount = Array.isArray(state.practicesDB) && state.practicesDB.length > 0
+    ? state.practicesDB.filter(p => !p.archived_at).length
+    : Object.values(state.practices || {}).flat().length
   const profileMenuEl = (
     <ProfileMenu
       name={state.profile?.name} email={state.email}
@@ -207,6 +210,7 @@ function AppInner() {
       moodReminders={state.moodReminders} updateMoodReminder={updateMoodReminder}
       notifTypes={state.notifTypes} updateNotifType={updateNotifType}
       needCount={needCount}
+      practiceCount={practiceCount}
       noteDeckCount={(state.noteDeck || []).length}
       customTagCount={customTagCount}
       resetTour={resetTour}
@@ -216,11 +220,11 @@ function AppInner() {
   return (
     <HeaderSlotContext.Provider value={setHeaderSlot}>
     <div className={styles.shell} style={{ '--kb': kbInset + 'px' }} {...(state.onboarded && { 'data-tabbar': '' })} {...(headerSlot && { 'data-appheader': '' })}>
-      {state.onboarded && <DesktopNav name={state.profile.name} email={state.email} remindersEnabled={state.remindersEnabled} updateRemindersEnabled={updateRemindersEnabled} moodReminders={state.moodReminders} updateMoodReminder={updateMoodReminder} notifTypes={state.notifTypes} updateNotifType={updateNotifType} needCount={needCount} noteDeckCount={(state.noteDeck || []).length} customTagCount={customTagCount} resetTour={resetTour} onOpenComposer={() => setComposerOpen(true)} hideComposer={location.pathname === '/today'} />}
+      {state.onboarded && <DesktopNav name={state.profile.name} email={state.email} remindersEnabled={state.remindersEnabled} updateRemindersEnabled={updateRemindersEnabled} moodReminders={state.moodReminders} updateMoodReminder={updateMoodReminder} notifTypes={state.notifTypes} updateNotifType={updateNotifType} needCount={needCount} practiceCount={practiceCount} noteDeckCount={(state.noteDeck || []).length} customTagCount={customTagCount} resetTour={resetTour} onOpenComposer={() => setComposerOpen(true)} hideComposer={location.pathname === '/today'} />}
       <div className={styles.column}>
       {state.onboarded && headerSlot && (
         <div className={styles.appHeader}>
-          <AppHeader slot={headerSlot} name={state.profile.name} email={state.email} remindersEnabled={state.remindersEnabled} updateRemindersEnabled={updateRemindersEnabled} moodReminders={state.moodReminders} updateMoodReminder={updateMoodReminder} notifTypes={state.notifTypes} updateNotifType={updateNotifType} needCount={needCount} noteDeckCount={(state.noteDeck || []).length} customTagCount={customTagCount} resetTour={resetTour} />
+          <AppHeader slot={headerSlot} name={state.profile.name} email={state.email} remindersEnabled={state.remindersEnabled} updateRemindersEnabled={updateRemindersEnabled} moodReminders={state.moodReminders} updateMoodReminder={updateMoodReminder} notifTypes={state.notifTypes} updateNotifType={updateNotifType} needCount={needCount} practiceCount={practiceCount} noteDeckCount={(state.noteDeck || []).length} customTagCount={customTagCount} resetTour={resetTour} />
         </div>
       )}
       <div className={styles.content} ref={contentRef} data-scroll>
@@ -231,7 +235,7 @@ function AppInner() {
           <Route path="/practices" element={<Protected onboarded={state.onboarded} userId={state.userId}><Practices state={state} addPractice={addPractice} renamePractice={renamePractice} updatePractice={updatePractice} archivePractice={archivePractice} setPracticeReminder={setPracticeReminder} stampReminderOffered={stampReminderOffered} incrementOffersDeclined={incrementOffersDeclined} completeOnboarding={completeOnboarding} /></Protected>} />
           <Route path="/data" element={<Protected onboarded={state.onboarded} userId={state.userId}><Data state={state} archivePractice={archivePractice} profileMenu={profileMenuEl} /></Protected>} />
           <Route path="/log" element={<Protected onboarded={state.onboarded} userId={state.userId}><Log state={state} syncCheckinDay={syncCheckinDay} profileMenu={profileMenuEl} /></Protected>} />
-          <Route path="/canvas" element={<Protected onboarded={state.onboarded} userId={state.userId}><CanvasScreen state={state} updateCanvas={updateCanvas} addPractice={addPractice} renamePractice={renamePractice} updatePractice={updatePractice} archivePractice={archivePractice} /></Protected>} />
+          <Route path="/canvas" element={<Protected onboarded={state.onboarded} userId={state.userId}><CanvasScreen state={state} updateCanvas={updateCanvas} /></Protected>} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/password" element={<UpdatePassword />} />
           <Route path="/settings" element={<Navigate to="/today" replace />} />

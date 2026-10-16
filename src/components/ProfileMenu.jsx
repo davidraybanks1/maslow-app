@@ -81,6 +81,7 @@ export default function ProfileMenu({
   moodReminders, updateMoodReminder,
   notifTypes, updateNotifType,
   needCount = 0,
+  practiceCount = 0,
   noteDeckCount = 0,
   customTagCount = 0,
   resetTour,
@@ -253,6 +254,10 @@ export default function ProfileMenu({
             {SPHERES.map((s, i) => <span key={i} className={styles.sphere9} style={{ background: lit(s) }} />)}
           </div>
           <div className={styles.tileText}><span className={styles.tileLabel}>needs</span><span className={styles.mono}>{needCount} · modes</span></div>
+        </button>
+        <button type="button" className={`${styles.card} ${styles.tile}`} onClick={() => goTo('/practices')}>
+          <span className={styles.tileNum}>{practiceCount}</span>
+          <div className={styles.tileText}><span className={styles.tileLabel}>practices</span><span className={styles.mono}>types · reminders</span></div>
         </button>
         <button type="button" className={`${styles.card} ${styles.tile}`} onClick={() => goTo('/today', { openDeck: true })}>
           <span className={styles.tileNum}>{noteDeckCount}</span>

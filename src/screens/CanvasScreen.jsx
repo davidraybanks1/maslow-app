@@ -1,714 +1,247 @@
-import { useState, useEffect, useRef, useContext } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { HeaderSlotContext } from '../lib/headerSlot'
 import { NEEDS, MODE_ORDER, MODES, MODE_NEED_CAP, MODE_DESCS, MODE_MAX_BUBBLES } from '../lib/constants'
-import { createDataStats, formatLastDone } from '../lib/dataStats'
-import { TYPES, poolTag } from '../lib/practiceTypes'
-import PracticeIcon from '../components/PracticeIcon'
-import PracticeSheet from '../components/PracticeSheet'
+import { canPlace } from '../lib/canvasRules'
+import { useNeedDrag } from '../lib/useNeedDrag'
+import Sheet from '../components/Sheet'
 import styles from './CanvasScreen.module.css'
 
+// Needs: which mode each need is in right now. Drag a need into a mode, or back
+// to the library to take it out of play. Tapping a need opens a list instead,
+// for anyone who'd rather not drag. Practices live on their own page.
 
-const MODE_ABBR = { exploration: 'explr', appreciation: 'apprc', nourishment: 'nrsh', survival: 'srvl' }
+const needName = id => NEEDS.find(n => n.id === id)?.name || id
 
-// Modes with a light fill — use dark text when selected
-const LIGHT_FILL_MODES = new Set(['appreciation', 'nourishment'])
-
-const GUIDE_KEY = 'maslow_canvas_guide_seen'
-
-const PRACTICE_CAP = 10
-
-export default function CanvasScreen({ state, updateCanvas, addPractice, renamePractice, updatePractice, archivePractice, onboarding = false, header = null, banner = null, footer = null }) {
+export default function CanvasScreen({ state, updateCanvas }) {
   const navigate = useNavigate()
   const location = useLocation()
+  const canvas = state.canvas || {}
+
+  const [moving, setMoving] = useState(null)   // need id: "move {need} to…"
+  const [filling, setFilling] = useState(null) // mode: "add a need to {mode}"
+  const [notice, setNotice] = useState(null)
+  const noticeTimer = useRef(null)
+  useEffect(() => () => clearTimeout(noticeTimer.current), [])
+
+  function say(msg) {
+    clearTimeout(noticeTimer.current)
+    setNotice(msg)
+    noticeTimer.current = setTimeout(() => setNotice(null), 3600)
+  }
+
+  // Everything that moves a need goes through here, so a drag, the list and the
+  // slot picker all follow the same rules and bounce back the same way.
+  function place(needId, target) {
+    const res = canPlace(needId, target, canvas)
+    if (!res.ok) { say(res.reason); return false }
+    if (res.noop) return true
+    Promise.resolve(updateCanvas(needId, target)).catch(() => say("couldn't save that move. try again."))
+    return true
+  }
+
+  const { drag, chipProps } = useNeedDrag({
+    onDrop: (id, over) => {
+      if (over == null) return
+      place(id, over === 'library' ? null : over)
+    },
+  })
+
+  const placedIn = mode => NEEDS.filter(n => canvas[n.id] === mode)
+  const library = NEEDS.filter(n => !canvas[n.id])
 
   function handleClose() {
-    navigate(location.state?.returnTo || '/today', { state: { openProfile: true } })
+    navigate(location.state?.returnTo || '/today', location.state?.fromProfile ? { state: { openProfile: true } } : undefined)
   }
 
-  const [guideOpen, setGuideOpen] = useState(false)
+  // How a mode card (or the library) looks while a chip is held over it.
+  function zoneClass(key) {
+    if (!drag || drag.over !== key) return ''
+    const target = key === 'library' ? null : key
+    return canPlace(drag.id, target, canvas).ok ? styles.over : styles.overBad
+  }
 
-  // Stage 2/3 state
-  const [openNeed, setOpenNeed]           = useState(null)
-  const [practiceMenu, setPracticeMenu]   = useState(null)   // practice id
-  const [practiceDraft, setPracticeDraft] = useState('')
-  const [deleteConfirm, setDeleteConfirm] = useState(null)   // practice id
-  const [sheet, setSheet]                 = useState(null)   // practice builder: { kind?, needId?, name?, config?, editing?, practice? }
-
-  // Stage 5 state
-  const [draft, setDraft] = useState('')
-
-  // Stage 6 state
-  const [pendingNeed, setPendingNeed]         = useState(null)
-  const [showModePicker, setShowModePicker]   = useState(false)
-  const [showSwapFor, setShowSwapFor]         = useState(null)  // mode key
-  const [showAddNeedFor, setShowAddNeedFor]   = useState(null)  // mode key
-
-  // Refs
-  const scrollAreaRef = useRef(null)
-
-  const setHeaderSlot = useContext(HeaderSlotContext)
-  useEffect(() => {
-    if (onboarding) return
-    setHeaderSlot(
+  function chip(need, variant) {
+    const held = drag?.id === need.id
+    return (
       <button
-        className={`${styles.guidePill} ${guideOpen ? styles.guidePillActive : ''}`}
-        onClick={() => setGuideOpen(o => !o)}
+        key={need.id}
+        type="button"
+        data-need={need.id}
+        className={`${variant === 'row' ? styles.row : styles.pill} ${held ? styles.held : ''}`}
+        {...chipProps(need.id, need.name, id => setMoving(id))}
       >
-        {guideOpen ? 'hide guide' : 'what is this?'}
+        <span className={styles.chipName}>{need.name}</span>
+        {variant === 'row' && <span className={styles.grip} aria-hidden="true" />}
       </button>
     )
-    return () => setHeaderSlot(null)
-  }, [guideOpen, setHeaderSlot, onboarding])
-
-  const useDB = Array.isArray(state.practicesDB) && state.practicesDB.length > 0
-
-  function needsInMode(mode) {
-    return NEEDS.filter(n => state.canvas[n.id] === mode)
-  }
-
-  function getPractices(needId) {
-    if (useDB) return state.practicesDB.filter(p => p.need_id === needId && !p.archived_at)
-    return (state.practices[needId] || []).map((label, i) => ({ id: `${needId}_${i}`, label, need_id: needId, archived_at: null }))
-  }
-
-  // Build lastDoneMap keyed by practice id (DB) or "needId:label" (legacy)
-  const statsObj = createDataStats(state)
-  const practiceStatsList = statsObj?.getPracticeStats ? statsObj.getPracticeStats(30) : []
-  const lastDoneMap = {}
-  for (const ps of practiceStatsList) {
-    if (ps.practice.id != null) {
-      lastDoneMap[ps.practice.id] = ps.daysSinceLast
-    } else {
-      lastDoneMap[`${ps.need.id}:${ps.text}`] = ps.daysSinceLast
-    }
-  }
-
-  function getLast(practice) {
-    if (practice.id != null && practice.id in lastDoneMap) return lastDoneMap[practice.id]
-    const legacyKey = `${practice.need_id}:${practice.label}`
-    if (legacyKey in lastDoneMap) return lastDoneMap[legacyKey]
-    return null
-  }
-
-  // Stage 5 — derived
-  const unplacedNeeds = NEEDS.filter(n => !state.canvas[n.id])
-  const allModesFull  = MODE_ORDER.every(m => needsInMode(m).length >= MODE_NEED_CAP[m])
-
-  function toggleNeed(needId) {
-    const isOpening = openNeed !== needId
-    setOpenNeed(isOpening ? needId : null)
-    setPracticeMenu(null)
-    setPracticeDraft('')
-    setDeleteConfirm(null)
-  }
-
-  function openMenuFor(practiceId, label) {
-    setPracticeMenu(practiceId)
-    setPracticeDraft(label)
-    setDeleteConfirm(null)
-  }
-
-  function closeMenu() {
-    setPracticeMenu(null)
-    setPracticeDraft('')
-    setDeleteConfirm(null)
-  }
-
-  function handleSave(practiceId) {
-    renamePractice(practiceId, practiceDraft)
-    closeMenu()
-  }
-
-  function handleArchive(practiceId) {
-    archivePractice(practiceId)
-    closeMenu()
-  }
-
-  const sheetNeeds = NEEDS.filter(n => state.canvas[n.id])
-  const fullNeeds = sheetNeeds.filter(n => getPractices(n.id).length >= PRACTICE_CAP).map(n => n.id)
-
-  function handleSheetSave({ needId, label, kind, config }) {
-    if (sheet?.practice?.id) updatePractice(sheet.practice.id, { label, kind, config })
-    else addPractice(needId, label, { kind, config })
-    if (needId) setOpenNeed(needId)
-    closeMenu()
-    setSheet(null)
-  }
-
-  function practiceCountLabel(count) {
-    if (count === 0) return 'none yet'
-    if (count === 1) return '1 to pick from'
-    return `${count} to pick from`
-  }
-
-  function circleStyle(days, tierColor) {
-    if (days === null) return { borderColor: 'rgba(0,0,0,.18)', background: 'transparent' }
-    if (days === 0 || days === 1) return { borderColor: tierColor, background: tierColor }
-    return { borderColor: tierColor, background: 'transparent' }
-  }
-
-  // Hint text for create field
-  function getCreateHint() {
-    const trimmed = draft.trim()
-    if (!trimmed) return null
-    const matchedNeed = NEEDS.find(n => n.name === trimmed)
-    if (!matchedNeed) return `"${trimmed}" isn't in the needs library.`
-    if (allModesFull) return 'every mode is at capacity. free a slot first, or swap a need out.'
-    return `"${trimmed}" will be added — pick a mode for it next.`
-  }
-
-  function handleAddClick() {
-    const trimmed = draft.trim()
-    if (!trimmed) return
-    const matchedNeed = NEEDS.find(n => n.name === trimmed)
-    if (matchedNeed && !allModesFull) {
-      setPendingNeed(matchedNeed)
-      setShowModePicker(true)
-      setDraft('')
-    }
   }
 
   return (
-    <div className={`${styles.screen}${footer ? ` ${styles.screenWithFooter}` : ''}`}>
-      {header}
-      {/* ── Static header ── */}
-      <div className={styles.staticHeader}>
-        <div className={styles.appBar}>
-          <button
-            className={`${styles.guidePill} ${guideOpen ? styles.guidePillActive : ''}`}
-            onClick={() => setGuideOpen(o => !o)}
-          >
-            {guideOpen ? 'hide guide' : 'what is this?'}
-          </button>
+    <div className={styles.screen}>
+      <div className={styles.header}>
+        <div className={styles.titleRow}>
+          <h1 className={styles.title}>needs.</h1>
+          <button type="button" className={styles.closeBtn} onClick={handleClose} aria-label="close needs">✕</button>
         </div>
-
-        {guideOpen && (
-          <div className={styles.guideCard}>
-            <div className={styles.guideTerm}>
-              <span className={styles.guideTermLabel}>needs</span>
-              <span className={styles.guideTermDef}>the parts of life that give you energy.</span>
-            </div>
-            <div className={styles.guideTerm}>
-              <span className={styles.guideTermLabel}>modes</span>
-              <span className={styles.guideTermDef}>the emphasis a need warrants for you right now — from just checking the box to real passion.</span>
-            </div>
-            <div className={styles.guideTerm}>
-              <span className={styles.guideTermLabel}>practices</span>
-              <span className={styles.guideTermDef}>the daily acts that meet a need.</span>
-            </div>
-          </div>
-        )}
-
-        <div className={styles.titleBlock}>
-          <div className={styles.titleRow}>
-            <h1 className={styles.pageTitle}>needs.</h1>
-            {!onboarding && (
-              <button className={styles.closeBtn} onClick={handleClose} aria-label="close needs">✕</button>
-            )}
-          </div>
-          <p className={styles.pageSubhead}>
-            add needs. move needs between modes. set your daily practices.
-          </p>
-        </div>
-
-        <div className={styles.headerHairline} />
+        <p className={styles.sub}>drag each need into the mode that fits it right now. or tap one to pick from a list.</p>
       </div>
 
-      {/* ── Scroll area ── */}
-      <div ref={scrollAreaRef} className={styles.scrollArea}>
-        {onboarding && banner}
-
-        {/* /canvas: needs library sits above mode cards; onboarding: below */}
-        {!onboarding && addPractice && (
-          <div className={styles.typeBlock}>
-            <div className={styles.typeAsk}>what type of practice is it?</div>
-            <div className={styles.typeRow}>
-              {TYPES.map(t => (
-                <button type="button" key={t.id} className={styles.typeTile} onClick={() => setSheet({ kind: t.id })}>
-                  <PracticeIcon kind={t.id} size={40} />
-                  <span className={styles.typeLabel}>{t.label}</span>
-                </button>
-              ))}
-            </div>
+      <div className={styles.body}>
+        <section
+          data-drop="library"
+          aria-label="needs library"
+          className={`${styles.library} ${zoneClass('library')}`}
+        >
+          <div className={styles.zoneHead}>
+            <span className={styles.zoneName}>library</span>
+            <span className={styles.zoneCount}>
+              {library.length === 0 ? 'every need is in a mode' : `${library.length} not in a mode`}
+            </span>
           </div>
-        )}
-
-        {!onboarding && (
-          <>
-            <div className={styles.librarySection}>
-              {unplacedNeeds.length > 0 && (
-                <div className={styles.libraryHeader}>
-                  <span className={styles.libraryTitle}>needs library</span>
-                  <span className={styles.librarySubhead}>
-                    {unplacedNeeds.length} {unplacedNeeds.length === 1 ? 'need' : 'needs'} not in a mode yet
-                  </span>
-                </div>
-              )}
-              {unplacedNeeds.length > 0 && (
-                <div className={styles.libraryChips}>
-                  {unplacedNeeds.map(need => (
-                    <button
-                      key={need.id}
-                      className={styles.libraryChip}
-                      onClick={() => setDraft(need.name)}
-                    >
-                      <span className={styles.libraryChipName}>{need.name}</span>
-                      <span className={styles.libraryChipPlus}>+</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-              <div className={styles.createRow}>
-                <input
-                  className={styles.createField}
-                  type="text"
-                  placeholder="add a need by name…"
-                  value={draft}
-                  onChange={e => setDraft(e.target.value)}
-                />
-                <button
-                  className={`${styles.addBtn}${draft.trim() && NEEDS.find(n => n.name === draft.trim()) ? ` ${styles.addBtnActive}` : ''}`}
-                  disabled={!draft.trim() || !NEEDS.find(n => n.name === draft.trim())}
-                  onClick={handleAddClick}
-                >
-                  add
-                </button>
-              </div>
-              {draft.trim() && (
-                <p className={styles.createHint}>{getCreateHint()}</p>
-              )}
+          {library.length > 0 && (
+            <div className={styles.pills}>
+              {library.map(n => chip(n, 'pill'))}
             </div>
-            <div className={styles.headerHairline} />
-          </>
-        )}
+          )}
+          <p className={styles.note}>drop a need here to take it out. its practices and history are kept.</p>
+        </section>
 
         {MODE_ORDER.map(mode => {
-          const tierColor = MODES[mode].color
-          const placed    = needsInMode(mode)
-          const cap       = MODE_NEED_CAP[mode]
-          const full      = placed.length >= cap
-
+          const placed = placedIn(mode)
+          const cap = MODE_NEED_CAP[mode]
+          const perDay = MODE_MAX_BUBBLES[mode]
+          const open = placed.length < cap ? 1 : 0 // one open slot is enough; the count says how many fit
           return (
-            <div
+            <section
               key={mode}
-              className={styles.modeCard}
+              data-drop={mode}
+              aria-label={mode}
+              className={`${styles.card} ${zoneClass(mode)}`}
+              style={{ '--mc': MODES[mode].color }}
             >
-              {/* Header row */}
-              <div className={styles.modeHeader}>
-                <span className={styles.modeDot} style={{ background: tierColor }} />
-                <span className={styles.modeName}>{mode}</span>
-                <span className={styles.modeCount}>{placed.length} of {cap}</span>
+              <div className={styles.zoneHead}>
+                <span className={styles.dot} />
+                <span className={styles.zoneName}>{mode}</span>
+                <span className={styles.zoneCount}>{placed.length} of {cap}</span>
               </div>
-
-              {/* Blurb */}
-              <p className={styles.modeBlurb}>{MODE_DESCS[mode]}</p>
-              <p className={styles.modeDailyTarget}>
-                {(() => { const n = MODE_MAX_BUBBLES[mode]; return `each need here gets ${n} ${n === 1 ? 'practice' : 'practices'} a day.` })()}
+              <p className={styles.blurb}>
+                {MODE_DESCS[mode]} · {perDay} {perDay === 1 ? 'practice' : 'practices'} a day each
               </p>
-
-              {/* Capacity bar */}
-              <div className={styles.capacityTrack}>
-                <div
-                  className={styles.capacityFill}
-                  style={{
-                    width: cap > 0 ? `${(placed.length / cap) * 100}%` : '0%',
-                    background: tierColor,
-                  }}
-                />
-              </div>
-
-              {/* Need rows */}
-              {placed.map(need => {
-                const practices = getPractices(need.id)
-                const isOpen    = openNeed === need.id
-
-                return (
-                  <div key={need.id} className={styles.needBlock}>
-                    <button className={styles.needRow} onClick={() => toggleNeed(need.id)}>
-                      <span className={styles.needName}>{need.name}</span>
-                      <span className={styles.practiceCount}>{practiceCountLabel(practices.length)}</span>
-                      <span className={styles.needChevron}>{isOpen ? '▲' : '▼'}</span>
-                    </button>
-
-                    {isOpen && (
-                      <div className={styles.needDetail}>
-                        {/* Section label */}
-                        <div className={styles.sectionLabel}>HOW IT SHOWS UP IN YOUR DAY</div>
-
-                        {/* Practice rows */}
-                        {practices.map(practice => {
-                          const days       = getLast(practice)
-                          const isMenuOpen = practiceMenu === practice.id
-
-                          if (isMenuOpen) {
-                            return (
-                              <div key={practice.id} className={styles.practiceEditor}>
-                                <input
-                                  className={styles.renameField}
-                                  value={practiceDraft}
-                                  onChange={e => setPracticeDraft(e.target.value)}
-                                  autoFocus
-                                />
-                                <div className={styles.editorActions}>
-                                  <button className={styles.saveBtn} onClick={() => handleSave(practice.id)}>
-                                    save
-                                  </button>
-                                  <button className={styles.cancelBtn} onClick={closeMenu}>
-                                    cancel
-                                  </button>
-                                  {useDB && updatePractice && (
-                                    <button
-                                      className={styles.cancelBtn}
-                                      aria-label={`${practice.label}: type and settings`}
-                                      onClick={() => {
-                                        setSheet({
-                                          kind: practice.kind || 'check',
-                                          needId: need.id,
-                                          name: practiceDraft.trim() || practice.label,
-                                          config: practice.config,
-                                          editing: true,
-                                          practice,
-                                        })
-                                      }}
-                                    >
-                                      type &amp; settings
-                                    </button>
-                                  )}
-                                  <button
-                                    className={`${styles.removeBtn}${deleteConfirm === practice.id ? ` ${styles.removeBtnConfirm}` : ''}`}
-                                    onClick={() => {
-                                      if (deleteConfirm === practice.id) {
-                                        handleArchive(practice.id)
-                                      } else {
-                                        setDeleteConfirm(practice.id)
-                                      }
-                                    }}
-                                  >
-                                    {deleteConfirm === practice.id ? 'confirm remove' : 'remove'}
-                                  </button>
-                                </div>
-                                {deleteConfirm === practice.id && (
-                                  <p className={styles.removeWarning}>
-                                    this removes {practice.label} and its history. tap remove again to confirm.
-                                  </p>
-                                )}
-                              </div>
-                            )
-                          }
-
-                          return (
-                            <div key={practice.id} className={styles.practiceRow}>
-                              <span className={styles.practiceIcon}>
-                                <PracticeIcon
-                                  kind={practice.kind || 'check'}
-                                  size={22}
-                                  lit={days === 0 || days === 1 ? [tierColor, tierColor] : null}
-                                />
-                              </span>
-                              <span className={styles.practiceText}>
-                                <span className={styles.practiceName}>{practice.label}</span>
-                                {poolTag(practice) && <span className={styles.practiceTag}>{poolTag(practice)}</span>}
-                              </span>
-                              <span className={styles.practiceMeta}>{formatLastDone(days)}</span>
-                              <button
-                                className={styles.menuBtn}
-                                onClick={() => openMenuFor(practice.id, practice.label)}
-                              >
-                                ⋯
-                              </button>
-                            </div>
-                          )
-                        })}
-
-                        {/* Add a practice: type first, in the builder sheet */}
-                        {practices.length < PRACTICE_CAP ? (
-                          <button
-                            className={styles.addPracticeBtn}
-                            onClick={() => { closeMenu(); setSheet({ needId: need.id }) }}
-                          >
-                            <span className={styles.addPracticePlus}>+</span>
-                            <span className={styles.addPracticeLabel}>add a practice</span>
-                          </button>
-                        ) : (
-                          <p className={styles.modeSelectorNote}>{PRACTICE_CAP} practices is the most a need holds. remove one to add another.</p>
-                        )}
-
-                        {/* Mode selector */}
-                        <div className={styles.modeSelectorSection}>
-                          <div className={styles.sectionLabel}>MODE</div>
-                          <div className={styles.modeSelectorRow}>
-                            {MODE_ORDER.map(m => {
-                              const mc        = MODES[m].color
-                              const isCurrent = state.canvas[need.id] === m
-                              const mPlaced   = needsInMode(m).length
-                              const mCap      = MODE_NEED_CAP[m]
-                              const mFull     = !isCurrent && mPlaced >= mCap
-                              const isLight   = LIGHT_FILL_MODES.has(m)
-
-                              const btnStyle = isCurrent
-                                ? { background: mc, borderColor: mc }
-                                : mFull ? { opacity: 0.4 } : {}
-
-                              const dotColor = isCurrent
-                                ? (isLight ? 'rgba(0,0,0,.4)' : 'rgba(252,250,244,.9)')
-                                : mc
-
-                              const labelColor = isCurrent
-                                ? (isLight ? 'rgba(0,0,0,.8)' : 'rgba(252,250,244,.9)')
-                                : 'rgba(0,0,0,.5)'
-
-                              const hint = isCurrent ? 'here' : mFull ? 'full' : `${mPlaced}/${mCap}`
-                              const hintColor = isCurrent
-                                ? (isLight ? 'rgba(0,0,0,.5)' : 'rgba(252,250,244,.7)')
-                                : 'rgba(0,0,0,.4)'
-
-                              return (
-                                <button
-                                  key={m}
-                                  className={styles.modeSelectorBtn}
-                                  style={btnStyle}
-                                  disabled={mFull}
-                                  onClick={() => { if (!isCurrent && !mFull) updateCanvas(need.id, m) }}
-                                >
-                                  <span className={styles.modeSelectorDot} style={{ background: dotColor }} />
-                                  <span className={styles.modeSelectorAbbr} style={{ color: labelColor }}>{MODE_ABBR[m]}</span>
-                                  <span className={styles.modeSelectorHint} style={{ color: hintColor }}>{hint}</span>
-                                </button>
-                              )
-                            })}
-                          </div>
-                          <p className={styles.modeSelectorNote}>
-                            {onboarding
-                              ? 'moving a need keeps its practices.'
-                              : 'moving a need keeps every practice and all of its history.'}
-                          </p>
-                        </div>
-
-                        {/* Remove from canvas */}
-                        <div className={styles.removeSection}>
-                          <button
-                            className={styles.removeFromCanvasBtn}
-                            onClick={() => updateCanvas(need.id, null)}
-                          >
-                            remove from canvas
-                          </button>
-                          <p className={styles.removeFromCanvasNote}>
-                            {onboarding
-                              ? 'its practices are kept — you can place it again at any time.'
-                              : 'practices and history are kept — you can place it again anytime.'}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-
-              {/* Mode footer */}
-              <div className={styles.modeFooter}>
-                {full ? (
-                  <>
-                    <span className={styles.atCapacityLabel}>at capacity</span>
-                    <button
-                      className={styles.swapNeedBtn}
-                      style={{ color: tierColor }}
-                      onClick={() => setShowSwapFor(mode)}
-                    >
-                      swap a need →
-                    </button>
-                  </>
-                ) : (
-                  <button className={styles.addNeedRow} onClick={() => setShowAddNeedFor(mode)}>
-                    <span className={styles.addNeedPlus} style={{ color: tierColor }}>+</span>
-                    <span className={styles.addNeedLabel}>add a need to {mode}</span>
+              <div className={styles.slots}>
+                {placed.map(n => chip(n, 'row'))}
+                {Array.from({ length: open }, (_, i) => (
+                  <button
+                    key={`open-${i}`}
+                    type="button"
+                    className={styles.openSlot}
+                    onClick={() => setFilling(mode)}
+                    aria-label={`add a need to ${mode}`}
+                  >
+                    {i === 0 && <span>drop a need here</span>}
+                    {i === 0 && <span className={styles.plus} aria-hidden="true">+</span>}
                   </button>
-                )}
+                ))}
               </div>
-            </div>
+            </section>
           )
         })}
 
-        {/* onboarding: needs library sits below mode cards */}
-        {onboarding && (
-          <>
-            <div className={styles.headerHairline} />
-            <div className={styles.librarySection}>
-              {unplacedNeeds.length > 0 && (
-                <div className={styles.libraryHeader}>
-                  <span className={styles.libraryTitle}>needs library</span>
-                  <span className={styles.librarySubhead}>
-                    {unplacedNeeds.length} {unplacedNeeds.length === 1 ? 'need' : 'needs'} not in a mode yet
-                  </span>
-                </div>
-              )}
-              {unplacedNeeds.length > 0 && (
-                <div className={styles.libraryChips}>
-                  {unplacedNeeds.map(need => (
-                    <button
-                      key={need.id}
-                      className={styles.libraryChip}
-                      onClick={() => setDraft(need.name)}
-                    >
-                      <span className={styles.libraryChipName}>{need.name}</span>
-                      <span className={styles.libraryChipPlus}>+</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-              <div className={styles.createRow}>
-                <input
-                  className={styles.createField}
-                  type="text"
-                  placeholder="add a need by name…"
-                  value={draft}
-                  onChange={e => setDraft(e.target.value)}
-                />
-                <button
-                  className={`${styles.addBtn}${draft.trim() && NEEDS.find(n => n.name === draft.trim()) ? ` ${styles.addBtnActive}` : ''}`}
-                  disabled={!draft.trim() || !NEEDS.find(n => n.name === draft.trim())}
-                  onClick={handleAddClick}
-                >
-                  add
-                </button>
-              </div>
-              {draft.trim() && (
-                <p className={styles.createHint}>{getCreateHint()}</p>
-              )}
-            </div>
-          </>
-        )}
-
+        <button
+          type="button"
+          className={styles.practicesLink}
+          onClick={() => navigate('/practices', { state: location.state })}
+        >
+          next: set the practices for each need →
+        </button>
       </div>
 
-      {footer}
+      <div className={styles.live} role="status" aria-live="polite">
+        {notice && <div className={styles.notice}>{notice}</div>}
+      </div>
 
-      {/* ── Practice builder ── */}
-      {sheet && (
-        <PracticeSheet
-          needs={sheetNeeds}
-          fullNeeds={fullNeeds}
-          initial={sheet}
-          onSave={handleSheetSave}
-          onClose={() => setSheet(null)}
-        />
+      {moving && (
+        <Sheet label={`move ${needName(moving)}`} onClose={() => setMoving(null)}>
+          <h2 className={styles.sheetTitle}>move {needName(moving)} to</h2>
+          <div className={styles.choices}>
+            {MODE_ORDER.map(m => {
+              const here = canvas[moving] === m
+              const res = canPlace(moving, m, canvas)
+              const hint = here ? 'here'
+                : !res.ok ? (moving === 'rest' && (m === 'exploration' || m === 'appreciation') ? 'not for rest' : 'full')
+                : `${placedIn(m).length} of ${MODE_NEED_CAP[m]}`
+              return (
+                <button
+                  key={m}
+                  type="button"
+                  className={styles.choice}
+                  style={{ '--mc': MODES[m].color }}
+                  aria-pressed={here}
+                  disabled={!here && !res.ok}
+                  onClick={() => { if (!here) place(moving, m); setMoving(null) }}
+                >
+                  <span className={styles.dot} />
+                  <span className={styles.choiceName}>{m}</span>
+                  <span className={styles.choiceHint}>{hint}</span>
+                </button>
+              )
+            })}
+            {canvas[moving] && (
+              <button
+                type="button"
+                className={styles.choice}
+                disabled={!canPlace(moving, null, canvas).ok}
+                onClick={() => { place(moving, null); setMoving(null) }}
+              >
+                <span className={styles.choiceName}>back to the library</span>
+                <span className={styles.choiceHint}>
+                  {canPlace(moving, null, canvas).ok ? 'practices kept' : 'always on your canvas'}
+                </span>
+              </button>
+            )}
+          </div>
+          <button type="button" className={styles.sheetCancel} onClick={() => setMoving(null)}>cancel</button>
+        </Sheet>
       )}
 
-      {/* ── Mode picker sheet ── */}
-      {showModePicker && pendingNeed && (
-        <div className={styles.sheetOverlay}>
-          <div
-            className={styles.sheetBackdrop}
-            onClick={() => { setShowModePicker(false); setPendingNeed(null) }}
-          />
-          <div className={styles.sheet}>
-            <h2 className={styles.sheetTitle}>add {pendingNeed.name} to…</h2>
-            <div className={styles.modeSelectorRow}>
-              {MODE_ORDER.map(m => {
-                const mc      = MODES[m].color
-                const mPlaced = needsInMode(m).length
-                const mCap    = MODE_NEED_CAP[m]
-                const mFull   = mPlaced >= mCap
+      {filling && (
+        <Sheet label={`add a need to ${filling}`} onClose={() => setFilling(null)}>
+          <h2 className={styles.sheetTitle}>add a need to {filling}</h2>
+          {library.length === 0 ? (
+            <p className={styles.sheetNote}>every need is already in a mode. drag one out of its mode to move it.</p>
+          ) : (
+            <div className={styles.choices}>
+              {library.map(n => {
+                const res = canPlace(n.id, filling, canvas)
                 return (
                   <button
-                    key={m}
-                    className={styles.modeSelectorBtn}
-                    style={mFull ? { opacity: 0.4 } : {}}
-                    disabled={mFull}
-                    onClick={() => {
-                      if (!mFull) {
-                        updateCanvas(pendingNeed.id, m)
-                        setShowModePicker(false)
-                        setPendingNeed(null)
-                      }
-                    }}
+                    key={n.id}
+                    type="button"
+                    className={styles.choice}
+                    style={{ '--mc': MODES[filling].color }}
+                    disabled={!res.ok}
+                    onClick={() => { place(n.id, filling); setFilling(null) }}
                   >
-                    <span className={styles.modeSelectorDot} style={{ background: mc }} />
-                    <span className={styles.modeSelectorAbbr} style={{ color: 'rgba(0,0,0,.5)' }}>{MODE_ABBR[m]}</span>
-                    <span className={styles.modeSelectorHint} style={{ color: 'rgba(0,0,0,.4)' }}>{mFull ? 'full' : `${mPlaced}/${mCap}`}</span>
+                    <span className={styles.choiceName}>{n.name}</span>
+                    {!res.ok && <span className={styles.choiceHint}>not for {filling}</span>}
                   </button>
                 )
               })}
             </div>
-            <button
-              className={styles.sheetCancel}
-              onClick={() => { setShowModePicker(false); setPendingNeed(null) }}
-            >
-              cancel
-            </button>
-          </div>
-        </div>
+          )}
+          <button type="button" className={styles.sheetCancel} onClick={() => setFilling(null)}>cancel</button>
+        </Sheet>
       )}
 
-      {/* ── Add need sheet ── */}
-      {showAddNeedFor && (
-        <div className={styles.sheetOverlay}>
-          <div
-            className={styles.sheetBackdrop}
-            onClick={() => setShowAddNeedFor(null)}
-          />
-          <div className={styles.sheet}>
-            <h2 className={styles.sheetTitle}>add a need to {showAddNeedFor}</h2>
-            {unplacedNeeds.length === 0 ? (
-              <p className={styles.sheetSubtitle}>every need is already in a mode.</p>
-            ) : (
-              unplacedNeeds.map(need => (
-                <div key={need.id} className={styles.swapRow}>
-                  <span className={styles.swapNeedName}>{need.name}</span>
-                  <button
-                    className={styles.swapRemoveBtn}
-                    onClick={() => {
-                      updateCanvas(need.id, showAddNeedFor)
-                      setShowAddNeedFor(null)
-                    }}
-                  >
-                    add
-                  </button>
-                </div>
-              ))
-            )}
-            <button
-              className={styles.sheetCancel}
-              onClick={() => setShowAddNeedFor(null)}
-            >
-              cancel
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ── Swap sheet ── */}
-      {showSwapFor && (
-        <div className={styles.sheetOverlay}>
-          <div
-            className={styles.sheetBackdrop}
-            onClick={() => setShowSwapFor(null)}
-          />
-          <div className={styles.sheet}>
-            <h2 className={styles.sheetTitle}>make room in {showSwapFor}</h2>
-            <p className={styles.sheetSubtitle}>remove a need to free a slot.</p>
-            {needsInMode(showSwapFor).map(need => (
-              <div key={need.id} className={styles.swapRow}>
-                <span className={styles.swapNeedName}>{need.name}</span>
-                <button
-                  className={styles.swapRemoveBtn}
-                  onClick={() => {
-                    updateCanvas(need.id, null)
-                    setShowSwapFor(null)
-                  }}
-                >
-                  remove
-                </button>
-              </div>
-            ))}
-            <button
-              className={styles.sheetCancel}
-              onClick={() => setShowSwapFor(null)}
-            >
-              cancel
-            </button>
-          </div>
-        </div>
+      {drag && createPortal(
+        <div
+          className={styles.ghost}
+          style={{ width: drag.w, height: drag.h, transform: `translate(${drag.x - drag.ox}px, ${drag.y - drag.oy}px) scale(1.04)` }}
+          aria-hidden="true"
+        >
+          {drag.label}
+        </div>,
+        document.body,
       )}
     </div>
   )

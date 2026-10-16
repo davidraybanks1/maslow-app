@@ -2,7 +2,7 @@ import styles from './AppHeader.module.css'
 import LoamMark from './LoamMark'
 import ProfileMenu from './ProfileMenu'
 
-export default function AppHeader({ slot, name, email, remindersEnabled, updateRemindersEnabled, moodReminders, updateMoodReminder, notifTypes, updateNotifType, needCount, noteDeckCount, customTagCount, resetTour }) {
+export default function AppHeader({ slot, name, email, remindersEnabled, updateRemindersEnabled, moodReminders, updateMoodReminder, notifTypes, updateNotifType, needCount, practiceCount, noteDeckCount, customTagCount, resetTour }) {
   return (
     <header className={styles.header}>
       <div className={styles.left}>
@@ -16,6 +16,7 @@ export default function AppHeader({ slot, name, email, remindersEnabled, updateR
           moodReminders={moodReminders} updateMoodReminder={updateMoodReminder}
           notifTypes={notifTypes} updateNotifType={updateNotifType}
           needCount={needCount}
+          practiceCount={practiceCount}
           noteDeckCount={noteDeckCount}
           customTagCount={customTagCount}
           resetTour={resetTour}

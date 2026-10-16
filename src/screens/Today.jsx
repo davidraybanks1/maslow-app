@@ -1173,7 +1173,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                             </div>
                             {sorted.length === 0 ? (
                               <div className={styles.noPractice}>
-                                no practices — <span className={styles.noPracticeLink} onClick={() => navigate('/canvas')}>add some</span>
+                                no practices — <span className={styles.noPracticeLink} onClick={() => navigate('/practices')}>add some</span>
                               </div>
                             ) : sorted.map(practice => {
                               const key = practiceKey(n, practice)
@@ -1209,7 +1209,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
           <button
             type="button"
             className={styles.editNeeds}
-            onClick={() => navigate('/canvas', { state: { returnTo: '/today' } })}
+            onClick={() => navigate('/practices', { state: { returnTo: '/today' } })}
           >edit</button>
           {isDesktop && popupMode && (() => {
             const pNeeds = NEEDS.filter(n => state.canvas[n.id] === popupMode)

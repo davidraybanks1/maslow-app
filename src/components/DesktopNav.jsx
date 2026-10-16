@@ -12,7 +12,7 @@ const ITEMS = [
   ['/log', 'drafts'],
 ]
 
-export default function DesktopNav({ name, email, remindersEnabled, updateRemindersEnabled, moodReminders, updateMoodReminder, notifTypes, updateNotifType, needCount, noteDeckCount, customTagCount, resetTour, onOpenComposer, hideComposer }) {
+export default function DesktopNav({ name, email, remindersEnabled, updateRemindersEnabled, moodReminders, updateMoodReminder, notifTypes, updateNotifType, needCount, practiceCount, noteDeckCount, customTagCount, resetTour, onOpenComposer, hideComposer }) {
   const linkClass = ({ isActive }) => `${styles.item} ${isActive ? styles.itemActive : ''}`
   return (
     <aside className={styles.nav} aria-label="Primary" data-tour="nav">
@@ -41,6 +41,7 @@ export default function DesktopNav({ name, email, remindersEnabled, updateRemind
           moodReminders={moodReminders} updateMoodReminder={updateMoodReminder}
           notifTypes={notifTypes} updateNotifType={updateNotifType}
           needCount={needCount}
+          practiceCount={practiceCount}
           noteDeckCount={noteDeckCount}
           customTagCount={customTagCount}
           resetTour={resetTour}

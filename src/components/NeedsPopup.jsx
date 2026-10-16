@@ -77,7 +77,7 @@ export default function NeedsPopup({
               </div>
               {sorted.length === 0 ? (
                 <div className={styles.noPractice}>
-                  no practices — <span className={styles.noPracticeLink} onClick={() => { closeRef.current(); navigate('/canvas') }}>add some</span>
+                  no practices — <span className={styles.noPracticeLink} onClick={() => { closeRef.current(); navigate('/practices') }}>add some</span>
                 </div>
               ) : sorted.map(practice => {
                 const key = practiceKey(n, practice)

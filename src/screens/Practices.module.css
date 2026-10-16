@@ -1,7 +1,12 @@
 .screen { display: flex; flex-direction: column; min-height: 100%; background: var(--paper); }
 
 .header { padding: 20px 16px 16px; }
-.eyebrowRow { display: flex; align-items: center; justify-content: flex-end; margin-bottom: 6px; }
+.eyebrowRow { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.eyebrowRight { display: flex; align-items: center; gap: 16px; }
+.needsLink { font-family: var(--font-mono); font-size: var(--type-floor); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink3); background: none; border: none; cursor: pointer; padding: 6px 0; -webkit-tap-highlight-color: transparent; }
+.needsLink:hover { color: var(--ink); }
+.closeBtn { width: 32px; height: 32px; border-radius: 16px; border: 1px solid rgba(0,0,0,.22); background: transparent; color: rgba(0,0,0,.68); font-family: var(--font-mono); font-size: 13px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; -webkit-tap-highlight-color: transparent; }
+.closeBtn:hover { background: var(--track); }
 .editToggle { font-family: var(--font-mono); font-size: var(--type-floor); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink3); background: none; border: none; cursor: pointer; padding: 0; -webkit-tap-highlight-color: transparent; }
 .editToggle:hover { color: var(--ink); }
 .title { font-family: var(--font-serif); font-size: 26px; font-weight: 300; letter-spacing: -0.01em; color: var(--ink); }

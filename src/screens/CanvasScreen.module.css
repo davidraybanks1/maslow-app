@@ -1,111 +1,31 @@
-/* ── Screen shell ── */
+/* Needs: a library of needs and four mode cards to drag them into. */
+
 .screen {
   display: flex;
   flex-direction: column;
-  background: var(--paper);
   min-height: 100%;
-}
-
-/* ── Static header ── */
-.staticHeader {
-  flex-shrink: 0;
-  padding: 0 22px;
   background: var(--paper);
 }
 
-/* App bar row */
-.appBar {
-  display: none;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 8px 0 4px;
-}
-
-/* When an inline footer is present: screen owns its height so the footer is always visible */
-.screenWithFooter {
-  height: 100%;
-  overflow: hidden;
-}
-
-.screenWithFooter .scrollArea {
-  flex: 1;
-  overflow-y: auto;
-}
-
-.guidePill {
-  height: 26px;
-  padding: 0 11px;
-  border-radius: 13px;
-  border: 1px solid rgba(0,0,0,.16);
-  background: none;
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  letter-spacing: .06em;
-  color: var(--ink);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
-  -webkit-tap-highlight-color: transparent;
-}
-.guidePill:hover { border-color: rgba(0,0,0,.3); }
-
-.guidePillActive {
-  background: #1B3A2D;
-  color: var(--card);
-  border-color: #1B3A2D;
-}
-.guidePillActive:hover { opacity: .88; }
-
-/* Guide card */
-.guideCard {
-  background: var(--card);
-  border: 1px solid rgba(0,0,0,.1);
-  border-radius: 16px;
-  padding: 14px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 11px;
-  margin-top: 8px;
-}
-
-.guideTerm {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.guideTermLabel {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  font-weight: 400;
-  letter-spacing: .16em;
-  text-transform: uppercase;
-  color: rgba(0,0,0,.45);
-  font-variant: small-caps;
-}
-
-.guideTermDef {
+.header { padding: 20px 22px 4px; }
+.titleRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.title {
   font-family: var(--font-serif);
-  font-size: 13px;
+  font-size: 30px;
   font-weight: 300;
-  line-height: 1.45;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
   color: var(--ink);
+  margin: 0 0 4px;
 }
-
-/* Title block */
-.titleBlock {
-  padding: 14px 0 12px;
+.sub {
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  font-weight: 300;
+  line-height: 1.5;
+  color: var(--ink3);
+  margin: 0;
 }
-
-.titleRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-/* Same weight as the exit on the note-deck and tags overlays - all three
-   read as one "this is how you leave" language, not a faint afterthought. */
 .closeBtn {
   width: 32px;
   height: 32px;
@@ -125,832 +45,232 @@
 }
 .closeBtn:hover { background: var(--track); }
 
-.pageTitle {
-  font-family: var(--font-serif);
-  font-size: 30px;
-  font-weight: 300;
-  line-height: 1.1;
-  color: var(--ink);
-  letter-spacing: -0.01em;
-  margin: 0 0 4px;
-}
-
-.pageSubhead {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  font-weight: 300;
-  line-height: 1.5;
-  color: var(--ink3);
-  margin: 0;
-}
-
-/* Bottom hairline */
-.headerHairline {
-  height: 1px;
-  background: rgba(0,0,0,.08);
-  margin: 18px -22px 0;
-}
-
-/* ── Scroll area ── */
-.scrollArea {
-  padding: 18px 22px;
+.body {
+  padding: 18px 22px 40px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
-/* ─────────────────────────────────────────
-   Stage 2 — Mode cards
-───────────────────────────────────────── */
-
-.modeCard {
+/* ── drop zones ── */
+.library, .card {
+  --mc: var(--ink3);
+  border-radius: 16px;
+  padding: 14px 16px 16px;
+  transition: box-shadow 120ms ease, background 120ms ease;
+}
+.library {
+  background: transparent;
+  border: 1px dashed rgba(0,0,0,.2);
+}
+.card {
   background: var(--card);
   border: 1px solid rgba(0,0,0,.09);
-  border-radius: 16px;
-  padding: 14px 16px 6px;
 }
+.over { box-shadow: 0 0 0 2px var(--mc); }
+.library.over { box-shadow: 0 0 0 2px var(--ink2); background: rgba(0,0,0,.03); }
+.overBad { background: rgba(0,0,0,.04); box-shadow: 0 0 0 2px var(--ink4); }
 
-/* Card header row */
-.modeHeader {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-
-.modeDot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.modeName {
+.zoneHead { display: flex; align-items: center; gap: 8px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--mc); flex-shrink: 0; }
+.zoneName {
   font-family: var(--font-mono);
-  font-weight: 400;
   font-size: var(--type-floor);
   letter-spacing: .16em;
   text-transform: uppercase;
   color: rgba(0,0,0,.55);
   flex: 1;
 }
-
-.modeCount {
+.zoneCount {
   font-family: var(--font-serif);
   font-weight: 300;
   font-size: 15px;
   color: var(--ink);
   white-space: nowrap;
 }
-
-/* Blurb */
-.modeBlurb {
-  font-family: var(--font-serif);
-  font-weight: 300;
-  font-size: 12px;
-  line-height: 1.45;
-  color: rgba(0,0,0,.5);
-  margin: 8px 0 0;
-}
-
-/* Daily target rule */
-.modeDailyTarget {
+.library .zoneCount { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); }
+.blurb {
   font-family: var(--font-mono);
   font-size: var(--type-floor);
   font-weight: 300;
+  line-height: 1.5;
   color: var(--ink3);
   margin: 6px 0 0;
 }
-
-/* Capacity bar */
-.capacityTrack {
-  height: 6px;
-  border-radius: 3px;
-  background: rgba(0,0,0,.07);
-  margin-top: 10px;
-  overflow: hidden;
-}
-
-.capacityFill {
-  height: 100%;
-  border-radius: 3px;
-  transition: width 300ms ease;
-}
-
-/* ─── Need block + row ─── */
-
-.needBlock {
-  /* wrapper — no extra styling needed */
-}
-
-.needRow {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  height: 52px;
-  gap: 10px;
-  padding: 0 0 0 2px;
-  box-sizing: border-box;
-  border-top: 1px solid rgba(0,0,0,.08);
-  border-left: none;
-  border-right: none;
-  border-bottom: none;
-  background: transparent;
-  cursor: pointer;
-  text-align: left;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.needName {
-  font-family: var(--font-serif);
+.note {
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
   font-weight: 300;
-  font-size: 18px;
+  color: var(--ink4);
+  margin: 12px 0 0;
+}
+
+/* ── chips ── */
+.pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.pill, .row {
+  font-family: var(--font-mono);
+  font-weight: 300;
   color: var(--ink);
-  flex: 1;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 120ms ease, transform 80ms ease;
 }
-
-.practiceCount {
-  font-family: var(--font-mono);
-  font-weight: 400;
-  font-size: var(--type-floor);
-  color: rgba(0,0,0,.4);
-  white-space: nowrap;
-}
-
-.needChevron {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  color: rgba(0,0,0,.3);
-  width: 12px;
-  text-align: center;
-  flex-shrink: 0;
-}
-
-/* ─── Need detail (expanded) ─── */
-
-.needDetail {
-  padding: 2px 0 14px;
-}
-
-/* Section label — shared by "HOW IT SHOWS UP IN YOUR DAY" and "MODE" */
-.sectionLabel {
-  font-family: var(--font-mono);
-  font-weight: 400;
-  font-size: var(--type-floor);
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  color: rgba(0,0,0,.38);
-  margin: 8px 0 4px;
-}
-
-/* ─── Practice rows ─── */
-
-.practiceRow {
-  display: flex;
-  align-items: center;
-  height: 46px;
-  gap: 10px;
-  border-bottom: 1px solid rgba(0,0,0,.06);
-}
-
-.practiceCircle {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: 1.5px solid;
-  flex-shrink: 0;
-  box-sizing: border-box;
-}
-
-.practiceName {
-  font-family: var(--font-mono);
-  font-weight: 300;
+.pill:active, .row:active { transform: scale(.98); }
+.pill {
   font-size: 13.5px;
-  color: var(--ink);
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.practiceMeta {
-  font-family: var(--font-mono);
-  font-weight: 400;
-  font-size: var(--type-floor);
-  color: rgba(0,0,0,.32);
-  white-space: nowrap;
-}
-
-.menuBtn {
-  width: 32px;
-  height: 32px;
-  border-radius: 16px;
-  background: transparent;
-  border: 1px solid transparent;
-  color: rgba(0,0,0,.35);
-  font-family: var(--font-mono);
-  font-size: 14px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  -webkit-tap-highlight-color: transparent;
-  line-height: 1;
-  padding: 0;
-}
-.menuBtn:hover {
-  background: rgba(0,0,0,.05);
-}
-
-.menuBtnOpen {
-  background: var(--paper);
-  border-color: rgba(0,0,0,.16);
-  color: var(--ink);
-}
-
-/* ─── Inline practice editor ─── */
-
-.practiceEditor {
-  padding: 10px 0;
-  border-bottom: 1px solid rgba(0,0,0,.06);
-}
-
-.renameField {
-  display: block;
-  width: 100%;
-  height: 42px;
-  border-radius: 12px;
-  border: 1px solid rgba(0,0,0,.16);
-  background: var(--paper);
-  font-family: var(--font-mono);
-  font-weight: 300;
-  font-size: 13.5px;
-  color: var(--ink);
-  padding: 0 12px;
-  box-sizing: border-box;
-  outline: none;
-}
-.renameField:focus {
-  border-color: rgba(0,0,0,.3);
-}
-
-.editorActions {
-  display: flex;
-  gap: 8px;
-  margin-top: 9px;
-}
-
-.saveBtn {
-  flex: 1;
-  height: 40px;
-  border-radius: 20px;
-  border: none;
-  background: #1B3A2D;
-  color: var(--card);
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.cancelBtn {
-  height: 40px;
-  padding: 0 14px;
-  border-radius: 20px;
-  border: 1px solid rgba(0,0,0,.14);
-  background: transparent;
-  color: rgba(0,0,0,.5);
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  white-space: nowrap;
-}
-
-.removeBtn {
-  height: 40px;
-  padding: 0 14px;
-  border-radius: 20px;
-  border: 1px solid rgba(196,56,31,.45);
-  background: transparent;
-  color: #C4381F;
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  white-space: nowrap;
-}
-
-.removeBtnConfirm {
-  background: #C4381F;
-  color: var(--card);
-  border-color: #C4381F;
-}
-
-.removeWarning {
-  color: rgba(196,56,31,.85);
-  font-family: var(--font-mono);
-  font-weight: 300;
-  font-size: var(--type-floor);
-  line-height: 1.5;
-  margin: 8px 0 0;
-}
-
-/* ─── Add a practice button ─── */
-
-.addPracticeBtn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-  height: 44px;
-  border-radius: 12px;
-  border: 1px dashed rgba(0,0,0,.16);
-  background: transparent;
-  padding: 0 14px;
-  margin-top: 4px;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  box-sizing: border-box;
-}
-
-.addPracticePlus {
-  font-family: var(--font-mono);
-  font-size: 14px;
-  color: rgba(0,0,0,.35);
-  line-height: 1;
-}
-
-.addPracticeLabel {
-  font-family: var(--font-mono);
-  font-weight: 300;
-  font-size: 12.5px;
-  color: rgba(0,0,0,.4);
-}
-
-/* ─── Mode selector ─── */
-
-.modeSelectorSection {
-  margin-top: 16px;
-}
-
-.modeSelectorRow {
-  display: flex;
-  gap: 6px;
-}
-
-.modeSelectorBtn {
-  flex: 1;
-  height: 52px;
-  border-radius: 12px;
-  border: 1px solid rgba(0,0,0,.12);
-  background: transparent;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  padding: 0;
-  min-width: 0;
-  transition: background 120ms ease, border-color 120ms ease;
-}
-.modeSelectorBtn:disabled {
-  cursor: default;
-}
-
-.modeSelectorDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.modeSelectorAbbr {
-  font-family: var(--font-mono);
-  font-weight: 400;
-  font-size: var(--type-floor);
-  text-transform: uppercase;
-  letter-spacing: .08em;
-}
-
-.modeSelectorHint {
-  font-family: var(--font-mono);
-  font-weight: 400;
-  font-size: var(--type-floor);
-}
-
-.modeSelectorNote {
-  font-family: var(--font-mono);
-  font-weight: 300;
-  font-size: var(--type-floor);
-  line-height: 1.5;
-  color: rgba(0,0,0,.4);
-  margin: 8px 0 0;
-}
-
-/* ─── Remove from canvas ─── */
-
-.removeSection {
-  margin-top: 12px;
-}
-
-.removeFromCanvasBtn {
-  display: block;
-  width: 100%;
-  height: 40px;
-  border-radius: 20px;
-  border: 1px solid rgba(0,0,0,.12);
-  background: transparent;
-  color: rgba(0,0,0,.5);
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.removeFromCanvasNote {
-  font-family: var(--font-mono);
-  font-weight: 300;
-  font-size: var(--type-floor);
-  line-height: 1.5;
-  color: rgba(0,0,0,.35);
-  margin: 8px 0 0;
-}
-
-/* ─── Mode footer ─── */
-
-.modeFooter {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 48px;
-  border-top: 1px solid rgba(0,0,0,.08);
-}
-
-.atCapacityLabel {
-  font-family: var(--font-mono);
-  font-weight: 400;
-  font-size: var(--type-floor);
-  color: rgba(0,0,0,.4);
-}
-
-.swapNeedBtn {
-  font-family: var(--font-mono);
-  font-weight: 400;
-  font-size: var(--type-floor);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.addNeedRow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  height: 48px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.addNeedPlus {
-  font-family: var(--font-mono);
-  font-size: 16px;
-  line-height: 1;
-}
-
-.addNeedLabel {
-  font-family: var(--font-mono);
-  font-weight: 300;
-  font-size: 12.5px;
-  color: rgba(0,0,0,.5);
-}
-
-/* ─────────────────────────────────────────
-   Stage 5 — Library + create
-───────────────────────────────────────── */
-
-.librarySection {
-  margin-top: 0;
-}
-
-.libraryHeader {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  margin-bottom: 10px;
-}
-
-.libraryTitle {
-  font-family: var(--font-serif);
-  font-weight: 300;
-  font-size: 20px;
-  line-height: 1.1;
-  color: var(--ink);
-  letter-spacing: -0.01em;
-}
-
-.librarySubhead {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  font-weight: 300;
-  line-height: 1.5;
-  color: var(--ink3);
-}
-
-.libraryChips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-}
-
-.libraryChip {
-  height: 38px;
-  padding: 0 14px;
-  border-radius: 19px;
-  border: 1px dashed rgba(0,0,0,.18);
-  background: transparent;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.libraryChipName {
-  font-family: var(--font-mono);
-  font-weight: 300;
-  font-size: 13px;
-  color: rgba(0,0,0,.6);
-}
-
-.libraryChipPlus {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: rgba(0,0,0,.32);
-}
-
-.createRow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.createField {
-  flex: 1;
-  height: 44px;
-  border-radius: 22px;
-  border: 1px solid rgba(0,0,0,.12);
+  padding: 11px 16px;
+  min-height: 44px;
+  border-radius: 999px;
   background: var(--card);
-  padding: 0 15px;
-  font-family: var(--font-mono);
-  font-weight: 300;
-  font-size: 12.5px;
-  color: var(--ink);
-  outline: none;
-  box-sizing: border-box;
-}
-.createField::placeholder {
-  color: rgba(0,0,0,.35);
-}
-.createField:focus {
-  border-color: rgba(0,0,0,.25);
-}
-
-.addBtn {
-  height: 44px;
-  padding: 0 18px;
-  border-radius: 22px;
   border: 1px solid rgba(0,0,0,.14);
-  background: transparent;
-  color: rgba(0,0,0,.35);
-  font-family: var(--font-mono);
-  font-weight: 400;
-  font-size: 12px;
-  cursor: default;
-  white-space: nowrap;
-  -webkit-tap-highlight-color: transparent;
-  flex-shrink: 0;
+}
+.slots { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.row, .openSlot {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 48px;
+  box-sizing: border-box;
+  border-radius: 12px;
+  padding: 0 14px;
+  text-align: left;
+}
+.row {
+  background: var(--paper);
+  border: 1px solid rgba(0,0,0,.12);
+  font-size: 14px;
+}
+.chipName { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.held { opacity: .3; }
+
+/* six dots: the "this moves" mark */
+.grip {
+  width: 10px;
+  height: 16px;
+  flex: none;
+  opacity: .4;
+  background:
+    radial-gradient(circle, var(--ink) 1.3px, transparent 1.6px) 0 0 / 5px 5.33px repeat;
 }
 
-.addBtnActive {
-  background: #1B3A2D;
-  color: var(--card);
-  border-color: #1B3A2D;
+.openSlot {
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  color: var(--ink4);
+  background: transparent;
+  border: 1px dashed rgba(0,0,0,.16);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.openSlot:empty { color: transparent; }
+.plus { font-size: 16px; color: var(--ink3); }
+
+.practicesLink {
+  align-self: flex-start;
+  margin-top: 6px;
+  padding: 10px 0;
+  background: none;
+  border: 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink2);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: var(--ink4);
   cursor: pointer;
 }
 
-.createHint {
+/* ── the thing under your finger ── */
+.ghost {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 0 16px;
+  border-radius: 12px;
+  background: var(--card);
+  border: 1px solid rgba(0,0,0,.2);
+  box-shadow: 0 10px 28px rgba(20,18,12,.22);
   font-family: var(--font-mono);
   font-weight: 300;
-  font-size: var(--type-floor);
-  line-height: 1.5;
-  color: rgba(0,0,0,.4);
-  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--ink);
+  pointer-events: none;
+  will-change: transform;
 }
 
-/* ─────────────────────────────────────────
-   Stage 6 — Mode picker + Swap sheets
-───────────────────────────────────────── */
-
-.sheetOverlay {
-  position: fixed;
-  inset: 0;
-  z-index: 200;
+/* ── bounce-back note ── */
+.live { position: fixed; left: 0; right: 0; bottom: calc(var(--safe-bottom) + 84px); z-index: 250; display: flex; justify-content: center; pointer-events: none; padding: 0 16px; }
+.notice {
+  max-width: 340px;
+  padding: 11px 16px;
+  border-radius: 12px;
+  background: var(--ink);
+  color: var(--card);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.45;
+  text-align: center;
 }
 
-.sheetBackdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,.4);
-}
-
-.sheet {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: var(--paper);
-  border-radius: 24px 24px 0 0;
-  padding: 24px 22px 48px;
-}
-
+/* ── sheets ── */
 .sheetTitle {
   font-family: var(--font-serif);
   font-weight: 300;
-  font-size: 20px;
+  font-size: 22px;
+  line-height: 1.15;
   color: var(--ink);
-  margin: 0 0 18px;
-}
-
-.sheetSubtitle {
-  font-family: var(--font-mono);
-  font-weight: 300;
-  font-size: 12px;
-  color: rgba(0,0,0,.45);
   margin: 0 0 16px;
 }
-
+.sheetNote { font-family: var(--font-mono); font-size: 13px; line-height: 1.5; color: var(--ink3); margin: 0 0 8px; }
+.choices { display: flex; flex-direction: column; gap: 8px; }
+.choice {
+  --mc: var(--ink3);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: 12px;
+  background: var(--paper);
+  border: 1px solid rgba(0,0,0,.12);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 300;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.choice[aria-pressed="true"] { border-color: var(--ink); }
+.choice:disabled { opacity: .45; cursor: default; }
+.choiceName { flex: 1; }
+.choiceHint { font-size: var(--type-floor); color: var(--ink3); }
 .sheetCancel {
   display: block;
   width: 100%;
-  padding: 16px 0 0;
-  background: transparent;
-  border: none;
+  margin-top: 14px;
+  min-height: 46px;
+  border-radius: 999px;
+  background: none;
+  border: 1px solid rgba(0,0,0,.16);
   font-family: var(--font-mono);
-  font-weight: 300;
-  font-size: 12px;
-  color: rgba(0,0,0,.4);
-  text-align: center;
+  font-size: 13px;
+  color: var(--ink2);
   cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
 }
-
-.swapRow {
-  display: flex;
-  align-items: center;
-  height: 52px;
-  border-bottom: 1px solid rgba(0,0,0,.08);
-}
-
-.swapNeedName {
-  font-family: var(--font-serif);
-  font-weight: 300;
-  font-size: 18px;
-  color: var(--ink);
-  flex: 1;
-}
-
-.swapRemoveBtn {
-  height: 32px;
-  padding: 0 12px;
-  border-radius: 16px;
-  border: 1px solid rgba(0,0,0,.14);
-  background: transparent;
-  color: rgba(0,0,0,.5);
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  flex-shrink: 0;
-}
-
-/* ─────────────────────────────────────────
-   Stage 7 — Desktop layout (≥900px)
-───────────────────────────────────────── */
 
 @media (min-width: 900px) {
-  .screen {
-    flex-direction: row;
-    align-items: stretch;
-    height: 100vh;
-    overflow: hidden;
-  }
-
-  /* Left column: static header becomes a sidebar */
-  .staticHeader {
-    width: 360px;
-    flex-shrink: 0;
-    padding: 0 26px;
-    overflow-y: auto;
-    border-right: 1px solid rgba(0,0,0,.08);
-    border-bottom: none;
-    display: flex;
-    flex-direction: column;
-    padding-bottom: 40px;
-  }
-  .staticHeader::-webkit-scrollbar { display: none; }
-
-  /* Hairline is now a right-border on the sidebar; hide the bottom one */
-  .headerHairline { display: none; }
-
-  /* Right column: mode cards fill the rest */
-  .scrollArea {
-    flex: 1;
-    padding: 22px 28px 60px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-auto-rows: max-content;
-    gap: 14px;
-    align-content: start;
-  }
-
-  /* Each mode card fills its grid cell naturally */
-  .modeCard {
-    /* nothing extra needed — grid handles sizing */
-  }
-
-  /* Sheets stay mobile-width on desktop — max 480px centered */
-  .sheet {
-    left: 50%;
-    right: auto;
-    transform: translateX(-50%);
-    width: min(480px, 100vw);
-    border-radius: 24px;
-    bottom: 50%;
-    margin-bottom: -240px;
-  }
+  .header, .body { width: 100%; max-width: 720px; margin: 0 auto; box-sizing: border-box; }
 }
-
-/* ≥900px: shell AppHeader hides; screen appBar shows with guide pill only */
-@media (min-width: 900px) {
-  .appBar { display: flex; }
+@media (prefers-reduced-motion: reduce) {
+  .library, .card, .pill, .row { transition: none; }
 }
-
-
-/* ── Practice types: icon, tag line, and the type strip ── */
-.practiceIcon { flex: none; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
-.practiceText { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
-.practiceTag {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  color: var(--ink3);
-  margin-top: 1px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.typeBlock { grid-column: 1 / -1; }
-.typeAsk { font-family: var(--font-serif); font-weight: 300; font-size: 22px; line-height: 1.15; color: var(--ink); }
-.typeRow {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  margin: 14px -22px 0;
-  padding: 2px 22px 6px;
-  scroll-snap-type: x proximity;
-  scroll-padding-left: 22px;
-  scrollbar-width: none;
-}
-.typeRow::-webkit-scrollbar { display: none; }
-.typeTile {
-  flex: none;
-  width: 82px;
-  padding: 14px 6px 11px;
-  border-radius: var(--radius);
-  background: var(--card);
-  border: 0.5px solid var(--hairline);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 9px;
-  scroll-snap-align: start;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: background 80ms ease;
-}
-.typeTile:active { background: #F6F2E8; }
-.typeLabel { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink2); }
-@media (min-width: 900px) {
-  .typeRow { margin: 14px 0 0; padding: 2px 0 6px; scroll-padding-left: 0; }
-}
-@media (prefers-reduced-motion: reduce) { .typeTile { transition: none; } }
