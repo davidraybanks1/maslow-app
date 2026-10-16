@@ -7,10 +7,10 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 0;
   min-height: 62px;
   margin-bottom: 8px;
-  padding: 12px 14px 14px;
+  padding: 0;
   border-radius: 16px;
   background: transparent;
   border: 1px solid rgba(0, 0, 0, .16);
@@ -25,7 +25,7 @@
   border-color: color-mix(in srgb, var(--mc) 55%, transparent);
 }
 .card[data-holding] { transform: scale(.985); }
-.cardSplit { padding-right: 46px; }
+.cardSplit .hit { padding-right: 0; }
 .cardInert { border-style: dashed; border-color: var(--border2); }
 .cardInert .icon { opacity: .6; }
 .cardHolding .icon { animation: hold 3.2s ease-in-out infinite; }
@@ -47,7 +47,7 @@
 /* holding a finished practice undoes it, so the fill is plain grey instead */
 .card[data-undo] .fill { background: rgba(0, 0, 0, .12); }
 
-.icon, .text, .meta { position: relative; z-index: 1; pointer-events: none; }
+.icon, .text, .meta { pointer-events: none; }
 .icon { flex: none; display: flex; }
 
 .text { flex: 1; min-width: 0; }
@@ -106,28 +106,35 @@
 }
 .partial i { display: block; height: 100%; background: var(--mc); }
 
-/* the whole tile is the hold target; the chevron sits above it */
+/* the tile content is the hold target: a plain flex child that fills the card */
 .hit {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  width: 100%;
-  padding: 0;
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-width: 0;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  padding: 12px 14px 14px;
   border: 0;
   background: none;
   border-radius: inherit;
+  font: inherit;
+  color: inherit;
+  text-align: left;
   cursor: pointer;
   touch-action: pan-y;
   -webkit-tap-highlight-color: transparent;
 }
 .hit:focus-visible { outline: 2px solid rgba(26, 26, 26, .45); outline-offset: -2px; }
 .chevBtn {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
+  position: relative;
+  z-index: 1;
+  flex: none;
+  align-self: stretch;
   width: 46px;
-  z-index: 3;
   display: flex;
   align-items: center;
   justify-content: center;

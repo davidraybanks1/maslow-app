@@ -210,23 +210,26 @@ export default function PracticeRow({
         data-undo={st.done ? '1' : undefined}
       >
         <span ref={hold.fillRef} className={styles.fill} aria-hidden="true" />
-        <span className={styles.icon}><PracticeIcon kind={kind} size={34} lit={st.done ? lit : null} /></span>
-        <span className={styles.text}>
-          <span className={styles.label}>{practice.label}</span>
-          {sub && <span className={styles.sub}>{sub}</span>}
-        </span>
-        <span className={styles.meta}>
-          {showX2 && <span className={styles.x2}>×2</span>}
-          {stamp && <span className={styles.stamp}>{stamp}</span>}
-        </span>
-        {part > 0 && <span className={styles.partial} aria-hidden="true"><i style={{ width: `${Math.min(1, part) * 100}%` }} /></span>}
+        {/* The button IS the tile content (a normal flex child, not an overlay), so
+            the part you press is exactly the part you see. */}
         <button
           type="button"
           className={styles.hit}
           aria-label={`${name}. hold to ${st.done ? 'undo' : 'check off'}`}
           aria-pressed={st.done}
           {...hold.press}
-        />
+        >
+          <span className={styles.icon}><PracticeIcon kind={kind} size={34} lit={st.done ? lit : null} /></span>
+          <span className={styles.text}>
+            <span className={styles.label}>{practice.label}</span>
+            {sub && <span className={styles.sub}>{sub}</span>}
+          </span>
+          <span className={styles.meta}>
+            {showX2 && <span className={styles.x2}>×2</span>}
+            {stamp && <span className={styles.stamp}>{stamp}</span>}
+          </span>
+        </button>
+        {part > 0 && <span className={styles.partial} aria-hidden="true"><i style={{ width: `${Math.min(1, part) * 100}%` }} /></span>}
         {split && (
           <button
             type="button"
