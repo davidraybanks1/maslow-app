@@ -205,6 +205,7 @@ export default function PracticeRow({
     <div className={expanded ? styles.open : undefined} data-kind={kind}>
       <div
         ref={hold.cardRef}
+        data-hold-card=""
         className={`${styles.card} ${st.done ? styles.cardDone : ''} ${inert ? styles.cardInert : ''} ${holding ? styles.cardHolding : ''} ${split ? styles.cardSplit : ''}`}
         style={{ '--mc': MODES[mode]?.color || '#ABBEA3' }}
         data-undo={st.done ? '1' : undefined}
