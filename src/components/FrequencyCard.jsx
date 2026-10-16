@@ -241,22 +241,24 @@ export default function FrequencyCard({ initialBand, initialFeeling, onSettle, c
     <div className={`${styles.freqCard}${tone && styles[tone] ? ` ${styles[tone]}` : ''}`}>
       {!compact && (
         <>
-          <VibeRing band={band} />
-          <p className={styles.freqSentence}>
-            {band ? (
-              <>
-                {pastTense ? 'I was feeling' : "I'm feeling"}{' '}
-                <span className={styles.freqFilled}>{feeling || BAND_LABEL[band]}</span>.
-              </>
-            ) : slotName ? (
-              pastTense ? `How was your ${slotName}?` : slotName === 'today' ? 'How are you today?' : `How are you this ${slotName}?`
-            ) : (
-              <>
-                {pastTense ? 'I was feeling' : "I'm feeling"}{' '}
-                <span className={styles.freqBlank}>?</span>.
-              </>
-            )}
-          </p>
+          <div className={styles.freqTop}>
+            <p className={styles.freqSentence}>
+              {band ? (
+                <>
+                  {pastTense ? 'I was feeling' : "I'm feeling"}{' '}
+                  <span className={styles.freqFilled}>{feeling || BAND_LABEL[band]}</span>.
+                </>
+              ) : slotName ? (
+                pastTense ? `How was your ${slotName}?` : slotName === 'today' ? 'How are you today?' : `How are you this ${slotName}?`
+              ) : (
+                <>
+                  {pastTense ? 'I was feeling' : "I'm feeling"}{' '}
+                  <span className={styles.freqBlank}>?</span>.
+                </>
+              )}
+            </p>
+            <VibeRing band={band} />
+          </div>
           {introNote && !band && <p className={styles.freqIntroNote}>{introNote}</p>}
         </>
       )}
