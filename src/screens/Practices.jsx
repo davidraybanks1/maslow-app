@@ -4,7 +4,7 @@ import { NEEDS, MODES, MODE_ORDER, TIME_RE } from '../lib/constants'
 import { createDataStats, formatLastDone } from '../lib/dataStats'
 import { isNative, checkNotifPermission, requestNotifPermission, scheduleReminders } from '../lib/native'
 import { TYPES, TYPED_STARTERS, poolTag } from '../lib/practiceTypes'
-import PracticeIcon from '../components/PracticeIcon'
+import PracticeIcon, { TIER_LIT } from '../components/PracticeIcon'
 import PracticeSheet from '../components/PracticeSheet'
 import styles from './Practices.module.css'
 
@@ -281,6 +281,7 @@ export default function Practices({ state, addPractice, renamePractice, updatePr
           const modeNeeds = NEEDS.filter(n => state.canvas[n.id] === mode)
           if (!modeNeeds.length) return null
           const modeColor = MODES[mode]?.pip
+          const modeLit = TIER_LIT[mode]
           return modeNeeds.map(n => {
             const pool = useDB
               ? state.practicesDB.filter(p => p.need_id === n.id && !p.archived_at)
@@ -343,7 +344,7 @@ export default function Practices({ state, addPractice, renamePractice, updatePr
                         ) : (
                           <>
                             <div className={styles.poolRow}>
-                              <PracticeIcon kind={p.kind || 'check'} size={22} className={styles.poolIcon} />
+                              <PracticeIcon kind={p.kind || 'check'} size={22} lit={modeLit} className={styles.poolIcon} />
                               <span
                                 className={styles.poolText}
                                 onClick={editMode && p.id ? () => handleStartRename(p) : undefined}

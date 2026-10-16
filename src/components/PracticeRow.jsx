@@ -3,17 +3,11 @@ import { MODES } from '../lib/constants'
 import {
   isSplit, subLabel, fmtTime, STRETCH_WORDS, MAX_ITEMS,
 } from '../lib/practiceTypes'
-import PracticeIcon from './PracticeIcon'
+import PracticeIcon, { TIER_LIT } from './PracticeIcon'
 import styles from './PracticeRow.module.css'
 
-// Tier colours for a done practice, same lighting as the Bloom petals.
-// Exploration is flat black for now, matching its check circles before.
-const LIT = {
-  exploration:  ['#191612', '#191612'],
-  appreciation: ['#C7D4C1', '#9DB394'],
-  nourishment:  ['#FFD166', '#F0A800'],
-  survival:     ['#FF7A55', '#F03C10'],
-}
+// Tier colours for a done practice live with the icon (TIER_LIT).
+const LIT = TIER_LIT
 const PIP = { exploration: '#191612' }
 
 function stampFor(st, lastDays) {

@@ -62,6 +62,15 @@ function shapes(kind, fill) {
   }
 }
 
+// The lit colours per mode, the same lighting as the Bloom petals. Exploration
+// is flat black for now, matching its check circles before.
+export const TIER_LIT = {
+  exploration:  ['#191612', '#191612'],
+  appreciation: ['#C7D4C1', '#9DB394'],
+  nourishment:  ['#FFD166', '#F0A800'],
+  survival:     ['#FF7A55', '#F03C10'],
+}
+
 // lit: null (unlit, shiny black) | [hi, lo] gradient pair for a lit tier colour
 export default function PracticeIcon({ kind = 'check', size = 24, lit = null, className }) {
   const gid = useId().replace(/:/g, '')

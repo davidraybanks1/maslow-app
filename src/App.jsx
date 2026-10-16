@@ -47,6 +47,9 @@ class AppErrorBoundary extends Component {
   }
 }
 
+// The personalization pages are for setting things up; the floating draft button stays off them.
+const PERSONALIZE_PATHS = ['/canvas', '/practices']
+
 function Protected({ children, onboarded, userId }) {
   if (!onboarded) return <Navigate to="/onboarding" replace />
   if (!userId) return <Navigate to="/signin" replace />
@@ -220,7 +223,7 @@ function AppInner() {
   return (
     <HeaderSlotContext.Provider value={setHeaderSlot}>
     <div className={styles.shell} style={{ '--kb': kbInset + 'px' }} {...(state.onboarded && { 'data-tabbar': '' })} {...(headerSlot && { 'data-appheader': '' })}>
-      {state.onboarded && <DesktopNav name={state.profile.name} email={state.email} remindersEnabled={state.remindersEnabled} updateRemindersEnabled={updateRemindersEnabled} moodReminders={state.moodReminders} updateMoodReminder={updateMoodReminder} notifTypes={state.notifTypes} updateNotifType={updateNotifType} needCount={needCount} practiceCount={practiceCount} noteDeckCount={(state.noteDeck || []).length} customTagCount={customTagCount} resetTour={resetTour} onOpenComposer={() => setComposerOpen(true)} hideComposer={location.pathname === '/today'} />}
+      {state.onboarded && <DesktopNav name={state.profile.name} email={state.email} remindersEnabled={state.remindersEnabled} updateRemindersEnabled={updateRemindersEnabled} moodReminders={state.moodReminders} updateMoodReminder={updateMoodReminder} notifTypes={state.notifTypes} updateNotifType={updateNotifType} needCount={needCount} practiceCount={practiceCount} noteDeckCount={(state.noteDeck || []).length} customTagCount={customTagCount} resetTour={resetTour} onOpenComposer={() => setComposerOpen(true)} hideComposer={location.pathname === '/today' || PERSONALIZE_PATHS.includes(location.pathname)} />}
       <div className={styles.column}>
       {state.onboarded && headerSlot && (
         <div className={styles.appHeader}>
@@ -247,7 +250,7 @@ function AppInner() {
           drafts section instead — see Today.jsx — so the sticky circle
           button (and the sheet it opens) stays reserved for the Almanac
           and Drafts screens. */}
-      {state.onboarded && !typing && location.pathname !== '/today' && <ComposerFab onClick={() => setComposerOpen(true)} />}
+      {state.onboarded && !typing && location.pathname !== '/today' && !PERSONALIZE_PATHS.includes(location.pathname) && <ComposerFab onClick={() => setComposerOpen(true)} />}
       {state.onboarded && (
         <GlobalComposer state={state} logMood={logMood} open={composerOpen} onClose={() => setComposerOpen(false)} />
       )}
