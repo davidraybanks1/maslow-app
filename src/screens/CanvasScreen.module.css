@@ -905,3 +905,52 @@
 @media (min-width: 900px) {
   .appBar { display: flex; }
 }
+
+
+/* ── Practice types: icon, tag line, and the type strip ── */
+.practiceIcon { flex: none; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
+.practiceText { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+.practiceTag {
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  color: var(--ink3);
+  margin-top: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.typeBlock { grid-column: 1 / -1; }
+.typeAsk { font-family: var(--font-serif); font-weight: 300; font-size: 22px; line-height: 1.15; color: var(--ink); }
+.typeRow {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  margin: 14px -22px 0;
+  padding: 2px 22px 6px;
+  scroll-snap-type: x proximity;
+  scroll-padding-left: 22px;
+  scrollbar-width: none;
+}
+.typeRow::-webkit-scrollbar { display: none; }
+.typeTile {
+  flex: none;
+  width: 82px;
+  padding: 14px 6px 11px;
+  border-radius: var(--radius);
+  background: var(--card);
+  border: 0.5px solid var(--hairline);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  scroll-snap-align: start;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 80ms ease;
+}
+.typeTile:active { background: #F6F2E8; }
+.typeLabel { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink2); }
+@media (min-width: 900px) {
+  .typeRow { margin: 14px 0 0; padding: 2px 0 6px; scroll-padding-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .typeTile { transition: none; } }

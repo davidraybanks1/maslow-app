@@ -231,7 +231,7 @@ function AppInner() {
           <Route path="/practices" element={<Protected onboarded={state.onboarded} userId={state.userId}><Practices state={state} addPractice={addPractice} renamePractice={renamePractice} updatePractice={updatePractice} archivePractice={archivePractice} setPracticeReminder={setPracticeReminder} stampReminderOffered={stampReminderOffered} incrementOffersDeclined={incrementOffersDeclined} completeOnboarding={completeOnboarding} /></Protected>} />
           <Route path="/data" element={<Protected onboarded={state.onboarded} userId={state.userId}><Data state={state} archivePractice={archivePractice} profileMenu={profileMenuEl} /></Protected>} />
           <Route path="/log" element={<Protected onboarded={state.onboarded} userId={state.userId}><Log state={state} syncCheckinDay={syncCheckinDay} profileMenu={profileMenuEl} /></Protected>} />
-          <Route path="/canvas" element={<Protected onboarded={state.onboarded} userId={state.userId}><CanvasScreen state={state} updateCanvas={updateCanvas} addPractice={addPractice} renamePractice={renamePractice} archivePractice={archivePractice} /></Protected>} />
+          <Route path="/canvas" element={<Protected onboarded={state.onboarded} userId={state.userId}><CanvasScreen state={state} updateCanvas={updateCanvas} addPractice={addPractice} renamePractice={renamePractice} updatePractice={updatePractice} archivePractice={archivePractice} /></Protected>} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/password" element={<UpdatePassword />} />
           <Route path="/settings" element={<Navigate to="/today" replace />} />

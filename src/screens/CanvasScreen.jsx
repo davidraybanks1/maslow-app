@@ -3,6 +3,9 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { HeaderSlotContext } from '../lib/headerSlot'
 import { NEEDS, MODE_ORDER, MODES, MODE_NEED_CAP, MODE_DESCS, MODE_MAX_BUBBLES } from '../lib/constants'
 import { createDataStats, formatLastDone } from '../lib/dataStats'
+import { TYPES, poolTag } from '../lib/practiceTypes'
+import PracticeIcon from '../components/PracticeIcon'
+import PracticeSheet from '../components/PracticeSheet'
 import styles from './CanvasScreen.module.css'
 
 
@@ -13,7 +16,9 @@ const LIGHT_FILL_MODES = new Set(['appreciation', 'nourishment'])
 
 const GUIDE_KEY = 'maslow_canvas_guide_seen'
 
-export default function CanvasScreen({ state, updateCanvas, addPractice, renamePractice, archivePractice, onboarding = false, header = null, banner = null, footer = null }) {
+const PRACTICE_CAP = 10
+
+export default function CanvasScreen({ state, updateCanvas, addPractice, renamePractice, updatePractice, archivePractice, onboarding = false, header = null, banner = null, footer = null }) {
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -28,8 +33,7 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
   const [practiceMenu, setPracticeMenu]   = useState(null)   // practice id
   const [practiceDraft, setPracticeDraft] = useState('')
   const [deleteConfirm, setDeleteConfirm] = useState(null)   // practice id
-  const [addingFor, setAddingFor]         = useState(null)   // need id
-  const [addDraft, setAddDraft]           = useState('')
+  const [sheet, setSheet]                 = useState(null)   // practice builder: { kind?, needId?, name?, config?, editing?, practice? }
 
   // Stage 5 state
   const [draft, setDraft] = useState('')
@@ -97,16 +101,12 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
     setPracticeMenu(null)
     setPracticeDraft('')
     setDeleteConfirm(null)
-    setAddingFor(null)
-    setAddDraft('')
   }
 
   function openMenuFor(practiceId, label) {
     setPracticeMenu(practiceId)
     setPracticeDraft(label)
     setDeleteConfirm(null)
-    setAddingFor(null)
-    setAddDraft('')
   }
 
   function closeMenu() {
@@ -123,6 +123,17 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
   function handleArchive(practiceId) {
     archivePractice(practiceId)
     closeMenu()
+  }
+
+  const sheetNeeds = NEEDS.filter(n => state.canvas[n.id])
+  const fullNeeds = sheetNeeds.filter(n => getPractices(n.id).length >= PRACTICE_CAP).map(n => n.id)
+
+  function handleSheetSave({ needId, label, kind, config }) {
+    if (sheet?.practice?.id) updatePractice(sheet.practice.id, { label, kind, config })
+    else addPractice(needId, label, { kind, config })
+    if (needId) setOpenNeed(needId)
+    closeMenu()
+    setSheet(null)
   }
 
   function practiceCountLabel(count) {
@@ -209,6 +220,20 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
         {onboarding && banner}
 
         {/* /canvas: needs library sits above mode cards; onboarding: below */}
+        {!onboarding && addPractice && (
+          <div className={styles.typeBlock}>
+            <div className={styles.typeAsk}>what type of practice is it?</div>
+            <div className={styles.typeRow}>
+              {TYPES.map(t => (
+                <button type="button" key={t.id} className={styles.typeTile} onClick={() => setSheet({ kind: t.id })}>
+                  <PracticeIcon kind={t.id} size={40} />
+                  <span className={styles.typeLabel}>{t.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {!onboarding && (
           <>
             <div className={styles.librarySection}>
@@ -332,6 +357,24 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
                                   <button className={styles.cancelBtn} onClick={closeMenu}>
                                     cancel
                                   </button>
+                                  {useDB && updatePractice && (
+                                    <button
+                                      className={styles.cancelBtn}
+                                      aria-label={`${practice.label}: type and settings`}
+                                      onClick={() => {
+                                        setSheet({
+                                          kind: practice.kind || 'check',
+                                          needId: need.id,
+                                          name: practiceDraft.trim() || practice.label,
+                                          config: practice.config,
+                                          editing: true,
+                                          practice,
+                                        })
+                                      }}
+                                    >
+                                      type &amp; settings
+                                    </button>
+                                  )}
                                   <button
                                     className={`${styles.removeBtn}${deleteConfirm === practice.id ? ` ${styles.removeBtnConfirm}` : ''}`}
                                     onClick={() => {
@@ -356,8 +399,17 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
 
                           return (
                             <div key={practice.id} className={styles.practiceRow}>
-                              <span className={styles.practiceCircle} style={circleStyle(days, tierColor)} />
-                              <span className={styles.practiceName}>{practice.label}</span>
+                              <span className={styles.practiceIcon}>
+                                <PracticeIcon
+                                  kind={practice.kind || 'check'}
+                                  size={22}
+                                  lit={days === 0 || days === 1 ? [tierColor, tierColor] : null}
+                                />
+                              </span>
+                              <span className={styles.practiceText}>
+                                <span className={styles.practiceName}>{practice.label}</span>
+                                {poolTag(practice) && <span className={styles.practiceTag}>{poolTag(practice)}</span>}
+                              </span>
                               <span className={styles.practiceMeta}>{formatLastDone(days)}</span>
                               <button
                                 className={styles.menuBtn}
@@ -369,54 +421,17 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
                           )
                         })}
 
-                        {/* Add a practice */}
-                        {addingFor === need.id ? (
-                          <div className={styles.practiceEditor}>
-                            <input
-                              className={styles.renameField}
-                              value={addDraft}
-                              onChange={e => setAddDraft(e.target.value)}
-                              onKeyDown={e => {
-                                if (e.key === 'Enter' && addDraft.trim()) {
-                                  addPractice(need.id, addDraft.trim())
-                                  setAddingFor(null)
-                                  setAddDraft('')
-                                } else if (e.key === 'Escape') {
-                                  setAddingFor(null)
-                                  setAddDraft('')
-                                }
-                              }}
-                              placeholder="name this practice"
-                              autoFocus
-                            />
-                            <div className={styles.editorActions}>
-                              <button
-                                className={styles.saveBtn}
-                                disabled={!addDraft.trim()}
-                                onClick={() => {
-                                  addPractice(need.id, addDraft.trim())
-                                  setAddingFor(null)
-                                  setAddDraft('')
-                                }}
-                              >
-                                save
-                              </button>
-                              <button
-                                className={styles.cancelBtn}
-                                onClick={() => { setAddingFor(null); setAddDraft('') }}
-                              >
-                                cancel
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
+                        {/* Add a practice: type first, in the builder sheet */}
+                        {practices.length < PRACTICE_CAP ? (
                           <button
                             className={styles.addPracticeBtn}
-                            onClick={() => { closeMenu(); setAddingFor(need.id); setAddDraft('') }}
+                            onClick={() => { closeMenu(); setSheet({ needId: need.id }) }}
                           >
                             <span className={styles.addPracticePlus}>+</span>
                             <span className={styles.addPracticeLabel}>add a practice</span>
                           </button>
+                        ) : (
+                          <p className={styles.modeSelectorNote}>{PRACTICE_CAP} practices is the most a need holds. remove one to add another.</p>
                         )}
 
                         {/* Mode selector */}
@@ -567,6 +582,17 @@ export default function CanvasScreen({ state, updateCanvas, addPractice, renameP
       </div>
 
       {footer}
+
+      {/* ── Practice builder ── */}
+      {sheet && (
+        <PracticeSheet
+          needs={sheetNeeds}
+          fullNeeds={fullNeeds}
+          initial={sheet}
+          onSave={handleSheetSave}
+          onClose={() => setSheet(null)}
+        />
+      )}
 
       {/* ── Mode picker sheet ── */}
       {showModePicker && pendingNeed && (
