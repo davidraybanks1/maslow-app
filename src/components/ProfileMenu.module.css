@@ -416,7 +416,6 @@ div.moreRow { cursor: default; }
 .listCard { padding: 8px 18px; }
 .cardLabel { padding: 10px 0 4px; }
 .rule { border-bottom: 0.5px solid var(--pf-rule); }
-.foot { padding: 4px 6px; }
 
 /* toggle */
 .toggle {
@@ -445,20 +444,16 @@ div.moreRow { cursor: default; }
   transition: transform var(--motion-toggle);
 }
 .toggleOn .toggleKnob { transform: translateX(18px); }
-.toggle:focus-visible, .pill:focus-visible, .preset:focus-visible, .stepBtn:focus-visible,
+.toggle:focus-visible, .pill:focus-visible,
 .tile:focus-visible, .remCard:focus-visible, .moreHead:focus-visible, .closeBtn:focus-visible {
   outline: 2px solid rgba(26, 26, 26, .35);
   outline-offset: 2px;
 }
 
 /* mood check-in rows */
-.slot {
-  padding: 12px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
+.slot { padding: 12px 0; }
 .slotRow { display: flex; align-items: center; gap: 12px; }
+.slotName { flex: 1; min-width: 0; }
 .slotText { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .slotLabel { font-family: var(--font-serif); font-size: 21px; font-weight: 300; }
 .pill {
@@ -476,71 +471,18 @@ div.moreRow { cursor: default; }
   -webkit-tap-highlight-color: transparent;
 }
 .pillOff { color: var(--pf-faint); }
-.pillEditing { border: 1px solid var(--pf-ink); padding: 6.5px 13.5px; }
 
-.editor {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 14px;
-  border-radius: 14px;
-  background: var(--pf-inset);
-}
-.stepper { display: flex; align-items: center; gap: 8px; }
-.stepBtn {
-  flex: 1;
-  height: 44px;
-  border-radius: 12px;
-  border: 0.5px solid rgba(60, 45, 20, 0.2);
-  background: #FFFFFF;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--pf-ink);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-.stepTime {
-  flex: 1.3;
-  text-align: center;
-  font-family: var(--pf-xl);
-  font-size: 30px;
-  font-weight: 200;
-  white-space: nowrap;
-}
-.presets { display: flex; flex-wrap: wrap; gap: 6px; }
-.preset {
-  padding: 8px 12px;
-  border-radius: 999px;
-  border: 0.5px solid rgba(60, 45, 20, 0.2);
-  background: #FFFFFF;
-  color: var(--pf-ink2);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  cursor: pointer;
-  transition: background var(--motion-hover);
-  -webkit-tap-highlight-color: transparent;
-}
-.presetActive { background: var(--pf-ink); color: var(--paper); }
 
 /* practice reminder rows */
 .tone {
   display: flex;
   gap: 14px;
-  align-items: flex-start;
-  padding: 14px 0;
+  align-items: center;
+  padding: 12px 0;
 }
-.tone .toggle { margin-top: 2px; }
 .toneText { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .toneLabel { font-family: var(--font-serif); font-size: 20px; font-weight: 300; }
 .toneDesc { line-height: 1.5; }
-.toneExample {
-  margin-top: 4px;
-  font-family: var(--font-serif);
-  font-size: 16px;
-  font-style: italic;
-  font-weight: 300;
-  color: var(--pf-ink2);
-}
 
 /* ── Sign-out confirm ── */
 .confirmScrim {
@@ -668,5 +610,24 @@ div.moreRow { cursor: default; }
 /* ── Reduced motion: no slides, no fades ── */
 @media (prefers-reduced-motion: reduce) {
   .panel, .panelClosing, .scrim, .scrimClosing, .viewIn, .confirmScrim { animation: none !important; }
-  .tile, .remCard, .toggle, .toggleKnob, .moreChevron, .remBody, .pill, .preset, .closeBtn, .signOut, .dialogPrimary, .dialogDanger { transition: none !important; }
+  .tile, .remCard, .toggle, .toggleKnob, .moreChevron, .remBody, .pill, .closeBtn, .signOut, .dialogPrimary, .dialogDanger { transition: none !important; }
+}
+
+/* ── Check-in time sheet (rendered in a portal, so global tokens only) ── */
+.shTitle { font-family: var(--font-serif); font-weight: 300; font-size: 22px; line-height: 1.15; color: var(--ink); margin: 0 0 16px; text-transform: lowercase; }
+.shStepper { display: flex; align-items: center; gap: 10px; }
+.shStep {
+  flex: 1; min-height: 48px; border-radius: 12px; background: var(--paper); border: 1px solid rgba(0,0,0,.14);
+  font-family: var(--font-mono); font-size: 14px; color: var(--ink); cursor: pointer;
+}
+.shTime { flex: 1.5; text-align: center; font-family: var(--font-serif); font-size: 32px; font-weight: 300; color: var(--ink); white-space: nowrap; }
+.shPresets { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.shPreset {
+  min-height: 40px; padding: 0 14px; border-radius: 999px; background: none; border: 1px solid rgba(0,0,0,.16);
+  font-family: var(--font-mono); font-size: 13px; color: var(--ink2); cursor: pointer;
+}
+.shPresetOn { background: var(--ink); border-color: var(--ink); color: var(--card); }
+.shDone {
+  display: block; width: 100%; min-height: 48px; margin-top: 20px; border-radius: 999px; border: none;
+  background: var(--ink); color: var(--card); font-family: var(--font-mono); font-size: 14px; cursor: pointer;
 }

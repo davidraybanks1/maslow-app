@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { isNative, checkNotifPermission, requestNotifPermission } from '../lib/native'
 import { deleteAccount, wipeLocalData } from '../lib/store'
+import Sheet from './Sheet'
 import { PracticesArt, NotesArt, TagsArt } from './ProfileArt'
 import styles from './ProfileMenu.module.css'
 
@@ -16,9 +17,9 @@ const PRESETS = {
   evening: [1140, 1200, 1230, 1290],
 }
 const TONES = [
-  { key: 'streaks', label: 'streaks', desc: 'cheers you on when a practice keeps going', example: '“five mornings of stretching in a row.”' },
-  { key: 'skips', label: 'skips', desc: 'lets you know when a practice has gone quiet', example: '“no walk for three days. today, maybe?”' },
-  { key: 'plain', label: 'time reminders', desc: 'nudges you at the time you set on a practice', example: '“reading · 8:30 pm”' },
+  { key: 'streaks', label: 'streaks', desc: 'a cheer when one keeps going' },
+  { key: 'skips', label: 'skips', desc: 'a nudge when one goes quiet' },
+  { key: 'plain', label: 'time reminders', desc: 'at the time you set' },
 ]
 // the four modes as lit spheres: light / base / dark
 const SPHERES = [
@@ -172,7 +173,8 @@ export default function ProfileMenu({
     if (!mounted) return
     function onKey(e) {
       if (e.key !== 'Escape') return
-      if (confirmSignOut) setConfirmSignOut(false)
+      if (editing) setEditing(null)
+      else if (confirmSignOut) setConfirmSignOut(false)
       else if (showDeleteDialog) { setShowDeleteDialog(false); setDeleteTyped(''); setDeleteError(null) }
       else close()
     }
@@ -342,81 +344,72 @@ export default function ProfileMenu({
           <h2 className={styles.title}>reminders.</h2>
           <Toggle on={on} onClick={handleMasterToggle} label="all reminders" />
         </div>
-        <div className={styles.mono}>
-          {permissionDenied
-            ? 'turn on notifications for Loam in your ios settings.'
-            : on ? 'nudges arrive on your iphone' : 'off · you won’t get any nudges'}
-        </div>
+        {permissionDenied && (
+          <div className={styles.mono}>turn on notifications for Loam in your ios settings.</div>
+        )}
       </div>
 
       <div ref={bodyRef} className={`${styles.remBody} ${on ? '' : styles.remBodyOff}`}>
         <div className={`${styles.card} ${styles.listCard}`}>
-          <div className={`${styles.mono} ${styles.cardLabel}`}>mood check-ins</div>
+          <div className={`${styles.mono} ${styles.cardLabel}`}>check-ins</div>
           {SLOTS.map((slot, i) => {
-            const d = slotData(slot), m = slotMinutes(slot), sel = editing === slot
+            const d = slotData(slot), m = slotMinutes(slot)
             return (
-              <div key={slot} className={`${styles.slot} ${i < SLOTS.length - 1 ? styles.rule : ''}`}>
-                <div className={styles.slotRow}>
-                  <div className={styles.slotText}>
-                    <span className={styles.slotLabel}>{slot}</span>
-                    <span className={styles.mono}>{d.on ? `${slot} check-in · ${fmt(m)}` : `no ${slot} check-in`}</span>
-                  </div>
-                  <button
-                    type="button"
-                    className={`${styles.pill} ${sel ? styles.pillEditing : ''} ${d.on ? '' : styles.pillOff}`}
-                    aria-expanded={sel}
-                    aria-label={`${slot} time, ${d.on ? fmt(m) : 'off'}`}
-                    onClick={() => setEditing(sel ? null : slot)}
-                  >{d.on ? fmt(m) : 'off'}</button>
-                  <Toggle on={!!d.on} onClick={() => saveSlot(slot, { on: !d.on })} label={`${slot} check-in`} />
-                </div>
-                {sel && (
-                  <div className={styles.editor}>
-                    <div className={styles.stepper}>
-                      <button type="button" className={styles.stepBtn} onClick={() => saveSlot(slot, { minutes: m - 15, on: true })}>− 15 min</button>
-                      <span className={styles.stepTime}>{fmt(m)}</span>
-                      <button type="button" className={styles.stepBtn} onClick={() => saveSlot(slot, { minutes: m + 15, on: true })}>+ 15 min</button>
-                    </div>
-                    <div className={styles.presets}>
-                      {PRESETS[slot].map(t => {
-                        const active = d.on && m === t
-                        return (
-                          <button
-                            key={t}
-                            type="button"
-                            className={`${styles.preset} ${active ? styles.presetActive : ''}`}
-                            onClick={() => saveSlot(slot, { minutes: t, on: true })}
-                          >{fmt(t)}</button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
+              <div key={slot} className={`${styles.slotRow} ${styles.slot} ${i < SLOTS.length - 1 ? styles.rule : ''}`}>
+                <span className={`${styles.slotLabel} ${styles.slotName}`}>{slot}</span>
+                <button
+                  type="button"
+                  className={`${styles.pill} ${d.on ? '' : styles.pillOff}`}
+                  aria-haspopup="dialog"
+                  aria-label={`${slot} time, ${d.on ? fmt(m) : 'off'}`}
+                  onClick={() => setEditing(slot)}
+                >{d.on ? fmt(m) : 'off'}</button>
+                <Toggle on={!!d.on} onClick={() => saveSlot(slot, { on: !d.on })} label={`${slot} check-in`} />
               </div>
             )
           })}
         </div>
 
         <div className={`${styles.card} ${styles.listCard}`}>
-          <div className={`${styles.mono} ${styles.cardLabel}`}>practice reminders</div>
+          <div className={`${styles.mono} ${styles.cardLabel}`}>practice nudges</div>
           {TONES.map((t, i) => (
             <div key={t.key} className={`${styles.tone} ${i < TONES.length - 1 ? styles.rule : ''}`}>
               <div className={styles.toneText}>
                 <span className={styles.toneLabel}>{t.label}</span>
                 <span className={`${styles.mono} ${styles.toneDesc}`}>{t.desc}</span>
-                <span className={styles.toneExample}>{t.example}</span>
               </div>
               <Toggle on={toneOn(t.key)} onClick={() => updateNotifType?.(t.key, !toneOn(t.key))} label={t.label} />
             </div>
           ))}
         </div>
-        {notifTypes && Object.values(notifTypes).every(v => v === false) && (
-          <div className={`${styles.mono} ${styles.foot}`}>with all three off, practice reminders stay silent.</div>
-        )}
-        <div className={`${styles.mono} ${styles.foot}`}>you’ll get these on your iphone.</div>
       </div>
     </div>
   )
+
+  const timeSheet = editing && (() => {
+    const slot = editing, d = slotData(slot), m = slotMinutes(slot)
+    return (
+      <Sheet label={`${slot} check-in time`} onClose={() => setEditing(null)}>
+        <h2 className={styles.shTitle}>{slot}</h2>
+        <div className={styles.shStepper}>
+          <button type="button" className={styles.shStep} onClick={() => saveSlot(slot, { minutes: m - 15, on: true })}>− 15</button>
+          <span className={styles.shTime} aria-live="polite">{fmt(m)}</span>
+          <button type="button" className={styles.shStep} onClick={() => saveSlot(slot, { minutes: m + 15, on: true })}>+ 15</button>
+        </div>
+        <div className={styles.shPresets}>
+          {PRESETS[slot].map(t => (
+            <button
+              key={t}
+              type="button"
+              className={`${styles.shPreset} ${d.on && m === t ? styles.shPresetOn : ''}`}
+              onClick={() => saveSlot(slot, { minutes: t, on: true })}
+            >{fmt(t)}</button>
+          ))}
+        </div>
+        <button type="button" className={styles.shDone} onClick={() => setEditing(null)}>Done</button>
+      </Sheet>
+    )
+  })()
 
   const confirmEl = confirmSignOut && (
     <div className={styles.confirmScrim} onClick={() => setConfirmSignOut(false)}>
@@ -497,6 +490,7 @@ export default function ProfileMenu({
         </div>,
         document.body
       )}
+      {mounted && timeSheet}
     </div>
   )
 }
