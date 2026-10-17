@@ -112,6 +112,37 @@ export function groupReminders(practices) {
   return groups.map(({ time, practices }) => ({ time, practices }))
 }
 
+// Fires when a practice timer ends, so it still rings with the screen locked or
+// the app in the background. One at a time; 3001 is clear of the reminder ids.
+const TIMER_ALERT_ID = 3001
+
+export async function scheduleTimerAlert({ label, minutes, seconds }) {
+  if (!isNative()) return
+  try {
+    const { LocalNotifications } = await import('@capacitor/local-notifications')
+    let perm = await LocalNotifications.checkPermissions()
+    if (String(perm.display).startsWith('prompt')) perm = await LocalNotifications.requestPermissions()
+    if (perm.display !== 'granted') return
+    await LocalNotifications.cancel({ notifications: [{ id: TIMER_ALERT_ID }] })
+    await LocalNotifications.schedule({
+      notifications: [{
+        id: TIMER_ALERT_ID,
+        title: 'Time\u2019s up',
+        body: `${label}: your ${minutes} ${minutes === 1 ? 'minute is' : 'minutes are'} done.`,
+        schedule: { at: new Date(Date.now() + Math.max(1, seconds) * 1000), allowWhileIdle: true },
+      }],
+    })
+  } catch (e) { console.warn('[native]', e) }
+}
+
+export async function cancelTimerAlert() {
+  if (!isNative()) return
+  try {
+    const { LocalNotifications } = await import('@capacitor/local-notifications')
+    await LocalNotifications.cancel({ notifications: [{ id: TIMER_ALERT_ID }] })
+  } catch (e) { console.warn('[native]', e) }
+}
+
 /* Daily mood prompts + per-practice reminders. */
 export async function scheduleReminders({
   remindersEnabled,

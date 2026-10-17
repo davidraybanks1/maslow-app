@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { hapticSuccess, scheduleTimerAlert, cancelTimerAlert } from '../lib/native'
 import styles from './TimerTakeover.module.css'
 
 // The orb's outline: a circle with a slow three-lobed wobble, the same blob
@@ -42,8 +43,16 @@ export default function TimerTakeover({ label, minutes, onFinish, onClose }) {
   function setPause(v) {
     const r = run.current
     if (r.done) return
-    if (v && !r.paused) { r.paused = true; r.pausedAt = Date.now() }
-    else if (!v && r.paused) { r.paused = false; r.acc += Date.now() - r.pausedAt }
+    if (v && !r.paused) {
+      r.paused = true
+      r.pausedAt = Date.now()
+      cancelTimerAlert()
+    } else if (!v && r.paused) {
+      const elapsed = (r.pausedAt - r.t0 - r.acc) / 1000
+      r.paused = false
+      r.acc += Date.now() - r.pausedAt
+      scheduleTimerAlert({ label, minutes, seconds: total - elapsed })
+    }
     setPaused(r.paused)
   }
 
@@ -67,6 +76,7 @@ export default function TimerTakeover({ label, minutes, onFinish, onClose }) {
       if (remaining !== shown) { shown = remaining; setLeft(Math.max(0, remaining)) }
       if (!r.done && el >= total) {
         r.done = true
+        hapticSuccess()
         setDone(true)
         setConfirm(false)
       }
@@ -75,6 +85,13 @@ export default function TimerTakeover({ label, minutes, onFinish, onClose }) {
     raf = requestAnimationFrame(frame)
     return () => cancelAnimationFrame(raf)
   }, [total])
+
+  // A notification at the end time, so the timer rings even with the screen
+  // locked. Pausing cancels it, resuming sets a new one, leaving cancels it.
+  useEffect(() => {
+    scheduleTimerAlert({ label, minutes, seconds: total })
+    return () => { cancelTimerAlert() }
+  }, [])
 
   useEffect(() => {
     if (!done) return undefined
