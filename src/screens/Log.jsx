@@ -12,6 +12,7 @@ import FirstWeekCard from '../components/FirstWeekCard'
 import GhostPreview from '../components/GhostPreview'
 import { SAMPLE_THREADS } from '../lib/previewSamples'
 import styles from './Log.module.css'
+import SignedImg from '../components/SignedImg'
 
 const MOOD_PILL = {
   good: { bg: '#1B3A2D' },
@@ -1368,7 +1369,7 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
                           {!isExpanded && isTruncatable && (
                             <span className={styles.archiveCardReadMore}>read more</span>
                           )}
-                          {e.image_url && <img src={e.image_url} className={styles.archiveEntryImage} alt="" />}
+                          {e.image_url && <SignedImg src={e.image_url} className={styles.archiveEntryImage} alt="" />}
                         </button>
                         <span className={styles.archiveCardTags}>
                           {(e.mood_feeling || e.mood_band) && <span className={styles.archiveTag}>{e.mood_feeling || BAND_LABEL[normalizeBand(e.mood_band)] || e.mood_band}</span>}

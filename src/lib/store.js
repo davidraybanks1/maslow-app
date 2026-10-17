@@ -1221,8 +1221,8 @@ export async function updateNoteDeckCard(id, { text, imageUrl, userId, previousT
 
 function removeStorageImage(imageUrl) {
   if (!imageUrl) return
-  const parts = imageUrl.split('/storage/v1/object/public/note-images/')
-  if (parts[1]) supabase.storage.from('note-images').remove([parts[1]])
+  const marker = SIGN_MARKERS.find(m => imageUrl.includes(m))
+  if (marker) supabase.storage.from('note-images').remove([decodeURIComponent(imageUrl.split(marker)[1].split('?')[0])])
 }
 
 export async function deleteNoteDeckCard(id, userId, text, imageUrl) {
@@ -1247,13 +1247,48 @@ export async function loadNoteHistory(userId) {
   return data?.note_history || []
 }
 
+const IMAGE_EXT_BY_TYPE = {
+  'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp',
+  'image/gif': 'gif', 'image/heic': 'heic',
+}
+const IMAGE_EXTS = new Set(['jpg', 'jpeg', 'png', 'webp', 'gif', 'heic'])
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024
+
 export async function uploadNoteImage(userId, file) {
-  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
+  // Only real images, and not enormous ones. The bucket enforces the same limits.
+  const nameExt = (file.name?.split('.').pop() || '').toLowerCase()
+  const ext = IMAGE_EXT_BY_TYPE[file.type] || (IMAGE_EXTS.has(nameExt) ? nameExt : null)
+  if (!ext) return { url: null, error: new Error('That file type is not supported. Use a JPG, PNG, WebP, GIF or HEIC photo.') }
+  if (file.size > MAX_IMAGE_BYTES) return { url: null, error: new Error('That photo is larger than 5 MB.') }
   const path = `${userId}/${Date.now()}.${ext}`
   const { error } = await supabase.storage.from('note-images').upload(path, file)
   if (error) { logSupabaseError('uploadNoteImage', error); return { url: null, error } }
+  // Stored in the same public-URL shape as before so existing rows keep working.
+  // The bucket is private, so every display goes through signedNoteImageUrl().
   const { data } = supabase.storage.from('note-images').getPublicUrl(path)
   return { url: data.publicUrl, error: null }
+}
+
+// Turn a stored note-image URL into a short-lived signed URL the browser can load.
+// Anything that is not one of our storage URLs (a blob: preview, say) passes through.
+const SIGN_MARKERS = ['/storage/v1/object/public/note-images/', '/storage/v1/object/sign/note-images/']
+const SIGN_TTL_S = 3600
+const signedCache = new Map() // path -> { url, exp }
+
+export async function signedNoteImageUrl(src) {
+  if (!src) return src
+  let path = null
+  for (const m of SIGN_MARKERS) {
+    const i = src.indexOf(m)
+    if (i !== -1) { path = decodeURIComponent(src.slice(i + m.length).split('?')[0]); break }
+  }
+  if (!path) return src
+  const hit = signedCache.get(path)
+  if (hit && hit.exp > Date.now()) return hit.url
+  const { data, error } = await supabase.storage.from('note-images').createSignedUrl(path, SIGN_TTL_S)
+  if (error || !data?.signedUrl) { logSupabaseError('signedNoteImageUrl', error); return src }
+  signedCache.set(path, { url: data.signedUrl, exp: Date.now() + (SIGN_TTL_S - 300) * 1000 })
+  return data.signedUrl
 }
 
 export async function loadUserCreatedAt(userId) {

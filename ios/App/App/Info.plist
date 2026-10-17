@@ -47,5 +47,9 @@
 	<true/>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>NSCameraUsageDescription</key>
+	<string>Loam uses the camera only when you choose to take a photo to attach to a note to yourself.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Loam uses your photos only when you choose one to attach to a note to yourself.</string>
 </dict>
 </plist>

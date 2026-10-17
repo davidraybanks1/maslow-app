@@ -13,6 +13,7 @@ import FrequencyCard, { MOOD_PIP_COLOR } from './FrequencyCard'
 // GlobalComposer.module.css for the sheet/modal chrome that is new here.
 import todayStyles from '../screens/Today.module.css'
 import styles from './GlobalComposer.module.css'
+import SignedImg from '../components/SignedImg'
 
 function formatQuoteDate(dateKey) {
   if (!dateKey) return ''
@@ -247,7 +248,7 @@ export default function GlobalComposer({ state, logMood, open, onClose }) {
         <button className={todayStyles.attachBtn} onClick={() => !noItems && setAttachMenuOpen(o => !o)} aria-label="attach photo or quote" disabled={noItems}>⊕</button>
         {hasPhoto && (
           <button className={todayStyles.attachChip} onClick={() => { setDraftImage(null); setSelectedChartId(null) }}>
-            <img src={draftImage} className={todayStyles.attachThumb} alt="" />×
+            <SignedImg src={draftImage} className={todayStyles.attachThumb} alt="" />×
           </button>
         )}
         {hasQuote && (

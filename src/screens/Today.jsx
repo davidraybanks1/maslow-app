@@ -23,6 +23,7 @@ import TimerTakeover from '../components/TimerTakeover'
 import PracticeToast from '../components/PracticeToast'
 import { usePracticeActions, practiceKey } from '../lib/usePracticeActions'
 import styles from './Today.module.css'
+import SignedImg from '../components/SignedImg'
 
 const MODE_THRESHOLDS = { exploration: 80, appreciation: 60, nourishment: 50, survival: 20 }
 
@@ -539,7 +540,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         <button className={styles.attachBtn} onClick={() => !noItems && setAttachMenuOpen(o => !o)} aria-label="attach photo or quote" disabled={noItems}>⊕</button>
         {hasPhoto && (
           <button className={styles.attachChip} onClick={() => setDraftImage(null)}>
-            <img src={draftImage} className={styles.attachThumb} alt="" />×
+            <SignedImg src={draftImage} className={styles.attachThumb} alt="" />×
           </button>
         )}
         {hasQuote && (
@@ -887,7 +888,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                         <div className={styles.noteDeckBody}>
                           <span className={styles.noteText} data-len={noteLenAttr(card.text)}>{card.text}</span>
                           {card.image_url && (
-                            <img
+                            <SignedImg
                               src={card.image_url}
                               alt=""
                               className={styles.noteThumbnail}
@@ -925,7 +926,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                         <div className={`${styles.noteDeckBody} ${styles.noteStackBody}`}>
                           <span className={styles.noteText} data-len={noteLenAttr(card.text)}>{card.text}</span>
                           {card.image_url && (
-                            <img
+                            <SignedImg
                               src={card.image_url}
                               alt=""
                               className={styles.noteThumbnail}
@@ -1313,7 +1314,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                           )}
                           <div className={styles.journalEntryText}>{display}</div>
                           {!isExp && trunc && <button className={styles.journalReadMore} onClick={toggle}>read more</button>}
-                          {e.image_url && <img src={e.image_url} className={styles.journalEntryImage} alt="" />}
+                          {e.image_url && <SignedImg src={e.image_url} className={styles.journalEntryImage} alt="" />}
                         </>
                       )
                     })()}
@@ -1388,7 +1389,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                           )}
                           <div className={styles.journalEntryText}>{display}</div>
                           {!isExp && trunc && <button className={styles.journalReadMore} onClick={toggle}>read more</button>}
-                          {e.image_url && <img src={e.image_url} className={styles.journalEntryImage} alt="" />}
+                          {e.image_url && <SignedImg src={e.image_url} className={styles.journalEntryImage} alt="" />}
                         </>
                       )
                     })()}
@@ -1440,7 +1441,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
       {lightboxImage && (
         <div className={styles.lightboxOverlay} onClick={() => setLightboxImage(null)}>
           <button className={styles.lightboxClose} onClick={() => setLightboxImage(null)}>×</button>
-          <img src={lightboxImage} alt="" className={styles.lightboxImage} onClick={e => e.stopPropagation()} />
+          <SignedImg src={lightboxImage} alt="" className={styles.lightboxImage} onClick={e => e.stopPropagation()} />
         </div>
       )}
 

@@ -7,6 +7,7 @@ import {
 } from '../lib/store'
 import Sheet from './Sheet'
 import styles from './ManageDeck.module.css'
+import SignedImg from '../components/SignedImg'
 
 // Notes to self. Same shape as Practices and Needs: a few short sections, and a
 // tap on any note opens one sheet with everything for it. Today shows 3 to 5.
@@ -146,7 +147,7 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
         onClick={() => openCard(c)}
       >
         {n != null && <span className={styles.badge}>{n}</span>}
-        {c.image_url && <img src={c.image_url} className={styles.thumb} alt="" />}
+        {c.image_url && <SignedImg src={c.image_url} className={styles.thumb} alt="" />}
         <span className={styles.rowText}>{c.text}</span>
         <span className={styles.chev} aria-hidden="true" />
       </button>
