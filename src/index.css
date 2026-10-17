@@ -200,13 +200,14 @@ button { touch-action: manipulation; }
   --motion-data:        400ms;
   --motion-step:        150ms;
 
-  /* Safe-area tokens: non-zero on PWA; zeroed on native where contentInset handles both */
+  /* Safe-area tokens. Same in the PWA and the iOS app: the app runs edge to edge
+     (contentInset "never" in capacitor.config.json) and reads the insets from env().
+     The old setup let the OS inset the web view and zeroed these on native, which
+     skewed where iOS delivers touches to pointer handlers (a hold landed on the
+     practice below the one under the finger). */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
-
-/* Capacitor sets this class at boot — content is already inset by the OS */
-html.native { --safe-top: 0px; --safe-bottom: 0px; }
 
 /* iOS "Add to Home Screen" standalone mode has a WebKit bug where
    env(safe-area-inset-bottom) reports Safari's own bottom-toolbar height
