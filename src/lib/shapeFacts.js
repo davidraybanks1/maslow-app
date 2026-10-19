@@ -3,8 +3,11 @@
 // Everything here is computed on the device from data the person already has
 // in the app (check-ins, moods). Nothing is sent anywhere, and nothing here
 // ever reads what they wrote in a draft. See the privacy policy.
-import { needName } from './constants'
-import { normalizeBand, BAND_LABEL } from './frequency'
+import { needName, MODE_ORDER } from './constants'
+import { normalizeBand, BAND_LABEL, FEELINGS } from './frequency'
+import { buildLadder } from './ladder'
+import { buildInsights } from './insights'
+import { buildStreaks } from './streaks'
 import { SLOTS } from './slots'
 
 // shape id -> value stored in journal.shape (matches the DB check constraint)
@@ -115,37 +118,156 @@ function moodWeek(state, days) {
 function plural(n, one, many) { return n === 1 ? one : many }
 
 /* ── truths ────────────────────────────────────────────────── */
-// A ranked pool of true statements, each from the person's own check-ins and
-// moods. `kind` is "up" (gives energy), "down" (takes or is missing) or
-// "plain". Always returns at least three: sparse accounts get gentle,
-// still-true fallbacks.
+// Every fact is a true statement drawn from what the person already has in
+// the app — the same numbers the Data screen shows (observations, streaks,
+// what changed, rhythm, vibrations) plus today's check-ins. All computed on
+// the device; nothing is sent anywhere and no draft text is ever read.
+//
+// A fact: { id, label, text, kind: 'up' | 'down' | 'plain', dotBand?, dotMode? }
+// `label` is the small caption (THIS WEEK, STREAK, WHAT CHANGED…), `text` is
+// one sentence that stands on its own, `kind` says whether it gives or takes
+// energy (used to build tension pairs).
+const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+const BAND_OF_FEELING = Object.fromEntries(
+  Object.entries(FEELINGS).flatMap(([band, list]) => list.map(f => [f, band])),
+)
+
+// order the groups are dealt from, so any three facts tend to come from
+// three different parts of the person's data
+const GROUP_ORDER = [
+  'FINDING', 'STREAK', 'WHAT CHANGED', 'OBSERVATION', 'YOUR RHYTHM',
+  'YOUR VIBRATIONS', 'THIS WEEK', 'QUIET LATELY', 'TODAY', 'THIS MONTH', 'TRUE TODAY',
+]
+
+function safely(fn) {
+  try { return fn() || [] } catch { return [] }
+}
+
+function insightFacts(state) {
+  const ladder = buildLadder({
+    canvas: state.canvas || {}, checkins: state.checkins || {}, moods: state.moods || [],
+    practicesDB: state.practicesDB || [], modeOrder: MODE_ORDER,
+  })
+  const list = buildInsights({ ladder, moods: state.moods || [], checkins: state.checkins || {}, canvas: state.canvas || {} })
+  return list.slice(0, 5).map(i => ({
+    id: i.id,
+    label: i.kind === 'finding' ? 'FINDING' : 'OBSERVATION',
+    text: i.text,
+    kind: i.kind === 'finding' ? 'up' : 'plain',
+  }))
+}
+
+function streakFacts(state, today) {
+  const list = buildStreaks({
+    canvas: state.canvas || {}, checkins: state.checkins || {}, moods: state.moods || [],
+    practicesDB: state.practicesDB || [], today,
+  })
+  const out = []
+  for (const st of list.slice(0, 8)) {
+    const key = `streak-${st.kind}-${st.name}-${st.quiet ? 'q' : 'r'}`
+    const mode = st.mode || null
+    if (st.quiet) {
+      out.push({ id: key, label: 'QUIET LATELY', kind: 'down', dotMode: mode,
+        text: `"${st.name}" has been quiet for ${st.days} days` })
+    } else if (st.kind === 'practice') {
+      out.push({ id: key, label: 'STREAK', kind: 'up', dotMode: mode,
+        text: `"${st.name}" is on a ${st.days}-day run${st.isRecord ? ', your longest yet' : ''}` })
+    } else if (st.kind === 'need') {
+      out.push({ id: key, label: 'STREAK', kind: 'up', dotMode: mode,
+        text: `${needName(st.name)} has been fully met ${st.days} days running` })
+    } else if (st.kind === 'mode') {
+      out.push({ id: key, label: 'STREAK', kind: 'up', dotMode: st.name,
+        text: `every ${st.name} need met, ${st.days} days running` })
+    } else if (st.kind === 'frequency') {
+      out.push({ id: key, label: 'STREAK', kind: st.name === 'bad' ? 'down' : 'plain', dotBand: st.name,
+        text: `${st.days} days running that were mostly ${BAND_LABEL[st.name] || st.name}` })
+    }
+  }
+  return out
+}
+
+function weekChangeFacts(state, today) {
+  const cur = lastDays(7, new Date(today + 'T12:00:00'))
+  const prior = lastDays(14, new Date(today + 'T12:00:00')).slice(7)
+  const out = []
+  for (const needId of Object.keys(state.canvas || {})) {
+    const pct = days => Math.round(days.filter(k => checkinsOn(state, k).some(c => c.need_id === needId)).length / days.length * 100)
+    const delta = pct(cur) - pct(prior)
+    if (delta >= 20) out.push({ id: `chg-up-${needId}`, label: 'WHAT CHANGED', kind: 'up', dotMode: state.canvas[needId], mag: delta,
+      text: `${needName(needId)} is up ${delta} points on the week before` })
+    if (delta <= -20) out.push({ id: `chg-down-${needId}`, label: 'WHAT CHANGED', kind: 'down', dotMode: state.canvas[needId], mag: -delta,
+      text: `${needName(needId)} is down ${-delta} points on the week before` })
+  }
+  return out.sort((a, b) => b.mag - a.mag).slice(0, 4)
+}
+
+function rhythmFacts(state) {
+  const byDay = Array.from({ length: 7 }, () => ({ good: 0, n: 0 }))
+  for (const m of state.moods || []) {
+    if (!m.date_key || !m.mood) continue
+    const d = new Date(m.date_key + 'T12:00:00').getDay()
+    byDay[d].n += 1
+    if (normalizeBand(m.mood) === 'good') byDay[d].good += 1
+  }
+  const rated = byDay.map((r, d) => ({ d, n: r.n, pct: r.n ? Math.round(r.good / r.n * 100) : 0 })).filter(r => r.n >= 6)
+  if (rated.length < 4) return []
+  rated.sort((a, b) => b.pct - a.pct)
+  const best = rated[0]
+  const worst = rated[rated.length - 1]
+  const out = [{ id: 'rhythm-best', label: 'YOUR RHYTHM', kind: 'up', dotBand: 'good',
+    text: `${WEEKDAYS[best.d]}s are your strongest day, ${best.pct}% good check-ins` }]
+  if (best.pct - worst.pct >= 15) out.push({ id: 'rhythm-worst', label: 'YOUR RHYTHM', kind: 'down', dotBand: 'mid',
+    text: `${WEEKDAYS[worst.d]}s run quietest, ${worst.pct}% good check-ins` })
+  return out
+}
+
+function vibrationFacts(state, today) {
+  const set = new Set(lastDays(30, new Date(today + 'T12:00:00')))
+  const tally = {}
+  for (const m of state.moods || []) {
+    if (!set.has(m.date_key) || !m.feeling) continue
+    tally[m.feeling] = (tally[m.feeling] || 0) + 1
+  }
+  const top = Object.entries(tally).sort((a, b) => b[1] - a[1])[0]
+  if (!top || top[1] < 4) return []
+  const band = BAND_OF_FEELING[top[0]] || null
+  return [{ id: 'vib-top', label: 'YOUR VIBRATIONS', kind: band === 'bad' ? 'down' : 'plain', dotBand: band,
+    text: `${top[0]} is the vibration you have felt most this month, ${top[1]} check-ins` }]
+}
+
+// A ranked pool of true statements. Always returns at least three: sparse
+// accounts get gentle, still-true fallbacks.
 export function truthPool(state, today) {
-  const pool = []
+  const all = []
   const week = lastDays(7, new Date(today + 'T12:00:00'))
   const month = lastDays(30, new Date(today + 'T12:00:00'))
 
+  all.push(...safely(() => insightFacts(state)))
+  all.push(...safely(() => streakFacts(state, today)))
+  all.push(...safely(() => weekChangeFacts(state, today)))
+  all.push(...safely(() => rhythmFacts(state)))
+  all.push(...safely(() => vibrationFacts(state, today)))
+
   const counts = practiceCounts(state, week)
   if (counts[0] && counts[0].days >= 2) {
-    pool.push({ id: 'p-top', kind: 'up', text: `you did "${counts[0].text}" on ${counts[0].days} of the last 7 days` })
+    all.push({ id: 'p-top', label: 'THIS WEEK', kind: 'up', dotMode: state.canvas?.[counts[0].needId] || null,
+      text: `you did "${counts[0].text}" on ${counts[0].days} of the last 7 days` })
   }
   if (counts[1] && counts[1].days >= 2) {
-    pool.push({ id: 'p-second', kind: 'up', text: `"${counts[1].text}" showed up ${counts[1].days} ${plural(counts[1].days, 'day', 'days')} this week` })
+    all.push({ id: 'p-second', label: 'THIS WEEK', kind: 'up', dotMode: state.canvas?.[counts[1].needId] || null,
+      text: `"${counts[1].text}" showed up ${counts[1].days} ${plural(counts[1].days, 'day', 'days')} this week` })
   }
 
   const todayDone = checkinsOn(state, today)
   if (todayDone.length) {
-    pool.push({ id: 'today-n', kind: 'up', text: `you've already checked in ${todayDone.length} ${plural(todayDone.length, 'practice', 'practices')} today` })
+    all.push({ id: 'today-n', label: 'TODAY', kind: 'up',
+      text: `you have checked in ${todayDone.length} ${plural(todayDone.length, 'practice', 'practices')} today` })
   }
-
   const mood = latestMoodToday(state, today)
   if (mood) {
     const w = mood.feeling || BAND_LABEL[mood.band] || mood.band
-    pool.push({ id: 'mood-now', kind: mood.band === 'bad' ? 'down' : 'plain', text: `you checked in as ${w} today` })
-  }
-
-  const mw = moodWeek(state, week)
-  if (mw) {
-    pool.push({ id: 'mood-week', kind: mw.band === 'bad' ? 'down' : 'plain', text: `most of your check-ins this week were ${BAND_LABEL[mw.band] || mw.band}` })
+    all.push({ id: 'mood-now', label: 'TODAY', kind: mood.band === 'bad' ? 'down' : 'plain', dotBand: mood.band,
+      text: `you checked in as ${w} today` })
   }
 
   const seen = needLastSeen(state, today)
@@ -153,12 +275,11 @@ export function truthPool(state, today) {
     .filter(n => n.daysAgo == null || n.daysAgo >= 5)
     .sort((a, b) => (b.daysAgo ?? 999) - (a.daysAgo ?? 999))[0]
   if (neglected) {
-    pool.push({
-      id: 'need-quiet',
-      kind: 'down',
+    all.push({
+      id: 'need-quiet', label: 'QUIET LATELY', kind: 'down', dotMode: state.canvas?.[neglected.needId] || null,
       text: neglected.daysAgo == null
-        ? `${needName(neglected.needId)} hasn't had a check-in yet`
-        : `${needName(neglected.needId)} hasn't had a check-in in ${neglected.daysAgo} days`,
+        ? `${needName(neglected.needId)} has not had a check-in yet`
+        : `${needName(neglected.needId)} has not had a check-in in ${neglected.daysAgo} days`,
     })
   }
 
@@ -169,36 +290,49 @@ export function truthPool(state, today) {
   }
   const topNeed = Object.entries(needDays).sort((a, b) => b[1] - a[1])[0]
   if (topNeed && topNeed[1] >= 4) {
-    pool.push({ id: 'need-top', kind: 'up', text: `${needName(topNeed[0])} is the need you've shown up for most this month` })
+    all.push({ id: 'need-top', label: 'THIS MONTH', kind: 'up', dotMode: state.canvas?.[topNeed[0]] || null,
+      text: `${needName(topNeed[0])} is the need you have shown up for most this month` })
   }
 
-  // Always-true fallbacks, so a brand-new account still gets three.
-  const fallbacks = [
-    { id: 'f-here', kind: 'plain', text: `you're here, writing, on ${new Date(today + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long' })}` },
-    { id: 'f-nobody', kind: 'plain', text: 'nobody has to read this' },
-    { id: 'f-body', kind: 'plain', text: 'your body is somewhere right now, doing its best' },
-    { id: 'f-day', kind: 'plain', text: 'today is only one day in a longer run' },
-  ]
-  for (const f of fallbacks) pool.push(f)
-  return pool
+  const weekday = new Date(today + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long' })
+  all.push(
+    { id: 'f-here', label: 'TRUE TODAY', kind: 'plain', text: `you are here, writing, on a ${weekday}` },
+    { id: 'f-nobody', label: 'TRUE TODAY', kind: 'plain', text: 'nobody has to read this' },
+    { id: 'f-body', label: 'TRUE TODAY', kind: 'plain', text: 'your body is somewhere right now, doing its best' },
+  )
+
+  // dedupe by id, then deal round-robin across groups
+  const byId = new Map()
+  for (const f of all) if (!byId.has(f.id)) byId.set(f.id, f)
+  const groups = new Map(GROUP_ORDER.map(g => [g, []]))
+  for (const f of byId.values()) (groups.get(f.label) || groups.set(f.label, []).get(f.label)).push(f)
+  const ordered = []
+  for (let r = 0; ; r++) {
+    let any = false
+    for (const list of groups.values()) if (list[r]) { ordered.push(list[r]); any = true }
+    if (!any) break
+  }
+  return ordered
 }
 
-// Pick three, starting `offset` places along, so "shuffle" rotates.
-export function pickTruths(pool, offset = 0) {
+// Pick three, starting somewhere that changes daily, and `offset` places
+// along, so "show me three others" rotates through the pool.
+export function pickTruths(pool, offset = 0, seed = 0) {
   const n = pool.length
+  const start = (seed * 3 + offset * 3) % n
   const out = []
-  for (let i = 0; i < Math.min(3, n); i++) out.push(pool[(offset * 3 + i) % n])
+  for (let i = 0; i < Math.min(3, n); i++) out.push(pool[(start + i) % n])
   return out
 }
 
 // Two things pulling on you: one that gives energy, one that takes it or is
 // missing. Falls back to plain framing when there isn't enough data.
-export function tensionPair(state, today, offset = 0) {
+export function tensionPair(state, today, offset = 0, seed = 0) {
   const pool = truthPool(state, today)
   const ups = pool.filter(t => t.kind === 'up')
   const downs = pool.filter(t => t.kind === 'down')
-  const a = ups.length ? ups[offset % ups.length] : { id: 'a-fb', kind: 'up', text: 'something that has been giving you energy lately' }
-  const b = downs.length ? downs[offset % downs.length] : { id: 'b-fb', kind: 'down', text: 'something that has been taking it' }
+  const a = ups.length ? ups[(seed + offset) % ups.length] : { id: 'a-fb', label: 'GIVING ENERGY', kind: 'up', text: 'something that has been giving you energy lately' }
+  const b = downs.length ? downs[(seed + offset) % downs.length] : { id: 'b-fb', label: 'TAKING ENERGY', kind: 'down', text: 'something that has been taking it' }
   return [a, b]
 }
 
@@ -253,6 +387,11 @@ export function suggestShape(mood) {
   const id = BY_FEELING[mood.feeling]
   if (!id) return null
   return { id, line: `you checked in as ${mood.feeling}. ${shapeLabel(id)} might fit.` }
+}
+
+// A number that changes each day, so the same three facts don't greet you every time.
+export function daySeed(dateKey) {
+  return Math.floor(new Date(dateKey + 'T12:00:00').getTime() / 86400000)
 }
 
 /* ── small formatting helpers ──────────────────────────────── */

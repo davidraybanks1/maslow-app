@@ -5,7 +5,7 @@ import { loadRecentDrafts } from '../../lib/store'
 import { hapticTick } from '../../lib/native'
 import {
   truthPool, pickTruths, tensionPair, todayChips, anglesFor,
-  shortDate, clip,
+  shortDate, clip, daySeed,
 } from '../../lib/shapeFacts'
 import styles from './Shapes.module.css'
 
@@ -19,11 +19,47 @@ function autosize(el) {
   el.style.height = Math.max(el.scrollHeight, 0) + 'px'
 }
 
+/* ── fact notes (truths + tension) ───────────────────────── */
+function factDot(f) {
+  if (f.dotMode && MODES[f.dotMode]) return MODES[f.dotMode].color
+  if (f.dotBand && MOOD_PIP_COLOR[f.dotBand]) return MOOD_PIP_COLOR[f.dotBand]
+  if (f.kind === 'up') return 'var(--exploration)'
+  if (f.kind === 'down') return 'var(--survival)'
+  return 'var(--ink4)'
+}
+
+function sentence(t) {
+  return t ? t.charAt(0).toUpperCase() + t.slice(1) : ''
+}
+
+function Note({ fact, slot }) {
+  return (
+    <div className={`${styles.note} ${styles['note' + slot]}`}>
+      <div className={styles.noteLabel}>
+        <span className={styles.noteDot} style={{ background: factDot(fact) }} />
+        {fact.label}
+      </div>
+      <div className={styles.noteText}>{sentence(fact.text)}</div>
+    </div>
+  )
+}
+
+// A dotted, bending line in the colour of the note it comes from.
+function Thread({ fact }) {
+  return (
+    <div className={styles.thread} aria-hidden="true" style={{ color: factDot(fact) }}>
+      <svg className={styles.threadCurve} width="44" height="38" viewBox="0 0 44 38">
+        <path d="M22 1 C 4 11, 40 27, 22 37" fill="none" stroke="currentColor" strokeWidth="3" strokeDasharray="0.1 7" strokeLinecap="round" />
+      </svg>
+    </div>
+  )
+}
+
 /* ── three truths ─────────────────────────────────────────── */
 function ThreeTruths({ state, today, onDraft }) {
   const pool = useMemo(() => truthPool(state, today), [state, today])
   const [offset, setOffset] = useState(0)
-  const truths = pickTruths(pool, offset)
+  const truths = pickTruths(pool, offset, daySeed(today))
   const [text, setText] = useState('')
   const [typing, setTyping] = useState(false)
 
@@ -40,13 +76,13 @@ function ThreeTruths({ state, today, onDraft }) {
   const collapsed = typing || !!text.trim()
   return (
     <div className={styles.body}>
-      <div className={styles.stack}>
+      <div className={`${styles.stack}`}>
         {collapsed && (
           <div className={styles.chipRow}>
-            {truths.map(t => <span key={t.id} className={styles.chip}>{t.text}</span>)}
+            {truths.map(t => <span key={t.id} className={styles.chip}>{sentence(t.text)}</span>)}
           </div>
         )}
-        {!collapsed && <div className={`${styles.note} ${styles.noteA}`}>{a?.text}</div>}
+        {!collapsed && a && <Note fact={a} slot="A" />}
         <div className={styles.card}>
           <textarea
             className={styles.area}
@@ -59,8 +95,8 @@ function ThreeTruths({ state, today, onDraft }) {
             aria-label="what do these three truths have in common"
           />
         </div>
-        {!collapsed && b && <div className={`${styles.note} ${styles.noteB}`}>{b.text}</div>}
-        {!collapsed && c && <div className={`${styles.note} ${styles.noteC}`}>{c.text}</div>}
+        {!collapsed && b && <Note fact={b} slot="B" />}
+        {!collapsed && c && <Note fact={c} slot="C" />}
       </div>
       {!collapsed && <button className={styles.shuffle} onClick={() => setOffset(o => o + 1)}>show me three others</button>}
     </div>
@@ -70,7 +106,7 @@ function ThreeTruths({ state, today, onDraft }) {
 /* ── tension ──────────────────────────────────────────────── */
 function Tension({ state, today, onDraft }) {
   const [offset, setOffset] = useState(0)
-  const [a, b] = useMemo(() => tensionPair(state, today, offset), [state, today, offset])
+  const [a, b] = useMemo(() => tensionPair(state, today, offset, daySeed(today)), [state, today, offset])
   const [text, setText] = useState('')
   const [typing, setTyping] = useState(false)
 
@@ -82,15 +118,15 @@ function Tension({ state, today, onDraft }) {
   const collapsed = typing || !!text.trim()
   return (
     <div className={styles.body}>
-      <div className={styles.stack}>
+      <div className={`${styles.stack} ${styles.stackTension}`}>
         {collapsed && (
           <div className={styles.chipRow}>
-            <span className={styles.chip}>{a.text}</span>
-            <span className={styles.chip}>{b.text}</span>
+            <span className={styles.chip}>{sentence(a.text)}</span>
+            <span className={styles.chip}>{sentence(b.text)}</span>
           </div>
         )}
-        {!collapsed && <div className={`${styles.note} ${styles.noteA} ${styles.noteUp}`}>{a.text}</div>}
-        {!collapsed && <div className={styles.thread} aria-hidden="true" />}
+        {!collapsed && <Note fact={a} slot="A" />}
+        {!collapsed && <Thread fact={a} />}
         <div className={styles.card}>
           <textarea
             className={styles.area}
@@ -103,8 +139,8 @@ function Tension({ state, today, onDraft }) {
             aria-label="what lives between these two"
           />
         </div>
-        {!collapsed && <div className={styles.thread} aria-hidden="true" />}
-        {!collapsed && <div className={`${styles.note} ${styles.noteB} ${styles.noteDown}`} style={{ marginTop: 0 }}>{b.text}</div>}
+        {!collapsed && <Thread fact={b} />}
+        {!collapsed && <Note fact={b} slot="B" />}
       </div>
       {!collapsed && <button className={styles.shuffle} onClick={() => setOffset(o => o + 1)}>a different pair</button>}
     </div>
