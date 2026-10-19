@@ -634,3 +634,29 @@
   color: var(--ink);
 }
 .discardBtns { display: inline-flex; gap: 14px; }
+
+/* ── inline (Today's persistent section) ───────────────── */
+.inlinePanel { display: flex; flex-direction: column; margin-bottom: 18px; }
+.titleInline {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  line-height: 1.15;
+  font-weight: 400;
+  color: var(--ink);
+  margin: 0 0 8px;
+  text-wrap: balance;
+}
+.titleInline em { font-style: italic; color: var(--ink2); }
+.inlineHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.footInline {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}

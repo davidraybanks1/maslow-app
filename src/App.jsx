@@ -117,9 +117,16 @@ function AppInner() {
 
   // The shape picker / writing rooms. Any screen opens them by dispatching
   // `maslow:open-shapes` ({ detail: { shape?, source? } }).
+  // Today has the picker built in as a persistent section, so it handles the
+  // event itself there; this overlay is for every other screen.
   const [shapesOpen, setShapesOpen] = useState(null)
+  const onTodayRef = useRef(false)
+  onTodayRef.current = location.pathname === '/today'
   useEffect(() => {
-    function onOpen(e) { setShapesOpen({ ...(e.detail || {}), at: Date.now() }) }
+    function onOpen(e) {
+      if (onTodayRef.current) return
+      setShapesOpen({ ...(e.detail || {}), at: Date.now() })
+    }
     window.addEventListener('maslow:open-shapes', onOpen)
     return () => window.removeEventListener('maslow:open-shapes', onOpen)
   }, [])

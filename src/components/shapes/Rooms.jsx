@@ -34,39 +34,35 @@ function ThreeTruths({ state, today, onDraft }) {
   }, [text, offset])
 
   const [a, b, c] = truths
-  const card = (
-    <div className={styles.card}>
-      <textarea
-        className={styles.area}
-        value={text}
-        onChange={e => setText(e.target.value)}
-        onFocus={() => setTyping(true)}
-        onBlur={() => setTyping(false)}
-        placeholder="what do these have in common?"
-        maxLength={9000}
-        aria-label="what do these three truths have in common"
-      />
-    </div>
-  )
-  if (typing) {
-    return (
-      <div className={styles.body}>
-        <div className={styles.chipRow}>
-          {truths.map(t => <span key={t.id} className={styles.chip}>{t.text}</span>)}
-        </div>
-        {card}
-      </div>
-    )
-  }
+  // Notes collapse to chips while you write. One stable tree (the card never
+  // changes position) so the textarea keeps focus when this flips; stays
+  // collapsed once there's text so the layout doesn't jump under a tap.
+  const collapsed = typing || !!text.trim()
   return (
     <div className={styles.body}>
       <div className={styles.stack}>
-        <div className={`${styles.note} ${styles.noteA}`}>{a?.text}</div>
-        {card}
-        {b && <div className={`${styles.note} ${styles.noteB}`}>{b.text}</div>}
-        {c && <div className={`${styles.note} ${styles.noteC}`}>{c.text}</div>}
+        {collapsed && (
+          <div className={styles.chipRow}>
+            {truths.map(t => <span key={t.id} className={styles.chip}>{t.text}</span>)}
+          </div>
+        )}
+        {!collapsed && <div className={`${styles.note} ${styles.noteA}`}>{a?.text}</div>}
+        <div className={styles.card}>
+          <textarea
+            className={styles.area}
+            value={text}
+            onChange={e => setText(e.target.value)}
+            onFocus={() => setTyping(true)}
+            onBlur={() => setTyping(false)}
+            placeholder="what do these have in common?"
+            maxLength={9000}
+            aria-label="what do these three truths have in common"
+          />
+        </div>
+        {!collapsed && b && <div className={`${styles.note} ${styles.noteB}`}>{b.text}</div>}
+        {!collapsed && c && <div className={`${styles.note} ${styles.noteC}`}>{c.text}</div>}
       </div>
-      <button className={styles.shuffle} onClick={() => setOffset(o => o + 1)}>show me three others</button>
+      {!collapsed && <button className={styles.shuffle} onClick={() => setOffset(o => o + 1)}>show me three others</button>}
     </div>
   )
 }
@@ -83,41 +79,34 @@ function Tension({ state, today, onDraft }) {
     onDraft({ entry: body ? `Two things pulling at me: ${a.text} — and ${b.text}.\n\n${body}` : '' })
   }, [text, offset])
 
-  const card = (
-    <div className={styles.card}>
-      <textarea
-        className={styles.area}
-        value={text}
-        onChange={e => setText(e.target.value)}
-        onFocus={() => setTyping(true)}
-        onBlur={() => setTyping(false)}
-        placeholder="what lives between these two?"
-        maxLength={9000}
-        aria-label="what lives between these two"
-      />
-    </div>
-  )
-  if (typing) {
-    return (
-      <div className={styles.body}>
-        <div className={styles.chipRow}>
-          <span className={styles.chip}>{a.text}</span>
-          <span className={styles.chip}>{b.text}</span>
-        </div>
-        {card}
-      </div>
-    )
-  }
+  const collapsed = typing || !!text.trim()
   return (
     <div className={styles.body}>
       <div className={styles.stack}>
-        <div className={`${styles.note} ${styles.noteA} ${styles.noteUp}`}>{a.text}</div>
-        <div className={styles.thread} aria-hidden="true" />
-        {card}
-        <div className={styles.thread} aria-hidden="true" />
-        <div className={`${styles.note} ${styles.noteB} ${styles.noteDown}`} style={{ marginTop: 0 }}>{b.text}</div>
+        {collapsed && (
+          <div className={styles.chipRow}>
+            <span className={styles.chip}>{a.text}</span>
+            <span className={styles.chip}>{b.text}</span>
+          </div>
+        )}
+        {!collapsed && <div className={`${styles.note} ${styles.noteA} ${styles.noteUp}`}>{a.text}</div>}
+        {!collapsed && <div className={styles.thread} aria-hidden="true" />}
+        <div className={styles.card}>
+          <textarea
+            className={styles.area}
+            value={text}
+            onChange={e => setText(e.target.value)}
+            onFocus={() => setTyping(true)}
+            onBlur={() => setTyping(false)}
+            placeholder="what lives between these two?"
+            maxLength={9000}
+            aria-label="what lives between these two"
+          />
+        </div>
+        {!collapsed && <div className={styles.thread} aria-hidden="true" />}
+        {!collapsed && <div className={`${styles.note} ${styles.noteB} ${styles.noteDown}`} style={{ marginTop: 0 }}>{b.text}</div>}
       </div>
-      <button className={styles.shuffle} onClick={() => setOffset(o => o + 1)}>a different pair</button>
+      {!collapsed && <button className={styles.shuffle} onClick={() => setOffset(o => o + 1)}>a different pair</button>}
     </div>
   )
 }

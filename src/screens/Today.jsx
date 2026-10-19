@@ -25,6 +25,7 @@ import { usePracticeActions, practiceKey } from '../lib/usePracticeActions'
 import styles from './Today.module.css'
 import SignedImg from '../components/SignedImg'
 import RevisitCard from '../components/shapes/RevisitCard'
+import { ShapesPanel } from '../components/shapes/ShapesFlow'
 import { shapeLabel } from '../lib/shapeFacts'
 import shapeStyles from '../components/shapes/Shapes.module.css'
 
@@ -390,6 +391,23 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     return () => window.removeEventListener('maslow:entry-added', onEntryAdded)
   }, [today])
 
+  // The drafts section is the shape picker, always showing. "just write"
+  // swaps in the plain composer below; a room opens in place. Anything that
+  // dispatches `maslow:open-shapes` (e.g. the revisit card's "continue")
+  // lands here on Today.
+  const [plainDraft, setPlainDraft] = useState(false)
+  const [shapesInit, setShapesInit] = useState(null)
+  const shapesRef = useRef(null)
+  useEffect(() => {
+    function onOpen(e) {
+      setPlainDraft(false)
+      setShapesInit({ ...(e.detail || {}), at: Date.now() })
+      setTimeout(() => shapesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60)
+    }
+    window.addEventListener('maslow:open-shapes', onOpen)
+    return () => window.removeEventListener('maslow:open-shapes', onOpen)
+  }, [])
+
   useEffect(() => {
     if (!pendingDeleteId) return
     function onDocMouseDown() { setPendingDeleteId(null) }
@@ -495,6 +513,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     if (error) { setDraftSaveError('save failed — try again'); return }
     setJournalEntries(prev => [...prev, data])
     resetDraft()
+    setPlainDraft(false)
   }
 
   async function handleDraftFilePick(e) {
@@ -1253,29 +1272,39 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 <span className={styles.journalDeskCount}> / {journalEntryCount} {journalEntryCount === 1 ? 'entry' : 'entries'} today</span>
               )}
             </div>
-            <RevisitCard state={state} />
-            <div className={styles.journalBottom}>
-              <div className={styles.journalComposerCard} data-tour="journal">
-                {draftChips}
-                <div className={styles.journalComposerWrap}>
-                  <textarea
-                    className={styles.journalComposerInput}
-                    placeholder="create a draft…"
-                    value={draftText}
-                    onChange={e => setDraftText(e.target.value)}
-                    onKeyDown={handleDraftKeyDown}
-                    maxLength={10000}
-                    rows={3}
-                  />
-                  <div className={styles.journalComposerFooter}>
-                    {renderAttachControl()}
-                    <span className={styles.journalHint}>⌘↵</span>
-                    <button className={styles.journalAddBtn} onClick={handleAddEntry} disabled={!draftText.trim() || draftSaving}>add</button>
+            <div ref={shapesRef} className={styles.journalBottom}>
+              <RevisitCard state={state} />
+              {plainDraft ? (
+                <div>
+                  <div className={shapeStyles.inlineHead}>
+                    <button className={shapeStyles.link} onClick={() => setPlainDraft(false)}>← shapes</button>
+                    <span className={shapeStyles.eyebrow}>just write</span>
+                  </div>
+                  <div className={styles.journalComposerCard} data-tour="journal">
+                    {draftChips}
+                    <div className={styles.journalComposerWrap}>
+                      <textarea
+                        className={styles.journalComposerInput}
+                        placeholder="create a draft…"
+                        value={draftText}
+                        onChange={e => setDraftText(e.target.value)}
+                        onKeyDown={handleDraftKeyDown}
+                        maxLength={10000}
+                        rows={3}
+                      />
+                      <div className={styles.journalComposerFooter}>
+                        {renderAttachControl()}
+                        <span className={styles.journalHint}>⌘↵</span>
+                        <button className={styles.journalAddBtn} onClick={handleAddEntry} disabled={!draftText.trim() || draftSaving}>add</button>
+                      </div>
+                    </div>
+                    {draftSaveError && <div className={styles.journalSaveError}>{draftSaveError}</div>}
+                    {draftFileInput}
                   </div>
                 </div>
-                {draftSaveError && <div className={styles.journalSaveError}>{draftSaveError}</div>}
-                {draftFileInput}
-              </div>
+              ) : (
+                <ShapesPanel state={state} mode="inline" initial={shapesInit} onJustWrite={() => setPlainDraft(true)} />
+              )}
             </div>
             <div className={styles.journalScroll} ref={journalEntriesRef}>
               <div className={styles.journalEntries}>
@@ -1333,31 +1362,40 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
           <div className={styles.cardJournal} data-tour="journal">
             <div className={styles.sectionHeader}>
               <span className={styles.sectionLabel}>drafts</span>
-              <span className={styles.sectionHeaderRight}>
-                <span className={styles.journalEntryCount}>
-                  {journalEntryCount > 0 ? `${journalEntryCount} ${journalEntryCount === 1 ? 'entry' : 'entries'} today` : ''}
-                </span>
-                <button className={styles.shapesLink} onClick={() => window.dispatchEvent(new CustomEvent('maslow:open-shapes', { detail: {} }))}>shapes</button>
+              <span className={styles.journalEntryCount}>
+                {journalEntryCount > 0 ? `${journalEntryCount} ${journalEntryCount === 1 ? 'entry' : 'entries'} today` : ''}
               </span>
             </div>
             <RevisitCard state={state} />
-            <div className={styles.journalComposer}>
-              {draftChips}
-              <textarea
-                className={styles.journalInput}
-                placeholder="what's on your mind?"
-                value={draftText}
-                onChange={e => setDraftText(e.target.value)}
-                onKeyDown={handleDraftKeyDown}
-                maxLength={10000}
-                rows={4}
-              />
-              <div className={styles.composerMobileFooter}>
-                {renderAttachControl()}
-                <button className={styles.journalAddBtn} onClick={handleAddEntry} disabled={!draftText.trim() || draftSaving}>add</button>
+            <div ref={shapesRef} data-tour="journal-shapes">
+              {plainDraft ? (
+                <>
+                  <div className={shapeStyles.inlineHead}>
+                    <button className={shapeStyles.link} onClick={() => setPlainDraft(false)}>← shapes</button>
+                    <span className={shapeStyles.eyebrow}>just write</span>
+                  </div>
+              <div className={styles.journalComposer}>
+                {draftChips}
+                <textarea
+                  className={styles.journalInput}
+                  placeholder="what's on your mind?"
+                  value={draftText}
+                  onChange={e => setDraftText(e.target.value)}
+                  onKeyDown={handleDraftKeyDown}
+                  maxLength={10000}
+                  rows={4}
+                />
+                <div className={styles.composerMobileFooter}>
+                  {renderAttachControl()}
+                  <button className={styles.journalAddBtn} onClick={handleAddEntry} disabled={!draftText.trim() || draftSaving}>add</button>
+                </div>
+                {draftSaveError && <div className={styles.journalSaveError}>{draftSaveError}</div>}
+                {draftFileInput}
               </div>
-              {draftSaveError && <div className={styles.journalSaveError}>{draftSaveError}</div>}
-              {draftFileInput}
+                </>
+              ) : (
+                <ShapesPanel state={state} mode="inline" initial={shapesInit} onJustWrite={() => setPlainDraft(true)} />
+              )}
             </div>
             <>
               {journalEntries.length > 0 && (

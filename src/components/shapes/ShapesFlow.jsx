@@ -16,14 +16,19 @@ const GLYPHS = {
   timer: <span className={styles.tileGlyph}><i className={styles.tgRing} /></span>,
 }
 
-/* The shape picker and the six writing rooms. Opened with the window event
-   `maslow:open-shapes` ({ detail: { shape?, source? } }) so any screen can
-   offer it. Saves an ordinary draft with `shape` set, then tells the rest of
-   the app with `maslow:entry-added`, like the composer does. */
-export default function ShapesFlow({ state, open, onClose, onJustWrite }) {
-  const [on, setOn] = useState(false)
-  const [stage, setStage] = useState('picker')
-  const [source, setSource] = useState(null)
+/* The shape picker and the six writing rooms, in one component.
+   mode="inline"  — a persistent section on Today. The picker is always
+                    showing; a room opens in place and returns to the picker
+                    after saving.
+   mode="overlay" — the full-screen version opened from other screens (the
+                    composer's "shapes" pill) with the window event
+                    `maslow:open-shapes` ({ detail: { shape?, source? } }).
+   Either way it saves an ordinary draft with `shape` set, then tells the
+   rest of the app with `maslow:entry-added`, like the composer does. */
+export function ShapesPanel({ state, mode = 'inline', initial, onExit, onJustWrite }) {
+  const inline = mode === 'inline'
+  const [stage, setStage] = useState(initial?.shape || 'picker')
+  const [source, setSource] = useState(initial?.source || null)
   const [draft, setDraft] = useState({ entry: '' })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
@@ -32,35 +37,41 @@ export default function ShapesFlow({ state, open, onClose, onJustWrite }) {
   const today = todayKey()
 
   useEffect(() => {
-    if (!open) { setOn(false); return }
-    setStage(open.shape || 'picker')
-    setSource(open.source || null)
+    if (!initial) return
+    setStage(initial.shape || 'picker')
+    setSource(initial.source || null)
     setDraft({ entry: '' })
     setError(null)
     setAskDiscard(false)
-    const raf = requestAnimationFrame(() => setOn(true))
-    return () => cancelAnimationFrame(raf)
-  }, [open])
-
-  useEffect(() => {
-    if (!open) return
-    function onKey(e) { if (e.key === 'Escape') handleClose() }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  })
+  }, [initial])
 
   const mood = useMemo(() => latestMoodToday(state, today), [state, today])
   const suggestion = useMemo(() => suggestShape(mood), [mood])
 
-  if (!open) return null
+  const dirty = stage !== 'picker' && stage !== 'timer' && !!draft.entry.trim()
 
-  function handleClose() {
-    if (stage !== 'picker' && draft.entry.trim() && stage !== 'timer') {
-      setAskDiscard(true)
-      return
-    }
-    onClose()
+  function reset() {
+    setStage('picker')
+    setSource(null)
+    setDraft({ entry: '' })
+    setError(null)
+    setAskDiscard(false)
   }
+  function leave() {
+    if (dirty) { setAskDiscard(true); return }
+    finishLeave()
+  }
+  function finishLeave() {
+    if (inline) reset()
+    else onExit?.()
+  }
+
+  useEffect(() => {
+    if (inline) return
+    function onKey(e) { if (e.key === 'Escape') leave() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  })
 
   async function save(override) {
     const d = override || draft
@@ -90,79 +101,101 @@ export default function ShapesFlow({ state, open, onClose, onJustWrite }) {
     if (d.settleId) window.dispatchEvent(new CustomEvent('maslow:revisit-changed'))
     savingRef.current = false
     setSaving(false)
-    // the timer room closes itself a beat later so "saved" is seen
-    if (stage === 'timer') setTimeout(onClose, 1400)
-    else onClose()
+    const done = () => { if (inline) reset(); else onExit?.() }
+    // the timer room lingers a beat so "saved" is seen
+    if (stage === 'timer') setTimeout(done, 1400)
+    else done()
   }
 
   const room = ROOMS[stage]
   const Comp = room?.Comp
+  const dateLabel = new Date().toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })
 
-  return createPortal(
-    <div className={`${styles.overlay} ${on ? styles.overlayOn : ''}`} role="dialog" aria-modal="true" aria-label={room ? room.eyebrow : 'how do you want to write'}>
-      <div className={styles.panel}>
+  return (
+    <div className={inline ? styles.inlinePanel : styles.panel} data-shapes-panel>
+      {!inline && (
         <div className={styles.head}>
-          <span className={styles.eyebrow}>
-            {room ? room.eyebrow : 'shapes'} · {new Date().toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })}
-          </span>
-          <button className={styles.close} onClick={handleClose} aria-label="close">✕</button>
+          <span className={styles.eyebrow}>{room ? room.eyebrow : 'shapes'} · {dateLabel}</span>
+          <button className={styles.close} onClick={leave} aria-label="close">✕</button>
         </div>
+      )}
+      {inline && room && (
+        <div className={styles.inlineHead}>
+          <button className={styles.link} onClick={leave}>← shapes</button>
+          <span className={styles.eyebrow}>{room.eyebrow}</span>
+        </div>
+      )}
 
-        {askDiscard && (
-          <div className={styles.discard} role="alert">
-            <span>discard what you wrote?</span>
-            <span className={styles.discardBtns}>
-              <button className={styles.link} onClick={() => setAskDiscard(false)}>keep writing</button>
-              <button className={styles.link} onClick={onClose}>discard</button>
-            </span>
+      {askDiscard && (
+        <div className={styles.discard} role="alert">
+          <span>discard what you wrote?</span>
+          <span className={styles.discardBtns}>
+            <button className={styles.link} onClick={() => setAskDiscard(false)}>keep writing</button>
+            <button className={styles.link} onClick={finishLeave}>discard</button>
+          </span>
+        </div>
+      )}
+
+      {stage === 'picker' ? (
+        <>
+          <h2 className={inline ? styles.titleInline : styles.title}>How do you want to write <em>today?</em></h2>
+          {!inline && <p className={styles.sub}>pick a room instead of facing a blank page. nothing here needs to be finished.</p>}
+          {suggestion && <p className={styles.suggest}>{suggestion.line}</p>}
+          <button className={styles.justWrite} onClick={() => { if (!inline) onExit?.(); onJustWrite?.() }}>
+            just write
+            <span className={styles.justWriteSub}>blank page</span>
+          </button>
+          <div className={styles.grid}>
+            {SHAPES.map(s => (
+              <button
+                key={s.id}
+                className={`${styles.tile} ${suggestion?.id === s.id ? styles.tileSuggested : ''}`}
+                onClick={() => { setStage(s.id); setDraft({ entry: '' }) }}
+              >
+                {GLYPHS[s.id]}
+                <span className={styles.tileName}>{s.label}</span>
+                <span className={styles.tileBlurb}>{s.blurb}</span>
+              </button>
+            ))}
           </div>
-        )}
-
-        {stage === 'picker' ? (
-          <>
-            <h2 className={styles.title}>How do you want to write <em>today?</em></h2>
-            <p className={styles.sub}>pick a room instead of facing a blank page. nothing here needs to be finished.</p>
-            {suggestion && <p className={styles.suggest}>{suggestion.line}</p>}
-            <button className={styles.justWrite} onClick={() => { onClose(); onJustWrite?.() }}>
-              just write
-              <span className={styles.justWriteSub}>blank page</span>
-            </button>
-            <div className={styles.grid}>
-              {SHAPES.map(s => (
-                <button
-                  key={s.id}
-                  className={`${styles.tile} ${suggestion?.id === s.id ? styles.tileSuggested : ''}`}
-                  onClick={() => { setStage(s.id); setDraft({ entry: '' }) }}
-                >
-                  {GLYPHS[s.id]}
-                  <span className={styles.tileName}>{s.label}</span>
-                  <span className={styles.tileBlurb}>{s.blurb}</span>
-                </button>
-              ))}
+        </>
+      ) : (
+        <>
+          <h2 className={inline ? styles.titleInline : styles.title}>{room.title[0]} <em>{room.title[1]}</em></h2>
+          <div style={{ height: 14 }} />
+          <Comp
+            key={stage}
+            state={state}
+            today={today}
+            source={source}
+            onDraft={setDraft}
+            onSave={save}
+          />
+          {error && <p className={styles.error} role="alert">{error}</p>}
+          {stage !== 'timer' && (
+            <div className={inline ? styles.footInline : styles.foot}>
+              <span className={styles.savesAs}>saves as · {room.eyebrow}</span>
+              <button className={styles.add} onClick={() => save()} disabled={!draft.entry.trim() || saving}>add</button>
             </div>
-          </>
-        ) : (
-          <>
-            <h2 className={styles.title}>{room.title[0]} <em>{room.title[1]}</em></h2>
-            <div style={{ height: 14 }} />
-            <Comp
-              key={stage}
-              state={state}
-              today={today}
-              source={source}
-              onDraft={setDraft}
-              onSave={save}
-            />
-            {error && <p className={styles.error} role="alert">{error}</p>}
-            {stage !== 'timer' && (
-              <div className={styles.foot}>
-                <span className={styles.savesAs}>saves as · {room.eyebrow}</span>
-                <button className={styles.add} onClick={() => save()} disabled={!draft.entry.trim() || saving}>add</button>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
+/* The full-screen version. */
+export default function ShapesFlow({ state, open, onClose, onJustWrite }) {
+  const [on, setOn] = useState(false)
+  useEffect(() => {
+    if (!open) { setOn(false); return }
+    const raf = requestAnimationFrame(() => setOn(true))
+    return () => cancelAnimationFrame(raf)
+  }, [open])
+  if (!open) return null
+  return createPortal(
+    <div className={`${styles.overlay} ${on ? styles.overlayOn : ''}`} role="dialog" aria-modal="true" aria-label="how do you want to write">
+      <ShapesPanel state={state} mode="overlay" initial={open} onExit={onClose} onJustWrite={onJustWrite} />
     </div>,
     document.body,
   )
