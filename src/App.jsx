@@ -24,6 +24,7 @@ import DesktopNav from './components/DesktopNav'
 import TabBar from './components/TabBar'
 import UpdateToast from './components/UpdateToast'
 import GlobalComposer, { ComposerFab } from './components/GlobalComposer'
+import ShapesFlow from './components/shapes/ShapesFlow'
 import styles from './App.module.css'
 
 class AppErrorBoundary extends Component {
@@ -113,6 +114,15 @@ function AppInner() {
   // every screen (Today/Data/Log), rather than only living at the bottom
   // of Today. See GlobalComposer.jsx.
   const [composerOpen, setComposerOpen] = useState(false)
+
+  // The shape picker / writing rooms. Any screen opens them by dispatching
+  // `maslow:open-shapes` ({ detail: { shape?, source? } }).
+  const [shapesOpen, setShapesOpen] = useState(null)
+  useEffect(() => {
+    function onOpen(e) { setShapesOpen({ ...(e.detail || {}), at: Date.now() }) }
+    window.addEventListener('maslow:open-shapes', onOpen)
+    return () => window.removeEventListener('maslow:open-shapes', onOpen)
+  }, [])
 
   // Per-device OS notification permission. Checked once when onboarded so we
   // can show the priming sheet even on a reinstall where notifPrimedAt is set.
@@ -253,6 +263,9 @@ function AppInner() {
       {state.onboarded && !typing && location.pathname !== '/today' && !PERSONALIZE_PATHS.includes(location.pathname) && <ComposerFab onClick={() => setComposerOpen(true)} />}
       {state.onboarded && (
         <GlobalComposer state={state} logMood={logMood} open={composerOpen} onClose={() => setComposerOpen(false)} />
+      )}
+      {state.onboarded && (
+        <ShapesFlow state={state} open={shapesOpen} onClose={() => setShapesOpen(null)} onJustWrite={() => setComposerOpen(true)} />
       )}
       {isNative() && state.onboarded && state.userId && state.tourSeenAt != null &&
        deviceNotifPerm === 'prompt' &&

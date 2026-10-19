@@ -24,6 +24,9 @@ import PracticeToast from '../components/PracticeToast'
 import { usePracticeActions, practiceKey } from '../lib/usePracticeActions'
 import styles from './Today.module.css'
 import SignedImg from '../components/SignedImg'
+import RevisitCard from '../components/shapes/RevisitCard'
+import { shapeLabel } from '../lib/shapeFacts'
+import shapeStyles from '../components/shapes/Shapes.module.css'
 
 const MODE_THRESHOLDS = { exploration: 80, appreciation: 60, nourishment: 50, survival: 20 }
 
@@ -1250,6 +1253,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 <span className={styles.journalDeskCount}> / {journalEntryCount} {journalEntryCount === 1 ? 'entry' : 'entries'} today</span>
               )}
             </div>
+            <RevisitCard state={state} />
             <div className={styles.journalBottom}>
               <div className={styles.journalComposerCard} data-tour="journal">
                 {draftChips}
@@ -1287,6 +1291,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                       {e.state && <span className={styles.journalStateTag}>{e.state}</span>}
                       {e.need_id && <span className={styles.journalNeedTag}>{e.need_id}</span>}
                       {e.custom && <span className={styles.journalNeedTag}>{e.custom}</span>}
+                      {e.shape && shapeLabel(e.shape) && <span className={shapeStyles.shapeChip}>{shapeLabel(e.shape)}</span>}
                       <button
                         className={`${styles.journalEntryDelete}${pendingDeleteId === e.id ? ` ${styles.journalEntryDeletePending}` : ''}`}
                         onMouseDown={ev => ev.stopPropagation()}
@@ -1328,10 +1333,14 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
           <div className={styles.cardJournal} data-tour="journal">
             <div className={styles.sectionHeader}>
               <span className={styles.sectionLabel}>drafts</span>
-              <span className={styles.journalEntryCount}>
-                {journalEntryCount > 0 ? `${journalEntryCount} ${journalEntryCount === 1 ? 'entry' : 'entries'} today` : ''}
+              <span className={styles.sectionHeaderRight}>
+                <span className={styles.journalEntryCount}>
+                  {journalEntryCount > 0 ? `${journalEntryCount} ${journalEntryCount === 1 ? 'entry' : 'entries'} today` : ''}
+                </span>
+                <button className={styles.shapesLink} onClick={() => window.dispatchEvent(new CustomEvent('maslow:open-shapes', { detail: {} }))}>shapes</button>
               </span>
             </div>
+            <RevisitCard state={state} />
             <div className={styles.journalComposer}>
               {draftChips}
               <textarea
@@ -1362,6 +1371,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                         {e.slot && <span className={styles.journalSlotChip}>{e.slot}</span>}
                         {e.state && <span className={styles.journalStateTag}>{e.state}</span>}
                         {e.need_id && <span className={styles.journalNeedTag}>{e.need_id}</span>}
+                        {e.shape && shapeLabel(e.shape) && <span className={shapeStyles.shapeChip}>{shapeLabel(e.shape)}</span>}
                         <button
                           className={`${styles.journalEntryDelete}${pendingDeleteId === e.id ? ` ${styles.journalEntryDeletePending}` : ''}`}
                           onMouseDown={ev => ev.stopPropagation()}

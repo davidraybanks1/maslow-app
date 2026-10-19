@@ -156,6 +156,13 @@ export default function GlobalComposer({ state, logMood, open, onClose }) {
     onClose()
   }
 
+  // Hand off to the shape picker. Whatever's typed stays here for when the
+  // sheet is reopened.
+  function openShapes() {
+    onClose()
+    window.dispatchEvent(new CustomEvent('maslow:open-shapes', { detail: {} }))
+  }
+
   const todayMoods = (state.moods || []).filter(m => m.date_key === today)
   const slotMood = todayMoods.find(m => m.prompt_time === slot)
   const inheritedBand = slotMood ? normalizeBand(slotMood.mood) : null
@@ -393,7 +400,10 @@ export default function GlobalComposer({ state, logMood, open, onClose }) {
         <div className={styles.deskSheet} onClick={e => e.stopPropagation()}>
           <div className={styles.sheetHead}>
             <span className={styles.sheetDate}>new draft · today</span>
-            <button className={styles.sheetClose} onClick={handleClose} aria-label="close">✕</button>
+            <span className={styles.sheetHeadRight}>
+              <button className={styles.shapesPill} onClick={openShapes}>shapes</button>
+              <button className={styles.sheetClose} onClick={handleClose} aria-label="close">✕</button>
+            </span>
           </div>
           {body}
         </div>
@@ -406,7 +416,10 @@ export default function GlobalComposer({ state, logMood, open, onClose }) {
       <div className={styles.mobileSheet} onClick={e => e.stopPropagation()}>
         <div className={styles.sheetHead}>
           <span className={styles.sheetDate}>new draft · today</span>
-          <button className={styles.sheetClose} onClick={handleClose} aria-label="close">✕</button>
+          <span className={styles.sheetHeadRight}>
+            <button className={styles.shapesPill} onClick={openShapes}>shapes</button>
+            <button className={styles.sheetClose} onClick={handleClose} aria-label="close">✕</button>
+          </span>
         </div>
         {body}
       </div>

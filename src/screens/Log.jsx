@@ -13,6 +13,9 @@ import GhostPreview from '../components/GhostPreview'
 import { SAMPLE_THREADS } from '../lib/previewSamples'
 import styles from './Log.module.css'
 import SignedImg from '../components/SignedImg'
+import RevisitSheet from '../components/shapes/RevisitSheet'
+import { shapeLabel } from '../lib/shapeFacts'
+import shapeStyles from '../components/shapes/Shapes.module.css'
 
 const MOOD_PILL = {
   good: { bg: '#1B3A2D' },
@@ -470,6 +473,7 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
 
   const [journalMeta, setJournalMeta] = useState([])
   const [archiveEntries, setArchiveEntries] = useState([])
+  const [revisitFor, setRevisitFor] = useState(null)
   const [archiveLoaded, setArchiveLoaded] = useState(false)
   const [customTags, setCustomTags] = useState([])
   const [filterSlot, setFilterSlot] = useState(null)
@@ -640,11 +644,20 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
     if (error) setArchiveEntries(prev => prev.map(e => e.id === id ? { ...e, favorite: currentFav } : e))
   }
 
-  async function handleToggleRevisit(id, currentRevisit) {
+  // Marking a draft "revisit" first offers the optional question for future
+  // you (RevisitSheet); un-marking is immediate.
+  async function applyRevisit(id, currentRevisit, question) {
     const newRevisit = !currentRevisit
-    setArchiveEntries(prev => prev.map(e => e.id === id ? { ...e, revisit: newRevisit } : e))
-    const { error } = await toggleJournalRevisit(id, newRevisit)
+    setArchiveEntries(prev => prev.map(e => e.id === id ? { ...e, revisit: newRevisit, revisit_question: newRevisit ? (question || null) : null } : e))
+    const { error } = await toggleJournalRevisit(id, newRevisit, question)
     if (error) setArchiveEntries(prev => prev.map(e => e.id === id ? { ...e, revisit: currentRevisit } : e))
+    else window.dispatchEvent(new CustomEvent('maslow:revisit-changed'))
+  }
+
+  function handleToggleRevisit(id, currentRevisit) {
+    if (currentRevisit) { applyRevisit(id, true); return }
+    const hit = archiveEntries.find(e => e.id === id)
+    setRevisitFor({ id, entry: hit?.entry || '' })
   }
 
   async function selectDay(dateKey) {
@@ -772,6 +785,7 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
                             {e.state && <span className={styles.threadReadTag}>{e.state}</span>}
                             {e.need_id && <span className={styles.threadReadTag}>{needName(e.need_id)}</span>}
                             {e.custom && <span className={styles.threadReadTag}>{e.custom}</span>}
+                            {e.shape && shapeLabel(e.shape) && <span className={shapeStyles.shapeChip}>{shapeLabel(e.shape)}</span>}
                             <span className={styles.archiveCardMarks}>
                               <button
                                 className={`${styles.archiveRevisitBtn}${e.revisit ? ` ${styles.archiveRevisitBtnActive}` : ''}`}
@@ -1375,6 +1389,7 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
                           {(e.mood_feeling || e.mood_band) && <span className={styles.archiveTag}>{e.mood_feeling || BAND_LABEL[normalizeBand(e.mood_band)] || e.mood_band}</span>}
                           {needTagName && <span className={styles.archiveTag}>{needTagName}</span>}
                           {e.custom && <span className={styles.archiveTag}>{e.custom}</span>}
+                          {e.shape && shapeLabel(e.shape) && <span className={shapeStyles.shapeChip}>{shapeLabel(e.shape)}</span>}
                           {(canAddNeed || canAddFrequency || canAddCustom) && (
                             <button
                               className={`${styles.archiveTagBtn} ${isTagging ? styles.archiveTagBtnOpen : ''}`}
@@ -1439,6 +1454,13 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
         })()}
 
       </div>
+      {revisitFor && (
+        <RevisitSheet
+          entry={revisitFor.entry}
+          onClose={() => setRevisitFor(null)}
+          onSave={q => { const id = revisitFor.id; setRevisitFor(null); applyRevisit(id, false, q) }}
+        />
+      )}
     </div>
   )
 }

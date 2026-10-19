@@ -952,18 +952,18 @@ export async function signInWithPassword(email, password) {
 export async function loadJournalEntries(userId, dateKey) {
   const { data } = await supabase
     .from('journal')
-    .select('id, entry, slot, need_id, state, custom, image_url, favorite, revisit, quoted_text, quoted_date, created_at, mood_band, mood_feeling')
+    .select('id, entry, slot, need_id, state, custom, image_url, favorite, revisit, quoted_text, quoted_date, created_at, mood_band, mood_feeling, shape, revisit_question, revisit_marked_at')
     .eq('user_id', userId)
     .eq('date_key', dateKey)
     .order('created_at', { ascending: true })
   return data || []
 }
 
-export async function addJournalEntry(userId, dateKey, { entry, slot, needId, state, custom, imageUrl, quotedText, quotedDate, moodBand, moodFeeling }) {
+export async function addJournalEntry(userId, dateKey, { entry, slot, needId, state, custom, imageUrl, quotedText, quotedDate, moodBand, moodFeeling, shape }) {
   const { data, error } = await supabase
     .from('journal')
-    .insert({ user_id: userId, date_key: dateKey, entry, slot: slot || null, need_id: needId || null, state: state || null, custom: custom || null, image_url: imageUrl || null, quoted_text: quotedText || null, quoted_date: quotedDate || null, mood_band: moodBand || null, mood_feeling: moodFeeling || null })
-    .select('id, entry, slot, need_id, state, custom, image_url, favorite, revisit, quoted_text, quoted_date, created_at, mood_band, mood_feeling')
+    .insert({ user_id: userId, date_key: dateKey, entry, slot: slot || null, need_id: needId || null, state: state || null, custom: custom || null, image_url: imageUrl || null, quoted_text: quotedText || null, quoted_date: quotedDate || null, mood_band: moodBand || null, mood_feeling: moodFeeling || null, shape: shape || null })
+    .select('id, entry, slot, need_id, state, custom, image_url, favorite, revisit, quoted_text, quoted_date, created_at, mood_band, mood_feeling, shape, revisit_question, revisit_marked_at')
     .single()
   if (error) logSupabaseError('addJournalEntry', error)
   return { data, error }
@@ -980,9 +980,20 @@ export async function loadAllJournalMeta(userId) {
 export async function loadJournalArchive(userId) {
   const { data } = await supabase
     .from('journal')
-    .select('id, date_key, entry, slot, need_id, state, custom, image_url, favorite, revisit, quoted_text, quoted_date, created_at, mood_band, mood_feeling')
+    .select('id, date_key, entry, slot, need_id, state, custom, image_url, favorite, revisit, quoted_text, quoted_date, created_at, mood_band, mood_feeling, shape, revisit_question, revisit_marked_at')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
+  return data || []
+}
+
+// The latest handful of drafts, newest first — the "continue" room's thread.
+export async function loadRecentDrafts(userId, limit = 12) {
+  const { data } = await supabase
+    .from('journal')
+    .select('id, date_key, entry, need_id, mood_band, mood_feeling, quoted_text, quoted_date, revisit, revisit_question, shape, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limit)
   return data || []
 }
 
@@ -992,19 +1003,27 @@ export async function toggleJournalFavorite(id, favorite) {
   return { error }
 }
 
-export async function toggleJournalRevisit(id, revisit) {
+export async function toggleJournalRevisit(id, revisit, question) {
+  const q = revisit && question ? String(question).trim().slice(0, 300) : ''
   const patch = revisit
-    ? { revisit: true, revisit_marked_at: new Date().toISOString() }
-    : { revisit: false, revisit_marked_at: null }
+    ? { revisit: true, revisit_marked_at: new Date().toISOString(), revisit_question: q || null }
+    : { revisit: false, revisit_marked_at: null, revisit_question: null }
   const { error } = await supabase.from('journal').update(patch).eq('id', id)
   if (error) logSupabaseError('toggleJournalRevisit', error)
+  return { error }
+}
+
+// A draft you came back to and answered stops being "revisit" unless you keep it open.
+export async function settleRevisit(id) {
+  const { error } = await supabase.from('journal').update({ revisit: false, revisit_marked_at: null, revisit_question: null }).eq('id', id)
+  if (error) logSupabaseError('settleRevisit', error)
   return { error }
 }
 
 export async function loadRevisitQueue(userId) {
   const { data } = await supabase
     .from('journal')
-    .select('id, date_key, entry, favorite, created_at, revisit_marked_at')
+    .select('id, date_key, entry, favorite, created_at, revisit_marked_at, revisit_question, need_id, mood_band, mood_feeling, shape, quoted_text, quoted_date')
     .eq('user_id', userId)
     .eq('revisit', true)
     .order('revisit_marked_at', { ascending: false, nullsFirst: false })

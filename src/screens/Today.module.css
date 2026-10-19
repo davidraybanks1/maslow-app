@@ -2450,3 +2450,18 @@
   background: #191612;
 }
 .practiceCheckBlack { border-color: #191612; }
+
+.sectionHeaderRight { display: inline-flex; align-items: center; gap: 10px; }
+.shapesLink {
+  background: none;
+  border: 1px dashed var(--ink4);
+  color: var(--ink2);
+  border-radius: 999px;
+  padding: 3px 11px;
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
