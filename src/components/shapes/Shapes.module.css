@@ -469,26 +469,17 @@
 }
 
 /* ── timer room ─────────────────────────────────────────── */
-.ringWrap {
-  align-self: center;
-  position: relative;
-  width: 112px;
-  height: 112px;
-  margin-bottom: 16px;
-}
-.ring { width: 100%; height: 100%; transform: rotate(-90deg); }
-.ringTrack { fill: none; stroke: var(--track); stroke-width: 6; }
-.ringBar { fill: none; stroke: var(--exploration); stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset 0.4s linear; }
-.ringTime {
+.timerCard { position: relative; }
+.timerCard > .card { border-color: transparent; }
+.timerRing {
   position: absolute;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-mono);
-  font-size: 22px;
-  color: var(--ink);
+  z-index: 2;
+  pointer-events: none;
 }
+.ringTrack { fill: none; stroke: var(--track); stroke-width: 3; }
+.ringBar { fill: none; stroke: var(--exploration); stroke-width: 3; stroke-linecap: round; transition: stroke-dashoffset 0.4s linear; }
+.timerClock { font-family: var(--font-mono); color: var(--ink); letter-spacing: 0.04em; }
 .timerNote {
   text-align: center;
   font-family: var(--font-sans);

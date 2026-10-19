@@ -343,19 +343,49 @@ function OneThing({ state, today, onDraft }) {
 
 /* ── timer room ───────────────────────────────────────────── */
 const ROOM_SECONDS = 180
-const R = 48
-const CIRC = 2 * Math.PI * R
+const RING_W = 3          // stroke width of the countdown ring
+const RING_R = 18         // matches the card's corner radius
+
+// A rounded-rect path that starts at top-centre and runs clockwise, so the
+// ring "closes" from the top around the card.
+function ringPath(w, h) {
+  const i = RING_W / 2
+  const r = RING_R - i
+  const x0 = i, y0 = i, x1 = w - i, y1 = h - i
+  return [
+    `M ${w / 2} ${y0}`,
+    `H ${x1 - r}`, `A ${r} ${r} 0 0 1 ${x1} ${y0 + r}`,
+    `V ${y1 - r}`, `A ${r} ${r} 0 0 1 ${x1 - r} ${y1}`,
+    `H ${x0 + r}`, `A ${r} ${r} 0 0 1 ${x0} ${y1 - r}`,
+    `V ${y0 + r}`, `A ${r} ${r} 0 0 1 ${x0 + r} ${y0}`,
+    `H ${w / 2}`,
+  ].join(' ')
+}
 
 function TimerRoom({ onDraft, onSave }) {
   const [text, setText] = useState('')
   const [left, setLeft] = useState(ROOM_SECONDS)
   const [running, setRunning] = useState(false)
   const [done, setDone] = useState(false)
+  const [size, setSize] = useState({ w: 0, h: 0 })
   const startedAt = useRef(0)
   const textRef = useRef('')
+  const cardRef = useRef(null)
   textRef.current = text
 
   useEffect(() => { onDraft({ entry: text.trim() }) }, [text])
+
+  // Measure the card so the ring hugs it exactly.
+  useEffect(() => {
+    const el = cardRef.current
+    if (!el) return
+    const measure = () => setSize({ w: el.offsetWidth, h: el.offsetHeight })
+    measure()
+    if (typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   useEffect(() => {
     if (!running) return
@@ -376,32 +406,33 @@ function TimerRoom({ onDraft, onSave }) {
 
   const mm = String(Math.floor(left / 60))
   const ss = String(left % 60).padStart(2, '0')
-  const offset = CIRC * (1 - left / ROOM_SECONDS)
+  const used = 1 - left / ROOM_SECONDS
 
   return (
     <div className={styles.body}>
-      <div className={styles.ringWrap}>
-        <svg className={styles.ring} viewBox="0 0 112 112" aria-hidden="true">
-          <circle className={styles.ringTrack} cx="56" cy="56" r={R} />
-          <circle className={styles.ringBar} cx="56" cy="56" r={R} strokeDasharray={CIRC} strokeDashoffset={offset} />
-        </svg>
-        <div className={styles.ringTime} role="timer" aria-label={`${mm} minutes ${ss} seconds left`}>{mm}:{ss}</div>
+      <div className={styles.timerCard} ref={cardRef}>
+        <div className={styles.card}>
+          <textarea
+            className={styles.area}
+            value={text}
+            onChange={e => { setText(e.target.value); if (!running && !done) setRunning(true) }}
+            disabled={done}
+            placeholder="start typing. the ring starts with you."
+            maxLength={9000}
+            aria-label="three minute draft"
+          />
+        </div>
+        {size.w > 0 && (
+          <svg className={styles.timerRing} width={size.w} height={size.h} viewBox={`0 0 ${size.w} ${size.h}`} aria-hidden="true">
+            <path className={styles.ringTrack} d={ringPath(size.w, size.h)} />
+            <path className={styles.ringBar} d={ringPath(size.w, size.h)} pathLength="100" strokeDasharray="100" strokeDashoffset={used * 100} />
+          </svg>
+        )}
       </div>
-      <div className={styles.card}>
-        <textarea
-          className={styles.area}
-          value={text}
-          onChange={e => { setText(e.target.value); if (!running && !done) setRunning(true) }}
-          disabled={done}
-          placeholder="start typing. the ring starts with you."
-          maxLength={9000}
-          aria-label="three minute draft"
-        />
-      </div>
-      <p className={styles.timerNote}>
+      <p className={styles.timerNote} role="timer" aria-label={`${mm} minutes ${ss} seconds left`}>
         {done
           ? (text.trim() ? 'saved. nice.' : 'time. nothing written, and that is fine.')
-          : 'saves itself when the ring closes'}
+          : <><span className={styles.timerClock}>{mm}:{ss}</span> · saves itself when the ring closes</>}
       </p>
     </div>
   )
