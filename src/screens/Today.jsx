@@ -1274,10 +1274,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
             <div ref={shapesRef} className={styles.journalBottom}>
               {plainDraft ? (
                 <div>
-                  <div className={shapeStyles.inlineHead}>
-                    <button className={shapeStyles.link} onClick={() => setPlainDraft(false)}>← shapes</button>
-                    <span className={shapeStyles.eyebrow}>blank page</span>
-                  </div>
                   <div className={styles.journalComposerCard} data-tour="journal">
                     {draftChips}
                     <div className={styles.journalComposerWrap}>
@@ -1298,6 +1294,9 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                     </div>
                     {draftSaveError && <div className={styles.journalSaveError}>{draftSaveError}</div>}
                     {draftFileInput}
+                  </div>
+                  <div className={shapeStyles.footInline}>
+                    <button className={shapeStyles.cancel} onClick={() => setPlainDraft(false)}>cancel</button>
                   </div>
                 </div>
               ) : (
@@ -1367,10 +1366,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
             <div ref={shapesRef} data-tour="journal-shapes">
               {plainDraft ? (
                 <>
-                  <div className={shapeStyles.inlineHead}>
-                    <button className={shapeStyles.link} onClick={() => setPlainDraft(false)}>← shapes</button>
-                    <span className={shapeStyles.eyebrow}>blank page</span>
-                  </div>
               <div className={styles.journalComposer}>
                 {draftChips}
                 <textarea
@@ -1389,6 +1384,9 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 {draftSaveError && <div className={styles.journalSaveError}>{draftSaveError}</div>}
                 {draftFileInput}
               </div>
+                  <div className={shapeStyles.footInline}>
+                    <button className={shapeStyles.cancel} onClick={() => setPlainDraft(false)}>cancel</button>
+                  </div>
                 </>
               ) : (
                 <ShapesPanel state={state} mode="inline" initial={shapesInit} onJustWrite={() => setPlainDraft(true)} />

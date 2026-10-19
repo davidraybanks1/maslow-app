@@ -111,6 +111,16 @@ export function ShapesPanel({ state, mode = 'inline', initial, onExit, onJustWri
   const Comp = room?.Comp
   const dateLabel = new Date().toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })
 
+  const discardBar = askDiscard && (
+    <div className={styles.discard} role="alert">
+      <span>discard what you wrote?</span>
+      <span className={styles.discardBtns}>
+        <button className={styles.link} onClick={() => setAskDiscard(false)}>keep writing</button>
+        <button className={styles.link} onClick={finishLeave}>discard</button>
+      </span>
+    </div>
+  )
+
   return (
     <div className={inline ? styles.inlinePanel : styles.panel} data-shapes-panel>
       {!inline && (
@@ -119,22 +129,7 @@ export function ShapesPanel({ state, mode = 'inline', initial, onExit, onJustWri
           <button className={styles.close} onClick={leave} aria-label="close">✕</button>
         </div>
       )}
-      {inline && room && (
-        <div className={styles.inlineHead}>
-          <button className={styles.link} onClick={leave}>← shapes</button>
-          <span className={styles.eyebrow}>{room.eyebrow}</span>
-        </div>
-      )}
-
-      {askDiscard && (
-        <div className={styles.discard} role="alert">
-          <span>discard what you wrote?</span>
-          <span className={styles.discardBtns}>
-            <button className={styles.link} onClick={() => setAskDiscard(false)}>keep writing</button>
-            <button className={styles.link} onClick={finishLeave}>discard</button>
-          </span>
-        </div>
-      )}
+      {!inline && discardBar}
 
       {stage === 'picker' ? (
         <>
@@ -165,8 +160,12 @@ export function ShapesPanel({ state, mode = 'inline', initial, onExit, onJustWri
         </>
       ) : (
         <>
-          <h2 className={inline ? styles.titleInline : styles.title}>{room.title[0]} <em>{room.title[1]}</em></h2>
-          <div style={{ height: 14 }} />
+          {!inline && (
+            <>
+              <h2 className={styles.title}>{room.title[0]} <em>{room.title[1]}</em></h2>
+              <div style={{ height: 14 }} />
+            </>
+          )}
           <Comp
             key={stage}
             state={state}
@@ -176,8 +175,16 @@ export function ShapesPanel({ state, mode = 'inline', initial, onExit, onJustWri
             onSave={save}
           />
           {error && <p className={styles.error} role="alert">{error}</p>}
-          {stage !== 'timer' && (
-            <div className={inline ? styles.footInline : styles.foot}>
+          {inline && discardBar}
+          {inline ? (
+            <div className={styles.footInline}>
+              <button className={styles.cancel} onClick={leave}>cancel</button>
+              {stage !== 'timer' && (
+                <button className={styles.add} onClick={() => save()} disabled={!draft.entry.trim() || saving}>add</button>
+              )}
+            </div>
+          ) : stage !== 'timer' && (
+            <div className={styles.foot}>
               <span className={styles.savesAs}>saves as · {room.eyebrow}</span>
               <button className={styles.add} onClick={() => save()} disabled={!draft.entry.trim() || saving}>add</button>
             </div>
