@@ -23,7 +23,7 @@ export const SHAPES = [
   { id: 'sort_first',   label: 'sort first',   blurb: 'sort the day into three piles, a line each.' },
   { id: 'continue',     label: 'continue',     blurb: 'pick up a note from before and answer it.' },
   { id: 'one_thing',    label: 'one thing',    blurb: 'pick a need. write one thing about it.' },
-  { id: 'timer',        label: 'timer room',   blurb: 'three minutes. it saves itself when the ring closes.' },
+  { id: 'timer',        label: 'timer room',   blurb: 'you pick the time. it saves itself when the ring closes.' },
 ]
 
 export function shapeLabel(id) {

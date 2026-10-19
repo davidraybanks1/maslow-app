@@ -469,6 +469,50 @@
 }
 
 /* ── timer room ─────────────────────────────────────────── */
+.lengths {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.length {
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  padding: 7px 14px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.lengthOn { background: var(--ink); color: var(--card); border-color: var(--ink); }
+.length:disabled { cursor: default; opacity: 0.55; }
+.lengthOn:disabled { opacity: 0.85; }
+.customWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  color: var(--ink2);
+}
+.customInput {
+  width: 46px;
+  box-sizing: border-box;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--card);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 6px 4px;
+  outline: none;
+}
+.customInput:focus { border-color: var(--ink); }
 .timerCard { position: relative; }
 .timerCard > .card { border-color: transparent; }
 .timerRing {

@@ -342,7 +342,17 @@ function OneThing({ state, today, onDraft }) {
 }
 
 /* ── timer room ───────────────────────────────────────────── */
-const ROOM_SECONDS = 180
+const PRESETS = [2, 5, 10]
+const DEFAULT_MINUTES = 5
+const MAX_MINUTES = 60
+const MINUTES_KEY = 'loam_timer_minutes'
+function readMinutes() {
+  try {
+    const n = parseInt(localStorage.getItem(MINUTES_KEY) || '', 10)
+    if (n >= 1 && n <= MAX_MINUTES) return n
+  } catch { /* storage unavailable */ }
+  return DEFAULT_MINUTES
+}
 const RING_W = 3          // stroke width of the countdown ring
 const RING_R = 18         // matches the card's corner radius
 
@@ -364,7 +374,11 @@ function ringPath(w, h) {
 
 function TimerRoom({ onDraft, onSave }) {
   const [text, setText] = useState('')
-  const [left, setLeft] = useState(ROOM_SECONDS)
+  const [minutes, setMinutes] = useState(readMinutes)
+  const [customOpen, setCustomOpen] = useState(() => !PRESETS.includes(readMinutes()))
+  const [customText, setCustomText] = useState(() => (PRESETS.includes(readMinutes()) ? '' : String(readMinutes())))
+  const total = minutes * 60
+  const [left, setLeft] = useState(total)
   const [running, setRunning] = useState(false)
   const [done, setDone] = useState(false)
   const [size, setSize] = useState({ w: 0, h: 0 })
@@ -389,9 +403,9 @@ function TimerRoom({ onDraft, onSave }) {
 
   useEffect(() => {
     if (!running) return
-    startedAt.current = Date.now() - (ROOM_SECONDS - left) * 1000
+    startedAt.current = Date.now() - (total - left) * 1000
     const id = setInterval(() => {
-      const remaining = Math.max(0, ROOM_SECONDS - Math.floor((Date.now() - startedAt.current) / 1000))
+      const remaining = Math.max(0, total - Math.floor((Date.now() - startedAt.current) / 1000))
       setLeft(remaining)
       if (remaining === 0) {
         clearInterval(id)
@@ -406,10 +420,58 @@ function TimerRoom({ onDraft, onSave }) {
 
   const mm = String(Math.floor(left / 60))
   const ss = String(left % 60).padStart(2, '0')
-  const used = 1 - left / ROOM_SECONDS
+  const used = 1 - left / total
+  const started = running || done || left !== total
+
+  // Pick the length before you start; it locks once the ring is moving.
+  function pick(n) {
+    if (started) return
+    setMinutes(n)
+    setLeft(n * 60)
+    try { localStorage.setItem(MINUTES_KEY, String(n)) } catch { /* storage unavailable */ }
+  }
+  function onCustom(v) {
+    const digits = v.replace(/[^0-9]/g, '').slice(0, 2)
+    setCustomText(digits)
+    const n = parseInt(digits, 10)
+    if (n >= 1 && n <= MAX_MINUTES) pick(n)
+  }
 
   return (
     <div className={styles.body}>
+      <div className={styles.lengths} role="group" aria-label="how long">
+        {PRESETS.map(n => (
+          <button
+            key={n}
+            className={`${styles.length} ${!customOpen && minutes === n ? styles.lengthOn : ''}`}
+            aria-pressed={!customOpen && minutes === n}
+            disabled={started}
+            onClick={() => { setCustomOpen(false); pick(n) }}
+          >{n} min</button>
+        ))}
+        <button
+          className={`${styles.length} ${customOpen ? styles.lengthOn : ''}`}
+          aria-pressed={customOpen}
+          disabled={started}
+          onClick={() => { setCustomOpen(true); if (!customText) setCustomText(String(minutes)) }}
+        >custom</button>
+        {customOpen && (
+          <label className={styles.customWrap}>
+            <input
+              id="timer-custom-minutes"
+              className={styles.customInput}
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={customText}
+              onChange={e => onCustom(e.target.value)}
+              disabled={started}
+              aria-label="minutes"
+              placeholder="7"
+            />
+            <span>min</span>
+          </label>
+        )}
+      </div>
       <div className={styles.timerCard} ref={cardRef}>
         <div className={styles.card}>
           <textarea
@@ -419,7 +481,7 @@ function TimerRoom({ onDraft, onSave }) {
             disabled={done}
             placeholder="start typing. the ring starts with you."
             maxLength={9000}
-            aria-label="three minute draft"
+            aria-label={`${minutes} minute draft`}
           />
         </div>
         {size.w > 0 && (
@@ -445,5 +507,5 @@ export const ROOMS = {
   sort_first:   { eyebrow: 'sort first',   title: ['sort it first.', 'then say a line.'], Comp: SortFirst },
   continue:     { eyebrow: 'continue',     title: ['continue a conversation', 'with yourself.'], Comp: Continue },
   one_thing:    { eyebrow: 'one thing',    title: ['one need.', 'one thing about it.'], Comp: OneThing },
-  timer:        { eyebrow: 'timer room',   title: ['three minutes.', 'then it is done.'], Comp: TimerRoom },
+  timer:        { eyebrow: 'timer room',   title: ['set a timer.', 'then it is done.'], Comp: TimerRoom },
 }
