@@ -138,9 +138,14 @@ export function ShapesPanel({ state, mode = 'inline', initial, onExit, onJustWri
 
       {stage === 'picker' ? (
         <>
-          <h2 className={inline ? styles.titleInline : styles.title}>How do you want to write <em>today?</em></h2>
-          {!inline && <p className={styles.sub}>pick a room instead of facing a blank page. nothing here needs to be finished.</p>}
-          {suggestion && <p className={styles.suggest}>{suggestion.line}</p>}
+          {/* On Today the picker is just the tiles; the suggested one is outlined. */}
+          {!inline && (
+            <>
+              <h2 className={styles.title}>How do you want to write <em>today?</em></h2>
+              <p className={styles.sub}>pick a room instead of facing a blank page. nothing here needs to be finished.</p>
+              {suggestion && <p className={styles.suggest}>{suggestion.line}</p>}
+            </>
+          )}
           <button className={styles.justWrite} onClick={() => { if (!inline) onExit?.(); onJustWrite?.() }}>
             blank page
           </button>
