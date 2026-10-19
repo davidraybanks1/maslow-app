@@ -142,8 +142,7 @@ export function ShapesPanel({ state, mode = 'inline', initial, onExit, onJustWri
           {!inline && <p className={styles.sub}>pick a room instead of facing a blank page. nothing here needs to be finished.</p>}
           {suggestion && <p className={styles.suggest}>{suggestion.line}</p>}
           <button className={styles.justWrite} onClick={() => { if (!inline) onExit?.(); onJustWrite?.() }}>
-            just write
-            <span className={styles.justWriteSub}>blank page</span>
+            blank page
           </button>
           <div className={styles.grid}>
             {SHAPES.map(s => (

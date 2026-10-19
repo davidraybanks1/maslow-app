@@ -24,7 +24,6 @@ import PracticeToast from '../components/PracticeToast'
 import { usePracticeActions, practiceKey } from '../lib/usePracticeActions'
 import styles from './Today.module.css'
 import SignedImg from '../components/SignedImg'
-import RevisitCard from '../components/shapes/RevisitCard'
 import { ShapesPanel } from '../components/shapes/ShapesFlow'
 import { shapeLabel } from '../lib/shapeFacts'
 import shapeStyles from '../components/shapes/Shapes.module.css'
@@ -391,7 +390,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     return () => window.removeEventListener('maslow:entry-added', onEntryAdded)
   }, [today])
 
-  // The drafts section is the shape picker, always showing. "just write"
+  // The drafts section is the shape picker, always showing. "blank page"
   // swaps in the plain composer below; a room opens in place. Anything that
   // dispatches `maslow:open-shapes` (e.g. the revisit card's "continue")
   // lands here on Today.
@@ -1273,12 +1272,11 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               )}
             </div>
             <div ref={shapesRef} className={styles.journalBottom}>
-              <RevisitCard state={state} />
               {plainDraft ? (
                 <div>
                   <div className={shapeStyles.inlineHead}>
                     <button className={shapeStyles.link} onClick={() => setPlainDraft(false)}>← shapes</button>
-                    <span className={shapeStyles.eyebrow}>just write</span>
+                    <span className={shapeStyles.eyebrow}>blank page</span>
                   </div>
                   <div className={styles.journalComposerCard} data-tour="journal">
                     {draftChips}
@@ -1366,13 +1364,12 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 {journalEntryCount > 0 ? `${journalEntryCount} ${journalEntryCount === 1 ? 'entry' : 'entries'} today` : ''}
               </span>
             </div>
-            <RevisitCard state={state} />
             <div ref={shapesRef} data-tour="journal-shapes">
               {plainDraft ? (
                 <>
                   <div className={shapeStyles.inlineHead}>
                     <button className={shapeStyles.link} onClick={() => setPlainDraft(false)}>← shapes</button>
-                    <span className={shapeStyles.eyebrow}>just write</span>
+                    <span className={shapeStyles.eyebrow}>blank page</span>
                   </div>
               <div className={styles.journalComposer}>
                 {draftChips}
