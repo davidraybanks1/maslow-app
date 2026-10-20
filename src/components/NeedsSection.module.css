@@ -83,12 +83,25 @@
   left: 0;
   top: 0;
   bottom: 0;
-  background: color-mix(in srgb, var(--cat) 33%, transparent);
+  background: var(--cat);
   transition: width 250ms ease-out;
 }
-.chipName, .chipCount { position: relative; font-family: var(--font-mono); font-size: var(--type-floor); }
-.chipName { color: var(--ink); }
-.chipCount { color: var(--ink2); font-variant-numeric: tabular-nums; }
+.chipName { position: relative; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink); }
+/* where the colour has filled in, the label switches to the text colour made
+   for that mode (light on dark green, dark on the rest) */
+.chipOn {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  color: var(--on);
+  white-space: nowrap;
+  pointer-events: none;
+  transition: clip-path 250ms ease-out;
+}
 
 /* the open need's practices fold out below the chips */
 .drawer {
@@ -230,5 +243,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .chipFill, .drawer, .pcard, .pfill, .chev, .chip { transition: none; }
+  .chipFill, .chipOn, .drawer, .pcard, .pfill, .chev, .chip { transition: none; }
 }

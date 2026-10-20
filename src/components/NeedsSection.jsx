@@ -261,7 +261,8 @@ export default function NeedsSection({
                     >
                       <span className={styles.chipFill} style={{ width: `${pct}%` }} aria-hidden="true" />
                       <span className={styles.chipName}>{need.name}</span>
-                      <span className={styles.chipCount}>{count}/{target}</span>
+                      {/* the same label again in the on-colour, shown only over the filled part */}
+                      <span className={styles.chipOn} style={{ clipPath: `inset(0 ${100 - pct}% 0 0)` }} aria-hidden="true">{need.name}</span>
                     </button>
                   )
                 })}
