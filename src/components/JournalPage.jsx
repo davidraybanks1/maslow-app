@@ -21,11 +21,11 @@ import styles from './JournalPage.module.css'
 const BLANK = "what's on your mind?"
 
 const EXPERIENCES = [
-  { id: 'three_truths', name: 'three truths', description: 'Three facts about you right now. Write what they have in common.', placeholder: 'one true thing about you right now…' },
-  { id: 'tension',      name: 'tension',      description: 'Two things pulling on you. Write the space between.',               placeholder: 'what lives between these two?' },
+  { id: 'timer',        name: 'timer room',   description: 'You pick the time. It saves itself when the ring closes.',         placeholder: 'set a time, then write.' },
   { id: 'continue',     name: 'revisit',      description: 'Keep a conversation going on a previous draft.',                   placeholder: 'pick a draft to answer…' },
   { id: 'one_thing',    name: 'one thing',    description: 'Pick a need. Write one thing about it.',                           placeholder: 'which need?' },
-  { id: 'timer',        name: 'timer room',   description: 'You pick the time. It saves itself when the ring closes.',         placeholder: 'set a time, then write.' },
+  { id: 'tension',      name: 'tension',      description: 'Two things pulling on you. Write the space between.',               placeholder: 'what lives between these two?' },
+  { id: 'three_truths', name: 'three truths', description: 'Three facts about you right now. Write what they have in common.', placeholder: 'one true thing about you right now…' },
 ]
 
 const DRAFT_KEY = 'loam_today_draft'
