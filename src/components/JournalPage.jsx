@@ -23,7 +23,7 @@ const BLANK = "what's on your mind?"
 const EXPERIENCES = [
   { id: 'three_truths', name: 'three truths', description: 'Three facts about you right now. Write what they have in common.', placeholder: 'one true thing about you right now…' },
   { id: 'tension',      name: 'tension',      description: 'Two things pulling on you. Write the space between.',               placeholder: 'what lives between these two?' },
-  { id: 'continue',     name: 'continue',     description: 'Pick up a note from before and answer it.',                        placeholder: 'pick a note to answer…' },
+  { id: 'continue',     name: 'revisit',      description: 'Keep a conversation going on a previous draft.',                   placeholder: 'pick a draft to answer…' },
   { id: 'one_thing',    name: 'one thing',    description: 'Pick a need. Write one thing about it.',                           placeholder: 'which need?' },
   { id: 'timer',        name: 'timer room',   description: 'You pick the time. It saves itself when the ring closes.',         placeholder: 'set a time, then write.' },
 ]
@@ -267,9 +267,12 @@ export default function JournalPage({ state, logMood }) {
             {error && <div className={styles.error} role="alert">{error}</div>}
             <div className={styles.footer}>
               <span className={styles.saves} role={extra.ring != null ? 'timer' : undefined}>{inSpace && extra.note ? extra.note : (justSaved ? 'saved · just now' : 'saves as you type')}</span>
-              <button type="button" className={styles.done} onClick={done} disabled={empty || saving}>
-                <span className={styles.donePill}>done</span>
-              </button>
+              <div className={styles.footerActions}>
+                {inSpace && <button type="button" className={styles.cancel} onClick={exit}>cancel</button>}
+                <button type="button" className={styles.done} onClick={done} disabled={empty || saving}>
+                  <span className={styles.donePill}>done</span>
+                </button>
+              </div>
             </div>
           </div>
           {inSpace && extra.ring != null && size.w > 0 && (

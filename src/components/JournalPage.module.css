@@ -100,7 +100,21 @@
 .error { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--survival); }
 
 .footer { display: flex; align-items: center; justify-content: space-between; min-height: 44px; }
-.saves { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); }
+.saves { flex: 1; min-width: 0; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); }
+.footerActions { display: flex; align-items: center; gap: 14px; flex: none; }
+.cancel {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  color: var(--ink3);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  -webkit-tap-highlight-color: transparent;
+}
 /* 40pt pill inside a 44pt touch target */
 .done {
   position: relative;

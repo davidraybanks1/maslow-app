@@ -79,28 +79,29 @@ function Tension({ state, today, text, onChange }) {
   )
 }
 
-/* ── continue ─────────────────────────────────────────────── */
+/* ── revisit (stored as the "continue" shape) ───────────────── */
 function Continue({ state, onChange }) {
-  const [drafts, setDrafts] = useState(null)
+  const [drafts, setDrafts] = useState(null)      // drafts marked 'revisit'
   const [source, setSource] = useState(null)
-  const [picking, setPicking] = useState(false)
+  const [picking, setPicking] = useState(true)    // opens on the chooser, no note pre-picked
   const [keepOpen, setKeepOpen] = useState(false)
   const [fresh, setFresh] = useState(false)
 
   useEffect(() => {
     let live = true
-    loadRecentDrafts(state.userId, 14).then(rows => {
+    loadRecentDrafts(state.userId, 60).then(rows => {
       if (!live) return
-      setDrafts(rows)
-      if (rows.length) setSource(rows.find(r => r.revisit) || rows[0])
+      setDrafts(rows.filter(r => r.revisit))
     })
     return () => { live = false }
   }, [state.userId])
 
   useEffect(() => {
-    if (fresh || !source) onChange({ placeholder: fresh ? 'a note to self' : 'pick a note to answer…' })
+    if (fresh) onChange({ placeholder: 'a note to self', locked: false })
+    else if (!source) onChange({ placeholder: 'pick a draft to answer…', locked: true })
     else onChange({
       placeholder: 'reply to yourself',
+      locked: false,
       quotedText: source.entry,
       quotedDate: source.date_key || null,
       needId: source.need_id || null,
@@ -109,13 +110,15 @@ function Continue({ state, onChange }) {
     })
   }, [source, keepOpen, fresh])
 
-  if (drafts && !drafts.length) {
-    return <p className={styles.hint}>nothing to continue yet. write one first. this will be here after.</p>
-  }
-  if (picking) {
+  const chooseLabel = "drafts you marked 'revisit'"
+
+  if (picking && !fresh) {
     return (
       <div className={styles.space}>
-        <div className={styles.eyebrow}>older drafts</div>
+        <div className={styles.eyebrow}>{chooseLabel}</div>
+        {drafts && !drafts.length && (
+          <p className={styles.hint}>nothing marked 'revisit' yet. mark a draft and it will be here.</p>
+        )}
         <div className={styles.pick}>
           {(drafts || []).map(d => (
             <button type="button" key={d.id} className={styles.pickItem} onClick={() => { setSource(d); setFresh(false); setPicking(false) }}>
@@ -123,6 +126,9 @@ function Continue({ state, onChange }) {
               <span className={styles.pastText}>{clip(d.entry, 120)}</span>
             </button>
           ))}
+        </div>
+        <div className={styles.linkRow}>
+          <button type="button" className={styles.link} onClick={() => { setFresh(true); setPicking(false) }}>a note to self</button>
         </div>
       </div>
     )
@@ -151,8 +157,8 @@ function Continue({ state, onChange }) {
         </label>
       )}
       <div className={styles.linkRow}>
-        <button type="button" className={styles.link} onClick={() => setPicking(true)}>older drafts</button>
-        <button type="button" className={styles.link} onClick={() => setFresh(f => !f)}>{fresh ? 'back to the thread' : 'a note to self'}</button>
+        <button type="button" className={styles.link} onClick={() => { setFresh(false); setPicking(true) }}>{chooseLabel}</button>
+        {!fresh && <button type="button" className={styles.link} onClick={() => setFresh(true)}>a note to self</button>}
       </div>
     </div>
   )
