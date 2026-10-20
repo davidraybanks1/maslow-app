@@ -4,6 +4,7 @@ import { isSplit } from '../lib/practiceTypes'
 import { practiceKey } from '../lib/usePracticeActions'
 import { useHold } from '../lib/useHold'
 import { PracticePanel } from './PracticeRow'
+import PracticeIcon from './PracticeIcon'
 import styles from './NeedsSection.module.css'
 
 // The Needs section on Today (phones). Every need is a chip you can see at a
@@ -23,6 +24,9 @@ const ON = {
   nourishment: 'var(--ink)',
   survival: 'var(--ink)',
 }
+
+// a light orb for the dark Exploration card once a practice is done
+const LIGHT_ORB = ['#FFFDF9', '#D9D3C7']
 
 function countFor(checked, needId) {
   let n = 0
@@ -86,12 +90,14 @@ function PracticeCard({ need, mode, practice, st, lastDays, onTap, onHint, onTog
         {...hold.press}
       >
         <span className={styles.ptop}>
-          <span className={styles.ring} aria-hidden="true">
-            {st.done && (
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M2.2 6.4 4.8 9 9.8 3.2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            )}
+          <span className={styles.picon}>
+            {/* the practice's own icon; on a done Exploration card (dark green) it flips to light */}
+            <PracticeIcon
+              kind={st.kind}
+              size={30}
+              lit={st.done && mode === 'exploration' ? LIGHT_ORB : null}
+              color={st.done && mode === 'exploration' ? '#FFFDF9' : 'var(--ink)'}
+            />
           </span>
           <span className={styles.pmeta}>
             {showX2 && <span className={styles.x2}>×2</span>}

@@ -185,16 +185,7 @@
 .ptop, .pbottom, .pmeta { pointer-events: none; }
 .ptop { display: flex; align-items: center; justify-content: space-between; }
 .pmeta { display: flex; align-items: center; gap: 8px; }
-.ring {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  box-sizing: border-box;
-  border: 1.5px solid currentColor;
-  border-radius: 50%;
-}
+.picon { display: flex; pointer-events: none; }
 .x2 { font-family: var(--font-mono); font-size: var(--type-floor); font-weight: 500; }
 .chev {
   width: 7px;

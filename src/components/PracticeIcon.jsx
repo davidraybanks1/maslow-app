@@ -72,7 +72,8 @@ export const TIER_LIT = {
 }
 
 // lit: null (unlit, shiny black) | [hi, lo] gradient pair for a lit tier colour
-export default function PracticeIcon({ kind = 'check', size = 24, lit = null, className }) {
+// color: the stroke/line colour (ink by default; light on a dark card)
+export default function PracticeIcon({ kind = 'check', size = 24, lit = null, color = 'var(--ink)', className }) {
   const gid = useId().replace(/:/g, '')
   const id = `pi-${gid}`
   const stops = lit
@@ -86,7 +87,7 @@ export default function PracticeIcon({ kind = 'check', size = 24, lit = null, cl
       viewBox="0 0 40 40"
       aria-hidden="true"
       focusable="false"
-      style={{ display: 'block', color: 'var(--ink)' }}
+      style={{ display: 'block', color }}
     >
       <defs>
         <radialGradient id={id} cx="34%" cy="26%">
