@@ -171,6 +171,25 @@ function BoundaryPanel({ st, onEdit }) {
   )
 }
 
+// The open-up detail for a practice that has something to open (ritual steps,
+// checklist items, timer, stretch slider, boundary window). Shared by the row
+// on the desktop popup and the Needs section on Today.
+export function PracticePanel({ st, mode, onEdit, onBegin, onStretch, onToggleItem, onAddItem }) {
+  const kind = st.kind
+  const panelProps = { st, onEdit }
+  return (
+    <>
+      {kind === 'ritual' && <RitualPanel cfg={st.cfg} onEdit={onEdit} />}
+      {kind === 'timed' && <TimedPanel {...panelProps} onBegin={onBegin} />}
+      {kind === 'checklist' && (
+        <ChecklistPanel {...panelProps} mode={mode} onToggleItem={onToggleItem} onAddItem={onAddItem} />
+      )}
+      {kind === 'stretch' && <StretchPanel {...panelProps} onStretch={onStretch} />}
+      {kind === 'boundary' && <BoundaryPanel {...panelProps} />}
+    </>
+  )
+}
+
 export default function PracticeRow({
   need, mode, practice, status: st, lastDays, expanded,
   onTap, onToggle, onToggleItem, onAddItem, onBegin, onStretch, onEdit, onHint,
@@ -200,7 +219,6 @@ export default function PracticeRow({
   }
 
   const name = `${practice.label}${sub ? `, ${sub}` : ''}${st.done ? ', done' : ''}`
-  const panelProps = { st, onEdit }
   return (
     <div className={expanded ? styles.open : undefined} data-kind={kind}>
       <div
@@ -248,13 +266,7 @@ export default function PracticeRow({
           {...(expanded ? {} : { inert: '' })}
         >
           <div className={styles.panelClip}>
-            {kind === 'ritual' && <RitualPanel cfg={st.cfg} onEdit={onEdit} />}
-            {kind === 'timed' && <TimedPanel {...panelProps} onBegin={onBegin} />}
-            {kind === 'checklist' && (
-              <ChecklistPanel {...panelProps} mode={mode} onToggleItem={onToggleItem} onAddItem={onAddItem} />
-            )}
-            {kind === 'stretch' && <StretchPanel {...panelProps} onStretch={onStretch} />}
-            {kind === 'boundary' && <BoundaryPanel {...panelProps} />}
+            <PracticePanel st={st} mode={mode} onEdit={onEdit} onBegin={onBegin} onStretch={onStretch} onToggleItem={onToggleItem} onAddItem={onAddItem} />
           </div>
         </div>
       )}

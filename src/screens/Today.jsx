@@ -15,8 +15,8 @@ import JournalQuote from '../components/JournalQuote'
 import ManageDeck from '../components/ManageDeck'
 import ManageTags from '../components/ManageTags'
 import NeedsPopup from '../components/NeedsPopup'
-import NeedPills, { NeedPill } from '../components/NeedPills'
-import PracticeRow from '../components/PracticeRow'
+import NeedPills from '../components/NeedPills'
+import NeedsSection from '../components/NeedsSection'
 import PracticeSheet from '../components/PracticeSheet'
 import StretchSheet from '../components/StretchSheet'
 import TimerTakeover from '../components/TimerTakeover'
@@ -660,12 +660,11 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     </div>
   )
 
-  const [openTier, setOpenTier] = useState(null)
+  // Phones: the one need whose practices are open (only one at a time)
+  const [openNeedId, setOpenNeedId] = useState(null)
   const [popupMode, setPopupMode] = useState(null)
   const tierElems = useRef({})
   const tierBtnElems = useRef({})
-  // Frozen sort order per mode — set at open, cleared at close so re-open re-sorts
-  const accordionSnapshots = useRef({})
 
   // Tour demo-ring: animate the completion ring while card 1 is visible.
   // Sweeps 0→100% over 1800ms, holds 800ms, eases back to the real value.
@@ -738,21 +737,18 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Tour cross-component nudge: open/close the first mode accordion.
+  // Tour cross-component nudge: open/close the first need in the first mode.
   // Prefer exploration; fall back to the first mode in MODE_ORDER that has
   // at least one need on the canvas; dispatch nothing if canvas is empty.
   useEffect(() => {
     function onOpenTier() {
       const modeToOpen = MODE_ORDER.find(m => allNeeds().some(n => state.canvas[n.id] === m))
       if (!modeToOpen) return
-      delete accordionSnapshots.current[modeToOpen]
-      setOpenTier(modeToOpen)
+      const first = allNeeds().find(n => state.canvas[n.id] === modeToOpen)
+      if (first) setOpenNeedId(first.id)
     }
     function onCloseTier() {
-      setOpenTier(prev => {
-        if (prev) delete accordionSnapshots.current[prev]
-        return null
-      })
+      setOpenNeedId(null)
     }
     window.addEventListener('maslow:open-tier', onOpenTier)
     window.addEventListener('maslow:close-tier', onCloseTier)
@@ -1066,171 +1062,76 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
 
         {/* ── Needs & Practices ── */}
         <div className={styles.practicesCard}>
-          <div className={styles.tierSectionHeader}>
-            <span className={styles.tierSectionLabel}>
-              {isDesktop && <Glyph kind="mode" />}
-              {isDesktop ? 'CANVAS' : 'NEEDS'}
-            </span>
-            {isDesktop && <span className={styles.tierSectionHint}>tap a mode to fill it</span>}
-          </div>
-          <div className={styles.tierList}>
-            {MODE_ORDER.map((mode, mi) => {
-              const modeNeeds = allNeeds().filter(n => state.canvas[n.id] === mode)
-              if (!modeNeeds.length) return null
-              const pip = MODES[mode]?.pip
-              const maxBubbles = MODE_MAX_BUBBLES[mode] || 0
-              const totalPossible = maxBubbles * modeNeeds.length
-              let modeDone = 0
-              for (const n of modeNeeds) {
-                modeDone += Math.min(
-                  checked.filter(e => e.need_id === n.id).reduce((s, e) => s + (e.count || 1), 0),
-                  maxBubbles
-                )
-              }
-              const progressPct = totalPossible > 0 ? Math.round((modeDone / totalPossible) * 100) : 0
-
-              if (isDesktop) {
-                const isPopupOpen = popupMode === mode
-                return (
-                  <div
-                    key={mode}
-                    className={styles.tier}
-                    data-tour={mode === firstTierMode ? 'modes' : undefined}
-                    ref={el => { tierElems.current[mode] = el }}
-                  >
-                    <button
-                      className={styles.tierHeader}
-                      onClick={() => setPopupMode(isPopupOpen ? null : mode)}
-                      aria-expanded={isPopupOpen}
-                      aria-controls={`needs-popup-${mode}`}
-                      ref={el => { tierBtnElems.current[mode] = el }}
+          {isDesktop ? (
+            <>
+              <div className={styles.tierSectionHeader}>
+                <span className={styles.tierSectionLabel}>
+                  <Glyph kind="mode" />
+                  CANVAS
+                </span>
+                <span className={styles.tierSectionHint}>tap a mode to fill it</span>
+              </div>
+              <div className={styles.tierList}>
+                {MODE_ORDER.map(mode => {
+                  const modeNeeds = allNeeds().filter(n => state.canvas[n.id] === mode)
+                  if (!modeNeeds.length) return null
+                  const pip = MODES[mode]?.pip
+                  const maxBubbles = MODE_MAX_BUBBLES[mode] || 0
+                  const totalPossible = maxBubbles * modeNeeds.length
+                  let modeDone = 0
+                  for (const n of modeNeeds) {
+                    modeDone += Math.min(
+                      checked.filter(e => e.need_id === n.id).reduce((s, e) => s + (e.count || 1), 0),
+                      maxBubbles
+                    )
+                  }
+                  const progressPct = totalPossible > 0 ? Math.round((modeDone / totalPossible) * 100) : 0
+                  const isPopupOpen = popupMode === mode
+                  return (
+                    <div
+                      key={mode}
+                      className={styles.tier}
+                      data-tour={mode === firstTierMode ? 'modes' : undefined}
+                      ref={el => { tierElems.current[mode] = el }}
                     >
-                      <div className={styles.tierHeaderTop}>
-                        <div className={`${styles.tierDot}${mode === 'exploration' ? ` ${styles.exploreBlack}` : ''}`} style={mode === 'exploration' ? undefined : { background: pip }} />
-                        <span className={styles.tierName}>{mode}</span>
-                        <span className={styles.tierCount}>{modeDone}/{totalPossible}</span>
-                      </div>
-                      <div className={styles.tierBar}>
-                        <div
-                          className={`${styles.tierBarFill}${mode === 'exploration' ? ` ${styles.exploreBlack}` : ''}`}
-                          style={{ width: `${progressPct}%`, ...(mode === 'exploration' ? {} : { background: pip }) }}
-                        />
-                      </div>
-                      <NeedPills mode={mode} needs={modeNeeds} />
-                    </button>
-                  </div>
-                )
-              }
-
-              // Mobile: inline accordion with frozen sort order
-              const isOpen = openTier === mode
-              function getPracticeCount(n, practice) {
-                return checked
-                  .filter(e => {
-                    if (e.need_id !== n.id) return false
-                    if (practice.id && e.practice_id) return e.practice_id === practice.id
-                    return e.practice_text === practice.label
-                  })
-                  .reduce((s, e) => s + (e.count || 1), 0)
-              }
-
-              // Snapshot: sort order is captured at open and held for the accordion's life.
-              // Tapping a practice updates counts but rows do not reorder mid-session.
-              // Closing clears the snapshot; reopening re-sorts at the current counts.
-              if (isOpen && !accordionSnapshots.current[mode]) {
-                accordionSnapshots.current[mode] = modeNeeds.map(n => {
-                  const pool = (state.practicesDB && state.practicesDB.length > 0)
-                    ? state.practicesDB.filter(p => p.need_id === n.id && !p.archived_at)
-                    : (state.practices[n.id] || []).map(label => ({ id: null, label }))
-                  return { need: n, sorted: [...pool].sort((a, b) => getPracticeCount(n, a) - getPracticeCount(n, b)) }
-                })
-              }
-              const pools = isOpen ? accordionSnapshots.current[mode] : []
-
-              return (
-                <div
-                  key={mode}
-                  className={`${styles.tier} ${isOpen ? styles.tierOpen : ''}`}
-                  data-tour={mode === firstTierMode ? 'modes' : undefined}
-                >
-                  <button
-                    className={styles.tierHeader}
-                    onClick={() => {
-                      if (openTier === mode) {
-                        delete accordionSnapshots.current[mode]
-                        setOpenTier(null)
-                      } else {
-                        delete accordionSnapshots.current[mode]
-                        setOpenTier(mode)
-                      }
-                    }}
-                    aria-expanded={isOpen}
-                  >
-                    <div className={styles.tierHeaderTop}>
-                      <div className={`${styles.tierDot}${mode === 'exploration' ? ` ${styles.exploreBlack}` : ''}`} style={mode === 'exploration' ? undefined : { background: pip }} />
-                      <span className={styles.tierName}>{mode}</span>
-                      <i className={`${styles.tierChevron} ${isOpen ? styles.tierChevronOpen : ''}`} aria-hidden="true" />
+                      <button
+                        className={styles.tierHeader}
+                        onClick={() => setPopupMode(isPopupOpen ? null : mode)}
+                        aria-expanded={isPopupOpen}
+                        aria-controls={`needs-popup-${mode}`}
+                        ref={el => { tierBtnElems.current[mode] = el }}
+                      >
+                        <div className={styles.tierHeaderTop}>
+                          <div className={`${styles.tierDot}${mode === 'exploration' ? ` ${styles.exploreBlack}` : ''}`} style={mode === 'exploration' ? undefined : { background: pip }} />
+                          <span className={styles.tierName}>{mode}</span>
+                          <span className={styles.tierCount}>{modeDone}/{totalPossible}</span>
+                        </div>
+                        <div className={styles.tierBar}>
+                          <div
+                            className={`${styles.tierBarFill}${mode === 'exploration' ? ` ${styles.exploreBlack}` : ''}`}
+                            style={{ width: `${progressPct}%`, ...(mode === 'exploration' ? {} : { background: pip }) }}
+                          />
+                        </div>
+                        <NeedPills mode={mode} needs={modeNeeds} />
+                      </button>
                     </div>
-                    <div className={styles.tierBar}>
-                      <div
-                        className={`${styles.tierBarFill}${mode === 'exploration' ? ` ${styles.exploreBlack}` : ''}`}
-                        style={{ width: `${progressPct}%`, ...(mode === 'exploration' ? {} : { background: pip }) }}
-                      />
-                    </div>
-                    {!isOpen && (
-                      <NeedPills mode={mode} needs={modeNeeds} />
-                    )}
-                  </button>
-
-                  <div className={`${styles.tierContent} ${isOpen ? styles.tierContentOpen : ''}`}>
-                    <div className={styles.tierContentInner}>
-                      {pools.map(({ need: n, sorted }) => {
-                        const needDone = Math.min(
-                          checked.filter(e => e.need_id === n.id).reduce((s, e) => s + (e.count || 1), 0),
-                          maxBubbles
-                        )
-                        return (
-                          <div key={n.id} className={styles.needGroup}>
-                            <div className={styles.needSubHeader}>
-                              <NeedPill mode={mode} name={n.name} />
-                              <span className={styles.needSubCount}>{needDone}/{maxBubbles}</span>
-                            </div>
-                            {sorted.length === 0 ? (
-                              <div className={styles.noPractice}>
-                                no practices — <span className={styles.noPracticeLink} onClick={() => navigate('/practices')}>add some</span>
-                              </div>
-                            ) : sorted.map(practice => {
-                              const key = practiceKey(n, practice)
-                              const st = practices.statusOf(n, practice)
-                              return (
-                                <PracticeRow
-                                  key={key}
-                                  need={n}
-                                  mode={mode}
-                                  practice={practice}
-                                  status={st}
-                                  lastDays={lastDoneMap.get(key) ?? null}
-                                  expanded={!!practices.expanded[key]}
-                                  onTap={() => practices.tap(n, mode, practice)}
-                                  onHint={() => practices.say('hold to check off')}
-                                  onToggle={() => practices.toggleExpanded(key)}
-                                  onToggleItem={i => practices.toggleItem(n, mode, practice, i)}
-                                  onAddItem={text => practices.addItem(n, mode, practice, text)}
-                                  onBegin={() => practices.beginTimer(n, mode, practice)}
-                                  onStretch={() => practices.openStretch(n, mode, practice)}
-                                  onEdit={practice.id ? () => setEditingPractice({ need: n, practice }) : undefined}
-                                />
-                              )
-                            })}
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+                  )
+                })}
+              </div>
+            </>
+          ) : (
+            <NeedsSection
+              state={state}
+              checked={checked}
+              practices={practices}
+              lastDoneMap={lastDoneMap}
+              openNeedId={openNeedId}
+              onOpenNeed={setOpenNeedId}
+              navigate={navigate}
+              onEditPractice={(need, practice) => setEditingPractice({ need, practice })}
+              tourMode={firstTierMode}
+            />
+          )}
           <button
             type="button"
             className={styles.editNeeds}
