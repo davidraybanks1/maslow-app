@@ -40,10 +40,13 @@ export const PIPS_FOR = tone =>
 // still read entirely off the shape and speed, same as before, never off a
 // color change, so the fill stays one ink tone (tone-adjusted via CSS vars
 // below) across all three bands.
+// "good" moves in big, slow, smooth swells (a lobed outline plus a gentle
+// breath in and out) so it's clearly alive but never jittery; "fine" and "bad"
+// get rougher and faster. a2 and breath are only used by "good".
 const RING_PARAMS = {
-  good: { a3: 2.5, a5: 0, a7: 0, speed: .6 },
-  mid:  { a3: 2,   a5: 3, a7: .6, speed: 1.2 },
-  bad:  { a3: 2.5, a5: 4, a7: 6,  speed: 2.6 },
+  good: { a2: 3.5, a3: 5,   a5: 0, a7: 0,  speed: .7,  breath: 2.8 },
+  mid:  { a2: 0,   a3: 2,   a5: 3, a7: .6, speed: 1.2, breath: 0 },
+  bad:  { a2: 0,   a3: 2.5, a5: 4, a7: 6,  speed: 2.6, breath: 0 },
 }
 const RING_REST = RING_PARAMS.mid
 
@@ -54,6 +57,8 @@ const PREFERS_REDUCED_MOTION = typeof window !== 'undefined' &&
 
 function ringRadiusAt(theta, R, p, phi) {
   return R
+    + p.breath * Math.sin(phi * 0.9)
+    + p.a2 * Math.sin(2 * theta - 0.7 * phi)
     + p.a3 * Math.sin(3 * theta + phi)
     + p.a5 * Math.sin(5 * theta - 1.3 * phi)
     + p.a7 * Math.sin(7 * theta + 1.9 * phi) * (0.7 + 0.3 * Math.sin(2 * phi + theta))
@@ -102,6 +107,8 @@ function VibeRing({ band }) {
       lastT = t
       const target = bandRef.current ? RING_PARAMS[bandRef.current] : RING_REST
       const ease = 1 - Math.exp(-dt / 0.5)
+      current.a2 += (target.a2 - current.a2) * ease
+      current.breath += (target.breath - current.breath) * ease
       current.a3 += (target.a3 - current.a3) * ease
       current.a5 += (target.a5 - current.a5) * ease
       current.a7 += (target.a7 - current.a7) * ease

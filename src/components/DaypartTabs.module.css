@@ -1,0 +1,86 @@
+.pip {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  border: 1.5px solid var(--border2);
+  background: transparent;
+  box-sizing: border-box;
+}
+
+.chip:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* three small cards that show the word */
+.chips {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
+  min-height: 60px;
+  padding: 9px 12px 10px;
+  border-radius: 14px;
+  border: 1px solid var(--border2);
+  background: var(--card);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.chipOn { border: 1.5px solid var(--ink); padding: 8.5px 11.5px 9.5px; }
+.chipLater { border-style: dashed; background: transparent; cursor: default; }
+.chipTop {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  color: var(--ink2);
+}
+.chipWord { font-family: var(--font-serif); font-size: 17px; font-weight: 300; line-height: 1.1; }
+.chipAdd { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink2); text-decoration: underline; text-underline-offset: 3px; }
+.chipLater .chipTop, .chipLater .chipWord { color: var(--ink4); }
+
+/* the header label as a dropdown */
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin: -12px 0 -12px -4px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  letter-spacing: 0.14em;
+  color: var(--ink2);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.toggle:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.toggleChev {
+  width: 7px;
+  height: 7px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg) translateY(-2px);
+  transition: transform 0.2s ease;
+}
+.toggleChevOpen { transform: rotate(-135deg) translate(-2px, -1px); }
+
+.drop {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 230ms ease, opacity 200ms ease;
+}
+.dropOpen { grid-template-rows: 1fr; opacity: 1; }
+.dropClip { overflow: hidden; min-height: 0; }
+@media (prefers-reduced-motion: reduce) { .drop, .toggleChev { transition: none; } }

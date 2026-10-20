@@ -21,6 +21,8 @@ import PracticeSheet from '../components/PracticeSheet'
 import StretchSheet from '../components/StretchSheet'
 import TimerTakeover from '../components/TimerTakeover'
 import PracticeToast from '../components/PracticeToast'
+import DaypartTabs, { DayToggle } from '../components/DaypartTabs'
+import dpStyles from '../components/DaypartTabs.module.css'
 import { usePracticeActions, practiceKey } from '../lib/usePracticeActions'
 import styles from './Today.module.css'
 import SignedImg from '../components/SignedImg'
@@ -758,6 +760,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     }
   }, [state.canvas]) // eslint-disable-line react-hooks/exhaustive-deps
   const [openRetroSlot, setOpenRetroSlot] = useState(null)
+  const [dayOpen, setDayOpen] = useState(false)
   // Reopens the *current* period's answer for editing (tapping its daypart).
   // Past periods use openRetroSlot's own row instead; this one expands the
   // main vibration card in place, since a finished answer hides its buttons.
@@ -835,8 +838,10 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   const daypartsData = SLOTS.map(s => ({
     name: s,
     isCurrent: s === slot,
+    isSelected: s === (openRetroSlot || slot),
     band: moodSelections[s] || null,
     hasFeeling: !!(moodFeelings[s]),
+    feeling: moodFeelings[s] || null,
     onTap: s === slot
       ? () => { setOpenRetroSlot(null); setEditingCurrent(e => !e) }
       : precedingSlots(slot).includes(s)
@@ -990,29 +995,9 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         {/* ── Frequency section ── */}
         <div className={styles.moodCard} data-tour="mood">
           <div className={styles.freqHeader}>
-            <span className={styles.freqHeaderLabel}>VIBRATIONS</span>
-            {!isDesktop && (
-              <div className={styles.freqHeaderDayparts}>
-                {daypartsData.map(dp => {
-                  const color = dp.band ? MOOD_PIP_COLOR[dp.band] : null
-                  const dotStyle = !color ? undefined
-                    : dp.hasFeeling
-                      ? { background: color, borderColor: color }
-                      : { background: `linear-gradient(to right, ${color} 50%, transparent 50%)`, borderColor: color }
-                  return (
-                    <button
-                      key={dp.name}
-                      className={`${styles.freqHeaderDp} ${dp.isCurrent ? styles.freqHeaderDpCurrent : ''}`}
-                      onClick={dp.onTap || undefined}
-                      style={!dp.onTap ? { cursor: 'default' } : undefined}
-                    >
-                      <span className={styles.freqHeaderDot} style={dotStyle} />
-                      <span className={styles.freqHeaderDpName}>{dp.name}</span>
-                    </button>
-                  )
-                })}
-              </div>
-            )}
+            {!isDesktop && daypartsData.some(d => d.band)
+              ? <DayToggle open={dayOpen} onToggle={() => setDayOpen(o => !o)} controls="day-vibrations" />
+              : <span className={styles.freqHeaderLabel}>VIBRATIONS</span>}
             <button
               type="button"
               className={styles.freqInfoBtn}
@@ -1021,6 +1006,13 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               onClick={() => setShowFreqInfo(v => !v)}
             >i</button>
           </div>
+          {!isDesktop && daypartsData.some(d => d.band) && (
+            <div id="day-vibrations" className={`${dpStyles.drop} ${dayOpen ? dpStyles.dropOpen : ''}`} aria-hidden={!dayOpen} {...(dayOpen ? {} : { inert: '' })}>
+              <div className={dpStyles.dropClip}>
+                <DaypartTabs items={daypartsData} />
+              </div>
+            </div>
+          )}
           <div className={styles.freqShell}>
             <FrequencyCard
               key={slot}
