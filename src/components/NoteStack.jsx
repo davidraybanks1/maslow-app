@@ -73,8 +73,10 @@ export default function NoteStack({ cards, onDismiss, onCommit, renderCard, data
     if (e.target.closest?.('button, a')) return
     const el = topRef.current
     if (!el) return
-    // the drag can start anywhere on the surface, not just on the card; the
-    // card is captured so it keeps following the finger wherever it goes
+    // a swipe has to begin on the top card itself: the empty space around it
+    // (and the footer row) is not a handle
+    if (!el.contains(e.target)) return
+    // the card is captured so it keeps following the finger wherever it goes
     el.setPointerCapture?.(e.pointerId)
     el.style.transition = 'none'
     drag.current = { id, x0: e.clientX, y0: e.clientY, dx: 0, dy: 0, samples: [{ t: performance.now(), dx: 0, dy: 0 }] }
@@ -208,9 +210,9 @@ export default function NoteStack({ cards, onDismiss, onCommit, renderCard, data
   ]
 
   return (
-    // The surface is bigger than the card: on a phone it spans the full width of
-    // the screen (the card is only 316px of it) and takes in the footer row
-    // under the card, so a swipe can start almost anywhere around the deck.
+    // The surface spans the screen width and takes in the footer row, but only
+    // the top card starts a swipe (see onPointerDown); touches elsewhere fall
+    // through to normal page scrolling.
     <div
       className={styles.surface}
       onPointerDown={onPointerDown}
