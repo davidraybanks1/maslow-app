@@ -333,3 +333,23 @@
   background: linear-gradient(90deg, rgba(21, 15, 0, 0.78), rgba(21, 15, 0, 0.16));
 }
 
+
+/* "edit" on an earlier daypart's answer: same small pill as the note deck's */
+.freqEditRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+.freqEditPill {
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  background: none;
+  border: 0.5px solid var(--hairline);
+  border-radius: 20px;
+  padding: 6px 14px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.freqEditPill:hover { background: var(--track); }

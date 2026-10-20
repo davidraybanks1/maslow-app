@@ -154,13 +154,14 @@ function VibeRing({ band }) {
 //        editing (bool: reopens a finished answer — band row + feeling list — for revising),
 //        introNote: optional line(s) shown under the opening prompt until a band is picked
 //        (the onboarding check-in explains what this is there), hideRule: drop the closing hairline,
+//        onEdit: when given and an answer exists, shows an "edit" pill under it (earlier dayparts),
 //        tone: 'dark' | 'amber' | undefined (paper), slotName: 'morning' | 'midday' | 'evening'
 // dayparts: [{ name, isCurrent, band, hasFeeling, onTap }]
 // slotName drives the opening prompt ("How are you today?", or "How was your {slotName}?" when
 // looking back at an earlier part of the day) before a band is
 // picked. Only the non-compact card uses it — compact's tiny picker (the retro tag row,
 // the draft composer) never shows the sentence at all.
-export default function FrequencyCard({ initialBand, initialFeeling, onSettle, compact, pastTense, dayparts, bandAsBack, tone, slotName, editing, introNote, hideRule }) {
+export default function FrequencyCard({ initialBand, initialFeeling, onSettle, compact, pastTense, dayparts, bandAsBack, tone, slotName, editing, introNote, hideRule, onEdit }) {
   const [band, setBand] = useState(initialBand || null)
   const [feeling, setFeeling] = useState(initialFeeling || null)
   // Whether the feeling sub-list is open. Starts open once a band is picked
@@ -334,7 +335,9 @@ export default function FrequencyCard({ initialBand, initialFeeling, onSettle, c
 
       {!compact && (
         <>
-          {!bandAsBack && !hideRule && <div className={styles.freqRule} />}
+          {onEdit && band && !editing
+            ? <div className={styles.freqEditRow}><button type="button" className={styles.freqEditPill} onClick={onEdit}>edit</button></div>
+            : (!bandAsBack && !hideRule && <div className={styles.freqRule} />)}
           {dayparts && (
             <div className={styles.freqDayparts}>
               {dayparts.map(dp => {

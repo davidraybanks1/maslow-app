@@ -22,6 +22,7 @@ import StretchSheet from '../components/StretchSheet'
 import TimerTakeover from '../components/TimerTakeover'
 import PracticeToast from '../components/PracticeToast'
 import DaypartTabs, { DayToggle } from '../components/DaypartTabs'
+import RetroMoodEdit from '../components/RetroMoodEdit'
 import dpStyles from '../components/DaypartTabs.module.css'
 import { usePracticeActions, practiceKey } from '../lib/usePracticeActions'
 import styles from './Today.module.css'
@@ -761,6 +762,9 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     }
   }, [state.canvas]) // eslint-disable-line react-hooks/exhaustive-deps
   const [openRetroSlot, setOpenRetroSlot] = useState(null)
+  // an earlier daypart's answer reopened for revising (simplified editor)
+  const [retroEditing, setRetroEditing] = useState(false)
+  useEffect(() => { setRetroEditing(false) }, [openRetroSlot])
   const [dayOpen, setDayOpen] = useState(false)
   // Reopens the *current* period's answer for editing (tapping its daypart).
   // Past periods use openRetroSlot's own row instead; this one expands the
@@ -1014,6 +1018,30 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               </div>
             </div>
           )}
+          {openRetroSlot && (
+            <div className={styles.retroRow}>
+              {retroEditing ? (
+                <RetroMoodEdit
+                  key={openRetroSlot}
+                  slotName={openRetroSlot}
+                  initialBand={moodSelections[openRetroSlot] || null}
+                  initialFeeling={moodFeelings[openRetroSlot] || null}
+                  onSave={(band, feeling) => { handleFrequencySettle(openRetroSlot, band, feeling); setRetroEditing(false); setOpenRetroSlot(null) }}
+                  onCancel={() => setRetroEditing(false)}
+                />
+              ) : (
+                <FrequencyCard
+                  key={openRetroSlot}
+                  initialBand={moodSelections[openRetroSlot] || null}
+                  initialFeeling={moodFeelings[openRetroSlot] || null}
+                  onSettle={(band, feeling) => { handleFrequencySettle(openRetroSlot, band, feeling); setOpenRetroSlot(null) }}
+                  onEdit={() => setRetroEditing(true)}
+                  pastTense
+                  slotName={openRetroSlot}
+                />
+              )}
+            </div>
+          )}
           <div className={isDesktop ? styles.freqShell : styles.freqCard}>
             <FrequencyCard
               key={slot}
@@ -1036,18 +1064,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                   )}
                 </p>
               ))}
-            </div>
-          )}
-          {openRetroSlot && (
-            <div className={styles.retroRow}>
-              <FrequencyCard
-                key={openRetroSlot}
-                initialBand={moodSelections[openRetroSlot] || null}
-                initialFeeling={moodFeelings[openRetroSlot] || null}
-                onSettle={(band, feeling) => { handleFrequencySettle(openRetroSlot, band, feeling); setOpenRetroSlot(null) }}
-                pastTense
-                slotName={openRetroSlot}
-              />
             </div>
           )}
         </div>
