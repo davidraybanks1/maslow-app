@@ -1026,7 +1026,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                   slotName={openRetroSlot}
                   initialBand={moodSelections[openRetroSlot] || null}
                   initialFeeling={moodFeelings[openRetroSlot] || null}
-                  onSave={(band, feeling) => { handleFrequencySettle(openRetroSlot, band, feeling); setRetroEditing(false); setOpenRetroSlot(null) }}
+                  onSave={(band, feeling) => { handleFrequencySettle(openRetroSlot, band, feeling); setRetroEditing(false); setOpenRetroSlot(null); setDayOpen(false) }}
                   onCancel={() => { setRetroEditing(false); setOpenRetroSlot(null); setDayOpen(false) }}
                 />
               ) : (
