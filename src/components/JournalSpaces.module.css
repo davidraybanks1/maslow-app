@@ -1,0 +1,73 @@
+/* What each writing experience puts around the page. Everything here sits
+   inside the page card, above the textarea, in quiet tinted blocks. */
+
+.space { display: flex; flex-direction: column; gap: 8px; }
+.hint { margin: 0; font-family: var(--font-mono); font-size: var(--type-floor); line-height: 1.5; color: var(--ink3); }
+.eyebrow { font-family: var(--font-mono); font-size: var(--type-floor); letter-spacing: 0.08em; color: var(--ink3); }
+
+/* a fact from your own data */
+.fact { padding: 10px 14px 11px; background: var(--surface-dim); border-radius: 14px; }
+.factLabel {
+  display: flex; align-items: center; gap: 7px; margin-bottom: 3px;
+  font-family: var(--font-mono); font-size: var(--type-floor); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink3);
+}
+.factDot { width: 7px; height: 7px; border-radius: 50%; flex: none; display: inline-block; }
+.factText { font-family: var(--font-serif); font-size: 17px; line-height: 1.35; color: var(--ink); }
+.thread { display: flex; justify-content: center; margin: -4px 0; line-height: 0; }
+
+.chipRow { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  padding: 6px 10px; border-radius: 999px; background: var(--surface-dim); border: 0;
+  font-family: var(--font-serif); font-size: 14px; line-height: 1.25; color: var(--ink2); text-align: left;
+}
+.chipBtn { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink); min-height: 32px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+
+.link {
+  align-self: flex-start; min-height: 32px; padding: 0; background: none; border: 0; cursor: pointer;
+  font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3);
+  text-decoration: underline; text-underline-offset: 3px; -webkit-tap-highlight-color: transparent;
+}
+.link:disabled { color: var(--ink4); text-decoration: none; cursor: default; }
+.linkRow { display: flex; gap: 18px; flex-wrap: wrap; }
+
+/* sort first */
+.piles { display: flex; flex-direction: column; gap: 8px; }
+.pile { display: block; padding: 10px 14px 11px; background: var(--surface-dim); border-radius: 14px; border: 1.5px solid transparent; }
+.pileOn { border-color: var(--ink4); }
+.pileLabel { display: flex; align-items: center; gap: 7px; margin-bottom: 2px; font-family: var(--font-mono); font-size: var(--type-floor); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink3); }
+.pileInput {
+  display: block; width: 100%; box-sizing: border-box; padding: 4px 0; border: 0; outline: 0; background: none;
+  font-family: var(--font-serif); font-size: 18px; line-height: 1.3; color: var(--ink);
+}
+.pileInput::placeholder { color: var(--ink3); opacity: 1; }
+
+/* continue */
+.past { background: var(--surface-dim); border-radius: 14px; padding: 12px 14px; border-left: 3px solid var(--ink4); }
+.pastMeta { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); }
+.pastMood { display: inline-flex; align-items: center; gap: 5px; }
+.pastText { margin: 0; font-family: var(--font-serif); font-size: 16px; line-height: 1.4; color: var(--ink); display: block; }
+.pastAsk { margin: 0 0 4px; font-family: var(--font-serif); font-style: italic; font-size: 15px; color: var(--ink2); }
+.keepOpen { display: flex; align-items: center; gap: 8px; min-height: 32px; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink2); }
+.pick { display: flex; flex-direction: column; gap: 6px; max-height: 240px; overflow-y: auto; }
+.pickItem { display: block; width: 100%; padding: 10px 14px; text-align: left; background: var(--surface-dim); border: 0; border-radius: 14px; cursor: pointer; }
+
+/* one thing */
+.needs { display: flex; flex-wrap: wrap; gap: 6px; }
+.need {
+  display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 12px;
+  border-radius: 999px; background: var(--surface-dim); border: 1.5px solid transparent; cursor: pointer;
+  font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink); -webkit-tap-highlight-color: transparent;
+}
+.needOn { border-color: var(--ink); }
+.angle { margin: 2px 0 0; font-family: var(--font-serif); font-style: italic; font-size: 18px; line-height: 1.35; color: var(--ink); }
+
+/* timer room */
+.lengths { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.length {
+  min-height: 36px; padding: 0 14px; border-radius: 999px; background: var(--surface-dim); border: 1.5px solid transparent; cursor: pointer;
+  font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink);
+}
+.lengthOn { border-color: var(--ink); }
+.length:disabled { cursor: default; opacity: 0.55; }
+.customWrap { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink2); }
+.customInput { width: 44px; min-height: 36px; box-sizing: border-box; text-align: center; border: 1.5px solid var(--border2); border-radius: 10px; background: var(--card); font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink); }

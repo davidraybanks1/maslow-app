@@ -1,0 +1,122 @@
+/* The writing page on Today (phones): an open page, and a row of glyphs for
+   the six writing experiences underneath. */
+
+.root { display: flex; flex-direction: column; gap: 12px; }
+
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0 8px;
+}
+.label, .mode {
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  letter-spacing: 0.14em;
+}
+.label { color: var(--ink3); }
+.mode { color: var(--exploration); }
+
+.pageWrap { position: relative; }
+.ring { position: absolute; inset: 0; pointer-events: none; }
+.ringTrack { fill: none; stroke: var(--hairline); stroke-width: 3; }
+.ringBar { fill: none; stroke: var(--exploration); stroke-width: 3; stroke-linecap: round; transition: stroke-dashoffset 0.4s linear; }
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--card);
+  border-radius: 24px;
+  padding: 18px 20px 12px;
+}
+.input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 120px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  resize: none;
+  overflow: hidden;
+  background: none;
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: 20px;
+  line-height: 1.4;
+}
+.input:disabled { color: var(--ink3); }
+.input::placeholder { color: var(--ink3); opacity: 1; }
+.error { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--survival); }
+
+.footer { display: flex; align-items: center; justify-content: space-between; min-height: 44px; }
+.saves { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); }
+/* 40pt pill inside a 44pt touch target */
+.done {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.donePill {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 20px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+}
+.done:disabled { cursor: default; }
+.done:disabled .donePill { opacity: 0.4; }
+.done:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 22px; }
+
+.glyphs {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+  margin-top: 4px;
+}
+.glyph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  min-width: 0;
+  padding: 0;
+  border: 1.5px solid transparent;
+  border-radius: 14px;
+  background: var(--card);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.glyphOn { border-color: var(--ink); }
+.glyph:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+.caption {
+  margin: 0;
+  padding: 0 8px;
+  min-height: 18px;
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  line-height: 1.5;
+  color: var(--ink2);
+}
+
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

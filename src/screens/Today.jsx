@@ -27,6 +27,7 @@ import { usePracticeActions, practiceKey } from '../lib/usePracticeActions'
 import styles from './Today.module.css'
 import SignedImg from '../components/SignedImg'
 import { ShapesPanel } from '../components/shapes/ShapesFlow'
+import JournalPage from '../components/JournalPage'
 import { shapeLabel } from '../lib/shapeFacts'
 import shapeStyles from '../components/shapes/Shapes.module.css'
 
@@ -1250,40 +1251,8 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
           </div>
         ) : (
           <div className={styles.cardJournal} data-tour="journal">
-            <div className={styles.sectionHeader}>
-              <span className={styles.sectionLabel}>drafts</span>
-              <span className={styles.journalEntryCount}>
-                {journalEntryCount > 0 ? `${journalEntryCount} ${journalEntryCount === 1 ? 'entry' : 'entries'} today` : ''}
-              </span>
-            </div>
             <div ref={shapesRef} data-tour="journal-shapes">
-              {plainDraft ? (
-                <>
-              <div className={styles.journalComposer}>
-                {draftChips}
-                <textarea
-                  className={styles.journalInput}
-                  placeholder="what's on your mind?"
-                  value={draftText}
-                  onChange={e => setDraftText(e.target.value)}
-                  onKeyDown={handleDraftKeyDown}
-                  maxLength={10000}
-                  rows={4}
-                />
-                <div className={styles.composerMobileFooter}>
-                  {renderAttachControl()}
-                  <button className={styles.journalAddBtn} onClick={handleAddEntry} disabled={!draftText.trim() || draftSaving}>add</button>
-                </div>
-                {draftSaveError && <div className={styles.journalSaveError}>{draftSaveError}</div>}
-                {draftFileInput}
-              </div>
-                  <div className={shapeStyles.footInline}>
-                    <button className={shapeStyles.cancel} onClick={() => setPlainDraft(false)}>cancel</button>
-                  </div>
-                </>
-              ) : (
-                <ShapesPanel state={state} mode="inline" initial={shapesInit} onJustWrite={() => setPlainDraft(true)} />
-              )}
+              <JournalPage state={state} />
             </div>
             <>
               {journalEntries.length > 0 && (

@@ -7,7 +7,7 @@ import { SHAPES, SHAPE_DB, latestMoodToday, suggestShape } from '../../lib/shape
 import { ROOMS } from './Rooms'
 import styles from './Shapes.module.css'
 
-const GLYPHS = {
+export const GLYPHS = {
   three_truths: <span className={styles.tileGlyph}><i className={styles.tg} /><i className={styles.tg} /><i className={styles.tg} /></span>,
   tension: <span className={styles.tileGlyph}><i className={styles.tgDot} /><i className={styles.tgLine} /><i className={styles.tgDot} /></span>,
   sort_first: <span className={styles.tileGlyph}><i className={styles.tgBar} /><i className={styles.tgBar} /><i className={styles.tgBar} /></span>,

@@ -20,7 +20,7 @@ function autosize(el) {
 }
 
 /* ── fact notes (truths + tension) ───────────────────────── */
-function factDot(f) {
+export function factDot(f) {
   if (f.dotMode && MODES[f.dotMode]) return MODES[f.dotMode].color
   if (f.dotBand && MOOD_PIP_COLOR[f.dotBand]) return MOOD_PIP_COLOR[f.dotBand]
   if (f.kind === 'up') return 'var(--exploration)'
@@ -28,7 +28,7 @@ function factDot(f) {
   return 'var(--ink4)'
 }
 
-function sentence(t) {
+export function sentence(t) {
   return t ? t.charAt(0).toUpperCase() + t.slice(1) : ''
 }
 
