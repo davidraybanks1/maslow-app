@@ -35,8 +35,8 @@ export const PIPS_FOR = tone =>
 // (0.7+0.3·sin(2φ+θ)), with the wobble amplitude/speed easing toward
 // whichever band is picked — calm and nearly still for "good", a rougher,
 // faster shimmer for "bad". Rests on the "fine" shape before an answer.
-// Rendered as a single filled shape (Bloom's own radial-gradient + soft-
-// shadow materials — see Bloom.jsx) rather than a stroked outline: mood is
+// Rendered as a single filled shape (Bloom's own radial-gradient material —
+// see Bloom.jsx), with no drop shadow, rather than a stroked outline: mood is
 // still read entirely off the shape and speed, same as before, never off a
 // color change, so the fill stays one ink tone (tone-adjusted via CSS vars
 // below) across all three bands.
@@ -84,7 +84,6 @@ function ringPathD(R, p, phi) {
 function VibeRing({ band }) {
   const rawId = useId()
   const uid = rawId.replace(/[^a-z0-9]/gi, '') || 'vr0'
-  const shadowRef = useRef(null)
   const blobRef = useRef(null)
   const bandRef = useRef(band)
   useEffect(() => { bandRef.current = band }, [band])
@@ -94,8 +93,8 @@ function VibeRing({ band }) {
   // effect never needs to restart when the band changes).
   useEffect(() => {
     if (PREFERS_REDUCED_MOTION) return
-    const shadow = shadowRef.current, blob = blobRef.current
-    if (!shadow || !blob) return
+    const blob = blobRef.current
+    if (!blob) return
 
     const current = { ...RING_REST }
     let phi = 0
@@ -115,7 +114,6 @@ function VibeRing({ band }) {
       current.speed += (target.speed - current.speed) * ease
       phi += current.speed * dt
       const d = ringPathD(60, current, phi)
-      shadow.setAttribute('d', d)
       blob.setAttribute('d', d)
       rafId = requestAnimationFrame(frame)
     }
@@ -127,16 +125,14 @@ function VibeRing({ band }) {
   // check-in's own "vibration ring static" accessibility note.
   useEffect(() => {
     if (!PREFERS_REDUCED_MOTION) return
-    const shadow = shadowRef.current, blob = blobRef.current
-    if (!shadow || !blob) return
+    const blob = blobRef.current
+    if (!blob) return
     const target = band ? RING_PARAMS[band] : RING_REST
     const d = ringPathD(60, target, 0.6)
-    shadow.setAttribute('d', d)
     blob.setAttribute('d', d)
   }, [band])
 
   const gradId = `vr-grad-${uid}`
-  const filterId = `vr-shadow-${uid}`
 
   return (
     <svg className={styles.vibeRing} viewBox="0 0 180 180" width="180" height="180" aria-hidden="true">
@@ -145,15 +141,7 @@ function VibeRing({ band }) {
           <stop offset="0%" style={{ stopColor: 'var(--orb-hi)' }} />
           <stop offset="100%" style={{ stopColor: 'var(--orb-lo)' }} />
         </radialGradient>
-        <filter id={filterId} x="-60%" y="-60%" width="220%" height="220%" colorInterpolationFilters="sRGB">
-          <feGaussianBlur in="SourceAlpha" stdDeviation="7" />
-          <feOffset dy="5" />
-          <feComponentTransfer><feFuncA type="linear" slope="0.22" /></feComponentTransfer>
-        </filter>
       </defs>
-      <g filter={`url(#${filterId})`} aria-hidden="true">
-        <path ref={shadowRef} fill="#000" />
-      </g>
       <path
         ref={blobRef}
         fill={`url(#${gradId})`}

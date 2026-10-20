@@ -59,8 +59,8 @@
    Carried over from the onboarding check-in — same formula, same per-band
    params (see FrequencyCard.jsx), just scaled down to sit above the
    sentence here instead of the full 180px onboarding treatment. Rendered
-   as a single filled orb using Bloom's own radial-gradient + soft-shadow
-   materials rather than a stroked outline (see Bloom.jsx and the
+   as a single filled orb using Bloom's own radial-gradient
+   material (no drop shadow) rather than a stroked outline (see Bloom.jsx and the
    vibration-as-bloom mockup) — mood still reads off the shape/speed only,
    never a color change, so --orb-hi/--orb-lo stay fixed across all three
    bands and only shift per tone, same as the rest of the card's ink. */
