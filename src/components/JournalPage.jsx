@@ -199,11 +199,7 @@ export default function JournalPage({ state, logMood }) {
         )}
       </div>
 
-      {!intro && (
-        <p className={styles.caption} aria-live="polite">
-          {blank ? 'begin with one of these, or just write' : `${exp.name} — ${exp.description}`}
-        </p>
-      )}
+      {blank && <p className={styles.caption}>begin with one of these, or just write</p>}
 
       <div className={styles.glyphs} role="group" aria-label="Writing style">
         {EXPERIENCES.map(x => {
@@ -224,6 +220,8 @@ export default function JournalPage({ state, logMood }) {
           )
         })}
       </div>
+
+      {inSpace && <p className={styles.caption} aria-live="polite">{exp.name} — {exp.description}</p>}
 
       {intro ? (
         <div className={styles.intro}>
