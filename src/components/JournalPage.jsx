@@ -199,7 +199,8 @@ export default function JournalPage({ state, logMood }) {
         )}
       </div>
 
-      {blank && <p className={styles.caption}>begin with one of these, or just write</p>}
+      {/* always here, so the spaces never jump when one is picked */}
+      <p className={styles.caption}>begin with one of these, or just write</p>
 
       <div className={styles.glyphs} role="group" aria-label="Writing style">
         {EXPERIENCES.map(x => {
