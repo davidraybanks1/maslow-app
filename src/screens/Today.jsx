@@ -1013,7 +1013,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               </div>
             </div>
           )}
-          <div className={styles.freqShell}>
+          <div className={isDesktop ? styles.freqShell : styles.freqCard}>
             <FrequencyCard
               key={slot}
               initialBand={moodSelections[slot] || null}

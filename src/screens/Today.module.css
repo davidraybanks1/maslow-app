@@ -2465,3 +2465,10 @@
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
+
+/* the vibrations check-in sits on its own white card on phones */
+.freqCard {
+  background: var(--card);
+  border-radius: 20px;
+  padding: 18px 16px 16px;
+}
