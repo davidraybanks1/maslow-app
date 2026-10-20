@@ -156,7 +156,8 @@ function VibeRing({ band }) {
 //        (the onboarding check-in explains what this is there), hideRule: drop the closing hairline,
 //        tone: 'dark' | 'amber' | undefined (paper), slotName: 'morning' | 'midday' | 'evening'
 // dayparts: [{ name, isCurrent, band, hasFeeling, onTap }]
-// slotName drives the opening prompt ("How are you this {slotName}?") before a band is
+// slotName drives the opening prompt ("How are you today?", or "How was your {slotName}?" when
+// looking back at an earlier part of the day) before a band is
 // picked. Only the non-compact card uses it — compact's tiny picker (the retro tag row,
 // the draft composer) never shows the sentence at all.
 export default function FrequencyCard({ initialBand, initialFeeling, onSettle, compact, pastTense, dayparts, bandAsBack, tone, slotName, editing, introNote, hideRule }) {
@@ -244,7 +245,7 @@ export default function FrequencyCard({ initialBand, initialFeeling, onSettle, c
                   <span className={styles.freqFilled}>{feeling || BAND_LABEL[band]}</span>.
                 </>
               ) : slotName ? (
-                pastTense ? `How was your ${slotName}?` : slotName === 'today' ? 'How are you today?' : `How are you this ${slotName}?`
+                pastTense ? `How was your ${slotName}?` : 'How are you today?'
               ) : (
                 <>
                   {pastTense ? 'I was feeling' : "I'm feeling"}{' '}
