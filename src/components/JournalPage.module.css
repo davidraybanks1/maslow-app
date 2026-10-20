@@ -9,28 +9,12 @@
   justify-content: space-between;
   padding: 0 8px;
 }
-.label, .mode {
+.label {
   font-family: var(--font-mono);
   font-size: var(--type-floor);
   letter-spacing: 0.14em;
 }
 .label { color: var(--ink3); }
-.mode { color: var(--exploration); }
-/* a name with an x: the way out of a space */
-.exit {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  margin: -14px -8px -14px 0;
-  padding: 0 8px;
-  border: 0;
-  background: none;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-.exit:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 8px; }
-.exitX { font-family: var(--font-mono); font-size: 18px; line-height: 1; color: var(--exploration); }
 
 /* a space, before you start it */
 .intro {
@@ -40,6 +24,7 @@
   background: var(--card);
   border-radius: 24px;
   padding: 22px 20px 18px;
+  box-sizing: border-box;
 }
 .introTitle { margin: 0; font-family: var(--font-serif); font-size: 26px; font-weight: 400; line-height: 1.2; color: var(--ink); }
 .introText { margin: 0; font-family: var(--font-serif); font-size: 20px; line-height: 1.4; color: var(--ink2); }

@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { todayKey, addJournalEntry, settleRevisit } from '../lib/store'
 import { currentSlot } from '../lib/slots'
 import { hapticSuccess } from '../lib/native'
@@ -76,6 +76,11 @@ export default function JournalPage({ state, logMood }) {
   const [tags, setTags] = useState({})
   const [size, setSize] = useState({ w: 0, h: 0 })
   const pageRef = useRef(null)
+  // The blank page's height, remembered so a space's intro card can stand in
+  // for it at exactly the same height - tapping a space then swaps the card
+  // without moving anything below it.
+  const blankWrapRef = useRef(null)
+  const blankH = useRef(0)
   const taRef = useRef(null)
   const doneRef = useRef(null)
   const firstRun = useRef(true)
@@ -187,16 +192,14 @@ export default function JournalPage({ state, logMood }) {
 
   const empty = !entry
 
+  useLayoutEffect(() => {
+    if (blank && blankWrapRef.current) blankH.current = blankWrapRef.current.offsetHeight
+  })
+
   return (
     <div className={styles.root}>
       <div className={styles.header}>
         <span className={styles.label}>WRITE</span>
-        {exp && (
-          <button type="button" className={styles.exit} onClick={exit} aria-label={`leave ${exp.name}`}>
-            <span className={styles.mode}>{exp.name.toUpperCase()}</span>
-            <span className={styles.exitX} aria-hidden="true">×</span>
-          </button>
-        )}
       </div>
 
       {/* always here, so the spaces never jump when one is picked */}
@@ -225,19 +228,19 @@ export default function JournalPage({ state, logMood }) {
       {inSpace && <p className={styles.caption} aria-live="polite">{exp.name} — {exp.description}</p>}
 
       {intro ? (
-        <div className={styles.intro}>
+        <div className={styles.intro} style={blankH.current ? { minHeight: blankH.current } : undefined}>
           <h3 className={styles.introTitle}>{exp.name}</h3>
           <p className={styles.introText}>{exp.description}</p>
           <div className={styles.introActions}>
             <button type="button" className={styles.start} onClick={() => setStarted(true)}>
               <span className={styles.startPill}>start</span>
             </button>
-            <button type="button" className={styles.notNow} onClick={exit}>not now</button>
+            <button type="button" className={styles.notNow} onClick={exit}>cancel</button>
           </div>
           {body && <p className={styles.kept}>what you've written is kept</p>}
         </div>
       ) : (
-        <div className={styles.pageWrap}>
+        <div className={styles.pageWrap} ref={blank ? blankWrapRef : undefined}>
           <div className={styles.page} ref={pageRef}>
             {Space && (
               <Space
