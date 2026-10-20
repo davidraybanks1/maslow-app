@@ -16,6 +16,69 @@
 }
 .label { color: var(--ink3); }
 .mode { color: var(--exploration); }
+/* a name with an x: the way out of a space */
+.exit {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin: -14px -8px -14px 0;
+  padding: 0 8px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.exit:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 8px; }
+.exitX { font-family: var(--font-mono); font-size: 18px; line-height: 1; color: var(--exploration); }
+
+/* a space, before you start it */
+.intro {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--card);
+  border-radius: 24px;
+  padding: 22px 20px 18px;
+}
+.introTitle { margin: 0; font-family: var(--font-serif); font-size: 26px; font-weight: 400; line-height: 1.2; color: var(--ink); }
+.introText { margin: 0; font-family: var(--font-serif); font-size: 20px; line-height: 1.4; color: var(--ink2); }
+.introActions { display: flex; align-items: center; gap: 18px; margin-top: 10px; }
+.start {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.startPill {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 24px;
+  border-radius: 20px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+}
+.start:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 22px; }
+.notNow {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  color: var(--ink3);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.kept { margin: 0; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); }
 
 .pageWrap { position: relative; }
 .ring { position: absolute; inset: 0; pointer-events: none; }
@@ -82,9 +145,8 @@
 
 .glyphs {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 6px;
-  margin-top: 4px;
 }
 .glyph {
   display: flex;

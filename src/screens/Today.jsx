@@ -1252,7 +1252,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         ) : (
           <div className={styles.cardJournal} data-tour="journal">
             <div ref={shapesRef} data-tour="journal-shapes">
-              <JournalPage state={state} />
+              <JournalPage state={state} logMood={logMood} />
             </div>
             <>
               {journalEntries.length > 0 && (

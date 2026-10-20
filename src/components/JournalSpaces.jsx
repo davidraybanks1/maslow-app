@@ -4,7 +4,7 @@ import { MOOD_PIP_COLOR } from './FrequencyCard'
 import { loadRecentDrafts } from '../lib/store'
 import { hapticTick } from '../lib/native'
 import {
-  truthPool, pickTruths, tensionPair, todayChips, anglesFor,
+  truthPool, pickTruths, tensionPair, anglesFor,
   shortDate, clip, daySeed,
 } from '../lib/shapeFacts'
 import { factDot, sentence } from './shapes/Rooms'
@@ -14,8 +14,8 @@ import styles from './JournalSpaces.module.css'
    The page itself (one textarea, one footer) belongs to JournalPage, so
    writing feels the same in all of them. Each space here shows its own
    affordance above the textarea and reports what it adds through
-   onChange({ lead, leadOnly, needId, quotedText, quotedDate, settleId, keepOpen,
-             placeholder, locked, hideInput, ring, note }).
+   onChange({ lead, needId, quotedText, quotedDate, settleId, keepOpen,
+             placeholder, locked, ring, note }).
    Props every space gets: state, today, text (what's typed), onChange, onFinish (timer: the ring closed). */
 
 /* A fact (from the person's own data) as a quiet block inside the page. */
@@ -75,56 +75,6 @@ function Tension({ state, today, text, onChange }) {
       <Thread fact={a} />
       <Fact fact={b} />
       <button type="button" className={styles.link} disabled={!!body} onClick={() => setOffset(o => o + 1)}>a different pair</button>
-    </div>
-  )
-}
-
-/* ── sort first ───────────────────────────────────────────── */
-const BUCKETS = [
-  { key: 'gave', label: 'gave me energy', color: MODES.exploration.color },
-  { key: 'took', label: 'took energy', color: MODES.survival.color },
-  { key: 'carry', label: 'still carrying', color: MODES.nourishment.color },
-]
-function SortFirst({ state, today, onChange }) {
-  const chips = useMemo(() => todayChips(state, today), [state, today])
-  const [vals, setVals] = useState({ gave: '', took: '', carry: '' })
-  const [focus, setFocus] = useState('gave')
-  useEffect(() => {
-    const lines = BUCKETS
-      .filter(b => vals[b.key].trim())
-      .map(b => `${b.label[0].toUpperCase()}${b.label.slice(1)}: ${vals[b.key].trim()}`)
-    onChange({ lead: lines.join('\n'), leadOnly: true, hideInput: true })
-  }, [vals])
-  function addChip(label) {
-    hapticTick()
-    setVals(v => ({ ...v, [focus]: v[focus] ? `${v[focus]}, ${label}` : label }))
-  }
-  return (
-    <div className={styles.space}>
-      {chips.length > 0 && (
-        <>
-          <div className={styles.eyebrow}>you checked in today · tap to place</div>
-          <div className={styles.chipRow}>
-            {chips.map(c => <button type="button" key={c} className={`${styles.chip} ${styles.chipBtn}`} onClick={() => addChip(c)}>{c}</button>)}
-          </div>
-        </>
-      )}
-      <div className={styles.piles}>
-        {BUCKETS.map(b => (
-          <label key={b.key} className={`${styles.pile} ${focus === b.key ? styles.pileOn : ''}`}>
-            <span className={styles.pileLabel}><span className={styles.factDot} style={{ background: b.color }} />{b.label}</span>
-            <input
-              className={styles.pileInput}
-              value={vals[b.key]}
-              onChange={e => setVals(v => ({ ...v, [b.key]: e.target.value }))}
-              onFocus={() => setFocus(b.key)}
-              placeholder="a line is enough"
-              maxLength={2000}
-              aria-label={b.label}
-            />
-          </label>
-        ))}
-      </div>
     </div>
   )
 }
@@ -358,7 +308,6 @@ function TimerRoom({ text, onChange, onFinish }) {
 export const SPACES = {
   three_truths: ThreeTruths,
   tension: Tension,
-  sort_first: SortFirst,
   continue: Continue,
   one_thing: OneThing,
   timer: TimerRoom,
