@@ -167,7 +167,7 @@ function Continue({ state, onChange }) {
 const GT_HEADINGS = ['took it:', 'tomorrow:']
 const GT_STEPS = [
   { q: 'what gave you energy today?', ph: 'something that gave you energy…', color: MODES.nourishment.pip },
-  { q: 'what took it?', ph: 'this is slowly draining me because…', color: MODES.survival.pip },
+  { q: 'what took it?', ph: 'name it. Explain it.', color: MODES.survival.pip },
   { q: 'what do you want more of tomorrow?', ph: 'more of…', color: MODES.exploration.pip },
 ]
 function gtStepOf(text) {
@@ -210,13 +210,13 @@ function OneThing({ state, today, text, onChange }) {
   const ph = step === 0 && pickedName ? `how'd ${pickedName} feel…` : s.ph
   useEffect(() => {
     onChange({
-      lead: 'gave me energy:',
+      lead: pickedName ? `gave me energy: ${pickedName}` : 'gave me energy:',
       placeholder: ph,
       needId: needId || null,
       nextHeading: step < GT_HEADINGS.length ? GT_HEADINGS[step] : null,
       ctaDisabled: !sectionText,
     })
-  }, [step, needId, ph, !!sectionText])
+  }, [step, needId, pickedName, ph, !!sectionText])
   return (
     <div className={styles.space}>
       <div className={styles.steps} aria-hidden="true">

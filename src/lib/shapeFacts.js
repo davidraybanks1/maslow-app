@@ -29,8 +29,11 @@ export const SHAPES = [
   { id: 'timer',        label: 'timer room',   blurb: 'you pick the time. it saves itself when the ring closes.' },
 ]
 
+// what the pill on a saved entry says: the phone spaces were renamed, but the
+// stored shape values (a DB check constraint) are the old ones
+const CHIP_LABELS = { one_thing: 'gave and took', continue: 'revisit' }
 export function shapeLabel(id) {
-  return SHAPES.find(s => s.id === id)?.label || null
+  return CHIP_LABELS[id] || SHAPES.find(s => s.id === id)?.label || null
 }
 
 /* ── date helpers ──────────────────────────────────────────── */
@@ -410,3 +413,4 @@ export function clip(text, max = 240) {
   const t = (text || '').trim()
   return t.length > max ? t.slice(0, max).trimEnd() + '…' : t
 }
+
