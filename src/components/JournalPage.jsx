@@ -83,7 +83,7 @@ export default function JournalPage({ state, logMood }) {
   const placeholder = inSpace ? (extra.placeholder || exp.placeholder) : BLANK
   const body = text.trim()
   const hidden = mode === 'one_thing' && inSpace ? gtHiddenPrefix(text) : ''
-  const entry = inSpace && extra.lead ? (body ? `${extra.lead}\n\n${body}` : '') : body
+  const entry = inSpace && extra.lead ? (body ? `${extra.lead}${extra.leadSep ?? '\n\n'}${body}` : '') : body
 
   // What was on the page when a space was started. Backing out of a started
   // space puts that back, so nothing you wrote inside it (headings included)

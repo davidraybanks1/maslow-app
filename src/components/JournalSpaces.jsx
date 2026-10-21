@@ -210,6 +210,7 @@ function OneThing({ state, today, text, onChange }) {
   const ph = step === 0 && pickedName ? `how'd ${pickedName} feel…` : s.ph
   useEffect(() => {
     onChange({
+      leadSep: '\n',
       lead: pickedName ? `gave me energy: ${pickedName}` : 'gave me energy:',
       placeholder: ph,
       needId: needId || null,

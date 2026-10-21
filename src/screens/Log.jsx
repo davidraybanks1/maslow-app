@@ -15,6 +15,7 @@ import styles from './Log.module.css'
 import SignedImg from '../components/SignedImg'
 import RevisitSheet from '../components/shapes/RevisitSheet'
 import { shapeLabel } from '../lib/shapeFacts'
+import EntryText from '../components/EntryText'
 import shapeStyles from '../components/shapes/Shapes.module.css'
 
 const MOOD_PILL = {
@@ -800,7 +801,7 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
                               >{e.favorite ? <IconHeartFilled size={15} stroke={1.5} /> : <IconHeart size={15} stroke={1.5} />}</button>
                             </span>
                           </div>
-                          <p className={styles.threadReadEntryBody}>{e.entry}</p>
+                          <p className={styles.threadReadEntryBody}><EntryText text={e.entry} shape={e.shape} /></p>
                         </div>
                       )
                     })
@@ -1107,7 +1108,7 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
                           {entryMoodDotColor && <span className={styles.calDetailJournalDot} style={{ background: entryMoodDotColor }} />}
                           <span>{timeStr}</span>
                         </div>
-                        <p className={styles.calDetailJournalBody}>{e.entry}</p>
+                        <p className={styles.calDetailJournalBody}><EntryText text={e.entry} shape={e.shape} /></p>
                         {(needTagName || e.state || e.custom) && (
                           <div className={styles.calDetailJournalTags}>
                             {e.state && <span className={styles.calDetailJournalTag}>{e.state}</span>}
@@ -1379,7 +1380,7 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
                               readMoreClass={styles.archiveQuoteReadMore}
                             />
                           )}
-                          <span className={styles.archiveCardBody}>{displayBody}</span>
+                          <span className={styles.archiveCardBody}><EntryText text={displayBody} shape={e.shape} /></span>
                           {!isExpanded && isTruncatable && (
                             <span className={styles.archiveCardReadMore}>read more</span>
                           )}

@@ -30,6 +30,7 @@ import SignedImg from '../components/SignedImg'
 import { ShapesPanel } from '../components/shapes/ShapesFlow'
 import JournalPage from '../components/JournalPage'
 import { shapeLabel } from '../lib/shapeFacts'
+import EntryText from '../components/EntryText'
 import shapeStyles from '../components/shapes/Shapes.module.css'
 
 const MODE_THRESHOLDS = { exploration: 80, appreciation: 60, nourishment: 50, survival: 20 }
@@ -1253,7 +1254,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                               readMoreClass={styles.journalQuoteReadMore}
                             />
                           )}
-                          <div className={styles.journalEntryText}>{display}</div>
+                          <div className={styles.journalEntryText}><EntryText text={display} shape={e.shape} /></div>
                           {!isExp && trunc && <button className={styles.journalReadMore} onClick={toggle}>read more</button>}
                           {e.image_url && <SignedImg src={e.image_url} className={styles.journalEntryImage} alt="" />}
                         </>
@@ -1308,7 +1309,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                               readMoreClass={styles.journalQuoteReadMore}
                             />
                           )}
-                          <div className={styles.journalEntryText}>{display}</div>
+                          <div className={styles.journalEntryText}><EntryText text={display} shape={e.shape} /></div>
                           {!isExp && trunc && <button className={styles.journalReadMore} onClick={toggle}>read more</button>}
                           {e.image_url && <SignedImg src={e.image_url} className={styles.journalEntryImage} alt="" />}
                         </>

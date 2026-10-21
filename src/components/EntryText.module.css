@@ -1,0 +1,18 @@
+.key {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  font-weight: 400;
+  color: var(--ink2);
+  white-space: nowrap;
+}
+.key::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--c);
+  vertical-align: 1px;
+}
