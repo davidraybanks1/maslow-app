@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { allNeeds } from '../lib/constants'
-import { normalizeBand } from '../lib/frequency'
+import { normalizeBand, BANDS, BAND_LABEL, FEELINGS } from '../lib/frequency'
 import { currentSlot } from '../lib/slots'
 import { loadCustomTags } from '../lib/store'
-import FrequencyCard, { MOOD_PIP_COLOR } from './FrequencyCard'
+import { MOOD_PIP_COLOR } from './FrequencyCard'
 import styles from './JournalTags.module.css'
 
 // The tags on a blank page: the part of the day, a vibration, a need, and your
@@ -41,6 +41,18 @@ export default function JournalTags({ state, today, logMood, onChange }) {
     setOpen(o => (o === which ? null : which))
   }
 
+  // choosing a band keeps the picker open for the feeling; choosing a feeling closes it.
+  // If today's check-in for this part of the day was never answered, this answers it.
+  function settle(b, f) {
+    setMoodBand(b)
+    setMoodFeeling(f || null)
+    setInherited(false)
+    if (f) setOpen(null)
+    if (newSlot.current) logMood?.(state.userId, slot, b, null, today, f || null)
+  }
+  function pickBand(b) { settle(b, null) }
+  function pickFeeling(f) { settle(band, f) }
+
   return (
     <div className={styles.tags}>
       <div className={styles.row}>
@@ -49,7 +61,7 @@ export default function JournalTags({ state, today, logMood, onChange }) {
         {band ? (
           <button type="button" className={styles.on} onClick={() => toggle('vibration')} aria-expanded={open === 'vibration'}>
             <span className={styles.dot} style={inherited ? { border: `1.5px solid ${MOOD_PIP_COLOR[band]}` } : { background: MOOD_PIP_COLOR[band] }} />
-            {feeling || band}
+            {feeling || BAND_LABEL[band]}
             {!inherited && (
               <span
                 className={styles.x}
@@ -60,36 +72,51 @@ export default function JournalTags({ state, today, logMood, onChange }) {
             )}
           </button>
         ) : (
-          <button type="button" className={styles.add} onClick={() => toggle('vibration')} aria-expanded={open === 'vibration'}>+ vibration</button>
+          <button type="button" className={`${styles.parent} ${open === 'vibration' ? styles.parentOpen : ''}`} onClick={() => toggle('vibration')} aria-expanded={open === 'vibration'}>+ vibration</button>
         )}
 
         {needId ? (
           <button type="button" className={styles.on} onClick={() => setNeedId(null)} aria-label={`remove ${needId}`}>{needId} <span className={styles.x} aria-hidden="true">×</span></button>
         ) : (
-          <button type="button" className={styles.add} onClick={() => toggle('need')} aria-expanded={open === 'need'}>+ need</button>
+          <button type="button" className={`${styles.parent} ${open === 'need' ? styles.parentOpen : ''}`} onClick={() => toggle('need')} aria-expanded={open === 'need'}>+ need</button>
         )}
 
         {customTags.length > 0 && (custom ? (
           <button type="button" className={styles.on} onClick={() => setCustom(null)} aria-label={`remove ${custom}`}>{custom} <span className={styles.x} aria-hidden="true">×</span></button>
         ) : (
-          <button type="button" className={styles.add} onClick={() => toggle('custom')} aria-expanded={open === 'custom'}>+ custom</button>
+          <button type="button" className={`${styles.parent} ${open === 'custom' ? styles.parentOpen : ''}`} onClick={() => toggle('custom')} aria-expanded={open === 'custom'}>+ custom</button>
         ))}
       </div>
 
       {open === 'vibration' && (
         <div className={styles.picker}>
-          <FrequencyCard
-            initialBand={band}
-            initialFeeling={feeling}
-            compact
-            onSettle={(b, f) => {
-              setMoodBand(b)
-              setMoodFeeling(f || null)
-              setInherited(false)
-              if (f) setOpen(null)
-              if (newSlot.current) logMood?.(state.userId, slot, b, null, today, f || null)
-            }}
-          />
+          <div className={styles.list} role="group" aria-label="vibration">
+            {BANDS.map(b => (
+              <button
+                type="button"
+                key={b}
+                className={`${styles.item} ${b === band ? styles.itemOn : ''}`}
+                aria-pressed={b === band}
+                onClick={() => pickBand(b)}
+              >
+                <span className={styles.dot} style={{ background: MOOD_PIP_COLOR[b] }} />
+                {BAND_LABEL[b]}
+              </button>
+            ))}
+          </div>
+          {band && (
+            <div className={styles.list} role="group" aria-label="feeling">
+              {FEELINGS[band].map(f => (
+                <button
+                  type="button"
+                  key={f}
+                  className={`${styles.item} ${f === feeling ? styles.itemOn : ''}`}
+                  aria-pressed={f === feeling}
+                  onClick={() => pickFeeling(f)}
+                >{f}</button>
+              ))}
+            </div>
+          )}
         </div>
       )}
       {open === 'need' && needs.length > 0 && (

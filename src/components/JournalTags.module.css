@@ -1,28 +1,41 @@
 .tags { display: flex; flex-direction: column; gap: 8px; }
 .row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 
-.slot, .add, .on, .item {
+/* the part of the day: set automatically, so it reads as a caption above the pills, not
+   as a tag; on its own line so the three parent pills always fit on one */
+.slot {
+  flex: 0 0 100%;
+  font-family: var(--font-mono);
+  font-size: var(--type-floor);
+  color: var(--ink3);
+}
+
+/* two kinds of pill. A TAG is an outlined pill: the ones you have chosen and the ones
+   you choose from. A PARENT (+ vibration, + need, + custom) is a filled pill: it is
+   what you press to open that list of tags, and it fills in dark while its list is open. */
+.parent, .on, .item {
   position: relative;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   min-height: 32px;
   box-sizing: border-box;
-  padding: 0 12px;
+  padding: 0 10px;
   border-radius: 999px;
-  background: none;
   font-family: var(--font-mono);
   font-size: var(--type-floor);
+  cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.slot { border: 1px solid var(--border2); color: var(--ink2); }
-.add { border: 1px dashed var(--border2); color: var(--ink3); cursor: pointer; }
-.on, .item { border: 1px solid var(--border2); color: var(--ink2); cursor: pointer; }
-/* a little extra reach so each chip is an easy target */
-.add::after, .on::after, .item::after { content: ''; position: absolute; inset: -6px -2px; }
-.add:focus-visible, .on:focus-visible, .item:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.on, .item { background: none; border: 1px solid var(--border2); color: var(--ink2); }
+.itemOn { border-color: var(--ink); color: var(--ink); }
+.parent { background: var(--surface-dim); border: 1px solid transparent; color: var(--ink2); }
+.parentOpen { background: var(--ink); color: var(--paper); }
+/* a little extra reach so each pill is an easy target */
+.parent::after, .on::after, .item::after { content: ''; position: absolute; inset: -6px -2px; }
+.parent:focus-visible, .on:focus-visible, .item:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
 .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; box-sizing: border-box; }
 .x { opacity: 0.6; line-height: 1; }
-.picker { margin: 2px 0; }
+.picker { display: flex; flex-direction: column; gap: 6px; margin: 2px 0; }
 .list { display: flex; flex-wrap: wrap; gap: 6px; }
