@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { isNative, checkNotifPermission, requestNotifPermission } from '../lib/native'
-import { deleteAccount, wipeLocalData } from '../lib/store'
+import { deleteAccount, wipeLocalData, signOutEverywhere } from '../lib/store'
 import Sheet from './Sheet'
 import { PracticesArt, NotesArt, TagsArt } from './ProfileArt'
 import styles from './ProfileMenu.module.css'
@@ -184,7 +184,7 @@ export default function ProfileMenu({
 
   async function handleSignOut() {
     close()
-    await supabase.auth.signOut()
+    await signOutEverywhere()
     navigate('/signin')
   }
 

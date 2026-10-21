@@ -68,6 +68,7 @@ const ARCHIVE_DATE_PRESETS = [
 const ARCHIVE_PAGE_SIZE = 3
 
 function formatArchiveDate(dateKey) {
+  if (!dateKey) return ''
   const d = new Date(dateKey + 'T12:00:00')
   return `${WDAYS[d.getDay()].slice(0, 3)} ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`
 }

@@ -41,6 +41,10 @@ class AppErrorBoundary extends Component {
           <button onClick={() => { this.setState({ error: null }); window.location.reload() }} style={{ fontSize: 12, padding: '8px 20px', borderRadius: 8, border: '0.5px solid var(--border)', background: 'none', cursor: 'pointer', color: 'var(--ink)' }}>
             reload
           </button>
+          {/* reloading re-renders the same screen, so a crash on that screen would repeat for good */}
+          <button onClick={() => { window.location.assign('/today') }} style={{ fontSize: 12, padding: '8px 20px', borderRadius: 8, border: '0.5px solid var(--border)', background: 'none', cursor: 'pointer', color: 'var(--ink)' }}>
+            go to today
+          </button>
         </div>
       )
     }

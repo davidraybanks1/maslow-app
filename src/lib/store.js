@@ -164,7 +164,9 @@ async function fetchAllRows(table, userId) {
       .order('date_key', { ascending: false })
       .order('created_at', { ascending: false })
       .range(from, from + PAGE - 1)
-    if (error) { logSupabaseError(`fetchAllRows:${table}`, error); break }
+    // a failed page must fail the whole load: returning what we have would replace
+    // good local history with a truncated copy (restoreFromSupabase catches this)
+    if (error) { logSupabaseError(`fetchAllRows:${table}`, error); throw error }
     out.push(...(data || []))
     if (!data || data.length < PAGE) break
   }
@@ -196,12 +198,13 @@ async function restoreFromSupabase(userId, email) {
     // days and "what changed" compared last month against an empty one for
     // the same reason. At ~10 rows a day this is ~200KB for a 100-day user;
     // when it isn't, the fix is to page the almanac's history, not to cut it.
-    const [checkins, moods, noteDeck, { data: practicesRows }] = await Promise.all([
+    const [checkins, moods, noteDeck, { data: practicesRows, error: practicesErr }] = await Promise.all([
       fetchCheckins(user.id),
       fetchMoods(user.id),
-      loadNoteDeck(user.id),
+      loadNoteDeck(user.id, { strict: true }),
       supabase.from('practices').select(PRACTICE_COLS).eq('user_id', user.id).order('created_at'),
     ])
+    if (practicesErr) throw practicesErr
     const checkinsMap = {}
     for (const row of (checkins || [])) {
       if (!checkinsMap[row.date_key]) checkinsMap[row.date_key] = []
@@ -242,6 +245,14 @@ async function restoreFromSupabase(userId, email) {
     console.error('restoreFromSupabase error', e)
     return null
   }
+}
+
+// Backward-compat copy of the practices list on users.practices. A supabase query is
+// lazy: it only goes out once awaited or .then()-ed, so the bare calls this replaces
+// were never sent at all.
+function syncLegacyPractices(userId, practices) {
+  return supabase.from('users').update({ practices }).eq('id', userId)
+    .then(({ error }) => { if (error) logSupabaseError('syncLegacyPractices', error) })
 }
 
 export function useAppState(onSignIn) {
@@ -300,6 +311,10 @@ export function useAppState(onSignIn) {
         const shouldSkip = signInNavRef.skip
         signInNavRef.skip = false
         const { id, email } = session.user
+        // auth-js re-announces SIGNED_IN every time the app returns to the foreground.
+        // For the user already loaded that is not a sign-in: re-fetching would overwrite
+        // in-flight taps and, on a bad connection, replace history with a partial copy.
+        if (!shouldSkip && stateRef.current.userId === id) return
         Sentry.setUser({ id })
         setTimeout(() => {
           restoreFromSupabase(id, email)
@@ -320,7 +335,7 @@ export function useAppState(onSignIn) {
       }
       if (event === 'SIGNED_OUT') {
         Sentry.setUser(null)
-        localStorage.removeItem('maslow_state')
+        clearLocalSession()
         setState(initialState())
       }
     })
@@ -443,7 +458,7 @@ export function useAppState(onSignIn) {
               setState(p => ({ ...p, practicesDB: p.practicesDB.map(r => r.id === tempId ? data : r) }))
             }
             // Also sync the JSONB for backward compat
-            supabase.from('users').update({ practices: newPractices }).eq('id', prev.userId)
+            syncLegacyPractices(prev.userId, newPractices)
           })
       }
       return { ...prev, practices: newPractices, practicesDB: [...prev.practicesDB, tempRecord] }
@@ -469,7 +484,7 @@ export function useAppState(onSignIn) {
             setState(p => ({ ...p, practicesDB: previousPracticesDB, practices: previousPractices }))
           }
         })
-        supabase.from('users').update({ practices: newPractices }).eq('id', prev.userId)
+        syncLegacyPractices(prev.userId, newPractices)
       }
       return { ...prev, practicesDB: updatedDB, practices: newPractices }
     })
@@ -500,7 +515,7 @@ export function useAppState(onSignIn) {
           }
         })
         if (newPractices !== prev.practices) {
-          supabase.from('users').update({ practices: newPractices }).eq('id', prev.userId)
+          syncLegacyPractices(prev.userId, newPractices)
         }
       }
       return { ...prev, practicesDB: updatedDB, practices: newPractices }
@@ -525,7 +540,7 @@ export function useAppState(onSignIn) {
             setState(p => ({ ...p, practicesDB: previousPracticesDB, practices: previousPractices }))
           }
         })
-        supabase.from('users').update({ practices: newPractices }).eq('id', prev.userId)
+        syncLegacyPractices(prev.userId, newPractices)
       }
       return { ...prev, practicesDB: updatedDB, practices: newPractices }
     })
@@ -1104,13 +1119,13 @@ export async function loadCustomTagUsageCounts(userId) {
 }
 
 export async function deleteJournalEntry(id, imageUrl) {
-  removeStorageImage(imageUrl)
   const { error } = await supabase
     .from('journal')
     .delete()
     .eq('id', id)
-  if (error) logSupabaseError('deleteJournalEntry', error)
-  return { error }
+  if (error) { logSupabaseError('deleteJournalEntry', error); return { error } }
+  removeStorageImage(imageUrl)
+  return { error: null }
 }
 
 // Legacy single-blob helpers — kept for Log/Data screens that haven't migrated yet
@@ -1125,14 +1140,16 @@ export async function saveJournalEntry(userId, dateKey, entry) {
 
 // Loads active (archived_at null) note_deck cards ordered for the swipe deck.
 // Lazily migrates a legacy note_to_self value if no rows exist yet.
-export async function loadNoteDeck(userId) {
-  const { data } = await supabase
+export async function loadNoteDeck(userId, { strict = false } = {}) {
+  const { data, error: deckErr } = await supabase
     .from('note_deck')
     .select('*')
     .eq('user_id', userId)
     .is('archived_at', null)
     .order('position', { ascending: true })
 
+  // strict (used by the full restore): a failed read must not look like an empty deck
+  if (deckErr && strict) throw deckErr
   if (data && data.length > 0) return data
 
   const { data: user } = await supabase.from('users').select('note_to_self').eq('id', userId).single()
@@ -1245,11 +1262,13 @@ function removeStorageImage(imageUrl) {
 }
 
 export async function deleteNoteDeckCard(id, userId, text, imageUrl) {
+  // delete the row first: the deck keeps at least three notes, so this can be refused,
+  // and the photo and the history entry must only go once the note really has
+  const { error } = await supabase.from('note_deck').delete().eq('id', id)
+  if (error) { logSupabaseError('deleteNoteDeckCard', error); return { error } }
   await appendNoteHistory(userId, text)
   removeStorageImage(imageUrl)
-  const { error } = await supabase.from('note_deck').delete().eq('id', id)
-  if (error) logSupabaseError('deleteNoteDeckCard', error)
-  return { error }
+  return { error: null }
 }
 
 export async function reorderNoteDeck(cards) {
@@ -1507,7 +1526,12 @@ export async function wipeLocalData() {
     })))
   } catch {}
 
-  // Cancel all scheduled local notifications (native only)
+  await cancelAllNotifications()
+}
+
+// Cancel every scheduled local notification (native only). Reminders carry the
+// person's own practice names, so they must not outlive their session.
+export async function cancelAllNotifications() {
   try {
     const { Capacitor } = await import('@capacitor/core')
     if (Capacitor.isNativePlatform()) {
@@ -1518,4 +1542,23 @@ export async function wipeLocalData() {
       }
     }
   } catch {}
+}
+
+// Everything on this device that belongs to the signed-in person, short of the
+// auth session itself (which signOut removes).
+export async function clearLocalSession() {
+  try {
+    localStorage.removeItem('maslow_state')
+    localStorage.removeItem('loam.practiceProgress.v1')
+    for (const k of Object.keys(localStorage)) if (k.startsWith('guidanceDismissed_')) localStorage.removeItem(k)
+  } catch {}
+  await cancelAllNotifications()
+}
+
+// Sign out so that it works with no connection too. A normal sign-out has to reach
+// the server; when it cannot, the session would stay on the phone, so drop it locally.
+export async function signOutEverywhere() {
+  const { error } = await supabase.auth.signOut()
+  if (error) await supabase.auth.signOut({ scope: 'local' }).catch(() => {})
+  await clearLocalSession()
 }

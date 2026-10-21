@@ -793,6 +793,16 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     return init
   })
 
+  // The answers above are held per daypart, not per day. When the date rolls over with
+  // the app still open, drop yesterday's so the new morning/midday/evening cards start
+  // unanswered (the sync below then re-seeds from anything already logged for the new day).
+  const moodsDay = useRef(today)
+  useEffect(() => {
+    if (moodsDay.current === today) return
+    moodsDay.current = today
+    setMoodSelections({}); setMoodFeelings({}); setMoodNotes({})
+  }, [today])
+
   // Sync mood selections, feelings, and notes from the server after restoreFromSupabase loads.
   // Only fills empty slots — never overwrites live user input.
   useEffect(() => {
@@ -813,7 +823,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
       todayMoodsNow.forEach(m => { if (!next[m.prompt_time] && m.note) next[m.prompt_time] = m.note })
       return next
     })
-  }, [state.moods])
+  }, [state.moods, today])
 
   async function handleFrequencySettle(promptTime, band, feeling) {
     if (!band) return  // blank station → no write

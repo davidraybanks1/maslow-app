@@ -1,4 +1,5 @@
 .key {
+  --c: var(--ink4); /* the step colour is set inline per prompt */
   display: inline-block;
   font-family: var(--font-mono);
   font-size: var(--type-floor);
