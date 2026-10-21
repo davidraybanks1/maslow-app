@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { normalizeBand, BAND_LABEL, FEELINGS, BANDS } from '../lib/frequency'
-import FrequencyCard from '../components/FrequencyCard'
+import { MOOD_PIP_COLOR } from '../components/FrequencyCard'
 import { IconHeart, IconHeartFilled } from '@tabler/icons-react'
 import { allNeeds, needName, MODE_MAX_BUBBLES, JOURNAL_TRUNCATE } from '../lib/constants'
 import { loadJournalEntry, loadDebriefs, loadDebriefTypes, loadAllJournalMeta, loadJournalArchive, updateJournalEntryTags, toggleJournalFavorite, toggleJournalRevisit, loadDayCheckins, loadCustomTags } from '../lib/store'
@@ -499,6 +499,8 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
   const [archiveVisible, setArchiveVisible] = useState(ARCHIVE_PAGE_SIZE)
   const [expandedEntries, setExpandedEntries] = useState(new Set())
   const [taggingEntryId, setTaggingEntryId] = useState(null)
+  const [taggingKind, setTaggingKind] = useState(null)   // which parent pill is open: 'vibration' | 'need' | 'custom'
+  const [taggingBand, setTaggingBand] = useState(null)    // the band picked so far, while its feeling is still to choose
 
   const [resurfacePool, setResurfacePool] = useState([])
   const [resurfaceIdx, setResurfaceIdx] = useState(0)
@@ -622,6 +624,13 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
     setResurfaceIdx(0)
   }, [archiveIdsKey, archiveLoaded])
 
+  function openTagging(entryId, kind) {
+    const same = taggingEntryId === entryId && taggingKind === kind
+    setTaggingEntryId(same ? null : entryId)
+    setTaggingKind(same ? null : kind)
+    setTaggingBand(null)
+  }
+
   async function handleRetroTag(entryId, { needId, customLabel, moodBand, moodFeeling }) {
     const { error } = await updateJournalEntryTags(entryId, { needId, customLabel, moodBand, moodFeeling })
     if (!error) {
@@ -634,8 +643,7 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
       }
       setArchiveEntries(prev => prev.map(patch))
       setJournalMeta(prev => prev.map(patch))
-      // Close the panel only when feeling chosen, or for non-frequency tags
-      if (moodBand === undefined || moodFeeling !== undefined) setTaggingEntryId(null)
+      setTaggingEntryId(null); setTaggingKind(null); setTaggingBand(null)
     }
   }
 
@@ -1356,13 +1364,6 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
                       next.has(e.id) ? next.delete(e.id) : next.add(e.id)
                       return next
                     })
-                    const missingCount = (canAddNeed ? 1 : 0) + (canAddFrequency ? 1 : 0) + (canAddCustom ? 1 : 0)
-                    const panelLabel = missingCount > 1
-                      ? 'add a tag to this entry'
-                      : canAddNeed ? 'add a need to this entry'
-                      : canAddFrequency ? 'add a vibration to this entry'
-                      : 'add a custom tag to this entry'
-
                     return (
                       <div key={e.id} className={`${styles.archiveRow}${isTagging ? ` ${styles.archiveRowOpen}` : ''}`}>
                         <button className={styles.archiveCardInner} onClick={toggleExpand}>
@@ -1392,11 +1393,49 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
                           {needTagName && <span className={styles.archiveTag}>{needTagName}</span>}
                           {e.custom && <span className={styles.archiveTag}>{e.custom}</span>}
                           {e.shape && shapeLabel(e.shape) && <span className={shapeStyles.shapeChip}>{shapeLabel(e.shape)}</span>}
-                          {(canAddNeed || canAddFrequency || canAddCustom) && (
+                          {[['vibration', canAddFrequency], ['need', canAddNeed], ['custom', canAddCustom]].filter(([, can]) => can).map(([kind]) => (
                             <button
-                              className={`${styles.archiveTagBtn} ${isTagging ? styles.archiveTagBtnOpen : ''}`}
-                              onClick={() => setTaggingEntryId(id => id === e.id ? null : e.id)}
-                            >+ tag</button>
+                              key={kind}
+                              className={`${styles.archiveTagParent} ${isTagging && taggingKind === kind ? styles.archiveTagParentOpen : ''}`}
+                              aria-expanded={isTagging && taggingKind === kind}
+                              onClick={() => openTagging(e.id, kind)}
+                            >+ {kind}</button>
+                          ))}
+                          {isTagging && (
+                            <span className={styles.retroTagOptions}>
+                              {taggingKind === 'need' && canAddNeed && (
+                                <span className={styles.retroTagRow}>
+                                  {canvasNeeds.map(n => (
+                                    <button key={n.id} className={styles.retroTagOption} onClick={() => handleRetroTag(e.id, { needId: n.id })}>{n.name}</button>
+                                  ))}
+                                </span>
+                              )}
+                              {taggingKind === 'custom' && canAddCustom && (
+                                <span className={styles.retroTagRow}>
+                                  {customTags.map(t => (
+                                    <button key={t.id} className={styles.retroTagOption} onClick={() => handleRetroTag(e.id, { customLabel: t.label })}>{t.label}</button>
+                                  ))}
+                                </span>
+                              )}
+                              {taggingKind === 'vibration' && canAddFrequency && (
+                                <>
+                                  <span className={styles.retroTagRow}>
+                                    {BANDS.map(b => (
+                                      <button key={b} className={`${styles.retroTagOption} ${b === taggingBand ? styles.retroTagOptionOn : ''}`} aria-pressed={b === taggingBand} onClick={() => setTaggingBand(b)}>
+                                        <span className={styles.retroTagDot} style={{ background: MOOD_PIP_COLOR[b] }} />{BAND_LABEL[b]}
+                                      </button>
+                                    ))}
+                                  </span>
+                                  {taggingBand && (
+                                    <span className={styles.retroTagRow}>
+                                      {FEELINGS[taggingBand].map(f => (
+                                        <button key={f} className={styles.retroTagOption} onClick={() => handleRetroTag(e.id, { moodBand: taggingBand, moodFeeling: f })}>{f}</button>
+                                      ))}
+                                    </span>
+                                  )}
+                                </>
+                              )}
+                            </span>
                           )}
                           <span className={styles.archiveCardMarks}>
                             <button
@@ -1412,31 +1451,6 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
                             >{e.favorite ? <IconHeartFilled size={15} stroke={1.5} /> : <IconHeart size={15} stroke={1.5} />}</button>
                           </span>
                         </span>
-                        {isTagging && (
-                          <div className={styles.retroTagPanel}>
-                            <div className={styles.retroTagLabel}>{panelLabel}</div>
-                            <div className={styles.retroTagOptions}>
-                              {canAddNeed && canvasNeeds.map(n => (
-                                <button key={n.id} className={styles.retroTagOption} onClick={() => handleRetroTag(e.id, { needId: n.id })}>
-                                  {n.name}
-                                </button>
-                              ))}
-                              {canAddFrequency && (
-                                <FrequencyCard
-                                  compact
-                                  initialBand={e.mood_band || null}
-                                  initialFeeling={e.mood_feeling || null}
-                                  onSettle={(band, feeling) => handleRetroTag(e.id, { moodBand: band, moodFeeling: feeling || undefined })}
-                                />
-                              )}
-                              {canAddCustom && customTags.map(t => (
-                                <button key={t.id} className={styles.retroTagOption} onClick={() => handleRetroTag(e.id, { customLabel: t.label })}>
-                                  {t.label}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
                       </div>
                     )
                   })}

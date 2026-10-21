@@ -662,55 +662,45 @@
   padding: 3.5px 11px;
 }
 
-.archiveTagBtn {
+.archiveTagParent {
   padding: 3.5px 11px;
   border-radius: 999px;
-  border: 1px dashed rgba(0,0,0,.22);
-  background: transparent;
-  color: rgba(0,0,0,.40);
+  border: 1px solid transparent;
+  background: var(--surface-dim);
+  color: var(--ink2);
   font-family: var(--font-mono);
   font-size: var(--type-floor);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.archiveTagBtnOpen {
-  border-style: solid;
-  border-color: rgba(0,0,0,.22);
-  color: rgba(0,0,0,.60);
-}
+.archiveTagParentOpen { background: var(--ink); color: var(--paper); }
 
-/* ── Retro-tag inline panel ── */
-.retroTagPanel {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(0,0,0,.07);
-}
-.retroTagLabel {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  font-weight: 400;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: rgba(0,0,0,.35);
-  margin-bottom: 8px;
-}
+/* ── Retro-tag lists: the tags you can add, under the pill that opened them ── */
 .retroTagOptions {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 6px;
+  flex: 0 0 100%;
+  margin: 2px 0;
 }
+.retroTagRow { display: flex; flex-wrap: wrap; gap: 6px; }
 .retroTagOption {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 3.5px 11px;
   border-radius: 999px;
-  border: 1px solid rgba(0,0,0,.22);
+  border: 1px solid var(--border2);
   background: transparent;
-  color: rgba(0,0,0,.60);
+  color: var(--ink2);
   font-family: var(--font-mono);
   font-size: var(--type-floor);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.retroTagOption:hover { opacity: 0.75; }
+.retroTagOption:not(.retroTagOptionOn):hover { opacity: 0.75; }
+.retroTagOptionOn { border-color: var(--ink); color: var(--ink); }
+.retroTagDot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
 
 .resurfaceSectionSub { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink4); margin: 2px 0 12px; }
 .archiveMoreRow { display: flex; gap: 8px; padding: 12px 16px 14px; border-top: 0.5px solid rgba(0,0,0,.07); }
