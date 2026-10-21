@@ -67,5 +67,7 @@
 .stepPip { flex: 1; height: 6px; border-radius: 3px; background: var(--track); overflow: hidden; }
 .stepLabel { font-family: var(--font-mono); font-size: var(--type-floor); letter-spacing: 0.06em; color: var(--ink3); }
 .stepQ { margin: 0; font-family: var(--font-serif); font-size: 22px; font-weight: 300; line-height: 1.25; color: var(--ink); }
+.stepHead { display: flex; flex-direction: column; gap: 4px; }
+.stepTag { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); }
 .stepHint { margin: 0; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); }
 .chipsRow { display: flex; flex-wrap: wrap; gap: 6px; }

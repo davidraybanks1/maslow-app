@@ -4,7 +4,7 @@ import { currentSlot } from '../lib/slots'
 import { hapticSuccess, hapticTick } from '../lib/native'
 import { SHAPE_DB, latestMoodToday } from '../lib/shapeFacts'
 import { GLYPHS } from './shapes/ShapesFlow'
-import { SPACES } from './JournalSpaces'
+import { SPACES, gtHiddenPrefix } from './JournalSpaces'
 import JournalTags from './JournalTags'
 import styles from './JournalPage.module.css'
 
@@ -82,6 +82,7 @@ export default function JournalPage({ state, logMood }) {
   const Space = inSpace ? SPACES[mode] : null
   const placeholder = inSpace ? (extra.placeholder || exp.placeholder) : BLANK
   const body = text.trim()
+  const hidden = mode === 'one_thing' && inSpace ? gtHiddenPrefix(text) : ''
   const entry = inSpace && extra.lead ? (body ? `${extra.lead}\n\n${body}` : '') : body
 
   // What was on the page when a space was started. Backing out of a started
@@ -252,8 +253,8 @@ export default function JournalPage({ state, logMood }) {
             <textarea
               ref={taRef}
               className={styles.input}
-              value={text}
-              onChange={e => setText(e.target.value)}
+              value={hidden ? text.slice(hidden.length) : text}
+              onChange={e => setText(hidden + e.target.value)}
               placeholder={placeholder}
               aria-label={placeholder}
               disabled={!!extra.locked}

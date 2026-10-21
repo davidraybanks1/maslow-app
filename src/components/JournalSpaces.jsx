@@ -176,6 +176,18 @@ function gtStepOf(text) {
   GT_HEADINGS.forEach((h, i) => { if (lines.includes(h)) step = i + 1 })
   return step
 }
+// everything up to and including the latest step heading: earlier answers stay in
+// the entry but the page only shows the step you're on, right under its question
+export function gtHiddenPrefix(text) {
+  const t = text || ''
+  let end = 0, pos = 0
+  for (const line of t.split('\n')) {
+    const next = pos + line.length + 1
+    if (GT_HEADINGS.includes(line.trim().toLowerCase())) end = Math.min(next, t.length)
+    pos = next
+  }
+  return t.slice(0, end)
+}
 function OneThing({ state, today, text, onChange }) {
   const step = gtStepOf(text)
   const s = GT_STEPS[step]
@@ -210,7 +222,10 @@ function OneThing({ state, today, text, onChange }) {
       <div className={styles.steps} aria-hidden="true">
         {GT_STEPS.map((x, i) => <span key={i} className={styles.stepPip} style={i <= step ? { background: x.color } : undefined} />)}
       </div>
-      <p className={styles.stepQ} aria-live="polite">{s.q}</p>
+      <div className={styles.stepHead}>
+        {step > 0 && needId && <span className={styles.stepTag}>tagged · {pickedName}</span>}
+        <p className={styles.stepQ} aria-live="polite">{s.q}</p>
+      </div>
       {step === 0 && moved.length > 0 && (
         <>
           <p className={styles.stepHint}>needs you moved toward today · tap to tag</p>
@@ -230,7 +245,6 @@ function OneThing({ state, today, text, onChange }) {
           </div>
         </>
       )}
-      {step > 0 && needId && <p className={styles.stepHint}>tagged · {pickedName}</p>}
     </div>
   )
 }
