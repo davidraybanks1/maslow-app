@@ -80,10 +80,10 @@
   position: relative;
 }
 /* the time, top right on the same line as "what's on your mind?" */
+/* time of day, lower left of the card, level with the done button */
 .clock {
-  position: absolute;
-  top: 30px;
-  right: 20px;
+  flex: 1;
+  min-width: 0;
   font-family: var(--font-mono);
   font-size: var(--type-floor);
   color: var(--ink3);
@@ -107,8 +107,6 @@
   line-height: 1.4;
 }
 .input:disabled { color: var(--ink3); }
-/* keep the first line of writing clear of the time */
-.inputBlank { padding-right: 64px; }
 
 .input::placeholder { color: var(--ink3); opacity: 1; }
 .error { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--survival); }

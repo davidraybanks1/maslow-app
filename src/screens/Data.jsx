@@ -546,9 +546,6 @@ function InsightsCard({ insights }) {
       <div ref={wrapperRef} className={styles.insightDeckWrapper} onScroll={handleScroll}>
         {cards.map((insight, i) => (
           <div key={insight ? insight.id : 'empty'} className={styles.insightCard}>
-            <div className={styles.insightLabel}>
-              {insight ? 'OBSERVATION' : 'OBSERVATIONS'}
-            </div>
             {insight ? (
               <>
                 <p className={styles.insightFinding} data-len={insight.text.length > 150 ? 'long' : insight.text.length > 90 ? 'mid' : undefined}>{insight.text}</p>

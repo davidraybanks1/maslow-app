@@ -260,10 +260,9 @@ export default function JournalPage({ state, logMood }) {
                 onFinish={() => doneRef.current?.()}
               />
             )}
-            {blank && <span className={styles.clock} aria-hidden="true">{clockLabel}</span>}
             <textarea
               ref={taRef}
-              className={`${styles.input} ${blank ? styles.inputBlank : ''}`}
+              className={styles.input}
               value={hidden ? text.slice(hidden.length) : text}
               onChange={e => setText(hidden + e.target.value)}
               placeholder={placeholder}
@@ -275,6 +274,7 @@ export default function JournalPage({ state, logMood }) {
             {blank && <JournalTags state={state} today={todayKey()} logMood={logMood} onChange={setTags} />}
             {error && <div className={styles.error} role="alert">{error}</div>}
             <div className={styles.footer}>
+              {blank && <span className={styles.clock} aria-hidden="true">{clockLabel}</span>}
               <div className={styles.footerActions}>
                 {inSpace && <button type="button" className={styles.cancel} onClick={cancelSpace}>cancel</button>}
                 <button type="button" className={styles.done} onClick={advancing ? advance : done} disabled={advancing ? !!extra.ctaDisabled : (empty || saving || !!extra.ctaDisabled)}>

@@ -48,9 +48,10 @@
 @media (prefers-reduced-motion: reduce) { .rTrack { transition: none; } .rKnob { transition: none; } }
 
 /* Taken times — shown below the row while the time picker is focused */
-.reminderTaken { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink4); padding: 2px 0 6px; line-height: 1.5; }
+/* wraps onto extra lines instead of running off the card */
+.reminderTaken { display: flex; flex-wrap: wrap; gap: 0 10px; min-width: 0; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink4); padding: 2px 0 6px; line-height: 1.5; }
 .reminderTakenHead { color: var(--ink3); }
-.reminderTakenItem { white-space: nowrap; }
+.reminderTakenItem { min-width: 0; overflow-wrap: anywhere; }
 
 /* ── Once-only reminder offer ── */
 .offerRow { display: flex; align-items: center; gap: 8px; padding: 3px 0 6px; }

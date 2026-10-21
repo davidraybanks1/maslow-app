@@ -1232,8 +1232,8 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                   return (
                   <div key={e.id} className={styles.journalEntryCard}>
                     <div className={styles.journalEntryMeta}>
-                      {e.mood_band && <span className={styles.journalFreqChip}><span className={styles.journalFreqDot} style={{ background: MOOD_PIP_COLOR[e.mood_band] }} />{e.mood_feeling || e.mood_band}</span>}
                       <span className={styles.journalEntryTime}>{formatEntryTime(e.created_at)}</span>
+                      {e.mood_band && <span className={styles.journalFreqChip}><span className={styles.journalFreqDot} style={{ background: MOOD_PIP_COLOR[e.mood_band] }} />{e.mood_feeling || e.mood_band}</span>}
                       {e.slot && <span className={styles.journalSlotChip}>{e.slot}</span>}
                       {e.state && <span className={styles.journalStateTag}>{e.state}</span>}
                       {e.need_id && <span className={styles.journalNeedTag}>{e.need_id}</span>}
@@ -1288,8 +1288,8 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                     return (
                     <div key={e.id} className={styles.journalEntryCard}>
                       <div className={styles.journalEntryMeta}>
-                        {e.mood_band && <span className={styles.journalFreqChip}><span className={styles.journalFreqDot} style={{ background: MOOD_PIP_COLOR[e.mood_band] }} />{e.mood_feeling || e.mood_band}</span>}
                         <span className={styles.journalEntryTime}>{formatEntryTime(e.created_at)}</span>
+                        {e.mood_band && <span className={styles.journalFreqChip}><span className={styles.journalFreqDot} style={{ background: MOOD_PIP_COLOR[e.mood_band] }} />{e.mood_feeling || e.mood_band}</span>}
                         {e.slot && <span className={styles.journalSlotChip}>{e.slot}</span>}
                         {e.state && <span className={styles.journalStateTag}>{e.state}</span>}
                         {e.need_id && <span className={styles.journalNeedTag}>{e.need_id}</span>}

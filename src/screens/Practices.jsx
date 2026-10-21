@@ -372,10 +372,10 @@ export default function Practices({ state, addPractice, updatePractice, archiveP
                             {/* Taken times — shown while this practice's picker is focused */}
                             {takenTimes.length > 0 && (
                               <div className={styles.reminderTaken}>
-                                <span className={styles.reminderTakenHead}>taken · </span>
-                                {takenTimes.map((t, i) => (
+                                <span className={styles.reminderTakenHead}>taken ·</span>
+                                {takenTimes.map(t => (
                                   <span key={t.time + t.label} className={styles.reminderTakenItem}>
-                                    {i > 0 ? ' · ' : ''}{t.time} {t.label}
+                                    {t.time} {t.label}
                                   </span>
                                 ))}
                               </div>

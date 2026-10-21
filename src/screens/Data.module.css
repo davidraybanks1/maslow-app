@@ -139,16 +139,6 @@
 /* arrows hidden on mobile (swipe works); shown on desktop */
 .insightDeckArrow { display: none; }
 
-.insightLabel {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  font-weight: 400;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: var(--ink3);
-  margin-bottom: 12px;
-}
-
 /* the finding sits in the middle of the card, the basis at the foot;
    the type steps down with length so the block keeps roughly one mass */
 .insightFinding {
