@@ -84,12 +84,21 @@ export default function JournalPage({ state, logMood }) {
   const body = text.trim()
   const entry = inSpace && extra.lead ? (body ? `${extra.lead}\n\n${body}` : '') : body
 
+  // What was on the page when a space was started. Backing out of a started
+  // space puts that back, so nothing you wrote inside it (headings included)
+  // leaks onto the blank page, and nothing is saved.
+  const baseText = useRef('')
+  const textRef = useRef('')
+  textRef.current = text
+  function startSpace() { baseText.current = textRef.current; setStarted(true) }
   function pick(id) {
+    if (inSpace) setText(baseText.current)
     if (id === mode) exit()
     else { setMode(id); setStarted(false) }
   }
-  // leave a space: back to the blank page, with what you wrote still there
+  // leave a space: back to the blank page, as it was before the space
   function exit() { setMode(null); setStarted(false) }
+  function cancelSpace() { setText(baseText.current); exit() }
 
   // measure the page so the timer ring can hug it
   useEffect(() => {
@@ -115,7 +124,7 @@ export default function JournalPage({ state, logMood }) {
   useEffect(() => {
     function onOpen(e) {
       const s = e.detail?.shape
-      if (EXPERIENCES.some(x => x.id === s)) { setMode(s); setStarted(true) }
+      if (EXPERIENCES.some(x => x.id === s)) { baseText.current = textRef.current; setMode(s); setStarted(true) }
     }
     window.addEventListener('maslow:open-shapes', onOpen)
     return () => window.removeEventListener('maslow:open-shapes', onOpen)
@@ -219,7 +228,7 @@ export default function JournalPage({ state, logMood }) {
           <h3 className={styles.introTitle}>{exp.name}</h3>
           <p className={styles.introText}>{exp.description}</p>
           <div className={styles.introActions}>
-            <button type="button" className={styles.start} onClick={() => setStarted(true)}>
+            <button type="button" className={styles.start} onClick={startSpace}>
               <span className={styles.startPill}>start</span>
             </button>
             <button type="button" className={styles.notNow} onClick={exit}>cancel</button>
@@ -255,7 +264,7 @@ export default function JournalPage({ state, logMood }) {
             {error && <div className={styles.error} role="alert">{error}</div>}
             <div className={styles.footer}>
               <div className={styles.footerActions}>
-                {inSpace && <button type="button" className={styles.cancel} onClick={exit}>cancel</button>}
+                {inSpace && <button type="button" className={styles.cancel} onClick={cancelSpace}>cancel</button>}
                 <button type="button" className={styles.done} onClick={advancing ? advance : done} disabled={advancing ? !!extra.ctaDisabled : (empty || saving || !!extra.ctaDisabled)}>
                   <span className={styles.donePill}>{advancing ? 'next' : 'done'}</span>
                 </button>
