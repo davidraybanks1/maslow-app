@@ -64,6 +64,7 @@ export default function JournalPage({ state, logMood }) {
   const blankWrapRef = useRef(null)
   const blankH = useRef(0)
   const taRef = useRef(null)
+  const doneRef = useRef(null)
 
   const exp = useMemo(() => EXPERIENCES.find(e => e.id === mode) || null, [mode])
   const inSpace = !!exp && started       // writing inside a space
@@ -155,6 +156,8 @@ export default function JournalPage({ state, logMood }) {
     exit()
   }
 
+  doneRef.current = done
+
   const empty = !entry
 
   // a multi-step space (gave and took) swaps "done" for "next" until its last step:
@@ -234,6 +237,7 @@ export default function JournalPage({ state, logMood }) {
                 text={text}
                 setText={writeText}
                 onChange={onSpace}
+                onFinish={() => doneRef.current?.()}
               />
             )}
             <textarea

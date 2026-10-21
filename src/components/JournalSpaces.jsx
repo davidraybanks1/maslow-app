@@ -16,7 +16,7 @@ import styles from './JournalSpaces.module.css'
    affordance above the textarea and reports what it adds through
    onChange({ lead, needId, quotedText, quotedDate, settleId, keepOpen,
              placeholder, locked, ring, note }).
-   Props every space gets: state, today, text (what's typed), onChange. */
+   Props every space gets: state, today, text (what's typed), onChange, onFinish (timer room only: the ring closed). */
 
 /* A fact (from the person's own data) as a quiet block inside the page. */
 function Fact({ fact }) {
@@ -247,7 +247,7 @@ function readMinutes() {
   } catch { /* storage unavailable */ }
   return DEFAULT_MINUTES
 }
-function TimerRoom({ text, onChange }) {
+function TimerRoom({ text, onChange, onFinish }) {
   const [minutes, setMinutes] = useState(readMinutes)
   const [customOpen, setCustomOpen] = useState(() => !PRESETS.includes(readMinutes()))
   const [customText, setCustomText] = useState(() => (PRESETS.includes(readMinutes()) ? '' : String(readMinutes())))
@@ -256,6 +256,8 @@ function TimerRoom({ text, onChange }) {
   const [running, setRunning] = useState(false)
   const [done, setDone] = useState(false)
   const startedAt = useRef(0)
+  const finishRef = useRef(onFinish)
+  finishRef.current = onFinish
   const started = running || done || left !== total
 
   // the ring starts with the first word
@@ -271,6 +273,7 @@ function TimerRoom({ text, onChange }) {
         clearInterval(id)
         setRunning(false)
         setDone(true)
+        finishRef.current?.()   // the timer room is the one space that saves itself
       }
     }, 250)
     return () => clearInterval(id)
