@@ -14,7 +14,15 @@ export const GLYPHS = {
   continue: <span className={styles.tileGlyph}><i className={styles.tgBar} style={{ width: 26 }} /><i className={styles.tgDot} /></span>,
   // gave and took: a lit dot (energy given) beside an empty ring (energy taken)
   one_thing: <span className={styles.tileGlyph} style={{ gap: 7 }}><i className={styles.tgDot} style={{ width: 14, height: 14, background: 'var(--nour)' }} /><i className={styles.tgDot} style={{ width: 14, height: 14, background: 'none', border: '2px solid var(--ink4)', boxSizing: 'border-box' }} /></span>,
-  timer: <span className={styles.tileGlyph}><i className={styles.tgRing} /></span>,
+  // timer room: the page, with the ring tracing round it as the time runs
+  timer: (
+    <span className={styles.tileGlyph}>
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <rect x="2.5" y="4.5" width="21" height="17" rx="5.5" strokeWidth="2" style={{ stroke: 'var(--ink4)' }} />
+        <path d="M2.5 13V10a5.5 5.5 0 0 1 5.5-5.5H16" strokeWidth="2.8" style={{ stroke: 'var(--exploration)' }} />
+      </svg>
+    </span>
+  ),
 }
 
 /* The shape picker and the six writing rooms, in one component.
