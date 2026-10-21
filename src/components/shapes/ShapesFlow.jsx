@@ -12,7 +12,8 @@ export const GLYPHS = {
   tension: <span className={styles.tileGlyph}><i className={styles.tgDot} /><i className={styles.tgLine} /><i className={styles.tgDot} /></span>,
   sort_first: <span className={styles.tileGlyph}><i className={styles.tgBar} /><i className={styles.tgBar} /><i className={styles.tgBar} /></span>,
   continue: <span className={styles.tileGlyph}><i className={styles.tgBar} style={{ width: 26 }} /><i className={styles.tgDot} /></span>,
-  one_thing: <span className={styles.tileGlyph}><i className={styles.tgDot} style={{ width: 16, height: 16 }} /></span>,
+  // gave and took: a lit dot (energy given) beside an empty ring (energy taken)
+  one_thing: <span className={styles.tileGlyph} style={{ gap: 7 }}><i className={styles.tgDot} style={{ width: 14, height: 14, background: 'var(--nour)' }} /><i className={styles.tgDot} style={{ width: 14, height: 14, background: 'none', border: '2px solid var(--ink4)', boxSizing: 'border-box' }} /></span>,
   timer: <span className={styles.tileGlyph}><i className={styles.tgRing} /></span>,
 }
 

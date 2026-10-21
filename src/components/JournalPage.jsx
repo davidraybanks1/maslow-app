@@ -23,7 +23,7 @@ const BLANK = "what's on your mind?"
 const EXPERIENCES = [
   { id: 'timer',        name: 'timer room',   description: 'You pick the time. It saves itself when the ring closes.',         placeholder: 'set a time, then write.' },
   { id: 'continue',     name: 'revisit',      description: 'Keep a conversation going on a previous draft.',                   placeholder: 'pick a draft to answer…' },
-  { id: 'one_thing',    name: 'one thing',    description: 'Pick a need. Write one thing about it.',                           placeholder: 'which need?' },
+  { id: 'one_thing',    name: 'gave and took', description: 'What gave you energy today, what took it, and what you want more of tomorrow.', placeholder: 'something that gave you energy…' },
   { id: 'tension',      name: 'tension',      description: 'Two things pulling on you. Write the space between.',               placeholder: 'what lives between these two?' },
   { id: 'three_truths', name: 'three truths', description: 'Three facts about you right now. Write what they have in common.', placeholder: 'one true thing about you right now…' },
 ]
@@ -192,6 +192,16 @@ export default function JournalPage({ state, logMood }) {
 
   const empty = !entry
 
+  // a space can write into the page for you (a heading, a tapped suggestion);
+  // the caret goes to the end so the next thing typed lands after it
+  function writeText(v) {
+    setText(v)
+    requestAnimationFrame(() => {
+      const el = taRef.current
+      if (el) { el.focus(); el.setSelectionRange(v.length, v.length) }
+    })
+  }
+
   useLayoutEffect(() => {
     if (blank && blankWrapRef.current) blankH.current = blankWrapRef.current.offsetHeight
   })
@@ -248,6 +258,7 @@ export default function JournalPage({ state, logMood }) {
                 state={state}
                 today={todayKey()}
                 text={text}
+                setText={writeText}
                 onChange={onSpace}
                 onFinish={() => doneRef.current?.()}
               />

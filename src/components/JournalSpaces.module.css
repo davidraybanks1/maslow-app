@@ -60,3 +60,13 @@
 .length:disabled { cursor: default; opacity: 0.55; }
 .customWrap { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink2); }
 .customInput { width: 44px; min-height: 36px; box-sizing: border-box; text-align: center; border: 1.5px solid var(--border2); border-radius: 10px; background: var(--card); font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink); }
+
+
+/* gave and took */
+.steps { display: flex; align-items: center; gap: 6px; }
+.stepPip { flex: 1; height: 6px; border-radius: 3px; background: var(--track); overflow: hidden; }
+.stepLabel { font-family: var(--font-mono); font-size: var(--type-floor); letter-spacing: 0.06em; color: var(--ink3); }
+.stepQ { margin: 0; font-family: var(--font-serif); font-size: 22px; font-weight: 300; line-height: 1.25; color: var(--ink); }
+.stepHint { margin: 0; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); }
+.chipsRow { display: flex; flex-wrap: wrap; gap: 6px; }
+.nextBtn { align-self: flex-start; min-height: 44px; padding: 0; border: 0; background: none; cursor: pointer; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }

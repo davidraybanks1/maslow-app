@@ -4,7 +4,7 @@ import { MOOD_PIP_COLOR } from './FrequencyCard'
 import { loadRecentDrafts } from '../lib/store'
 import { hapticTick } from '../lib/native'
 import {
-  truthPool, pickTruths, tensionPair, anglesFor,
+  truthPool, pickTruths, tensionPair,
   shortDate, clip, daySeed,
 } from '../lib/shapeFacts'
 import { factDot, sentence } from './shapes/Rooms'
@@ -164,41 +164,69 @@ function Continue({ state, onChange }) {
   )
 }
 
-/* ── one thing ────────────────────────────────────────────── */
-function OneThing({ state, onChange }) {
-  const needs = useMemo(() => {
-    const ids = Object.keys(state.canvas || {})
-    const list = allNeeds().filter(n => ids.includes(n.id))
-    return list.length ? list : allNeeds().slice(0, 6)
-  }, [state.canvas])
+/* ── gave and took (stored as the "one_thing" shape) ─────────── */
+// One page, three beats: what gave you energy, what took it, what you want
+// more of tomorrow. The first heading rides along as the entry's lead; the
+// later ones are written into the page when you move on, so the step you are
+// on is simply read back from the text. The needs you moved toward today are
+// offered as tags for the entry (an entry carries one need tag).
+const GT_HEADINGS = ['took it:', 'tomorrow:']
+const GT_STEPS = [
+  { q: 'what gave you energy today?', ph: 'something that gave you energy…', color: MODES.nourishment.pip },
+  { q: 'what took it?', ph: 'something that took it…', color: MODES.survival.pip },
+  { q: 'what do you want more of tomorrow?', ph: 'more of…', color: MODES.exploration.pip },
+]
+function gtStepOf(text) {
+  const lines = (text || '').split('\n').map(l => l.trim().toLowerCase())
+  let step = 0
+  GT_HEADINGS.forEach((h, i) => { if (lines.includes(h)) step = i + 1 })
+  return step
+}
+function OneThing({ state, today, text, setText, onChange }) {
+  const step = gtStepOf(text)
+  const s = GT_STEPS[step]
   const [needId, setNeedId] = useState(null)
-  const [angleIx, setAngleIx] = useState(0)
-  const need = needs.find(n => n.id === needId)
-  const angles = anglesFor(needId)
-  useEffect(() => {
-    onChange({ needId: needId || null, locked: !need, placeholder: need ? `one thing about ${need.name}` : 'which need?' })
-  }, [needId])
+  // the needs they have moved toward today, from the check-ins already on the device
+  const moved = useMemo(() => {
+    const counts = {}
+    for (const e of ((state.checkins || {})[today] || [])) counts[e.need_id] = (counts[e.need_id] || 0) + (e.count || 1)
+    return allNeeds().filter(n => counts[n.id] > 0 && state.canvas?.[n.id])
+  }, [state.checkins, state.canvas, today])
+  useEffect(() => { onChange({ lead: 'gave me energy:', placeholder: s.ph, needId: needId || null }) }, [step, needId])
+
+  function next() {
+    hapticTick()
+    const sep = text && !text.endsWith('\n') ? '\n\n' : text ? '\n' : ''
+    setText(`${text || ''}${sep}${GT_HEADINGS[step]}\n`)
+  }
   return (
     <div className={styles.space}>
-      <div className={styles.needs} role="group" aria-label="pick a need">
-        {needs.map(n => (
-          <button
-            type="button"
-            key={n.id}
-            className={`${styles.need} ${n.id === needId ? styles.needOn : ''}`}
-            aria-pressed={n.id === needId}
-            onClick={() => { hapticTick(); setNeedId(id => id === n.id ? null : n.id); setAngleIx(0) }}
-          >
-            <span className={styles.factDot} style={{ background: MODES[state.canvas?.[n.id]]?.color || 'var(--ink4)' }} />
-            {n.name}
-          </button>
-        ))}
+      <div className={styles.steps} aria-hidden="true">
+        {GT_STEPS.map((x, i) => <span key={i} className={styles.stepPip} style={i <= step ? { background: x.color } : undefined} />)}
       </div>
-      {need && (
+      <p className={styles.stepQ} aria-live="polite">{s.q}</p>
+      {step === 0 && moved.length > 0 && (
         <>
-          <p className={styles.angle}>{angles[angleIx % angles.length]}</p>
-          <button type="button" className={styles.link} onClick={() => setAngleIx(i => i + 1)}>another angle</button>
+          <p className={styles.stepHint}>needs you moved toward today · tap to tag</p>
+          <div className={styles.needs} role="group" aria-label="tag a need">
+            {moved.map(n => (
+              <button
+                type="button"
+                key={n.id}
+                className={`${styles.need} ${n.id === needId ? styles.needOn : ''}`}
+                aria-pressed={n.id === needId}
+                onClick={() => { hapticTick(); setNeedId(id => id === n.id ? null : n.id) }}
+              >
+                <span className={styles.factDot} style={{ background: MODES[state.canvas?.[n.id]]?.color || 'var(--ink4)' }} />
+                {n.name}
+              </button>
+            ))}
+          </div>
         </>
+      )}
+      {step > 0 && needId && <p className={styles.stepHint}>tagged · {moved.find(n => n.id === needId)?.name}</p>}
+      {step < GT_HEADINGS.length && (
+        <button type="button" className={styles.nextBtn} onClick={next}>{step === 0 ? 'next: what took it →' : 'next: tomorrow →'}</button>
       )}
     </div>
   )
