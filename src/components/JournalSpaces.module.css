@@ -69,4 +69,3 @@
 .stepQ { margin: 0; font-family: var(--font-serif); font-size: 22px; font-weight: 300; line-height: 1.25; color: var(--ink); }
 .stepHint { margin: 0; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); }
 .chipsRow { display: flex; flex-wrap: wrap; gap: 6px; }
-.nextBtn { align-self: flex-start; min-height: 44px; padding: 0; border: 0; background: none; cursor: pointer; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }

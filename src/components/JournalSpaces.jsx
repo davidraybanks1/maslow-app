@@ -16,7 +16,7 @@ import styles from './JournalSpaces.module.css'
    affordance above the textarea and reports what it adds through
    onChange({ lead, needId, quotedText, quotedDate, settleId, keepOpen,
              placeholder, locked, ring, note }).
-   Props every space gets: state, today, text (what's typed), onChange, onFinish (timer: the ring closed). */
+   Props every space gets: state, today, text (what's typed), onChange. */
 
 /* A fact (from the person's own data) as a quiet block inside the page. */
 function Fact({ fact }) {
@@ -85,7 +85,6 @@ function Continue({ state, onChange }) {
   const [source, setSource] = useState(null)
   const [picking, setPicking] = useState(true)    // opens on the chooser, no note pre-picked
   const [keepOpen, setKeepOpen] = useState(false)
-  const [fresh, setFresh] = useState(false)
 
   useEffect(() => {
     let live = true
@@ -97,8 +96,7 @@ function Continue({ state, onChange }) {
   }, [state.userId])
 
   useEffect(() => {
-    if (fresh) onChange({ placeholder: 'a note to self', locked: false })
-    else if (!source) onChange({ placeholder: 'pick a draft to answer…', locked: true })
+    if (!source) onChange({ placeholder: 'pick a draft to answer…', locked: true })
     else onChange({
       placeholder: 'reply to yourself',
       locked: false,
@@ -108,11 +106,11 @@ function Continue({ state, onChange }) {
       settleId: source.revisit ? source.id : null,
       keepOpen,
     })
-  }, [source, keepOpen, fresh])
+  }, [source, keepOpen])
 
   const chooseLabel = "drafts you marked 'revisit'"
 
-  if (picking && !fresh) {
+  if (picking) {
     return (
       <div className={styles.space}>
         <div className={styles.eyebrow}>{chooseLabel}</div>
@@ -121,21 +119,18 @@ function Continue({ state, onChange }) {
         )}
         <div className={styles.pick}>
           {(drafts || []).map(d => (
-            <button type="button" key={d.id} className={styles.pickItem} onClick={() => { setSource(d); setFresh(false); setPicking(false) }}>
+            <button type="button" key={d.id} className={styles.pickItem} onClick={() => { setSource(d); setPicking(false) }}>
               <span className={styles.pastMeta}>{shortDate(d.date_key)}{d.mood_feeling ? ` · ${d.mood_feeling}` : ''}</span>
               <span className={styles.pastText}>{clip(d.entry, 120)}</span>
             </button>
           ))}
-        </div>
-        <div className={styles.linkRow}>
-          <button type="button" className={styles.link} onClick={() => { setFresh(true); setPicking(false) }}>a note to self</button>
         </div>
       </div>
     )
   }
   return (
     <div className={styles.space}>
-      {!fresh && source && (
+      {source && (
         <div className={styles.past}>
           <div className={styles.pastMeta}>
             <span>you · {shortDate(source.date_key)}</span>
@@ -150,15 +145,14 @@ function Continue({ state, onChange }) {
           <p className={styles.pastText}>{clip(source.entry, 280)}</p>
         </div>
       )}
-      {!fresh && source?.revisit && (
+      {source?.revisit && (
         <label className={styles.keepOpen}>
           <input type="checkbox" checked={keepOpen} onChange={e => setKeepOpen(e.target.checked)} />
           keep this one in revisit
         </label>
       )}
       <div className={styles.linkRow}>
-        <button type="button" className={styles.link} onClick={() => { setFresh(false); setPicking(true) }}>{chooseLabel}</button>
-        {!fresh && <button type="button" className={styles.link} onClick={() => setFresh(true)}>a note to self</button>}
+        <button type="button" className={styles.link} onClick={() => setPicking(true)}>{chooseLabel}</button>
       </div>
     </div>
   )
@@ -173,7 +167,7 @@ function Continue({ state, onChange }) {
 const GT_HEADINGS = ['took it:', 'tomorrow:']
 const GT_STEPS = [
   { q: 'what gave you energy today?', ph: 'something that gave you energy…', color: MODES.nourishment.pip },
-  { q: 'what took it?', ph: 'something that took it…', color: MODES.survival.pip },
+  { q: 'what took it?', ph: 'this is slowly draining me because…', color: MODES.survival.pip },
   { q: 'what do you want more of tomorrow?', ph: 'more of…', color: MODES.exploration.pip },
 ]
 function gtStepOf(text) {
@@ -182,7 +176,7 @@ function gtStepOf(text) {
   GT_HEADINGS.forEach((h, i) => { if (lines.includes(h)) step = i + 1 })
   return step
 }
-function OneThing({ state, today, text, setText, onChange }) {
+function OneThing({ state, today, text, onChange }) {
   const step = gtStepOf(text)
   const s = GT_STEPS[step]
   const [needId, setNeedId] = useState(null)
@@ -192,13 +186,25 @@ function OneThing({ state, today, text, setText, onChange }) {
     for (const e of ((state.checkins || {})[today] || [])) counts[e.need_id] = (counts[e.need_id] || 0) + (e.count || 1)
     return allNeeds().filter(n => counts[n.id] > 0 && state.canvas?.[n.id])
   }, [state.checkins, state.canvas, today])
-  useEffect(() => { onChange({ lead: 'gave me energy:', placeholder: s.ph, needId: needId || null }) }, [step, needId])
-
-  function next() {
-    hapticTick()
-    const sep = text && !text.endsWith('\n') ? '\n\n' : text ? '\n' : ''
-    setText(`${text || ''}${sep}${GT_HEADINGS[step]}\n`)
-  }
+  const pickedName = moved.find(n => n.id === needId)?.name
+  // "next" stands in for "done" until the last step, and only lights once the
+  // current step has something in it
+  const sectionText = (() => {
+    const lines = (text || '').split('\n')
+    let from = 0
+    GT_HEADINGS.slice(0, step).forEach(h => { const ix = lines.findIndex(l => l.trim().toLowerCase() === h); if (ix >= 0) from = ix + 1 })
+    return lines.slice(from).join('\n').trim()
+  })()
+  const ph = step === 0 && pickedName ? `how'd ${pickedName} feel…` : s.ph
+  useEffect(() => {
+    onChange({
+      lead: 'gave me energy:',
+      placeholder: ph,
+      needId: needId || null,
+      nextHeading: step < GT_HEADINGS.length ? GT_HEADINGS[step] : null,
+      ctaDisabled: !sectionText,
+    })
+  }, [step, needId, ph, !!sectionText])
   return (
     <div className={styles.space}>
       <div className={styles.steps} aria-hidden="true">
@@ -224,10 +230,7 @@ function OneThing({ state, today, text, setText, onChange }) {
           </div>
         </>
       )}
-      {step > 0 && needId && <p className={styles.stepHint}>tagged · {moved.find(n => n.id === needId)?.name}</p>}
-      {step < GT_HEADINGS.length && (
-        <button type="button" className={styles.nextBtn} onClick={next}>{step === 0 ? 'next: what took it →' : 'next: tomorrow →'}</button>
-      )}
+      {step > 0 && needId && <p className={styles.stepHint}>tagged · {pickedName}</p>}
     </div>
   )
 }
@@ -244,7 +247,7 @@ function readMinutes() {
   } catch { /* storage unavailable */ }
   return DEFAULT_MINUTES
 }
-function TimerRoom({ text, onChange, onFinish }) {
+function TimerRoom({ text, onChange }) {
   const [minutes, setMinutes] = useState(readMinutes)
   const [customOpen, setCustomOpen] = useState(() => !PRESETS.includes(readMinutes()))
   const [customText, setCustomText] = useState(() => (PRESETS.includes(readMinutes()) ? '' : String(readMinutes())))
@@ -253,8 +256,6 @@ function TimerRoom({ text, onChange, onFinish }) {
   const [running, setRunning] = useState(false)
   const [done, setDone] = useState(false)
   const startedAt = useRef(0)
-  const finishRef = useRef(onFinish)
-  finishRef.current = onFinish
   const started = running || done || left !== total
 
   // the ring starts with the first word
@@ -270,7 +271,6 @@ function TimerRoom({ text, onChange, onFinish }) {
         clearInterval(id)
         setRunning(false)
         setDone(true)
-        finishRef.current?.()
       }
     }, 250)
     return () => clearInterval(id)
@@ -283,9 +283,8 @@ function TimerRoom({ text, onChange, onFinish }) {
       placeholder: 'start typing. the ring starts with you.',
       ring: 1 - left / total,
       locked: done,
-      note: done ? (text.trim() ? 'saved. nice.' : 'time. nothing written, and that is fine.') : `${mm}:${ss} · saves when the ring closes`,
     })
-  }, [left, total, done, text])
+  }, [left, total, done])
 
   function pick(n) {
     if (started) return

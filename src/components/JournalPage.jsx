@@ -1,7 +1,7 @@
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { todayKey, addJournalEntry, settleRevisit } from '../lib/store'
 import { currentSlot } from '../lib/slots'
-import { hapticSuccess } from '../lib/native'
+import { hapticSuccess, hapticTick } from '../lib/native'
 import { SHAPE_DB, latestMoodToday } from '../lib/shapeFacts'
 import { GLYPHS } from './shapes/ShapesFlow'
 import { SPACES } from './JournalSpaces'
@@ -21,27 +21,12 @@ import styles from './JournalPage.module.css'
 const BLANK = "what's on your mind?"
 
 const EXPERIENCES = [
-  { id: 'timer',        name: 'timer room',   description: 'You pick the time. It saves itself when the ring closes.',         placeholder: 'set a time, then write.' },
+  { id: 'timer',        name: 'timer room',   description: 'Write for a set amount of time.',                                              placeholder: 'set a time, then write.' },
   { id: 'continue',     name: 'revisit',      description: 'Keep a conversation going on a previous draft.',                   placeholder: 'pick a draft to answer…' },
   { id: 'one_thing',    name: 'gave and took', description: 'What gave you energy today, what took it, and what you want more of tomorrow.', placeholder: 'something that gave you energy…' },
   { id: 'tension',      name: 'tension',      description: 'Two things pulling on you. Write the space between.',               placeholder: 'what lives between these two?' },
   { id: 'three_truths', name: 'three truths', description: 'Three facts about you right now. Write what they have in common.', placeholder: 'one true thing about you right now…' },
 ]
-
-const DRAFT_KEY = 'loam_today_draft'
-function readDraft() {
-  try {
-    const d = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null')
-    if (d && typeof d.text === 'string') return d
-  } catch { /* no draft */ }
-  return null
-}
-function writeDraft(text, shape) {
-  try {
-    if (!text.trim()) localStorage.removeItem(DRAFT_KEY)
-    else localStorage.setItem(DRAFT_KEY, JSON.stringify({ text, shape, at: Date.now() }))
-  } catch { /* storage blocked: the draft just won't survive a reload */ }
-}
 
 // A rounded-rect path from top-centre, clockwise, so the ring closes from the top
 const RING_W = 3
@@ -60,16 +45,13 @@ function ringPath(w, h) {
 
 export default function JournalPage({ state, logMood }) {
   const uid = useId().replace(/[^a-z0-9]/gi, '')
-  const [text, setText] = useState(() => readDraft()?.text || '')
-  const [mode, setMode] = useState(() => {
-    const s = readDraft()?.shape
-    return EXPERIENCES.some(e => e.id === s) ? s : null
-  })
+  // nothing is saved until "done": the page lives in memory only
+  const [text, setText] = useState('')
+  const [mode, setMode] = useState(null)
   // a space has been picked (mode) and also started (you're writing in it)
-  const [started, setStarted] = useState(() => EXPERIENCES.some(e => e.id === readDraft()?.shape))
+  const [started, setStarted] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
-  const [justSaved, setJustSaved] = useState(false)
   // what the open space adds around the page (see JournalSpaces)
   const [extraRaw, setExtra] = useState({})
   // tags on the blank page (see JournalTags)
@@ -82,8 +64,6 @@ export default function JournalPage({ state, logMood }) {
   const blankWrapRef = useRef(null)
   const blankH = useRef(0)
   const taRef = useRef(null)
-  const doneRef = useRef(null)
-  const firstRun = useRef(true)
 
   const exp = useMemo(() => EXPERIENCES.find(e => e.id === mode) || null, [mode])
   const inSpace = !!exp && started       // writing inside a space
@@ -130,19 +110,6 @@ export default function JournalPage({ state, logMood }) {
     el.style.height = Math.max(el.scrollHeight, 120) + 'px'
   }, [text, mode, started])
 
-  // autosave about 800 ms after you stop typing (or change space)
-  useEffect(() => {
-    if (firstRun.current) { firstRun.current = false; return }
-    const t = setTimeout(() => {
-      writeDraft(text, started ? mode : null)
-      if (text.trim()) {
-        setJustSaved(true)
-        setTimeout(() => setJustSaved(false), 2000)
-      }
-    }, 800)
-    return () => clearTimeout(t)
-  }, [text, mode, started])
-
   // other parts of the app can open a specific space (e.g. a note's "continue")
   useEffect(() => {
     function onOpen(e) {
@@ -184,13 +151,20 @@ export default function JournalPage({ state, logMood }) {
     }
     hapticSuccess()
     window.dispatchEvent(new CustomEvent('maslow:entry-added', { detail: { entry: data, dateKey: today } }))
-    writeDraft('', null)
     setText('')
     exit()
   }
-  doneRef.current = done
 
   const empty = !entry
+
+  // a multi-step space (gave and took) swaps "done" for "next" until its last step:
+  // next writes the following heading into the page
+  const advancing = inSpace && !!extra.nextHeading
+  function advance() {
+    hapticTick()
+    const sep = text && !text.endsWith('\n') ? '\n\n' : text ? '\n' : ''
+    writeText(`${text || ''}${sep}${extra.nextHeading}\n`)
+  }
 
   // a space can write into the page for you (a heading, a tapped suggestion);
   // the caret goes to the end so the next thing typed lands after it
@@ -260,7 +234,6 @@ export default function JournalPage({ state, logMood }) {
                 text={text}
                 setText={writeText}
                 onChange={onSpace}
-                onFinish={() => doneRef.current?.()}
               />
             )}
             <textarea
@@ -277,11 +250,10 @@ export default function JournalPage({ state, logMood }) {
             {blank && <JournalTags state={state} today={todayKey()} logMood={logMood} onChange={setTags} />}
             {error && <div className={styles.error} role="alert">{error}</div>}
             <div className={styles.footer}>
-              <span className={styles.saves} role={extra.ring != null ? 'timer' : undefined}>{inSpace && extra.note ? extra.note : (justSaved ? 'saved · just now' : 'saves as you type')}</span>
               <div className={styles.footerActions}>
                 {inSpace && <button type="button" className={styles.cancel} onClick={exit}>cancel</button>}
-                <button type="button" className={styles.done} onClick={done} disabled={empty || saving}>
-                  <span className={styles.donePill}>done</span>
+                <button type="button" className={styles.done} onClick={advancing ? advance : done} disabled={advancing ? !!extra.ctaDisabled : (empty || saving || !!extra.ctaDisabled)}>
+                  <span className={styles.donePill}>{advancing ? 'next' : 'done'}</span>
                 </button>
               </div>
             </div>
