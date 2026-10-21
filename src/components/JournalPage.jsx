@@ -61,6 +61,16 @@ export default function JournalPage({ state, logMood }) {
   // The blank page's height, remembered so a space's intro card can stand in
   // for it at exactly the same height - tapping a space then swaps the card
   // without moving anything below it.
+  // the time shown at the top right of the blank page; the part of the day is still saved with the entry
+  const [clock, setClock] = useState(() => new Date())
+  useEffect(() => {
+    const id = setInterval(() => setClock(new Date()), 30_000)
+    return () => clearInterval(id)
+  }, [])
+  const clockLabel = (() => {
+    const h = clock.getHours() % 12 || 12
+    return `${h}:${String(clock.getMinutes()).padStart(2, '0')}${clock.getHours() < 12 ? 'am' : 'pm'}`
+  })()
   const blankWrapRef = useRef(null)
   const blankH = useRef(0)
   const taRef = useRef(null)
@@ -250,9 +260,10 @@ export default function JournalPage({ state, logMood }) {
                 onFinish={() => doneRef.current?.()}
               />
             )}
+            {blank && <span className={styles.clock} aria-hidden="true">{clockLabel}</span>}
             <textarea
               ref={taRef}
-              className={styles.input}
+              className={`${styles.input} ${blank ? styles.inputBlank : ''}`}
               value={hidden ? text.slice(hidden.length) : text}
               onChange={e => setText(hidden + e.target.value)}
               placeholder={placeholder}

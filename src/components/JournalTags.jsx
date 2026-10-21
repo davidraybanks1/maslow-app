@@ -56,8 +56,6 @@ export default function JournalTags({ state, today, logMood, onChange }) {
   return (
     <div className={styles.tags}>
       <div className={styles.row}>
-        <span className={styles.slot}>{slot}</span>
-
         {band ? (
           <button type="button" className={styles.on} onClick={() => toggle('vibration')} aria-expanded={open === 'vibration'}>
             <span className={styles.dot} style={inherited ? { border: `1.5px solid ${MOOD_PIP_COLOR[band]}` } : { background: MOOD_PIP_COLOR[band] }} />
