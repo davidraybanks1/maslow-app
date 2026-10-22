@@ -188,6 +188,7 @@ export default function OnboardingAccount({ destination, recommendation, practic
 
         <div className={styles.fine}>
           <p>Your answers stay yours. Never shared, never sold.</p>
+          <p>Loam is for self-reflection, not medical care. If you’re in crisis, call or text 988 (US).</p>
           <p>
             Already have an account?{' '}
             <button type="button" className={styles.link} onClick={() => navigate('/signin')}>Sign in</button>
