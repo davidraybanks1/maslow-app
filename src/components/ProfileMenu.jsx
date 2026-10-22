@@ -324,6 +324,7 @@ export default function ProfileMenu({
               <a href="https://loamdaybook.com/privacy" target="_blank" rel="noopener noreferrer">privacy</a>
               <a href="https://loamdaybook.com/terms" target="_blank" rel="noopener noreferrer">terms</a>
             </div>
+            <p className={styles.careNote}>loam is for self-reflection, not medical care. if you’re in crisis, call or text 988 (US).</p>
           </div>
         )}
       </div>

@@ -358,6 +358,13 @@ div.moreRow { cursor: default; }
   color: var(--pf-muted);
 }
 .legalRow a:hover { color: var(--pf-ink); }
+.careNote {
+  margin: 10px 0 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--pf-muted);
+}
 
 /* ── Home: sign out ── */
 .signOut {
