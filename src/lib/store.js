@@ -1440,9 +1440,13 @@ export async function seedStarterContent(userId, canvasObj, overrides = {}, note
           ? overrides[needId]
           : STARTER_PRACTICES[needId]
         if (!labels || labels.length === 0) continue
-        practicesJsonb[needId] = labels
-        for (const label of labels) {
-          practicesRows.push({ user_id: userId, label, need_id: needId })
+        // An override entry is a plain label or { label, kind, config } (a
+        // practice picked in onboarding); a bare label is a plain check.
+        const entries = labels.map(l => (typeof l === 'string' ? { label: l } : l))
+        practicesJsonb[needId] = entries.map(e => e.label)
+        for (const e of entries) {
+          const kind = e.kind || 'check'
+          practicesRows.push({ user_id: userId, label: e.label, need_id: needId, ...(e.kind ? { kind, config: sanitizeConfig(kind, e.config) } : {}) })
         }
       }
       if (practicesRows.length > 0) {

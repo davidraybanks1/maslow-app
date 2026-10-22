@@ -2,14 +2,14 @@ import { useId } from 'react'
 import styles from './LoamSplash.module.css'
 import { SYMBOL } from './loamMarkGeometry'
 
-/* The Loam splash: the symbol builds itself, then a line of welcome. Shared by
-   the daily loading screen and the first screen of onboarding.
-   The gold orb rolls in first and comes to rest; the lumps drop into the pile
-   around it from the bottom up (the way the Bloom settles); the green orb
-   sprouts last, in the notch at the top left; then "Welcome to Loam."
+/* The Loam splash: the symbol builds itself, then the name. Shared by the
+   daily loading screen and the first screen of onboarding.
+   The black lumps drop into a pile from the bottom up (the way the Bloom
+   settles); the gold orb rolls in and comes to rest; the green orb pops out
+   from behind the pile's upper-left corner; then the name, Loam.
    Shown once a day, and first of all for someone opening the app for the
    first time (it leads straight into onboarding). The choreography is
-   ~2.8s; App.jsx holds it for RITUAL_MS. Reduced motion shows it at rest. */
+   ~2.7s; App.jsx holds it for RITUAL_MS. Reduced motion shows it at rest. */
 
 const [sx, sy, sw, sh] = SYMBOL.viewBox
 
@@ -41,6 +41,9 @@ export default function LoamSplash() {
           </radialGradient>
         </defs>
 
+        {/* drawn first so it can start hidden behind the pile and pop out of it;
+            it never overlaps a lump once it has landed */}
+        <path d={SYMBOL.green.d} fill={`url(#${uid}-sage)`} className={styles.sprout} />
         <path d={SYMBOL.gold.d} fill={`url(#${uid}-gold)`} className={styles.roll} />
         {SYMBOL.pieces.map((p, i) => (
           <path
@@ -48,13 +51,12 @@ export default function LoamSplash() {
             d={p.d}
             fill={`url(#${uid}-dark)`}
             className={styles.lump}
-            style={{ '--d': `${650 + (n - 1 - i) * 75}ms` }}
+            style={{ '--d': `${100 + (n - 1 - i) * 55}ms` }}
           />
         ))}
-        <path d={SYMBOL.green.d} fill={`url(#${uid}-sage)`} className={styles.sprout} />
       </svg>
 
-      <p className={styles.welcome}>Welcome to Loam.</p>
+      <p className={styles.welcome}>Loam</p>
     </div>
   )
 }

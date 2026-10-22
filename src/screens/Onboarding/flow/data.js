@@ -86,7 +86,7 @@ export const NOTE_LIBRARY = [
 // once three notes are chosen.
 export const PROGRESS_AT = {
   welcome: 0, intro: 0.04, hypotheses: 0.10, how: 0.16,
-  rank: 0.58, recap: 0.62, almanac: 0.78,
+  rank: 0.58, recap: 0.62, practice: 0.70, almanac: 0.78,
 }
 export const SORT_FROM = 0.16
 export const SORT_TO = 0.56
@@ -190,4 +190,70 @@ export function recommendationFrom(placed) {
     }
   }
   return { universal, personal }
+}
+
+
+// ── First-practice picks ──────────────────────────────────────────────────
+// One suggestion per practice type, drawn from the needs the person kept, so
+// the screen both shows what the six types are and lets them keep one. The
+// highest-ranked kept need wins each type (exploration first, then
+// appreciation, nourishment, survival).
+const PICKS = {
+  check: [
+    { need: 'nutrition', label: 'Water, eight glasses', config: { target: 8 } },
+    { need: 'dwelling', label: 'Make the bed' },
+    { need: 'reflection', label: 'One journal entry' },
+    { need: 'community', label: 'Thoughtful text' },
+    { need: 'beauty', label: 'Listen to music' },
+    { need: 'money', label: 'Check accounts' },
+  ],
+  timed: [
+    { need: 'movement', label: 'Walk', config: { minutes: 20, timer: 'on' } },
+    { need: 'reflection', label: '10 minutes of quiet', config: { minutes: 10, timer: 'on' } },
+    { need: 'beauty', label: 'Time in nature', config: { minutes: 15, timer: 'on' } },
+    { need: 'information', label: 'Read non-fiction', config: { minutes: 20, timer: 'on' } },
+    { need: 'play', label: 'Play an actual game', config: { minutes: 20, timer: 'on' } },
+  ],
+  checklist: [
+    { need: 'rest', label: 'Wind-down', config: { items: ['Phone away', 'Dim lights', 'Stretch'], need: 'all', reset: 'same' } },
+    { need: 'nutrition', label: 'Morning basics', config: { items: ['Vitamins', 'Water', 'Breakfast'], need: 'all', reset: 'same' } },
+    { need: 'dwelling', label: 'Reset the kitchen', config: { items: ['Dishes', 'Wipe the counter', 'Take out trash'], need: 'all', reset: 'same' } },
+  ],
+  ritual: [
+    { need: 'reflection', label: 'Evening review', config: { anchor: 'after dinner', steps: ['Open the notebook', 'Write three lines', 'Close it'], setting: 'the kitchen table', closing: 'close the notebook' } },
+    { need: 'rest', label: 'Evening wind-down', config: { anchor: 'when I close my laptop', steps: ['Dim the lights', 'Make tea', 'Three slow breaths'], setting: 'lamp only', closing: 'turn off the lamp' } },
+    { need: 'nutrition', label: 'Make tea', config: { anchor: 'after lunch', steps: ['Boil the kettle', 'Pick a mug', 'Sit with it'], setting: 'same chair', closing: 'rinse the mug' } },
+  ],
+  stretch: [
+    { need: 'community', label: 'Reach out to someone', config: { small: 'send one text', cadence: 'once a week' } },
+    { need: 'thrill', label: 'Do the scary thing', config: { small: 'ask one question', cadence: 'once a week' } },
+    { need: 'intimacy', label: 'Say the hard thing', config: { small: 'start with one honest sentence', cadence: 'when ready' } },
+    { need: 'play', label: 'Try something new', config: { small: 'pick a ten-minute version', cadence: 'twice a month' } },
+  ],
+  boundary: [
+    { need: 'rest', label: 'No screens before bed', config: { window: { from: '21:00', until: '07:00' } } },
+    { need: 'information', label: 'No news after dinner', config: { window: { from: '19:00', until: '07:00' } } },
+    { need: 'nutrition', label: 'No snacks after 9', config: { window: { from: '21:00', until: '07:00' } } },
+  ],
+}
+const PICK_KINDS = ['check', 'timed', 'checklist', 'ritual', 'stretch', 'boundary']
+
+export function picksFor(placed) {
+  const rank = []
+  for (const mode of MODE_KEYS) for (const id of placed[mode] || []) rank.push({ id, mode })
+  const out = []
+  const used = {}
+  for (const kind of PICK_KINDS) {
+    let best = null
+    for (const cand of PICKS[kind]) {
+      const r = rank.findIndex(x => x.id === cand.need)
+      // a need already offered once counts as lower-ranked, so six rows
+      // spread across what they kept instead of all landing on one need
+      const score = r + 6 * (used[cand.need] || 0)
+      if (r !== -1 && (!best || score < best.score)) best = { score, cand, mode: rank[r].mode }
+    }
+    if (best) used[best.cand.need] = (used[best.cand.need] || 0) + 1
+    if (best) out.push({ kind, needId: best.cand.need, mode: best.mode, label: best.cand.label, config: best.cand.config || null })
+  }
+  return out
 }

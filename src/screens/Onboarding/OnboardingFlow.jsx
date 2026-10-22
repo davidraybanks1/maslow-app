@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import styles from './flow/Flow.module.css'
 import Progress from './flow/Progress'
+import PracticeScreen from './flow/screens/PracticeScreen'
+import { STARTER_PRACTICES } from '../../lib/starterContent'
 import { REDUCED_MOTION } from './flow/Typed'
 import {
   FLOW_NEEDS, PROGRESS_AT, SORT_FROM, SORT_TO, NOTES_NEEDED, NOTES_MAX,
@@ -45,6 +47,7 @@ export default function OnboardingFlow({ updateCanvas, completeOnboarding }) {
   const [rank, setRank] = useState({ zoneKey: null, index: 0, total: 0 })
   const [origin, setOrigin] = useState({})
   const [notes, setNotes] = useState({ picked: [], own: [] })
+  const [pick, setPick] = useState(null)
 
   // Fade out, swap the step (and any state that belongs to it) at the moment
   // the old screen is gone, fade in.
@@ -82,6 +85,11 @@ export default function OnboardingFlow({ updateCanvas, completeOnboarding }) {
       if (settled.zone) setRank(r => ({ ...r, zoneKey: settled.zone.key, index: r.index + 1 }))
     })
   }
+
+  // The starter practices stay; a picked practice joins its need, at the front.
+  const practicesDraft = pick
+    ? { [pick.needId]: [{ label: pick.label, kind: pick.kind, config: pick.config }, ...(STARTER_PRACTICES[pick.needId] || []).filter(l => l.toLowerCase() !== pick.label.toLowerCase())] }
+    : {}
 
   const notesTotal = notes.picked.length + notes.own.length
 
@@ -148,7 +156,10 @@ export default function OnboardingFlow({ updateCanvas, completeOnboarding }) {
       break
     }
     case 'recap':
-      screen = <RecapScreen placed={placed} onNext={() => go('almanac')} />
+      screen = <RecapScreen placed={placed} onNext={() => go('practice')} />
+      break
+    case 'practice':
+      screen = <PracticeScreen placed={placed} pick={pick} onPick={setPick} onNext={() => go('almanac')} />
       break
     case 'almanac':
       screen = (
@@ -165,7 +176,7 @@ export default function OnboardingFlow({ updateCanvas, completeOnboarding }) {
         <OnboardingAccount
           destination="/today"
           recommendation={recommendationFrom(placed)}
-          practicesDraft={{}}
+          practicesDraft={practicesDraft}
           notes={[...notes.picked, ...notes.own].slice(0, NOTES_MAX)}
           onDone={handleAccountDone}
           onBack={() => go('notes')}

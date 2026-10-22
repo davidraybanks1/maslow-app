@@ -873,3 +873,22 @@
   text-underline-offset: 3px;
 }
 .signInLink:hover { color: var(--ink); }
+
+  /* ── First-practice pick ── */
+  .pickStage { height: auto; flex-shrink: 1; }
+  .pickList { display: flex; flex-direction: column; gap: 10px; margin-top: 22px; padding-bottom: 8px; }
+  .pick {
+    display: flex; align-items: center; gap: 14px;
+    width: 100%; text-align: left;
+    background: var(--card); border: 1px solid rgba(0,0,0,.08); border-radius: 14px;
+    padding: 12px 16px; cursor: pointer; color: var(--ink);
+    -webkit-tap-highlight-color: transparent;
+    transition: border-color .15s, background .15s;
+  }
+  .pick:active { background: #FBFAF6; }
+  .pickOn { border-color: var(--ink); }
+  .pickIcon { flex: none; color: var(--ink); }
+  .pickText { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .pickLabel { font-family: var(--font-serif); font-weight: 300; font-size: 19px; line-height: 1.2; }
+  .pickMeta { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); letter-spacing: .02em; }
+  .pickRadio { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--border2); background: transparent; transition: background .15s, border-color .15s; }

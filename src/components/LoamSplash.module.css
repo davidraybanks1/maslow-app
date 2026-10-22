@@ -18,18 +18,7 @@
    so nothing shows before its turn */
 .lump, .roll, .sprout { transform-box: fill-box; }
 
-/* 1. the gold orb rolls in from the right and comes to rest */
-.roll {
-  transform-origin: 50% 50%;
-  animation: roll 700ms cubic-bezier(0.2, 0.8, 0.25, 1) 120ms both;
-}
-@keyframes roll {
-  0%   { opacity: 0; transform: translateX(120px) rotate(80deg) scale(0.9); }
-  35%  { opacity: 1; }
-  100% { opacity: 1; transform: none; }
-}
-
-/* 2. the lumps drop into the pile, bottom of the pile first */
+/* 1. the black lumps drop into the pile, bottom of the pile first */
 .lump {
   transform-origin: 50% 100%;
   animation: settle 620ms cubic-bezier(0.22, 1.25, 0.36, 1) var(--d, 0ms) both;
@@ -40,13 +29,28 @@
   100% { opacity: 1; transform: none; }
 }
 
-/* 3. growth: the green orb sprouts in the notch */
+/* 2. the gold orb rolls in from the right and comes to rest */
+.roll {
+  transform-origin: 50% 50%;
+  animation: roll 700ms cubic-bezier(0.2, 0.8, 0.25, 1) 850ms both;
+}
+@keyframes roll {
+  0%   { opacity: 0; transform: translateX(120px) rotate(80deg) scale(0.9); }
+  35%  { opacity: 1; }
+  100% { opacity: 1; transform: none; }
+}
+
+/* 3. the green orb pops out from behind the pile's upper-left corner: it
+   starts small and tucked in behind the lumps (it is drawn under them), slides
+   up and out past its spot, and settles. */
 .sprout {
   transform-origin: 50% 50%;
-  animation: sprout 620ms cubic-bezier(0.3, 1.5, 0.45, 1) 1750ms both;
+  animation: sprout 700ms cubic-bezier(0.3, 0.9, 0.4, 1) 1500ms both;
 }
 @keyframes sprout {
-  0%   { opacity: 0; transform: scale(0); }
+  0%   { opacity: 0; transform: translate(48px, 56px) scale(0.35); }
+  12%  { opacity: 1; }
+  62%  { opacity: 1; transform: translate(-7px, -9px) scale(1.12); }
   100% { opacity: 1; transform: none; }
 }
 
@@ -54,13 +58,13 @@
 .welcome {
   margin: 0;
   font-family: var(--font-serif);
-  font-size: clamp(30px, 10.2vw, 40px);
+  font-size: clamp(38px, 12vw, 50px);
   line-height: 1.15;
   white-space: nowrap;
   font-weight: 400;
   letter-spacing: 0.005em;
   color: var(--ink);
-  animation: rise 600ms cubic-bezier(0.2, 0.8, 0.25, 1) 2250ms both;
+  animation: rise 600ms cubic-bezier(0.2, 0.8, 0.25, 1) 2100ms both;
 }
 @keyframes rise {
   0%   { opacity: 0; transform: translateY(10px); }
