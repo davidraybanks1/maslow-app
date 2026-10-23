@@ -41,7 +41,7 @@ function poolFor(state, need) {
 }
 
 function relative(days) {
-  if (days == null) return 'never'
+  if (days == null) return ''
   if (days <= 0) return 'today'
   if (days === 1) return 'yesterday'
   return `${days}d ago`
@@ -72,7 +72,7 @@ function PracticeCard({ need, mode, practice, st, lastDays, onTap, onHint, onTog
   // has something to open, and otherwise says how this works
   const hold = useHold({ onComplete: onTap, onTap: split ? onToggle : onHint, fill: !inert })
 
-  const label = `${practice.label}, ${st.done ? 'done today' : `last done ${relative(lastDays)}`}. hold to ${st.done ? 'undo' : 'check off'}`
+  const label = `${practice.label}, ${st.done ? 'done today' : lastDays == null ? 'not done yet' : `last done ${relative(lastDays)}`}. hold to ${st.done ? 'undo' : 'check off'}`
   return (
     <div
       ref={hold.cardRef}
@@ -106,7 +106,7 @@ function PracticeCard({ need, mode, practice, st, lastDays, onTap, onHint, onTog
         </span>
         <span className={styles.pbottom}>
           <span className={styles.pname}>{practice.label}</span>
-          <span className={styles.pfoot}>{foot}</span>
+          {foot && <span className={styles.pfoot}>{foot}</span>}
         </span>
       </button>
     </div>
@@ -178,6 +178,11 @@ function Drawer({ id, open, needs, modeKey, sortSeq, state, checked, practices, 
                 />
               )
             })}
+            <button
+              type="button"
+              className={styles.addCard}
+              onClick={() => navigate('/practices', { state: { returnTo: '/today' } })}
+            >+ add practice</button>
           </div>
         )}
         {expandedList.map(practice => {

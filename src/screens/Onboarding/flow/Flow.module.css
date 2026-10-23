@@ -366,8 +366,10 @@
     font-family: var(--font-serif);
     font-weight: 400;
     font-size: 21px;
+    line-height: 1.2;
     letter-spacing: -0.005em;
     color: var(--ink);
+    text-wrap: balance;
   }
   .sortHeadSub {
     margin-top: 8px;
@@ -506,6 +508,38 @@
   .chip.nourishment { background: var(--nourishment);  color: var(--ink); }
   .chip.survival { background: var(--survival);     color: #fff; }
   .chip.unassigned { background: var(--paper); color: var(--ink3); border: 0.5px solid var(--hairline); }
+
+  /*  Sort rows are the colour itself: each bucket fills with its mode colour
+     (--zc) and takes the text colour that reads on it (--zon). Placed chips sit
+     on the fill as a tint of the text colour; once a bucket is full or can't
+     take the card it pales and its chips go solid so they still read.  */
+  .zone_exploration  { --zc: var(--exploration);  --zon: #FFFDF9; }
+  .zone_appreciation { --zc: var(--appreciation); --zon: var(--ink); }
+  .zone_nourishment  { --zc: var(--nourishment);  --zon: var(--ink); }
+  .zone_survival     { --zc: var(--survival);     --zon: var(--ink); }
+  .zone.zoneColor { background: var(--zc); border-color: transparent; color: var(--zon); }
+  .zone.zoneColor .zoneLabel,
+  .zone.zoneColor .zoneCount,
+  .zone.zoneColor .zoneWhy { color: var(--zon); }
+  .zone.zoneColor .chips { margin-left: 0; }
+  .zone.zoneColor .zoneWhy { margin-left: 0; }
+  .zone.zoneColor .chip { background: color-mix(in srgb, var(--zon) 18%, transparent); color: var(--zon); }
+  .zone.enabled.zoneColor:hover { background: var(--zc); filter: brightness(1.05); }
+  .zone.enabled.zoneColor:active { background: var(--zc); border-color: var(--ink); }
+  .zone.disabled.zoneColor,
+  .zone.full.zoneColor {
+    background: color-mix(in srgb, var(--zc) 28%, var(--paper));
+    color: var(--ink);
+  }
+  .zone.disabled.zoneColor .zoneLabel,
+  .zone.disabled.zoneColor .zoneCount,
+  .zone.disabled.zoneColor .zoneWhy,
+  .zone.full.zoneColor .zoneLabel,
+  .zone.full.zoneColor .zoneCount { color: var(--ink); }
+  .zone.disabled.zoneColor > :not(.chips),
+  .zone.full.zoneColor > :not(.chips) { opacity: .62; }
+  .zone.disabled.zoneColor .chip,
+  .zone.full.zoneColor .chip { background: var(--zc); color: var(--zon); }
 
   /*  Done screen recap (design pass addition)  */
   .doneRecap { margin-top: 22px; display: flex; flex-direction: column; gap: 10px; }

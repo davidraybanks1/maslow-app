@@ -50,8 +50,8 @@ export default function SortScreen({ onProgress, onDone }) {
   return (
     <ScreenLayout counter={`${sortedCount} / ${FLOW_NEEDS.length}`} cta={{ label: 'continue', disabled: true }}>
       <div className={styles.sortHead}>
-        <div className={styles.sortHeadTitle}>Go with your gut here</div>
-        <div className={styles.sortHeadSub}>Tap the color that describes the thing</div>
+        <div className={styles.sortHeadTitle}>Tap the color that describes the thing</div>
+        <div className={styles.sortHeadSub}>Go with your gut here</div>
       </div>
 
       <div className={`${styles.cardStage} ${styles.sortStage}`}>
@@ -73,18 +73,14 @@ export default function SortScreen({ onProgress, onDone }) {
           const atTarget = zone.cap !== Infinity && n === zone.cap
           const overTarget = zone.cap !== Infinity && n > zone.cap
           const interactive = !disabled && !full
-          const swatchVar = (zone.key === 'appreciation' || zone.key === 'nourishment') ? `${zone.key}-strong` : zone.key
           return (
             <div
               key={zone.key}
-              className={`${styles.zone} ${disabled ? styles.disabled : full ? styles.full : styles.enabled}${(atTarget || overTarget) ? ` ${styles.overTarget}` : ''}`}
+              className={`${styles.zone}${zone.key === 'unassigned' ? '' : ` ${styles.zoneColor} ${styles[`zone_${zone.key}`]}`} ${disabled ? styles.disabled : full ? styles.full : styles.enabled}${(atTarget || overTarget) ? ` ${styles.overTarget}` : ''}`}
               onClick={interactive ? () => commit(zone) : undefined}
             >
               <div className={styles.zoneHead}>
-                <span
-                  className={`${styles.zoneSwatch}${zone.key === 'unassigned' ? ` ${styles.unassigned}` : ''}`}
-                  style={zone.key === 'unassigned' ? undefined : { background: `var(--${swatchVar})` }}
-                />
+                {zone.key === 'unassigned' && <span className={`${styles.zoneSwatch} ${styles.unassigned}`} />}
                 <span className={`${styles.zoneLabel}${(atTarget || overTarget) ? ` ${styles.dimmed}` : ''}`}>{zone.label}</span>
                 {zone.cap !== Infinity && (
                   <span className={`${styles.zoneCount}${(atTarget || overTarget) ? ` ${styles.over}` : ''}`}>

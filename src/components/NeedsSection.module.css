@@ -212,7 +212,8 @@
 .addCard {
   flex: none;
   width: 128px;
-  height: 104px;
+  min-height: 104px;
+  align-self: stretch;
   border-radius: 16px;
   border: 1.5px dashed var(--ink3);
   background: none;
