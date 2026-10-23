@@ -1082,6 +1082,48 @@
   flex-direction: column;
   gap: 0;
   margin-bottom: 10px;
+  /* inset to the composer's own padding so the times line up with its clock and
+     the text stops where its "done" button does */
+  padding: 0 20px;
+}
+
+/* Timeline: the time sits in a left gutter, a thin rail runs down past each
+   entry, and every entry hangs from an open circle on the rail. */
+.journalMobileEntries .journalEntryCard {
+  position: relative;
+  margin-left: 72px;
+  padding: 8px 0 18px;
+  border-bottom: none;
+}
+.journalMobileEntries .journalEntryMeta { min-height: 26px; }
+.journalMobileEntries .journalEntryTime {
+  position: absolute;
+  left: -72px;
+  top: 12px;
+  white-space: nowrap;
+}
+.journalMobileEntries .journalEntryCard::before {
+  content: "";
+  position: absolute;
+  left: -16.5px;
+  top: 15px;
+  z-index: 1;
+  width: 7px;
+  height: 7px;
+  box-sizing: content-box;
+  border: 1.5px solid var(--ink);
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: 0 0 0 4px var(--paper);
+}
+.journalMobileEntries .journalEntryCard:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: -12px;
+  top: 20px;
+  bottom: -20px;
+  width: 1px;
+  background: rgba(0, 0, 0, 0.16);
 }
 
 /* Mobile: the composer sits directly under the header, above the logged
