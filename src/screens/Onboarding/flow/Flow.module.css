@@ -665,7 +665,16 @@
   
 
   /* the first screen: the Loam mark, centred a touch above the middle */
-  .cardStage.introStage.welcomeStage { align-items: center; padding-bottom: 4vh; }
+  /* The mark and name are centred on the whole screen, not on the gap between
+     the sign-in row and the arrow, so they sit at the true middle. */
+  .cardStage.introStage.welcomeStage {
+    position: absolute;
+    inset: calc(var(--safe-top) * -1) 0 0;
+    height: auto;
+    margin: 0;
+    align-items: center;
+    pointer-events: none;
+  }
   /* Notes picker: header types out in the stage like the other reading screens,
      the picker itself sits beneath it. */
   .cardStage.introStage.notesStage { flex: 0 0 auto; justify-content: flex-start; padding-top: 24px; padding-bottom: 22px; }

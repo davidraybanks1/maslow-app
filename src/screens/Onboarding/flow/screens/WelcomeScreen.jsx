@@ -6,8 +6,9 @@ import useTimeline from '../useTimeline'
 import LoamSplash, { SPLASH_MS } from '../../../../components/LoamSplash'
 
 // The very first screen: the Loam mark builds itself, "Welcome to Loam." lands,
-// and then the arrow arrives.
-export default function WelcomeScreen({ onNext }) {
+// and then the arrow arrives. Someone who already has an account can sign in
+// from the first moment, without waiting for the arrow.
+export default function WelcomeScreen({ onNext, onSignIn }) {
   const at = useTimeline()
   const [arrow, setArrow] = useState(REDUCED_MOTION)
 
@@ -18,7 +19,10 @@ export default function WelcomeScreen({ onNext }) {
   }, [at])
 
   return (
-    <ScreenLayout cta={{ arrow: true, hidden: !arrow, onClick: onNext }}>
+    <ScreenLayout
+      topRight={<button type="button" className={styles.signInLink} onClick={onSignIn}>sign in</button>}
+      cta={{ arrow: true, hidden: !arrow, onClick: onNext }}
+    >
       <div className={`${styles.cardStage} ${styles.introStage} ${styles.welcomeStage}`}>
         <LoamSplash />
       </div>

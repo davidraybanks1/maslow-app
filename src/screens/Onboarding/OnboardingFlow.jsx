@@ -127,7 +127,7 @@ export default function OnboardingFlow({ updateCanvas, completeOnboarding }) {
   let key = step
   switch (step) {
     case 'welcome':
-      screen = <WelcomeScreen onNext={() => go('intro')} />
+      screen = <WelcomeScreen onNext={() => go('intro')} onSignIn={() => navigate('/signin')} />
       break
     case 'intro':
       screen = <IntroScreen onNext={() => go('hypotheses')} onSignIn={() => navigate('/signin')} />
@@ -196,7 +196,8 @@ export default function OnboardingFlow({ updateCanvas, completeOnboarding }) {
 
   return (
     <div className={styles.root}>
-      <Progress value={progress} />
+      {/* the splash stands alone; the bar starts with the first question */}
+      {step !== 'welcome' && <Progress value={progress} />}
       <div key={key} className={`${styles.screen} ${leaving ? styles.screenOut : styles.screenIn}${plain ? ` ${styles.screenPlain}` : ''}`}>
         {screen}
       </div>
