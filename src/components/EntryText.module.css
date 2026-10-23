@@ -17,3 +17,29 @@
   background: var(--c);
   vertical-align: 1px;
 }
+
+/* each prompt (or the written answer) is its own block, with a gap between */
+.sec { display: block; }
+.sec + .sec { margin-top: 10px; }
+.head { display: block; }
+.ans { display: block; white-space: pre-line; }
+.head + .ans { margin-top: 3px; }
+
+/* one fact per line behind a small dot (three truths, two things pulling) */
+.fact {
+  display: block;
+  position: relative;
+  margin-top: 3px;
+  padding-left: 14px;
+  color: var(--ink2);
+}
+.fact::before {
+  content: "";
+  position: absolute;
+  left: 1px;
+  top: 0.62em;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--ink4);
+}
