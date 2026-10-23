@@ -77,8 +77,8 @@ export const NOTE_LIBRARY = [
   'Everything you want is on the other side of discomfort.',
   'Don’t downgrade your aspirations to match your reality. Upgrade your beliefs to match your vision.',
   'If you feel like you are doing too much, you are not doing enough of what matters.',
-  'Anxiety is just meaning before we understand it. Take the time to understand it',
-  'Take up space',
+  'Anxiety is just meaning before we understand it. Take the time to understand it.',
+  'Take up space.',
 ]
 
 // Resting progress value for each non-sorting screen. The sort fills
@@ -236,7 +236,9 @@ const PICKS = {
     { need: 'nutrition', label: 'No snacks after 9', config: { window: { from: '21:00', until: '07:00' } } },
   ],
 }
-const PICK_KINDS = ['check', 'timed', 'checklist', 'ritual', 'stretch', 'boundary']
+// Five of the six kinds: the sixth (a boundary) is one scroll too many on a
+// phone, and it is easy to find in the app.
+const PICK_KINDS = ['check', 'timed', 'checklist', 'ritual', 'stretch']
 
 export function picksFor(placed) {
   const rank = []
@@ -247,7 +249,7 @@ export function picksFor(placed) {
     let best = null
     for (const cand of PICKS[kind]) {
       const r = rank.findIndex(x => x.id === cand.need)
-      // a need already offered once counts as lower-ranked, so six rows
+      // a need already offered once counts as lower-ranked, so the five rows
       // spread across what they kept instead of all landing on one need
       const score = r + 6 * (used[cand.need] || 0)
       if (r !== -1 && (!best || score < best.score)) best = { score, cand, mode: rank[r].mode }

@@ -119,12 +119,12 @@ export default function OnboardingAccount({ destination, recommendation, practic
       setLoading(false)
       // Pass canvasObj and seeded rows so handleAccountDone can populate both
       // canvas and practicesDB in completeOnboarding before navigating.
-      onDone(destination, userId, canvasObj, seeded)
+      onDone(destination, userId, canvasObj, seeded, { name: name.trim(), email: email.trim().toLowerCase() })
       return
     }
 
     setLoading(false)
-    onDone(destination, userId, canvasObj, null)
+    onDone(destination, userId, canvasObj, null, { name: name.trim(), email: email.trim().toLowerCase() })
   }
 
   const canSubmit = name.trim() && email.trim() && password.length >= 8
@@ -187,7 +187,6 @@ export default function OnboardingAccount({ destination, recommendation, practic
         )}
 
         <div className={styles.fine}>
-          <p>Your answers stay yours. Never shared, never sold.</p>
           <p>Loam is for self-reflection, not medical care. If you’re in crisis, call or text 988 (US).</p>
           <p>
             Already have an account?{' '}

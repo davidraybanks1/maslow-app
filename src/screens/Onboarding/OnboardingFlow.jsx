@@ -103,14 +103,14 @@ export default function OnboardingFlow({ updateCanvas, completeOnboarding }) {
     go('account')
   }
 
-  function handleAccountDone(dest, userId, canvas, seeded) {
+  function handleAccountDone(dest, userId, canvas, seeded, who) {
     try { sessionStorage.removeItem(OLD_SS_KEY) } catch { /* private mode */ }
     // Pass the canvas and seeded rows so state is fully populated before
     // navigating, without waiting on a reload or the sign-in restore path.
     if (completeOnboarding) completeOnboarding(
       canvas || null,
       seeded?.practices || null,
-      userId ? { userId } : undefined,
+      userId ? { userId, name: who?.name || '', email: who?.email } : undefined,
       seeded?.practicesDB || null,
       seeded?.noteDeck || null,
     )

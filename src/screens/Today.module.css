@@ -165,6 +165,7 @@
 .noteDeckWrapper::-webkit-scrollbar { display: none; }
 
 .noteDeckCard {
+  position: relative;
   flex: 0 0 100%;
   scroll-snap-align: start;
   box-sizing: border-box;
@@ -2476,7 +2477,8 @@
     background: none;
     border: none;
     border-radius: 0;
-    margin-top: 26px;
+    /* the needs' "edit" pill sits right above, so the gap stays small */
+    margin-top: 6px;
     padding: 0;
   }
 }

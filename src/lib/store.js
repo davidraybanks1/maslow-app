@@ -758,7 +758,7 @@ export function useAppState(onSignIn) {
   }
 
   function completeOnboarding(canvas, practices, profile, seededRows, seededNotes) {
-    const { userId, ...profileData } = profile || {}
+    const { userId, email, ...profileData } = profile || {}
     setState(prev => ({
       ...prev,
       onboarded: true,
@@ -770,6 +770,7 @@ export function useAppState(onSignIn) {
       // Only update profile if caller actually passed profile fields beyond userId.
       profile: Object.keys(profileData).length > 0 ? profileData : prev.profile,
       userId: userId || prev.userId,
+      email: email || prev.email,
     }))
   }
 
@@ -1445,8 +1446,12 @@ export async function seedStarterContent(userId, canvasObj, overrides = {}, note
         const entries = labels.map(l => (typeof l === 'string' ? { label: l } : l))
         practicesJsonb[needId] = entries.map(e => e.label)
         for (const e of entries) {
+          // Every row carries kind and config. supabase-js fills a field a row
+          // leaves out with null, and both columns are NOT NULL, so one picked
+          // practice next to plain starters used to fail the whole batch (and
+          // the notes after it), leaving a new account empty.
           const kind = e.kind || 'check'
-          practicesRows.push({ user_id: userId, label: e.label, need_id: needId, ...(e.kind ? { kind, config: sanitizeConfig(kind, e.config) } : {}) })
+          practicesRows.push({ user_id: userId, label: e.label, need_id: needId, kind, config: e.kind ? sanitizeConfig(kind, e.config) : {} })
         }
       }
       if (practicesRows.length > 0) {
@@ -1455,14 +1460,15 @@ export async function seedStarterContent(userId, canvasObj, overrides = {}, note
           .insert(practicesRows)
           .select(PRACTICE_COLS)
         if (pErr) {
+          // Log it and carry on: the notes below are independent of this batch.
           logSupabaseError('seedStarterContent:practices', pErr)
-          return null
+        } else {
+          const { error: uErr } = await supabase
+            .from('users').update({ practices: practicesJsonb }).eq('id', userId)
+          if (uErr) logSupabaseError('seedStarterContent:users.practices', uErr)
+          practices = practicesJsonb
+          practicesDB = inserted || []
         }
-        const { error: uErr } = await supabase
-          .from('users').update({ practices: practicesJsonb }).eq('id', userId)
-        if (uErr) logSupabaseError('seedStarterContent:users.practices', uErr)
-        practices = practicesJsonb
-        practicesDB = inserted || []
       }
     }
 

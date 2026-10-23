@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { allNeeds, MODES, MODE_ORDER, MODE_MAX_BUBBLES, MODE_WEIGHTS, JOURNAL_TRUNCATE } from '../lib/constants'
 import { currentSlot, precedingSlots, SLOTS, SLOT_NOUN, SLOT_GREETING } from '../lib/slots'
 import { todayKey, loadJournalEntries, deleteJournalEntry, loadNoteDeck, loadCustomTags, addJournalEntry, uploadNoteImage, loadRevisitQueue } from '../lib/store'
-import { createDataStats, getCanvasGuidance } from '../lib/dataStats'
+import { createDataStats } from '../lib/dataStats'
 import { hapticTick, isNative, pendingNotifSlot } from '../lib/native'
 import { normalizeBand, BAND_LABEL, THREADS, THREAD_COPY, FREQUENCY_INTRO, splitFrequencyWords } from '../lib/frequency'
 import { useIsDesktop } from '../lib/useIsDesktop'
@@ -117,49 +117,6 @@ function parseJournalEntry(text, timestampClass) {
   )
 }
 
-function dateKeyForOffset(daysAgo) {
-  const d = new Date()
-  d.setDate(d.getDate() - daysAgo)
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
-function isGuidanceDismissed(type) {
-  for (let i = 0; i < 7; i++) {
-    if (localStorage.getItem(`guidanceDismissed_${type}_${dateKeyForOffset(i)}`)) return true
-  }
-  return false
-}
-
-function GuidanceCard({ type, onDismiss }) {
-  const navigate = useNavigate()
-
-  if (type === 'grow') {
-    return (
-      <div className={styles.guidanceCardGrow}>
-        <div className={styles.guidanceEyebrowGrow}>14-DAY STREAK</div>
-        <div className={styles.guidanceHeadline}>you've built the muscle. ready to try something new?</div>
-        <div className={styles.guidanceBody}>two weeks of consistent practice means your canvas is working. this is a good moment to add a need or raise a need to a higher mode — one small step, not an overhaul.</div>
-        <div className={styles.guidanceActions}>
-          <button className={styles.guidanceCtaGrow} onClick={() => navigate('/canvas')}>update my canvas →</button>
-          <button className={styles.guidanceSecondary} onClick={onDismiss}>not yet</button>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className={styles.guidanceCardSimplify}>
-      <div className={styles.guidanceEyebrowSimplify}>CANVAS CHECK-IN</div>
-      <div className={styles.guidanceHeadline}>the best athletes know when to pull back.</div>
-      <div className={styles.guidanceBody}>a tighter canvas is a stronger one. consider removing a need or moving one to a lower mode — not as a failure, but as a deliberate choice to build real consistency before adding more.</div>
-      <div className={styles.guidanceActions}>
-        <button className={styles.guidanceCtaSimplify} onClick={() => navigate('/canvas')}>adjust my canvas →</button>
-        <button className={styles.guidanceSecondary} onClick={onDismiss}>keep as is</button>
-      </div>
-    </div>
-  )
-}
-
 /* Notes to self you have swiped past this session. Kept outside the
    component so a trip to another tab does not bring them back; cleared when
    the app is reopened, so every day starts with the full deck. */
@@ -247,16 +204,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     ])
   )
   const dateLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
-
-  const [guidanceDismissedNow, setGuidanceDismissedNow] = useState(false)
-  const onboardedToday = state.onboardedAt === today
-  const guidanceType = onboardedToday ? null : getCanvasGuidance(state.checkins || {}, state.canvas || {})
-  const showGuidance = !!guidanceType && !guidanceDismissedNow && !isGuidanceDismissed(guidanceType)
-
-  function handleDismissGuidance() {
-    localStorage.setItem(`guidanceDismissed_${guidanceType}_${today}`, '1')
-    setGuidanceDismissedNow(true)
-  }
 
   const [noteDeck, setNoteDeck] = useState(() => state.noteDeck || [])
   const [deckLoaded, setDeckLoaded] = useState(state.noteDeck != null && state.noteDeck !== undefined)
@@ -714,7 +661,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               const t = Math.min((now - t1) / 700, 1)
               const ease = 1 - t * t  // ease-out quadratic
               const frac = real + (1 - real) * ease
-              if (frac > real + 0.005) {
+              if (t < 1 && frac > real + 0.005) {
                 setDemoRing(frac)
                 rafId = requestAnimationFrame(sweepDown)
               } else {
@@ -727,6 +674,9 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         }
         rafId = requestAnimationFrame(sweepUp)
       }, 600))
+      // Safety net: if animation frames ever stall mid-sweep (a throttled
+      // webview, a backgrounded app), the ring must not stay on a demo value.
+      timers.push(setTimeout(() => { if (!cancelled) cancel() }, 600 + 1800 + 800 + 700 + 600))
     }
 
     function onDemoRingStop() {
@@ -984,29 +934,33 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                   </>
                 )
               ) : deckLoaded ? (
-                <div className={styles.noteDeckCard}>
-                  <div className={styles.noteDeckEyebrow}><Glyph kind="note" />NOTE TO SELF</div>
-                  <div className={styles.noteDeckBody}>
-                    <button className={styles.noteAddBtn} onClick={openManageDeck}>+ add a note to self</button>
+                /* inside the wrapper so the card is centred like the deck's own */
+                <div className={styles.noteDeckWrapper}>
+                  <div className={styles.noteDeckCard}>
+                    {isDesktop
+                      ? <div className={styles.noteDeckEyebrow}><Glyph kind="note" />NOTE TO SELF</div>
+                      : <div className={styles.noteStackLabel}>NOTE<br />TO SELF</div>}
+                    <div className={styles.noteDeckBody}>
+                      <button className={styles.noteAddBtn} onClick={openManageDeck}>+ add a note to self</button>
+                    </div>
+                    <div className={styles.noteDeckFooter}><span /></div>
                   </div>
-                  <div className={styles.noteDeckFooter}><span /></div>
                 </div>
               ) : (
-                <div className={styles.noteDeckCard}>
-                  <div className={styles.noteDeckEyebrow}><Glyph kind="note" />NOTE TO SELF</div>
-                  <div className={styles.noteDeckBody}>
-                    <span className={styles.noteEmpty}>—</span>
+                <div className={styles.noteDeckWrapper}>
+                  <div className={styles.noteDeckCard}>
+                    {isDesktop
+                      ? <div className={styles.noteDeckEyebrow}><Glyph kind="note" />NOTE TO SELF</div>
+                      : <div className={styles.noteStackLabel}>NOTE<br />TO SELF</div>}
+                    <div className={styles.noteDeckBody}>
+                      <span className={styles.noteEmpty}>—</span>
+                    </div>
+                    <div className={styles.noteDeckFooter}><span /></div>
                   </div>
-                  <div className={styles.noteDeckFooter}><span /></div>
                 </div>
               )}
             </div>
           </div>}
-
-        {/* ── Guidance ── */}
-        <div className={styles.guidanceSlot}>
-          {showGuidance && <GuidanceCard type={guidanceType} onDismiss={handleDismissGuidance} />}
-        </div>
 
         {/* ── Frequency section ── */}
         <div className={styles.moodCard} data-tour="mood">

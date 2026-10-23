@@ -28,7 +28,7 @@ export default function PracticeScreen({ placed, pick, onPick, onNext }) {
       <div className={`${styles.cardStage} ${styles.introStage} ${styles.pickStage}`}>
         <div className={styles.conceptTitle}>Pick a practice to start with.</div>
         <div className={styles.hookBody} style={{ marginTop: 12 }}>
-          Practices come in six kinds. Choose one and it{'’'}ll be waiting for you in the app.
+          Practices come in a few kinds. Choose one and it{'’'}ll be waiting for you in the app.
         </div>
         <div className={styles.pickList} role="radiogroup" aria-label="first practice">
           {picks.map((p, i) => {

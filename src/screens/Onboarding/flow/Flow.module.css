@@ -905,3 +905,32 @@
   .pickLabel { font-family: var(--font-serif); font-weight: 300; font-size: 19px; line-height: 1.2; }
   .pickMeta { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); letter-spacing: .02em; }
   .pickRadio { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--border2); background: transparent; transition: background .15s, border-color .15s; }
+
+/* ── Shorter phones (an iPhone 15/16 is 852pt tall) ─────────────────────────
+   Nothing should hide below the fold, so the chrome around each screen and the
+   gaps inside the busier ones (sort, recap, practices, notes) tighten up. */
+@media (max-height: 880px) {
+  .top { padding-top: calc(var(--safe-top) + 12px); }
+  .topRow { margin: 8px 0 0; }
+  .ctaRow { padding: 8px 22px calc(var(--safe-bottom) + 8px); }
+
+  /* sort */
+  .sortHead { margin-top: 6px; margin-bottom: 12px; }
+  .cardStage.sortStage { height: 136px; margin-bottom: 12px; }
+  .zones { gap: 8px; }
+  .zone { padding: 10px 14px; }
+
+  /* recap */
+  .doneRecap { margin-top: 14px; gap: 8px; }
+  .doneGroup { padding: 10px 16px 11px; }
+
+  /* practices */
+  .pickList { gap: 8px; margin-top: 14px; padding-bottom: 4px; }
+  .pick { padding: 8px 16px; }
+
+  /* notes to self */
+  .cardStage.introStage.notesStage { padding-top: 8px; padding-bottom: 10px; }
+  .deckCard { height: 164px; padding-top: 48px; }
+  .notesSectionLabelSecond { margin-top: 12px; }
+  .noteInput { padding: 11px 16px; }
+}
