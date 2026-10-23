@@ -130,7 +130,7 @@ export default function OnboardingFlow({ updateCanvas, completeOnboarding }) {
       screen = <WelcomeScreen onNext={() => go('intro')} onSignIn={() => navigate('/signin')} />
       break
     case 'intro':
-      screen = <IntroScreen onNext={() => go('hypotheses')} onSignIn={() => navigate('/signin')} />
+      screen = <IntroScreen onNext={() => go('hypotheses')} />
       break
     case 'hypotheses':
       screen = <HypothesesScreen onNext={() => go('how')} />

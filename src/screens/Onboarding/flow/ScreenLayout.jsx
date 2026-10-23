@@ -1,10 +1,10 @@
 import styles from './Flow.module.css'
 
 // One screen's skeleton: the counter row, a scrolling body, and the pinned
-// button. `topRight` replaces the counter with other small content (the intro's
-// sign-in link). `cta` is { label, arrow, hidden, disabled, onClick }; leave it off for
+// button. `topRight` replaces the counter with other small content. `bottomLeft`
+// sits in the button row opposite the button (the welcome screen's sign-in link). `cta` is { label, arrow, hidden, disabled, onClick }; leave it off for
 // a screen that has no button.
-export default function ScreenLayout({ counter, topRight, cta, children }) {
+export default function ScreenLayout({ counter, topRight, bottomLeft, cta, children }) {
   return (
     <div className={styles.layout}>
       <div className={styles.top}>
@@ -16,6 +16,7 @@ export default function ScreenLayout({ counter, topRight, cta, children }) {
       <div className={styles.body}>{children}</div>
       {cta && (
         <div className={styles.ctaRow}>
+          {bottomLeft || null}
           <button
             type="button"
             className={`${styles.cta}${cta.arrow ? ` ${styles.ctaArrow}` : ''}${cta.hidden ? ` ${styles.ctaHidden}` : ''}`}

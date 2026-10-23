@@ -77,6 +77,7 @@
 .ctaRow {
   flex-shrink: 0;
   display: flex;
+  align-items: center;
   justify-content: flex-end;
   padding: 16px 22px calc(var(--safe-bottom) + 24px);
 }
@@ -882,6 +883,9 @@
   text-underline-offset: 3px;
 }
 .signInLink:hover { color: var(--ink); }
+/* in the button row, opposite the arrow */
+.signInBottom { padding: 12px 0; }
+.ctaRow .ctaArrow { margin-left: auto; }
 
   /* ── First-practice pick ── */
   .pickStage { height: auto; flex-shrink: 1; }

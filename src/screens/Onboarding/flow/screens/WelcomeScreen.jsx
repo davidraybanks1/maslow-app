@@ -20,7 +20,7 @@ export default function WelcomeScreen({ onNext, onSignIn }) {
 
   return (
     <ScreenLayout
-      topRight={<button type="button" className={styles.signInLink} onClick={onSignIn}>sign in</button>}
+      bottomLeft={<button type="button" className={`${styles.signInLink} ${styles.signInBottom}`} onClick={onSignIn}>sign in</button>}
       cta={{ arrow: true, hidden: !arrow, onClick: onNext }}
     >
       <div className={`${styles.cardStage} ${styles.introStage} ${styles.welcomeStage}`}>
