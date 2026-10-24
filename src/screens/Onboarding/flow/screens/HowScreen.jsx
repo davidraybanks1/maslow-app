@@ -4,7 +4,8 @@ import ScreenLayout from '../ScreenLayout'
 import Typed, { typingMs, REDUCED_MOTION } from '../Typed'
 
 const LEAD = 'But, like, how?'
-const P1 = 'Well, you’re going to sort out what matters to you–those things actually deserve your attention.'
+// U+2015 (horizontal bar), not U+2014: Newsreader's em dash is drawn short, this one reads as a full-width dash
+const P1 = 'Well, you’re going to sort out what matters to you―those things that deserve your attention.'
 const P2 = 'Then Loam will help you track what’s working and what to tweak, with data and stuff.'
 
 const START = 120      // before the lead starts
