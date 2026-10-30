@@ -1,0 +1,321 @@
+/* The desktop frame. Nothing here renders below 900px (App.jsx mounts it only
+   when useIsDesktop is true), but the rules are fenced anyway. */
+
+@media (min-width: 900px) {
+  /* ── the dock: strip (+ pinned rail) as one flex child of the shell ───────── */
+  .dock {
+    --strip-w: 72px;
+    --rail-w: 330px;
+    position: sticky;
+    top: 0;
+    flex: none;
+    height: 100vh;
+    width: var(--strip-w);
+    z-index: 40;
+    transition: width 200ms ease;
+  }
+  .dock[data-pinned] { width: calc(var(--strip-w) + var(--rail-w)); }
+  .dock[data-focus] { width: 0; }
+
+  /* ── strip ───────────────────────────────────────────────────────────────── */
+  .strip {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: var(--strip-w);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 22px 0 18px;
+    background: var(--paper);
+    border-right: 1px solid var(--hairline);
+    z-index: 3;
+    transition: transform 220ms cubic-bezier(.3, .7, .2, 1), opacity 500ms ease, box-shadow 220ms;
+  }
+  .stripAway {
+    transform: translateX(-100%);
+    pointer-events: none;
+  }
+  .dock[data-focus] .strip:not(.stripAway) { box-shadow: 14px 0 40px rgba(60, 45, 10, .12); }
+  /* mid-sentence: the furniture fades to a whisper until the pointer moves */
+  .stripQuiet { opacity: .28; }
+
+  .brand {
+    background: none;
+    border: 0;
+    padding: 4px 6px;
+    border-radius: 10px;
+    cursor: pointer;
+    display: block;
+  }
+  .brand:hover { background: rgba(26, 26, 24, .05); }
+  .brand:focus-visible { outline: 2px solid rgba(26, 26, 24, .35); outline-offset: 2px; }
+
+  .glance {
+    margin-top: 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    padding: 8px 8px 10px;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: background 150ms;
+  }
+  .glance:hover { background: rgba(26, 26, 24, .05); }
+  .glance:focus-visible { outline: 2px solid rgba(26, 26, 24, .35); outline-offset: 1px; }
+  .rings { display: flex; flex-direction: column; gap: 14px; align-items: center; }
+  .vd {
+    margin-top: 16px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1.5px solid var(--ink4);
+    display: grid;
+    place-items: center;
+    font: 400 12px var(--font-mono);
+    color: var(--ink2);
+    letter-spacing: 0;
+  }
+
+  .nav {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+  }
+  .navItem {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+    display: grid;
+    place-items: center;
+    color: var(--ink3);
+    text-decoration: none;
+    transition: color 150ms, background 150ms;
+  }
+  .navItem svg { width: 19px; height: 19px; }
+  .navItem:hover { color: var(--ink); background: rgba(26, 26, 24, .06); }
+  .navItem:focus-visible { outline: 2px solid rgba(26, 26, 24, .35); outline-offset: 2px; }
+  .navOn { color: var(--paper); background: var(--ink); }
+  .navOn:hover { color: var(--paper); background: var(--ink); }
+  .navLabel {
+    position: absolute;
+    left: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 4px 9px;
+    border-radius: 8px;
+    background: var(--ink);
+    color: var(--paper);
+    font: 400 12px var(--font-mono);
+    letter-spacing: .02em;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 120ms;
+    z-index: 5;
+  }
+  .navItem:hover .navLabel,
+  .navItem:focus-visible .navLabel { opacity: 1; }
+
+  .foot { margin-top: 18px; display: flex; justify-content: center; }
+
+  .hot {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: 14px;
+    z-index: 45;
+  }
+
+  /* ── rail ────────────────────────────────────────────────────────────────── */
+  .rail {
+    position: absolute;
+    left: var(--strip-w);
+    top: 0;
+    bottom: 0;
+    width: var(--rail-w);
+    background: var(--paper);
+    border-right: 1px solid var(--hairline);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    z-index: 2;
+    transform: translateX(calc(-1 * var(--rail-w) - var(--strip-w)));
+    visibility: hidden;
+    transition: transform 220ms cubic-bezier(.3, .7, .2, 1), visibility 0s linear 220ms, box-shadow 220ms;
+  }
+  .railOpen {
+    transform: none;
+    visibility: visible;
+    transition: transform 220ms cubic-bezier(.3, .7, .2, 1), visibility 0s, box-shadow 220ms;
+    box-shadow: 18px 0 44px rgba(60, 45, 10, .14);
+  }
+  .railPinned { box-shadow: none; }
+
+  .railInner {
+    padding: 26px 20px 28px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .railHead { display: flex; justify-content: space-between; align-items: baseline; }
+  .railTitle { margin: 0; font: 300 28px var(--font-serif); letter-spacing: -.01em; color: var(--ink); }
+  .pinBtn {
+    font: 400 12px var(--font-mono);
+    color: var(--ink3);
+    background: transparent;
+    border: 1px solid var(--hairline);
+    border-radius: 99px;
+    padding: 4px 10px;
+    cursor: pointer;
+  }
+  .pinBtn kbd { font: inherit; opacity: .7; margin-left: 4px; }
+  .pinBtn:hover { color: var(--ink); border-color: var(--border2); }
+
+  .lbl {
+    font: 400 12px var(--font-mono);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink3);
+  }
+
+  /* notes to self */
+  .notesWrap { margin: 0 -20px 0 0; }
+  .notesHead { display: flex; justify-content: space-between; align-items: baseline; padding-right: 20px; margin-bottom: 9px; }
+  .count { font: 400 12px var(--font-mono); color: var(--ink3); }
+  .notes {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding: 2px 20px 4px 0;
+    scrollbar-width: none;
+    outline: none;
+  }
+  .notes::-webkit-scrollbar { display: none; }
+  .notes:focus-visible { box-shadow: 0 0 0 2px rgba(26, 26, 24, .25); border-radius: 16px; }
+  .nc {
+    flex: 0 0 232px;
+    height: 128px;
+    scroll-snap-align: start;
+    background: var(--card);
+    border: 1px solid rgba(0, 0, 0, .05);
+    border-radius: 16px;
+    padding: 15px 16px;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+  .ncText {
+    font: italic 300 17px/1.4 var(--font-serif);
+    color: var(--ink);
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .ncPhoto { padding: 0; flex-direction: column; align-items: stretch; }
+  .ncImg { flex: 1; min-height: 0; width: 100%; object-fit: cover; display: block; }
+  .ncCap { font: italic 300 13.5px/1.3 var(--font-serif); padding: 8px 12px 9px; background: #fff; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ncAdd {
+    background: transparent;
+    border: 1px dashed rgba(0, 0, 0, .24);
+    justify-content: center;
+    font: 400 12px var(--font-mono);
+    color: var(--ink3);
+    cursor: pointer;
+  }
+  .ncAdd:hover { color: var(--ink); border-color: var(--ink3); }
+  .dots { display: flex; gap: 5px; justify-content: center; margin-top: 8px; padding-right: 20px; }
+  .dots i { width: 5px; height: 5px; border-radius: 50%; background: var(--ink4); display: block; }
+  .dots i.dotOn, .dotOn { background: var(--ink); }
+
+  /* cards */
+  .card {
+    background: var(--card);
+    border: 1px solid rgba(0, 0, 0, .05);
+    border-radius: 16px;
+    padding: 16px;
+  }
+  .vibQ { font: 300 20px var(--font-serif); margin: 8px 0 12px; color: var(--ink); }
+  .vib { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 7px; }
+  .vibBtn {
+    font: 400 12px var(--font-mono);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    text-align: center;
+    padding: 9px 0;
+    border: 1px solid rgba(0, 0, 0, .14);
+    border-radius: 10px;
+    color: var(--ink2);
+    background: transparent;
+    cursor: pointer;
+    transition: background 150ms, color 150ms;
+  }
+  .vibBtn:hover { background: rgba(26, 26, 24, .05); }
+  .vibSel, .vibSel:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .feels { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .feel {
+    font: 400 12px var(--font-mono);
+    padding: 4px 10px;
+    border-radius: 99px;
+    border: 1px solid rgba(0, 0, 0, .14);
+    background: transparent;
+    color: var(--ink2);
+    cursor: pointer;
+  }
+  .feelSel { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+  .zone { padding: 12px 0; border-top: 1px solid var(--hairline); }
+  .zone:first-child { border-top: 0; padding-top: 2px; }
+  .zone:last-of-type { padding-bottom: 2px; }
+  .zoneHead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .zoneName { display: flex; align-items: center; gap: 8px; font: 400 12px var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ink2); }
+  .zdot { width: 8px; height: 8px; border-radius: 50%; display: block; }
+  .zoneN { font: 400 12px var(--font-mono); color: var(--ink3); }
+  .bar { height: 5px; border-radius: 9px; background: var(--track); overflow: hidden; margin-bottom: 9px; }
+  .bar i { display: block; height: 100%; border-radius: 9px; transition: width 400ms ease; }
+
+  .pr {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    padding: 4px 0;
+    background: none;
+    border: 0;
+    text-align: left;
+    cursor: pointer;
+    font: 400 15px var(--font-serif);
+    color: var(--ink);
+  }
+  .pr:hover .chk { border-color: var(--ink); }
+  .prName { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pr small { font: 400 12px var(--font-mono); color: var(--ink3); flex: none; }
+  .chk {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(0, 0, 0, .28);
+    flex: none;
+    display: grid;
+    place-items: center;
+    box-sizing: border-box;
+  }
+  .prDone { color: var(--ink3); }
+  .prDone .prName { text-decoration: line-through; text-decoration-thickness: 1px; }
+  .prDone .chk { border: 0; }
+  .empty { background: none; border: 0; font: 400 13px var(--font-mono); color: var(--ink3); cursor: pointer; text-align: left; padding: 0; }
+  .empty:hover { color: var(--ink); }
+  .notice { margin: 10px 0 0; font: 400 12px var(--font-mono); color: var(--ink3); }
+}
+
+@media (max-width: 899px) {
+  .dock, .hot { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dock, .strip, .rail, .railOpen, .bar i { transition: none; }
+}

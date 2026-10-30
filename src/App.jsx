@@ -20,7 +20,10 @@ import SignIn from './screens/SignIn'
 import UpdatePassword from './screens/UpdatePassword'
 import AppHeader from './components/AppHeader'
 import ProfileMenu from './components/ProfileMenu'
-import DesktopNav from './components/DesktopNav'
+import DeskShell from './components/DeskShell'
+import { DeskChromeProvider } from './lib/deskChrome'
+import Write from './screens/Write'
+import DeskDrafts from './screens/DeskDrafts'
 import TabBar from './components/TabBar'
 import UpdateToast from './components/UpdateToast'
 import GlobalComposer, { ComposerFab } from './components/GlobalComposer'
@@ -107,7 +110,7 @@ function AppInner() {
   // SIGNED_IN event fired with a stale /signin check.
   const onSignInRef = useRef(null)
   onSignInRef.current = () => {
-    if (['/', '/signin', '/onboarding'].includes(location.pathname)) navigate('/today')
+    if (['/', '/signin', '/onboarding'].includes(location.pathname)) navigate(isDesktop ? '/write' : '/today')
   }
 
   const { state, authLoading, updateCanvas, replaceCanvas, addCustomNeed, renameCustomNeed, deleteCustomNeed, addPractice, renamePractice, updatePractice, archivePractice, removePractice, setPracticeReminder, stampReminderOffered, incrementOffersDeclined, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, setCheckinDetail, logMood, completeOnboarding, updateRemindersEnabled, updateMoodReminder, updateNotifType, markNotifPrimed, markTourSeen, resetTour, updateNoteDeck, syncCheckinDay } = useAppState(
@@ -126,9 +129,13 @@ function AppInner() {
   const [shapesOpen, setShapesOpen] = useState(null)
   const onTodayRef = useRef(false)
   onTodayRef.current = location.pathname === '/today'
+  const isDesktopRef = useRef(false)
+  isDesktopRef.current = isDesktop
   useEffect(() => {
     function onOpen(e) {
       if (onTodayRef.current) return
+      // On a desktop the writing rooms live on the writing page, not in an overlay.
+      if (isDesktopRef.current) { navigate('/write', { state: { ...(e.detail || {}), at: Date.now() } }); return }
       setShapesOpen({ ...(e.detail || {}), at: Date.now() })
     }
     window.addEventListener('maslow:open-shapes', onOpen)
@@ -244,7 +251,7 @@ function AppInner() {
   return (
     <HeaderSlotContext.Provider value={setHeaderSlot}>
     <div className={styles.shell} style={{ '--kb': kbInset + 'px' }} {...(state.onboarded && { 'data-tabbar': '' })} {...(headerSlot && { 'data-appheader': '' })}>
-      {state.onboarded && <DesktopNav name={state.profile.name} email={state.email} remindersEnabled={state.remindersEnabled} updateRemindersEnabled={updateRemindersEnabled} moodReminders={state.moodReminders} updateMoodReminder={updateMoodReminder} notifTypes={state.notifTypes} updateNotifType={updateNotifType} needCount={needCount} practiceCount={practiceCount} noteDeckCount={(state.noteDeck || []).length} customTagCount={customTagCount} resetTour={resetTour} onOpenComposer={() => setComposerOpen(true)} hideComposer={location.pathname === '/today' || PERSONALIZE_PATHS.includes(location.pathname)} />}
+      {state.onboarded && isDesktop && <DeskShell state={state} actions={{ checkIn, clearPracticeCheckins, incrementCheckinCount, setCheckinDetail, logMood }} name={state.profile.name} email={state.email} remindersEnabled={state.remindersEnabled} updateRemindersEnabled={updateRemindersEnabled} moodReminders={state.moodReminders} updateMoodReminder={updateMoodReminder} notifTypes={state.notifTypes} updateNotifType={updateNotifType} needCount={needCount} practiceCount={practiceCount} noteDeckCount={(state.noteDeck || []).length} customTagCount={customTagCount} resetTour={resetTour} />}
       <div className={styles.column}>
       {state.onboarded && headerSlot && (
         <div className={styles.appHeader}>
@@ -253,9 +260,11 @@ function AppInner() {
       )}
       <div className={styles.content} ref={contentRef} data-scroll>
         <Routes>
-          <Route path="/" element={state.onboarded ? <Navigate to="/today" replace /> : <Navigate to="/onboarding" replace />} />
+          <Route path="/" element={state.onboarded ? <Navigate to={isDesktop ? '/write' : '/today'} replace /> : <Navigate to="/onboarding" replace />} />
           <Route path="/onboarding" element={state.onboarded ? <Navigate to="/today" replace /> : <OnboardingFlow updateCanvas={updateCanvas} completeOnboarding={completeOnboarding} />} />
           <Route path="/today" element={<Protected onboarded={state.onboarded} userId={state.userId}><Today state={state} checkIn={checkIn} removeCheckin={removeCheckin} clearPracticeCheckins={clearPracticeCheckins} incrementCheckinCount={incrementCheckinCount} setCheckinDetail={setCheckinDetail} updatePractice={updatePractice} logMood={logMood} onActiveDeckChanged={updateNoteDeck} onCustomTagsChanged={setCustomTagCount} profileMenu={profileMenuEl} /></Protected>} />
+          <Route path="/write" element={<Protected onboarded={state.onboarded} userId={state.userId}><Write state={state} logMood={logMood} /></Protected>} />
+          <Route path="/drafts" element={<Protected onboarded={state.onboarded} userId={state.userId}><DeskDrafts state={state} /></Protected>} />
           <Route path="/practices" element={<Protected onboarded={state.onboarded} userId={state.userId}><Practices state={state} addPractice={addPractice} renamePractice={renamePractice} updatePractice={updatePractice} archivePractice={archivePractice} setPracticeReminder={setPracticeReminder} stampReminderOffered={stampReminderOffered} incrementOffersDeclined={incrementOffersDeclined} completeOnboarding={completeOnboarding} /></Protected>} />
           <Route path="/data" element={<Protected onboarded={state.onboarded} userId={state.userId}><Data state={state} archivePractice={archivePractice} profileMenu={profileMenuEl} /></Protected>} />
           <Route path="/log" element={<Protected onboarded={state.onboarded} userId={state.userId}><Log state={state} syncCheckinDay={syncCheckinDay} profileMenu={profileMenuEl} /></Protected>} />
@@ -276,7 +285,7 @@ function AppInner() {
         <GlobalComposer state={state} logMood={logMood} open={composerOpen} onClose={() => setComposerOpen(false)} />
       )}
       {state.onboarded && (
-        <ShapesFlow state={state} open={shapesOpen} onClose={() => setShapesOpen(null)} onJustWrite={() => setComposerOpen(true)} />
+        <ShapesFlow state={state} open={shapesOpen} onClose={() => setShapesOpen(null)} onJustWrite={() => (isDesktop ? navigate('/write') : setComposerOpen(true))} />
       )}
       {isNative() && state.onboarded && state.userId && state.tourSeenAt != null &&
        deviceNotifPerm === 'prompt' &&
@@ -300,7 +309,9 @@ export default function App() {
   return (
     <BrowserRouter>
       <AppErrorBoundary>
-        <AppInner />
+        <DeskChromeProvider>
+          <AppInner />
+        </DeskChromeProvider>
       </AppErrorBoundary>
       {!isNative() && <UpdateToast />}
     </BrowserRouter>

@@ -1,0 +1,241 @@
+/* The desktop writing page. Phones never route here (Write.jsx redirects). */
+
+.page {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  color: var(--ink);
+  position: relative;
+  transition: background 300ms ease;
+}
+
+/* paper: the page re-skins only itself; strip and rail stay as they are */
+.page[data-paper='white'] { --paper: #fff; --card: #fbf9f4; }
+.page[data-paper='night'] {
+  --paper: #161512;
+  --card: #23221D;
+  --ink: #EFEADD;
+  --ink2: rgba(239, 234, 221, .72);
+  --ink3: rgba(239, 234, 221, .46);
+  --ink4: rgba(239, 234, 221, .26);
+  --hairline: rgba(239, 234, 221, .12);
+  --border: rgba(239, 234, 221, .12);
+  --border2: rgba(239, 234, 221, .2);
+  --track: rgba(239, 234, 221, .1);
+}
+
+/* furniture: everything that is not the words */
+[data-furniture] { transition: opacity 500ms ease; }
+.page[data-quiet] [data-furniture] { opacity: .25; }
+.page[data-focus] [data-furniture] { opacity: .55; }
+.page[data-focus] [data-furniture]:hover,
+.page[data-focus] [data-furniture]:focus-within { opacity: 1; }
+
+/* ── top: ways to write ─────────────────────────────────────────────────────── */
+.top {
+  flex: none;
+  min-height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 40px;
+}
+.pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.shape {
+  font: 400 14px var(--font-serif);
+  padding: 6px 13px;
+  border-radius: 99px;
+  border: 1px solid rgba(128, 120, 100, .35);
+  background: transparent;
+  color: var(--ink2);
+  cursor: pointer;
+  transition: background 150ms, color 150ms;
+}
+.shape:hover { background: rgba(128, 120, 100, .12); }
+.shapeOn, .shapeOn:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+.btn {
+  font: 400 12px var(--font-mono);
+  color: var(--ink2);
+  border: 1px solid rgba(128, 120, 100, .35);
+  background: transparent;
+  border-radius: 99px;
+  padding: 7px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn:hover:not(:disabled) { background: rgba(128, 120, 100, .12); }
+.btn:disabled { opacity: .5; cursor: default; }
+.btn kbd { font: inherit; opacity: .65; }
+.btnOn { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.btnOn:hover:not(:disabled) { background: var(--ink); }
+.btnDark { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.btnDark:hover:not(:disabled) { background: var(--ink); opacity: .88; }
+
+/* ── the column ─────────────────────────────────────────────────────────────── */
+.scroller {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(128, 120, 100, .3) transparent;
+}
+.col {
+  width: min(var(--wcol, 700px), calc(100% - 80px));
+  margin: 0 auto;
+  padding: 26px 0 42vh;
+}
+
+.meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 30px; }
+.when { font: 400 12px var(--font-mono); letter-spacing: .04em; color: var(--ink3); margin-right: 8px; }
+.chip, .chipOn, .chipAdd {
+  font: 400 12px var(--font-mono);
+  padding: 4px 11px;
+  border-radius: 99px;
+  border: 1px solid rgba(128, 120, 100, .35);
+  color: var(--ink2);
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.chipOn, .chipAdd { cursor: pointer; }
+.chipOn { border-color: var(--ink); color: var(--ink); }
+.chipAdd { border-style: dashed; color: var(--ink3); }
+.chipAdd:hover { color: var(--ink); border-color: var(--ink3); }
+.pip { width: 9px; height: 9px; border-radius: 50%; display: block; box-sizing: border-box; }
+.thumb { width: 18px; height: 18px; border-radius: 4px; object-fit: cover; display: block; }
+
+/* popovers */
+.popWrap { position: relative; display: inline-flex; }
+.pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 20;
+  min-width: 220px;
+  background: var(--card);
+  color: var(--ink);
+  border: 1px solid var(--hairline);
+  border-radius: 16px;
+  box-shadow: 0 18px 50px rgba(60, 45, 10, .18);
+  padding: 14px 16px;
+}
+.popUp { top: auto; bottom: calc(100% + 10px); left: auto; right: 0; width: 330px; }
+.popH { margin: 0 0 10px; font: 400 12px var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ink3); }
+.picker { display: flex; flex-wrap: wrap; gap: 6px; }
+.pickItem {
+  font: 400 12px var(--font-mono);
+  padding: 5px 11px;
+  border-radius: 99px;
+  border: 1px solid var(--hairline);
+  background: transparent;
+  color: var(--ink2);
+  cursor: pointer;
+}
+.pickItem:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  padding: 7px 0;
+  font: 400 13px var(--font-mono);
+  color: var(--ink2);
+  white-space: nowrap;
+}
+.slider { display: flex; align-items: center; gap: 8px; }
+.slider b { font: 300 15px var(--font-serif); color: var(--ink); }
+.slider input { width: 96px; accent-color: var(--ink); }
+.seg { display: inline-flex; border: 1px solid rgba(128, 120, 100, .4); border-radius: 9px; overflow: hidden; }
+.seg button { padding: 5px 10px; font: 400 12px var(--font-mono); color: var(--ink2); background: transparent; border: 0; border-left: 1px solid rgba(128, 120, 100, .3); cursor: pointer; }
+.seg button:first-child { border-left: 0; }
+.seg .segOn { background: var(--ink); color: var(--paper); }
+.sw { display: inline-flex; gap: 8px; }
+.sw button { width: 26px; height: 26px; border-radius: 50%; border: 1px solid rgba(0, 0, 0, .25); cursor: pointer; padding: 0; }
+.sw .swOn { outline: 2px solid var(--ink); outline-offset: 2px; }
+.tog { width: 30px; height: 18px; border-radius: 99px; background: var(--ink); position: relative; border: 0; padding: 0; cursor: pointer; }
+.tog::after { content: ''; position: absolute; right: 2px; top: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--paper); transition: all 150ms; }
+.togOff { background: rgba(128, 120, 100, .4); }
+.togOff::after { right: 14px; background: #fff; }
+
+/* ── the page: textarea over a mirror ───────────────────────────────────────── */
+.paper { position: relative; min-height: 46vh; }
+.mirror, .input, .placeholder {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  font-size: var(--wsize, 24px);
+  line-height: 1.72;
+  letter-spacing: 0;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: normal;
+  margin: 0;
+  padding: 0;
+  tab-size: 4;
+}
+.mirror { color: var(--ink); pointer-events: none; user-select: none; }
+.current, .other { transition: color 220ms ease; }
+.paper[data-fade] .other { color: var(--ink3); }
+.placeholder { position: absolute; inset: 0 0 auto 0; color: var(--ink4); pointer-events: none; font-style: italic; }
+.input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  color: transparent;
+  caret-color: var(--ink);
+  border: 0;
+  outline: 0;
+  resize: none;
+  overflow: hidden;
+}
+.input::selection { background: rgba(245, 182, 34, .45); color: transparent; }
+
+/* rooms (three truths, tension, …) keep their own components; this is their frame */
+.room { padding-top: 4px; }
+.roomTitle { margin: 0 0 18px; font: 300 30px/1.2 var(--font-serif); letter-spacing: -.01em; color: var(--ink); }
+.roomTitle em { font-style: italic; color: var(--ink2); }
+
+.discard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font: 400 13px var(--font-mono);
+  color: var(--ink2);
+  border: 1px dashed rgba(128, 120, 100, .5);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 18px;
+}
+.link { background: none; border: 0; padding: 0 0 0 14px; font: inherit; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.error { font: 400 13px var(--font-mono); color: var(--destructive); margin-top: 12px; }
+
+/* ── status line ────────────────────────────────────────────────────────────── */
+.status {
+  flex: none;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 0 40px;
+  font: 400 12px var(--font-mono);
+  color: var(--ink3);
+}
+.stat { display: inline-flex; align-items: center; gap: 6px; }
+.statErr { color: var(--destructive); }
+.okDot { width: 7px; height: 7px; border-radius: 50%; background: var(--positive); display: block; }
+.grow { flex: 1; }
+.status .btn { padding: 6px 13px; }
+
+@media (prefers-reduced-motion: reduce) {
+  [data-furniture], .current, .other, .page { transition: none; }
+}
