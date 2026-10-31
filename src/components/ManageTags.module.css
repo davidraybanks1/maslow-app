@@ -12,6 +12,7 @@
 .inner { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 
 .header { display: flex; align-items: center; justify-content: space-between; padding: 20px 16px 0; flex-shrink: 0; }
+.headerStack { display: flex; flex-direction: column; gap: 6px; }
 .title { font-family: var(--font-serif); font-size: 30px; font-weight: 300; line-height: 1.1; letter-spacing: -0.01em; color: var(--ink); margin: 0; }
 .closeBtn {
   width: 32px; height: 32px; border-radius: 16px;

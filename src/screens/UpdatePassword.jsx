@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import LoamMark from '../components/LoamMark'
+import PanelBack from '../components/PanelBack'
 import styles from './SignIn.module.css'
 
 // Set a new password: reached from the "forgot your password?" code flow and
@@ -40,7 +41,9 @@ export default function UpdatePassword({ inPanel = false, onDone }) {
 
   return (
     <div className={`${styles.screen} ${inPanel ? styles.inPanel : ''}`}>
-      <button type="button" className={styles.back} onClick={() => (inPanel ? onDone?.() : navigate(-1))}>{'←'} {inPanel ? 'Profile' : 'Back'}</button>
+      {inPanel
+        ? <PanelBack label="profile" onClick={() => onDone?.()} />
+        : <button type="button" className={styles.back} onClick={() => navigate(-1)}>{'←'} Back</button>}
 
       {!inPanel && <div className={styles.mark}><LoamMark width={112} /></div>}
 

@@ -428,6 +428,7 @@ export default function DeskShell({ state, actions, name, email, remindersEnable
                   completeOnboarding={actions.completeOnboarding}
                   onClose={() => leave('today')}
                   onNeeds={() => setPanel('needs')}
+                  backTo={back === 'profile' ? 'profile' : undefined}
                 />
               </div>
             )}
@@ -442,6 +443,7 @@ export default function DeskShell({ state, actions, name, email, remindersEnable
                   archivePractice={actions.archivePractice}
                   onClose={() => leave('today')}
                   onPractices={() => setPanel('practices')}
+                  backTo={back === 'profile' ? 'profile' : undefined}
                 />
               </div>
             )}
@@ -450,6 +452,7 @@ export default function DeskShell({ state, actions, name, email, remindersEnable
                 <ManageDeck
                   inline
                   userId={state.userId}
+                  backTo={back === 'profile' ? 'profile' : undefined}
                   onClose={() => {
                     if (state.userId) loadNoteDeck(state.userId).then(refreshDeck)
                     leave('today')
@@ -463,6 +466,7 @@ export default function DeskShell({ state, actions, name, email, remindersEnable
                 <ManageTags
                   inline
                   userId={state.userId}
+                  backTo="profile"
                   onClose={updatedTags => {
                     actions.setCustomTagCount?.(updatedTags.length)
                     leave('profile')

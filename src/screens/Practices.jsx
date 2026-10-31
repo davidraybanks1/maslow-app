@@ -6,6 +6,7 @@ import { isNative, checkNotifPermission, requestNotifPermission, scheduleReminde
 import { TYPES, TYPED_STARTERS, poolTag } from '../lib/practiceTypes'
 import PracticeIcon, { TIER_LIT } from '../components/PracticeIcon'
 import PracticeSheet from '../components/PracticeSheet'
+import PanelBack from '../components/PanelBack'
 import styles from './Practices.module.css'
 
 const MAX = 10
@@ -27,7 +28,7 @@ const STARTERS = {
 }
 const OB_FLAG = 'onboardingPracticesDone'
 
-export default function Practices({ state, addPractice, updatePractice, archivePractice, setPracticeReminder, stampReminderOffered, incrementOffersDeclined, completeOnboarding, onClose, onNeeds }) {
+export default function Practices({ state, addPractice, updatePractice, archivePractice, setPracticeReminder, stampReminderOffered, incrementOffersDeclined, completeOnboarding, onClose, onNeeds, backTo }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [editMode, setEditMode] = useState(false)
@@ -222,13 +223,16 @@ export default function Practices({ state, addPractice, updatePractice, archiveP
     <div className={styles.screen}>
       <div className={styles.header}>
         <div className={styles.eyebrowRow}>
-          <button type="button" className={styles.needsLink} onClick={() => (onNeeds ? onNeeds() : navigate('/canvas', { state: location.state }))}>← needs</button>
-          <button
+          {backTo
+            ? <PanelBack label={backTo} onClick={onClose} />
+            : <button type="button" className={styles.needsLink} onClick={() => (onNeeds ? onNeeds() : navigate('/canvas', { state: location.state }))}>← needs</button>}
+          {backTo && <button type="button" className={styles.needsLink} onClick={onNeeds}>needs →</button>}
+          {!backTo && <button
             type="button"
             className={styles.closeBtn}
             onClick={() => (onClose ? onClose() : navigate(location.state?.returnTo || '/today', location.state?.fromProfile ? { state: { openProfile: true } } : undefined))}
             aria-label="close practices"
-          >✕</button>
+          >✕</button>}
         </div>
         <h1 className={styles.title}>Practices</h1>
       </div>

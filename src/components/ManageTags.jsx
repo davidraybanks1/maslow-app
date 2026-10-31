@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { loadCustomTags, createCustomTag, deleteCustomTag, loadCustomTagUsageCounts } from '../lib/store'
 import Sheet from './Sheet'
+import PanelBack from './PanelBack'
 import styles from './ManageTags.module.css'
 
 // Tags. Same shape as Practices and Needs: type a word to add one, tap a tag to
 // see what it's on and delete it.
-export default function ManageTags({ inline = false, userId, onClose }) {
+export default function ManageTags({ inline = false, backTo, userId, onClose }) {
   const [tags, setTags] = useState([])
   const [usageCounts, setUsageCounts] = useState({})
   const [loaded, setLoaded] = useState(false)
@@ -62,8 +63,17 @@ export default function ManageTags({ inline = false, userId, onClose }) {
     <div className={`${styles.overlay} ${inline ? styles.inline : ''} ${closing && !inline ? styles.overlayClosing : ''}`}>
       <div className={styles.inner}>
         <div className={styles.header}>
-          <h1 className={styles.title}>Tags</h1>
-          <button type="button" className={styles.closeBtn} onClick={handleClose} aria-label="close tags">✕</button>
+          {backTo ? (
+            <div className={styles.headerStack}>
+              <PanelBack label={backTo} onClick={handleClose} />
+              <h1 className={styles.title}>Tags</h1>
+            </div>
+          ) : (
+            <>
+              <h1 className={styles.title}>Tags</h1>
+              <button type="button" className={styles.closeBtn} onClick={handleClose} aria-label="close tags">✕</button>
+            </>
+          )}
         </div>
 
         <div className={styles.body}>

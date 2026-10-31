@@ -5,13 +5,14 @@ import { allNeeds, needName, MODE_ORDER, MODES, MODE_NEED_CAP, MAX_CUSTOM_NEEDS,
 import { canPlace } from '../lib/canvasRules'
 import { useNeedDrag } from '../lib/useNeedDrag'
 import Sheet from '../components/Sheet'
+import PanelBack from '../components/PanelBack'
 import styles from './CanvasScreen.module.css'
 
 // Needs: which mode each need is in right now. Drag a need into a mode, or back
 // to the library to take it out of play. Tapping a need opens a list instead,
 // for anyone who'd rather not drag. Practices live on their own page.
 
-export default function CanvasScreen({ state, updateCanvas, addCustomNeed, renameCustomNeed, deleteCustomNeed, archivePractice, onClose, onPractices }) {
+export default function CanvasScreen({ state, updateCanvas, addCustomNeed, renameCustomNeed, deleteCustomNeed, archivePractice, onClose, onPractices, backTo }) {
   // onClose / onPractices are set when this is hosted in the desktop side panel
   const navigate = useNavigate()
   const location = useLocation()
@@ -109,8 +110,9 @@ export default function CanvasScreen({ state, updateCanvas, addCustomNeed, renam
     <div className={styles.screen}>
       <div className={styles.header}>
         <div className={styles.eyebrowRow}>
+          {backTo ? <PanelBack label={backTo} onClick={handleClose} /> : null}
           <button type="button" className={styles.link} onClick={() => (onPractices ? onPractices() : navigate('/practices', { state: location.state }))}>practices →</button>
-          <button type="button" className={styles.closeBtn} onClick={handleClose} aria-label="close needs">✕</button>
+          {!backTo && <button type="button" className={styles.closeBtn} onClick={handleClose} aria-label="close needs">✕</button>}
         </div>
         <h1 className={styles.title}>Needs</h1>
       </div>

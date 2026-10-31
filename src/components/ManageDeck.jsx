@@ -6,6 +6,7 @@ import {
   reorderNoteDeck,
 } from '../lib/store'
 import Sheet from './Sheet'
+import PanelBack from './PanelBack'
 import styles from './ManageDeck.module.css'
 import SignedImg from '../components/SignedImg'
 
@@ -14,7 +15,7 @@ import SignedImg from '../components/SignedImg'
 const MIN_DECK = 3
 const MAX_DECK = 5
 
-export default function ManageDeck({ inline = false, userId, onClose, onDeckChanged }) {
+export default function ManageDeck({ inline = false, backTo, userId, onClose, onDeckChanged }) {
   const [deck, setDeck] = useState([])
   const [library, setLibrary] = useState([])
   const [loaded, setLoaded] = useState(false)
@@ -167,8 +168,17 @@ export default function ManageDeck({ inline = false, userId, onClose, onDeckChan
     <div className={`${styles.overlay} ${inline ? styles.inline : ''} ${closing && !inline ? styles.overlayClosing : ''}`}>
       <div className={styles.inner}>
         <div className={styles.header}>
-          <h1 className={styles.title}>Notes to self</h1>
-          <button type="button" className={styles.closeBtn} onClick={handleClose} aria-label="close notes to self">✕</button>
+          {backTo ? (
+            <div className={styles.headerStack}>
+              <PanelBack label={backTo} onClick={handleClose} />
+              <h1 className={styles.title}>Notes to self</h1>
+            </div>
+          ) : (
+            <>
+              <h1 className={styles.title}>Notes to self</h1>
+              <button type="button" className={styles.closeBtn} onClick={handleClose} aria-label="close notes to self">✕</button>
+            </>
+          )}
         </div>
 
         <div className={styles.body}>
