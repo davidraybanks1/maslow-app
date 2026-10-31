@@ -123,11 +123,13 @@
 .starterChip:active { transform: scale(0.97); }
 
 /* desktop tier: center the screen at a comfortable reading width */
-@media (min-width: 900px) {
+/* desktop page layout retired: this screen now lives in the desktop side panel at its phone layout (see DeskShell.jsx) */
+@media (min-width: 99999px) {
   .screen { max-width: 660px; margin: 0 auto; width: 100%; background: transparent; }
 }
 
-@media (min-width: 900px) {
+/* desktop page layout retired: this screen now lives in the desktop side panel at its phone layout (see DeskShell.jsx) */
+@media (min-width: 99999px) {
   .obFooter {
     position: sticky;
     bottom: 0;

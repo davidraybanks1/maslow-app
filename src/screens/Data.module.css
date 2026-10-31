@@ -604,7 +604,8 @@
 .allNumsCards { }
 
 /* ── Desktop ────────────────────────────────────────────────────────────── */
-@media (min-width: 900px) {
+/* desktop page layout retired: this screen now lives in the desktop side panel at its phone layout (see DeskShell.jsx) */
+@media (min-width: 99999px) {
   /* outer wrap: left-anchored after the nav rail, matching Today and Log */
   .desktopWrap {
     max-width: 1280px;

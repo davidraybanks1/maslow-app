@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, Navigate } from 'react-router-dom'
 import { allNeeds } from '../lib/constants'
 import { currentSlot } from '../lib/slots'
@@ -11,6 +11,8 @@ import { useDeskChrome } from '../lib/deskChrome'
 import FrequencyCard, { MOOD_PIP_COLOR } from '../components/FrequencyCard'
 import SignedImg from '../components/SignedImg'
 import { ROOMS } from '../components/shapes/Rooms'
+import { GLYPHS } from '../components/shapes/ShapesFlow'
+import Glyph from '../lib/glyphs'
 import styles from './Write.module.css'
 
 /* The desktop writing page.
@@ -25,15 +27,9 @@ import styles from './Write.module.css'
    so nothing about a draft depends on where it was written. The page itself is
    also kept on this device as you go, so a closed tab never eats a paragraph. */
 
-const PREFS_KEY = 'loam_write_prefs'
 const DRAFT_KEY = 'loam_write_draft'
-const DEFAULT_PREFS = { size: 24, width: 'medium', paper: 'cream', typewriter: false, fade: true }
-const WIDTHS = { narrow: 600, medium: 700, wide: 840 }
 const QUIET_MS = 1800
 
-function readPrefs() {
-  try { return { ...DEFAULT_PREFS, ...JSON.parse(localStorage.getItem(PREFS_KEY) || '{}') } } catch { return DEFAULT_PREFS }
-}
 function readDraft() {
   try {
     const d = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null')
@@ -66,8 +62,8 @@ const PILLS = [
 /* ── the page itself: a textarea over a mirror ──────────────────────────────
    The textarea holds the real text but paints nothing; the mirror underneath
    paints the same text in the same metrics, which is what lets one paragraph be
-   lit while the rest dim, and gives us the caret's position for typewriter
-   scrolling without any measuring hacks. */
+   lit while the rest dim, and gives us the caret's position
+   without any measuring hacks. */
 function Page({ text, onText, sel, onSel, fade, taRef, caretRef, onInput, placeholder }) {
   const idx = Math.min(sel, text.length)
   const before = text.slice(0, idx)
@@ -113,14 +109,6 @@ export default function Write({ state, logMood }) {
   const today = todayKey()
   const slot = currentSlot()
 
-  const [prefs, setPrefsState] = useState(readPrefs)
-  const setPref = useCallback((k, v) => {
-    setPrefsState(p => {
-      const n = { ...p, [k]: v }
-      try { localStorage.setItem(PREFS_KEY, JSON.stringify(n)) } catch {}
-      return n
-    })
-  }, [])
 
   // which room is open: 'blank' or a shape id (arrived with one from another screen, maybe)
   const arrivedShape = location.state?.shape
@@ -156,7 +144,7 @@ export default function Write({ state, logMood }) {
   const chipBand = moodInherited ? inheritedBand : moodBand
   const chipFeeling = moodInherited ? inheritedFeeling : moodFeeling
 
-  const [popover, setPopover] = useState(null) // 'mood' | 'need' | 'custom' | 'page' | null
+  const [popover, setPopover] = useState(null) // 'mood' | 'need' | 'custom' | null
   const [customTags, setCustomTags] = useState([])
   const [status, setStatus] = useState(restored ? 'kept' : 'idle') // idle | kept | saving | saved | error
   const [savedNote, setSavedNote] = useState(false)
@@ -233,12 +221,11 @@ export default function Write({ state, logMood }) {
     setQuiet(true)
     clearTimeout(quietT.current)
     quietT.current = setTimeout(() => setQuiet(false), QUIET_MS)
-    followCaret(true)
+    followCaret()
   }
 
-  // typewriter scrolling keeps the line you are writing at a steady height;
-  // otherwise just never let it run under the status line
-  function followCaret(typed) {
+  // never let the line you are writing run under the status line
+  function followCaret() {
     const sc = scrollerRef.current
     const mark = caretRef.current
     if (!sc || !mark) return
@@ -246,9 +233,7 @@ export default function Write({ state, logMood }) {
       const s = sc.getBoundingClientRect()
       const m = mark.getBoundingClientRect()
       const rel = m.top - s.top
-      if (prefs.typewriter && typed) {
-        sc.scrollTo({ top: sc.scrollTop + rel - s.height * 0.42, behavior: 'smooth' })
-      } else if (m.bottom > s.bottom - 110) {
+      if (m.bottom > s.bottom - 110) {
         sc.scrollTo({ top: sc.scrollTop + (m.bottom - (s.bottom - 110)), behavior: 'smooth' })
       } else if (rel < 8) {
         sc.scrollTo({ top: sc.scrollTop + rel - 60, behavior: 'smooth' })
@@ -369,10 +354,8 @@ export default function Write({ state, logMood }) {
   return (
     <div
       className={styles.page}
-      data-paper={prefs.paper}
       data-focus={focus ? '' : undefined}
       data-quiet={quiet ? '' : undefined}
-      style={{ '--wsize': `${prefs.size}px`, '--wcol': `${WIDTHS[prefs.width] || WIDTHS.medium}px` }}
       onClick={e => { if (popover && !e.target.closest('[data-pop]')) setPopover(null) }}
     >
       <header className={styles.top} data-furniture>
@@ -382,7 +365,10 @@ export default function Write({ state, logMood }) {
               key={p.id} type="button" role="tab" aria-selected={stage === p.id}
               className={`${styles.shape} ${stage === p.id ? styles.shapeOn : ''}`}
               onClick={() => goStage(p.id)}
-            >{p.label}</button>
+            >
+              <span className={styles.shapeGlyph} aria-hidden="true">{p.id === 'blank' ? <Glyph kind="note" height={13} /> : GLYPHS[p.id]}</span>
+              {p.label}
+            </button>
           ))}
         </div>
         <button type="button" className={styles.btn} onClick={toggleFocus} aria-pressed={focus}>
@@ -479,7 +465,7 @@ export default function Write({ state, logMood }) {
           {stage === 'blank' ? (
             <Page
               text={text} onText={setText} sel={sel} onSel={setSel}
-              fade={prefs.fade && (focus || quiet)} taRef={taRef} caretRef={caretRef}
+              fade={focus || quiet} taRef={taRef} caretRef={caretRef}
               onInput={handleInput}
               placeholder="start anywhere."
             />
@@ -511,46 +497,6 @@ export default function Write({ state, logMood }) {
         )}
         <input ref={fileRef} type="file" accept="image/*" hidden onChange={onPhoto} />
 
-        <span className={styles.popWrap} data-pop>
-          <button type="button" className={styles.btn} onClick={() => setPopover(p => (p === 'page' ? null : 'page'))} aria-expanded={popover === 'page'} aria-label="page settings">Aa</button>
-          {popover === 'page' && (
-            <div className={`${styles.pop} ${styles.popUp}`} role="dialog" aria-label="page settings">
-              <h4 className={styles.popH}>page</h4>
-              <div className={styles.row}>
-                <label htmlFor="pg-size">type size</label>
-                <span className={styles.slider}>
-                  <b>A</b>
-                  <input id="pg-size" type="range" min="19" max="32" step="1" value={prefs.size} onChange={e => setPref('size', Number(e.target.value))} />
-                  <b style={{ fontSize: 21 }}>A</b>
-                </span>
-              </div>
-              <div className={styles.row}>
-                <span>line width</span>
-                <span className={styles.seg}>
-                  {Object.keys(WIDTHS).map(w => (
-                    <button key={w} type="button" className={prefs.width === w ? styles.segOn : ''} onClick={() => setPref('width', w)}>{w}</button>
-                  ))}
-                </span>
-              </div>
-              <div className={styles.row}>
-                <span>paper</span>
-                <span className={styles.sw}>
-                  {[['cream', '#EFEADD'], ['white', '#FFFFFF'], ['night', '#1A1A18']].map(([k, c]) => (
-                    <button key={k} type="button" aria-label={`${k} paper`} aria-pressed={prefs.paper === k} className={prefs.paper === k ? styles.swOn : ''} style={{ background: c }} onClick={() => setPref('paper', k)} />
-                  ))}
-                </span>
-              </div>
-              <div className={styles.row}>
-                <span>typewriter scroll</span>
-                <button type="button" role="switch" aria-checked={prefs.typewriter} aria-label="typewriter scroll" className={`${styles.tog} ${prefs.typewriter ? '' : styles.togOff}`} onClick={() => setPref('typewriter', !prefs.typewriter)} />
-              </div>
-              <div className={styles.row}>
-                <span>fade the rest in focus</span>
-                <button type="button" role="switch" aria-checked={prefs.fade} aria-label="fade the rest in focus" className={`${styles.tog} ${prefs.fade ? '' : styles.togOff}`} onClick={() => setPref('fade', !prefs.fade)} />
-              </div>
-            </div>
-          )}
-        </span>
 
         {stage === 'blank' && (
           <button type="button" className={`${styles.btn} ${revisit ? styles.btnOn : ''}`} onClick={() => setRevisit(r => !r)} aria-pressed={revisit}>

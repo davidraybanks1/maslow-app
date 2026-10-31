@@ -1227,7 +1227,8 @@
    zero the sending side on each affected pair to keep 20px gaps unchanged. */
 
 /* desktop grid */
-@media (min-width: 900px) {
+/* desktop page layout retired: this screen now lives in the desktop side panel at its phone layout (see DeskShell.jsx) */
+@media (min-width: 99999px) {
   /* Two-column grid, left-anchored. max-width + padding match Today's
      .desktopWrap so content edges align at every viewport width. */
   .content {

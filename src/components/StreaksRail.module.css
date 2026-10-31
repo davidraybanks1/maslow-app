@@ -59,6 +59,7 @@
 }
 .kindOn { background: var(--expl-deep, #0C5038); border-color: var(--expl-deep, #0C5038); color: #fff; }
 
-@media (min-width: 900px) {
+/* desktop page layout retired: this screen now lives in the desktop side panel at its phone layout (see DeskShell.jsx) */
+@media (min-width: 99999px) {
   .rail { margin-inline: 0; padding-inline: 0; scroll-padding-left: 0; }
 }

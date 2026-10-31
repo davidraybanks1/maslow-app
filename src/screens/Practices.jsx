@@ -27,7 +27,7 @@ const STARTERS = {
 }
 const OB_FLAG = 'onboardingPracticesDone'
 
-export default function Practices({ state, addPractice, updatePractice, archivePractice, setPracticeReminder, stampReminderOffered, incrementOffersDeclined, completeOnboarding }) {
+export default function Practices({ state, addPractice, updatePractice, archivePractice, setPracticeReminder, stampReminderOffered, incrementOffersDeclined, completeOnboarding, onClose }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [editMode, setEditMode] = useState(false)
@@ -226,7 +226,7 @@ export default function Practices({ state, addPractice, updatePractice, archiveP
           <button
             type="button"
             className={styles.closeBtn}
-            onClick={() => navigate(location.state?.returnTo || '/today', location.state?.fromProfile ? { state: { openProfile: true } } : undefined)}
+            onClick={() => (onClose ? onClose() : navigate(location.state?.returnTo || '/today', location.state?.fromProfile ? { state: { openProfile: true } } : undefined))}
             aria-label="close practices"
           >✕</button>
         </div>

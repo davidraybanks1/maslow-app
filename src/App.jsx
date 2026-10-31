@@ -21,9 +21,8 @@ import UpdatePassword from './screens/UpdatePassword'
 import AppHeader from './components/AppHeader'
 import ProfileMenu from './components/ProfileMenu'
 import DeskShell from './components/DeskShell'
-import { DeskChromeProvider } from './lib/deskChrome'
+import { DeskChromeProvider, useDeskChrome } from './lib/deskChrome'
 import Write from './screens/Write'
-import DeskDrafts from './screens/DeskDrafts'
 import TabBar from './components/TabBar'
 import UpdateToast from './components/UpdateToast'
 import GlobalComposer, { ComposerFab } from './components/GlobalComposer'
@@ -57,6 +56,16 @@ class AppErrorBoundary extends Component {
 
 // The personalization pages are for setting things up; the floating draft button stays off them.
 const PERSONALIZE_PATHS = ['/canvas', '/practices']
+
+// On a desktop the writing page is the only full page. Today, data, drafts and
+// practices open in the side panel beside it, so their old addresses (a
+// notification tap, a link from the profile menu) land there instead.
+function DeskGo({ view }) {
+  const { setPanel } = useDeskChrome()
+  const location = useLocation()
+  useEffect(() => { setPanel(view) }, [])
+  return <Navigate to="/write" replace state={location.state} />
+}
 
 function Protected({ children, onboarded, userId }) {
   if (!onboarded) return <Navigate to="/onboarding" replace />
@@ -251,7 +260,7 @@ function AppInner() {
   return (
     <HeaderSlotContext.Provider value={setHeaderSlot}>
     <div className={styles.shell} style={{ '--kb': kbInset + 'px' }} {...(state.onboarded && { 'data-tabbar': '' })} {...(headerSlot && { 'data-appheader': '' })}>
-      {state.onboarded && isDesktop && <DeskShell state={state} actions={{ checkIn, clearPracticeCheckins, incrementCheckinCount, setCheckinDetail, logMood }} name={state.profile.name} email={state.email} remindersEnabled={state.remindersEnabled} updateRemindersEnabled={updateRemindersEnabled} moodReminders={state.moodReminders} updateMoodReminder={updateMoodReminder} notifTypes={state.notifTypes} updateNotifType={updateNotifType} needCount={needCount} practiceCount={practiceCount} noteDeckCount={(state.noteDeck || []).length} customTagCount={customTagCount} resetTour={resetTour} />}
+      {state.onboarded && isDesktop && <DeskShell state={state} actions={{ checkIn, clearPracticeCheckins, incrementCheckinCount, setCheckinDetail, logMood, syncCheckinDay, addPractice, updatePractice, archivePractice, setPracticeReminder, stampReminderOffered, incrementOffersDeclined, completeOnboarding, updateNoteDeck, setCustomTagCount }} name={state.profile.name} email={state.email} remindersEnabled={state.remindersEnabled} updateRemindersEnabled={updateRemindersEnabled} moodReminders={state.moodReminders} updateMoodReminder={updateMoodReminder} notifTypes={state.notifTypes} updateNotifType={updateNotifType} needCount={needCount} practiceCount={practiceCount} noteDeckCount={(state.noteDeck || []).length} customTagCount={customTagCount} resetTour={resetTour} />}
       <div className={styles.column}>
       {state.onboarded && headerSlot && (
         <div className={styles.appHeader}>
@@ -262,12 +271,12 @@ function AppInner() {
         <Routes>
           <Route path="/" element={state.onboarded ? <Navigate to={isDesktop ? '/write' : '/today'} replace /> : <Navigate to="/onboarding" replace />} />
           <Route path="/onboarding" element={state.onboarded ? <Navigate to="/today" replace /> : <OnboardingFlow updateCanvas={updateCanvas} completeOnboarding={completeOnboarding} />} />
-          <Route path="/today" element={<Protected onboarded={state.onboarded} userId={state.userId}><Today state={state} checkIn={checkIn} removeCheckin={removeCheckin} clearPracticeCheckins={clearPracticeCheckins} incrementCheckinCount={incrementCheckinCount} setCheckinDetail={setCheckinDetail} updatePractice={updatePractice} logMood={logMood} onActiveDeckChanged={updateNoteDeck} onCustomTagsChanged={setCustomTagCount} profileMenu={profileMenuEl} /></Protected>} />
+          <Route path="/today" element={isDesktop ? <DeskGo view="today" /> : <Protected onboarded={state.onboarded} userId={state.userId}><Today state={state} checkIn={checkIn} removeCheckin={removeCheckin} clearPracticeCheckins={clearPracticeCheckins} incrementCheckinCount={incrementCheckinCount} setCheckinDetail={setCheckinDetail} updatePractice={updatePractice} logMood={logMood} onActiveDeckChanged={updateNoteDeck} onCustomTagsChanged={setCustomTagCount} profileMenu={profileMenuEl} /></Protected>} />
           <Route path="/write" element={<Protected onboarded={state.onboarded} userId={state.userId}><Write state={state} logMood={logMood} /></Protected>} />
-          <Route path="/drafts" element={<Protected onboarded={state.onboarded} userId={state.userId}><DeskDrafts state={state} /></Protected>} />
-          <Route path="/practices" element={<Protected onboarded={state.onboarded} userId={state.userId}><Practices state={state} addPractice={addPractice} renamePractice={renamePractice} updatePractice={updatePractice} archivePractice={archivePractice} setPracticeReminder={setPracticeReminder} stampReminderOffered={stampReminderOffered} incrementOffersDeclined={incrementOffersDeclined} completeOnboarding={completeOnboarding} /></Protected>} />
-          <Route path="/data" element={<Protected onboarded={state.onboarded} userId={state.userId}><Data state={state} archivePractice={archivePractice} profileMenu={profileMenuEl} /></Protected>} />
-          <Route path="/log" element={<Protected onboarded={state.onboarded} userId={state.userId}><Log state={state} syncCheckinDay={syncCheckinDay} profileMenu={profileMenuEl} /></Protected>} />
+          <Route path="/drafts" element={isDesktop ? <DeskGo view="drafts" /> : <Navigate to="/log" replace />} />
+          <Route path="/practices" element={isDesktop ? <DeskGo view="practices" /> : <Protected onboarded={state.onboarded} userId={state.userId}><Practices state={state} addPractice={addPractice} renamePractice={renamePractice} updatePractice={updatePractice} archivePractice={archivePractice} setPracticeReminder={setPracticeReminder} stampReminderOffered={stampReminderOffered} incrementOffersDeclined={incrementOffersDeclined} completeOnboarding={completeOnboarding} /></Protected>} />
+          <Route path="/data" element={isDesktop ? <DeskGo view="data" /> : <Protected onboarded={state.onboarded} userId={state.userId}><Data state={state} archivePractice={archivePractice} profileMenu={profileMenuEl} /></Protected>} />
+          <Route path="/log" element={isDesktop ? <DeskGo view="drafts" /> : <Protected onboarded={state.onboarded} userId={state.userId}><Log state={state} syncCheckinDay={syncCheckinDay} profileMenu={profileMenuEl} /></Protected>} />
           <Route path="/canvas" element={<Protected onboarded={state.onboarded} userId={state.userId}><CanvasScreen state={state} updateCanvas={updateCanvas} addCustomNeed={addCustomNeed} renameCustomNeed={renameCustomNeed} deleteCustomNeed={deleteCustomNeed} archivePractice={archivePractice} /></Protected>} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/password" element={<UpdatePassword />} />

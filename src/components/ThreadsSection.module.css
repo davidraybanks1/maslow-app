@@ -193,6 +193,7 @@
   font-family: var(--mono); font-size: var(--type-floor); color: var(--ink4); letter-spacing: 0.02em;
 }
 
-@media (min-width: 900px) {
+/* desktop page layout retired: this screen now lives in the desktop side panel at its phone layout (see DeskShell.jsx) */
+@media (min-width: 99999px) {
   .ringsWrap { margin-inline: 0; width: 100%; }
 }

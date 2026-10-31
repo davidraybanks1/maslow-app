@@ -654,11 +654,12 @@ function Group({ title, sub, aside, first, children }) {
   )
 }
 
-export default function Data({ state, profileMenu }) {
+export default function Data({ state, profileMenu, compact = false }) {
   const [period, setPeriodRaw] = useState(7)
   const [offset, setOffset] = useState(0)
   const setPeriod = p => { setPeriodRaw(p); setOffset(0) }
-  const isDesktop = useIsDesktop()
+  // `compact` is the side panel on a desktop: the phone layout, in a narrow column
+  const isDesktop = useIsDesktop() && !compact
 
   const canvas      = state?.canvas      ?? {}
   const checkins    = state?.checkins    ?? {}

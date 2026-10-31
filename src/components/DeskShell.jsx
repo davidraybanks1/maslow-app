@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { MODES } from '../lib/constants'
-import { todayKey } from '../lib/store'
+import { todayKey, loadNoteDeck } from '../lib/store'
 import { currentSlot } from '../lib/slots'
 import { normalizeBand, BAND_LABEL, BANDS, FEELINGS } from '../lib/frequency'
 import { zonesFor } from '../lib/dayProgress'
@@ -12,44 +12,31 @@ import LoamMark from './LoamMark'
 import ProfileMenu from './ProfileMenu'
 import SignedImg from './SignedImg'
 import StretchSheet from './StretchSheet'
+import ManageDeck from './ManageDeck'
+import ManageTags from './ManageTags'
+import Data from '../screens/Data'
+import Log from '../screens/Log'
+import Practices from '../screens/Practices'
 import styles from './DeskShell.module.css'
 
-/* The desktop frame (≥900px): a 72px strip that is always one glance wide, and
-   a 330px rail that opens beside it.
+/* The desktop frame (≥900px).
 
-   The strip carries the four progress rings, the current vibration, the way
-   around the app and the profile menu. The rail carries what you would want
-   at your elbow while you write: notes to self, how you are, today's practices.
+   The writing page is the only full page. Around it: a 72px strip with the way
+   around the app, and a side panel that opens beside it. Today, data and drafts
+   all open in that panel (at the phone's layout, so everything on the phone is
+   here too), and practices opens from a link inside the today panel.
 
-   States — collapsed → peek (hover the rings, or click them: floats over the
-   page) → pinned (click the mark, the pin, or ⌘/ : docks and pushes the page).
-   While the writing page is in focus the strip itself leaves; a hot zone on
-   the left edge brings it back. Below 900px none of this renders. */
+   On a wide window the panel docks and the page moves over to make room; on a
+   narrower one it floats above the page. While the writing page is in focus the
+   strip itself leaves; a hot zone on the left edge brings it back.
+   Below 900px none of this renders. */
 
 const NAV = [
-  ['/write', 'write', <path key="a" d="M3 15l.8-3.6L12 3.2a1.4 1.4 0 012 2L5.8 13.4z M10.6 4.6l2.8 2.8" />],
-  ['/today', 'today', <g key="a"><circle cx="9" cy="9" r="3" /><path d="M9 2v1.8M9 14.2V16M2 9h1.8M14.2 9H16M4.2 4.2l1.3 1.3M12.5 12.5l1.3 1.3M4.2 13.8l1.3-1.3M12.5 5.5l1.3-1.3" /></g>],
-  ['/data', 'data', <g key="a"><rect x="2.5" y="9" width="3" height="6.5" rx="1" /><rect x="7.5" y="3.5" width="3" height="12" rx="1" /><rect x="12.5" y="6.5" width="3" height="9" rx="1" /></g>],
-  ['/drafts', 'drafts', <g key="a"><rect x="4.5" y="2.5" width="10" height="12" rx="2" /><path d="M3 5.5v8.2a1.8 1.8 0 001.8 1.8H12 M7.5 6.5h4M7.5 9h4" /></g>],
-  ['/practices', 'practices', <g key="a"><circle cx="9" cy="9" r="6.5" /><path d="M6.2 9.2l2 2 3.6-4" /></g>],
+  ['write', <path key="a" d="M3 15l.8-3.6L12 3.2a1.4 1.4 0 012 2L5.8 13.4z M10.6 4.6l2.8 2.8" />],
+  ['today', <g key="a"><circle cx="9" cy="9" r="3" /><path d="M9 2v1.8M9 14.2V16M2 9h1.8M14.2 9H16M4.2 4.2l1.3 1.3M12.5 12.5l1.3 1.3M4.2 13.8l1.3-1.3M12.5 5.5l1.3-1.3" /></g>],
+  ['data', <g key="a"><rect x="2.5" y="9" width="3" height="6.5" rx="1" /><rect x="7.5" y="3.5" width="3" height="12" rx="1" /><rect x="12.5" y="6.5" width="3" height="9" rx="1" /></g>],
+  ['drafts', <g key="a"><rect x="4.5" y="2.5" width="10" height="12" rx="2" /><path d="M3 5.5v8.2a1.8 1.8 0 001.8 1.8H12 M7.5 6.5h4M7.5 9h4" /></g>],
 ]
-
-const R = 13
-const CIRC = 2 * Math.PI * R
-
-function Ring({ color, fill, label }) {
-  return (
-    <svg width="34" height="34" viewBox="0 0 34 34" role="img" aria-label={label}>
-      <circle cx="17" cy="17" r={R} fill="none" stroke="var(--track)" strokeWidth="3" />
-      <circle
-        cx="17" cy="17" r={R} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round"
-        strokeDasharray={`${(fill * CIRC).toFixed(1)} ${CIRC.toFixed(1)}`}
-        transform="rotate(-90 17 17)"
-        style={{ transition: 'stroke-dasharray 400ms ease' }}
-      />
-    </svg>
-  )
-}
 
 function relative(days) {
   if (days == null) return ''
@@ -59,19 +46,22 @@ function relative(days) {
 }
 
 /* ── notes to self: a row you scroll sideways ─────────────────────────────── */
-function NotesRail({ cards, onAdd }) {
+function NotesRail({ cards, onAdd, onEdit }) {
   const ref = useRef(null)
   const [i, setI] = useState(0)
   const STEP = 242 // card + gap
   function onScroll() {
     const el = ref.current
-    if (el) setI(Math.min(cards.length - 1, Math.max(0, Math.round(el.scrollLeft / STEP))))
+    if (el) setI(Math.min(Math.max(cards.length - 1, 0), Math.max(0, Math.round(el.scrollLeft / STEP))))
   }
   return (
     <section className={styles.notesWrap} aria-label="Notes to self">
       <div className={styles.notesHead}>
         <span className={styles.lbl}>notes to self</span>
-        {cards.length > 0 && <span className={styles.count}>{i + 1}/{cards.length}</span>}
+        <span className={styles.headRight}>
+          {cards.length > 0 && <span className={styles.count}>{i + 1}/{cards.length}</span>}
+          <button type="button" className={styles.miniLink} onClick={onEdit}>edit</button>
+        </span>
       </div>
       <div
         className={styles.notes}
@@ -102,9 +92,8 @@ function NotesRail({ cards, onAdd }) {
   )
 }
 
-/* ── the rail ─────────────────────────────────────────────────────────────── */
-function Rail({ state, actions, pinned, onPin, onNavigate }) {
-  const navigate = useNavigate()
+/* ── today: notes, how you are, today's practices ─────────────────────────── */
+function TodayView({ state, actions, onEditNotes, onOpenPractices, onGoNeeds }) {
   const [today, setToday] = useState(() => todayKey())
   const [slot, setSlot] = useState(() => currentSlot())
   useEffect(() => {
@@ -139,15 +128,10 @@ function Rail({ state, actions, pinned, onPin, onNavigate }) {
   const anyRows = zones.some(z => z.rows.length > 0)
 
   return (
-    <div className={styles.railInner}>
-      <div className={styles.railHead}>
-        <h2 className={styles.railTitle}>today.</h2>
-        <button type="button" className={styles.pinBtn} onClick={onPin} aria-pressed={pinned}>
-          {pinned ? 'unpin' : 'pin'} <kbd>⌘/</kbd>
-        </button>
-      </div>
+    <div className={styles.view}>
+      <h2 className={styles.viewTitle}>today.</h2>
 
-      <NotesRail cards={cards} onAdd={() => { onNavigate?.(); navigate('/today', { state: { openDeck: true } }) }} />
+      <NotesRail cards={cards} onAdd={onEditNotes} onEdit={onEditNotes} />
 
       <section className={styles.card} aria-label="Vibrations">
         <div className={styles.lbl}>vibrations</div>
@@ -177,6 +161,10 @@ function Rail({ state, actions, pinned, onPin, onNavigate }) {
       </section>
 
       <section className={styles.card} aria-label="Today's practices">
+        <div className={styles.cardHead}>
+          <span className={styles.lbl}>practices</span>
+          <button type="button" className={styles.miniLink} onClick={onOpenPractices}>edit practices →</button>
+        </div>
         {zones.filter(z => z.rows.length > 0 || z.target > 0).map(z => (
           <div key={z.mode} className={styles.zone}>
             <div className={styles.zoneHead}>
@@ -208,7 +196,7 @@ function Rail({ state, actions, pinned, onPin, onNavigate }) {
           </div>
         ))}
         {!anyRows && (
-          <button type="button" className={styles.empty} onClick={() => { onNavigate?.(); navigate('/canvas') }}>
+          <button type="button" className={styles.empty} onClick={onGoNeeds}>
             choose your needs and practices to see them here →
           </button>
         )}
@@ -222,7 +210,7 @@ function Rail({ state, actions, pinned, onPin, onNavigate }) {
   )
 }
 
-// A docked rail needs room for a page beside it; below this it stays a peek.
+// A docked panel needs room for the page beside it; below this it floats.
 function useWide(px) {
   const q = `(min-width: ${px}px)`
   const [wide, setWide] = useState(() => typeof window !== 'undefined' && window.matchMedia(q).matches)
@@ -235,76 +223,72 @@ function useWide(px) {
   return wide
 }
 
+const PASSING = new Set(['/today', '/data', '/log', '/drafts', '/practices'])
+
 /* ── the frame ────────────────────────────────────────────────────────────── */
 export default function DeskShell({ state, actions, name, email, remindersEnabled, updateRemindersEnabled, moodReminders, updateMoodReminder, notifTypes, updateNotifType, needCount, practiceCount, noteDeckCount, customTagCount, resetTour }) {
-  const { pathname } = useLocation()
-  const { focus, quiet, pinned, setPinned } = useDeskChrome()
-  const railAvailable = pathname !== '/today' // Today already is the rail, bigger
-  const [peek, setPeek] = useState(false)
-  const [reveal, setReveal] = useState(false) // strip brought back while in focus
-  const openT = useRef(null)
-  const closeT = useRef(null)
-  const dockRef = useRef(null)
-
-  const today = todayKey()
-  const checked = state.checkins?.[today] || []
-  const zones = zonesFor(state, checked)
-  const slot = currentSlot()
-  const slotMood = (state.moods || []).find(m => m.date_key === today && m.prompt_time === slot)
-  const band = slotMood ? normalizeBand(slotMood.mood) : null
-
+  const location = useLocation()
+  const navigate = useNavigate()
+  const { focus, quiet, panel, setPanel } = useDeskChrome()
   const wide = useWide(1200)
-  const railPinned = railAvailable && pinned && !focus && wide
-  const railOpen = railAvailable && (railPinned || peek)
+  const [reveal, setReveal] = useState(false) // strip brought back while in focus
+  const [deckOpen, setDeckOpen] = useState(false)
+  const [tagsOpen, setTagsOpen] = useState(false)
+  const closeT = useRef(null)
+  const fromProfile = useRef(false)
+
+  const onWrite = location.pathname === '/write'
+  const open = !!panel && !focus
+  const docked = open && wide && onWrite
   const stripHidden = focus && !reveal
-  const dim = quiet && !peek && !reveal
+  const dim = quiet && !reveal
 
-  // Esc / route change closes any floating state.
-  useEffect(() => { setPeek(false); setReveal(false) }, [pathname])
+  useEffect(() => { setReveal(false) }, [location.pathname])
+  // The panel belongs to the writing page. Another full page (needs, say) takes
+  // the window on its own, so the panel steps aside. The legacy paths are only
+  // passing through DeskGo on their way to /write and keep what they opened.
+  useEffect(() => {
+    if (!PASSING.has(location.pathname) && location.pathname !== '/write') setPanel(null)
+  }, [location.pathname])
+  useEffect(() => () => clearTimeout(closeT.current), [])
 
-  // ⌘/ (ctrl+/) pins or unpins the rail from anywhere.
+  // Handed over from the profile menu (it opens the notes and tags managers by
+  // navigating to Today, and remembers where to go back to).
+  useEffect(() => {
+    const st = location.state || {}
+    if (st.fromProfile) fromProfile.current = true
+    if (st.openDeck) { setDeckOpen(true); navigate(location.pathname, { replace: true, state: {} }) }
+    else if (st.openTags) { setTagsOpen(true); navigate(location.pathname, { replace: true, state: {} }) }
+  }, [location.state])
+
+  function backToProfile() {
+    if (!fromProfile.current) return false
+    fromProfile.current = false
+    navigate('/write', { replace: true, state: { openProfile: true } })
+    return true
+  }
+
+  // ⌘/ opens or closes today's panel from anywhere; Esc closes whatever is open.
   useEffect(() => {
     function onKey(e) {
       if ((e.metaKey || e.ctrlKey) && e.key === '/') {
         e.preventDefault()
-        if (railAvailable) setPinned(p => !p)
+        show(panel === 'today' ? null : 'today')
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [railAvailable, setPinned])
+  })
 
-  useEffect(() => () => { clearTimeout(openT.current); clearTimeout(closeT.current) }, [])
-
-  function scheduleOpen() {
-    clearTimeout(closeT.current)
-    if (!railAvailable || railOpen) return
-    clearTimeout(openT.current)
-    openT.current = setTimeout(() => setPeek(true), 160)
+  function show(view) {
+    if (!onWrite) navigate('/write')
+    setPanel(view)
   }
-  function scheduleClose() {
-    clearTimeout(openT.current)
-    clearTimeout(closeT.current)
-    closeT.current = setTimeout(() => { setPeek(false); setReveal(false) }, 320)
+  function pressNav(key) {
+    if (key === 'write') { setPanel(null); if (!onWrite) navigate('/write'); return }
+    show(panel === key ? null : key)
   }
-  function cancelClose() { clearTimeout(closeT.current) }
-
-  const glance = (
-    <div
-      className={styles.glance}
-      onMouseEnter={scheduleOpen}
-      onClick={() => { clearTimeout(openT.current); if (railAvailable) setPeek(p => !p) }}
-      role="button"
-      tabIndex={0}
-      aria-label="today at a glance — open the rail"
-      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (railAvailable) setPeek(p => !p) } }}
-    >
-      <div className={styles.rings}>
-        {zones.map(z => <Ring key={z.mode} color={MODES[z.mode].pip} fill={z.fill} label={`${z.mode} ${z.done} of ${z.target}`} />)}
-      </div>
-      <div className={styles.vd} title="how you are right now">{band ? BAND_LABEL[band] : '–'}</div>
-    </div>
-  )
+  const current = panel === 'practices' ? 'today' : panel
 
   const profile = (
     <ProfileMenu
@@ -318,58 +302,109 @@ export default function DeskShell({ state, actions, name, email, remindersEnable
     />
   )
 
+  const refreshDeck = deck => actions.updateNoteDeck?.(deck)
+
   return (
     <>
       {focus && <div className={styles.hot} onMouseEnter={() => { clearTimeout(closeT.current); setReveal(true) }} aria-hidden="true" />}
       <div
-        ref={dockRef}
         className={styles.dock}
         data-focus={focus ? '' : undefined}
-        data-pinned={railPinned ? '' : undefined}
-        onMouseEnter={cancelClose}
-        onMouseLeave={scheduleClose}
-        onKeyDown={e => { if (e.key === 'Escape') { setPeek(false); setReveal(false) } }}
+        data-docked={docked ? '' : undefined}
+        data-open={open ? '' : undefined}
+        data-view={panel === 'today' ? 'today' : 'wide'}
+        onMouseEnter={() => clearTimeout(closeT.current)}
+        onMouseLeave={() => { if (focus) { clearTimeout(closeT.current); closeT.current = setTimeout(() => setReveal(false), 320) } }}
+        onKeyDown={e => { if (e.key === 'Escape' && open) { setPanel(null) } }}
       >
         <aside
           className={`${styles.strip} ${stripHidden ? styles.stripAway : ''} ${dim ? styles.stripQuiet : ''}`}
           aria-label="Primary"
           data-tour="nav"
         >
-          <button
-            type="button" className={styles.brand}
-            onClick={() => railAvailable && setPinned(p => !p)}
-            aria-label={railPinned ? 'unpin the rail' : 'pin the rail'}
-            title={railAvailable ? 'pin the rail (⌘/)' : 'Loam'}
-          >
+          <button type="button" className={styles.brand} onClick={() => pressNav('write')} aria-label="Loam — back to the page" title="back to the page">
             <LoamMark width={34} />
           </button>
-          {glance}
           <nav className={styles.nav}>
-            {NAV.map(([to, label, icon]) => (
-              <NavLink key={to} to={to} className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navOn : ''}`} aria-label={label} title={label}>
-                <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{icon}</svg>
-                <span className={styles.navLabel}>{label}</span>
-              </NavLink>
-            ))}
+            {NAV.map(([key, icon]) => {
+              const on = key === 'write' ? !open && onWrite : current === key && open
+              return (
+                <button
+                  key={key} type="button"
+                  className={`${styles.navItem} ${on ? styles.navOn : ''}`}
+                  aria-label={key}
+                  aria-pressed={on}
+                  onClick={() => pressNav(key)}
+                >
+                  <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{icon}</svg>
+                  <span className={styles.navLabel}>{key}</span>
+                </button>
+              )
+            })}
           </nav>
           <div className={styles.foot}>{profile}</div>
         </aside>
 
-        {railAvailable && (
+        {panel && (
           <aside
-            className={`${styles.rail} ${railOpen && !stripHidden ? styles.railOpen : ''} ${railPinned ? styles.railPinned : ''}`}
-            aria-label="Today"
-            aria-hidden={railOpen ? undefined : true}
-            inert={railOpen ? undefined : ''}
+            className={`${styles.panel} ${open ? styles.panelOpen : ''}`}
+            aria-label={panel}
+            aria-hidden={open ? undefined : true}
+            inert={open ? undefined : ''}
           >
-            <Rail
-              state={state} actions={actions} pinned={railPinned}
-              onPin={() => setPinned(p => !p)}
-              onNavigate={() => setPeek(false)}
-            />
+            {panel !== 'practices' && (
+              <button type="button" className={styles.close} onClick={() => setPanel(null)} aria-label="close panel">✕</button>
+            )}
+            {panel === 'today' && (
+              <TodayView
+                state={state} actions={actions}
+                onEditNotes={() => setDeckOpen(true)}
+                onOpenPractices={() => setPanel('practices')}
+                onGoNeeds={() => { setPanel(null); navigate('/canvas') }}
+              />
+            )}
+            {panel === 'data' && <div className={styles.screenHost}><Data state={state} compact /></div>}
+            {panel === 'drafts' && <div className={styles.screenHost}><Log state={state} syncCheckinDay={actions.syncCheckinDay} /></div>}
+            {panel === 'practices' && (
+              <div className={styles.screenHost}>
+                <Practices
+                  state={state}
+                  addPractice={actions.addPractice}
+                  updatePractice={actions.updatePractice}
+                  archivePractice={actions.archivePractice}
+                  setPracticeReminder={actions.setPracticeReminder}
+                  stampReminderOffered={actions.stampReminderOffered}
+                  incrementOffersDeclined={actions.incrementOffersDeclined}
+                  completeOnboarding={actions.completeOnboarding}
+                  onClose={() => { if (backToProfile()) setPanel(null); else setPanel('today') }}
+                />
+              </div>
+            )}
           </aside>
         )}
       </div>
+
+      {deckOpen && (
+        <ManageDeck
+          userId={state.userId}
+          onClose={() => {
+            setDeckOpen(false)
+            if (state.userId) loadNoteDeck(state.userId).then(refreshDeck)
+            backToProfile()
+          }}
+          onDeckChanged={refreshDeck}
+        />
+      )}
+      {tagsOpen && (
+        <ManageTags
+          userId={state.userId}
+          onClose={updatedTags => {
+            setTagsOpen(false)
+            actions.setCustomTagCount?.(updatedTags.length)
+            backToProfile()
+          }}
+        />
+      )}
     </>
   )
 }

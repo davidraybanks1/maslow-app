@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
 /* Desktop chrome state shared between the shell (strip + rail) and the screens.
 
@@ -7,40 +7,31 @@ import { createContext, useCallback, useContext, useMemo, useState } from 'react
              the strip back for as long as the pointer is there.
    quiet   — the person is mid-sentence. The strip and the page furniture dim to
              a whisper (see Write.jsx); any pointer movement brings them back.
-   pinned  — the rail is docked open and pushes the page over, rather than
-             floating over it. Remembered on this device.
+   panel   — which view the side panel is showing: 'today' | 'data' | 'drafts' |
+             'practices', or null when it is closed. The writing page is the only
+             full page; everything else opens here, beside it.
 
    None of this exists below 900px. */
-
-const PIN_KEY = 'loam_desk_rail_pinned'
-
-function readPinned() {
-  try { return localStorage.getItem(PIN_KEY) === '1' } catch { return false }
-}
 
 const DeskChromeContext = createContext(null)
 
 export function DeskChromeProvider({ children }) {
   const [focus, setFocus] = useState(false)
   const [quiet, setQuiet] = useState(false)
-  const [pinned, setPinnedState] = useState(readPinned)
+  const [panel, setPanelState] = useState(null)
 
-  const setPinned = useCallback(next => {
-    setPinnedState(prev => {
-      const v = typeof next === 'function' ? next(prev) : next
-      try { localStorage.setItem(PIN_KEY, v ? '1' : '0') } catch {}
-      return v
-    })
-  }, [])
+  const setPanel = useCallback(next => setPanelState(next), [])
+  // focus gives the page the whole window, so it closes the panel
+  useEffect(() => { if (focus) setPanelState(null) }, [focus])
 
   const value = useMemo(
-    () => ({ focus, setFocus, quiet, setQuiet, pinned, setPinned }),
-    [focus, quiet, pinned, setPinned],
+    () => ({ focus, setFocus, quiet, setQuiet, panel, setPanel }),
+    [focus, quiet, panel, setPanel],
   )
   return <DeskChromeContext.Provider value={value}>{children}</DeskChromeContext.Provider>
 }
 
-const FALLBACK = { focus: false, setFocus() {}, quiet: false, setQuiet() {}, pinned: false, setPinned() {} }
+const FALLBACK = { focus: false, setFocus() {}, quiet: false, setQuiet() {}, panel: null, setPanel() {} }
 export function useDeskChrome() {
   return useContext(DeskChromeContext) || FALLBACK
 }
