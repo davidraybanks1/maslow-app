@@ -4,7 +4,7 @@ import { allNeeds } from '../lib/constants'
 import { currentSlot } from '../lib/slots'
 import { todayKey, addJournalEntry, settleRevisit, toggleJournalRevisit, uploadNoteImage, loadCustomTags } from '../lib/store'
 import { normalizeBand } from '../lib/frequency'
-import { SHAPES, SHAPE_DB, shapeLabel } from '../lib/shapeFacts'
+import { SHAPE_DB } from '../lib/shapeFacts'
 import { hapticSuccess } from '../lib/native'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import { useDeskChrome } from '../lib/deskChrome'
@@ -12,7 +12,6 @@ import FrequencyCard, { MOOD_PIP_COLOR } from '../components/FrequencyCard'
 import SignedImg from '../components/SignedImg'
 import { ROOMS } from '../components/shapes/Rooms'
 import { GLYPHS } from '../components/shapes/ShapesFlow'
-import Glyph from '../lib/glyphs'
 import styles from './Write.module.css'
 
 /* The desktop writing page.
@@ -53,11 +52,17 @@ function dateLine() {
   return new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).toLowerCase()
 }
 
+// The phone's writing spaces, in the phone's order and under its names
+// (JournalPage.jsx). The blank page is not a pill: it is where you are until
+// you pick a space, and picking the open one again puts you back.
 const PILLS = [
-  { id: 'blank', label: 'blank page' },
-  ...SHAPES.filter(s => s.id !== 'continue').map(s => ({ id: s.id, label: s.label })),
-  { id: 'continue', label: shapeLabel('continue') },
+  { id: 'timer', label: 'timer room' },
+  { id: 'continue', label: 'revisit' },
+  { id: 'one_thing', label: 'gave and took' },
+  { id: 'tension', label: 'tension' },
+  { id: 'three_truths', label: 'three truths' },
 ]
+const IN_PILLS = id => PILLS.some(p => p.id === id)
 
 /* ── the page itself: a textarea over a mirror ──────────────────────────────
    The textarea holds the real text but paints nothing; the mirror underneath
@@ -113,7 +118,7 @@ export default function Write({ state, logMood }) {
   // which room is open: 'blank' or a shape id (arrived with one from another screen, maybe)
   const arrivedShape = location.state?.shape
   const arrivedSource = location.state?.source || null
-  const [stage, setStage] = useState(() => (arrivedShape && ROOMS[arrivedShape] ? arrivedShape : 'blank'))
+  const [stage, setStage] = useState(() => (arrivedShape && ROOMS[arrivedShape] && IN_PILLS(arrivedShape) ? arrivedShape : 'blank'))
   const [source, setSource] = useState(arrivedSource)
   const [roomDraft, setRoomDraft] = useState({ entry: '' })
   const [pendingStage, setPendingStage] = useState(null)
@@ -121,7 +126,7 @@ export default function Write({ state, logMood }) {
   // another screen handed over a room while we are already here
   useEffect(() => {
     const sh = location.state?.shape
-    if (sh && ROOMS[sh]) { setStage(sh); setSource(location.state?.source || null); setRoomDraft({ entry: '' }) }
+    if (sh && ROOMS[sh] && IN_PILLS(sh)) { setStage(sh); setSource(location.state?.source || null); setRoomDraft({ entry: '' }) }
   }, [location.state?.at])
 
   // the blank page, restored from this device if there was one in progress
@@ -359,14 +364,14 @@ export default function Write({ state, logMood }) {
       onClick={e => { if (popover && !e.target.closest('[data-pop]')) setPopover(null) }}
     >
       <header className={styles.top} data-furniture>
-        <div className={styles.pills} role="tablist" aria-label="how to write">
+        <div className={styles.pills} role="group" aria-label="how to write">
           {PILLS.map(p => (
             <button
-              key={p.id} type="button" role="tab" aria-selected={stage === p.id}
+              key={p.id} type="button" aria-pressed={stage === p.id}
               className={`${styles.shape} ${stage === p.id ? styles.shapeOn : ''}`}
-              onClick={() => goStage(p.id)}
+              onClick={() => goStage(stage === p.id ? 'blank' : p.id)}
             >
-              <span className={styles.shapeGlyph} aria-hidden="true">{p.id === 'blank' ? <Glyph kind="note" height={13} /> : GLYPHS[p.id]}</span>
+              <span className={styles.shapeGlyph} aria-hidden="true">{GLYPHS[p.id]}</span>
               {p.label}
             </button>
           ))}
