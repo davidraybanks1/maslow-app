@@ -25,14 +25,15 @@
   min-height: 68px;
   padding-top: 10px;
   padding-bottom: 6px;
-  display: flex;
+  /* the pills sit in the middle of the page; the focus button holds the right */
+  display: grid;
+  grid-template-columns: minmax(112px, 1fr) minmax(0, auto) minmax(112px, 1fr);
   align-items: center;
-  justify-content: space-between;
   gap: 16px;
   padding-left: 40px;
   padding-right: 40px;
 }
-.pills { display: flex; flex-wrap: wrap; gap: 6px 7px; min-width: 0; }
+.pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 7px; min-width: 0; }
 .shapeGlyph { display: inline-flex; align-items: center; transform: scale(.78); transform-origin: left center; margin-right: -3px; }
 .shape {
   display: inline-flex;
@@ -64,6 +65,7 @@
   cursor: pointer;
   white-space: nowrap;
   flex: none;
+  justify-self: end;
 }
 .btn:hover:not(:disabled) { background: rgba(128, 120, 100, .12); }
 .btn:disabled { opacity: .5; cursor: default; }

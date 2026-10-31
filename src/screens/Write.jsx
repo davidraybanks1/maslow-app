@@ -4,6 +4,7 @@ import { allNeeds } from '../lib/constants'
 import { currentSlot } from '../lib/slots'
 import { todayKey, addJournalEntry, settleRevisit, toggleJournalRevisit, uploadNoteImage, loadCustomTags } from '../lib/store'
 import { normalizeBand } from '../lib/frequency'
+import Glyph from '../lib/glyphs'
 import { SHAPE_DB } from '../lib/shapeFacts'
 import { hapticSuccess } from '../lib/native'
 import { useIsDesktop } from '../lib/useIsDesktop'
@@ -52,17 +53,18 @@ function dateLine() {
   return new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).toLowerCase()
 }
 
-// The phone's writing spaces, in the phone's order and under its names
-// (JournalPage.jsx). The blank page is not a pill: it is where you are until
-// you pick a space, and picking the open one again puts you back.
+// The blank page first, then the phone's writing spaces in the phone's order
+// and under its names (JournalPage.jsx). Picking the open space again puts you
+// back on the blank page.
 const PILLS = [
+  { id: 'blank', label: 'blank page' },
   { id: 'timer', label: 'timer room' },
   { id: 'continue', label: 'revisit' },
   { id: 'one_thing', label: 'gave and took' },
   { id: 'tension', label: 'tension' },
   { id: 'three_truths', label: 'three truths' },
 ]
-const IN_PILLS = id => PILLS.some(p => p.id === id)
+const IN_PILLS = id => id !== 'blank' && PILLS.some(p => p.id === id)
 
 /* ── the page itself: a textarea over a mirror ──────────────────────────────
    The textarea holds the real text but paints nothing; the mirror underneath
@@ -364,6 +366,7 @@ export default function Write({ state, logMood }) {
       onClick={e => { if (popover && !e.target.closest('[data-pop]')) setPopover(null) }}
     >
       <header className={styles.top} data-furniture>
+        <span aria-hidden="true" />
         <div className={styles.pills} role="group" aria-label="how to write">
           {PILLS.map(p => (
             <button
@@ -371,7 +374,7 @@ export default function Write({ state, logMood }) {
               className={`${styles.shape} ${stage === p.id ? styles.shapeOn : ''}`}
               onClick={() => goStage(stage === p.id ? 'blank' : p.id)}
             >
-              <span className={styles.shapeGlyph} aria-hidden="true">{GLYPHS[p.id]}</span>
+              <span className={styles.shapeGlyph} aria-hidden="true">{p.id === 'blank' ? <Glyph kind="note" height={13} /> : GLYPHS[p.id]}</span>
               {p.label}
             </button>
           ))}
