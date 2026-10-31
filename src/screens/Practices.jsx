@@ -27,7 +27,7 @@ const STARTERS = {
 }
 const OB_FLAG = 'onboardingPracticesDone'
 
-export default function Practices({ state, addPractice, updatePractice, archivePractice, setPracticeReminder, stampReminderOffered, incrementOffersDeclined, completeOnboarding, onClose }) {
+export default function Practices({ state, addPractice, updatePractice, archivePractice, setPracticeReminder, stampReminderOffered, incrementOffersDeclined, completeOnboarding, onClose, onNeeds }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [editMode, setEditMode] = useState(false)
@@ -222,7 +222,7 @@ export default function Practices({ state, addPractice, updatePractice, archiveP
     <div className={styles.screen}>
       <div className={styles.header}>
         <div className={styles.eyebrowRow}>
-          <button type="button" className={styles.needsLink} onClick={() => navigate('/canvas', { state: location.state })}>← needs</button>
+          <button type="button" className={styles.needsLink} onClick={() => (onNeeds ? onNeeds() : navigate('/canvas', { state: location.state }))}>← needs</button>
           <button
             type="button"
             className={styles.closeBtn}

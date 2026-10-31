@@ -95,6 +95,19 @@
   .panelClosing { animation: panelOut 150ms ease both; }
 }
 
+.panelDesk,
+.panelDesk.panelDesk {
+  position: relative;
+  inset: auto;
+  left: auto;
+  width: auto;
+  min-height: 100%;
+  border: 0;
+  box-shadow: none;
+  animation: none;
+}
+.panelDesk .scroll { overflow: visible; }
+
 .scroll {
   flex: 1;
   overflow-y: auto;

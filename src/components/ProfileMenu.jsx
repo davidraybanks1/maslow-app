@@ -77,7 +77,13 @@ function Chevron({ dir = 'right' }) {
   return <svg width="8" height="14" viewBox="0 0 8 14" aria-hidden="true"><path d="M1 1l6 6-6 6" fill="none" stroke="#8a8273" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
 }
 
+// `desk` is set on the desktop. There the profile is not an overlay of its own:
+// it lives in the shell's side panel like every other view, so the avatar only
+// toggles it, the pages it links to open in that same panel, and its contents
+// are portalled into the panel's host element.
+//   desk = { open, host, onToggle, onClose, onGo }
 export default function ProfileMenu({
+  desk,
   name, email,
   remindersEnabled, updateRemindersEnabled,
   moodReminders, updateMoodReminder,
@@ -113,6 +119,13 @@ export default function ProfileMenu({
   const displayName = (name || (email || '').split('@')[0] || 'you').trim().toLowerCase()
 
   useEffect(() => () => { if (closeTimerRef.current) clearTimeout(closeTimerRef.current) }, [])
+
+  // desktop: the shell decides when the profile is showing
+  const deskOpen = !!desk?.open
+  useEffect(() => {
+    if (!desk) return
+    if (deskOpen) { resetView(); setPhase('open') } else { setPhase(null); resetView() }
+  }, [deskOpen])
 
   // Re-open the profile when returning from a profile sub-page (needs / notes / tags).
   // The navigate state { openProfile: true } is set by the sub-page's ✕ button.
@@ -156,6 +169,7 @@ export default function ProfileMenu({
   }
 
   function close(onDone) {
+    if (desk) { desk.onClose?.(); onDone?.(); return }
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const finish = () => {
       setPhase(null)
@@ -232,6 +246,8 @@ export default function ProfileMenu({
   const permissionDenied = isNative() && notifPermission === 'denied' && !on
 
   const goTo = (path, state) => close(() => navigate(path, { state: { fromProfile: true, returnTo: location.pathname, ...state } }))
+  // on the desktop these open in the shell's panel instead of navigating
+  const open = (view, path, state) => (desk ? desk.onGo(view) : goTo(path, state))
 
   const home = (
     <div className={`${styles.view} ${styles.viewIn}`} key="home">
@@ -252,21 +268,21 @@ export default function ProfileMenu({
       <div className={styles.group}>
       <h3 className={styles.groupLabel}>customize</h3>
       <div className={styles.tiles}>
-        <button type="button" className={`${styles.card} ${styles.tile}`} onClick={() => goTo('/canvas')}>
+        <button type="button" className={`${styles.card} ${styles.tile}`} onClick={() => open('needs', '/canvas')}>
           <div className={styles.spheres} aria-hidden="true">
             {SPHERES.map((s, i) => <span key={i} className={styles.sphere9} style={{ background: lit(s) }} />)}
           </div>
           <div className={styles.tileText}><span className={styles.tileLabel}>needs</span><span className={styles.mono}>{needCount} · modes</span></div>
         </button>
-        <button type="button" className={`${styles.card} ${styles.tile}`} onClick={() => goTo('/practices')}>
+        <button type="button" className={`${styles.card} ${styles.tile}`} onClick={() => open('practices', '/practices')}>
           <PracticesArt />
           <div className={styles.tileText}><span className={styles.tileLabel}>practices</span><span className={styles.mono}>{practiceCount} · types</span></div>
         </button>
-        <button type="button" className={`${styles.card} ${styles.tile}`} onClick={() => goTo('/today', { openDeck: true })}>
+        <button type="button" className={`${styles.card} ${styles.tile}`} onClick={() => open('notes', '/today', { openDeck: true })}>
           <NotesArt />
           <div className={styles.tileText}><span className={styles.tileLabel}>notes to self</span><span className={styles.mono}>{noteDeckCount} · on today</span></div>
         </button>
-        <button type="button" className={`${styles.card} ${styles.tile}`} onClick={() => goTo('/today', { openTags: true })}>
+        <button type="button" className={`${styles.card} ${styles.tile}`} onClick={() => open('tags', '/today', { openTags: true })}>
           <TagsArt />
           <div className={styles.tileText}><span className={styles.tileLabel}>tags</span><span className={styles.mono}>{customTagCount} · custom</span></div>
         </button>
@@ -315,7 +331,7 @@ export default function ProfileMenu({
             {email && (
               <div className={styles.moreRow}><span>email address</span><span className={styles.mono}>{email}</span></div>
             )}
-            <button type="button" className={styles.moreRow} onClick={() => close(() => navigate('/password'))}>change password</button>
+            <button type="button" className={styles.moreRow} onClick={() => (desk ? desk.onGo('password') : close(() => navigate('/password')))}>change password</button>
             {resetTour && (
               <button type="button" className={styles.moreRow} onClick={() => { resetTour(); close() }}>show hints again</button>
             )}
@@ -465,14 +481,25 @@ export default function ProfileMenu({
         ref={avatarRef}
         data-tour="profile"
         className={`${styles.avatar} ${isOpen ? styles.avatarOpen : ''}`}
-        onClick={() => (phase === 'open' ? close() : openMenu())}
+        onClick={() => (desk ? desk.onToggle() : phase === 'open' ? close() : openMenu())}
         aria-label="Account menu"
         aria-expanded={isOpen}
       >
         {initial}
       </button>
 
-      {mounted && createPortal(
+      {mounted && desk && desk.host && createPortal(
+        <div ref={panelRef} tabIndex={-1} role="region" aria-label="profile" className={`${styles.panel} ${styles.panelDesk}`}>
+          <div className={styles.scroll}>
+            {page === 'home' ? home : reminders}
+          </div>
+          {confirmEl}
+          {deleteDialogEl}
+        </div>,
+        desk.host
+      )}
+
+      {mounted && !desk && createPortal(
         <div className={styles.layer}>
           <div className={`${styles.scrim} ${phase === 'closing' ? styles.scrimClosing : ''}`} onClick={() => close()} />
           <div

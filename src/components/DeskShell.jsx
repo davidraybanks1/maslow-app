@@ -17,6 +17,8 @@ import ManageTags from './ManageTags'
 import Data from '../screens/Data'
 import Log from '../screens/Log'
 import Practices from '../screens/Practices'
+import CanvasScreen from '../screens/CanvasScreen'
+import UpdatePassword from '../screens/UpdatePassword'
 import styles from './DeskShell.module.css'
 
 /* The desktop frame (≥900px).
@@ -24,7 +26,9 @@ import styles from './DeskShell.module.css'
    The writing page is the only full page. Around it: a 72px strip with the way
    around the app, and a side panel that opens beside it. Today, data and drafts
    all open in that panel (at the phone's layout, so everything on the phone is
-   here too), and practices opens from a link inside the today panel.
+   here too). Practices opens from a link inside the today panel. The profile and
+   everything it links to (needs, practices, notes, tags, password) open in the
+   same panel, so nothing but the writing page ever takes the whole window.
 
    On a wide window the panel docks and the page moves over to make room; on a
    narrower one it floats above the page. While the writing page is in focus the
@@ -223,7 +227,9 @@ function useWide(px) {
   return wide
 }
 
-const PASSING = new Set(['/today', '/data', '/log', '/drafts', '/practices'])
+const PASSING = new Set(['/today', '/data', '/log', '/drafts', '/practices', '/canvas'])
+// views that carry their own close / back control
+const SELF_CLOSING = new Set(['profile', 'practices', 'needs', 'notes', 'tags', 'password'])
 
 /* ── the frame ────────────────────────────────────────────────────────────── */
 export default function DeskShell({ state, actions, name, email, remindersEnabled, updateRemindersEnabled, moodReminders, updateMoodReminder, notifTypes, updateNotifType, needCount, practiceCount, noteDeckCount, customTagCount, resetTour }) {
@@ -232,10 +238,9 @@ export default function DeskShell({ state, actions, name, email, remindersEnable
   const { focus, quiet, panel, setPanel } = useDeskChrome()
   const wide = useWide(1200)
   const [reveal, setReveal] = useState(false) // strip brought back while in focus
-  const [deckOpen, setDeckOpen] = useState(false)
-  const [tagsOpen, setTagsOpen] = useState(false)
+  const [host, setHost] = useState(null)  // where the profile portals its contents
+  const [back, setBack] = useState(null)   // the panel a sub-view returns to
   const closeT = useRef(null)
-  const fromProfile = useRef(false)
 
   const onWrite = location.pathname === '/write'
   const open = !!panel && !focus
@@ -252,20 +257,15 @@ export default function DeskShell({ state, actions, name, email, remindersEnable
   }, [location.pathname])
   useEffect(() => () => clearTimeout(closeT.current), [])
 
-  // Handed over from the profile menu (it opens the notes and tags managers by
-  // navigating to Today, and remembers where to go back to).
-  useEffect(() => {
-    const st = location.state || {}
-    if (st.fromProfile) fromProfile.current = true
-    if (st.openDeck) { setDeckOpen(true); navigate(location.pathname, { replace: true, state: {} }) }
-    else if (st.openTags) { setTagsOpen(true); navigate(location.pathname, { replace: true, state: {} }) }
-  }, [location.state])
-
-  function backToProfile() {
-    if (!fromProfile.current) return false
-    fromProfile.current = false
-    navigate('/write', { replace: true, state: { openProfile: true } })
-    return true
+  // Open a view that was reached from another panel, remembering the way back.
+  function goPanel(view, from) {
+    setBack(from ?? null)
+    show(view)
+  }
+  function leave(fallback = 'today') {
+    const to = back || fallback
+    setBack(null)
+    setPanel(to)
   }
 
   // ⌘/ opens or closes today's panel from anywhere; Esc closes whatever is open.
@@ -285,13 +285,22 @@ export default function DeskShell({ state, actions, name, email, remindersEnable
     setPanel(view)
   }
   function pressNav(key) {
+    setBack(null)
     if (key === 'write') { setPanel(null); if (!onWrite) navigate('/write'); return }
     show(panel === key ? null : key)
   }
-  const current = panel === 'practices' ? 'today' : panel
+  // practices, needs and notes belong to today unless the profile sent you there
+  const current = ['practices', 'needs', 'notes'].includes(panel) ? (back === 'profile' ? null : 'today') : panel
 
   const profile = (
     <ProfileMenu
+      desk={{
+        open: panel === 'profile' && open,
+        host,
+        onToggle: () => { setBack(null); show(panel === 'profile' ? null : 'profile') },
+        onClose: () => { setBack(null); setPanel(null) },
+        onGo: view => goPanel(view, 'profile'),
+      }}
       name={name} email={email}
       remindersEnabled={remindersEnabled} updateRemindersEnabled={updateRemindersEnabled}
       moodReminders={moodReminders} updateMoodReminder={updateMoodReminder}
@@ -352,15 +361,15 @@ export default function DeskShell({ state, actions, name, email, remindersEnable
             aria-hidden={open ? undefined : true}
             inert={open ? undefined : ''}
           >
-            {panel !== 'practices' && (
+            {!SELF_CLOSING.has(panel) && (
               <button type="button" className={styles.close} onClick={() => setPanel(null)} aria-label="close panel">✕</button>
             )}
             {panel === 'today' && (
               <TodayView
                 state={state} actions={actions}
-                onEditNotes={() => setDeckOpen(true)}
-                onOpenPractices={() => setPanel('practices')}
-                onGoNeeds={() => { setPanel(null); navigate('/canvas') }}
+                onEditNotes={() => goPanel('notes', 'today')}
+                onOpenPractices={() => goPanel('practices', 'today')}
+                onGoNeeds={() => goPanel('needs', 'today')}
               />
             )}
             {panel === 'data' && <div className={styles.screenHost}><Data state={state} compact /></div>}
@@ -376,35 +385,60 @@ export default function DeskShell({ state, actions, name, email, remindersEnable
                   stampReminderOffered={actions.stampReminderOffered}
                   incrementOffersDeclined={actions.incrementOffersDeclined}
                   completeOnboarding={actions.completeOnboarding}
-                  onClose={() => { if (backToProfile()) setPanel(null); else setPanel('today') }}
+                  onClose={() => leave('today')}
+                  onNeeds={() => setPanel('needs')}
                 />
               </div>
             )}
+            {panel === 'needs' && (
+              <div className={styles.screenHost}>
+                <CanvasScreen
+                  state={state}
+                  updateCanvas={actions.updateCanvas}
+                  addCustomNeed={actions.addCustomNeed}
+                  renameCustomNeed={actions.renameCustomNeed}
+                  deleteCustomNeed={actions.deleteCustomNeed}
+                  archivePractice={actions.archivePractice}
+                  onClose={() => leave('today')}
+                  onPractices={() => setPanel('practices')}
+                />
+              </div>
+            )}
+            {panel === 'notes' && (
+              <div className={styles.screenHost}>
+                <ManageDeck
+                  inline
+                  userId={state.userId}
+                  onClose={() => {
+                    if (state.userId) loadNoteDeck(state.userId).then(refreshDeck)
+                    leave('today')
+                  }}
+                  onDeckChanged={refreshDeck}
+                />
+              </div>
+            )}
+            {panel === 'tags' && (
+              <div className={styles.screenHost}>
+                <ManageTags
+                  inline
+                  userId={state.userId}
+                  onClose={updatedTags => {
+                    actions.setCustomTagCount?.(updatedTags.length)
+                    leave('profile')
+                  }}
+                />
+              </div>
+            )}
+            {panel === 'password' && (
+              <div className={styles.screenHost}>
+                <UpdatePassword inPanel onDone={() => leave('profile')} />
+              </div>
+            )}
+            {panel === 'profile' && <div ref={setHost} className={styles.screenHost} />}
           </aside>
         )}
       </div>
 
-      {deckOpen && (
-        <ManageDeck
-          userId={state.userId}
-          onClose={() => {
-            setDeckOpen(false)
-            if (state.userId) loadNoteDeck(state.userId).then(refreshDeck)
-            backToProfile()
-          }}
-          onDeckChanged={refreshDeck}
-        />
-      )}
-      {tagsOpen && (
-        <ManageTags
-          userId={state.userId}
-          onClose={updatedTags => {
-            setTagsOpen(false)
-            actions.setCustomTagCount?.(updatedTags.length)
-            backToProfile()
-          }}
-        />
-      )}
     </>
   )
 }

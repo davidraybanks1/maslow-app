@@ -6,7 +6,9 @@ import styles from './SignIn.module.css'
 
 // Set a new password: reached from the "forgot your password?" code flow and
 // from the profile's account section. Shares the sign-in screen's look.
-export default function UpdatePassword() {
+// `inPanel` is the desktop: the profile's "change password" opens in the side
+// panel instead of taking the window, and hands back through onDone.
+export default function UpdatePassword({ inPanel = false, onDone }) {
   const navigate = useNavigate()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -31,15 +33,16 @@ export default function UpdatePassword() {
     if (err) {
       setError(err.message || 'Something went wrong. Try again.')
     } else {
-      navigate('/today')
+      if (inPanel) onDone?.()
+      else navigate('/today')
     }
   }
 
   return (
-    <div className={styles.screen}>
-      <button type="button" className={styles.back} onClick={() => navigate(-1)}>{'←'} Back</button>
+    <div className={`${styles.screen} ${inPanel ? styles.inPanel : ''}`}>
+      <button type="button" className={styles.back} onClick={() => (inPanel ? onDone?.() : navigate(-1))}>{'←'} {inPanel ? 'Profile' : 'Back'}</button>
 
-      <div className={styles.mark}><LoamMark width={112} /></div>
+      {!inPanel && <div className={styles.mark}><LoamMark width={112} /></div>}
 
       <h1 className={styles.title}>Update your password.</h1>
 

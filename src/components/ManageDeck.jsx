@@ -14,7 +14,7 @@ import SignedImg from '../components/SignedImg'
 const MIN_DECK = 3
 const MAX_DECK = 5
 
-export default function ManageDeck({ userId, onClose, onDeckChanged }) {
+export default function ManageDeck({ inline = false, userId, onClose, onDeckChanged }) {
   const [deck, setDeck] = useState([])
   const [library, setLibrary] = useState([])
   const [loaded, setLoaded] = useState(false)
@@ -164,7 +164,7 @@ export default function ManageDeck({ userId, onClose, onDeckChanged }) {
   const on = switchLocked ? (sheet?.isNew ? false : cardOn) : wantOn
 
   return (
-    <div className={`${styles.overlay} ${closing ? styles.overlayClosing : ''}`}>
+    <div className={`${styles.overlay} ${inline ? styles.inline : ''} ${closing && !inline ? styles.overlayClosing : ''}`}>
       <div className={styles.inner}>
         <div className={styles.header}>
           <h1 className={styles.title}>Notes to self</h1>

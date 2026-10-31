@@ -66,11 +66,14 @@
 .ghostBtnArmed { border-color: var(--ink); color: var(--ink); }
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-@media (min-width: 900px) {
+/* the desktop hosts this in the side panel at the phone's layout */
+@media (min-width: 99999px) {
   .inner { width: 100%; max-width: 1280px; padding: 0 32px; box-sizing: border-box; }
   .header, .body { max-width: var(--page-measure); padding-left: 0; padding-right: 0; }
   .title { font-size: 42px; }
 }
+/* hosted in a panel instead of covering the window */
+.inline { position: relative; inset: auto; z-index: auto; min-height: 100%; padding-top: 0; animation: none; }
 @media (prefers-reduced-motion: reduce) {
   .overlay, .overlayClosing { animation: none; }
 }

@@ -142,4 +142,7 @@
   .screen { max-width: 440px; margin: 0 auto; width: 100%; background: transparent; padding-top: 64px; }
 }
 
+.screen.inPanel { max-width: none; margin: 0; width: auto; padding: 26px 20px 28px; background: transparent; gap: 0; }
+.inPanel .title { margin-top: 10px; font-size: 28px; font-weight: 300; }
+.inPanel .form { margin-top: 20px; }
 .hint { font-family: var(--font-mono); font-size: 12px; color: var(--ink4); margin: -2px 0 0 2px; }

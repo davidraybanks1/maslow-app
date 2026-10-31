@@ -5,7 +5,7 @@ import styles from './ManageTags.module.css'
 
 // Tags. Same shape as Practices and Needs: type a word to add one, tap a tag to
 // see what it's on and delete it.
-export default function ManageTags({ userId, onClose }) {
+export default function ManageTags({ inline = false, userId, onClose }) {
   const [tags, setTags] = useState([])
   const [usageCounts, setUsageCounts] = useState({})
   const [loaded, setLoaded] = useState(false)
@@ -59,7 +59,7 @@ export default function ManageTags({ userId, onClose }) {
   }
 
   return (
-    <div className={`${styles.overlay} ${closing ? styles.overlayClosing : ''}`}>
+    <div className={`${styles.overlay} ${inline ? styles.inline : ''} ${closing && !inline ? styles.overlayClosing : ''}`}>
       <div className={styles.inner}>
         <div className={styles.header}>
           <h1 className={styles.title}>Tags</h1>

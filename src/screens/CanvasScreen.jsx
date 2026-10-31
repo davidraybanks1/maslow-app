@@ -11,7 +11,8 @@ import styles from './CanvasScreen.module.css'
 // to the library to take it out of play. Tapping a need opens a list instead,
 // for anyone who'd rather not drag. Practices live on their own page.
 
-export default function CanvasScreen({ state, updateCanvas, addCustomNeed, renameCustomNeed, deleteCustomNeed, archivePractice }) {
+export default function CanvasScreen({ state, updateCanvas, addCustomNeed, renameCustomNeed, deleteCustomNeed, archivePractice, onClose, onPractices }) {
+  // onClose / onPractices are set when this is hosted in the desktop side panel
   const navigate = useNavigate()
   const location = useLocation()
   const canvas = state.canvas || {}
@@ -77,6 +78,7 @@ export default function CanvasScreen({ state, updateCanvas, addCustomNeed, renam
   const library = allNeeds().filter(n => !canvas[n.id])
 
   function handleClose() {
+    if (onClose) { onClose(); return }
     navigate(location.state?.returnTo || '/today', location.state?.fromProfile ? { state: { openProfile: true } } : undefined)
   }
 
@@ -107,7 +109,7 @@ export default function CanvasScreen({ state, updateCanvas, addCustomNeed, renam
     <div className={styles.screen}>
       <div className={styles.header}>
         <div className={styles.eyebrowRow}>
-          <button type="button" className={styles.link} onClick={() => navigate('/practices', { state: location.state })}>practices →</button>
+          <button type="button" className={styles.link} onClick={() => (onPractices ? onPractices() : navigate('/practices', { state: location.state }))}>practices →</button>
           <button type="button" className={styles.closeBtn} onClick={handleClose} aria-label="close needs">✕</button>
         </div>
         <h1 className={styles.title}>Needs</h1>
