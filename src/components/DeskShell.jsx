@@ -11,6 +11,7 @@ import { useDeskChrome } from '../lib/deskChrome'
 import LoamMark from './LoamMark'
 import ProfileMenu from './ProfileMenu'
 import SignedImg from './SignedImg'
+import NoteStack from './NoteStack'
 import StretchSheet from './StretchSheet'
 import ManageDeck from './ManageDeck'
 import ManageTags from './ManageTags'
@@ -49,49 +50,55 @@ function relative(days) {
   return `${days}d ago`
 }
 
-/* ── notes to self: a row you scroll sideways ─────────────────────────────── */
-function NotesRail({ cards, onAdd, onEdit }) {
-  const ref = useRef(null)
-  const [i, setI] = useState(0)
-  const STEP = 242 // card + gap
-  function onScroll() {
-    const el = ref.current
-    if (el) setI(Math.min(Math.max(cards.length - 1, 0), Math.max(0, Math.round(el.scrollLeft / STEP))))
-  }
+/* ── notes to self: the phone's swipe stack ───────────────────────────────────
+   One note on top, a couple peeking behind it. Drag one off (or flick it) and
+   it is reviewed for the session; reviewing the whole deck counts as the
+   "notes to self" practice, exactly as on the phone. */
+const reviewedNotes = new Set()
+const noteLen = t => ((t || '').length > 150 ? 'long' : (t || '').length > 90 ? 'mid' : undefined)
+
+function NotesStack({ cards, reviewed, onDismiss, onAdd, onEdit, onReset }) {
+  const left = cards.filter(c => !reviewed.has(c.id))
+  const seen = cards.length - left.length
   return (
     <section className={styles.notesWrap} aria-label="Notes to self">
       <div className={styles.notesHead}>
         <span className={styles.lbl}>notes to self</span>
         <span className={styles.headRight}>
-          {cards.length > 0 && <span className={styles.count}>{i + 1}/{cards.length}</span>}
+          {cards.length > 0 && <span className={styles.count}>{Math.min(seen + 1, cards.length)}/{cards.length}</span>}
           <button type="button" className={styles.miniLink} onClick={onEdit}>edit</button>
         </span>
       </div>
-      <div
-        className={styles.notes}
-        ref={ref}
-        onScroll={onScroll}
-        tabIndex={0}
-        role="group"
-        aria-label="scroll sideways through your notes"
-        onKeyDown={e => {
-          if (e.key === 'ArrowRight') { e.preventDefault(); ref.current?.scrollBy({ left: STEP, behavior: 'smooth' }) }
-          if (e.key === 'ArrowLeft') { e.preventDefault(); ref.current?.scrollBy({ left: -STEP, behavior: 'smooth' }) }
-        }}
-      >
-        {cards.map(c => (
-          <div key={c.id} className={`${styles.nc} ${c.image_url ? styles.ncPhoto : ''}`}>
-            {c.image_url && <SignedImg src={c.image_url} alt="" className={styles.ncImg} />}
-            {c.text && <span className={c.image_url ? styles.ncCap : styles.ncText}>{c.text}</span>}
+      <div className={styles.stackHost}>
+        {cards.length === 0 ? (
+          <div className={styles.noteEmptyCard}>
+            <span className={styles.noteLabel}>NOTE<br />TO SELF</span>
+            <button type="button" className={styles.noteAdd} onClick={onAdd}>+ add a note to self</button>
           </div>
-        ))}
-        <button type="button" className={`${styles.nc} ${styles.ncAdd}`} onClick={onAdd}>+ add a note</button>
+        ) : left.length === 0 ? (
+          <div className={styles.noteEmptyCard}>
+            <span className={styles.noteLabel}>NOTE<br />TO SELF</span>
+            <p className={styles.noteDone}>that is all of them for now.</p>
+            <button type="button" className={styles.noteAdd} onClick={onReset}>read them again</button>
+          </div>
+        ) : (
+          <NoteStack
+            cards={left}
+            cardClassName={styles.noteCardFace}
+            onDismiss={onDismiss}
+            onCommit={() => {}}
+            renderCard={card => (
+              <>
+                <div className={styles.noteLabel}>NOTE<br />TO SELF</div>
+                <div className={styles.noteBody}>
+                  <span className={styles.noteText} data-len={noteLen(card.text)}>{card.text}</span>
+                  {card.image_url && <SignedImg src={card.image_url} alt="" className={styles.noteThumb} />}
+                </div>
+              </>
+            )}
+          />
+        )}
       </div>
-      {cards.length > 1 && (
-        <div className={styles.dots} aria-hidden="true">
-          {cards.map((c, k) => <i key={c.id} className={k === i ? styles.dotOn : ''} />)}
-        </div>
-      )}
     </section>
   )
 }
@@ -129,13 +136,45 @@ function TodayView({ state, actions, onEditNotes, onOpenPractices, onGoNeeds }) 
   }
 
   const cards = state.noteDeck || []
+  const [, setReviewTick] = useState(0)
+
+  // Reading the whole deck is a practice: the 'notes to self' one is checked
+  // for the day once the last card has gone.
+  const deckReviewed = cards.length > 0 && cards.every(c => reviewedNotes.has(c.id))
+  const autoChecked = useRef(null)
+  useEffect(() => {
+    if (!deckReviewed || autoChecked.current === today) return
+    const matches = label => /notes? to self/i.test(label || '')
+    let hit = null
+    if (state.practicesDB && state.practicesDB.length > 0) {
+      const p = state.practicesDB.find(p => !p.archived_at && matches(p.label) && state.canvas?.[p.need_id])
+      if (p) hit = { needId: p.need_id, label: p.label, id: p.id }
+    } else {
+      for (const needId of Object.keys(state.practices || {})) {
+        const label = (state.practices[needId] || []).find(matches)
+        if (label && state.canvas?.[needId]) { hit = { needId, label, id: null }; break }
+      }
+    }
+    if (!hit) return
+    autoChecked.current = today
+    const done = checked.some(e => e.need_id === hit.needId && (hit.id && e.practice_id ? e.practice_id === hit.id : e.practice_text === hit.label))
+    if (!done) actions.checkIn?.(hit.needId, hit.label, state.canvas[hit.needId], undefined, hit.id)
+  }, [deckReviewed, today])
+
   const anyRows = zones.some(z => z.rows.length > 0)
 
   return (
     <div className={styles.view}>
       <h2 className={styles.viewTitle}>today.</h2>
 
-      <NotesRail cards={cards} onAdd={onEditNotes} onEdit={onEditNotes} />
+      <NotesStack
+        cards={cards}
+        reviewed={reviewedNotes}
+        onDismiss={id => { reviewedNotes.add(id); setReviewTick(t => t + 1) }}
+        onReset={() => { reviewedNotes.clear(); setReviewTick(t => t + 1) }}
+        onAdd={onEditNotes}
+        onEdit={onEditNotes}
+      />
 
       <section className={styles.card} aria-label="Vibrations">
         <div className={styles.lbl}>vibrations</div>
@@ -192,7 +231,10 @@ function TodayView({ state, actions, onEditNotes, onOpenPractices, onGoNeeds }) 
                       <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="8" fill="var(--exploration)" /><path d="M4.6 8.2l2.3 2.3 4.5-4.6" stroke="#EFEADD" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     )}
                   </span>
-                  <span className={styles.prName}>{practice.label}</span>
+                  <span className={styles.prText}>
+                    <span className={styles.prName}>{practice.label}</span>
+                    <em className={styles.prNeed}>{need.name}</em>
+                  </span>
                   <small>{st.done ? (st.count > 1 ? `×${st.count}` : 'today') : (tally || relative(days))}</small>
                 </button>
               )
@@ -321,7 +363,6 @@ export default function DeskShell({ state, actions, name, email, remindersEnable
         data-focus={focus ? '' : undefined}
         data-docked={docked ? '' : undefined}
         data-open={open ? '' : undefined}
-        data-view={panel === 'today' ? 'today' : 'wide'}
         onMouseEnter={() => clearTimeout(closeT.current)}
         onMouseLeave={() => { if (focus) { clearTimeout(closeT.current); closeT.current = setTimeout(() => setReveal(false), 320) } }}
         onKeyDown={e => { if (e.key === 'Escape' && open) { setPanel(null) } }}
