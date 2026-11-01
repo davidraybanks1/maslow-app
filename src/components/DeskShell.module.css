@@ -145,19 +145,20 @@
   .screenHost { min-height: 100%; }
 
   .view {
-    padding: 26px 20px 28px 20px;
+    padding: 26px 22px 40px;
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 22px;
   }
-  .viewTitle { margin: 0; font: 300 28px var(--font-serif); letter-spacing: -.01em; color: var(--ink); }
-  .headRight { display: inline-flex; align-items: baseline; gap: 12px; }
+  .head { display: flex; flex-direction: column; gap: 2px; padding-right: 36px; }
+  .viewTitle { margin: 0; font: 300 34px/1 var(--font-serif); letter-spacing: -.01em; color: var(--ink); }
+  .date { font: 400 12px var(--font-mono); letter-spacing: .06em; color: var(--ink2); }
   .miniLink {
     background: none;
     border: 0;
     padding: 0;
     font: 400 12px var(--font-mono);
-    color: var(--ink3);
+    color: var(--ink2);
     text-decoration: underline;
     text-underline-offset: 3px;
     cursor: pointer;
@@ -168,69 +169,48 @@
     font: 400 12px var(--font-mono);
     letter-spacing: .14em;
     text-transform: uppercase;
-    color: var(--ink3);
+    color: var(--ink2);
   }
 
-  /* notes to self: the phone's swipe stack, one card on top */
-  .notesWrap { margin: 0; }
-  .notesHead { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
-  .count { font: 400 12px var(--font-mono); color: var(--ink3); }
-  .stackHost {
-    --surface-reflective: var(--card);
-    display: flex;
-    justify-content: center;
-    padding: 0 0 8px;
-  }
-  .stackHost > * { width: 316px; max-width: 100%; }
-  .stackHost .noteCardFace { padding: 0; }
-  .noteLabel {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    font: 400 12px/1.5 var(--font-mono);
-    letter-spacing: .14em;
-    text-transform: uppercase;
-    white-space: nowrap;
-    color: var(--ink3);
-    pointer-events: none;
-  }
-  .noteBody {
-    position: absolute;
-    inset: 0;
-    box-sizing: border-box;
-    padding: 62px 18px 14px 20px;
+  /* note to self: a single quoted line, no card */
+  .note {
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    gap: 10px;
+    gap: 8px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--hairline);
   }
-  .noteText {
-    font: 300 20px/1.32 var(--font-serif);
-    letter-spacing: -.01em;
+  .noteTop { display: flex; justify-content: space-between; align-items: center; min-height: 28px; }
+  .noteNav { display: inline-flex; align-items: center; gap: 4px; }
+  .noteCount { font: 400 12px var(--font-mono); letter-spacing: .04em; color: var(--ink2); min-width: 28px; text-align: center; }
+  .arrow {
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    color: var(--ink2);
+    font: 400 18px/1 var(--font-serif);
+    cursor: pointer;
+  }
+  .arrow:hover { background: rgba(26, 26, 24, .06); color: var(--ink); }
+  .noteEdit { margin-right: 8px; transition: opacity 150ms; }
+  .note:not(:hover):not(:focus-within) .noteEdit { opacity: 0; }
+  .quote {
+    margin: 0;
+    font: italic 300 21px/1.35 var(--font-serif);
+    letter-spacing: -.005em;
     color: var(--ink);
-    text-align: left;
-    overflow: hidden;
+    text-wrap: pretty;
+    overflow-wrap: anywhere;
   }
-  .noteText[data-len='mid'] { font-size: 17.5px; line-height: 1.36; }
-  .noteText[data-len='long'] { font-size: 15.5px; line-height: 1.4; }
-  .noteThumb { width: 100%; max-height: 84px; object-fit: cover; border-radius: 10px; display: block; }
-  .noteEmptyCard {
-    position: relative;
-    box-sizing: border-box;
-    height: 262px;
-    padding: 62px 20px 20px;
-    border-radius: 20px;
-    border: 0.5px solid rgba(0, 0, 0, .07);
-    box-shadow: 0 2px 16px rgba(0, 0, 0, .08);
-    background: var(--card);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-start;
-    gap: 14px;
-  }
-  .noteDone { margin: 0; font: 300 20px/1.32 var(--font-serif); color: var(--ink); }
+  .quote[data-len='mid'] { font-size: 19px; }
+  .quote[data-len='long'] { font-size: 17px; line-height: 1.4; }
+  .noteThumb { width: 100%; max-height: 84px; object-fit: cover; border-radius: 10px; display: block; margin-top: 4px; }
   .noteAdd {
+    align-self: flex-start;
     background: none;
     border: 0;
     padding: 0;
@@ -242,22 +222,24 @@
   }
   .noteAdd:hover { color: var(--ink); }
 
-  /* cards */
-  .card {
+  /* vibrations: ask, then settle to one line */
+  .vibCard {
     background: var(--card);
     border: 1px solid rgba(0, 0, 0, .05);
     border-radius: 16px;
-    padding: 16px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
   }
-  .cardHead { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 10px; }
-  .vibQ { font: 300 20px var(--font-serif); margin: 8px 0 12px; color: var(--ink); }
-  .vib { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 7px; }
+  .vibQ { font: 300 19px var(--font-serif); color: var(--ink); }
+  .vib { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
   .vibBtn {
+    height: 40px;
     font: 400 12px var(--font-mono);
-    letter-spacing: .08em;
+    letter-spacing: .12em;
     text-transform: uppercase;
     text-align: center;
-    padding: 9px 0;
     border: 1px solid rgba(0, 0, 0, .14);
     border-radius: 10px;
     color: var(--ink2);
@@ -267,59 +249,84 @@
   }
   .vibBtn:hover { background: rgba(26, 26, 24, .05); }
   .vibSel, .vibSel:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
-  .feels { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .feels { display: flex; flex-wrap: wrap; gap: 6px; }
   .feel {
     font: 400 12px var(--font-mono);
-    padding: 4px 10px;
+    padding: 7px 12px;
     border-radius: 99px;
     border: 1px solid rgba(0, 0, 0, .14);
     background: transparent;
     color: var(--ink2);
     cursor: pointer;
   }
-  .feelSel { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .feel:hover { background: rgba(26, 26, 24, .05); }
+  .feelSel, .feelSel:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .vibSummary { display: flex; align-items: baseline; gap: 10px; }
+  .vibWords { flex: 1; min-width: 0; font: 300 19px var(--font-serif); color: var(--ink); }
 
-  .zone { padding: 12px 0; border-top: 1px solid var(--hairline); }
-  .zone:first-child { border-top: 0; padding-top: 2px; }
-  .zone:last-of-type { padding-bottom: 2px; }
-  .zoneHead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-  .zoneName { display: flex; align-items: center; gap: 8px; font: 400 12px var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ink2); }
-  .zdot { width: 8px; height: 8px; border-radius: 50%; display: block; }
-  .zoneN { font: 400 12px var(--font-mono); color: var(--ink3); }
-  .bar { height: 5px; border-radius: 9px; background: var(--track); overflow: hidden; margin-bottom: 9px; }
-  .bar i { display: block; height: 100%; border-radius: 9px; transition: width 400ms ease; }
+  /* practices: modes as an accordion, only the open one on paper */
+  .practices { display: flex; flex-direction: column; gap: 6px; }
+  .prHead { display: flex; justify-content: space-between; align-items: baseline; padding: 0 4px 6px; }
+  .mode { border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; transition: background 200ms; }
+  .modeOpen { background: var(--card); }
+  .modeHead {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    width: 100%;
+    padding: 0;
+    background: none;
+    border: 0;
+    text-align: left;
+    color: inherit;
+    cursor: pointer;
+  }
+  .modeRow { display: flex; align-items: center; gap: 10px; width: 100%; }
+  .zdot { width: 9px; height: 9px; border-radius: 50%; display: block; flex: none; background: var(--mc); }
+  .modeName { flex: 1; font: 400 20px var(--font-serif); color: var(--ink); }
+  .zoneN { font: 400 12px var(--font-mono); color: var(--ink2); }
+  .chev { width: 12px; text-align: center; font: 400 14px var(--font-mono); color: var(--ink2); }
+  .bar { display: block; height: 3px; width: 100%; border-radius: 2px; background: var(--track); overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--mc); transition: width 300ms ease; }
+  .modeBody { display: flex; flex-direction: column; }
+  .modeNone { margin: 0; padding: 9px 0; font: 400 12px var(--font-mono); color: var(--ink3); }
 
   .pr {
     display: flex;
     align-items: center;
-    gap: 9px;
+    gap: 12px;
     width: 100%;
-    padding: 4px 0;
+    min-height: 44px;
+    padding: 9px 0;
     background: none;
     border: 0;
+    border-radius: 8px;
     text-align: left;
     cursor: pointer;
-    font: 400 15px var(--font-serif);
+    font: 400 17px var(--font-serif);
     color: var(--ink);
   }
-  .pr:hover .chk { border-color: var(--ink); }
+  .pr:hover { background: rgba(29, 29, 27, .03); }
   .prText { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
   .prName { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .prNeed { font: 400 12px var(--font-mono); font-style: normal; letter-spacing: .04em; color: var(--ink3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .pr small { font: 400 12px var(--font-mono); color: var(--ink3); flex: none; }
+  .pr small { font: 400 12px var(--font-mono); color: var(--ink2); flex: none; }
   .chk {
-    width: 16px;
-    height: 16px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
     border: 1.5px solid rgba(0, 0, 0, .28);
     flex: none;
     display: grid;
     place-items: center;
     box-sizing: border-box;
+    color: var(--card);
+    transition: background 150ms, border-color 150ms;
   }
-  .prDone { color: var(--ink3); }
-  .prDone .prName { text-decoration: line-through; text-decoration-thickness: 1px; }
-  .prDone .chk { border: 0; }
+  .chk[data-tick='ink'] { color: var(--ink); }
+  .pr:hover .chk { border-color: var(--ink); }
+  .prDone .chk, .prDone:hover .chk { background: var(--mc); border-color: var(--mc); }
+  .prDone .prName { color: var(--ink2); }
   .empty { background: none; border: 0; font: 400 13px var(--font-mono); color: var(--ink3); cursor: pointer; text-align: left; padding: 0; }
   .empty:hover { color: var(--ink); }
   .notice { margin: 10px 0 0; font: 400 12px var(--font-mono); color: var(--ink3); }

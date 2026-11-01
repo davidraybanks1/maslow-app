@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { MODES } from '../lib/constants'
 import { todayKey, loadNoteDeck } from '../lib/store'
-import { currentSlot } from '../lib/slots'
+import { currentSlot, SLOT_GREETING } from '../lib/slots'
 import { normalizeBand, BAND_LABEL, BANDS, FEELINGS } from '../lib/frequency'
 import { zonesFor } from '../lib/dayProgress'
 import { createDataStats } from '../lib/dataStats'
@@ -11,7 +11,6 @@ import { useDeskChrome } from '../lib/deskChrome'
 import LoamMark from './LoamMark'
 import ProfileMenu from './ProfileMenu'
 import SignedImg from './SignedImg'
-import NoteStack from './NoteStack'
 import StretchSheet from './StretchSheet'
 import ManageDeck from './ManageDeck'
 import ManageTags from './ManageTags'
@@ -50,60 +49,65 @@ function relative(days) {
   return `${days}d ago`
 }
 
-/* ── notes to self: the phone's swipe stack ───────────────────────────────────
-   One note on top, a couple peeking behind it. Drag one off (or flick it) and
-   it is reviewed for the session; reviewing the whole deck counts as the
-   "notes to self" practice, exactly as on the phone. */
+/* ── notes to self: one quoted line ───────────────────────────────────────────
+   One note at a time with ‹ n/N › to move through them (wrapping round). Moving
+   through the whole deck counts as the "notes to self" practice, as it does on
+   the phone, so the ids you have looked at are kept for the session. */
 const reviewedNotes = new Set()
 const noteLen = t => ((t || '').length > 150 ? 'long' : (t || '').length > 90 ? 'mid' : undefined)
 
-function NotesStack({ cards, reviewed, onDismiss, onAdd, onEdit, onReset }) {
-  const left = cards.filter(c => !reviewed.has(c.id))
-  const seen = cards.length - left.length
+function NoteLine({ cards, onSeen, onEdit }) {
+  const [idx, setIdx] = useState(0)
+  const n = cards.length
+  const i = n ? Math.min(idx, n - 1) : 0
+  const card = cards[i]
+
+  function go(step) {
+    const next = (i + step + n) % n
+    onSeen([cards[i].id, cards[next].id])
+    setIdx(next)
+  }
+
+  if (!card) {
+    return (
+      <section className={styles.note} aria-label="Note to self">
+        <div className={styles.noteTop}><span className={styles.lbl}>note to self</span></div>
+        <button type="button" className={styles.noteAdd} onClick={onEdit}>+ add a note to self</button>
+      </section>
+    )
+  }
+
   return (
-    <section className={styles.notesWrap} aria-label="Notes to self">
-      <div className={styles.notesHead}>
-        <span className={styles.lbl}>notes to self</span>
-        <span className={styles.headRight}>
-          {cards.length > 0 && <span className={styles.count}>{Math.min(seen + 1, cards.length)}/{cards.length}</span>}
-          <button type="button" className={styles.miniLink} onClick={onEdit}>edit</button>
+    <section className={styles.note} aria-label="Note to self">
+      <div className={styles.noteTop}>
+        <span className={styles.lbl}>note to self</span>
+        <span className={styles.noteNav}>
+          <button type="button" className={`${styles.miniLink} ${styles.noteEdit}`} onClick={onEdit}>edit</button>
+          {n > 1 && (
+            <>
+              <button type="button" className={styles.arrow} onClick={() => go(-1)} aria-label="previous note">‹</button>
+              <span className={styles.noteCount} aria-live="polite">{i + 1}/{n}</span>
+              <button type="button" className={styles.arrow} onClick={() => go(1)} aria-label="next note">›</button>
+            </>
+          )}
         </span>
       </div>
-      <div className={styles.stackHost}>
-        {cards.length === 0 ? (
-          <div className={styles.noteEmptyCard}>
-            <span className={styles.noteLabel}>NOTE<br />TO SELF</span>
-            <button type="button" className={styles.noteAdd} onClick={onAdd}>+ add a note to self</button>
-          </div>
-        ) : left.length === 0 ? (
-          <div className={styles.noteEmptyCard}>
-            <span className={styles.noteLabel}>NOTE<br />TO SELF</span>
-            <p className={styles.noteDone}>that is all of them for now.</p>
-            <button type="button" className={styles.noteAdd} onClick={onReset}>read them again</button>
-          </div>
-        ) : (
-          <NoteStack
-            cards={left}
-            cardClassName={styles.noteCardFace}
-            onDismiss={onDismiss}
-            onCommit={() => {}}
-            renderCard={card => (
-              <>
-                <div className={styles.noteLabel}>NOTE<br />TO SELF</div>
-                <div className={styles.noteBody}>
-                  <span className={styles.noteText} data-len={noteLen(card.text)}>{card.text}</span>
-                  {card.image_url && <SignedImg src={card.image_url} alt="" className={styles.noteThumb} />}
-                </div>
-              </>
-            )}
-          />
-        )}
-      </div>
+      <blockquote className={styles.quote} data-len={noteLen(card.text)}>“{card.text}”</blockquote>
+      {card.image_url && <SignedImg src={card.image_url} alt="" className={styles.noteThumb} />}
     </section>
   )
 }
 
-/* ── today: notes, how you are, today's practices ─────────────────────────── */
+function dayLabel(key, slot) {
+  const [y, m, d] = key.split('-').map(Number)
+  const day = new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+  return `${day.toLowerCase()} · ${SLOT_GREETING[slot]}`
+}
+
+// Done markers wear the mode's color; the two light modes take dark ink for the tick.
+const TICK_INK = { appreciation: true, nourishment: true }
+
+/* ── today: a note, how you are, today's practices ────────────────────────── */
 function TodayView({ state, actions, onEditNotes, onOpenPractices, onGoNeeds }) {
   const [today, setToday] = useState(() => todayKey())
   const [slot, setSlot] = useState(() => currentSlot())
@@ -130,16 +134,18 @@ function TodayView({ state, actions, onEditNotes, onOpenPractices, onGoNeeds }) 
   const slotMood = (state.moods || []).find(m => m.date_key === today && m.prompt_time === slot)
   const band = slotMood ? normalizeBand(slotMood.mood) : null
   const feeling = slotMood?.feeling || null
+  const [changing, setChanging] = useState(false) // reopening a saved check-in
   function setMood(b, f) {
     if (!state.userId) return
     actions.logMood?.(state.userId, slot, b, null, today, f || null)
   }
+  const settled = !!band && !!feeling && !changing
 
   const cards = state.noteDeck || []
   const [, setReviewTick] = useState(0)
 
   // Reading the whole deck is a practice: the 'notes to self' one is checked
-  // for the day once the last card has gone.
+  // for the day once every note has been looked at.
   const deckReviewed = cards.length > 0 && cards.every(c => reviewedNotes.has(c.id))
   const autoChecked = useRef(null)
   useEffect(() => {
@@ -161,86 +167,130 @@ function TodayView({ state, actions, onEditNotes, onOpenPractices, onGoNeeds }) 
     if (!done) actions.checkIn?.(hit.needId, hit.label, state.canvas[hit.needId], undefined, hit.id)
   }, [deckReviewed, today])
 
+  const shown = zones.filter(z => z.rows.length > 0 || z.target > 0)
   const anyRows = zones.some(z => z.rows.length > 0)
+  const doneTotal = zones.reduce((n, z) => n + z.done, 0)
+
+  // One mode open at a time. It starts on the first one with something left to
+  // do, and then stays where the person put it.
+  const [openMode, setOpenMode] = useState(undefined) // undefined = not chosen yet, null = all closed
+  useEffect(() => {
+    if (openMode !== undefined || shown.length === 0) return
+    const first = shown.find(z => z.rows.some(({ need, practice }) => !practices.statusOf(need, practice).done)) || shown[0]
+    setOpenMode(first.mode)
+  }, [openMode, shown.length])
 
   return (
     <div className={styles.view}>
-      <h2 className={styles.viewTitle}>today.</h2>
+      <header className={styles.head}>
+        <h2 className={styles.viewTitle}>today.</h2>
+        <div className={styles.date}>{dayLabel(today, slot)}</div>
+      </header>
 
-      <NotesStack
+      <NoteLine
         cards={cards}
-        reviewed={reviewedNotes}
-        onDismiss={id => { reviewedNotes.add(id); setReviewTick(t => t + 1) }}
-        onReset={() => { reviewedNotes.clear(); setReviewTick(t => t + 1) }}
-        onAdd={onEditNotes}
+        onSeen={ids => { ids.forEach(id => reviewedNotes.add(id)); setReviewTick(t => t + 1) }}
         onEdit={onEditNotes}
       />
 
-      <section className={styles.card} aria-label="Vibrations">
-        <div className={styles.lbl}>vibrations</div>
-        <div className={styles.vibQ}>how are you this {slot === 'midday' ? 'afternoon' : slot}?</div>
-        <div className={styles.vib} role="group" aria-label="mood">
-          {BANDS.map(b => (
-            <button
-              key={b} type="button"
-              className={`${styles.vibBtn} ${band === b ? styles.vibSel : ''}`}
-              aria-pressed={band === b}
-              onClick={() => setMood(b, band === b ? feeling : null)}
-            >{BAND_LABEL[b]}</button>
-          ))}
-        </div>
-        {band && (
-          <div className={styles.feels} role="group" aria-label="vibration">
-            {FEELINGS[band].map(f => (
-              <button
-                key={f} type="button"
-                className={`${styles.feel} ${feeling === f ? styles.feelSel : ''}`}
-                aria-pressed={feeling === f}
-                onClick={() => setMood(band, feeling === f ? null : f)}
-              >{f}</button>
-            ))}
+      <section className={styles.vibCard} aria-label="Vibrations">
+        {settled ? (
+          <div className={styles.vibSummary}>
+            <span className={styles.lbl}>feeling</span>
+            <span className={styles.vibWords}>{(BAND_LABEL[band] || band).toLowerCase()}, {feeling}</span>
+            <button type="button" className={styles.miniLink} onClick={() => setChanging(true)}>change</button>
           </div>
+        ) : (
+          <>
+            <div className={styles.vibQ}>how are you this {SLOT_GREETING[slot]}?</div>
+            <div className={styles.vib} role="group" aria-label="mood">
+              {BANDS.map(b => (
+                <button
+                  key={b} type="button"
+                  className={`${styles.vibBtn} ${band === b ? styles.vibSel : ''}`}
+                  aria-pressed={band === b}
+                  onClick={() => setMood(b, band === b ? feeling : null)}
+                >{BAND_LABEL[b]}</button>
+              ))}
+            </div>
+            {band && (
+              <div className={styles.feels} role="group" aria-label="vibration">
+                {FEELINGS[band].map(f => (
+                  <button
+                    key={f} type="button"
+                    className={`${styles.feel} ${feeling === f ? styles.feelSel : ''}`}
+                    aria-pressed={feeling === f}
+                    onClick={() => {
+                      if (feeling === f) { setMood(band, null); return }
+                      setMood(band, f)
+                      setChanging(false)
+                    }}
+                  >{f}</button>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </section>
 
-      <section className={styles.card} aria-label="Today's practices">
-        <div className={styles.cardHead}>
-          <span className={styles.lbl}>practices</span>
-          <button type="button" className={styles.miniLink} onClick={onOpenPractices}>edit practices →</button>
+      <section className={styles.practices} aria-label="Today's practices">
+        <div className={styles.prHead}>
+          <span className={styles.lbl}>practices · {doneTotal} today</span>
+          <button type="button" className={styles.miniLink} onClick={onOpenPractices}>edit →</button>
         </div>
-        {zones.filter(z => z.rows.length > 0 || z.target > 0).map(z => (
-          <div key={z.mode} className={styles.zone}>
-            <div className={styles.zoneHead}>
-              <span className={styles.zoneName}><i className={styles.zdot} style={{ background: MODES[z.mode].pip }} />{z.mode}</span>
-              <span className={styles.zoneN}>{z.done}/{z.target}</span>
+        {shown.map(z => {
+          const open = openMode === z.mode
+          const color = MODES[z.mode].pip
+          const body = `mode-${z.mode}`
+          return (
+            <div key={z.mode} className={`${styles.mode} ${open ? styles.modeOpen : ''}`} style={{ '--mc': color }}>
+              <button
+                type="button"
+                className={styles.modeHead}
+                aria-expanded={open}
+                aria-controls={body}
+                onClick={() => setOpenMode(open ? null : z.mode)}
+              >
+                <span className={styles.modeRow}>
+                  <i className={styles.zdot} />
+                  <span className={styles.modeName}>{z.mode}</span>
+                  <span className={styles.zoneN}>{z.done}/{z.target}</span>
+                  <span className={styles.chev} aria-hidden="true">{open ? '–' : '+'}</span>
+                </span>
+                <span className={styles.bar}><i style={{ width: `${Math.round(z.fill * 100)}%` }} /></span>
+              </button>
+              {open && (
+                <div id={body} className={styles.modeBody}>
+                  {z.rows.length === 0 && <p className={styles.modeNone}>nothing chosen here yet</p>}
+                  {z.rows.map(({ need, practice }) => {
+                    const st = practices.statusOf(need, practice)
+                    const days = lastDone.get(practice.id || `${need.id}_${practice.label}`)
+                    const tally = st.kind === 'check' && st.cfg.target > 1 && !st.done && st.tally > 0 ? `${st.tally}/${st.cfg.target}` : null
+                    return (
+                      <button
+                        key={st.key} type="button"
+                        className={`${styles.pr} ${st.done ? styles.prDone : ''}`}
+                        aria-pressed={st.done}
+                        onClick={() => practices.tap(need, z.mode, practice)}
+                      >
+                        <span className={styles.chk} data-tick={TICK_INK[z.mode] ? 'ink' : undefined} aria-hidden="true">
+                          {st.done && (
+                            <svg width="12" height="12" viewBox="0 0 12 12"><path d="M2.6 6.2l2.2 2.2 4.6-4.8" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                          )}
+                        </span>
+                        <span className={styles.prText}>
+                          <span className={styles.prName}>{practice.label}</span>
+                          <em className={styles.prNeed}>{need.name}</em>
+                        </span>
+                        <small>{st.done ? (st.count > 1 ? `done ×${st.count}` : 'done today') : (tally || relative(days))}</small>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
             </div>
-            <div className={styles.bar}><i style={{ width: `${Math.round(z.fill * 100)}%`, background: MODES[z.mode].pip }} /></div>
-            {z.rows.map(({ need, practice }) => {
-              const st = practices.statusOf(need, practice)
-              const days = lastDone.get(practice.id || `${need.id}_${practice.label}`)
-              const tally = st.kind === 'check' && st.cfg.target > 1 && !st.done && st.tally > 0 ? `${st.tally}/${st.cfg.target}` : null
-              return (
-                <button
-                  key={st.key} type="button"
-                  className={`${styles.pr} ${st.done ? styles.prDone : ''}`}
-                  aria-pressed={st.done}
-                  onClick={() => practices.tap(need, z.mode, practice)}
-                >
-                  <span className={styles.chk} aria-hidden="true">
-                    {st.done && (
-                      <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="8" fill="var(--exploration)" /><path d="M4.6 8.2l2.3 2.3 4.5-4.6" stroke="#EFEADD" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                    )}
-                  </span>
-                  <span className={styles.prText}>
-                    <span className={styles.prName}>{practice.label}</span>
-                    <em className={styles.prNeed}>{need.name}</em>
-                  </span>
-                  <small>{st.done ? (st.count > 1 ? `×${st.count}` : 'today') : (tally || relative(days))}</small>
-                </button>
-              )
-            })}
-          </div>
-        ))}
+          )
+        })}
         {!anyRows && (
           <button type="button" className={styles.empty} onClick={onGoNeeds}>
             choose your needs and practices to see them here →
