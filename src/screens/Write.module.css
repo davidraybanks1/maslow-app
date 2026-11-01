@@ -42,7 +42,7 @@
   font: 400 14px var(--font-serif);
   padding: 5px 11px;
   white-space: nowrap;
-  border-radius: 99px;
+  border-radius: 14px;
   border: 1px solid rgba(128, 120, 100, .35);
   background: transparent;
   color: var(--ink2);
