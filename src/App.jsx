@@ -23,7 +23,7 @@ import ProfileMenu from './components/ProfileMenu'
 import DeskShell from './components/DeskShell'
 import { DeskChromeProvider, useDeskChrome } from './lib/deskChrome'
 import Write from './screens/Write'
-import TabBar from './components/TabBar'
+import { LoamTabBar } from './components/loam'
 const Primitives = import.meta.env.DEV ? lazy(() => import('./screens/Primitives')) : null
 import UpdateToast from './components/UpdateToast'
 import GlobalComposer, { ComposerFab } from './components/GlobalComposer'
@@ -288,7 +288,7 @@ function AppInner() {
         </Routes>
       </div>
       </div>
-      {state.onboarded && !typing && <TabBar />}
+      {state.onboarded && !typing && <LoamTabBar />}
       {/* Today has its own always-visible composer at the bottom of the
           drafts section instead — see Today.jsx — so the sticky circle
           button (and the sheet it opens) stays reserved for the Almanac

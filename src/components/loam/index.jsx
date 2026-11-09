@@ -436,7 +436,7 @@ export function LoamTabBar() {
           to={to}
           className={({ isActive }) => `${styles.tab} ${isActive ? styles.tabActive : ''}`}
         >
-          {label}
+          <span className={styles.tabLabel}>{label}</span>
         </NavLink>
       ))}
     </nav>
