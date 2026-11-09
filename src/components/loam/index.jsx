@@ -7,6 +7,7 @@ import { NavLink } from 'react-router-dom'
 import { useHold } from '../../lib/useHold'
 import { FEELINGS, BAND_LABEL } from '../../lib/frequency'
 import { currentSlot, SLOT_GREETING } from '../../lib/slots'
+import { dayNumber } from '../../lib/dayNumber'
 import styles from './index.module.css'
 
 /* ── Dateline ─────────────────────────────────────────────── */
@@ -20,15 +21,18 @@ export function Dateline({ onboardedAt, children, docked }) {
   const dow = DAY_ABBR[now.getDay()]
   const mon = MON_ABBR[now.getMonth()]
   const day = now.getDate()
-  const noNum = onboardedAt
-    ? String(Math.max(1, Math.floor((Date.now() - new Date(onboardedAt).getTime()) / 86400000) + 1)).padStart(3, '0')
-    : '001'
+  const noNum = dayNumber(onboardedAt, now)
   return (
     <div className={`${styles.dateline} ${docked ? styles.datelineDocked : ''}`}>
-      <span className={styles.datelineText}>{dow} · {mon} {day} · NO. {noNum}</span>
+      <span className={styles.datelineText}>{dow} · {mon} {day}{noNum ? ` · NO. ${noNum}` : ''}</span>
       {children}
     </div>
   )
+}
+
+/* ── Greeting ─────────────────────────────────────────────── */
+export function Greeting({ word }) {
+  return <div className={styles.greeting}>good<br /><em>{word}.</em></div>
 }
 
 /* ── ProfileBadge ─────────────────────────────────────────── */
@@ -68,14 +72,28 @@ export function ProgressRule({ pct = 0 }) {
 }
 
 /* ── PullQuote ────────────────────────────────────────────── */
-export function PullQuote({ text, folio, noTopRule }) {
+export function PullQuote({ text, folio, noTopRule, children }) {
   return (
     <div className={`${styles.pullQuote} ${noTopRule ? styles.pullQuoteNoRule : ''}`}>
       <span className={styles.pullQuoteMark}>&ldquo;</span>
       <div className={styles.pullQuoteBody}>
-        <p className={styles.pullQuoteText}>{text}</p>
+        {text && <p className={styles.pullQuoteText}>{text}</p>}
+        {children}
         {folio && <span className={styles.pullQuoteFolio}>{folio}</span>}
       </div>
+    </div>
+  )
+}
+
+/* The folio under a swipeable note. Kept outside the quote so it stays put
+   while the note is thrown. index and total are absent when there is no deck. */
+export function NoteFolio({ index, total, onEdit }) {
+  return (
+    <div className={styles.noteFolio}>
+      <span className={styles.pullQuoteFolio}>
+        NOTE TO SELF{total ? ` · ${index}/${total}` : ''}{index < total ? ' →' : ''}
+      </span>
+      {onEdit && <button type="button" className={styles.noteFolioEdit} onClick={onEdit}>edit</button>}
     </div>
   )
 }
@@ -258,7 +276,7 @@ export function EntryRow({
 }
 
 /* ── WriteBlock ───────────────────────────────────────────── */
-/* resting: greeting + textarea + room hints
+/* resting: prompt + textarea + room hints
    active (text present or textarea focused): chips + textarea + footer
    draft persistence is owned by the parent; just value/onChange here */
 const WRITE_ROOMS = [
@@ -275,7 +293,6 @@ export function WriteBlock({
   onSubmit,
   saving = false,
   error,
-  greeting = 'morning',
   slot,
   chipBand,
   chipFeeling,
@@ -300,7 +317,7 @@ export function WriteBlock({
       </div>
       {!active && (
         <div className={styles.writeBlockGreeting}>
-          good <em>{greeting}.</em>
+          what's on <em>your mind?</em>
         </div>
       )}
       {active && (chipBand || slot) && (

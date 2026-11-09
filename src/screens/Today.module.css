@@ -1050,7 +1050,6 @@
 
 
 .moodDivider {
-  order: 4;
   border: none;
   border-top: 1px solid var(--hairline);
   margin: 18px 0;
@@ -1667,16 +1666,9 @@
   color: var(--ink2);
 }
 
-/* ── Mobile visual order ── */
-/* .list is flex-column; colLeft/colRight are display:contents so their
-   children are direct flex items. Order places cards in the desired
-   mobile sequence regardless of DOM (desktop-friendly) source order. */
-.reflectiveSection { order: 1; }
-.timerSlot         { order: 2; }
-.guidanceSlot      { order: 3; }
-.moodCard          { order: 4; }
-.practicesCard     { order: 5; }
-.cardJournal       { order: 6; }
+/* .list is flex-column and colLeft/colRight are display:contents, so on mobile
+   the sections stack in source order: note, check-in, contents, write, entries.
+   Don't add `order` here: anything without one sorts to 0, ahead of the rest. */
 
 /* ── Desktop two-column layout ── */
 @media (min-width: 900px) {
@@ -1725,10 +1717,6 @@
   .headerRingWrap { display: block; flex: 1 1 0; min-width: 0; max-width: 620px; }
   .headerBarWrap { display: none; }
   .spaceBar { max-width: none; }
-
-  /* Reset mobile order values */
-  .reflectiveSection, .guidanceSlot,
-  .moodCard, .practicesCard { order: 0; }
 
   /* Cards: white surface, hairline border, no shadow */
   .card {
@@ -2248,93 +2236,13 @@
     max-width: calc(100% - 100px);
   }
 
-  /* ── Notes deck — fullbleed horizontal scroll ── */
+  /* ── Note to self: a pull quote straight on the paper ── */
   .reflectiveSection {
     background: none;
     border: none;
     border-radius: 0;
     padding: 0;
-    margin-left: -22px;
-    margin-right: -22px;
-    /* Back to sitting 55-80px up under the bloom's own box (which runs to
-       204px below the header's top, glow included) - the card's top corner
-       tucked behind the flower, on purpose, is the intended layered look
-       from before the swipe-to-dismiss redesign, not a bug to clear. */
-    width: calc(100% + 44px);
     overflow: visible;
-    /* The note cards carried no background of their own here — the inline
-       gradient was it. --card (#FAF8F1) is that gradient's 44% stop, so the
-       flat surface is the middle of the light it replaces. */
-    --surface-reflective: var(--card);
-  }
-
-  .noteDeckWrapper {
-    padding: 6px calc((100% - 316px) / 2);
-    gap: 12px;
-    /* height driven by fixed-size cards, no JS height needed */
-  }
-
-  .noteDeckCard {
-    flex: 0 0 316px;
-    width: 316px;
-    height: 262px;
-    scroll-snap-align: center;
-    scroll-snap-stop: always;
-    border-radius: 20px;
-    padding: 20px;
-    border: 0.5px solid rgba(0,0,0,0.07);
-    box-shadow: 0 2px 16px rgba(0,0,0,0.08);
-  }
-
-  /* With the deck reviewed and its section gone, the vibrations section moves
-     up under the header. Vibrations is no longer a white card the bloom can
-     tuck behind — its header row carries the daypart dots on the right, which
-     sit exactly where the bloom's lowest pebbles hang — so this has to be tall
-     enough to start the row below the bloom's bottom edge. */
-  .deckReviewedSpace { height: 84px; }
-
-  .noteDeckBody {
-    /* height, not flex: 1 - the swipe deck's own card (NoteStack.module.css)
-       isn't a flex container, so flex:1 had nothing to stretch against and
-       this sat at its own shrink-to-fit height, pinned under the padding. */
-    height: 100%;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    /* Centered in the space below the card's own top padding (still clearing
-       the bloom, which overlaps the card's top-right corner). */
-    justify-content: center;
-  }
-
-  /* The actual swipeable note-to-self card only (not the "+ add a note"
-     empty state, which keeps the rule above). Taken out of flow and sized to
-     the card's full box so it is not squeezed by NoteStack's own padding,
-     then given a top inset instead: with the section header gone the card
-     rides up under the bloom, whose lowest petals reach ~100px into it, so
-     the text centers in the clear space below that rather than the card's
-     true middle. */
-  .noteDeckBody.noteStackBody {
-    position: absolute;
-    inset: 0;
-    height: auto;
-    padding: 104px 18px 6px 20px;
-  }
-
-  /* "NOTE / TO SELF" on two lines - the same label type as VIBRATIONS and
-     MODES, pinned inside the card's top-left corner (the bloom takes the
-     top-right, and one line would run under its left-most petals). */
-  .noteStackLabel {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    font-family: var(--font-mono);
-    font-size: var(--type-floor);
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    line-height: 1.5;
-    white-space: nowrap;
-    color: var(--ink3);
-    pointer-events: none;
   }
 
   .noteDeckAddCard {
@@ -2434,17 +2342,6 @@
     .freqHeaderDayparts { gap: 8px; }
     .freqHeaderDp { gap: 4px; }
     .freqHeaderDpName { letter-spacing: 0.02em; }
-  }
-
-  /* ── Deck footer — rendered once below the rail, not inside each card ── */
-  .deckFooterRow {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    /* 10px read as flush against the card's own shadow/bottom edge — bumped
-       for clearer breathing room between the two. */
-    padding: 20px calc((100% - 316px) / 2) 0;
-    /* mirrors the deck's centering padding so counter aligns with card centre */
   }
 
   /* ── Practice check — radial-gradient fill matching petal lighting ── */

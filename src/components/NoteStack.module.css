@@ -45,3 +45,27 @@
 .cardBehind {
   pointer-events: none;
 }
+
+/* flat: the note sits on the paper as a pull quote, so the deck's fixed
+   footprint and card surface go away. A thrown note is taken out of flow so
+   the next one can take its place while it flies off. */
+.stackFlat {
+  height: auto;
+}
+.cardFlat {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+}
+.cardFlatGhost {
+  position: absolute;
+  top: 0;
+  left: 0;
+}

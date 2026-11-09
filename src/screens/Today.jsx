@@ -9,7 +9,7 @@ import { normalizeBand, BAND_LABEL, THREADS, THREAD_COPY, FREQUENCY_INTRO, split
 import { useIsDesktop } from '../lib/useIsDesktop'
 import FrequencyCard, { MOOD_PIP_COLOR } from '../components/FrequencyCard'
 import Glyph from '../lib/glyphs'
-import { ProgressRule, Dateline, ProfileBadge, CheckIn, EntryRow, WriteBlock } from '../components/loam'
+import { ProgressRule, Dateline, ProfileBadge, CheckIn, EntryRow, WriteBlock, Greeting, PullQuote, NoteFolio } from '../components/loam'
 import NoteStack from '../components/NoteStack'
 import JournalQuote from '../components/JournalQuote'
 import ManageDeck from '../components/ManageDeck'
@@ -812,6 +812,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
             />
           </Dateline>
           {cloneElement(profileMenu, { hideTrigger: true })}
+          <Greeting word={SLOT_GREETING[slot]} />
         </>
       )}
 
@@ -823,7 +824,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         <div className={styles.colLeft}>
 
         {/* ── Note to self deck ── */}
-        {deckReviewed && <div className={styles.deckReviewedSpace} aria-hidden="true" />}
         {!deckReviewed && <div className={styles.reflectiveSection}>
             <div className={styles.noteDeckSection}>
               {noteDeck.length > 0 ? (
@@ -872,15 +872,13 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 ) : (
                   <>
                     <NoteStack
+                      flat
                       dataTour="note"
                       cards={visibleDeck}
                       onDismiss={handleNoteDismissed}
                       onCommit={hapticTick}
                       renderCard={card => (
-                        <>
-                        <div className={styles.noteStackLabel}>NOTE<br />TO SELF</div>
-                        <div className={`${styles.noteDeckBody} ${styles.noteStackBody}`}>
-                          <span className={styles.noteText} data-len={noteLenAttr(card.text)}>{card.text}</span>
+                        <PullQuote noTopRule text={card.text}>
                           {card.image_url && (
                             <SignedImg
                               src={card.image_url}
@@ -889,25 +887,30 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                               onClick={() => setLightboxImage(card.image_url)}
                             />
                           )}
-                        </div>
-                        </>
+                        </PullQuote>
                       )}
                       footer={(
-                        <div className={styles.deckFooterRow}>
-                          <span className={styles.noteDeckCounter}>{Math.min(noteDeck.length - visibleDeck.length + 1, noteDeck.length)}/{noteDeck.length}</span>
-                          <button className={styles.noteEditPill} onClick={openManageDeck}>edit</button>
-                        </div>
+                        <NoteFolio
+                          index={Math.min(noteDeck.length - visibleDeck.length + 1, noteDeck.length)}
+                          total={noteDeck.length}
+                          onEdit={openManageDeck}
+                        />
                       )}
                     />
                   </>
                 )
+              ) : !isDesktop ? (
+                <>
+                  <PullQuote noTopRule text={deckLoaded ? undefined : '—'}>
+                    {deckLoaded && <button className={styles.noteAddBtn} onClick={openManageDeck}>+ add a note to self</button>}
+                  </PullQuote>
+                  <NoteFolio />
+                </>
               ) : deckLoaded ? (
                 /* inside the wrapper so the card is centred like the deck's own */
                 <div className={styles.noteDeckWrapper}>
                   <div className={styles.noteDeckCard}>
-                    {isDesktop
-                      ? <div className={styles.noteDeckEyebrow}><Glyph kind="note" />NOTE TO SELF</div>
-                      : <div className={styles.noteStackLabel}>NOTE<br />TO SELF</div>}
+                    <div className={styles.noteDeckEyebrow}><Glyph kind="note" />NOTE TO SELF</div>
                     <div className={styles.noteDeckBody}>
                       <button className={styles.noteAddBtn} onClick={openManageDeck}>+ add a note to self</button>
                     </div>
@@ -917,9 +920,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               ) : (
                 <div className={styles.noteDeckWrapper}>
                   <div className={styles.noteDeckCard}>
-                    {isDesktop
-                      ? <div className={styles.noteDeckEyebrow}><Glyph kind="note" />NOTE TO SELF</div>
-                      : <div className={styles.noteStackLabel}>NOTE<br />TO SELF</div>}
+                    <div className={styles.noteDeckEyebrow}><Glyph kind="note" />NOTE TO SELF</div>
                     <div className={styles.noteDeckBody}>
                       <span className={styles.noteEmpty}>—</span>
                     </div>
@@ -934,7 +935,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         {isDesktop ? (
           <div className={styles.moodCard} data-tour="mood">
             <div className={styles.freqHeader}>
-              <span className={styles.freqHeaderLabel}>VIBRATIONS</span>
+              <span className={styles.freqHeaderLabel}>feeling</span>
               <button
                 type="button"
                 className={styles.freqInfoBtn}
@@ -1262,7 +1263,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               onSubmit={handleAddEntry}
               saving={draftSaving}
               error={draftSaveError}
-              greeting={SLOT_GREETING[slot]}
               slot={slot}
               chipBand={chipBand}
               chipFeeling={chipFeeling}

@@ -27,6 +27,8 @@ export default [
     rules: {
       // The one rule that catches the bug class that already shipped:
       'no-undef': 'error',
+      // no-undef does not see JSX element names, so <Missing /> needs its own rule:
+      'react/jsx-no-undef': 'error',
 
       // React / hooks basics needed for JSX to parse cleanly:
       'react/jsx-uses-react': 'warn',

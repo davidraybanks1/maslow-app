@@ -36,7 +36,9 @@ const FLING_FALLBACK_MS = 320
 const FLOURISH_GLOW_LIT = '0 0 48px 16px rgba(240,168,0,.55), 0 10px 30px rgba(240,168,0,.25)'
 const FLOURISH_TINT = 'rgba(255,209,102,.85)'
 
-export default function NoteStack({ cards, onDismiss, onCommit, renderCard, dataTour, footer, cardClassName = '' }) {
+// flat: no card surface, no peeking cards, no glow. The same swipe on a note
+// that sits straight on the paper and takes the height of its own text.
+export default function NoteStack({ cards, onDismiss, onCommit, renderCard, dataTour, footer, cardClassName = '', flat = false }) {
   const [order, setOrder] = useState(cards)
   // Cards already thrown but still mid-flight. They leave `order` the instant
   // the swipe commits (so the next card is live and draggable straight away)
@@ -155,8 +157,10 @@ export default function NoteStack({ cards, onDismiss, onCommit, renderCard, data
       }
       el.style.transform = targets[dir]
       el.style.opacity = '0'
-      el.style.boxShadow = FLOURISH_GLOW_LIT
-      el.style.backgroundColor = FLOURISH_TINT
+      if (!flat) {
+        el.style.boxShadow = FLOURISH_GLOW_LIT
+        el.style.backgroundColor = FLOURISH_TINT
+      }
       // the card leaves the deck right now - the next one is live for the
       // very next touch - and the thrown one just finishes its flight inert
       const card = order.find(c => c.id === d.id)
@@ -206,8 +210,9 @@ export default function NoteStack({ cards, onDismiss, onCommit, renderCard, data
   // re-ordered around them.
   const items = [
     ...leaving.map(card => ({ card, ghost: true })),
-    ...order.slice(0, 3).map((card, i) => ({ card, i })),
+    ...order.slice(0, flat ? 1 : 3).map((card, i) => ({ card, i })),
   ]
+  const flatClass = flat ? ` ${styles.cardFlat}` : ''
 
   return (
     // The surface spans the screen width and takes in the footer row, but only
@@ -221,11 +226,11 @@ export default function NoteStack({ cards, onDismiss, onCommit, renderCard, data
       onPointerCancel={onPointerCancel}
       onClickCapture={onClickCapture}
     >
-    <div className={styles.stack}>
+    <div className={`${styles.stack}${flat ? ` ${styles.stackFlat}` : ''}`}>
       {items.map(({ card, ghost, i }) => ghost ? (
         <div
           key={card.id}
-          className={`${styles.card} ${cardClassName}`}
+          className={`${styles.card}${flatClass}${flat ? ` ${styles.cardFlatGhost}` : ''} ${cardClassName}`}
           style={{ zIndex: 2, pointerEvents: 'none' }}
           aria-hidden="true"
         >
@@ -237,7 +242,7 @@ export default function NoteStack({ cards, onDismiss, onCommit, renderCard, data
           ref={i === 0 ? topRef : null}
           // the tour frames the top card itself, not the full-width box around the deck
           data-tour={i === 0 ? dataTour : undefined}
-          className={`${styles.card}${i > 0 ? ` ${styles.cardBehind}` : ''} ${cardClassName}`}
+          className={`${styles.card}${flatClass}${i > 0 ? ` ${styles.cardBehind}` : ''} ${cardClassName}`}
           // Kept low on purpose: the bloom sits at z-index 2 (Today.module.css's
           // .headerRingWrap), and neither .stack nor its ancestors isolate a
           // stacking context, so these numbers compete directly against it in

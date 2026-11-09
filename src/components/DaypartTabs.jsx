@@ -55,7 +55,7 @@ export function DayToggle({ open, onToggle, controls }) {
       aria-controls={controls}
       onClick={onToggle}
     >
-      <span>VIBRATIONS</span>
+      <span>feeling</span>
       <i className={`${styles.toggleChev} ${open ? styles.toggleChevOpen : ''}`} aria-hidden="true" />
     </button>
   )

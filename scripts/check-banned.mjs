@@ -14,7 +14,6 @@ const SRC = new URL('../src', import.meta.url).pathname
 /* Files with known existing violations, cleared stage-by-stage.
    Remove a file from this list when its violations are cleaned up. */
 const KNOWN_VIOLATIONS = new Set([
-  'components/DaypartTabs.jsx',
   'components/DeskShell.jsx',
   'components/GlobalComposer.jsx',
   'components/JournalTags.jsx',

@@ -94,6 +94,7 @@
   color: var(--loam-gold);
   font-family: var(--loam-font-reading);
   flex-shrink: 0;
+  width: 28px;
   margin-top: -4px;
 }
 .pullQuoteBody {
@@ -115,6 +116,34 @@
   color: var(--loam-muted);
   text-transform: uppercase;
 }
+/* lines up with the quote text: gutter + mark width + the quote's gap */
+.noteFolio {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--loam-gutter) 16px calc(var(--loam-gutter) + 38px);
+}
+.noteFolioEdit {
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  color: var(--loam-muted);
+  background: none;
+  border: none;
+  padding: 8px 0 8px 12px;
+  cursor: pointer;
+}
+
+/* ── Greeting ─────────────────────────────────────────────── */
+.greeting {
+  padding: 18px var(--loam-gutter) 6px;
+  font-family: var(--loam-font-display);
+  font-size: var(--loam-greeting);
+  font-weight: 400;
+  line-height: 0.98;
+  letter-spacing: -0.01em;
+  color: var(--loam-ink);
+}
+.greeting em { font-style: italic; }
 
 /* ── CheckIn ──────────────────────────────────────────────── */
 .checkIn {
