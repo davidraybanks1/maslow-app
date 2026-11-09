@@ -21,10 +21,10 @@ export function Dateline({ onboardedAt, children, docked }) {
   const day = now.getDate()
   const noNum = onboardedAt
     ? String(Math.max(1, Math.floor((Date.now() - new Date(onboardedAt).getTime()) / 86400000) + 1)).padStart(3, '0')
-    : '001'
+    : null
   return (
     <div className={`${styles.dateline} ${docked ? styles.datelineDocked : ''}`}>
-      <span className={styles.datelineText}>{dow} · {mon} {day} · NO. {noNum}</span>
+      <span className={styles.datelineText}>{dow} · {mon} {day}{noNum ? ` · NO. ${noNum}` : ''}</span>
       {children}
     </div>
   )
