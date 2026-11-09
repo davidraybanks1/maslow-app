@@ -1,704 +1,225 @@
+/* Data: one long page, all paper. HANDOFF §4 and §6.4. */
+
 .screen {
+  position: relative;
   display: flex;
   flex-direction: column;
   min-height: 100%;
-  background: var(--paper);
-}
-
-.periodToggle {
-  display: flex;
-  gap: 6px;
-}
-
-.periodPill {
-  height: 28px;
-  padding: 0 12px;
-  border-radius: 14px;
-  border: 1px solid rgba(0,0,0,.15);
-  background: none;
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  letter-spacing: .06em;
-  color: rgba(0,0,0,.45);
-  cursor: pointer;
-  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-}
-
-.periodPillActive {
-  background: var(--exploration);
-  color: var(--card);
-  border-color: var(--exploration);
-}
-
-.pageTitle {
-  font-family: var(--font-serif);
-  font-size: 30px;
-  font-weight: 300;
-  line-height: 1.1;
-  color: var(--ink);
-  letter-spacing: -0.01em;
-  margin: 0 0 4px;
-}
-
-.pageHeaderAccount { flex-shrink: 0; }
-
-/* One line under the title, set like the drafts page's subhead. */
-.pageSubhead {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  font-weight: 300;
-  color: var(--ink3);
-  line-height: 1.5;
-  margin: 0 0 18px;
-  padding-bottom: 14px;
-  border-bottom: 0.5px solid var(--hairline);
-}
-
-/* ── Groups: the titled bands of the page ─────────────────────────────── */
-.group { margin-top: 32px; border-top: 0.5px solid var(--hairline); padding-top: 26px; }
-.groupFirst { margin-top: 18px; border-top: 0; padding-top: 0; }
-.groupHead { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
-.groupTitle {
-  font-family: var(--font-serif); font-size: 23px; font-weight: 300; letter-spacing: -0.015em;
-  line-height: 1.15; color: var(--ink); margin: 0 0 3px;
-}
-.groupSub { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink4); margin: 0; line-height: 1.5; }
-
-/* stepping the range: the arrows are buttons you can see, the span sits between them */
-.rangeNav { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
-.rangeBtn {
-  width: 28px; height: 28px; border-radius: 50%; border: 0.5px solid var(--hairline); background: var(--card);
-  font-family: var(--font-mono); font-size: 16px; line-height: 1; color: var(--ink2); cursor: pointer;
-  display: grid; place-items: center; padding: 0 0 2px; -webkit-tap-highlight-color: transparent;
-}
-.rangeBtn:disabled { opacity: 0.3; cursor: default; }
-.rangeLabel { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); white-space: nowrap; min-width: 9ch; text-align: center; }
-.rangeNow {
-  font-family: var(--font-mono); font-size: var(--type-floor); letter-spacing: 0.06em; text-transform: uppercase;
-  padding: 5px 10px; border-radius: 999px; border: 0.5px solid var(--hairline); background: none; color: var(--ink3); cursor: pointer;
-}
-.groupBody > .section:first-child,
-.groupBody > .dRow3 > .section:first-child { border-top: none; padding-top: 0; margin-top: 0; }
-
-/* ── Insights card ──────────────────────────────────────────────────────── */
-/* ── Insights deck ──────────────────────────────────────────────────────── */
-.insightDeck { display: flex; flex-direction: column; }
-
- /* the same rail as notes to self on Today: one card centred, the next
-   peeking in from the right, so the deck reads as a deck */
-.insightDeckWrapper {
-  display: flex;
-  align-items: stretch;
-  gap: 12px;
-  width: calc(100% + 44px);
-  margin-inline: -22px;
-  padding: 6px calc((100% - 282px + 44px) / 2);
+  padding: 0 var(--loam-gutter) 64px; /* room to read past the round write button */
+  background: var(--loam-paper);
   box-sizing: border-box;
+}
+
+/* ── Docked header ──────────────────────────────────────────── */
+.dockAnchor {
+  position: sticky;
+  top: 0;
+  height: 0;
+  z-index: 20;
+  margin-inline: calc(-1 * var(--loam-gutter));
+}
+.dock { background: var(--loam-paper); padding-inline: var(--loam-gutter); }
+
+/* ── The page's title ───────────────────────────────────────── */
+.greeting { padding: 18px 0 14px; }
+.title {
+  font-family: var(--loam-font-display);
+  font-size: var(--loam-greeting);
+  font-weight: 400;
+  line-height: 0.98;
+  letter-spacing: -0.01em;
+  color: var(--loam-ink);
+  margin: 0;
+}
+.title em { font-style: italic; }
+
+.emptyState {
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  color: var(--loam-muted);
+  margin-top: 48px;
+  text-align: center;
+}
+
+.block { margin-top: 32px; border-top: var(--loam-rule-open); padding-top: 18px; }
+.afterTitle { margin-top: 14px; }
+
+/* ── This week ──────────────────────────────────────────────── */
+.dayRow {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr) 40px 44px;
+  align-items: center;
+  column-gap: 8px;
+  height: 39px;
+  border-bottom: var(--loam-rule-row);
+}
+.dayName { font-family: var(--loam-font-display); font-size: var(--loam-index); color: var(--loam-ink); }
+.today { font-style: italic; }
+.future, .future .calDay { color: var(--loam-muted); }
+.dayPct { font-family: var(--loam-font-mono); font-size: var(--loam-label); text-align: right; color: var(--loam-ink); }
+
+.dots { display: inline-flex; flex-wrap: wrap; gap: 3px; justify-content: flex-end; }
+.dots i { width: 9px; height: 9px; border-radius: 50%; display: block; }
+
+.calendar { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.calHead { font-family: var(--loam-font-mono); font-size: var(--loam-label); letter-spacing: 0.04em; color: var(--loam-muted); padding: 8px 0 6px; }
+.calCell { display: flex; flex-direction: column; min-height: 76px; padding: 6px 6px 4px 0; border-top: var(--loam-rule-row); box-sizing: border-box; }
+.calDay { font-family: var(--loam-font-display); font-size: 18px; line-height: 1.1; color: var(--loam-ink); }
+.calPct { font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-ink); margin: 2px 0 3px; }
+.calCell .dots { justify-content: flex-start; margin-top: 6px; }
+.calCell .dots i { width: 7px; height: 7px; }
+
+.legend, .legendKey { font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-muted); }
+.legend { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 12px; letter-spacing: 0.06em; padding: 10px 0; }
+.legendKey { display: inline-flex; gap: 10px; letter-spacing: 0.02em; }
+.legendKey span { display: inline-flex; align-items: center; gap: 4px; }
+.legendKey i { width: 9px; height: 9px; border-radius: 50%; display: block; }
+
+/* week and month stepping: the folio under the table */
+.folio {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 0;
+  border-top: var(--loam-rule-row);
+  border-bottom: var(--loam-rule-close);
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  letter-spacing: 0.04em;
+  color: var(--loam-muted);
+}
+.folioBtn, .folioNow {
+  font: inherit; letter-spacing: inherit; color: var(--loam-ink); background: none; border: none;
+  padding: 10px 0; cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent;
+}
+.folioBtn:not(:disabled) { text-decoration: underline; text-underline-offset: 3px; }
+.folioBtn:disabled { color: var(--loam-muted); opacity: 0.55; cursor: default; }
+.folioNow { text-decoration: underline; text-underline-offset: 3px; }
+.folioHere { white-space: nowrap; }
+
+.foldLink {
+  align-self: flex-start;
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  letter-spacing: 0.04em;
+  color: var(--loam-ink);
+  background: none;
+  border: none;
+  padding: 12px 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── How the days felt ──────────────────────────────────────── */
+.feels { padding-bottom: 8px; }
+.feelGrid { display: flex; gap: 6px; height: 104px; margin-top: 10px; }
+.feelGridMonth { gap: 2px; }
+.feelCol { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; }
+.feelStack { flex: 1; width: 100%; display: flex; flex-direction: column; justify-content: flex-end; gap: 1px; margin-bottom: 6px; }
+.feelStack i { display: block; width: 100%; min-height: 3px; }
+.feelStack .feelEmpty { height: 3px; background: var(--loam-track); }
+.feelLabel { font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-muted); line-height: 1; min-height: 12px; font-variant-numeric: tabular-nums; }
+.feelLabelToday { color: var(--loam-ink); }
+
+/* ── What changed ───────────────────────────────────────────── */
+.moverRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px 44px;
+  align-items: center;
+  column-gap: 10px;
+  min-height: 44px;
+  border-bottom: var(--loam-rule-row);
+}
+.moverName { font-family: var(--loam-font-display); font-size: var(--loam-chapter); color: var(--loam-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.moverTrack { position: relative; height: 14px; }
+.moverLine { position: absolute; top: 6.5px; left: 0; right: 0; border-top: var(--loam-leader-dots); }
+.moverRun { position: absolute; top: 5.5px; height: 2.5px; }
+.moverWas, .moverNow { position: absolute; top: 2.5px; width: 9px; height: 9px; border-radius: 50%; margin-left: -4.5px; box-sizing: border-box; }
+.moverWas { background: var(--loam-paper); border: 1px solid var(--loam-ink); }
+.moverDelta { font-family: var(--loam-font-mono); font-size: var(--loam-label); text-align: right; }
+.moverDeltaUp { color: var(--loam-up); }
+.moverDeltaDown { color: var(--loam-down); }
+.closingRead {
+  font-family: var(--loam-font-reading);
+  font-style: italic;
+  font-size: var(--loam-body);
+  line-height: 1.3;
+  color: var(--loam-ink-2);
+  margin: 12px 0 0;
+}
+
+/* ── Observation ────────────────────────────────────────────── */
+.obsHead { font-family: var(--loam-font-mono); font-size: var(--loam-label); letter-spacing: 0.1em; color: var(--loam-ink); }
+.obsDeck {
+  display: flex;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   overscroll-behavior-x: contain;
 }
-.insightDeckWrapper::-webkit-scrollbar { display: none; }
-
-.insightCard {
-  flex: 0 0 282px;
-  width: 282px;
-  height: 296px;
-  scroll-snap-align: center;
-  scroll-snap-stop: always;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  background: var(--card);
-  border: 0.5px solid rgba(0,0,0,0.07);
-  border-radius: 20px;
-  padding: 20px;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.08);
-}
-
-.insightDeckFooter {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 2px 0;
-}
-
-.insightDeckCounter {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  color: var(--ink3);
-  letter-spacing: 0.04em;
-}
-
-.insightDeckNav { display: flex; gap: 6px; }
-
-/* arrows hidden on mobile (swipe works); shown on desktop */
-.insightDeckArrow { display: none; }
-
-/* the finding sits in the middle of the card, the basis at the foot;
-   the type steps down with length so the block keeps roughly one mass */
-.insightFinding {
-  font-family: var(--font-serif);
-  font-size: 20px;
-  font-weight: 300;
-  line-height: 1.32;
-  letter-spacing: -0.01em;
-  color: var(--ink);
-  margin: auto 0;
-}
-.insightFinding[data-len="mid"]  { font-size: 17.5px; line-height: 1.36; }
-.insightFinding[data-len="long"] { font-size: 15.5px; line-height: 1.40; }
-
-.insightBasis {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  font-weight: 300;
-  line-height: 1.5;
-  color: var(--ink3);
-  margin: 12px 0 0;
-}
-
-/* ── Shared section chrome ──────────────────────────────────────────────── */
-.section {
-  border-top: 1px solid rgba(0,0,0,.1);
-  padding-top: 18px;
-  margin-top: 8px;
-  margin-bottom: 8px;
-}
-
-.sectionHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-.sectionLabel {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  font-weight: 400;
-  letter-spacing: .16em;
-  text-transform: uppercase;
-  color: var(--ink3);
-  white-space: nowrap;
-}
-
-.sectionMeta {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  color: var(--ink4);
-  letter-spacing: .02em;
-  flex: 1 1 auto;
-  min-width: 0;
-  text-align: right;
-  margin-left: 12px;
-}
-
-.sectionRead {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  font-weight: 300;
-  line-height: 1.5;
-  color: var(--ink3);
-  margin: 8px 0 0;
-}
-
-/* ── Your rhythm ────────────────────────────────────────────────────────── */
-.rhythmGrid {
-  display: flex;
-  gap: 6px;
-  height: 138px;
-  margin-bottom: 10px;
-}
-
-.rhythmGridMonth { gap: 2px; }
-.rhythmGridMonth .rhythmBar { border-radius: 2px; min-height: 3px; }
-.rhythmGridMonth .rhythmDot { width: 5px; height: 5px; margin: 4px 0 3px; }
-.rhythmGridMonth .rhythmLetter { font-variant-numeric: tabular-nums; min-height: 12px; }
-
-/* ── Your feels ── */
-.feelKey { display: inline-flex; align-items: center; gap: 5px; margin-left: 10px; }
-.feelKey i { display: block; width: 8px; height: 8px; border-radius: 2px; }
-.feelGrid { display: flex; gap: 6px; height: 104px; margin-bottom: 10px; }
-.feelGridMonth { gap: 2px; }
-.feelCol { flex: 1; display: flex; flex-direction: column; align-items: center; }
-.feelStack { flex: 1; width: 100%; display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; margin-bottom: 6px; }
-.feelStack i { display: block; width: 100%; min-height: 4px; border-radius: 3px; }
-.feelGridMonth .feelStack i { border-radius: 1.5px; min-height: 3px; }
-.feelStack .feelEmpty { height: 4px; min-height: 4px; background: rgba(0,0,0,.06); }
-.feelGridMonth .rhythmLetter { font-variant-numeric: tabular-nums; min-height: 12px; }
-
-.rhythmCol {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.rhythmBarArea {
-  flex: 1;
-  display: flex;
-  align-items: flex-end;
-  width: 100%;
-}
-
-.rhythmBar {
-  width: 100%;
-  border-radius: 5px;
-  min-height: 4px;
-  transition: height 300ms ease;
-}
-
-.rhythmDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  margin: 3px 0 2px;
-  flex-shrink: 0;
-}
-
-.rhythmLetter {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  color: var(--ink4);
+.obsDeck::-webkit-scrollbar { display: none; }
+.obsSlide { flex: 0 0 100%; overflow: hidden; scroll-snap-align: start; scroll-snap-stop: always; display: flex; flex-direction: column; align-items: flex-start; padding-top: 8px; box-sizing: border-box; }
+.obsStat {
+  font-family: var(--loam-font-display);
+  font-size: 64px;
   line-height: 1;
+  color: var(--loam-ink);
+  padding: 0 6px 0 4px;
+  background: linear-gradient(to bottom, transparent 52%, var(--loam-gold) 52%);
 }
-.rhythmLetterToday { color: var(--ink); }
+.obsText { font-family: var(--loam-font-reading); font-style: italic; font-size: var(--loam-quote); line-height: 1.2; color: var(--loam-ink); margin: 8px 0 0; }
+.obsBasis { font-family: var(--loam-font-reading); font-style: italic; font-size: var(--loam-body); line-height: 1.3; color: var(--loam-muted); margin: 8px 0 0; }
+.pager { display: flex; align-items: center; gap: 12px; margin-top: 6px; font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-ink); font-variant-numeric: tabular-nums; }
+.pagerBtn { font: inherit; font-size: 15px; color: var(--loam-ink); background: none; border: none; padding: 8px 4px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 
-/* The bar/dot key, moved down under the chart it explains rather than
-   competing with the section label up top. */
-.rhythmLegend {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  color: var(--ink4);
-  letter-spacing: .02em;
-  text-align: center;
-  margin: 0;
-}
-
-/* ── What changed rows ──────────────────────────────────────────────────── */
-.moverRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  height: 44px;
-  border-bottom: 1px solid rgba(0,0,0,.06);
-}
-
-.moverDot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.moverName {
-  font-family: var(--font-serif);
-  font-size: 16px;
-  font-weight: 300;
-  color: var(--ink);
-  flex: 1;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* a slope, not a bar — where the need was, where it is, the move between */
-.moverBarTrack {
-  flex: 1 1 auto;
-  min-width: 74px;
-  height: 14px;
-  position: relative;
-}
-.moverSlopeLine {
-  position: absolute; top: 6.5px; left: 0; right: 0; height: 1px;
-  background: rgba(0, 0, 0, 0.10); border-radius: 1px;
-}
-.moverSlopeRun {
-  position: absolute; top: 5.8px; height: 2.4px; border-radius: 2px;
-  transition: left 300ms ease, width 300ms ease;
-}
-.moverSlopeDot {
-  position: absolute; top: 3.5px; width: 7.5px; height: 7.5px;
-  border-radius: 50%; margin-left: -3.75px;
-  transition: left 300ms ease;
-}
-
-.moverValue {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  color: var(--ink3);
-  width: 34px;
-  text-align: right;
-  flex-shrink: 0;
-}
-
-.moverDelta {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  font-weight: 500;
-  width: 42px;
-  text-align: right;
-  flex-shrink: 0;
-}
-.moverDeltaUp   { color: #2C6E49; }
-.moverDeltaDown { color: #C4381F; }
-.moverDeltaFlat { color: rgba(0,0,0,.3); }
-
-/* ── Ribbons ────────────────────────────────────────────────────────────── */
-.ribbonStack {
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-}
-
-.ribbonRow {
-  display: flex;
-  flex-direction: column;
-}
-
+/* ── Ledger ─────────────────────────────────────────────────── */
+.ribbonRow { padding: 6px 0 8px; border-bottom: var(--loam-rule-row); }
 .ribbonHeader {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  text-align: left;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-  margin-bottom: 5px;
+  display: flex; align-items: baseline; gap: 8px; width: 100%; background: none; border: none; padding: 0 0 4px;
+  cursor: pointer; text-align: left; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
 }
-
-.ribbonName {
-  font-family: var(--font-serif);
-  font-size: 14px;
-  font-weight: 300;
-  color: var(--ink);
-  flex: 1;
-}
-.ribbonNameDormant { color: rgba(0,0,0,.4); }
-
-.ribbonStat {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  color: rgba(0,0,0,.35);
-}
-.ribbonStatDormant {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  color: #C4381F;
-}
-
-.ribbonChevron {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  color: var(--ink4);
-}
-
-.ribbonBand {
-  display: flex;
-  gap: 1.5px;
-}
-
-.ribbonCell {
-  flex: 1;
-  height: 12px;
-  border-radius: 2px;
-}
+.ribbonName { font-family: var(--loam-font-display); font-size: var(--loam-index); color: var(--loam-ink); flex: 1; min-width: 0; }
+.ribbonNameDormant { color: var(--loam-muted); }
+.ribbonStat { font-family: var(--loam-font-mono); font-size: var(--loam-label); letter-spacing: 0.06em; color: var(--loam-muted); text-align: right; }
+.ribbonChevron { font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-muted); }
+.ribbonBand { display: flex; gap: 2px; }
+.ribbonCell { flex: 1; height: 12px; }
 /* Desktop only — applied via className when isDesktop */
 .ribbonCellClickable { cursor: pointer; }
+.dateHint { font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-muted); text-align: center; padding: 4px 0; min-height: 18px; }
 
-.ribbonExpand {
-  padding: 11px 0 2px 13px;
-  border-left: 1px solid rgba(0,0,0,.12);
-  margin-top: 5px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.ribbonExpand { padding: 10px 0 4px; display: flex; flex-direction: column; gap: 10px; }
+.ribbonExpandNote { font-family: var(--loam-font-reading); font-style: italic; font-size: var(--loam-body); line-height: 1.3; color: var(--loam-ink-2); margin: 0; }
+.practiceRow { display: flex; flex-direction: column; gap: 4px; }
+.practiceRowTop { display: flex; align-items: baseline; gap: 8px; }
+.practiceName { font-family: var(--loam-font-reading); font-size: var(--loam-body); color: var(--loam-ink); flex: 1; min-width: 0; }
+.practiceStat { font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-muted); }
+.practiceBand { display: flex; gap: 2px; }
+.practiceBandCell { flex: 1; height: 8px; }
+
+/* ── All the numbers ────────────────────────────────────────── */
+.numsGrid { display: grid; grid-template-columns: minmax(0, 1fr) 76px 44px 40px; column-gap: 6px; align-items: center; }
+.numsGrid > span:not(:first-child) { text-align: right; }
+.numsHead {
+  margin-top: 14px; padding-bottom: 6px; border-bottom: var(--loam-rule-close);
+  font-family: var(--loam-font-mono); font-size: var(--loam-label); letter-spacing: 0.1em; color: var(--loam-ink);
 }
-
-.ribbonExpandNote {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  font-weight: 300;
-  line-height: 1.5;
-  color: var(--ink3);
-  margin: 0;
+.numsRow { min-height: 44px; border-bottom: var(--loam-rule-row); font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-ink); }
+.numsRow small { font-size: var(--loam-label); color: var(--loam-muted); }
+.numsName { display: flex; align-items: center; gap: 8px; font-family: var(--loam-font-display); font-size: var(--loam-index); min-width: 0; }
+.numsName i { flex: 0 0 8px; width: 8px; height: 8px; border-radius: 50%; display: block; }
+.numsLast { color: var(--loam-muted); }
+.numsChapter { border-bottom: var(--loam-rule-close); }
+.numsSubtotal {
+  display: flex; justify-content: space-between; gap: 12px; padding: 8px 0;
+  font-family: var(--loam-font-mono); font-size: var(--loam-label); letter-spacing: 0.04em; color: var(--loam-muted);
 }
-
-.practiceRow {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.practiceRowTop {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.practiceName {
-  font-family: var(--font-mono);
-  font-size: 12.5px;
-  font-weight: 300;
-  color: var(--ink);
-  flex: 1;
-}
-
-.practiceStat {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  color: var(--ink3);
-}
-
-.practiceBand {
-  display: flex;
-  gap: 1.5px;
-}
-
-.practiceBandCell {
-  flex: 1;
-  height: 8px;
-  border-radius: 2px;
-}
-
-
-/* ── All the numbers ────────────────────────────────────────────────────── */
-.allNumsHeader {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: none;
-  border: none;
-  padding: 0;
-  width: 100%;
-  cursor: pointer;
-  text-align: left;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.allNumsCard {
-  background: var(--card);
-  border-radius: 14px;
-  padding: 13px 15px;
-  margin-top: 10px;
-}
-
-.allNumsModeHeader {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.allNumsModeName {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--ink);
-  flex: 1;
-}
-
-.allNumsModeValue {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--ink);
-}
-
-.allNumsBarWrap {
-  position: relative;
-  margin-bottom: 10px;
-}
-
-.allNumsBarTrack {
-  height: 6px;
-  border-radius: 3px;
-  background: var(--track);
-  overflow: hidden;
-}
-
-.allNumsBarFill {
-  height: 100%;
-  border-radius: 3px;
-  transition: width 300ms ease;
-}
-
-.allNumsPaceTick {
-  position: absolute;
-  top: -3px;
-  width: 2px;
-  height: 12px;
-  background: rgba(0,0,0,.35);
-  border-radius: 1px;
-  transform: translateX(-50%);
-  pointer-events: none;
-}
-
-.allNumsNeedRow {
-  display: flex;
-  align-items: center;
-  height: 40px;
-  gap: 8px;
-  border-top: 1px solid var(--hairline);
-}
-
-.allNumsNeedName {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 300;
-  color: var(--ink);
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.allNumsFraction {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  color: rgba(0,0,0,.32);
-  flex-shrink: 0;
-}
-
-.allNumsPct {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  color: var(--ink);
-  width: 36px;
-  text-align: right;
-  flex-shrink: 0;
-}
-
-.emptyState {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 300;
-  color: var(--ink3);
-  margin-top: 48px;
-  text-align: center;
-}
-
-.dateHint {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  color: var(--ink3);
-  text-align: center;
-  padding: 4px 0;
-  min-height: 18px;
-}
-
-
-/* ── New wrapper classes (mobile base — transparent wrappers) ─────────────── */
-.desktopWrap { padding: 14px 22px; }
-.pageHeaderRow { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-.dRow3 { }
-.sectionCard { }
-.allNumsCards { }
-
-/* ── Desktop ────────────────────────────────────────────────────────────── */
-/* desktop page layout retired: this screen now lives in the desktop side panel at its phone layout (see DeskShell.jsx) */
-@media (min-width: 99999px) {
-  /* outer wrap: left-anchored after the nav rail, matching Today and Log */
-  .desktopWrap {
-    max-width: 1280px;
-    margin: 0;
-    width: 100%;
-    padding: 0 32px 32px;
-    box-sizing: border-box;
-  }
-
-  /* Row 1: title+subhead left, toggle right */
-  .pageHeaderRow {
-    align-items: baseline;
-    gap: 24px;
-    padding: 32px 0 8px;
-  }
-  .pageTitle { font-size: 42px; margin-bottom: 2px; }
-  /* The desktop sidebar already carries its own account menu. */
-  .pageHeaderAccount { display: none; }
-  .groupTitle { font-size: 28px; }
-
-  .insightDeckWrapper { width: 100%; margin-inline: 0; padding: 0; gap: 0; }
-  .insightCard { flex: 0 0 100%; width: auto; height: auto; scroll-snap-align: start; border-radius: 16px; padding: 18px 20px; box-shadow: none; border: 0.5px solid var(--hairline); }
-  .insightFinding { margin: 0 0 8px; font-size: 20px; }
-  .insightFinding[data-len="mid"], .insightFinding[data-len="long"] { font-size: 20px; line-height: 1.32; }
-  .insightBasis { margin: 0; }
-
-  .insightDeckArrow {
-    display: flex;
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    border: 0.5px solid var(--hairline);
-    background: none;
-    font-size: 14px;
-    color: var(--ink2);
-    cursor: pointer;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    -webkit-tap-highlight-color: transparent;
-    transition: background var(--motion-hover);
-  }
-  .insightDeckArrow:hover { background: var(--track); }
-
-  /* Row 3: what-changed ~50% / rhythm ~50% — stretch so bottoms align */
-  .dRow3 {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
-    gap: 12px;
-  }
-  .dRow3 > .section { margin-top: 0; }
-
-  /* Rhythm card: flex column so the bar chart absorbs extra height */
-  .rhythmCard {
-    display: flex;
-    flex-direction: column;
-  }
-  .rhythmCard .rhythmGrid {
-    flex: 1;
-    height: auto;
-    min-height: 138px;
-  }
-
-  /* Row 5: ribbons — single column; 90 day-cells need full width to stay legible */
-  .ribbonStack {
-    display: flex;
-    flex-direction: column;
-    gap: 9px;
-  }
-
-
-  /* Row 7: all numbers — four mode cards in a row */
-  .allNumsCards {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    margin-top: 10px;
-  }
-  .allNumsCard { margin-top: 0; }
-
-  .dRow3 { margin-bottom: 12px; }
-  .dRow3 > .sectionCard { margin-bottom: 0; }
-
-  /* WHAT CHANGED · YOUR RHYTHM — white cards */
-  .sectionCard {
-    background: var(--card);
-    border: 0.5px solid var(--hairline);
-    border-radius: 18px;
-    padding: 18px 20px;
-    margin-top: 0;
-    margin-bottom: 12px;
-  }
-
-  /* Closing lines: readable measure, not full-bleed */
-  .sectionRead { max-width: 70ch; }
+.numsTotal {
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 12px; margin-top: 24px; padding-top: 10px;
+  border-top: var(--loam-rule-close);
+  font-family: var(--loam-font-mono); font-size: var(--loam-label); letter-spacing: 0.06em; color: var(--loam-ink);
 }

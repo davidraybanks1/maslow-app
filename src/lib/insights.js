@@ -49,7 +49,10 @@ function findings(ladder) {
       id: `finding-${node.kind}-${node.name}`,
       kind: 'finding',
       text: `${node.hi}% of your check-ins come out good on the days you ${verb} ${node.name} — ${node.lo}% on the days you don't.`,
-      basis: `${node.days} days against ${node.off} · luck would do this ${oneIn(node.p)}`,
+      // the same fact, split for the page: the stat is set large, the rest runs under it
+      stat: `${node.hi}%`,
+      rest: `of your check-ins come out good on days you ${verb} ${node.name}. ${node.lo}% on days you don't.`,
+      basis: `${node.days} days against ${node.off}. luck would do this ${oneIn(node.p)}.`,
       weight: 100 - Math.abs(node.gap || 0),
     })
   })
@@ -122,7 +125,7 @@ function observations({ moods, checkins, canvas }) {
 }
 
 /**
- * @returns [{ id, kind: 'finding' | 'obs', text, basis }] — findings first.
+ * @returns [{ id, kind: 'finding' | 'obs', text, basis, stat?, rest? }] — findings first.
  */
 export function buildInsights({ ladder, moods, checkins, canvas }) {
   const f = findings(ladder)

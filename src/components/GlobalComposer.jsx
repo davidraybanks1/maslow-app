@@ -6,7 +6,6 @@ import { todayKey, addJournalEntry, uploadNoteImage, loadCustomTags, loadRevisit
 import { normalizeBand } from '../lib/frequency'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import { getSeenCharts } from '../lib/chartRegistry'
-import Glyph from '../lib/glyphs'
 import FrequencyCard, { MOOD_PIP_COLOR } from './FrequencyCard'
 // Reuses Today's composer chip/picker/attach/quote styling verbatim so the
 // global composer is pixel-identical to the one it replaces there — see
@@ -29,7 +28,7 @@ function formatQuoteDate(dateKey) {
 export function ComposerFab({ onClick }) {
   return (
     <button className={styles.fab} onClick={onClick} aria-label="Add a draft">
-      <Glyph kind="note" height={18} />
+      <span className={styles.fabW} aria-hidden="true">w</span>
     </button>
   )
 }

@@ -16,15 +16,15 @@ import styles from './index.module.css'
 const DAY_ABBR = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
 const MON_ABBR = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
 
-export function Dateline({ onboardedAt, children, docked }) {
+export function Dateline({ onboardedAt, children, docked, text, flush }) {
   const now = new Date()
   const dow = DAY_ABBR[now.getDay()]
   const mon = MON_ABBR[now.getMonth()]
   const day = now.getDate()
   const noNum = dayNumber(onboardedAt, now)
   return (
-    <div className={`${styles.dateline} ${docked ? styles.datelineDocked : ''}`}>
-      <span className={styles.datelineText}>{dow} · {mon} {day}{noNum ? ` · NO. ${noNum}` : ''}</span>
+    <div className={`${styles.dateline} ${docked ? styles.datelineDocked : ''} ${flush ? styles.datelineFlush : ''}`}>
+      <span className={styles.datelineText}>{text ?? `${dow} · ${mon} ${day}${noNum ? ` · NO. ${noNum}` : ''}`}</span>
       {children}
     </div>
   )
@@ -53,21 +53,60 @@ export function ProfileBadge({ initial, onClick, docked, ...rest }) {
 }
 
 /* ── ProgressRule ─────────────────────────────────────────── */
-export function ProgressRule({ pct = 0 }) {
+/* Today's rule is the default. Data's per-row rules pass `bare` (no gutter, no
+   %, the row prints its own number), their own label, and tour={null} so only
+   Today's carries the tour anchor. `muted` is a day or thread with nothing in it. */
+export function ProgressRule({ pct = 0, bare, muted, label, tour = 'space' }) {
   const p = Math.round(Math.max(0, Math.min(100, pct)))
   return (
     <div
-      className={styles.progressRule}
+      className={`${styles.progressRule} ${bare ? styles.progressRuleBare : ''}`}
       role="img"
-      aria-label={`${p}% complete today`}
-      data-tour="space"
+      aria-label={label ?? `${p}% complete today`}
+      data-tour={tour ?? undefined}
     >
       <div className={styles.progressTrack}>
         {p > 0 && <div className={styles.progressFill} style={{ width: `${p}%` }} />}
-        <div className={styles.progressDots} style={{ left: `${p}%`, right: 0 }} />
+        <div className={`${styles.progressDots} ${muted ? styles.progressDotsMuted : ''}`} style={{ left: `${p}%`, right: 0 }} />
       </div>
-      <span className={styles.progressPct}>{p}%</span>
+      {!bare && <span className={styles.progressPct}>{p}%</span>}
     </div>
+  )
+}
+
+/* ── Section furniture (Data, Drafts) ─────────────────────── */
+export function SectionTitle({ lead, turn, sub }) {
+  return (
+    <>
+      <h2 className={styles.sectionTitle}>{lead} <em>{turn}</em></h2>
+      {sub && <p className={styles.sectionSub}>{sub}</p>}
+    </>
+  )
+}
+
+export function LabelRow({ left, right }) {
+  return (
+    <div className={styles.labelRow}>
+      <span>{left}</span>
+      {right != null && <span className={styles.labelRowRight}>{right}</span>}
+    </div>
+  )
+}
+
+/* Tags are words (§4.5): a row of lowercase mono buttons, the selected one underlined. */
+export function WordTabs({ options, value, onChange, label }) {
+  return (
+    <span className={styles.wordTabs} role="group" aria-label={label}>
+      {options.map(o => (
+        <button
+          key={o.v}
+          type="button"
+          aria-pressed={value === o.v}
+          className={`${styles.wordTab} ${value === o.v ? styles.wordTabOn : ''}`}
+          onClick={() => onChange(o.v)}
+        >{o.label}</button>
+      ))}
+    </span>
   )
 }
 

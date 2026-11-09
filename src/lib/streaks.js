@@ -118,8 +118,8 @@ export function buildStreaks({ canvas, checkins, moods, practicesDB = [], today 
 
 export const STREAK_KINDS = [
   { v: 'all', label: 'all' },
+  { v: 'practice', label: 'practices' },
+  { v: 'frequency', label: 'feelings' },
   { v: 'mode', label: 'modes' },
   { v: 'need', label: 'needs' },
-  { v: 'practice', label: 'practices' },
-  { v: 'frequency', label: 'vibrations' },
 ]

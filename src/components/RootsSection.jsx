@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { buildLadder, openSecondDoor, walkLadder, oneIn } from '../lib/ladder'
 import { MODE_ORDER } from '../lib/constants'
 import { useChartCapture } from '../lib/useChartCapture'
+import { SectionTitle, WordTabs } from './loam'
 import styles from './RootsSection.module.css'
 
 /* ── The ladder, drawn as a root system ──────────────────────────────────
@@ -19,24 +20,29 @@ import styles from './RootsSection.module.css'
 
 const DEPTH  = { significant: 108, close: 76, testing: 52, quiet: 30, new: 14 }
 const WEIGHT = { significant: 3.2, close: 2.1, testing: 1.35, quiet: 0.9, new: 0.9 }
-const STROKE = {
-  significant: 'url(#rootsSig)', close: 'rgba(12,80,56,.55)', testing: 'rgba(12,80,56,.32)',
-  quiet: 'rgba(0,0,0,.13)', new: 'rgba(0,0,0,.18)',
-}
+/* every root is its mode's colour; how much it shows is how much evidence it has */
+const STRENGTH = { significant: 1, close: 0.72, testing: 0.5, quiet: 0.28, new: 0.36 }
 const ORDER = ['significant', 'close', 'testing', 'quiet', 'new']
 const LEVELS = [
   { v: 'significant', label: 'strong', shows: ['significant'] },
-  { v: 'close',       label: '+ growing',   shows: ['significant', 'close'] },
+  { v: 'close',       label: '+ emerging',  shows: ['significant', 'close'] },
   { v: 'testing',     label: '+ light',     shows: ['significant', 'close', 'testing'] },
 ]
 const MODE_FILL = {
-  exploration: 'var(--exploration)', appreciation: 'var(--appreciation-deep)',
-  nourishment: 'var(--nourishment)', survival: 'var(--survival)',
+  exploration: 'var(--loam-exploration)', appreciation: 'var(--loam-appreciation)',
+  nourishment: 'var(--loam-nourishment)', survival: 'var(--loam-survival)',
+}
+const MODE_TEXT = {
+  exploration: 'var(--loam-exploration-text)', appreciation: 'var(--loam-appreciation-text)',
+  nourishment: 'var(--loam-nourishment-text)', survival: 'var(--loam-survival-text)',
 }
 /* the pyramid, bottom to top, left to right */
 const DRAW_ORDER = [...MODE_ORDER].reverse()
 
-const W = 349, SURF = 48
+/* The drawing is laid out in real CSS pixels: its width is measured and one
+   viewBox unit is one pixel at 1x, so a 12px label is 12px on every phone. PAD
+   is the room labels may hang past the ground line, inside the page gutter. */
+const PAD = 24, SURF = 48, FALLBACK_W = 349
 /* DM Mono at the 12px floor runs about 7.3px a character; every label box
    below is estimated from this, so the collision rule is honest at the size
    the labels actually render. */
@@ -47,14 +53,14 @@ const modeWeight = m => Math.max(leaves(m), 9)   // never narrower than its own 
 /* deterministic wobble, so roots look grown rather than plotted, and stay put between renders */
 function wob(seed, amt) { const x = Math.sin(seed * 12.9898) * 43758.5453; return ((x - Math.floor(x)) - 0.5) * amt }
 
-function layout(tree) {
+function layout(tree, W) {
   const edges = [], nodes = []
   let seed = 0
   const place = (n, x0, x1, y0, depth, parent) => {
     seed++
     const cx = (x0 + x1) / 2 + wob(seed, Math.min(18, (x1 - x0) * 0.35))
     const y1 = y0 + DEPTH[n.tier]
-    const node = { ref: n, x: cx, y0, y1, depth, parent, tier: n.tier, name: n.name, kind: n.kind }
+    const node = { ref: n, x: cx, y0, y1, depth, parent, tier: n.tier, name: n.name, kind: n.kind, mode: parent ? parent.mode : n.name }
     nodes.push(node)
     if (parent) edges.push({ from: parent, to: node, tier: n.tier })
     const kids = n.children || []
@@ -96,9 +102,16 @@ function samples(e) {
 
 /* mode names run along the surface, staggered low / high so neighbours never
    touch; a name near an edge is pulled in so it stays on the page */
-const modeLabX = m => {
+const modeLabX = (m, W) => {
   const half = m.name.length * CW * 1.1 / 2 + 2
-  return Math.max(-34 + half, Math.min(W + 34 - half, m.x)).toFixed(1)
+  return Math.max(-PAD + half, Math.min(W + PAD - half, m.x)).toFixed(1)
+}
+
+/* the signed, whole-point gap a label prints; nothing when there isn't one */
+const gapLabel = gap => {
+  if (!Number.isFinite(gap)) return null
+  const g = Math.round(gap)
+  return g === 0 ? null : `${g > 0 ? '+' : '−'}${Math.abs(g)}`
 }
 
 export default function RootsSection({ canvas, checkins, moods, practicesDB, ghost }) {
@@ -152,9 +165,22 @@ export default function RootsSection({ canvas, checkins, moods, practicesDB, gho
     return { tree: t }
   }, [canvas, checkins, moods, practicesDB])
 
-  const geo = useMemo(() => layout(tree), [tree])
+  const hasTree = tree.length > 0
+  const [boxW, setBoxW] = useState(0)
+  useLayoutEffect(() => {
+    const box = boxRef.current
+    if (!box) return
+    const read = () => setBoxW(box.clientWidth)
+    read()
+    const ro = new ResizeObserver(read)
+    ro.observe(box)
+    return () => ro.disconnect()
+  }, [hasTree])
+  const W = boxW ? Math.max(240, boxW - PAD * 2) : FALLBACK_W
+
+  const geo = useMemo(() => layout(tree, W), [tree, W])
   const chartRef = useChartCapture('data-roots', 'your roots', !ghost)
-  if (!tree.length) return null
+  if (!hasTree) return null
 
   const shows = LEVELS.find(l => l.v === level).shows
   const lit = n => shows.includes(n.tier)
@@ -193,15 +219,14 @@ export default function RootsSection({ canvas, checkins, moods, practicesDB, gho
     .filter(n => n.depth > 0 && (lit(n) || (n.depth === 1 && litKid(n))))
     .sort((a, b) => rank(a) - rank(b) || a.y1 - b.y1 || a.x - b.x)
     .forEach(n => {
-      const sig = n.tier === 'significant'
-      const num = sig && n.ref.gap != null ? `+${Math.round(n.ref.gap)}` : null
+      const num = gapLabel(n.ref.gap)
       if (n.depth === 1) {
         // a need's name sits beside its tip - above it if it can, where only the
         // one root comes in, else below, where its children fan out
         const tw = Math.max(n.name.length, num ? num.length : 0) * CW
         const lines = num ? 2 : 1
         const outside = n.x >= n.parent.x
-        const sides = [outside, !outside].filter(r => r ? n.x + 8 + tw <= W + 30 : n.x - 8 - tw >= -30)
+        const sides = [outside, !outside].filter(r => r ? n.x + 8 + tw <= W + PAD - 4 : n.x - 8 - tw >= -PAD + 4)
         const cands = []
         for (const above of [true, false]) for (const right of sides) {
           const x0 = right ? n.x + 8 : n.x - 8 - tw
@@ -214,9 +239,9 @@ export default function RootsSection({ canvas, checkins, moods, practicesDB, gho
         const y = (b.above ? n.y1 - 6 - (lines - 1) * LH : n.y1 + 6) + b.dy
         labels.push({ n, kind: 'need', right: b.right, y, num, leader: b.dy > 0 })
       } else {
-        // a practice runs down its root; with a number it takes a second column
-        const th = Math.max(n.name.length, num ? num.length : 0) * CW
-        const c = { x0: n.x - (num ? 14 : 4), x1: n.x + 12, y0: n.y1, y1: n.y1 + 8 + th, pref: 0 }
+        // a practice runs down its root, its number after its name
+        const th = (n.name.length + (num ? num.length + 1 : 0)) * CW
+        const c = { x0: n.x - 4, x1: n.x + 12, y0: n.y1, y1: n.y1 + 8 + th, pref: 0 }
         const b = settle([c], n)
         if (!b) return
         placed.push(b.bx)
@@ -226,56 +251,52 @@ export default function RootsSection({ canvas, checkins, moods, practicesDB, gho
   const H = Math.max(...geo.nodes.map(n => n.y1 + 20), ...labels.map(l => l.bottom || 0)) + 12
 
   return (
-    <section ref={chartRef} className={styles.section}>
+    <section ref={chartRef} className={styles.section} data-dock="DATA · ALL HISTORY">
       <div className={styles.pad}>
-        <h2 className={styles.title}>Your roots</h2>
-        <p className={styles.sub}>The longer and greener the root, the more it correlates to better vibrations.</p>
+        <SectionTitle lead="your" turn="roots." sub="the deeper the root, the more it lines up with good check-ins." />
 
         <div ref={boxRef} className={`${styles.box}${zoom > 1 ? ` ${styles.boxZoomed}` : ''}`}
           style={zoom > 1 && baseH ? { maxHeight: baseH } : undefined}>
-        <svg className={styles.roots} style={{ width: `${zoom * 100}%` }} viewBox={`-34 0 ${W + 68} ${H}`} role="img" aria-label="root system of modes, needs and practices">
-          <defs>
-            <linearGradient id="rootsSig" gradientUnits="userSpaceOnUse" x1="0" y1={SURF} x2="0" y2={H}>
-              <stop offset="0" stopColor="#3FA87A" /><stop offset="1" stopColor="#0C5038" />
-            </linearGradient>
-          </defs>
-          <line x1="-34" y1={SURF} x2={W + 34} y2={SURF} className={styles.surface} />
+        <svg className={styles.roots} style={{ width: `${zoom * 100}%` }} viewBox={`${-PAD} 0 ${W + PAD * 2} ${H}`} role="img" aria-label="root system of modes, needs and practices">
+          <line x1="0" y1={SURF} x2={W} y2={SURF} className={styles.surface} />
 
           {[...ORDER].reverse().map(tier =>
             geo.edges.filter(e => e.tier === tier).map((e, i) => (
-              <path key={`${tier}-${i}`} d={path(e)} fill="none" stroke={STROKE[tier]} strokeWidth={WEIGHT[tier]}
+              <path key={`${tier}-${i}`} d={path(e)} fill="none" stroke={MODE_TEXT[e.to.mode] || 'var(--loam-ink)'}
+                // a wild root is drawn full strength and hangs off a faint parent; the contrast is the point
+                strokeOpacity={e.to.ref.wild ? 1 : STRENGTH[tier]} strokeWidth={e.to.ref.wild ? WEIGHT.significant : WEIGHT[tier]}
                 strokeLinecap="round" strokeDasharray={tier === 'new' ? '1.5 2.5' : undefined}
-                className={e.to.ref.wild ? styles.wild : undefined}
                 onClick={() => setPicked(e.to.ref)} style={{ cursor: 'pointer' }} />
             ))
           )}
 
           {geo.modes.map((m, i) => (
             <g key={m.name} onClick={() => setPicked(m.ref)} style={{ cursor: 'pointer' }}>
-              <path d={`M${m.x} ${SURF} L${m.x} ${m.y1}`} fill="none" stroke={STROKE[m.tier]} strokeWidth={WEIGHT[m.tier]} strokeLinecap="round" />
-              <circle cx={m.x} cy={SURF} r="5.2" fill={MODE_FILL[m.name] || 'var(--ink)'} />
-              <text className={styles.modeLab} x={modeLabX(m)} y={SURF - (i % 2 ? 27 : 11)} textAnchor="middle">{m.name}</text>
+              <path d={`M${m.x} ${SURF} L${m.x} ${m.y1}`} fill="none" stroke={MODE_TEXT[m.name] || 'var(--loam-ink)'} strokeOpacity={STRENGTH[m.tier]} strokeWidth={WEIGHT[m.tier]} strokeLinecap="round" />
+              <circle cx={m.x} cy={SURF} r="5.2" fill={MODE_FILL[m.name] || 'var(--loam-ink)'} />
+              <text className={styles.modeLab} x={modeLabX(m, W)} y={SURF - (i % 2 ? 27 : 11)} textAnchor="middle">{m.name}</text>
             </g>
           ))}
 
           {labels.map(({ n, kind, right, y, num, leader }) => {
-            const sig = n.tier === 'significant'
-            const cls = `${styles.lab}${sig ? ` ${styles.labSig}` : n.tier === 'testing' ? ` ${styles.labDim}` : ''}`
+            const cls = `${styles.lab}${n.tier === 'significant' ? ` ${styles.labSig}` : ''}`
+            const numFill = MODE_TEXT[n.mode] || 'var(--loam-ink)'
             if (kind === 'need') {
               const x = right ? n.x + 7 : n.x - 7, anchor = right ? 'start' : 'end'
               return (
                 <g key={n.name + n.y1} onClick={() => setPicked(n.ref)} style={{ cursor: 'pointer' }}>
                   {leader && <path className={styles.leader} d={`M${n.x} ${n.y1} L${n.x} ${y - 3} L${right ? n.x + 5 : n.x - 5} ${y - 3}`} />}
                   <text className={cls} x={x} y={y} textAnchor={anchor}>{n.name}</text>
-                  {num && <text className={styles.labNum} x={x} y={y + 14} textAnchor={anchor}>{num}</text>}
+                  {num && <text className={styles.labNum} style={{ fill: numFill }} x={x} y={y + 14} textAnchor={anchor}>{num}</text>}
                 </g>
               )
             }
             return (
               <g key={n.name + n.y1} onClick={() => setPicked(n.ref)} style={{ cursor: 'pointer' }}>
                 {leader && <path className={styles.leader} d={`M${n.x} ${n.y1} L${n.x} ${y - 4}`} />}
-                <text className={cls} transform={`translate(${(n.x + 4.5).toFixed(1)} ${y.toFixed(1)}) rotate(90)`}>{n.name}</text>
-                {num && <text className={styles.labNum} transform={`translate(${(n.x - 9.5).toFixed(1)} ${y.toFixed(1)}) rotate(90)`}>{num}</text>}
+                <text className={cls} transform={`translate(${(n.x + 4.5).toFixed(1)} ${y.toFixed(1)}) rotate(90)`}>
+                  {n.name}{num && <tspan className={styles.labNum} style={{ fill: numFill }} dx="7">{num}</tspan>}
+                </text>
               </g>
             )
           })}
@@ -302,11 +323,7 @@ export default function RootsSection({ canvas, checkins, moods, practicesDB, gho
         )}
 
         <div className={styles.levels}>
-          {LEVELS.map(l => (
-            <button key={l.v} type="button" aria-pressed={level === l.v}
-              className={`${styles.level}${level === l.v ? ` ${styles.levelOn}` : ''}`}
-              onClick={() => setLevel(l.v)}>{l.label}</button>
-          ))}
+          <WordTabs label="how much to show" options={LEVELS} value={level} onChange={setLevel} />
         </div>
       </div>
     </section>

@@ -1,57 +1,41 @@
-.section { margin-top: 32px; border-top: 0.5px solid var(--hairline); padding-top: 26px; }
+.section { margin-top: 32px; border-top: var(--loam-rule-open); padding-top: 18px; }
 .pad { padding-inline: 0; }
-.title {
-  font-family: var(--serif, 'Newsreader', Georgia, serif);
-  font-size: 23px; font-weight: 300; letter-spacing: -0.015em; margin: 0 0 3px;
-}
-.sub { font-family: var(--mono); font-size: var(--type-floor); color: var(--ink3); margin: 0; line-height: 1.5; max-width: 44ch; }
-.head {
-  font-family: var(--serif, 'Newsreader', Georgia, serif);
-  font-weight: 300; font-size: 19px; line-height: 1.3; letter-spacing: -0.01em; margin: 0; max-width: 30ch;
-}
-.head em { font-style: italic; }
-.headSub { font-family: var(--mono); font-size: var(--type-floor); color: var(--ink3); margin: 6px 0 0; line-height: 1.5; letter-spacing: 0.02em; }
 
-.box { margin-top: 14px; overflow: hidden; touch-action: pan-y pinch-zoom; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+/* out to the screen edge: the labels may hang past the ground line, which stops at the gutter */
+.box {
+  margin: 14px calc(-1 * var(--loam-gutter)) 0;
+  overflow: hidden; touch-action: pan-y pinch-zoom; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+}
 .box::-webkit-scrollbar { display: none; }
 .boxZoomed { overflow: auto; touch-action: pan-x pan-y; }
 .roots { display: block; width: 100%; overflow: visible; transition: width 120ms ease; }
+.surface { stroke: var(--loam-ink); stroke-width: 1; }
+.modeLab { font-family: var(--loam-font-mono); font-size: var(--loam-label); letter-spacing: 0.02em; fill: var(--loam-ink); }
+.lab { font-family: var(--loam-font-mono); font-size: var(--loam-label); fill: var(--loam-ink-2); letter-spacing: 0.02em; }
+.labSig { fill: var(--loam-ink); }
+.labNum { font-family: var(--loam-font-mono); font-size: var(--loam-label); }
+.leader { stroke: var(--loam-rule); stroke-width: 0.6; fill: none; }
+
 .zoomRow { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; }
-.zoomHint { font-family: var(--mono); font-size: var(--type-floor); color: var(--ink4); }
-.zoomBtns { display: flex; gap: 4px; }
+.zoomHint { font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-muted); letter-spacing: 0.04em; }
+.zoomBtns { display: flex; align-items: center; gap: 6px; }
 .zoomBtn {
-  font-family: var(--mono); font-size: 14px; line-height: 1; width: 28px; height: 28px; border-radius: 50%;
-  border: 0.5px solid var(--hairline); background: none; color: var(--ink2); cursor: pointer;
-  display: grid; place-items: center; -webkit-tap-highlight-color: transparent;
+  font-family: var(--loam-font-mono); font-size: 16px; line-height: 1; min-width: 32px; height: 32px;
+  border: none; background: none; color: var(--loam-ink); cursor: pointer;
+  display: grid; place-items: center; padding: 0; -webkit-tap-highlight-color: transparent;
 }
-.zoomBtn:disabled { opacity: 0.3; cursor: default; }
-.zoomReset { width: auto; padding: 0 10px; border-radius: 999px; font-size: var(--type-floor); }
-.surface { stroke: rgba(0,0,0,.22); stroke-width: 0.7; }
-.modeLab { font-family: var(--mono); font-size: var(--type-floor); letter-spacing: 0.1em; text-transform: uppercase; fill: var(--ink3); }
-.lab { font-family: var(--mono); font-size: var(--type-floor); fill: var(--ink2); letter-spacing: 0.02em; }
-.labSig { fill: var(--ink); }
-.labDim { fill: rgba(0,0,0,.38); }
-.labNum { font-family: var(--mono); font-size: var(--type-floor); fill: #2C6E49; }
-.leader { stroke: rgba(0,0,0,.22); stroke-width: 0.6; fill: none; }
-/* a wild root is drawn in the significant ramp but hangs off grey - the contrast is the point */
-.wild { stroke: url(#rootsSig) !important; stroke-width: 3.2 !important; }
+.zoomBtn:disabled { color: var(--loam-muted); opacity: 0.5; cursor: default; }
+.zoomReset { font-size: var(--loam-label); text-decoration: underline; text-underline-offset: 3px; }
 
 .pick {
-  font-family: var(--mono); font-size: var(--type-floor); line-height: 1.55; color: var(--ink2);
-  margin: 12px 0 0; padding: 10px 12px; border-radius: 10px;
-  background: var(--card); border: 0.5px solid var(--hairline); position: relative; padding-right: 30px;
+  font-family: var(--loam-font-mono); font-size: var(--loam-label); line-height: 1.55; color: var(--loam-ink-2);
+  margin: 10px 0 0; padding: 10px 26px 10px 0; position: relative;
+  border-top: var(--loam-rule-row); border-bottom: var(--loam-rule-row);
 }
-.pick b { font-weight: 500; color: var(--ink); }
+.pick b { font-weight: 500; color: var(--loam-ink); }
 .pickClose {
-  position: absolute; right: 8px; top: 6px; background: none; border: none; font-size: 14px;
-  color: var(--ink3); cursor: pointer; padding: 2px 6px;
+  position: absolute; right: -6px; top: 4px; background: none; border: none; font-size: 16px;
+  color: var(--loam-ink); cursor: pointer; padding: 4px 6px;
 }
 
-.levels { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; margin-top: 18px; }
-.level {
-  font-family: var(--mono); font-size: var(--type-floor); padding: 5px 9px; border-radius: 999px;
-  border: 0.5px solid var(--hairline); background: none; color: var(--ink3); cursor: pointer;
-}
-.levelOn { background: var(--ink); color: #F2F0E8; border-color: var(--ink); }
-.note { font-family: var(--mono); font-size: var(--type-floor); line-height: 1.6; color: var(--ink4); margin: 14px 0 0; }
-.note b { color: var(--ink2); font-weight: 400; }
+.levels { margin-top: 10px; }

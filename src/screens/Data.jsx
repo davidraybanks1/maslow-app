@@ -1,9 +1,10 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo, useEffect, useRef, cloneElement } from 'react'
 import { allNeeds, MODE_ORDER } from '../lib/constants'
 import { createDataStats } from '../lib/dataStats'
 import { normalizeBand, BAND_LABEL } from '../lib/frequency'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import { useChartCapture } from '../lib/useChartCapture'
+import { isoWeek } from '../lib/isoWeek'
 import RootsSection from '../components/RootsSection'
 import ThreadsSection from '../components/ThreadsSection'
 import StreaksRail from '../components/StreaksRail'
@@ -11,6 +12,7 @@ import StrataRibbon from '../components/StrataRibbon'
 import FinePrint from '../components/FinePrint'
 import FirstWeekCard from '../components/FirstWeekCard'
 import GhostPreview from '../components/GhostPreview'
+import { Dateline, LabelRow, ProfileBadge, ProgressRule, SectionTitle, WordTabs } from '../components/loam'
 import { sampleAlmanacData } from '../lib/previewSamples'
 import { buildLadder } from '../lib/ladder'
 import { buildInsights } from '../lib/insights'
@@ -23,40 +25,28 @@ const PERIODS = [
 
 const MODE_THRESHOLDS = { exploration: 80, appreciation: 60, nourishment: 50, survival: 20 }
 
-// 7px dots use deep sage for appreciation (< 12px threshold)
-const TIER_DOT = {
-  exploration: '#1B3A2D',
-  appreciation: '#ABBEA3',
-  nourishment: '#F5B622',
-  survival: '#F55127',
+const MODE_FILL = {
+  exploration: 'var(--loam-exploration)',
+  appreciation: 'var(--loam-appreciation)',
+  nourishment: 'var(--loam-nourishment)',
+  survival: 'var(--loam-survival)',
 }
-// bars keep brand sage for appreciation
-const TIER_BAR = {
-  exploration: '#1B3A2D',
-  appreciation: '#ABBEA3',
-  nourishment: '#F5B622',
-  survival: '#F55127',
+const MOOD_FILL = { good: 'var(--loam-mood-good)', mid: 'var(--loam-mood-fine)', bad: 'var(--loam-mood-bad)' }
+
+// Ledger cells: the run you are on is solid, days behind it are a lighter tint
+// of the same colour. Appreciation steps down to its text shade, because its
+// fill at lower alpha disappears into the paper.
+const CELL_SOLID = {
+  exploration: 'var(--loam-exploration)',
+  appreciation: 'var(--loam-appreciation-text)',
+  nourishment: 'var(--loam-nourishment)',
+  survival: 'var(--loam-survival)',
 }
-// One light source at 34% / 26%, the way every other object in the app is lit.
-// Appreciation runs to ink because sage on paper is about 1.8:1.
-const TIER_RAMP = {
-  exploration: ['#2E8A64', '#0C5038'],
-  appreciation: ['#B4C4AC', '#536E4D'],
-  nourishment: ['#FFD166', '#F0A800'],
-  survival: ['#FF7A55', '#F03C10'],
-}
-// The run behind you is a wash of the same colour; only the run you are on is
-// paint. Contrast is value, not alpha — the same hue at lower opacity left
-// sage sitting on sage.
-const TIER_WASH = {
-  exploration: '#2E8A6459',
-  appreciation: '#B0C2A8',
-  nourishment: '#FFD166A6',
-  survival: '#FF7A5559',
-}
-const petal = mode => {
-  const r = TIER_RAMP[mode] || TIER_RAMP.exploration
-  return `radial-gradient(circle at 34% 26%, ${r[0]}, ${r[1]})`
+const CELL_TINT = {
+  exploration: '#1E3B2E73',
+  appreciation: 'var(--loam-appreciation)',
+  nourishment: '#F2AE1A73',
+  survival: '#E8502E73',
 }
 
 // Rolling window ending today; comparison = same length immediately prior.
@@ -117,6 +107,16 @@ function buildRange(period, offset) {
   return { keys, prevKeys, title, label, todayKey, elapsed: keys.filter(dk => dk <= todayKey) }
 }
 
+const MON_CAPS = MONTHS.map(m => m.slice(0, 3).toUpperCase())
+
+/** OCT 12–18 for a week, OCT 26–NOV 1 across a month, SEPTEMBER for a month. */
+function spanLabel(keys, period) {
+  const [, m0, d0] = keys[0].split('-').map(Number)
+  if (period === 30) return MONTHS[m0 - 1].toUpperCase()
+  const [, m1, d1] = keys[keys.length - 1].split('-').map(Number)
+  return m0 === m1 ? `${MON_CAPS[m0 - 1]} ${d0}–${d1}` : `${MON_CAPS[m0 - 1]} ${d0}–${MON_CAPS[m1 - 1]} ${d1}`
+}
+
 function buildNeedDeltas(canvas, checkins, cur, pri) {
   if (!cur.length || !pri.length) return []
   return allNeeds().filter(n => canvas[n.id]).map(need => {
@@ -130,28 +130,31 @@ function buildNeedDeltas(canvas, checkins, cur, pri) {
   })
 }
 
-/** Where the need was, where it is, and the move between — the ladder's grammar. */
-function MoverSlope({ pct, delta }) {
+/** Where the need was (○), where it is (●), and the move between. */
+function MoverSlope({ pct, delta, mode }) {
   const clamp = v => Math.max(2, Math.min(98, v))
   const was = clamp(pct - delta), now = clamp(pct)
-  const up = delta >= 0
-  const ramp = up ? ['#3FA87A', '#07301F'] : ['#FF8A66', '#A81F06']
+  const color = MODE_FILL[mode] || 'var(--loam-ink)'
   return (
-    <div className={styles.moverBarTrack}>
-      <span className={styles.moverSlopeLine} />
-      <span className={styles.moverSlopeRun} style={{
-        left: `${Math.min(was, now)}%`, width: `${Math.abs(now - was)}%`,
-        background: `linear-gradient(90deg, ${ramp[0]}, ${ramp[1]})`,
-      }} />
-      <span className={styles.moverSlopeDot} style={{ left: `${was}%`, background: 'rgba(0,0,0,.18)' }} />
-      <span className={styles.moverSlopeDot} style={{
-        left: `${now}%`, background: `radial-gradient(circle at 34% 26%, ${ramp[0]}, ${ramp[1]})`,
-      }} />
+    <div className={styles.moverTrack}>
+      <span className={styles.moverLine} />
+      <span className={styles.moverRun} style={{ left: `${Math.min(was, now)}%`, width: `${Math.abs(now - was)}%`, background: color }} />
+      <span className={styles.moverWas} style={{ left: `${was}%` }} />
+      <span className={styles.moverNow} style={{ left: `${now}%`, background: color }} />
     </div>
   )
 }
 
-function WhatChanged({ range, canvas, checkins }) {
+const signed = n => `${n > 0 ? '+' : n < 0 ? '−' : ''}${Math.abs(n)}`
+
+function compareLabels(range, offset) {
+  const unit = range.keys.length > 7 ? 'MONTH' : 'WEEK'
+  if (offset === 0) return { cur: `THIS ${unit}`, prev: `LAST ${unit}` }
+  if (offset === 1) return { cur: `LAST ${unit}`, prev: `${unit} BEFORE` }
+  return { cur: `THAT ${unit}`, prev: `${unit} BEFORE` }
+}
+
+function WhatChanged({ range, offset, canvas, checkins, dock }) {
   // only the days that have happened count against you
   const needDeltas = useMemo(
     () => buildNeedDeltas(canvas, checkins, range.elapsed, range.prevKeys),
@@ -167,31 +170,27 @@ function WhatChanged({ range, canvas, checkins }) {
   for (const ns of fallers) modeCounts[ns.mode] = (modeCounts[ns.mode] || 0) + 1
   const topEntry = Object.entries(modeCounts).sort((a, b) => b[1] - a[1])[0]
   const closingRead = topEntry && topEntry[1] >= 2 && fallers.length >= 2
-    ? `${topEntry[1] === fallers.length ? 'All' : topEntry[1]} of the needs losing ground are in ${topEntry[0]} mode.`
+    ? `${topEntry[1] === fallers.length ? 'all' : 'two'} of the needs losing ground are in ${topEntry[0]}.`
     : null
+  const { cur, prev } = compareLabels(range, offset)
 
   return (
-    <section className={`${styles.section} ${styles.sectionCard}`}>
-      <div className={styles.sectionHeader}>
-        <span className={styles.sectionLabel}>WHAT CHANGED</span>
-        <span className={styles.sectionMeta}>against the {range.keys.length > 7 ? 'month' : 'week'} before</span>
-      </div>
+    <section className={styles.block} data-dock={dock}>
+      <SectionTitle lead="what" turn="changed." />
+      <div className={styles.afterTitle}><LabelRow left="NEED" right={`${prev} ○ → ● ${cur}`} /></div>
       {rows.map(ns => (
         <div key={ns.need.id} className={styles.moverRow}>
-          <span className={styles.moverDot} style={{ background: petal(ns.mode) }} />
           <span className={styles.moverName}>{ns.need.name}</span>
-          <MoverSlope pct={ns.pct} delta={ns.delta} />
-          <span className={styles.moverValue}>{ns.pct}%</span>
-          <span className={`${styles.moverDelta} ${ns.delta > 0 ? styles.moverDeltaUp : ns.delta < 0 ? styles.moverDeltaDown : styles.moverDeltaFlat}`}>
-            {ns.delta > 0 ? '+' : ''}{ns.delta}
-          </span>
+          <MoverSlope pct={ns.pct} delta={ns.delta} mode={ns.mode} />
+          <span className={`${styles.moverDelta} ${ns.delta > 0 ? styles.moverDeltaUp : styles.moverDeltaDown}`}>{signed(ns.delta)}</span>
         </div>
       ))}
-      {closingRead && <p className={styles.sectionRead}>{closingRead}</p>}
+      {closingRead && <p className={styles.closingRead}>{closingRead}</p>}
     </section>
   )
 }
 
+const WEEKDAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
 const WEEKDAY_LETTERS = ['m', 't', 'w', 't', 'f', 's', 's']
 
 function formatDkLabel(dk) {
@@ -206,88 +205,126 @@ function dayCompPct(canvas, checkins, dk) {
   return Math.round(met / active.length * 100)
 }
 
-function dominantMoodFor(moods, dk) {
-  const dayMoods = moods.filter(m => m.date_key === dk)
-  if (!dayMoods.length) return null
-  const c = {}
-  for (const m of dayMoods) { const band = normalizeBand(m.mood); c[band] = (c[band] || 0) + 1 }
-  return Object.entries(c).sort((a, b) => b[1] - a[1])[0][0]
+const SLOT_RANK = { morning: 0, midday: 1, evening: 2 }
+
+/** Every check-in's band for each day, in the order of the day. */
+function moodsByDay(moods) {
+  const out = {}
+  for (const m of moods || []) {
+    if (!m?.date_key) continue
+    ;(out[m.date_key] ||= []).push(m)
+  }
+  for (const list of Object.values(out)) list.sort((a, b) => (SLOT_RANK[a.prompt_time] ?? 9) - (SLOT_RANK[b.prompt_time] ?? 9))
+  return out
 }
 
-/* One light source at 34% / 26%, the way the bloom and the streak glyphs
-   are lit. A bar that met the day is nourishment's full ramp; a bar that
-   fell short is the same ramp washed back. The mood dots and the feels
-   stacks use the band ramps. */
-const LIT = (a, b) => `radial-gradient(circle at 34% 26%, ${a}, ${b})`
-const BAR_FULL = LIT('#FFD166', '#F0A800')
-const BAR_WASH = LIT('#FFE6A6', '#F5C542')
-const MOOD_RAMP = { good: ['#3FA87A', '#07301F'], mid: ['#B4C4AC', '#3E5238'], bad: ['#FF8A66', '#A81F06'] }
-const MOOD_LIT = Object.fromEntries(Object.entries(MOOD_RAMP).map(([k, [a, b]]) => [k, LIT(a, b)]))
+function MoodDots({ list }) {
+  return (
+    <span className={styles.dots}>
+      {list.map((m, i) => {
+        const band = normalizeBand(m.mood)
+        return <i key={i} style={{ background: MOOD_FILL[band] || 'var(--loam-track)' }} />
+      })}
+    </span>
+  )
+}
+
+function dayAria(dk, pct, list) {
+  const bands = list.map(m => BAND_LABEL[normalizeBand(m.mood)] || m.mood).join(', ')
+  return `${formatDkLabel(dk)}: ${pct}% of needs met${bands ? `; checked in ${bands}` : ''}`
+}
 
 function RhythmSection({ canvas, checkins, moods, range }) {
   const monthly = range.keys.length > 7
   const { keys, todayKey } = range
-  const chartRef = useChartCapture('data-rhythm', 'your rhythm')
-  // in the month view a Monday is labelled with its date; the rest stay blank
-  const dayLabel = (dk, i) => {
-    if (!monthly) return WEEKDAY_LETTERS[i]
-    const [y, m, d] = dk.split('-').map(Number)
-    return new Date(y, m - 1, d).getDay() === 1 ? String(d) : ''
-  }
+  const chartRef = useChartCapture('data-rhythm', 'this week')
+  const byDay = useMemo(() => moodsByDay(moods), [moods])
+  const [y0, m0, d0] = keys[0].split('-').map(Number)
+  const blanks = (new Date(y0, m0 - 1, d0).getDay() + 6) % 7
 
   return (
-    <section ref={chartRef} className={`${styles.section} ${styles.sectionCard} ${styles.rhythmCard}`}>
-      <div className={styles.sectionHeader}>
-        <span className={styles.sectionLabel}>YOUR RHYTHM</span>
-      </div>
-      <div className={`${styles.rhythmGrid}${monthly ? ` ${styles.rhythmGridMonth}` : ''}`}>
-        {keys.map((dk, i) => {
-          const pct = dayCompPct(canvas, checkins, dk)
-          const mood = dominantMoodFor(moods, dk)
-          const isToday = dk === todayKey
-          const isFuture = dk > todayKey
-          const barColor = isToday || pct >= 70 ? BAR_FULL : BAR_WASH
-          const dotColor = mood ? MOOD_LIT[mood] : 'rgba(0,0,0,.06)'
-          return (
-            <div key={dk} className={styles.rhythmCol}>
-              <div className={styles.rhythmBarArea}>
-                {!isFuture && pct > 0 && (
-                  <div className={styles.rhythmBar} style={{ height: `${pct}%`, background: barColor }} />
-                )}
+    <div ref={chartRef}>
+      {monthly ? (
+        <div className={styles.calendar}>
+          {WEEKDAY_LETTERS.map((l, i) => <span key={i} className={styles.calHead}>{l}</span>)}
+          {Array.from({ length: blanks }, (_, i) => <span key={`b${i}`} />)}
+          {keys.map(dk => {
+            const pct = dayCompPct(canvas, checkins, dk)
+            const list = byDay[dk] || []
+            const future = dk > todayKey
+            const today = dk === todayKey
+            return (
+              <div key={dk} className={`${styles.calCell}${future ? ` ${styles.future}` : ''}`}>
+                <span className={`${styles.calDay}${today ? ` ${styles.today}` : ''}`}>{Number(dk.slice(8))}</span>
+                <span className={styles.calPct}>{future ? '–' : pct}</span>
+                <ProgressRule bare tour={null} muted={future} pct={future ? 0 : pct} label={future ? `${formatDkLabel(dk)}: still to come` : dayAria(dk, pct, list)} />
+                <MoodDots list={list} />
               </div>
-              <div className={styles.rhythmDot} style={{ background: dotColor }} />
-              <span className={`${styles.rhythmLetter}${isToday ? ` ${styles.rhythmLetterToday}` : ''}`}>
-                {dayLabel(dk, i)}
-              </span>
-            </div>
-          )
-        })}
+            )
+          })}
+        </div>
+      ) : keys.map((dk, i) => {
+        const pct = dayCompPct(canvas, checkins, dk)
+        const list = byDay[dk] || []
+        const future = dk > todayKey
+        return (
+          <div key={dk} className={styles.dayRow}>
+            <span className={`${styles.dayName}${future ? ` ${styles.future}` : ''}${dk === todayKey ? ` ${styles.today}` : ''}`}>{WEEKDAYS[i]}</span>
+            <ProgressRule bare tour={null} muted={future} pct={future ? 0 : pct} label={future ? `${formatDkLabel(dk)}: still to come` : dayAria(dk, pct, list)} />
+            <span className={styles.dayPct}>{future ? '–' : `${pct}%`}</span>
+            <MoodDots list={list} />
+          </div>
+        )
+      })}
+      <div className={styles.legend}>
+        <span>RULE = NEEDS MET</span>
+        <span className={styles.legendKey}>
+          {['good', 'mid', 'bad'].map(b => <span key={b}><i style={{ background: MOOD_FILL[b] }} />{BAND_LABEL[b]}</span>)}
+        </span>
       </div>
-      <p className={styles.rhythmLegend}>{'bar\u00a0=\u00a0practices met · dot\u00a0=\u00a0mood'}</p>
-    </section>
+    </div>
   )
 }
 
-const MOOD_LENS_COLOR = { good: '#1B3A2D', mid: '#9DB394', bad: '#D93B1C' }
-const EMPTY_CELL = 'rgba(0,0,0,.06)'
+const EMPTY_CELL = 'var(--loam-track)'
 
 const MOBILE_WINDOW = 30
-// Clamped to store's 30-day checkins fetch; raise both together when that widens.
 const DESKTOP_WINDOW = 30
 
-/* ── Your feels: how the days felt, one column each ──────────────────── */
+/* ── How the days felt: one column each, folded under this week ──────── */
+
+function FeelsChart({ days, peak, monthly, todayKey, dayLabel }) {
+  const chartRef = useChartCapture('data-feels', 'how the days felt')
+  return (
+    <div ref={chartRef} className={styles.feels}>
+      <div className={styles.legendKey}>
+        {['good', 'mid', 'bad'].map(b => <span key={b}><i style={{ background: MOOD_FILL[b] }} />{BAND_LABEL[b]}</span>)}
+      </div>
+      <div className={`${styles.feelGrid}${monthly ? ` ${styles.feelGridMonth}` : ''}`}>
+        {days.map((d, i) => (
+          <div key={d.dk} className={styles.feelCol}>
+            <div className={styles.feelStack}>
+              {d.dk <= todayKey && d.n === 0 && <i className={styles.feelEmpty} />}
+              {['bad', 'mid', 'good'].map(b => d[b] > 0 && (
+                <i key={b} style={{ height: `${(d[b] / peak) * 100}%`, background: MOOD_FILL[b] }} />
+              ))}
+            </div>
+            <span className={`${styles.feelLabel}${d.dk === todayKey ? ` ${styles.feelLabelToday}` : ''}`}>{dayLabel(d.dk, i)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 function FeelsSection({ moods, range }) {
+  const [open, setOpen] = useState(false)
   const monthly = range.keys.length > 7
-  const { keys, prevKeys, todayKey } = range
-  const chartRef = useChartCapture('data-feels', 'your feels')
+  const { keys, todayKey } = range
 
   const { days, total } = useMemo(() => {
     const tally = keys.map(dk => ({ dk, good: 0, mid: 0, bad: 0, n: 0 }))
     const idx = new Map(keys.map((dk, i) => [dk, i]))
-    const prev = new Set(prevKeys)
-    let prevGood = 0, prevN = 0
-    const wc = {}
     for (const m of moods || []) {
       if (!m?.date_key) continue
       const band = normalizeBand(m.mood)
@@ -296,17 +333,10 @@ function FeelsSection({ moods, range }) {
         const t = tally[i]
         if (t[band] !== undefined) t[band]++
         t.n++
-        if (m.feeling) wc[m.feeling] = (wc[m.feeling] || 0) + 1
-      } else if (prev.has(m.date_key)) {
-        prevN++
-        if (band === 'good') prevGood++
       }
     }
-    const total = tally.reduce((s, t) => s + t.n, 0)
-    const good = tally.reduce((s, t) => s + t.good, 0)
-    const words = Object.entries(wc).sort((a, b) => b[1] - a[1]).slice(0, 2)
-    return { days: tally, total, good, prevPct: prevN ? Math.round(prevGood / prevN * 100) : null, prevTotal: prevN, words }
-  }, [moods, keys, prevKeys])
+    return { days: tally, total: tally.reduce((s, t) => s + t.n, 0) }
+  }, [moods, keys])
 
   if (!total) return null
 
@@ -318,33 +348,12 @@ function FeelsSection({ moods, range }) {
   }
 
   return (
-    <section ref={chartRef} className={`${styles.section} ${styles.sectionCard}`}>
-      <div className={styles.sectionHeader}>
-        <span className={styles.sectionLabel}>YOUR FEELS</span>
-        <span className={styles.sectionMeta}>
-          {['good', 'mid', 'bad'].map(b => (
-            <span key={b} className={styles.feelKey}><i style={{ background: MOOD_LIT[b] }} />{BAND_LABEL[b]}</span>
-          ))}
-        </span>
-      </div>
-      <div className={`${styles.feelGrid}${monthly ? ` ${styles.feelGridMonth}` : ''}`}>
-        {days.map((d, i) => {
-          const isToday = d.dk === todayKey
-          const isFuture = d.dk > todayKey
-          return (
-            <div key={d.dk} className={styles.feelCol}>
-              <div className={styles.feelStack}>
-                {!isFuture && d.n === 0 && <i className={styles.feelEmpty} />}
-                {['bad', 'mid', 'good'].map(b => d[b] > 0 && (
-                  <i key={b} style={{ height: `${(d[b] / peak) * 100}%`, background: MOOD_LIT[b] }} />
-                ))}
-              </div>
-              <span className={`${styles.rhythmLetter}${isToday ? ` ${styles.rhythmLetterToday}` : ''}`}>{dayLabel(d.dk, i)}</span>
-            </div>
-          )
-        })}
-      </div>
-    </section>
+    <div>
+      <button type="button" className={styles.foldLink} aria-expanded={open} onClick={() => setOpen(o => !o)}>
+        how the days felt {open ? '▴' : '▾'}
+      </button>
+      {open && <FeelsChart days={days} peak={peak} monthly={monthly} todayKey={todayKey} dayLabel={dayLabel} />}
+    </div>
   )
 }
 
@@ -390,12 +399,10 @@ function RibbonsSection({ canvas, checkins, practicesDB, days, windowLen, isDesk
   useEffect(() => () => clearTimeout(ribbonTimerRef.current), [])
 
   return (
-    <section ref={chartRef} className={`${styles.section} ${styles.sectionCard}`}>
-      <div className={styles.sectionHeader}>
-        <span className={styles.sectionLabel}>EACH NEED, DAY BY DAY</span>
-        <span className={styles.sectionMeta}>lit = running now</span>
-      </div>
-      <div className={styles.ribbonStack}>
+    <section ref={chartRef} className={styles.block} data-dock="DATA · LAST 30 DAYS">
+      <SectionTitle lead="your" turn="ledger." />
+      <div className={styles.afterTitle}><LabelRow left="EACH NEED, DAY BY DAY" right={`${windowLen} DAYS`} /></div>
+      <div>
         {needRows.map(({ need, mode, daysActive, isDormant, sinceMonth, run }) => {
           const isOpen = openNeed === need.id
           const practices = practicesDB.filter(p => p.need_id === need.id)
@@ -412,24 +419,25 @@ function RibbonsSection({ canvas, checkins, practicesDB, days, windowLen, isDesk
           return (
             <div key={need.id} className={styles.ribbonRow}>
               <button
+                type="button"
                 className={styles.ribbonHeader}
+                aria-expanded={isOpen}
                 onClick={() => setOpenNeed(isOpen ? null : need.id)}
               >
-                <span className={styles.moverDot} style={{ background: TIER_DOT[mode] }} />
                 <span className={`${styles.ribbonName}${isDormant ? ` ${styles.ribbonNameDormant}` : ''}`}>
                   {need.name}
                 </span>
                 {isDormant ? (
-                  <span className={styles.ribbonStatDormant}>
-                    {sinceMonth ? `nothing logged since ${sinceMonth}` : 'nothing logged'}
+                  <span className={styles.ribbonStat}>
+                    {sinceMonth ? `NOTHING LOGGED SINCE ${sinceMonth.toUpperCase()}` : 'NOTHING LOGGED'}
                   </span>
                 ) : (
                   <span className={styles.ribbonStat}>
-                    {daysActive} of {windowLen} days
-                    {run && ` · ${run.count}${run.atEdge ? '+' : ''} ${run.isStreak ? 'day streak' : 'days quiet'}`}
+                    {daysActive} OF {windowLen}
+                    {run && ` · ${run.count}${run.atEdge ? '+' : ''}${run.isStreak ? '-DAY STREAK' : ' DAYS QUIET'}`}
                   </span>
                 )}
-                <span className={styles.ribbonChevron}>{isOpen ? '▴' : '▾'}</span>
+                <span className={styles.ribbonChevron} aria-hidden="true">{isOpen ? '▴' : '▾'}</span>
               </button>
 
               {/* Need band — one cell per day */}
@@ -444,8 +452,8 @@ function RibbonsSection({ canvas, checkins, practicesDB, days, windowLen, isDesk
                       background: !(checkins[dk] || []).some(e => e.need_id === need.id)
                         ? EMPTY_CELL
                         : run?.isStreak && i >= days.length - run.count
-                          ? petal(mode)
-                          : (TIER_WASH[mode] || TIER_WASH.exploration),
+                          ? CELL_SOLID[mode]
+                          : (CELL_TINT[mode] || CELL_TINT.exploration),
                     }}
                   />
                 ))}
@@ -501,7 +509,7 @@ function RibbonsSection({ canvas, checkins, practicesDB, days, windowLen, isDesk
                                 <div
                                   key={i}
                                   className={styles.practiceBandCell}
-                                  style={{ background: done ? TIER_BAR[mode] : EMPTY_CELL }}
+                                  style={{ background: done ? CELL_SOLID[mode] : EMPTY_CELL }}
                                 />
                               ))}
                             </div>
@@ -521,7 +529,7 @@ function RibbonsSection({ canvas, checkins, practicesDB, days, windowLen, isDesk
   )
 }
 
-function InsightsCard({ insights }) {
+function InsightsCard({ insights, dock }) {
   const [activeIdx, setActiveIdx] = useState(0)
   const wrapperRef = useRef(null)
 
@@ -542,124 +550,164 @@ function InsightsCard({ insights }) {
   const cards = insights.length > 0 ? insights : [null]
 
   return (
-    <div className={styles.insightDeck}>
-      <div ref={wrapperRef} className={styles.insightDeckWrapper} onScroll={handleScroll}>
-        {cards.map((insight, i) => (
-          <div key={insight ? insight.id : 'empty'} className={styles.insightCard}>
+    <section className={styles.block} data-dock={dock}>
+      <div className={styles.obsHead}>OBSERVATION</div>
+      <div ref={wrapperRef} className={styles.obsDeck} onScroll={handleScroll}>
+        {cards.map(insight => (
+          <div key={insight ? insight.id : 'empty'} className={styles.obsSlide}>
             {insight ? (
               <>
-                <p className={styles.insightFinding} data-len={insight.text.length > 150 ? 'long' : insight.text.length > 90 ? 'mid' : undefined}>{insight.text}</p>
-                <p className={styles.insightBasis}>{insight.basis}</p>
+                {insight.stat && <span className={styles.obsStat}>{insight.stat}</span>}
+                <p className={styles.obsText}>{insight.rest ?? insight.text}</p>
+                <p className={styles.obsBasis}>{insight.basis}</p>
               </>
             ) : (
-              <p className={styles.insightFinding}>log moods and practices for a few more days — patterns take a little time to emerge.</p>
+              <p className={styles.obsText}>log moods and practices for a few more days — patterns take a little time to emerge.</p>
             )}
           </div>
         ))}
       </div>
       {insights.length > 1 && (
-        <div className={styles.insightDeckFooter}>
-          <span className={styles.insightDeckCounter}>{activeIdx + 1}/{insights.length}</span>
-          <div className={styles.insightDeckNav}>
-            <button className={styles.insightDeckArrow} onClick={() => advance(-1)} aria-label="previous insight">‹</button>
-            <button className={styles.insightDeckArrow} onClick={() => advance(1)} aria-label="next insight">›</button>
-          </div>
+        <div className={styles.pager}>
+          <button type="button" className={styles.pagerBtn} onClick={() => advance(-1)} aria-label="previous insight">←</button>
+          <span>{activeIdx + 1}/{insights.length}</span>
+          <button type="button" className={styles.pagerBtn} onClick={() => advance(1)} aria-label="next insight">→</button>
         </div>
       )}
-    </div>
+    </section>
   )
 }
 
-function AllNumbersSection({ range, canvas, checkins }) {
+function AllNumbersSection({ range, canvas, checkins, days }) {
   const [open, setOpen] = useState(false)
   const periodDays = range.elapsed
+  const priorDays = range.prevKeys
+  const unit = range.keys.length > 7 ? 'MONTH' : 'WEEK'
 
-  const modeData = useMemo(() => {
-    return MODE_ORDER.map(mode => {
+  const { modeData, totals } = useMemo(() => {
+    const countMet = (need, keys) => keys.filter(dk => (checkins[dk] || []).some(e => e.need_id === need.id)).length
+    const totals = { met: 0, possible: 0, lastMet: 0, lastPossible: 0, windowMet: 0, windowPossible: 0 }
+    const modeData = MODE_ORDER.map(mode => {
       const needsInMode = allNeeds().filter(n => canvas[n.id] === mode)
       if (!needsInMode.length) return null
       let totalMet = 0, totalPossible = 0
       const needRows = needsInMode.map(need => {
-        const met = periodDays.filter(dk => (checkins[dk] || []).some(e => e.need_id === need.id)).length
+        const met = countMet(need, periodDays)
         const total = periodDays.length
+        const last = countMet(need, priorDays)
+        const inWindow = countMet(need, days)
         totalMet += met
         totalPossible += total
-        return { need, met, total, pct: total > 0 ? Math.round(met / total * 100) : 0 }
+        totals.lastMet += last
+        totals.lastPossible += priorDays.length
+        totals.windowMet += inWindow
+        totals.windowPossible += days.length
+        return {
+          need, met, total, last, lastTotal: priorDays.length,
+          pct: total > 0 ? Math.round(met / total * 100) : 0,
+          windowPct: days.length > 0 ? Math.round(inWindow / days.length * 100) : 0,
+        }
       })
+      totals.met += totalMet
+      totals.possible += totalPossible
       const modePct = totalPossible > 0 ? Math.round(totalMet / totalPossible * 100) : 0
       return { mode, modePct, needRows }
     }).filter(Boolean)
-  }, [canvas, checkins, periodDays])
+    return { modeData, totals }
+  }, [canvas, checkins, periodDays, priorDays, days])
 
   if (!modeData.length) return null
 
   return (
-    <section className={styles.section}>
-      <button className={styles.allNumsHeader} onClick={() => setOpen(o => !o)}>
-        <span className={styles.sectionLabel}>ALL THE NUMBERS</span>
-        <span className={styles.sectionMeta}>by mode and need · {range.title.toLowerCase()}</span>
-        <span className={styles.ribbonChevron}>{open ? '▴' : '▾'}</span>
+    <>
+      <button type="button" className={styles.foldLink} aria-expanded={open} onClick={() => setOpen(o => !o)}>
+        all the numbers {open ? '▴' : '▾'}
       </button>
 
       {open && (
-        <>
-          <div className={styles.allNumsCards}>
-            {modeData.map(({ mode, modePct, needRows }) => (
-              <div key={mode} className={styles.allNumsCard}>
-                <div className={styles.allNumsModeHeader}>
-                  <span className={styles.moverDot} style={{ background: TIER_DOT[mode] }} />
-                  <span className={styles.allNumsModeName}>{mode}</span>
-                  <span className={styles.allNumsModeValue}>{modePct}%</span>
+        <section className={styles.block} data-dock="DATA · ALL THE NUMBERS">
+          <SectionTitle lead="all the" turn="numbers." sub="every need, plainly. grouped by chapter, i. to iv." />
+          <div className={`${styles.numsGrid} ${styles.numsHead}`}>
+            <span>NEED</span><span>{unit}</span><span>LAST</span><span>30D</span>
+          </div>
+          {modeData.map(({ mode, modePct, needRows }) => (
+            <div key={mode} className={styles.numsChapter}>
+              {needRows.map(({ need, met, total, pct, last, lastTotal, windowPct }) => (
+                <div key={need.id} className={`${styles.numsGrid} ${styles.numsRow}`}>
+                  <span className={styles.numsName}><i style={{ background: MODE_FILL[mode] }} />{need.name}</span>
+                  <span>{met}/{total} <small>{pct}%</small></span>
+                  <span className={styles.numsLast}>{last}/{lastTotal}</span>
+                  <span>{windowPct}%</span>
                 </div>
-                <div className={styles.allNumsBarWrap}>
-                  <div className={styles.allNumsBarTrack}>
-                    <div className={styles.allNumsBarFill} style={{ width: `${modePct}%`, background: TIER_BAR[mode] }} />
-                  </div>
-                  <div className={styles.allNumsPaceTick} style={{ left: `${MODE_THRESHOLDS[mode]}%` }} />
-                </div>
-                {needRows.map(({ need, met, total, pct }) => (
-                  <div key={need.id} className={styles.allNumsNeedRow}>
-                    <span className={styles.allNumsNeedName}>{need.name}</span>
-                    <span className={styles.allNumsFraction}>{met} of {total}</span>
-                    <span className={styles.allNumsPct}>{pct}%</span>
-                  </div>
-                ))}
+              ))}
+              <div className={styles.numsSubtotal}>
+                <span>{mode}</span>
+                <span>{modePct}% · pace {MODE_THRESHOLDS[mode]}</span>
               </div>
-            ))}
+            </div>
+          ))}
+          <div className={styles.numsTotal}>
+            <span>TOTAL</span>
+            <span>
+              {totals.met}/{totals.possible} · {totals.lastMet}/{totals.lastPossible} · {totals.windowPossible > 0 ? Math.round(totals.windowMet / totals.windowPossible * 100) : 0}%
+            </span>
           </div>
           <FinePrint>
-            <p>Each bar is how often you met that mode's needs in this window: days you logged something for a need, out of the days you could have. The needs underneath are the same thing, one at a time.</p>
-            <p>The little tick on each bar is the pace your canvas implies for that mode. Past the tick, you're doing more than you set out to; short of it, less. Neither is a grade.</p>
+            <p>Each chapter&apos;s number is how often you met its needs in this window: days you logged something for a need, out of the days you could have. The needs above it are the same thing, one at a time.</p>
+            <p>Pace is what your canvas implies for that chapter. Past it, you&apos;re doing more than you set out to; short of it, less. Neither is a grade.</p>
           </FinePrint>
-        </>
+          <p className={styles.closingRead}>that&apos;s the end of the page.</p>
+        </section>
       )}
-    </section>
+    </>
   )
 }
 
-/* A titled band of the page. The four drawn sections carry their own; these
-   wrap the cards that live in this file. */
-function Group({ title, sub, aside, first, children }) {
-  return (
-    <section className={`${styles.group}${first ? ` ${styles.groupFirst}` : ''}`}>
-      <div className={styles.groupHead}>
-        <div>
-          <h2 className={styles.groupTitle}>{title}</h2>
-          {sub && <div className={styles.groupSub}>{sub}</div>}
-        </div>
-        {aside}
-      </div>
-      <div className={styles.groupBody}>{children}</div>
-    </section>
-  )
+/* The scroller is App's [data-scroll] on a phone and the side panel's own box
+   on a desktop; the header docks against whichever one this page is in. */
+function scrollParent(el) {
+  for (let n = el?.parentElement; n; n = n.parentElement) {
+    if (/(auto|scroll)/.test(getComputedStyle(n).overflowY)) return n
+  }
+  return null
 }
 
-export default function Data({ state, profileMenu, compact = false }) {
+const DOCK_H = 48
+
+/* Once a section with a data-dock line reaches the top, its line becomes the
+   header. Above the first of them the page's own dateline is still on screen. */
+function useDockLine(rootRef) {
+  const [line, setLine] = useState(null)
+  useEffect(() => {
+    const root = rootRef.current
+    const scroller = scrollParent(root)
+    if (!root || !scroller) return
+    const read = () => {
+      const edge = scroller.getBoundingClientRect().top + DOCK_H
+      // the last section may be too short to ever reach the top; at the end of the page it has arrived
+      const atEnd = scroller.scrollTop > 0 && scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 2
+      let cur = null
+      root.querySelectorAll('[data-dock]').forEach(s => { if (atEnd || s.getBoundingClientRect().top <= edge) cur = s.dataset.dock })
+      setLine(cur)
+    }
+    read()
+    scroller.addEventListener('scroll', read, { passive: true })
+    // a strata range or an opened section can change the line without a scroll
+    const mo = new MutationObserver(read)
+    mo.observe(root, { subtree: true, childList: true, attributes: true, attributeFilter: ['data-dock'] })
+    return () => { scroller.removeEventListener('scroll', read); mo.disconnect() }
+  }, [rootRef])
+  return line
+}
+
+export default function Data({ state, profileMenu, profileMenuRef, compact = false }) {
   const [period, setPeriodRaw] = useState(7)
   const [offset, setOffset] = useState(0)
   const setPeriod = p => { setPeriodRaw(p); setOffset(0) }
   // `compact` is the side panel on a desktop: the phone layout, in a narrow column
   const isDesktop = useIsDesktop() && !compact
+  const rootRef = useRef(null)
+  const dockLine = useDockLine(rootRef)
 
   const canvas      = state?.canvas      ?? {}
   const checkins    = state?.checkins    ?? {}
@@ -687,84 +735,82 @@ export default function Data({ state, profileMenu, compact = false }) {
     return dks[0] ?? null
   }, [checkins, moods])
   const canGoBack = !!earliestDk && earliestDk < range.keys[0]
-  const rangeNav = (
-    <div className={styles.rangeNav}>
-      <button type="button" className={styles.rangeBtn} onClick={() => setOffset(o => o + 1)} disabled={!canGoBack} aria-label={`previous ${period === 30 ? 'month' : 'week'}`}>‹</button>
-      <span className={styles.rangeLabel}>{range.label}</span>
-      <button type="button" className={styles.rangeBtn} onClick={() => setOffset(o => o - 1)} disabled={offset === 0} aria-label={`next ${period === 30 ? 'month' : 'week'}`}>›</button>
-      {offset > 0 && <button type="button" className={styles.rangeNow} onClick={() => setOffset(0)}>now</button>}
-    </div>
-  )
 
-  const periodToggleEl = (
-    <div className={styles.periodToggle}>
-      {PERIODS.map(p => (
-        <button
-          key={p.days}
-          className={`${styles.periodPill}${period === p.days ? ` ${styles.periodPillActive}` : ''}`}
-          onClick={() => setPeriod(p.days)}
-        >{p.label}</button>
-      ))}
-    </div>
-  )
+  const prevLabel = spanLabel(buildRange(period, offset + 1).keys, period)
+  const nextLabel = spanLabel(buildRange(period, offset - 1).keys, period)
+  const rangeLine = period === 30
+    ? `${spanLabel(range.keys, period)} ${range.keys[0].slice(0, 4)}`
+    : spanLabel(range.keys, period)
+  const masthead = period === 30 ? `DATA · ${rangeLine}` : `DATA · ${rangeLine} · WEEK ${isoWeek(range.keys[0])}`
+  const dock = `DATA · ${rangeLine}`
+  const unit = period === 30 ? 'month' : 'week'
+
+  const initial = ((state?.profile?.name || state?.email || '?').trim()[0] || '?').toUpperCase()
+  const badge = docked => profileMenuRef
+    ? <ProfileBadge docked={docked} initial={initial} onClick={() => profileMenuRef.current?.open()} {...(docked ? {} : { 'data-tour': 'profile' })} />
+    : null
 
   return (
-    <div className={styles.screen}>
-      <div className={styles.desktopWrap}>
-        <div className={styles.pageHeaderRow}>
-          <h1 className={styles.pageTitle}>data.</h1>
-          <div className={styles.pageHeaderAccount}>{profileMenu}</div>
-        </div>
-        <p className={styles.pageSubhead}>Your practices and vibrations, shown from different angles.</p>
-
-        {!hasCanvas && (
-          <p className={styles.emptyState}>set up your canvas to see your data.</p>
-        )}
-
-        {hasCanvas && totalCheckinDays < 7 && (
-          <FirstWeekCard
-            title="After about a week, you’ll see your data start to tell a story."
-          />
-        )}
-
-        {hasCanvas && (
-          <>
-            <StreaksRail canvas={canvas} checkins={checkins} moods={moods} practicesDB={practicesDB} first />
-
-            <Group title={range.title} sub={rangeNav} aside={periodToggleEl}>
-              <div className={styles.dRow3}>
-                <RhythmSection stats={stats} canvas={canvas} checkins={checkins} moods={moods} range={range} />
-                <FeelsSection moods={moods} range={range} />
-                <WhatChanged range={range} canvas={canvas} checkins={checkins} />
-              </div>
-            </Group>
-
-            <Group title="Observations">
-              <InsightsCard insights={insights} />
-            </Group>
-
-            {totalCheckinDays < 7 ? (
-              <GhostAlmanac />
-            ) : (
-              <>
-                <RootsSection canvas={canvas} checkins={checkins} moods={moods} practicesDB={practicesDB} />
-                <ThreadsSection userId={state?.userId} moods={moods} />
-                <StrataRibbon moods={moods} />
-              </>
-            )}
-
-            <Group title="Your ledger">
-              <RibbonsSection canvas={canvas} checkins={checkins} practicesDB={practicesDB} days={dayKeys} windowLen={windowLen} isDesktop={isDesktop} />
-              <AllNumbersSection range={range} canvas={canvas} checkins={checkins} />
-            </Group>
-          </>
-        )}
+    <div ref={rootRef} className={styles.screen}>
+      {/* zero-height so appearing never moves the page */}
+      <div className={styles.dockAnchor}>
+        {dockLine && <div className={styles.dock}><Dateline text={dockLine} flush>{badge(true)}</Dateline></div>}
       </div>
+
+      <Dateline text={masthead} flush>{badge(false)}</Dateline>
+      {profileMenuRef && profileMenu && cloneElement(profileMenu, { hideTrigger: true })}
+      <div className={styles.greeting}><GreetingTitle /></div>
+
+      {!hasCanvas && <p className={styles.emptyState}>set up your canvas to see your data.</p>}
+
+      {hasCanvas && totalCheckinDays < 7 && (
+        <FirstWeekCard title="After about a week, you’ll see your data start to tell a story." />
+      )}
+
+      {hasCanvas && (
+        <>
+          <LabelRow
+            left={range.title.toUpperCase()}
+            right={<WordTabs label="period" options={PERIODS.map(p => ({ v: p.days, label: p.label }))} value={period} onChange={setPeriod} />}
+          />
+          <RhythmSection stats={stats} canvas={canvas} checkins={checkins} moods={moods} range={range} />
+          <div className={styles.folio}>
+            <button type="button" className={styles.folioBtn} onClick={() => setOffset(o => o + 1)} disabled={!canGoBack} aria-label={`previous ${unit}`}>← {prevLabel}</button>
+            {offset > 0
+              ? <button type="button" className={styles.folioNow} onClick={() => setOffset(0)}>now</button>
+              : <span className={styles.folioHere}>THIS {unit.toUpperCase()}</span>}
+            <button type="button" className={styles.folioBtn} onClick={() => setOffset(o => o - 1)} disabled={offset === 0} aria-label={`next ${unit}`}>{nextLabel} →</button>
+          </div>
+          <FeelsSection moods={moods} range={range} />
+
+          <StreaksRail canvas={canvas} checkins={checkins} moods={moods} practicesDB={practicesDB} />
+
+          <WhatChanged range={range} offset={offset} canvas={canvas} checkins={checkins} dock={dock} />
+          <InsightsCard insights={insights} dock={dock} />
+
+          {totalCheckinDays < 7 ? (
+            <GhostAlmanac />
+          ) : (
+            <>
+              <RootsSection canvas={canvas} checkins={checkins} moods={moods} practicesDB={practicesDB} />
+              <ThreadsSection userId={state?.userId} moods={moods} />
+              <StrataRibbon moods={moods} />
+            </>
+          )}
+
+          <RibbonsSection canvas={canvas} checkins={checkins} practicesDB={practicesDB} days={dayKeys} windowLen={windowLen} isDesktop={isDesktop} />
+          <AllNumbersSection range={range} canvas={canvas} checkins={checkins} days={dayKeys} />
+        </>
+      )}
     </div>
   )
 }
 
-// What roots, vibrations and strata will look like once there's a week of
+function GreetingTitle() {
+  return <h1 className={styles.title}>what&apos;s<br /><em>working.</em></h1>
+}
+
+// What roots, feelings and strata will look like once there's a week of
 // data behind them: the real drawings on made-up readings, washed out.
 function GhostAlmanac() {
   const sample = useMemo(() => sampleAlmanacData(), [])

@@ -1,32 +1,18 @@
-import { useId, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { normalizeBand } from '../lib/frequency'
 import { useChartCapture } from '../lib/useChartCapture'
-import FinePrint from './FinePrint'
+import { SectionTitle, WordTabs } from './loam'
 import styles from './StrataRibbon.module.css'
 
 /* Absolute counts, not shares — a 100% stacked chart is necessarily a
    rectangle, and the whole point is that the silhouette should undulate.
    Thickness is how much you logged; the layers are how it felt. */
 
-/* The same light-at-34%/26% ramps that light the bloom, the rhythm bars and
-   the feels stacks — this used to be a full-colour ridge line over a pale
-   wash instead, which read as chalky next to those. Each band is one big
-   shape rather than many small beads, so the radial gradient reads here as
-   one soft sheen across the whole layer rather than a single hard glint. */
-const MOOD_RAMP = {
-  good: ['#3FA87A', '#07301F'],
-  mid: ['#B4C4AC', '#3E5238'],
-  bad: ['#FF8A66', '#A81F06'],
-}
-const BAND_C = {
-  good: { line: MOOD_RAMP.good[0], fill: MOOD_RAMP.good },
-  mid: { line: MOOD_RAMP.mid[0], fill: MOOD_RAMP.mid },
-  bad: { line: MOOD_RAMP.bad[0], fill: MOOD_RAMP.bad },
-}
-const BAND_LIT = Object.fromEntries(
-  Object.entries(MOOD_RAMP).map(([b, [a, c]]) => [b, `radial-gradient(circle at 34% 26%, ${a}, ${c})`])
-)
+const BAND_FILL = { good: 'var(--loam-mood-good)', mid: 'var(--loam-mood-fine)', bad: 'var(--loam-mood-bad)' }
 const BANDS = ['good', 'mid', 'bad']
+const BAND_WORD = { good: 'good', mid: 'fine', bad: 'bad' }
+const MON = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
+const shortDay = dk => { if (!dk) return ''; const [, m, d] = dk.split('-'); return `${MON[+m - 1]} ${+d}` }
 const RANGES = [
   { v: 7, label: 'week' }, { v: 14, label: '2 weeks' },
   { v: 21, label: '3 weeks' }, { v: 30, label: 'month' },
@@ -111,8 +97,6 @@ function tellStory(raw, good, total) {
 
 export default function StrataRibbon({ moods, ghost }) {
   const [range, setRange] = useState(30)
-  const rawId = useId()
-  const uid = rawId.replace(/[^a-z0-9]/gi, '') || 's0'
 
   const { pts, from, to, story } = useMemo(() => {
     const byDay = new Map()
@@ -137,7 +121,7 @@ export default function StrataRibbon({ moods, ghost }) {
     const good = raw.reduce((s, p) => s + p.good, 0)
     return { pts, total, good, from: days[0], to: days[days.length - 1], story: tellStory(raw, good, total) }
   }, [moods, range])
-  const chartRef = useChartCapture('data-strata', 'your strata', !ghost)
+  const chartRef = useChartCapture('data-strata', 'the strata', !ghost)
 
   if (pts.length < 3) return null
 
@@ -155,59 +139,37 @@ export default function StrataRibbon({ moods, ghost }) {
     // strip only the moveto; the curve back has to follow the lower edge, not cut across it
     const back = smoothPath(rev).replace(/^M\s*-?[\d.]+\s+-?[\d.]+/, '')
     const d = smoothPath(upper) + ` L${rev[0][0].toFixed(1)} ${rev[0][1].toFixed(1)}` + back + ' Z'
-    return { band, d, ridge: smoothPath(upper) }
+    return { band, d }
   })
 
   return (
-    <section ref={chartRef} className={styles.section}>
-      <div className={styles.pad}>
-        <div className={styles.titleRow}>
-          <h2 className={styles.title}>Your strata</h2>
-          <div className={styles.legend}>
-            {BANDS.map(b => (
-              <span key={b}>
-                <i style={{ background: BAND_LIT[b] }} />
-                {b === 'mid' ? 'fine' : b}
-              </span>
-            ))}
-          </div>
-        </div>
-        <p className={styles.sub}>{pts.length} days · {from?.slice(5)} — {to?.slice(5)}</p>
-        <p className={styles.story}>
-          {story.text} <em>{story.em}</em>
-        </p>
-      </div>
+    <section ref={chartRef} className={styles.section} data-dock={`DATA · LAST ${pts.length} LOGGED DAYS`}>
+      <SectionTitle lead="the" turn="strata." />
+      <p className={styles.story}>
+        {story.text.toLowerCase()} <em>{story.em.toLowerCase()}</em>
+      </p>
 
       <figure className={styles.fig}>
-        <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="How your days have layered up">
-          <defs>
-            {BANDS.map(b => (
-              <radialGradient key={b} id={`strata-${b}-${uid}`} cx="34%" cy="26%" r="75%">
-                <stop offset="0%" stopColor={BAND_C[b].fill[0]} />
-                <stop offset="100%" stopColor={BAND_C[b].fill[1]} />
-              </radialGradient>
-            ))}
-          </defs>
-          {layers.map(l => <path key={l.band} d={l.d} fill={`url(#strata-${l.band}-${uid})`} />)}
-          {/* ridges drawn top layer first, so where a band is empty the one beneath shows through in its own colour */}
-          {[...layers].reverse().map(l => <path key={`${l.band}-r`} d={l.ridge} fill="none" stroke={BAND_C[l.band].line} strokeWidth="1.6" strokeLinejoin="round" />)}
+        <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="How your days have layered up: check-ins per day, stacked good, fine, bad">
+          {layers.map(l => <path key={l.band} d={l.d} fill={BAND_FILL[l.band]} stroke="var(--loam-paper)" strokeWidth="1" />)}
         </svg>
       </figure>
+      <div className={styles.axis}>
+        <span>{shortDay(from)}</span>
+        <span className={styles.legend}>
+          {BANDS.map(b => <span key={b}><i style={{ background: BAND_FILL[b] }} />{BAND_WORD[b]}</span>)}
+        </span>
+        <span>{shortDay(to)}</span>
+      </div>
 
-      <div className={styles.pad}>
-        <div className={styles.kinds}>
-          {RANGES.map(r => (
-            <button
-              key={r.v} type="button" aria-pressed={range === r.v}
-              className={`${styles.kindPill}${range === r.v ? ` ${styles.kindOn}` : ''}`}
-              onClick={() => setRange(r.v)}
-            >{r.label}</button>
-          ))}
-        </div>
-        <FinePrint>
-          <p>Each day is a slice of ground. The taller the slice, the more check-ins you logged that day. The colours are how those check-ins felt, stacked from the bottom up: green for good, pale for fine, red for bad.</p>
-          {pts.length > 14 && <p>At this length each day is blended a little with the day either side of it. Without that, two or three check-ins a day make a saw blade instead of land.</p>}
-        </FinePrint>
+      <div className={styles.ranges}>
+        <WordTabs label="range" options={RANGES} value={range} onChange={setRange} />
+      </div>
+
+      <div className={styles.read}>
+        <h3 className={styles.readLabel}>HOW TO READ IT</h3>
+        <p>each day stacks your check-ins: good at the bottom, then fine, then bad. the taller the day, the more you logged. the line where the dark ground ends is how much of that day was good, and a dip in it is worth a look in drafts.</p>
+        {pts.length > 14 && <p>at this length each day is blended a little with the day either side of it. without that, two or three check-ins a day make a saw blade instead of land.</p>}
       </div>
     </section>
   )

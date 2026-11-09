@@ -5,12 +5,11 @@
 
 .fab {
   position: fixed;
-  left: 50%;
   bottom: calc(76px + var(--safe-bottom) + 16px);
-  transform: translateX(-50%);
+  right: 20px;
   z-index: 45;
-  width: 54px;
-  height: 54px;
+  width: var(--loam-write-btn);
+  height: var(--loam-write-btn);
   border-radius: 50%;
   background: var(--ink);
   color: var(--card);
@@ -19,11 +18,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 20px rgba(0,0,0,.28);
   transition: transform 160ms ease, opacity 160ms ease;
   -webkit-tap-highlight-color: transparent;
 }
-.fab:active { transform: translateX(-50%) scale(0.94); }
+.fab:active { transform: scale(0.94); }
+.fabW { font-family: var(--loam-font-display); font-style: italic; font-size: 26px; line-height: 1; }
 
 @media (min-width: 900px) {
   .fab { display: none; }

@@ -1,154 +1,24 @@
-/* The four threads — capacity, engagement, drive, posture — drawn as four
-   concentric rings rippling out from "you" at the center. Outer ring = the
-   thread you lead with. See ThreadsSection.jsx for the full rationale. */
+/* How you've felt: the four threads as rows. See ThreadsSection.jsx. */
 
-.section { margin-top: 32px; border-top: 0.5px solid var(--hairline); padding-top: 26px; }
-.pad { padding-inline: 0; }
-.titleRow { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 0 0 12px; }
-.title { font-family: var(--serif, 'Newsreader', Georgia, serif); font-size: 23px; font-weight: 300; letter-spacing: -0.015em; margin: 0; }
-.titleKey { display: flex; gap: 11px; font-family: var(--mono); font-size: var(--type-floor); color: var(--ink4); letter-spacing: 0.02em; }
-.titleKey span { display: flex; align-items: center; gap: 5px; }
-.titleKey i { width: 9px; height: 9px; border-radius: 50%; display: block; }
-.claim {
-  font-family: var(--serif, 'Newsreader', Georgia, serif);
-  font-weight: 300; font-size: 19px; line-height: 1.36; letter-spacing: -0.01em;
-  margin: 4px 0 0; text-wrap: balance;
-}
-.claim em { font-style: italic; color: var(--expl-deep, #0C5038); }
-/* one quiet line under the title, set like the roots section's */
-.sub { font-family: var(--mono); font-size: var(--type-floor); color: var(--ink3); margin: -6px 0 0; line-height: 1.5; }
+.section { margin-top: 32px; border-top: var(--loam-rule-open); padding-top: 18px; }
+.head { margin-top: 18px; }
 
-/* ── Rings stage ── */
-/* full bleed, same as the strata ribbon and the roots tree — the rings are
-   the point of this card, not a chart boxed into the text column, so they
-   run past the card's own side padding out toward the screen edges. */
-.ringsWrap { margin: 18px -22px 0; width: calc(100% + 44px); display: flex; justify-content: center; overflow: visible; }
-.rings { width: 100%; height: auto; overflow: visible; }
-
-.pulse {
-  fill: none;
-  stroke: var(--ink);
-  opacity: 0;
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: sonar 3.6s ease-out infinite;
-}
-.pulse2 { animation-delay: 1.2s; }
-.pulse3 { animation-delay: 2.4s; }
-@keyframes sonar {
-  0%   { transform: scale(0.28); opacity: 0.22; }
-  75%  { transform: scale(1); opacity: 0; }
-  100% { transform: scale(1); opacity: 0; }
-}
-
-.you { fill: var(--card); stroke: var(--ink); stroke-width: 1.2; }
-.youLabel {
-  font-family: var(--mono);
-  /* the rings SVG renders at ~0.57x its own viewBox units on a real phone
-     screen (viewBox 680 wide vs. ~390 real CSS px) — var(--type-floor) here
-     would paint at under 7 real px, so this is sized up to still read at the
-     app's real type floor once the SVG shrinks it back down. */
-  font-size: 22px;
-  letter-spacing: 0.1em;
-  fill: var(--ink3);
-  text-anchor: middle;
-}
-
-.ringHit { stroke: transparent; cursor: pointer; }
-/* neutral track, full circle — hairline rather than a solid fill, so it
-   stays visible-but-quiet on both light and dark surfaces */
-.ringTrack { stroke: var(--hairline); transition: opacity 260ms ease; }
-/* the one arc that matters: this ring's leading feeling, and only that —
-   starts at the top and sweeps clockwise by its share of the thread */
-.ringArc { transition: opacity 260ms ease, stroke-width 260ms ease; }
-.ringGroup { transition: opacity 300ms ease; cursor: pointer; }
-.ringDim { opacity: 0.5; }
-.ringOn .ringArc { filter: saturate(1.08); }
-
-/* small points drifting along the leading arc — outward for good (growing,
-   reaching away from you), inward for bad (pressing in) */
-.spark {
-  pointer-events: none;
-  animation-name: sparkDrift;
-  animation-timing-function: ease-out;
-  animation-iteration-count: infinite;
-}
-@keyframes sparkDrift {
-  0%   { transform: translate(0, 0); opacity: 0; }
-  15%  { opacity: 0.9; }
-  /* --dx / --dy are set inline per spark (its own radial direction and
-     distance) rather than declared here as design tokens */
-  100% { transform: translate(var(--dx, 0px), var(--dy, 0px)); opacity: 0; }
-}
-/* fine holds still — no radial drift, just a slow breathing pulse in place,
-   which is itself the "neutral" cue */
-.sparkPulse {
-  pointer-events: none;
-  animation: sparkBreathe 3.2s ease-in-out infinite;
-}
-@keyframes sparkBreathe {
-  0%, 100% { opacity: 0.28; }
-  50%      { opacity: 0.75; }
-}
-
-/* ── Fixed-quadrant labels — named by the word you reach for most, not the
-   category, with a short tick back to its own ring ── */
-.labelGroup { cursor: pointer; }
-/* var(--hairline) at 1.5 was tuned for real CSS pixels — on this SVG's
-   ~0.57x shrink (see SVG_SCALE in the .jsx) it all but disappeared.
-   Darker and thicker so the tick reads as a real connector, not a stray
-   pixel. */
-.labelTick { stroke: var(--ink4); stroke-width: 2.5; }
-.labelWord {
-  font-family: var(--serif, 'Newsreader', Georgia, serif); font-style: italic; font-weight: 300;
-  /* same SVG-shrink compensation as .youLabel above: 28px here reads as
-     ~16px on an actual phone screen, not the 17px it used to be entered as
-     (which was rendering closer to 9-10 real px). */
-  font-size: 28px; fill: var(--ink);
-}
-.labelSub {
-  font-family: var(--mono); font-size: 22px; letter-spacing: 0.09em;
-  text-transform: uppercase; fill: var(--ink3);
-}
-.labelCount {
-  font-family: var(--mono); font-size: 22px; letter-spacing: 0.04em;
-  font-variant-numeric: tabular-nums; fill: var(--ink4);
-}
-.labelOn .labelWord { fill: var(--expl-deep, #0C5038); }
-.labelOn .labelSub { fill: var(--ink2); }
-.labelOn .labelCount { fill: var(--ink3); }
-.labelOn .labelTick { stroke: rgba(0,0,0,.4); }
-
-/* ── Legend / selector list ── */
-.legend { margin-top: 22px; display: flex; flex-direction: column; }
-.legendRow { border-top: 0.5px solid var(--hairline); }
-.legend .legendRow:last-child { border-bottom: 0.5px solid var(--hairline); }
-.legendHead {
-  display: flex; align-items: center; gap: 11px; width: 100%;
-  padding: 13px 2px; border: none; background: none; cursor: pointer;
+.row { border-bottom: var(--loam-rule-row); }
+.rowHead {
+  display: flex; flex-direction: column; gap: 8px; width: 100%;
+  padding: 12px 0; border: none; background: none; cursor: pointer;
   font: inherit; color: inherit; text-align: left;
   -webkit-tap-highlight-color: transparent;
 }
-.legendDot { flex: 0 0 12px; width: 12px; height: 12px; border-radius: 50%; }
-.legendName {
-  font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em;
-  text-transform: uppercase; color: var(--ink2);
+.nameLine { display: flex; align-items: baseline; gap: 10px; }
+.name { font-family: var(--loam-font-display); font-size: var(--loam-chapter); line-height: 1.1; color: var(--loam-ink); }
+.rowOn .name { font-style: italic; }
+.word { font-family: var(--loam-font-display); font-style: italic; font-size: 19px; color: var(--loam-ink-2); }
+.count {
+  margin-left: auto; font-family: var(--loam-font-mono); font-size: var(--loam-label);
+  letter-spacing: 0.05em; color: var(--loam-ink); font-variant-numeric: tabular-nums;
 }
-.legendShape {
-  font-family: var(--serif, 'Newsreader', Georgia, serif); font-style: italic; font-size: 13px;
-  color: var(--ink3); margin-left: 4px; flex: 1;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.legendN {
-  font-family: var(--mono); font-size: 12px; color: var(--ink4);
-  font-variant-numeric: tabular-nums; margin-left: auto; flex-shrink: 0;
-}
-.legendCaret {
-  flex: 0 0 auto; font-size: var(--type-floor); color: var(--ink4);
-  transition: transform 260ms ease; margin-left: 2px;
-}
-.legendOn .legendCaret { transform: rotate(90deg); }
-.legendOn .legendName { color: var(--ink); }
+.shape { font-family: var(--loam-font-mono); font-size: var(--loam-label); letter-spacing: 0.08em; text-transform: uppercase; color: var(--loam-muted); }
 
 .rungsPanel {
   display: grid;
@@ -156,44 +26,22 @@
   opacity: 0;
   transition: grid-template-rows 300ms ease, opacity 240ms ease;
 }
-.legendOn .rungsPanel { grid-template-rows: 1fr; opacity: 1; }
+.rowOn .rungsPanel { grid-template-rows: 1fr; opacity: 1; }
 .rungsPanelInner { overflow: hidden; }
-.rungs { margin: 0 0 14px 23px; display: flex; flex-direction: column; gap: 8px; }
+.rungs { margin: 0 0 12px; display: flex; flex-direction: column; gap: 8px; }
 .rung { display: flex; align-items: center; gap: 10px; }
-/* base/fallback size only — actual width/height are set inline per rung,
-   scaled to that word's share of readings within its own thread (see
-   rungDotSize in ThreadsSection.jsx) */
-.rungDot { flex: 0 0 8px; width: 8px; height: 8px; border-radius: 50%; transition: width 200ms ease, height 200ms ease; }
-.rungOff .rungDot { box-shadow: inset 0 0 0 1px rgba(0,0,0,.22); background: transparent; }
-.rungWord { font-family: var(--serif, 'Newsreader', Georgia, serif); font-size: 14.5px; font-weight: 300; color: var(--ink); }
-.rungOff .rungWord { color: var(--ink4); }
-.rungCount { margin-left: auto; font-family: var(--mono); font-size: var(--type-floor); color: var(--ink4); font-variant-numeric: tabular-nums; }
-.rungOff .rungCount { color: rgba(0, 0, 0, 0.18); }
+.rungDotBox { flex: 0 0 18px; display: grid; place-items: center; }
+/* width/height are set inline, scaled to that word's share of its thread */
+.rungDot { display: block; border-radius: 50%; }
+.rungOff .rungDot { border: 1px solid var(--loam-leader); box-sizing: border-box; }
+.rungWord { font-family: var(--loam-font-display); font-size: var(--loam-index); color: var(--loam-ink); }
+.rungOff .rungWord { color: var(--loam-muted); }
+.rungCount { margin-left: auto; font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-muted); font-variant-numeric: tabular-nums; }
 
-/* what the thread means, and what to do about its bad-band word — same
-   quiet register as FinePrint's body, indented under the rungs it explains */
 .threadCopy {
-  margin: 2px 0 14px 23px;
-  padding-top: 12px;
-  border-top: 0.5px solid var(--hairline);
-  font-family: var(--mono); font-size: var(--type-floor); line-height: 1.62; color: var(--ink3);
+  margin: 0 0 14px; padding-top: 10px; border-top: var(--loam-rule-row);
+  font-family: var(--loam-font-reading); font-size: var(--loam-body); line-height: 1.3; color: var(--loam-ink-2);
 }
 .threadCopy p { margin: 0 0 8px; }
 .threadCopy p:last-child { margin-bottom: 0; }
-/* the frequency words themselves (calm, steady, …) inside the prose — a
-   real medium weight from the mono family, not the browser's synthetic
-   bold, so they stay scannable without shouting */
-.threadCopy b { color: var(--ink2); font-weight: 500; }
-
-/* ── Footnote — the good/fine/bad key itself now lives beside the title;
-   this is just the ring-size/arc explainer that's left ── */
-.footnote {
-  margin: 20px 0 0; padding-top: 15px;
-  border-top: 0.5px solid var(--hairline);
-  font-family: var(--mono); font-size: var(--type-floor); color: var(--ink4); letter-spacing: 0.02em;
-}
-
-/* desktop page layout retired: this screen now lives in the desktop side panel at its phone layout (see DeskShell.jsx) */
-@media (min-width: 99999px) {
-  .ringsWrap { margin-inline: 0; width: 100%; }
-}
+.threadCopy b { color: var(--loam-ink); font-weight: 500; }

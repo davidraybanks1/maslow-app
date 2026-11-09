@@ -14,6 +14,7 @@
   background: var(--loam-paper);
   z-index: 10;
 }
+.datelineFlush { padding-inline: 0; }
 .datelineText {
   font-family: var(--loam-font-mono);
   font-size: var(--loam-label);
@@ -76,6 +77,58 @@
   color: var(--loam-muted);
   min-width: 28px;
   text-align: right;
+}
+
+.progressRuleBare { padding: 0; }
+.progressDotsMuted { border-top-color: var(--loam-rule); }
+
+/* ── Section furniture ────────────────────────────────────── */
+.sectionTitle {
+  font-family: var(--loam-font-display);
+  font-size: var(--loam-title);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  color: var(--loam-ink);
+  margin: 0;
+}
+.sectionTitle em { font-style: italic; }
+.sectionSub {
+  font-family: var(--loam-font-reading);
+  font-size: var(--loam-body);
+  line-height: 1.3;
+  color: var(--loam-ink-2);
+  margin: 8px 0 0;
+}
+.labelRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 6px;
+  border-bottom: var(--loam-rule-close);
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  letter-spacing: 0.1em;
+  color: var(--loam-ink);
+}
+.labelRowRight { text-align: right; }
+.wordTabs { display: inline-flex; flex-wrap: wrap; gap: 0 14px; }
+.wordTab {
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-tag);
+  letter-spacing: 0.04em;
+  color: var(--loam-muted);
+  background: none;
+  border: none;
+  padding: 6px 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.wordTabOn {
+  color: var(--loam-ink);
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
 /* ── PullQuote ────────────────────────────────────────────── */

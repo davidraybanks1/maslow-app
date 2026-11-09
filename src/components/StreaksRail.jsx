@@ -1,6 +1,9 @@
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { buildStreaks, STREAK_KINDS } from '../lib/streaks'
 import { GlyphShape, GLYPH_BOX, GLYPH_RADIAL } from '../lib/glyphs'
+import { BAND_LABEL } from '../lib/frequency'
+import { needName } from '../lib/constants'
+import { LabelRow, WordTabs } from './loam'
 import styles from './StreaksRail.module.css'
 
 /* Four kinds of run, four silhouettes — so you can tell what you are looking
@@ -57,10 +60,19 @@ export function Meter({ streak }) {
   )
 }
 
-export default function StreaksRail({ canvas, checkins, moods, practicesDB, first, children }) {
+function phrase(s) {
+  if (s.quiet) return <>days without {s.name}</>
+  const word = s.kind === 'frequency' ? BAND_LABEL[s.name] ?? s.name : s.kind === 'need' ? needName(s.name) : s.name
+  return <>days of <em>{word}</em></>
+}
+
+const PREVIEW = 2
+
+/* Two rows on the page; `all →` opens the rest in place, where each row also
+   carries its glyph and twelve-day strip. */
+export default function StreaksRail({ canvas, checkins, moods, practicesDB }) {
   const [kind, setKind] = useState('all')
-  const [pos, setPos] = useState(1)
-  const railRef = useRef(null)
+  const [open, setOpen] = useState(false)
 
   const all = useMemo(
     () => buildStreaks({ canvas, checkins, moods, practicesDB }),
@@ -73,59 +85,45 @@ export default function StreaksRail({ canvas, checkins, moods, practicesDB, firs
 
   const running = all.filter(s => !s.quiet).length
   const lulled = all.length - running
+  const shown = open ? rows : rows.slice(0, PREVIEW)
+  const more = rows.length > PREVIEW
 
   return (
-    <section className={`${styles.section}${first ? ` ${styles.first}` : ''}`}>
-      <div className={styles.pad}>
-        <h2 className={styles.title}>Streaks and lulls</h2>
-        <p className={styles.sub}>
-          {running} streak{running === 1 ? '' : 's'} running · {lulled} lull{lulled === 1 ? '' : 's'}
-        </p>
-      </div>
-
-      <div
-        className={styles.rail} ref={railRef}
-        onScroll={() => {
-          const r = railRef.current
-          if (r) setPos(Math.min(Math.max(Math.round(r.scrollLeft / 192) + 1, 1), rows.length))
-        }}
-      >
-        {rows.map(s => (
-          <div key={s.key + (s.quiet ? ':q' : '')} className={`${styles.card}${s.quiet ? ` ${styles.quiet}` : ''}`}>
-            <div className={styles.head}>
-              <Glyph streak={s} />
-              <span className={styles.kind}>{s.kind === 'frequency' ? 'vibration' : s.kind}</span>
-            </div>
-            <span className={styles.num}>{s.days}<i>days</i></span>
-            <span className={styles.name}>
-              {s.kind === 'frequency' ? (s.name === 'mid' ? 'fine' : s.name) : s.name}
-            </span>
-            <span className={styles.spacer} />
-            <span className={styles.meter}><Meter streak={s} /></span>
-            <span className={`${styles.foot}${s.isRecord && !s.quiet ? ` ${styles.rec}` : ''}`}>
-              {s.quiet ? 'in a lull' : s.isRecord ? 'your longest yet' : 'still going'}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      <div className={styles.pad}>
-        {kinds.length > 2 && <div className={styles.railFoot}>
-          <div className={styles.kinds}>
-            {kinds.map(k => (
-              <button
-                key={k.v} type="button" aria-pressed={kind === k.v}
-                className={`${styles.kindPill}${kind === k.v ? ` ${styles.kindOn}` : ''}`}
-                onClick={() => {
-                  setKind(k.v); setPos(1)
-                  if (railRef.current) railRef.current.scrollTo({ left: 0 })
-                }}
-              >{k.label}</button>
-            ))}
-          </div>
-          <span className={styles.railPos}>{Math.min(pos, rows.length)} of {rows.length}</span>
-        </div>}
-        {children}
+    <section className={styles.section}>
+      <LabelRow
+        left="STREAKS & LULLS"
+        right={`${running} RUNNING · ${lulled} ${lulled === 1 ? 'LULL' : 'LULLS'}`}
+      />
+      {shown.map(s => (
+        <div key={s.key + (s.quiet ? ':q' : '')} className={styles.row}>
+          <span className={styles.num}>{s.days}</span>
+          <span className={styles.body}>
+            <span className={styles.phrase}>{phrase(s)}</span>
+            {open && (
+              <span className={styles.detail}>
+                <Glyph streak={s} />
+                <span className={styles.meter}><Meter streak={s} /></span>
+              </span>
+            )}
+          </span>
+          <span className={styles.state}>
+            {s.quiet ? 'IN A LULL' : s.isRecord ? 'YOUR LONGEST YET' : 'STILL GOING'}
+          </span>
+        </div>
+      ))}
+      <div className={styles.foot}>
+        {kinds.length > 2 && <WordTabs label="filter streaks" options={kinds} value={kind} onChange={setKind} />}
+        <span className={styles.pos}>
+          {shown.length} of {rows.length}
+          {more && (
+            <>
+              {' · '}
+              <button type="button" className={styles.more} aria-expanded={open} onClick={() => setOpen(o => !o)}>
+                {open ? 'fewer ↑' : 'all →'}
+              </button>
+            </>
+          )}
+        </span>
       </div>
     </section>
   )

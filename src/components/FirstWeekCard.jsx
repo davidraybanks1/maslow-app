@@ -1,8 +1,7 @@
 import styles from './FirstWeekCard.module.css'
 
-// The white "still filling in" card shown at the top of almanac and drafts
-// while a new account has under a week of data. Same surface as the calendar
-// and insight cards so it reads as part of the app, not a banner.
+// The "still filling in" line at the top of Data and Drafts while a new
+// account has under a week of data. Plain text on the page, between rules.
 export default function FirstWeekCard({ title }) {
   return (
     <div className={styles.card} role="note">
