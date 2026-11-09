@@ -2,6 +2,7 @@
    All visual components for the redesign. Screens rebuild on top of these.
    Parity note: PracticeDot wraps lib/useHold.js unchanged (hapticTick line 102,
    hapticSuccess line 70 stay at their existing call sites). */
+import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useHold } from '../../lib/useHold'
 import { FEELINGS, BAND_LABEL } from '../../lib/frequency'
@@ -21,10 +22,10 @@ export function Dateline({ onboardedAt, children, docked }) {
   const day = now.getDate()
   const noNum = onboardedAt
     ? String(Math.max(1, Math.floor((Date.now() - new Date(onboardedAt).getTime()) / 86400000) + 1)).padStart(3, '0')
-    : null
+    : '001'
   return (
     <div className={`${styles.dateline} ${docked ? styles.datelineDocked : ''}`}>
-      <span className={styles.datelineText}>{dow} · {mon} {day}{noNum ? ` · NO. ${noNum}` : ''}</span>
+      <span className={styles.datelineText}>{dow} · {mon} {day} · NO. {noNum}</span>
       {children}
     </div>
   )
