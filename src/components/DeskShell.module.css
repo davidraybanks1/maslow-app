@@ -224,7 +224,8 @@
 
   /* vibrations: ask, then settle to one line */
   .vibCard {
-    background: var(--card);
+    /* TODO: Stage 2 loam var(--card) → paper; use local lift until full token sweep */
+    background: #FFFDF9;
     border: 1px solid rgba(0, 0, 0, .05);
     border-radius: 16px;
     padding: 18px;
@@ -268,7 +269,8 @@
   .practices { display: flex; flex-direction: column; gap: 6px; }
   .prHead { display: flex; justify-content: space-between; align-items: baseline; padding: 0 4px 6px; }
   .mode { border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; transition: background 200ms; }
-  .modeOpen { background: var(--card); }
+  /* TODO: Stage 2 loam var(--card) → paper; use local lift until full token sweep */
+  .modeOpen { background: #FFFDF9; }
   .modeHead {
     display: flex;
     flex-direction: column;
@@ -320,7 +322,8 @@
     display: grid;
     place-items: center;
     box-sizing: border-box;
-    color: var(--card);
+    /* TODO: Stage 2 loam var(--card) → paper; keep white (not paper) so check glyph stays visible */
+    color: #fff;
     transition: background 150ms, border-color 150ms;
   }
   .chk[data-tick='ink'] { color: var(--ink); }

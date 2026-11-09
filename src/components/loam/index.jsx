@@ -31,7 +31,7 @@ export function Dateline({ onboardedAt, children, docked }) {
 }
 
 /* ── ProfileBadge ─────────────────────────────────────────── */
-export function ProfileBadge({ initial, onClick, docked }) {
+export function ProfileBadge({ initial, onClick, docked, ...rest }) {
   const size = docked ? 26 : 30
   return (
     <button
@@ -40,6 +40,7 @@ export function ProfileBadge({ initial, onClick, docked }) {
       style={{ width: size, height: size }}
       aria-label="profile"
       onClick={onClick}
+      {...rest}
     >
       {(initial || '?').toUpperCase()}
     </button>
@@ -190,11 +191,56 @@ export function IndexRow({ name, value, onClick }) {
 }
 
 /* ── EntryRow ─────────────────────────────────────────────── */
-export function EntryRow({ dateLabel, text, tags = [], onRevisit, onFavorite, favorite }) {
+/* Supports: delete two-step confirm, read more, quoted text, photo + viewer,
+   room tag, mood chip, revisit, favorite */
+export function EntryRow({
+  dateLabel, text, tags = [], onRevisit, onFavorite, favorite,
+  pendingDelete = false, onDelete,
+  quotedText, quotedDate,
+  imageUrl, onImageClick,
+  roomTag,
+  moodBand, moodFeeling, moodPipColor,
+  expanded = false, onToggleExpand,
+}) {
+  const TRUNCATE = 220
+  const isTrunc = text && text.length > TRUNCATE && !expanded
+  const display = isTrunc ? text.slice(0, TRUNCATE).trimEnd() + '…' : text
   return (
     <div className={styles.entryRow}>
-      <div className={styles.entryRowDate}>{dateLabel}</div>
-      <p className={styles.entryRowText}>{text}</p>
+      <div className={styles.entryRowMeta}>
+        <span className={styles.entryRowDate}>{dateLabel}</span>
+        {moodBand && (
+          <span className={styles.entryRowMoodChip}>
+            <span className={styles.entryRowMoodDot} style={{ background: moodPipColor }} />
+            {moodFeeling || moodBand}
+          </span>
+        )}
+        {roomTag && <span className={styles.entryRowRoomTag}>{roomTag}</span>}
+        {onDelete && (
+          <button
+            type="button"
+            className={`${styles.entryRowDeleteBtn}${pendingDelete ? ` ${styles.entryRowDeleteBtnPending}` : ''}`}
+            onMouseDown={e => e.stopPropagation()}
+            onClick={onDelete}
+            aria-label={pendingDelete ? 'confirm delete' : 'delete'}
+          >{pendingDelete ? 'delete?' : '×'}</button>
+        )}
+      </div>
+      {quotedText && (
+        <div className={styles.entryRowQuote}>
+          {quotedDate && <span className={styles.entryRowQuoteDate}>{quotedDate}</span>}
+          <p className={styles.entryRowQuoteText}>&ldquo;{quotedText}&rdquo;</p>
+        </div>
+      )}
+      <p className={styles.entryRowText}>{display}</p>
+      {isTrunc && (
+        <button type="button" className={styles.entryRowReadMore} onClick={onToggleExpand}>read more</button>
+      )}
+      {imageUrl && (
+        <button type="button" className={styles.entryRowImageBtn} onClick={() => onImageClick?.(imageUrl)}>
+          <img src={imageUrl} className={styles.entryRowImage} alt="" />
+        </button>
+      )}
       {tags.length > 0 && (
         <div className={styles.entryRowTags}>{tags.join(' · ')}</div>
       )}
@@ -206,6 +252,113 @@ export function EntryRow({ dateLabel, text, tags = [], onRevisit, onFavorite, fa
           <button type="button" className={`${styles.entryRowAction} ${favorite ? styles.entryRowActionActive : ''}`} onClick={onFavorite}>♡</button>
         )}
       </div>
+    </div>
+  )
+}
+
+/* ── WriteBlock ───────────────────────────────────────────── */
+/* resting: greeting + textarea + room hints
+   active (text present or textarea focused): chips + textarea + footer
+   draft persistence is owned by the parent; just value/onChange here */
+const WRITE_ROOMS = [
+  { id: 'timer',        label: 'timer' },
+  { id: 'continue',     label: 'revisit' },
+  { id: 'one_thing',    label: 'gave and took' },
+  { id: 'tension',      label: 'tension' },
+  { id: 'three_truths', label: 'three truths' },
+]
+
+export function WriteBlock({
+  text = '',
+  onTextChange,
+  onSubmit,
+  saving = false,
+  error,
+  greeting = 'morning',
+  slot,
+  chipBand,
+  chipFeeling,
+  chipPip,
+  entryCount = 0,
+  suggestedRoom,
+  onRoomClick,
+  imageUrl,
+  onImageClick,
+  onAttach,
+  onImageRemove,
+}) {
+  const [focused, setFocused] = useState(false)
+  const active = focused || text.length > 0
+  return (
+    <div className={styles.writeBlock} data-tour="journal">
+      <div className={styles.writeBlockHeader}>
+        <span className={styles.writeBlockLabel}>WRITE</span>
+        {!active && entryCount > 0 && (
+          <span className={styles.writeBlockCount}>{entryCount} {entryCount === 1 ? 'entry' : 'entries'}</span>
+        )}
+      </div>
+      {!active && (
+        <div className={styles.writeBlockGreeting}>
+          good <em>{greeting}.</em>
+        </div>
+      )}
+      {active && (chipBand || slot) && (
+        <div className={styles.writeBlockChips}>
+          {slot && <span className={styles.writeChip}>{slot}</span>}
+          {chipBand && (
+            <span className={styles.writeChip}>
+              <span className={styles.writeChipDot} style={{ background: chipPip || 'currentColor' }} />
+              {chipFeeling || chipBand}
+            </span>
+          )}
+        </div>
+      )}
+      <div className={styles.writeBlockRule} />
+      <textarea
+        className={styles.writeBlockTextarea}
+        placeholder="begin here…"
+        value={text}
+        onChange={e => onTextChange?.(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        rows={4}
+        maxLength={10000}
+      />
+      {imageUrl && active && (
+        <button type="button" className={styles.writeChipActive} onClick={() => onImageClick?.(imageUrl)}>photo</button>
+      )}
+      {error && <div className={styles.writeBlockError}>{error}</div>}
+      {active && (
+        <div className={styles.writeBlockFooter}>
+          {onAttach && (
+            <button type="button" className={styles.writeBlockAttach} onClick={onAttach} aria-label="attach">⊕</button>
+          )}
+          {imageUrl && onImageRemove && (
+            <button type="button" className={styles.writeChipActive} onClick={onImageRemove}>photo ×</button>
+          )}
+          <span className={styles.writeBlockHint}>⌘↵</span>
+          <button
+            type="button"
+            className={styles.writeBlockSubmit}
+            onClick={onSubmit}
+            disabled={!text.trim() || saving}
+          >{saving ? '…' : 'add'}</button>
+        </div>
+      )}
+      {!active && (
+        <div className={styles.writeBlockRooms}>
+          {WRITE_ROOMS.map(r => (
+            <button
+              key={r.id}
+              type="button"
+              className={`${styles.writeRoomBtn}${suggestedRoom?.id === r.id ? ` ${styles.writeRoomBtnHint}` : ''}`}
+              onClick={() => onRoomClick?.(r.id)}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

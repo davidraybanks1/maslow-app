@@ -292,6 +292,12 @@
   padding: 12px var(--loam-gutter);
   border-top: var(--loam-rule-row);
 }
+.entryRowMeta {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
 .entryRowDate {
   font-family: var(--loam-font-mono);
   font-size: var(--loam-label);
@@ -299,11 +305,96 @@
   text-transform: uppercase;
   color: var(--loam-muted);
 }
+.entryRowMoodChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  letter-spacing: 0.05em;
+  color: var(--loam-muted);
+}
+.entryRowMoodDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.entryRowRoomTag {
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  letter-spacing: 0.05em;
+  color: var(--loam-muted);
+}
+.entryRowDeleteBtn {
+  margin-left: auto;
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  color: var(--loam-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  letter-spacing: 0.05em;
+  transition: color 150ms;
+}
+.entryRowDeleteBtn:hover { color: var(--loam-ink); }
+.entryRowDeleteBtnPending { color: var(--loam-ink); }
+.entryRowQuote {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 10px;
+  border-left: 2px solid var(--loam-gold);
+  margin: 2px 0;
+}
+.entryRowQuoteDate {
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  color: var(--loam-muted);
+  letter-spacing: 0.06em;
+}
+.entryRowQuoteText {
+  font-family: var(--loam-font-reading);
+  font-style: italic;
+  font-size: var(--loam-body);
+  color: var(--loam-ink-2);
+  margin: 0;
+}
 .entryRowText {
   font-family: var(--loam-font-reading);
   font-size: var(--loam-body);
   line-height: 1.35;
   color: var(--loam-ink-2);
+  margin: 0;
+}
+.entryRowReadMore {
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  color: var(--loam-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  letter-spacing: 0.05em;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.entryRowImageBtn {
+  display: block;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 2px;
+}
+.entryRowImage {
+  display: block;
+  max-width: 100%;
+  max-height: 200px;
+  object-fit: contain;
 }
 .entryRowTags {
   font-family: var(--loam-font-mono);
@@ -330,6 +421,163 @@
 }
 .entryRowAction:hover { color: var(--loam-ink); }
 .entryRowActionActive { color: var(--loam-ink); }
+
+/* ── WriteBlock ───────────────────────────────────────────── */
+.writeBlock {
+  border-top: var(--loam-rule-open);
+}
+.writeBlockHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 14px var(--loam-gutter) 0;
+}
+.writeBlockLabel {
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--loam-muted);
+}
+.writeBlockCount {
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  letter-spacing: 0.05em;
+  color: var(--loam-muted);
+}
+.writeBlockGreeting {
+  padding: 8px var(--loam-gutter) 10px;
+  font-family: var(--loam-font-display);
+  font-size: 28px;
+  color: var(--loam-ink);
+  line-height: 1.1;
+}
+.writeBlockGreeting em { font-style: italic; }
+.writeBlockChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px var(--loam-gutter) 0;
+}
+.writeChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  letter-spacing: 0.06em;
+  color: var(--loam-muted);
+  border: 1px solid var(--loam-leader);
+  border-radius: 999px;
+  padding: 3px 8px;
+}
+.writeChipDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.writeChipActive {
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  letter-spacing: 0.06em;
+  color: var(--loam-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.writeBlockRule {
+  height: 1px;
+  background: none;
+  border: none;
+  border-top: var(--loam-rule-row);
+  margin: 10px var(--loam-gutter);
+}
+.writeBlockTextarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 10px var(--loam-gutter);
+  font-family: var(--loam-font-reading);
+  font-size: var(--loam-body);
+  line-height: 1.4;
+  color: var(--loam-ink);
+  background: none;
+  border: none;
+  resize: none;
+  box-sizing: border-box;
+  outline: none;
+}
+.writeBlockTextarea::placeholder { color: var(--loam-muted); }
+.writeBlockError {
+  padding: 6px var(--loam-gutter);
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  color: #c0392b;
+  letter-spacing: 0.04em;
+}
+.writeBlockFooter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px var(--loam-gutter) 14px;
+}
+.writeBlockAttach {
+  font-family: var(--loam-font-mono);
+  font-size: 16px;
+  color: var(--loam-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+.writeBlockHint {
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  color: var(--loam-muted);
+  letter-spacing: 0.04em;
+  margin-left: auto;
+}
+.writeBlockSubmit {
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--loam-ink);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: opacity 150ms;
+}
+.writeBlockSubmit:disabled { opacity: 0.35; cursor: default; }
+.writeBlockRooms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  padding: 10px var(--loam-gutter) 14px;
+}
+.writeRoomBtn {
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  letter-spacing: 0.06em;
+  color: var(--loam-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 150ms;
+}
+.writeRoomBtn:hover { color: var(--loam-ink); }
+.writeRoomBtnHint {
+  color: var(--loam-ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 
 /* ── TabBar ───────────────────────────────────────────────── */
 .tabBar {

@@ -9,7 +9,7 @@ const ALL_STEPS = [
     target: 'space',
     top: true,            // lives in the header: always scroll back to the top first
     body: [
-      "This is your loam. It fills as you check off your daily practices.",
+      "This line fills as you check off your practices today.",
       "The goal isn’t always 100%. It’s to figure out what works for you.",
     ],
   },

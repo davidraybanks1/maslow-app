@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef, cloneElement } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { allNeeds, MODES, MODE_ORDER, MODE_MAX_BUBBLES, MODE_WEIGHTS, JOURNAL_TRUNCATE } from '../lib/constants'
 import { currentSlot, precedingSlots, SLOTS, SLOT_NOUN, SLOT_GREETING } from '../lib/slots'
@@ -9,7 +9,7 @@ import { normalizeBand, BAND_LABEL, THREADS, THREAD_COPY, FREQUENCY_INTRO, split
 import { useIsDesktop } from '../lib/useIsDesktop'
 import FrequencyCard, { MOOD_PIP_COLOR } from '../components/FrequencyCard'
 import Glyph from '../lib/glyphs'
-import { ProgressRule } from '../components/loam'
+import { ProgressRule, Dateline, ProfileBadge, CheckIn, EntryRow, WriteBlock } from '../components/loam'
 import NoteStack from '../components/NoteStack'
 import JournalQuote from '../components/JournalQuote'
 import ManageDeck from '../components/ManageDeck'
@@ -29,7 +29,7 @@ import styles from './Today.module.css'
 import SignedImg from '../components/SignedImg'
 import { ShapesPanel } from '../components/shapes/ShapesFlow'
 import JournalPage from '../components/JournalPage'
-import { shapeLabel } from '../lib/shapeFacts'
+import { shapeLabel, suggestShape, latestMoodToday } from '../lib/shapeFacts'
 import EntryText from '../components/EntryText'
 import shapeStyles from '../components/shapes/Shapes.module.css'
 
@@ -83,7 +83,7 @@ if (typeof document !== 'undefined') {
   window.addEventListener('pageshow', clearReviewedNotes)
 }
 
-export default function Today({ state, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, setCheckinDetail, updatePractice, logMood, onActiveDeckChanged, onCustomTagsChanged, profileMenu }) {
+export default function Today({ state, checkIn, removeCheckin, clearPracticeCheckins, incrementCheckinCount, setCheckinDetail, updatePractice, logMood, onActiveDeckChanged, onCustomTagsChanged, profileMenu, profileMenuRef }) {
   const navigate = useNavigate()
   const location = useLocation()
   const isDesktop = useIsDesktop()
@@ -387,6 +387,21 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     setDraftMoodFeeling(null)
   }
 
+  // Mobile draft persistence: sync to localStorage on every change, recover on mount/day-change.
+  const draftKey = `loam_draft_${today}`
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(draftKey)
+      if (saved) setDraftText(saved)
+    } catch {}
+  }, [draftKey])
+  useEffect(() => {
+    try {
+      if (draftText) localStorage.setItem(draftKey, draftText)
+      else localStorage.removeItem(draftKey)
+    } catch {}
+  }, [draftText, draftKey])
+
   const slotMood = todayMoods.find(m => m.prompt_time === slot)
   const inheritedBand = slotMood ? normalizeBand(slotMood.mood) : null
   const inheritedFeeling = slotMood?.feeling || null
@@ -419,6 +434,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     setDraftSaving(false)
     if (error) { setDraftSaveError('save failed — try again'); return }
     setJournalEntries(prev => [...prev, data])
+    try { localStorage.removeItem(draftKey) } catch {}
     resetDraft()
     setPlainDraft(false)
   }
@@ -775,16 +791,29 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     <div className={styles.screen}>
     <div className={styles.desktopWrap}>
 
-      {/* ── Greeting ── */}
-      <div className={styles.header}>
-        <div className={styles.headerAccount}>{profileMenu}</div>
-        <div className={styles.headerRow}>
-          <div className={styles.headerLeft}>
-            <div className={styles.greeting}>good {SLOT_GREETING[slot]}.</div>
-            <div className={styles.dateLabel}>{dateLabel}</div>
+      {/* ── Header ── */}
+      {isDesktop ? (
+        <div className={styles.header}>
+          <div className={styles.headerAccount}>{profileMenu}</div>
+          <div className={styles.headerRow}>
+            <div className={styles.headerLeft}>
+              <div className={styles.greeting}>good {SLOT_GREETING[slot]}.</div>
+              <div className={styles.dateLabel}>{dateLabel}</div>
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <>
+          <Dateline onboardedAt={state.onboardedAt}>
+            <ProfileBadge
+              initial={((state.profile?.name || state.email || '?').trim()[0] || '?').toUpperCase()}
+              onClick={() => profileMenuRef?.current?.open()}
+              data-tour="profile"
+            />
+          </Dateline>
+          {cloneElement(profileMenu, { hideTrigger: true })}
+        </>
+      )}
 
       {/* ── Progress rule (replaces stone pile) ── */}
       <ProgressRule pct={demoRing !== null ? Math.round(demoRing * 100) : ringPct} />
@@ -901,76 +930,132 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
             </div>
           </div>}
 
-        {/* ── Frequency section ── */}
-        <div className={styles.moodCard} data-tour="mood">
-          <div className={styles.freqHeader}>
-            {!isDesktop && daypartsData.some(d => d.band)
-              ? <DayToggle open={dayOpen} onToggle={() => setDayOpen(o => !o)} controls="day-vibrations" />
-              : <span className={styles.freqHeaderLabel}>VIBRATIONS</span>}
-            <button
-              type="button"
-              className={styles.freqInfoBtn}
-              aria-expanded={showFreqInfo}
-              aria-label={showFreqInfo ? 'hide what these mean' : 'what these mean'}
-              onClick={() => setShowFreqInfo(v => !v)}
-            >i</button>
-          </div>
-          {!isDesktop && daypartsData.some(d => d.band) && (
-            <div id="day-vibrations" className={`${dpStyles.drop} ${dayOpen ? dpStyles.dropOpen : ''}`} aria-hidden={!dayOpen} {...(dayOpen ? {} : { inert: '' })}>
-              <div className={dpStyles.dropClip}>
-                <DaypartTabs items={daypartsData} />
+        {/* ── Mood / Check-in ── */}
+        {isDesktop ? (
+          <div className={styles.moodCard} data-tour="mood">
+            <div className={styles.freqHeader}>
+              <span className={styles.freqHeaderLabel}>VIBRATIONS</span>
+              <button
+                type="button"
+                className={styles.freqInfoBtn}
+                aria-expanded={showFreqInfo}
+                aria-label={showFreqInfo ? 'hide what these mean' : 'what these mean'}
+                onClick={() => setShowFreqInfo(v => !v)}
+              >i</button>
+            </div>
+            {openRetroSlot && (
+              <div className={styles.retroRow}>
+                {retroEditing ? (
+                  <RetroMoodEdit
+                    key={openRetroSlot}
+                    slotName={openRetroSlot}
+                    initialBand={moodSelections[openRetroSlot] || null}
+                    initialFeeling={moodFeelings[openRetroSlot] || null}
+                    onSave={(band, feeling) => { handleFrequencySettle(openRetroSlot, band, feeling); setRetroEditing(false); setOpenRetroSlot(null); setDayOpen(false) }}
+                    onCancel={() => { setRetroEditing(false); setOpenRetroSlot(null); setDayOpen(false) }}
+                  />
+                ) : (
+                  <FrequencyCard
+                    key={openRetroSlot}
+                    initialBand={moodSelections[openRetroSlot] || null}
+                    initialFeeling={moodFeelings[openRetroSlot] || null}
+                    onSettle={(band, feeling) => { handleFrequencySettle(openRetroSlot, band, feeling); setOpenRetroSlot(null) }}
+                    onEdit={() => setRetroEditing(true)}
+                    pastTense
+                    slotName={openRetroSlot}
+                  />
+                )}
               </div>
+            )}
+            <div className={styles.freqShell}>
+              <FrequencyCard
+                key={slot}
+                initialBand={moodSelections[slot] || null}
+                initialFeeling={moodFeelings[slot] || null}
+                onSettle={(band, feeling) => { handleFrequencySettle(slot, band, feeling); if (feeling) setEditingCurrent(false) }}
+                editing={editingCurrent}
+                dayparts={daypartsData}
+                slotName={slot}
+              />
             </div>
-          )}
-          {openRetroSlot && (
-            <div className={styles.retroRow}>
-              {retroEditing ? (
-                <RetroMoodEdit
-                  key={openRetroSlot}
-                  slotName={openRetroSlot}
-                  initialBand={moodSelections[openRetroSlot] || null}
-                  initialFeeling={moodFeelings[openRetroSlot] || null}
-                  onSave={(band, feeling) => { handleFrequencySettle(openRetroSlot, band, feeling); setRetroEditing(false); setOpenRetroSlot(null); setDayOpen(false) }}
-                  onCancel={() => { setRetroEditing(false); setOpenRetroSlot(null); setDayOpen(false) }}
-                />
-              ) : (
-                <FrequencyCard
-                  key={openRetroSlot}
-                  initialBand={moodSelections[openRetroSlot] || null}
-                  initialFeeling={moodFeelings[openRetroSlot] || null}
-                  onSettle={(band, feeling) => { handleFrequencySettle(openRetroSlot, band, feeling); setOpenRetroSlot(null) }}
-                  onEdit={() => setRetroEditing(true)}
-                  pastTense
-                  slotName={openRetroSlot}
-                />
-              )}
-            </div>
-          )}
-          <div className={isDesktop ? styles.freqShell : styles.freqCard}>
-            <FrequencyCard
-              key={slot}
-              initialBand={moodSelections[slot] || null}
-              initialFeeling={moodFeelings[slot] || null}
-              onSettle={(band, feeling) => { handleFrequencySettle(slot, band, feeling); if (feeling) setEditingCurrent(false) }}
-              editing={editingCurrent}
-              dayparts={isDesktop ? daypartsData : null}
-              bandAsBack={!isDesktop}
-              slotName={slot}
-            />
+            {showFreqInfo && (
+              <div className={styles.freqInfoPanel}>
+                <p className={styles.freqInfoIntro}>{FREQUENCY_INTRO}</p>
+                {THREADS.map(t => (
+                  <p key={t}>
+                    <span className={styles.freqInfoCat}>{t}</span> — {splitFrequencyWords(THREAD_COPY[t].definition).map((seg, i) =>
+                      seg.bold ? <b key={i}>{seg.text}</b> : seg.text
+                    )}
+                  </p>
+                ))}
+              </div>
+            )}
           </div>
-          {showFreqInfo && (
-            <div className={styles.freqInfoPanel}>
-              <p className={styles.freqInfoIntro}>{FREQUENCY_INTRO}</p>
-              {THREADS.map(t => (
-                <p key={t}>
-                  <span className={styles.freqInfoCat}>{t}</span> — {splitFrequencyWords(THREAD_COPY[t].definition).map((seg, i) =>
-                    seg.bold ? <b key={i}>{seg.text}</b> : seg.text
-                  )}
-                </p>
-              ))}
-            </div>
-          )}
-        </div>
+        ) : (
+          <div data-tour="mood">
+            <CheckIn
+              band={moodSelections[slot] || null}
+              feeling={moodFeelings[slot] || null}
+              onBand={b => { hapticTick(); handleFrequencySettle(slot, b, null) }}
+              onFeeling={f => { hapticTick(); handleFrequencySettle(slot, moodSelections[slot] || 'mid', f); setEditingCurrent(false) }}
+            />
+            {daypartsData.some(d => d.band) && (
+              <>
+                <div className={styles.freqHeader}>
+                  <DayToggle open={dayOpen} onToggle={() => setDayOpen(o => !o)} controls="day-vibrations" />
+                  <button
+                    type="button"
+                    className={styles.freqInfoBtn}
+                    aria-expanded={showFreqInfo}
+                    aria-label={showFreqInfo ? 'hide what these mean' : 'what these mean'}
+                    onClick={() => setShowFreqInfo(v => !v)}
+                  >i</button>
+                </div>
+                <div id="day-vibrations" className={`${dpStyles.drop} ${dayOpen ? dpStyles.dropOpen : ''}`} aria-hidden={!dayOpen} {...(dayOpen ? {} : { inert: '' })}>
+                  <div className={dpStyles.dropClip}>
+                    <DaypartTabs items={daypartsData} />
+                  </div>
+                </div>
+              </>
+            )}
+            {openRetroSlot && (
+              <div className={styles.retroRow}>
+                {retroEditing ? (
+                  <RetroMoodEdit
+                    key={openRetroSlot}
+                    slotName={openRetroSlot}
+                    initialBand={moodSelections[openRetroSlot] || null}
+                    initialFeeling={moodFeelings[openRetroSlot] || null}
+                    onSave={(band, feeling) => { handleFrequencySettle(openRetroSlot, band, feeling); setRetroEditing(false); setOpenRetroSlot(null); setDayOpen(false) }}
+                    onCancel={() => { setRetroEditing(false); setOpenRetroSlot(null); setDayOpen(false) }}
+                  />
+                ) : (
+                  <FrequencyCard
+                    key={openRetroSlot}
+                    initialBand={moodSelections[openRetroSlot] || null}
+                    initialFeeling={moodFeelings[openRetroSlot] || null}
+                    onSettle={(band, feeling) => { handleFrequencySettle(openRetroSlot, band, feeling); setOpenRetroSlot(null) }}
+                    onEdit={() => setRetroEditing(true)}
+                    pastTense
+                    slotName={openRetroSlot}
+                  />
+                )}
+              </div>
+            )}
+            {showFreqInfo && (
+              <div className={styles.freqInfoPanel}>
+                <p className={styles.freqInfoIntro}>{FREQUENCY_INTRO}</p>
+                {THREADS.map(t => (
+                  <p key={t}>
+                    <span className={styles.freqInfoCat}>{t}</span> — {splitFrequencyWords(THREAD_COPY[t].definition).map((seg, i) =>
+                      seg.bold ? <b key={i}>{seg.text}</b> : seg.text
+                    )}
+                  </p>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
         <div className={styles.moodDivider} />
 
         {/* ── Needs & Practices ── */}
@@ -1170,61 +1255,54 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
             </div>
           </div>
         ) : (
-          <div className={styles.cardJournal} data-tour="journal">
-            <div ref={shapesRef} data-tour="journal-shapes">
-              <JournalPage state={state} logMood={logMood} />
-            </div>
-            <>
-              {journalEntries.length > 0 && (
-                <div className={styles.journalMobileEntries}>
-                  {journalEntries.map(e => {
-                    return (
-                    <div key={e.id} className={styles.journalEntryCard}>
-                      <div className={styles.journalEntryMeta}>
-                        <span className={styles.journalEntryTime}>{formatEntryTime(e.created_at)}</span>
-                        {e.mood_band && <span className={styles.journalFreqChip}><span className={styles.journalFreqDot} style={{ background: MOOD_PIP_COLOR[e.mood_band] }} />{e.mood_feeling || e.mood_band}</span>}
-                        {e.slot && <span className={styles.journalSlotChip}>{e.slot}</span>}
-                        {e.state && <span className={styles.journalStateTag}>{e.state}</span>}
-                        {e.need_id && <span className={styles.journalNeedTag}>{e.need_id}</span>}
-                        {e.shape && shapeLabel(e.shape) && <span className={shapeStyles.shapeChip}>{shapeLabel(e.shape)}</span>}
-                        <button
-                          className={`${styles.journalEntryDelete}${pendingDeleteId === e.id ? ` ${styles.journalEntryDeletePending}` : ''}`}
-                          onMouseDown={ev => ev.stopPropagation()}
-                          onClick={() => handleDeleteEntry(e.id)}
-                          aria-label={pendingDeleteId === e.id ? 'confirm delete' : 'delete entry'}
-                        >{pendingDeleteId === e.id ? 'delete?' : '×'}</button>
-                      </div>
-                      {(() => {
-                      const body = e.entry || ''
-                      const isExp = expandedTodayEntries.has(e.id)
-                      const trunc = body.length > JOURNAL_TRUNCATE
-                      const display = !isExp && trunc ? body.slice(0, JOURNAL_TRUNCATE).trimEnd() + '…' : body
-                      const toggle = () => setExpandedTodayEntries(prev => { const s = new Set(prev); isExp ? s.delete(e.id) : s.add(e.id); return s })
-                      return (
-                        <>
-                          {e.quoted_text && (
-                            <JournalQuote
-                              text={e.quoted_text}
-                              dateLabel={formatQuoteDate(e.quoted_date)}
-                              blockClass={styles.journalQuoteBlock}
-                              dateClass={styles.journalQuoteDate}
-                              textClass={styles.journalQuoteText}
-                              readMoreClass={styles.journalQuoteReadMore}
-                            />
-                          )}
-                          <div className={styles.journalEntryText}><EntryText text={display} shape={e.shape} /></div>
-                          {!isExp && trunc && <button className={styles.journalReadMore} onClick={toggle}>read more</button>}
-                          {e.image_url && <SignedImg src={e.image_url} className={styles.journalEntryImage} alt="" />}
-                        </>
-                      )
-                    })()}
-                    </div>
-                    )
-                  })}
-                </div>
-              )}
-            </>
-          </div>
+          <>
+            <WriteBlock
+              text={draftText}
+              onTextChange={setDraftText}
+              onSubmit={handleAddEntry}
+              saving={draftSaving}
+              error={draftSaveError}
+              greeting={SLOT_GREETING[slot]}
+              slot={slot}
+              chipBand={chipBand}
+              chipFeeling={chipFeeling}
+              chipPip={chipBand ? MOOD_PIP_COLOR[chipBand] : undefined}
+              entryCount={journalEntryCount}
+              suggestedRoom={suggestShape(latestMoodToday(state, today))}
+              onRoomClick={roomId => navigate('/write', { state: { shape: roomId, at: Date.now() } })}
+              imageUrl={draftImage}
+              onImageClick={setLightboxImage}
+              onAttach={() => draftFileInputRef.current?.click()}
+              onImageRemove={() => setDraftImage(null)}
+            />
+            {draftFileInput}
+            {journalEntries.length > 0 && (
+              <div className={styles.journalMobileEntries}>
+                {journalEntries.map(e => {
+                  const isExp = expandedTodayEntries.has(e.id)
+                  return (
+                    <EntryRow
+                      key={e.id}
+                      dateLabel={formatEntryTime(e.created_at)}
+                      text={e.entry || ''}
+                      expanded={isExp}
+                      onToggleExpand={() => setExpandedTodayEntries(prev => { const s = new Set(prev); isExp ? s.delete(e.id) : s.add(e.id); return s })}
+                      moodBand={e.mood_band || undefined}
+                      moodFeeling={e.mood_feeling || undefined}
+                      moodPipColor={e.mood_band ? MOOD_PIP_COLOR[e.mood_band] : undefined}
+                      roomTag={e.shape ? shapeLabel(e.shape) : undefined}
+                      quotedText={e.quoted_text || undefined}
+                      quotedDate={e.quoted_date ? formatQuoteDate(e.quoted_date) : undefined}
+                      imageUrl={e.image_url || undefined}
+                      onImageClick={setLightboxImage}
+                      pendingDelete={pendingDeleteId === e.id}
+                      onDelete={() => handleDeleteEntry(e.id)}
+                    />
+                  )
+                })}
+              </div>
+            )}
+          </>
         )}
         {draftQuotePickerOverlay}
 

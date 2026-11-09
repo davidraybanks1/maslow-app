@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
@@ -82,7 +82,7 @@ function Chevron({ dir = 'right' }) {
 // toggles it, the pages it links to open in that same panel, and its contents
 // are portalled into the panel's host element.
 //   desk = { open, host, onToggle, onClose, onGo }
-export default function ProfileMenu({
+const ProfileMenu = forwardRef(function ProfileMenu({
   desk,
   name, email,
   remindersEnabled, updateRemindersEnabled,
@@ -93,7 +93,8 @@ export default function ProfileMenu({
   noteDeckCount = 0,
   customTagCount = 0,
   resetTour,
-}) {
+  hideTrigger = false,
+}, ref) {
   const [phase, setPhase] = useState(null) // null | 'open' | 'closing'
   const [page, setPage] = useState('home') // 'home' | 'reminders'
   const [moreOpen, setMoreOpen] = useState(false)
@@ -182,6 +183,10 @@ export default function ProfileMenu({
     setPhase('closing')
     closeTimerRef.current = setTimeout(finish, mobile ? 220 : 150)
   }
+
+  // Expose openMenu() so an external trigger (e.g. ProfileBadge) can open the sheet
+  // without rendering the built-in trigger button (hideTrigger mode).
+  useImperativeHandle(ref, () => ({ open: openMenu }), [])
 
   useEffect(() => {
     if (!mounted) return
@@ -477,16 +482,20 @@ export default function ProfileMenu({
 
   return (
     <div className={styles.wrapper}>
-      <button
-        ref={avatarRef}
-        data-tour="profile"
-        className={`${styles.avatar} ${isOpen ? styles.avatarOpen : ''}`}
-        onClick={() => (desk ? desk.onToggle() : phase === 'open' ? close() : openMenu())}
-        aria-label="Account menu"
-        aria-expanded={isOpen}
-      >
-        {initial}
-      </button>
+      {hideTrigger ? (
+        <span ref={avatarRef} style={{ display: 'none' }} aria-hidden="true" />
+      ) : (
+        <button
+          ref={avatarRef}
+          data-tour="profile"
+          className={`${styles.avatar} ${isOpen ? styles.avatarOpen : ''}`}
+          onClick={() => (desk ? desk.onToggle() : phase === 'open' ? close() : openMenu())}
+          aria-label="Account menu"
+          aria-expanded={isOpen}
+        >
+          {initial}
+        </button>
+      )}
 
       {mounted && desk && desk.host && createPortal(
         <div ref={panelRef} tabIndex={-1} role="region" aria-label="profile" className={`${styles.panel} ${styles.panelDesk}`}>
@@ -521,4 +530,6 @@ export default function ProfileMenu({
       {mounted && timeSheet}
     </div>
   )
-}
+})
+
+export default ProfileMenu

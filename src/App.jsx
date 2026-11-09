@@ -244,8 +244,10 @@ function AppInner() {
   const practiceCount = Array.isArray(state.practicesDB) && state.practicesDB.length > 0
     ? state.practicesDB.filter(p => !p.archived_at).length
     : Object.values(state.practices || {}).flat().length
+  const profileMenuRef = useRef(null)
   const profileMenuEl = (
     <ProfileMenu
+      ref={profileMenuRef}
       name={state.profile?.name} email={state.email}
       remindersEnabled={state.remindersEnabled} updateRemindersEnabled={updateRemindersEnabled}
       moodReminders={state.moodReminders} updateMoodReminder={updateMoodReminder}
@@ -272,7 +274,7 @@ function AppInner() {
         <Routes>
           <Route path="/" element={state.onboarded ? <Navigate to={isDesktop ? '/write' : '/today'} replace /> : <Navigate to="/onboarding" replace />} />
           <Route path="/onboarding" element={state.onboarded ? <Navigate to="/today" replace /> : <OnboardingFlow updateCanvas={updateCanvas} completeOnboarding={completeOnboarding} />} />
-          <Route path="/today" element={isDesktop ? <DeskGo view="today" /> : <Protected onboarded={state.onboarded} userId={state.userId}><Today state={state} checkIn={checkIn} removeCheckin={removeCheckin} clearPracticeCheckins={clearPracticeCheckins} incrementCheckinCount={incrementCheckinCount} setCheckinDetail={setCheckinDetail} updatePractice={updatePractice} logMood={logMood} onActiveDeckChanged={updateNoteDeck} onCustomTagsChanged={setCustomTagCount} profileMenu={profileMenuEl} /></Protected>} />
+          <Route path="/today" element={isDesktop ? <DeskGo view="today" /> : <Protected onboarded={state.onboarded} userId={state.userId}><Today state={state} checkIn={checkIn} removeCheckin={removeCheckin} clearPracticeCheckins={clearPracticeCheckins} incrementCheckinCount={incrementCheckinCount} setCheckinDetail={setCheckinDetail} updatePractice={updatePractice} logMood={logMood} onActiveDeckChanged={updateNoteDeck} onCustomTagsChanged={setCustomTagCount} profileMenu={profileMenuEl} profileMenuRef={profileMenuRef} /></Protected>} />
           <Route path="/write" element={<Protected onboarded={state.onboarded} userId={state.userId}><Write state={state} logMood={logMood} /></Protected>} />
           <Route path="/drafts" element={isDesktop ? <DeskGo view="drafts" /> : <Navigate to="/log" replace />} />
           <Route path="/practices" element={isDesktop ? <DeskGo view="practices" /> : <Protected onboarded={state.onboarded} userId={state.userId}><Practices state={state} addPractice={addPractice} renamePractice={renamePractice} updatePractice={updatePractice} archivePractice={archivePractice} setPracticeReminder={setPracticeReminder} stampReminderOffered={stampReminderOffered} incrementOffersDeclined={incrementOffersDeclined} completeOnboarding={completeOnboarding} /></Protected>} />
