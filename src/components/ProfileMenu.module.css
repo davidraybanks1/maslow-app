@@ -69,7 +69,7 @@
   --pf-track: #E2DCCE;
   --pf-rule: rgba(60, 45, 20, 0.12);
   --pf-line: rgba(60, 45, 20, 0.16);
-  --pf-xl: 'Newsreader Extralight', var(--font-serif);
+  --pf-xl: var(--loam-font-reading);
 
   position: absolute;
   inset: 0;
@@ -184,7 +184,7 @@ button.card, .tile, .remCard {
 .name {
   font-family: var(--pf-xl);
   font-size: 40px;
-  font-weight: 200;
+  font-weight: 300;
   line-height: 1;
   letter-spacing: -0.02em;
   overflow-wrap: anywhere;
@@ -529,7 +529,7 @@ div.moreRow { cursor: default; }
   gap: 12px;
   text-align: center;
 }
-.dialogTitle { font-family: var(--pf-xl); font-size: 28px; font-weight: 200; line-height: 1.15; }
+.dialogTitle { font-family: var(--pf-xl); font-size: 28px; font-weight: 300; line-height: 1.15; }
 .dialogBody {
   font-family: var(--font-serif);
   font-size: 16px;

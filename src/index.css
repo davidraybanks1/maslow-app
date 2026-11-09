@@ -84,14 +84,57 @@
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
-/* Same variable file, opened up to its 200 weight. The base 'Newsreader' face
-   is capped at 300, so anything asking for 200 there renders at 300. */
+/* ── Instrument Serif (self-hosted, 400 normal + italic) ── */
 @font-face {
-  font-family: 'Newsreader Extralight';
+  font-family: 'Instrument Serif';
   font-style: normal;
-  font-weight: 200;
+  font-weight: 400;
   font-display: swap;
-  src: url('/fonts/newsreader.woff2') format('woff2');
+  src: url('/fonts/instrument-serif-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Instrument Serif';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/instrument-serif-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Instrument Serif';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/instrument-serif-italic-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Instrument Serif';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/instrument-serif-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* ── Bricolage Grotesque (self-hosted, 800 only — wordmark) ── */
+@font-face {
+  font-family: 'Bricolage Grotesque';
+  font-style: normal;
+  font-weight: 800;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url('/fonts/bricolage-grotesque-800-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Bricolage Grotesque';
+  font-style: normal;
+  font-weight: 800;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url('/fonts/bricolage-grotesque-800-latin.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
@@ -100,70 +143,126 @@
 button { touch-action: manipulation; }
 
 :root {
-  /* Paper stack */
-  --paper:  #EFEADD;        /* main screen background */
-  --card:   #FFFFFF;        /* card surfaces */
+  /* ── Loam 2b "Cover" design tokens ───────────────────────── */
+  --loam-paper:    #EFEAE0;
+  --loam-paper-2:  #E7E1D4;
+  --loam-keyboard-scrim: rgba(23, 21, 18, .45);
+
+  --loam-ink:    #171512;
+  --loam-ink-2:  #3a3731;
+  --loam-muted:  #6b665c;
+  --loam-leader: #8a8478;
+  --loam-rule:   rgba(23, 21, 18, .15);
+  --loam-track:  rgba(23, 21, 18, .08);
+
+  --loam-exploration:        #1E3B2E;  --loam-exploration-text:  #1E3B2E;
+  --loam-appreciation:       #A8BFA0;  --loam-appreciation-text: #4f6648;
+  --loam-nourishment:        #F2AE1A;  --loam-nourishment-text:  #8a6000;
+  --loam-survival:           #E8502E;  --loam-survival-text:     #b5401f;
+
+  --loam-gold:      #F2AE1A;
+  --loam-gold-text: #8a6000;
+
+  --loam-mood-good: #1E3B2E;
+  --loam-mood-fine: #A8BFA0;
+  --loam-mood-bad:  #E8502E;
+
+  --loam-up:   #1E3B2E;
+  --loam-down: #b5401f;
+
+  --loam-font-wordmark: 'Bricolage Grotesque', sans-serif;
+  --loam-font-display:  'Instrument Serif', serif;
+  --loam-font-reading:  'Newsreader', serif;
+  --loam-font-mono:     'DM Mono', monospace;
+
+  --loam-greeting: 44px;
+  --loam-title:    30px;
+  --loam-chapter:  22px;
+  --loam-index:    20px;
+  --loam-quote:    23px;
+  --loam-body:     16.5px;
+  --loam-label:    12px;
+  --loam-tag:      12px;
+  --loam-tab:      12px;
+  --loam-bignum:   46px;
+  --loam-min-text: 12px;
+
+  --loam-rule-open:    1.5px solid var(--loam-ink);
+  --loam-rule-close:   1px solid var(--loam-ink);
+  --loam-rule-row:     1px solid var(--loam-rule);
+  --loam-leader-dots:  1px dotted var(--loam-leader);
+
+  --loam-gutter:       24px;
+  --loam-stack:        18px;
+  --loam-radius-pill:  40px;
+  --loam-badge:        30px;
+  --loam-badge-radius: 30%;
+  --loam-write-btn:    50px;
+
+  /* ── Updated legacy tokens (new values, old names kept for compat) ── */
+  --paper:  #EFEAE0;
+  --card:   var(--loam-paper);   /* no-cards rule: card = paper, no white surfaces */
 
   /* Backward-compat aliases */
   --bg:  var(--paper);
-  --bg2: #E8E3D4;
-  --bg3: #DDD7C8;
+  --bg2: #E5DFD0;
+  --bg3: #DAD4C4;
 
-  --ink:  #1A1A18;
-  --ink2: #5A5750;
-  --ink3: rgba(0,0,0,.45);
-  --ink4: rgba(0,0,0,.25);
+  --ink:  #171512;
+  --ink2: #3a3731;
+  --ink3: rgba(23,21,18,.45);
+  --ink4: rgba(23,21,18,.25);
 
-  --ink-muted: rgba(0,0,0,.45);
+  --ink-muted: rgba(23,21,18,.45);
 
   /* Borders / surfaces */
-  --hairline: rgba(0,0,0,.1);
-  --track:    rgba(0,0,0,.07);
+  --hairline: rgba(23,21,18,.12);
+  --track:    rgba(23,21,18,.08);
   --border:   var(--hairline);
-  --border2:  rgba(0,0,0,.15);
+  --border2:  rgba(23,21,18,.18);
 
   --surface-reflective: #E8E4F0;
 
-  /* Layer / mode colors — unchanged */
-  --play: #1B3A2D;
-  --play-bg: #E8EFE9;
-  --play-text: #1B3627;
+  /* Mode colors — updated to new palette */
+  --play: #1E3B2E;
+  --play-bg: #E5EDE7;
+  --play-text: #1E3B2E;
 
-  --appr: #D8E2DC;
-  --appr-border: #A8B8B0;
-  --appr-text: #4A6860;
+  --appr: #A8BFA0;
+  --appr-border: #7a9e72;
+  --appr-text: #4f6648;
 
-  --nour: #F5B622;
-  --nour-border: #CC9C00;
-  --nour-text: #8A6A00;
+  --nour: #F2AE1A;
+  --nour-border: #c48a00;
+  --nour-text: #8a6000;
 
-  --surv: #F55127;
-  --surv-text: #D93B1C;
+  --surv: #E8502E;
+  --surv-text: #b5401f;
 
   --anxiety: #2C2820;
-  --appreciation-strong: #5A7A70;
-  --appreciation-deep:   #9DB394; /* small marks <12px only — sage fails at 7px, this doesn't */
-  --nourishment-deep:    #C9930C; /* amber — small marks/counts only, same rule as appreciation-deep */
-  --surface-dim:         #F5EFE0; /* off-row surface in note list */
+  --appreciation-strong: #4f6648;
+  --appreciation-deep:   #7a9e72;
+  --nourishment-deep:    #c48a00;
+  --surface-dim:         #EBE5D5;
 
   /* Semantic data tokens */
-  --positive:         #2C6E49;
-  --destructive:      #C4381F;
+  --positive:         #1E3B2E;
+  --destructive:      #b5401f;
   --on-dark-negative: #F2A08C;
-  --empty-cell:       rgba(0,0,0,.06);
+  --empty-cell:       rgba(23,21,18,.06);
 
-  /* Mode identity tokens — unchanged */
-  --exploration:  #1B3A2D;
-  --appreciation: #ABBEA3;
-  --nourishment:  #F5B622;
-  --survival:     #F55127;
+  /* Mode identity tokens — updated */
+  --exploration:  #1E3B2E;
+  --appreciation: #A8BFA0;
+  --nourishment:  #F2AE1A;
+  --survival:     #E8502E;
 
   /* Loading screen */
   --loader-lavender: #C9C1E0;
   --motion-page: 350ms;
 
-  /* Typography */
-  --font-serif: 'Newsreader', serif;
+  /* Typography — Instrument Serif replaces Newsreader as display */
+  --font-serif: 'Instrument Serif', serif;
   --font-mono:  'DM Mono', monospace;
   /* short aliases - the almanac components reach for these, and an undefined
      var() in font-family silently resolves to inherit, which is how five

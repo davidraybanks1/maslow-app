@@ -23,6 +23,7 @@ import ProfileMenu from './components/ProfileMenu'
 import DeskShell from './components/DeskShell'
 import { DeskChromeProvider, useDeskChrome } from './lib/deskChrome'
 import Write from './screens/Write'
+import Primitives from './screens/Primitives'
 import TabBar from './components/TabBar'
 import UpdateToast from './components/UpdateToast'
 import GlobalComposer, { ComposerFab } from './components/GlobalComposer'
@@ -280,6 +281,7 @@ function AppInner() {
           <Route path="/canvas" element={isDesktop ? <DeskGo view="needs" /> : <Protected onboarded={state.onboarded} userId={state.userId}><CanvasScreen state={state} updateCanvas={updateCanvas} addCustomNeed={addCustomNeed} renameCustomNeed={renameCustomNeed} deleteCustomNeed={deleteCustomNeed} archivePractice={archivePractice} /></Protected>} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/password" element={<UpdatePassword />} />
+          <Route path="/primitives" element={<Primitives />} />
           <Route path="/settings" element={<Navigate to="/today" replace />} />
         </Routes>
       </div>

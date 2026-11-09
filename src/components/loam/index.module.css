@@ -1,0 +1,364 @@
+/* Loam 2b primitives — CSS module */
+
+/* ── Dateline ─────────────────────────────────────────────── */
+.dateline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px var(--loam-gutter) 10px;
+  border-bottom: var(--loam-rule-close);
+}
+.datelineDocked {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  background: var(--loam-paper);
+  z-index: 10;
+}
+.datelineText {
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--loam-muted);
+}
+
+/* ── ProfileBadge ─────────────────────────────────────────── */
+.badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--loam-ink);
+  border-radius: var(--loam-badge-radius);
+  background: transparent;
+  color: var(--loam-ink);
+  font-family: var(--loam-font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 150ms;
+}
+.badge:hover { opacity: 0.7; }
+
+/* ── ProgressRule ─────────────────────────────────────────── */
+.progressRule {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px var(--loam-gutter);
+}
+.progressTrack {
+  flex: 1;
+  position: relative;
+  height: 3px;
+}
+.progressFill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 3px;
+  background: var(--loam-gold);
+  border-radius: 1.5px;
+}
+.progressDots {
+  position: absolute;
+  top: 0.5px;
+  height: 2px;
+  border-top: 2px dotted var(--loam-leader);
+}
+.progressPct {
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  color: var(--loam-muted);
+  min-width: 28px;
+  text-align: right;
+}
+
+/* ── PullQuote ────────────────────────────────────────────── */
+.pullQuote {
+  display: flex;
+  gap: 10px;
+  padding: 14px var(--loam-gutter);
+  border-top: var(--loam-rule-open);
+}
+.pullQuoteNoRule {
+  border-top: none;
+}
+.pullQuoteMark {
+  font-size: 36px;
+  line-height: 1;
+  color: var(--loam-gold);
+  font-family: var(--loam-font-reading);
+  flex-shrink: 0;
+  margin-top: -4px;
+}
+.pullQuoteBody {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pullQuoteText {
+  font-family: var(--loam-font-reading);
+  font-style: italic;
+  font-size: var(--loam-quote);
+  line-height: 1.15;
+  color: var(--loam-ink);
+}
+.pullQuoteFolio {
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  letter-spacing: 0.08em;
+  color: var(--loam-muted);
+  text-transform: uppercase;
+}
+
+/* ── CheckIn ──────────────────────────────────────────────── */
+.checkIn {
+  padding: 16px var(--loam-gutter);
+  border-top: var(--loam-rule-open);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.checkInLabel {
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--loam-muted);
+}
+.checkInBands,
+.checkInFeelings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 20px;
+}
+.checkInWord {
+  font-family: var(--loam-font-display);
+  font-size: 28px;
+  font-weight: 400;
+  color: var(--loam-ink);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 3px;
+  transition: text-decoration-color 150ms;
+}
+.checkInWord:hover {
+  text-decoration-color: var(--loam-ink);
+}
+.checkInWordActive {
+  text-decoration-color: var(--loam-ink);
+}
+.checkInChosen {
+  font-family: var(--loam-font-display);
+  font-size: 24px;
+  line-height: 1.1;
+  color: var(--loam-ink);
+}
+.checkInChosen em {
+  font-style: italic;
+}
+
+/* ── ChapterRow ───────────────────────────────────────────── */
+.chapterRow {
+  display: grid;
+  grid-template-columns: 34px 1fr auto;
+  align-items: baseline;
+  gap: 0 8px;
+  padding: 10px var(--loam-gutter);
+  border-top: var(--loam-rule-row);
+}
+.chapterNumeral {
+  font-family: var(--loam-font-display);
+  font-style: italic;
+  font-size: var(--loam-chapter);
+  line-height: 1;
+}
+.chapterName {
+  font-family: var(--loam-font-display);
+  font-size: var(--loam-chapter);
+  line-height: 1.1;
+  color: var(--loam-ink);
+}
+.chapterRowDone .chapterName {
+  font-style: italic;
+}
+.chapterCount {
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  letter-spacing: 0.05em;
+  color: var(--loam-muted);
+  white-space: nowrap;
+}
+
+/* ── PracticeDot ──────────────────────────────────────────── */
+.practiceDot {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid var(--loam-ink);
+  background: transparent;
+  overflow: hidden;
+  flex-shrink: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.practiceDotDone {
+  border-color: transparent;
+}
+.practiceDotFill {
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  opacity: 0.3;
+  pointer-events: none;
+}
+[data-holding] .practiceDotFill {
+  opacity: 0.5;
+}
+[data-flash] .practiceDotFill {
+  opacity: 0;
+  transition: opacity 360ms;
+}
+.practiceDotX2 {
+  position: relative;
+  font-family: var(--loam-font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--loam-paper);
+  letter-spacing: 0;
+  pointer-events: none;
+}
+
+/* ── IndexRow ─────────────────────────────────────────────── */
+.indexRow {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  width: 100%;
+  padding: 10px var(--loam-gutter);
+  background: none;
+  border: none;
+  border-top: var(--loam-rule-row);
+  cursor: pointer;
+  text-align: left;
+}
+.indexRow:disabled {
+  cursor: default;
+  pointer-events: none;
+}
+.indexRowName {
+  font-family: var(--loam-font-display);
+  font-size: var(--loam-index);
+  color: var(--loam-ink);
+  white-space: nowrap;
+}
+.indexRowLeader {
+  flex: 1;
+  border-bottom: var(--loam-leader-dots);
+  margin-bottom: 3px;
+  min-width: 20px;
+}
+.indexRowValue {
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  letter-spacing: 0.05em;
+  color: var(--loam-muted);
+  white-space: nowrap;
+}
+
+/* ── EntryRow ─────────────────────────────────────────────── */
+.entryRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px var(--loam-gutter);
+  border-top: var(--loam-rule-row);
+}
+.entryRowDate {
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--loam-muted);
+}
+.entryRowText {
+  font-family: var(--loam-font-reading);
+  font-size: var(--loam-body);
+  line-height: 1.35;
+  color: var(--loam-ink-2);
+}
+.entryRowTags {
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-tag);
+  letter-spacing: 0.04em;
+  color: var(--loam-muted);
+}
+.entryRowActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  padding-top: 2px;
+}
+.entryRowAction {
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  letter-spacing: 0.05em;
+  color: var(--loam-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 150ms;
+}
+.entryRowAction:hover { color: var(--loam-ink); }
+.entryRowActionActive { color: var(--loam-ink); }
+
+/* ── TabBar ───────────────────────────────────────────────── */
+.tabBar {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  background: var(--loam-paper);
+  border-top: var(--loam-rule-close);
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  padding: 12px var(--loam-gutter) calc(12px + env(safe-area-inset-bottom, 0px));
+  z-index: 50;
+}
+.tab {
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-tab);
+  letter-spacing: 0.06em;
+  color: var(--loam-muted);
+  text-decoration: none;
+  padding-bottom: 1px;
+  border-bottom: 1px solid transparent;
+  transition: color 150ms, border-color 150ms;
+}
+.tab:hover { color: var(--loam-ink); }
+.tabActive {
+  color: var(--loam-ink);
+  border-bottom-color: var(--loam-ink);
+}

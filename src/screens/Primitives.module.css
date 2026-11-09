@@ -1,0 +1,68 @@
+.page {
+  background: var(--loam-paper);
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 24px 0 100px;
+  color: var(--loam-ink);
+}
+
+.pageTitle {
+  font-family: var(--loam-font-mono);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--loam-muted);
+  padding: 0 var(--loam-gutter) 24px;
+  border-bottom: var(--loam-rule-open);
+  margin-bottom: 24px;
+}
+
+.section {
+  margin-bottom: 36px;
+}
+
+.sectionTitle {
+  font-family: var(--loam-font-mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--loam-muted);
+  padding: 0 var(--loam-gutter) 8px;
+  border-bottom: var(--loam-rule-row);
+  margin-bottom: 0;
+}
+
+.dotRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px var(--loam-gutter);
+  border-top: var(--loam-rule-row);
+}
+
+.dotLabel {
+  font-family: var(--loam-font-mono);
+  font-size: 12px;
+  color: var(--loam-muted);
+  letter-spacing: 0.04em;
+  flex: 1;
+}
+
+.reset {
+  font-family: var(--loam-font-mono);
+  font-size: 12px;
+  color: var(--loam-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.tabBarPreview {
+  position: relative;
+  height: 60px;
+  overflow: hidden;
+}
