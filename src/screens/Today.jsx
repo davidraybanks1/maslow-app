@@ -9,7 +9,7 @@ import { normalizeBand, BAND_LABEL, THREADS, THREAD_COPY, FREQUENCY_INTRO, split
 import { useIsDesktop } from '../lib/useIsDesktop'
 import FrequencyCard, { MOOD_PIP_COLOR } from '../components/FrequencyCard'
 import Glyph from '../lib/glyphs'
-import Bloom from '../components/Bloom'
+import { ProgressRule } from '../components/loam'
 import NoteStack from '../components/NoteStack'
 import JournalQuote from '../components/JournalQuote'
 import ManageDeck from '../components/ManageDeck'
@@ -43,50 +43,6 @@ function noteLenAttr(text) {
 }
 
 // Shared math: each mode owns ≤25% of total; returns [{color, from, to}] in percent
-function buildProgressSegments(arcs) {
-  const segs = []
-  let cursor = 0
-  for (const { color, fill } of arcs) {
-    const segPct = fill * 25
-    if (segPct > 0.001) {
-      segs.push({ color, from: cursor, to: cursor + segPct })
-      cursor += segPct
-    }
-  }
-  segs.push({ color: 'var(--track)', from: cursor, to: 100 })
-  return segs
-}
-
-function buildRingGradient(arcs) {
-  const segs = buildProgressSegments(arcs)
-  const stops = segs.flatMap(s => [`${s.color} ${s.from.toFixed(2)}%`, `${s.color} ${s.to.toFixed(2)}%`])
-  return `conic-gradient(from -90deg, ${stops.join(', ')})`
-}
-
-function CompletionRing({ arcs, pct }) {
-  const gradient = buildRingGradient(arcs)
-  return (
-    <div className={styles.ring} style={{ background: gradient }} aria-label={`${pct}% complete today`} role="img">
-      <div className={styles.ringInner}>
-        <span className={styles.ringPct}>{pct}<span className={styles.ringPctSign}>%</span></span>
-      </div>
-    </div>
-  )
-}
-
-function CompletionBar({ arcs, pct }) {
-  const segs = buildProgressSegments(arcs)
-  return (
-    <div className={styles.progressBarOuter} aria-label={`${pct}% complete today`} role="img">
-      <div className={styles.progressBarTrack}>
-        {segs.map((s, i) => (
-          <div key={i} className={styles.progressBarSeg} style={{ width: `${s.to - s.from}%`, background: s.color }} />
-        ))}
-      </div>
-      <span className={styles.progressBarPct}>{pct}<span className={styles.progressBarPctSign}>%</span></span>
-    </div>
-  )
-}
 
 function formatQuoteDate(dateKey) {
   if (!dateKey) return ''
@@ -821,34 +777,17 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
 
       {/* ── Greeting ── */}
       <div className={styles.header}>
-        {/* Absolutely positioned rather than inline in .headerRow — the
-            bloom (see .headerRingWrap below) bleeds across nearly the whole
-            right side of this header, and floating the account control
-            above it (instead of flowing it through the row) is what lets
-            the greeting itself sit flush with .header's top edge, on the
-            same line as almanac's/drafts' page title + account control,
-            without the bloom pushing the account control out of the way. */}
         <div className={styles.headerAccount}>{profileMenu}</div>
         <div className={styles.headerRow}>
           <div className={styles.headerLeft}>
             <div className={styles.greeting}>good {SLOT_GREETING[slot]}.</div>
             <div className={styles.dateLabel}>{dateLabel}</div>
           </div>
-          <div className={styles.headerRingWrap} data-tour="space">
-            <Bloom
-              arcs={demoRing !== null ? ringArcs.map(a => ({ ...a, fill: demoRing })) : ringArcs}
-              pct={demoRing !== null ? Math.round(demoRing * 100) : ringPct}
-              variant={isDesktop ? 'wide' : 'plot'}
-            />
-          </div>
-          <div className={styles.headerBarWrap} data-tour="space">
-            <CompletionBar
-              arcs={demoRing !== null ? ringArcs.map(a => ({ ...a, fill: demoRing })) : ringArcs}
-              pct={demoRing !== null ? Math.round(demoRing * 100) : ringPct}
-            />
-          </div>
         </div>
       </div>
+
+      {/* ── Progress rule (replaces stone pile) ── */}
+      <ProgressRule pct={demoRing !== null ? Math.round(demoRing * 100) : ringPct} />
 
       {/* ── Scrollable / grid body ── */}
       <div className={styles.list}>

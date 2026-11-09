@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef, Component } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef, Component, lazy, Suspense } from 'react'
 import * as Sentry from '@sentry/capacitor'
 import { HeaderSlotContext } from './lib/headerSlot'
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, useNavigationType } from 'react-router-dom'
@@ -23,8 +23,8 @@ import ProfileMenu from './components/ProfileMenu'
 import DeskShell from './components/DeskShell'
 import { DeskChromeProvider, useDeskChrome } from './lib/deskChrome'
 import Write from './screens/Write'
-import Primitives from './screens/Primitives'
 import TabBar from './components/TabBar'
+const Primitives = import.meta.env.DEV ? lazy(() => import('./screens/Primitives')) : null
 import UpdateToast from './components/UpdateToast'
 import GlobalComposer, { ComposerFab } from './components/GlobalComposer'
 import ShapesFlow from './components/shapes/ShapesFlow'
@@ -281,7 +281,7 @@ function AppInner() {
           <Route path="/canvas" element={isDesktop ? <DeskGo view="needs" /> : <Protected onboarded={state.onboarded} userId={state.userId}><CanvasScreen state={state} updateCanvas={updateCanvas} addCustomNeed={addCustomNeed} renameCustomNeed={renameCustomNeed} deleteCustomNeed={deleteCustomNeed} archivePractice={archivePractice} /></Protected>} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/password" element={<UpdatePassword />} />
-          <Route path="/primitives" element={<Primitives />} />
+          {import.meta.env.DEV && Primitives && <Route path="/primitives" element={<Suspense fallback={null}><Primitives /></Suspense>} />}
           <Route path="/settings" element={<Navigate to="/today" replace />} />
         </Routes>
       </div>
