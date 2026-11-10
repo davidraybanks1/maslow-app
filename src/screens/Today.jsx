@@ -10,7 +10,7 @@ import { normalizeBand, BAND_LABEL, THREADS, THREAD_COPY, FREQUENCY_INTRO, split
 import { useIsDesktop } from '../lib/useIsDesktop'
 import FrequencyCard, { MOOD_PIP_COLOR } from '../components/FrequencyCard'
 import Glyph from '../lib/glyphs'
-import { ProgressRule, Dateline, ProfileBadge, CheckIn, EntryRow, WriteBlock, Greeting, PullQuote, NoteFolio, LabelRow } from '../components/loam'
+import { ProgressRule, Dateline, ProfileBadge, CheckIn, EntryRow, WriteBlock, Greeting, PullQuote, NoteFolio, LabelRow, DayLedger } from '../components/loam'
 import NoteStack from '../components/NoteStack'
 import JournalQuote from '../components/JournalQuote'
 import ManageDeck from '../components/ManageDeck'
@@ -22,7 +22,7 @@ import PracticeSheet from '../components/PracticeSheet'
 import StretchSheet from '../components/StretchSheet'
 import TimerTakeover from '../components/TimerTakeover'
 import PracticeToast from '../components/PracticeToast'
-import DaypartTabs, { DayToggle } from '../components/DaypartTabs'
+import { DayToggle } from '../components/DaypartTabs'
 import RetroMoodEdit from '../components/RetroMoodEdit'
 import dpStyles from '../components/DaypartTabs.module.css'
 import { usePracticeActions, practiceKey } from '../lib/usePracticeActions'
@@ -842,6 +842,14 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
 
   // when the current part of the day was first answered (the stamp's time line)
   const recordedAt = (state.moods || []).find(m => m.date_key === today && m.prompt_time === slot)?.created_at || null
+  // every check-in answer on the phone ticks once, then saves
+  const settleWithTick = (s, b, f) => { hapticTick(); handleFrequencySettle(s, b, f) }
+  // the opened area's rows: the tiles' data, plus when each part of the day was answered
+  const ledgerItems = daypartsData.map(d => ({
+    ...d,
+    isEarlier: precedingSlots(slot).includes(d.name),
+    recordedAt: (state.moods || []).find(m => m.date_key === today && m.prompt_time === d.name)?.created_at || null,
+  }))
 
   // something to open: a check-in already made, or an earlier part of the day to add
   const canLookBack = daypartsData.some(d => d.band) || precedingSlots(slot).length > 0
@@ -1072,8 +1080,8 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
             <CheckIn
               band={moodSelections[slot] || null}
               feeling={moodFeelings[slot] || null}
-              onBand={b => { hapticTick(); handleFrequencySettle(slot, b, null) }}
-              onFeeling={f => { hapticTick(); handleFrequencySettle(slot, moodSelections[slot] || 'mid', f); setEditingCurrent(false) }}
+              onBand={b => settleWithTick(slot, b, null)}
+              onFeeling={f => { settleWithTick(slot, moodSelections[slot] || 'mid', f); setEditingCurrent(false) }}
               editing={editingCurrent}
               onToggleEdit={() => { setOpenRetroSlot(null); setEditingCurrent(e => !e) }}
               inlineFeeling
@@ -1084,32 +1092,21 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
             {canLookBack && (
               <div id="day-vibrations" className={`${dpStyles.drop} ${dayOpen ? dpStyles.dropOpen : ''}`} aria-hidden={!dayOpen} {...(dayOpen ? {} : { inert: '' })}>
                 <div className={dpStyles.dropClip}>
-                  <DaypartTabs items={daypartsData} />
+                  <DayLedger
+                    items={ledgerItems}
+                    openSlot={openRetroSlot}
+                    editingCurrent={editingCurrent}
+                    revising={retroEditing}
+                    // the card's own answer (as the old card's onSettle): save, then close the card
+                    onCardPick={(band, feeling) => { settleWithTick(openRetroSlot, band, feeling); setOpenRetroSlot(null) }}
+                    onCardClose={() => setOpenRetroSlot(null)}
+                    onRevise={() => setRetroEditing(true)}
+                    // the edit view (as the old editor): a mood only ticks; a feeling saves and closes the area
+                    onReviseTick={() => hapticTick()}
+                    onReviseSave={(band, feeling) => { settleWithTick(openRetroSlot, band, feeling); setRetroEditing(false); setOpenRetroSlot(null); setDayOpen(false) }}
+                    onReviseCancel={() => { setRetroEditing(false); setOpenRetroSlot(null); setDayOpen(false) }}
+                  />
                 </div>
-              </div>
-            )}
-            {openRetroSlot && (
-              <div className={styles.retroRow}>
-                {retroEditing ? (
-                  <RetroMoodEdit
-                    key={openRetroSlot}
-                    slotName={openRetroSlot}
-                    initialBand={moodSelections[openRetroSlot] || null}
-                    initialFeeling={moodFeelings[openRetroSlot] || null}
-                    onSave={(band, feeling) => { handleFrequencySettle(openRetroSlot, band, feeling); setRetroEditing(false); setOpenRetroSlot(null); setDayOpen(false) }}
-                    onCancel={() => { setRetroEditing(false); setOpenRetroSlot(null); setDayOpen(false) }}
-                  />
-                ) : (
-                  <FrequencyCard
-                    key={openRetroSlot}
-                    initialBand={moodSelections[openRetroSlot] || null}
-                    initialFeeling={moodFeelings[openRetroSlot] || null}
-                    onSettle={(band, feeling) => { handleFrequencySettle(openRetroSlot, band, feeling); setOpenRetroSlot(null) }}
-                    onEdit={() => setRetroEditing(true)}
-                    pastTense
-                    slotName={openRetroSlot}
-                  />
-                )}
               </div>
             )}
           </div>

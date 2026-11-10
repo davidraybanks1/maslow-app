@@ -289,6 +289,121 @@ export function CheckIn({ band, feeling, onBand, onFeeling, editing, onToggleEdi
   )
 }
 
+/* ── DayLedger ────────────────────────────────────────────── */
+/* The rest of the day under the check-in (phone), one ledger row per part of
+   the day. Display and routing only: the parent owns every answer, haptic and
+   rule (Today: the same taps as the old tiles and earlier-slot card).
+   items: [{ name, isCurrent, isEarlier, band, feeling, onTap, recordedAt }]
+     onTap null → later today, not tappable
+   openSlot: the earlier part of the day whose card is open; revising: that
+   card is in its edit view. */
+function LedgerMeta({ name, at }) {
+  return <div className={styles.checkInMeta}>{at ? `${formatClock(at)} · ` : ''}{name.toUpperCase()}</div>
+}
+function LedgerSentence({ band, feeling, blank }) {
+  return (
+    <div className={`${styles.ledgerSay} ${blank ? styles.checkInChosenMuted : ''}`}>
+      i was feeling{' '}
+      {blank
+        ? <span className={`${styles.stamp} ${styles.stampEmpty}`} aria-hidden="true">…</span>
+        : <><em>{BAND_LABEL[band]}</em>{feeling && <span className={styles.stamp}>{feeling}</span>}</>}
+    </div>
+  )
+}
+function StampOptions({ words, label, on, onPick, labelFor = w => w }) {
+  return (
+    <div className={styles.stampRow} role="group" aria-label={label}>
+      {words.map(w => (
+        <button key={w} type="button" className={`${styles.stamp} ${styles.stampBtn} ${on(w) ? styles.stampOn : ''}`} aria-pressed={on(w)} onClick={() => onPick(w)}>
+          {labelFor(w)}
+        </button>
+      ))}
+    </div>
+  )
+}
+function LedgerRevise({ initialBand, initialFeeling, onTick, onSave, onCancel }) {
+  const [band, setBand] = useState(initialBand || null)
+  return (
+    <>
+      <StampOptions words={BAND_WORDS} label="how it felt" on={b => b === band} onPick={b => { onTick(); setBand(b) }} labelFor={b => BAND_LABEL[b]} />
+      {band && (
+        <>
+          <div className={styles.ledgerAsk}>what kind of {BAND_LABEL[band]}?</div>
+          <StampOptions words={FEELINGS[band]} label={`what kind of ${BAND_LABEL[band]}`} on={f => band === initialBand && f === initialFeeling} onPick={f => onSave(band, f)} />
+        </>
+      )}
+      <div className={styles.ledgerLinks}><button type="button" className={styles.ledgerLink} onClick={onCancel}>cancel</button></div>
+    </>
+  )
+}
+export function DayLedger({ items, openSlot, editingCurrent, revising, onCardPick, onCardClose, onRevise, onReviseTick, onReviseSave, onReviseCancel }) {
+  return (
+    <div className={styles.ledger} role="group" aria-label="earlier check-ins today">
+      {items.map(it => {
+        const open = it.isEarlier && openSlot === it.name
+        if (!it.onTap) {
+          return (
+            <div key={it.name} className={styles.ledgerRow}>
+              <LedgerMeta name={it.name} />
+              <div className={styles.ledgerLater}>later</div>
+            </div>
+          )
+        }
+        const said = it.band ? `${BAND_LABEL[it.band]}${it.feeling ? `, ${it.feeling}` : ''}` : (it.isCurrent ? 'not yet' : 'not logged')
+        return (
+          <div key={it.name} className={styles.ledgerItem}>
+            <button
+              type="button"
+              className={styles.ledgerRow}
+              onClick={it.onTap}
+              aria-expanded={it.isCurrent ? !!editingCurrent : open}
+              aria-label={`${it.name}: ${said}. ${it.band || it.isCurrent ? 'edit' : 'add'}`}
+            >
+              {it.isCurrent ? (
+                <span className={styles.ledgerHeadLine}>
+                  <LedgerMeta name={it.name} at={it.recordedAt} />
+                  <span className={styles.ledgerLink}>edit</span>
+                </span>
+              ) : (
+                <>
+                  <LedgerMeta name={it.name} at={it.recordedAt} />
+                  {it.band || open
+                    ? <LedgerSentence band={it.band} feeling={it.feeling} blank={!it.band} />
+                    : <span className={`${styles.ledgerLink} ${styles.ledgerAdd}`}>+ add</span>}
+                </>
+              )}
+            </button>
+            {open && (
+              <div className={styles.ledgerCard}>
+                {revising ? (
+                  <LedgerRevise key={it.name} initialBand={it.band} initialFeeling={it.feeling} onTick={onReviseTick} onSave={onReviseSave} onCancel={onReviseCancel} />
+                ) : (
+                  <>
+                    {!(it.band && it.feeling) && (
+                      <StampOptions words={BAND_WORDS} label="how it felt" on={b => b === it.band} onPick={b => onCardPick(b, null)} labelFor={b => BAND_LABEL[b]} />
+                    )}
+                    {it.band && !it.feeling && (
+                      <>
+                        <div className={styles.ledgerAsk}>what kind of {BAND_LABEL[it.band]}?</div>
+                        <StampOptions words={FEELINGS[it.band]} label={`what kind of ${BAND_LABEL[it.band]}`} on={() => false} onPick={f => onCardPick(it.band, f)} />
+                      </>
+                    )}
+                    <div className={styles.ledgerLinks}>
+                      {it.band
+                        ? <button type="button" className={styles.ledgerLink} onClick={onRevise}>edit</button>
+                        : <button type="button" className={styles.ledgerLink} onClick={onCardClose}>cancel</button>}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 /* ── ChapterRow ───────────────────────────────────────────── */
 /* numeral: 'i' – 'iv', name, met, total, color = mode text token */
 export function ChapterRow({ numeral, name, met, total, color, complete }) {

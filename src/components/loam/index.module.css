@@ -315,6 +315,74 @@
 .stampOn { box-shadow: 0 0 0 2px var(--loam-paper), 0 0 0 3.5px var(--loam-ink); }
 .stampBtn:focus-visible { outline: 2px solid var(--loam-ink); outline-offset: 5px; }
 
+/* ── DayLedger: the rest of the day under the check-in (phone) ── */
+.ledger { display: flex; flex-direction: column; margin-top: 4px; }
+.ledgerItem + .ledgerItem, .ledgerItem + .ledgerRow, .ledgerRow + .ledgerItem, .ledgerRow + .ledgerRow { border-top: var(--loam-rule-row); }
+.ledgerRow {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 10px 0;
+  background: none;
+  border: 0;
+  text-align: left;
+  color: var(--loam-ink);
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+div.ledgerRow { cursor: default; }
+.ledgerRow:focus-visible { outline: 2px solid var(--loam-ink); outline-offset: 2px; }
+.ledgerRow .checkInMeta { margin-bottom: 0; }
+.ledgerHeadLine { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ledgerSay {
+  font-family: var(--loam-font-display);
+  font-size: 19px;
+  line-height: 1.2;
+  color: var(--loam-ink);
+}
+.ledgerSay em { font-style: italic; }
+.ledgerLater {
+  font-family: var(--loam-font-display);
+  font-size: 19px;
+  line-height: 1.2;
+  font-style: italic;
+  color: var(--loam-muted);
+}
+.ledgerAsk {
+  font-family: var(--loam-font-display);
+  font-size: 17px;
+  line-height: 1.2;
+  color: var(--loam-muted);
+}
+.ledgerLink {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 0;
+  background: none;
+  border: 0;
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  letter-spacing: 0.04em;
+  color: var(--loam-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.ledgerLink:focus-visible { outline: 2px solid var(--loam-ink); outline-offset: 2px; }
+/* inside a row the row is the target; the link is just the word */
+.ledgerRow .ledgerLink { min-height: 0; }
+.ledgerAdd { align-self: flex-start; }
+.ledgerCard { display: flex; flex-direction: column; gap: 12px; padding: 4px 0 6px; }
+.ledgerLinks { display: flex; gap: 20px; margin-top: -6px; }
+
 .checkInAnswer { display: flex; align-items: baseline; gap: 14px; }
 .checkInChange {
   padding: 6px 0;

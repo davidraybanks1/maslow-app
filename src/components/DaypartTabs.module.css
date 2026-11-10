@@ -82,7 +82,7 @@
   display: grid;
   grid-template-rows: 0fr;
   opacity: 0;
-  transition: grid-template-rows 230ms ease, opacity 200ms ease;
+  transition: grid-template-rows 180ms ease, opacity 180ms ease;
 }
 .dropOpen { grid-template-rows: 1fr; opacity: 1; }
 .dropClip { overflow: hidden; min-height: 0; }
