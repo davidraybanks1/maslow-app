@@ -147,38 +147,46 @@ export function NoteFolio({ index, total, onEdit }) {
    band: 'good' | 'mid' | 'bad' | null
    feeling: string | null
    onBand(band): called when a band word is tapped
-   onFeeling(feeling): called when a feeling word is tapped */
+   onFeeling(feeling): called when a feeling word is tapped
+   editing / onToggleEdit: reopen a finished answer to revise it */
 const BAND_WORDS = ['good', 'mid', 'bad']
-export function CheckIn({ band, feeling, onBand, onFeeling }) {
+export function CheckIn({ band, feeling, onBand, onFeeling, editing, onToggleEdit }) {
   const slot = currentSlot()
   const greeting = SLOT_GREETING[slot] || 'day'
+  // retapping the answer you already gave changes nothing
+  const pickBand = b => { if (b !== band || !feeling) onBand?.(b) }
+  const bandRow = (
+    <div className={styles.checkInBands} role="group" aria-label="how are you">
+      {BAND_WORDS.map(b => (
+        <button
+          key={b}
+          type="button"
+          className={`${styles.checkInWord} ${band === b ? styles.checkInWordActive : ''}`}
+          aria-pressed={band === b}
+          onClick={() => pickBand(b)}
+        >
+          {BAND_LABEL[b]}
+        </button>
+      ))}
+    </div>
+  )
   if (!band) {
     return (
       <div className={styles.checkIn}>
         <div className={styles.checkInLabel}>HOW ARE YOU THIS {greeting.toUpperCase()}?</div>
-        <div className={styles.checkInBands} role="group" aria-label="how are you">
-          {BAND_WORDS.map(b => (
-            <button
-              key={b}
-              type="button"
-              className={`${styles.checkInWord} ${band === b ? styles.checkInWordActive : ''}`}
-              aria-pressed={band === b}
-              onClick={() => onBand?.(b)}
-            >
-              {BAND_LABEL[b]}
-            </button>
-          ))}
-        </div>
+        {bandRow}
       </div>
     )
   }
   const bandFeelings = FEELINGS[band] || []
+  const answered = !!feeling && !editing
   return (
     <div className={styles.checkIn}>
       <div className={styles.checkInChosen}>
         i&apos;m feeling <em>{BAND_LABEL[band]}.</em>
       </div>
-      {!feeling && (
+      {editing && bandRow}
+      {!answered && (
         <>
           <div className={styles.checkInLabel}>WHAT KIND OF {BAND_LABEL[band].toUpperCase()}?</div>
           <div className={styles.checkInFeelings} role="group" aria-label="what kind">
@@ -196,8 +204,15 @@ export function CheckIn({ band, feeling, onBand, onFeeling }) {
           </div>
         </>
       )}
-      {feeling && (
-        <div className={styles.checkInLabel}>· {feeling}</div>
+      {(answered || editing) && (
+        <div className={styles.checkInAnswer}>
+          {answered && <span className={styles.checkInLabel}>· {feeling}</span>}
+          {onToggleEdit && (
+            <button type="button" className={styles.checkInChange} aria-expanded={!!editing} onClick={onToggleEdit}>
+              {editing ? 'done' : 'change'}
+            </button>
+          )}
+        </div>
       )}
     </div>
   )

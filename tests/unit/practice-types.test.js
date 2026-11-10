@@ -88,9 +88,9 @@ describe('kind helpers', () => {
     expect(tickCount([true, true, true], 2)).toBe(2)
   })
   it('formats times and labels', () => {
-    expect(fmtTime('00:00')).toBe('12am')
-    expect(fmtTime('12:30')).toBe('12:30pm')
-    expect(fmtTime('21:00')).toBe('9pm')
+    expect(fmtTime('00:00')).toBe('12:00AM')
+    expect(fmtTime('12:30')).toBe('12:30PM')
+    expect(fmtTime('21:00')).toBe('9:00PM')
     expect(poolTag({ kind: 'timed', config: { minutes: 20 } })).toBe('20 min')
     expect(poolTag({ kind: 'check', config: { target: 1 } })).toBe('')
     expect(subLabel({ kind: 'ritual', config: { steps: ['a'] } })).toBe('1 step')

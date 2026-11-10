@@ -200,7 +200,7 @@ describe('boundary', () => {
     expect(st().phase).toBe('in')
     act_(a => a.tap(need, mode, p))
     expect(calls.checkIn).toHaveLength(0)
-    expect(hook.result.current.api.notice).toMatch(/7am/)
+    expect(hook.result.current.api.notice).toMatch(/7:00AM/)
   })
   it('can once the window has ended', () => {
     const { st, act_, calls } = setup(p)

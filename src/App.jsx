@@ -293,7 +293,7 @@ function AppInner() {
           and Drafts screens. */}
       {state.onboarded && !typing && location.pathname !== '/today' && !PERSONALIZE_PATHS.includes(location.pathname) && <ComposerFab onClick={() => setComposerOpen(true)} />}
       {state.onboarded && (
-        <GlobalComposer state={state} logMood={logMood} open={composerOpen} onClose={() => setComposerOpen(false)} />
+        <GlobalComposer key={state.userId} state={state} logMood={logMood} open={composerOpen} onClose={() => setComposerOpen(false)} />
       )}
       {state.onboarded && (
         <ShapesFlow state={state} logMood={logMood} open={shapesOpen} onClose={() => setShapesOpen(null)} />

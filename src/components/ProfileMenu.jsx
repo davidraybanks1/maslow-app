@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { isNative, checkNotifPermission, requestNotifPermission } from '../lib/native'
 import { deleteAccount, wipeLocalData, signOutEverywhere } from '../lib/store'
+import { formatTimeOfDay } from '../lib/formatTime'
 import Sheet from './Sheet'
 import { PracticesArt, NotesArt, TagsArt } from './ProfileArt'
 import styles from './ProfileMenu.module.css'
@@ -47,11 +48,7 @@ const toHHMM = m => {
 }
 function fmt(m) {
   const v = wrap(m), h = Math.floor(v / 60), mm = v % 60
-  return `${h % 12 || 12}:${String(mm).padStart(2, '0')} ${h < 12 ? 'am' : 'pm'}`
-}
-function short(m) {
-  const v = wrap(m), h = Math.floor(v / 60), mm = v % 60
-  return `${h % 12 || 12}${mm ? `:${String(mm).padStart(2, '0')}` : ''}${h < 12 ? 'a' : 'p'}`
+  return formatTimeOfDay(`${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}`)
 }
 const dayPos = m => `${Math.min(100, Math.max(0, ((m - DAY_START) / DAY_SPAN) * 100)).toFixed(1)}%`
 
@@ -306,8 +303,8 @@ const ProfileMenu = forwardRef(function ProfileMenu({
         </div>
         <div className={styles.dayLine}>
           <div className={styles.dayRule} />
-          <span className={`${styles.dayEnd} ${styles.dayEndL}`}>6 am</span>
-          <span className={`${styles.dayEnd} ${styles.dayEndR}`}>11 pm</span>
+          <span className={`${styles.dayEnd} ${styles.dayEndL}`}>6:00AM</span>
+          <span className={`${styles.dayEnd} ${styles.dayEndR}`}>11:00PM</span>
           {SLOTS.map(s => {
             const d = slotData(s), m = slotMinutes(s), lightOn = on && d.on
             return (
@@ -316,7 +313,7 @@ const ProfileMenu = forwardRef(function ProfileMenu({
                   className={`${styles.daySphere} ${lightOn ? '' : styles.daySphereOff}`}
                   style={lightOn ? { background: GREEN_SPHERE } : undefined}
                 />
-                <span className={`${styles.dayTime} ${lightOn ? '' : styles.dayTimeOff}`}>{lightOn ? short(m) : 'off'}</span>
+                <span className={`${styles.dayTime} ${lightOn ? '' : styles.dayTimeOff}`}>{lightOn ? fmt(m) : 'off'}</span>
               </div>
             )
           })}

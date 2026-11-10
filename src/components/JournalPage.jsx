@@ -1,6 +1,7 @@
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { todayKey, addJournalEntry, settleRevisit } from '../lib/store'
 import { currentSlot } from '../lib/slots'
+import { formatClock } from '../lib/formatTime'
 import { hapticSuccess, hapticTick } from '../lib/native'
 import { SHAPE_DB, latestMoodToday } from '../lib/shapeFacts'
 import { GLYPHS } from './shapes/ShapesFlow'
@@ -70,10 +71,7 @@ export default function JournalPage({ state, logMood, room, source, onDone, onDi
     const id = setInterval(() => setClock(new Date()), 30_000)
     return () => clearInterval(id)
   }, [])
-  const clockLabel = (() => {
-    const h = clock.getHours() % 12 || 12
-    return `${h}:${String(clock.getMinutes()).padStart(2, '0')}${clock.getHours() < 12 ? 'am' : 'pm'}`
-  })()
+  const clockLabel = formatClock(clock)
   const blankWrapRef = useRef(null)
   const blankH = useRef(0)
   const taRef = useRef(null)

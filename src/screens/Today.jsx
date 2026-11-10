@@ -4,6 +4,7 @@ import { allNeeds, needName, MODES, MODE_ORDER, MODE_MAX_BUBBLES, MODE_WEIGHTS, 
 import { currentSlot, precedingSlots, SLOTS, SLOT_NOUN, SLOT_GREETING } from '../lib/slots'
 import { todayKey, loadJournalEntries, deleteJournalEntry, loadNoteDeck, loadCustomTags, addJournalEntry, uploadNoteImage, loadRevisitQueue } from '../lib/store'
 import { createDataStats } from '../lib/dataStats'
+import { formatClock as formatEntryTime } from '../lib/formatTime'
 import { hapticTick, isNative, pendingNotifSlot } from '../lib/native'
 import { normalizeBand, BAND_LABEL, THREADS, THREAD_COPY, FREQUENCY_INTRO, splitFrequencyWords } from '../lib/frequency'
 import { useIsDesktop } from '../lib/useIsDesktop'
@@ -50,13 +51,6 @@ function formatQuoteDate(dateKey) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
-function formatEntryTime(ts) {
-  const d = new Date(ts)
-  const h = d.getHours() % 12 || 12
-  const m = String(d.getMinutes()).padStart(2, '0')
-  const ampm = d.getHours() < 12 ? 'am' : 'pm'
-  return `${h}:${m}${ampm}`
-}
 
 
 function formatScore(v) {
@@ -1064,19 +1058,23 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               feeling={moodFeelings[slot] || null}
               onBand={b => { hapticTick(); handleFrequencySettle(slot, b, null) }}
               onFeeling={f => { hapticTick(); handleFrequencySettle(slot, moodSelections[slot] || 'mid', f); setEditingCurrent(false) }}
+              editing={editingCurrent}
+              onToggleEdit={() => { setOpenRetroSlot(null); setEditingCurrent(e => !e) }}
             />
+            <div className={styles.freqHeader}>
+              {daypartsData.some(d => d.band)
+                ? <DayToggle open={dayOpen} onToggle={() => setDayOpen(o => !o)} controls="day-vibrations" />
+                : <span className={styles.freqHeaderLabel}>feeling</span>}
+              <button
+                type="button"
+                className={styles.freqInfoBtn}
+                aria-expanded={showFreqInfo}
+                aria-label={showFreqInfo ? 'hide what these mean' : 'what these mean'}
+                onClick={() => setShowFreqInfo(v => !v)}
+              >i</button>
+            </div>
             {daypartsData.some(d => d.band) && (
               <>
-                <div className={styles.freqHeader}>
-                  <DayToggle open={dayOpen} onToggle={() => setDayOpen(o => !o)} controls="day-vibrations" />
-                  <button
-                    type="button"
-                    className={styles.freqInfoBtn}
-                    aria-expanded={showFreqInfo}
-                    aria-label={showFreqInfo ? 'hide what these mean' : 'what these mean'}
-                    onClick={() => setShowFreqInfo(v => !v)}
-                  >i</button>
-                </div>
                 <div id="day-vibrations" className={`${dpStyles.drop} ${dayOpen ? dpStyles.dropOpen : ''}`} aria-hidden={!dayOpen} {...(dayOpen ? {} : { inert: '' })}>
                   <div className={dpStyles.dropClip}>
                     <DaypartTabs items={daypartsData} />

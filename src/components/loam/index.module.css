@@ -240,6 +240,19 @@
 .checkInWordActive {
   text-decoration-color: var(--loam-ink);
 }
+.checkInAnswer { display: flex; align-items: baseline; gap: 14px; }
+.checkInChange {
+  padding: 6px 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  letter-spacing: 0.04em;
+  color: var(--loam-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 .checkInChosen {
   font-family: var(--loam-font-display);
   font-size: 24px;

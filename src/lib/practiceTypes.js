@@ -1,3 +1,4 @@
+import { formatTimeOfDay } from './formatTime'
 // Practice types: the six shapes a practice can take, and the pure helpers
 // the builder sheet and Today rows share.
 //
@@ -22,9 +23,7 @@ export const MAX_TALLY = 8
 export const MAX_MINUTES = 240
 
 export function fmtTime(t) {
-  const h = Number(String(t).slice(0, 2))
-  const m = String(t).slice(3, 5)
-  return `${((h + 11) % 12) + 1}${m === '00' ? '' : ':' + m}${h < 12 ? 'am' : 'pm'}`
+  return formatTimeOfDay(t)
 }
 
 export function toMinutes(t) {

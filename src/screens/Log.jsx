@@ -14,6 +14,7 @@ import styles from './Log.module.css'
 import ui from './Drafts.module.css'
 import { Dateline, EntryRow, LabelRow, ProfileBadge, SectionTitle } from '../components/loam'
 import { useDockLine } from '../lib/useDockLine'
+import { formatClock as formatEntryTime } from '../lib/formatTime'
 import SignedImg from '../components/SignedImg'
 import RevisitSheet from '../components/shapes/RevisitSheet'
 import { shapeLabel } from '../lib/shapeFacts'
@@ -70,11 +71,6 @@ function formatArchiveDate(dateKey) {
   if (!dateKey) return ''
   const d = new Date(dateKey + 'T12:00:00')
   return `${WDAYS[d.getDay()].slice(0, 3)} ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`
-}
-
-function formatEntryTime(createdAt) {
-  const d = new Date(createdAt)
-  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
 function formatRangeDateStr(dateKey) {
@@ -594,6 +590,13 @@ export default function Log({ state, syncCheckinDay, profileMenu, profileMenuRef
     })
     loadCustomTags(state.userId).then(setCustomTags)
   }, [state.userId])
+
+  // a draft saved from the composer or a room belongs here straight away
+  useEffect(() => {
+    const onAdded = e => { const { entry, dateKey } = e.detail || {}; if (entry) setArchiveEntries(prev => [{ ...entry, date_key: dateKey }, ...prev]) }
+    window.addEventListener('maslow:entry-added', onAdded)
+    return () => window.removeEventListener('maslow:entry-added', onAdded)
+  }, [])
 
   useEffect(() => {
     if (!archiveLoaded || archiveEntries.length < 10) { setResurfacePool([]); return }
