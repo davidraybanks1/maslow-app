@@ -1,36 +1,48 @@
-/* Today's contents: chapters, need words, and the open need's practice rows. */
+/* Today's needs: chapters, need rows, and the open need's practice rows. */
 
 .cat { padding-bottom: 10px; border-bottom: var(--loam-rule-row); }
 
-/* 34px numeral column + its 8px gap, so the words sit under the chapter name */
-.words {
+/* 34px numeral column + its 8px gap, so the rows sit under the chapter name */
+.needs { padding: 0 var(--loam-gutter) 0 calc(var(--loam-gutter) + 42px); }
+.need + .need { border-top: var(--loam-rule-row); }
+.needRow {
   display: flex;
-  flex-wrap: wrap;
-  gap: 2px 18px;
-  padding: 0 var(--loam-gutter) 0 calc(var(--loam-gutter) + 42px);
-}
-.word {
-  display: inline-flex;
   align-items: center;
-  gap: 7px;
-  min-height: 32px;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
   padding: 0;
   background: none;
   border: none;
   cursor: pointer;
+  text-align: left;
   font-family: var(--loam-font-reading);
   font-size: var(--loam-body);
   color: var(--loam-ink-2);
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
-.word:focus-visible { outline: 2px solid var(--loam-ink); outline-offset: 2px; }
-.wordOpen { color: var(--loam-ink); }
-.wordOpen .wordName { text-decoration: underline; text-underline-offset: 4px; }
-.wordDot { flex: none; display: block; width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid; box-sizing: border-box; }
-.wordCount { font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-muted); }
+.needRow:focus-visible { outline: 2px solid var(--loam-ink); outline-offset: -2px; }
+.needRowOpen { color: var(--loam-ink); }
+/* filled when met, otherwise holds the same width empty */
+.needDot { flex: none; display: block; width: 12px; height: 12px; border-radius: 50%; }
+.needName { min-width: 0; }
+.needCount { font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-muted); }
+.needArrow {
+  flex: none;
+  margin-left: auto;
+  margin-right: 3px;
+  width: 7px;
+  height: 7px;
+  border-top: 1.5px solid var(--loam-muted);
+  border-right: 1.5px solid var(--loam-muted);
+  box-sizing: border-box;
+  transform: rotate(45deg);
+  transition: transform 220ms ease;
+}
+.needRowOpen .needArrow { transform: rotate(135deg); }
 
-/* the open need's practices fold out below the words */
+/* the open need's practices fold out below its row, lined up with the need's name */
 .drawer {
   display: grid;
   grid-template-rows: 0fr;
@@ -40,7 +52,7 @@
 .drawerOpen { grid-template-rows: 1fr; opacity: 1; }
 .drawerClip { overflow: hidden; min-height: 0; }
 
-.rows { margin: 6px var(--loam-gutter) 0 calc(var(--loam-gutter) + 42px); border-top: var(--loam-rule-row); }
+.rows { margin-left: 20px; padding-bottom: 6px; border-top: var(--loam-rule-row); }
 
 .addPractice {
   display: block;
@@ -55,7 +67,7 @@
 }
 
 /* the detail for a practice that has more to it (steps, items, timer) */
-.panelHost { margin: 10px var(--loam-gutter) 0 calc(var(--loam-gutter) + 42px); padding-top: 10px; border-top: var(--loam-rule-row); }
+.panelHost { margin: 10px 0 0 20px; padding-top: 10px; border-top: var(--loam-rule-row); }
 .panelHost > div:not(.panelTitle) { margin: 0; }
 .panelTitle {
   font-family: var(--loam-font-display);
@@ -66,5 +78,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .drawer { transition: none; }
+  .drawer, .needArrow { transition: none; }
 }

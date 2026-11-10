@@ -6,13 +6,14 @@ import { PracticePanel } from './PracticeRow'
 import { ChapterRow, LabelRow, PracticeDot } from './loam'
 import styles from './NeedsSection.module.css'
 
-// The contents on Today (phones): the four modes as chapters i.–iv., each need
-// a word beneath its chapter, filled once met. Tap a word to open that need's
-// practices as press-and-hold rows underneath. Only one need is open at a time.
+// The needs on Today (and the desktop panel): the four modes as chapters i.–iv.,
+// each need a full row beneath its chapter. A dot means met; circles belong to
+// the practices, which are what gets checked off. Tap a row to open that need's
+// practices as press-and-hold rows under it. Only one need is open at a time.
 //
 // What counts as "met" is the app's own rule, not "one practice": each need has
 // a target by mode (exploration 3, appreciation 2, nourishment and survival 1,
-// MODE_MAX_BUBBLES), and a word part-way there shows its count.
+// MODE_MAX_BUBBLES), and a row part-way there shows its count.
 
 const NUMERAL = { exploration: 'i', appreciation: 'ii', nourishment: 'iii', survival: 'iv' }
 const MODE_FILL = {
@@ -219,59 +220,55 @@ export default function NeedsSection({
 
   return (
     <>
-      <LabelRow left="CONTENTS" right={total > 0 ? <span aria-label={`${met} of ${total} needs met`}>{met}/{total} MET</span> : null} />
-      {cats.map(({ mode, needs, rows, metCount }) => {
-        const drawerId = `needs-drawer-${mode}`
-        const openHere = needs.some(n => n.id === openNeedId) ? openNeedId : null
-        return (
-          <div key={mode} className={styles.cat} data-tour={mode === tourMode ? 'modes' : undefined}>
-            <ChapterRow
-              numeral={NUMERAL[mode]}
-              name={mode}
-              met={metCount}
-              total={needs.length}
-              color={MODE_TEXT[mode]}
-              complete={metCount === needs.length}
-            />
-            <div className={styles.words}>
-              {rows.map(({ need, count, target, met: isMet }) => {
-                const isOpen = openNeedId === need.id
-                return (
+      <LabelRow left="NEEDS" right={total > 0 ? <span aria-label={`${met} of ${total} needs met`}>{met}/{total} MET</span> : null} />
+      {cats.map(({ mode, needs, rows, metCount }) => (
+        <div key={mode} className={styles.cat} data-tour={mode === tourMode ? 'modes' : undefined}>
+          <ChapterRow
+            numeral={NUMERAL[mode]}
+            name={mode}
+            met={metCount}
+            total={needs.length}
+            color={MODE_TEXT[mode]}
+            complete={metCount === needs.length}
+          />
+          <div className={styles.needs}>
+            {rows.map(({ need, count, target, met: isMet }) => {
+              const isOpen = openNeedId === need.id
+              const drawerId = `needs-drawer-${need.id}`
+              return (
+                <div key={need.id} className={styles.need}>
                   <button
-                    key={need.id}
                     type="button"
-                    className={`${styles.word} ${isOpen ? styles.wordOpen : ''}`}
+                    className={`${styles.needRow} ${isOpen ? styles.needRowOpen : ''}`}
                     aria-expanded={isOpen}
                     aria-controls={drawerId}
-                    aria-label={`${need.name}, ${count} of ${target} done today`}
+                    aria-label={`${need.name}, ${count} of ${target}`}
                     onClick={() => toggle(need.id)}
                   >
-                    <i
-                      className={styles.wordDot}
-                      style={isMet ? { background: MODE_FILL[mode], borderColor: MODE_FILL[mode] } : { borderColor: MODE_TEXT[mode] }}
-                    />
-                    <span className={styles.wordName}>{need.name}</span>
-                    {count > 0 && !isMet && <small className={styles.wordCount}>{count}/{target}</small>}
+                    <i className={styles.needDot} style={isMet ? { background: MODE_FILL[mode] } : undefined} />
+                    <span className={styles.needName}>{need.name}</span>
+                    {count > 0 && !isMet && <small className={styles.needCount}>{count}/{target}</small>}
+                    <i className={styles.needArrow} aria-hidden="true" />
                   </button>
-                )
-              })}
-            </div>
-            <Drawer
-              id={drawerId}
-              open={openHere}
-              needs={needs}
-              modeKey={mode}
-              sortSeq={sortSeq}
-              state={state}
-              checked={checked}
-              practices={practices}
-              lastDoneMap={lastDoneMap}
-              navigate={navigate}
-              onEditPractice={onEditPractice}
-            />
+                  <Drawer
+                    id={drawerId}
+                    open={isOpen ? need.id : null}
+                    needs={needs}
+                    modeKey={mode}
+                    sortSeq={sortSeq}
+                    state={state}
+                    checked={checked}
+                    practices={practices}
+                    lastDoneMap={lastDoneMap}
+                    navigate={navigate}
+                    onEditPractice={onEditPractice}
+                  />
+                </div>
+              )
+            })}
           </div>
-        )
-      })}
+        </div>
+      ))}
     </>
   )
 }
