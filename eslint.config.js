@@ -33,7 +33,8 @@ export default [
       // React / hooks basics needed for JSX to parse cleanly:
       'react/jsx-uses-react': 'warn',
       'react/jsx-uses-vars': 'warn',
-      'react-hooks/rules-of-hooks': 'warn',
+      // A hook after an early return crashed the first open of the day; fail the build on it.
+      'react-hooks/rules-of-hooks': 'error',
 
       // Everything else off — no noise on an existing codebase:
       ...Object.fromEntries(
