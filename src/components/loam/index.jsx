@@ -12,6 +12,7 @@ import { FEELINGS, BAND_LABEL } from '../../lib/frequency'
 import { currentSlot, SLOT_GREETING } from '../../lib/slots'
 import { dayNumber } from '../../lib/dayNumber'
 import { JOURNAL_TRUNCATE } from '../../lib/constants'
+import { ROOM_PICKER } from '../../lib/shapeFacts'
 import styles from './index.module.css'
 
 /* ── Dateline ─────────────────────────────────────────────── */
@@ -385,48 +386,56 @@ export function EntryRow({
 }
 
 /* ── WriteBlock ───────────────────────────────────────────── */
-/* resting: prompt + textarea + room hints
-   active (text present or textarea focused): chips + textarea + footer
+/* resting: prompt + textarea + the rooms as icons
+   active (text present or textarea focused): stamp + textarea + chips + footer
+   Each resting/active pair shares one grid cell, so the block is always as tall
+   as its taller half and nothing moves when it switches. The description slot
+   works the same way, sized by all five descriptions at once.
    draft persistence is owned by the parent; just value/onChange here */
-const WRITE_ROOMS = [
-  { id: 'timer',        label: 'timer' },
-  { id: 'continue',     label: 'revisit' },
-  { id: 'one_thing',    label: 'gave and took' },
-  { id: 'tension',      label: 'tension' },
-  { id: 'three_truths', label: 'three truths' },
-]
-
-/* The rooms as line drawings on the paper: 1.5px ink, nothing behind them.
-   Gold appears once, on the energy given in gave and took. */
+/* The rooms as line drawings on the paper: 1.5px ink, nothing behind them, drawn
+   to one optical size (a ring is narrower than a row of small marks but carries
+   the same weight). Gold appears once, on the energy given in gave and took. */
 const ROOM_LINE = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.5, strokeLinecap: 'round', strokeLinejoin: 'round' }
 const ROOM_ICONS = {
-  timer: <path {...ROOM_LINE} d="M14 4A10 10 0 1 1 5.34 9" />,
+  timer: <path {...ROOM_LINE} d="M14 6.5A7.5 7.5 0 1 1 7.5 10.25" />,
   continue: (
     <>
-      <path {...ROOM_LINE} d="M4.6 10.4A10 10 0 1 1 4.3 16.6" />
-      <path {...ROOM_LINE} d="M4.2 5.4V10.6H9.4" />
+      <path {...ROOM_LINE} d="M7.1 11A7.5 7.5 0 1 1 6.75 16" />
+      <path {...ROOM_LINE} d="M6.9 7.4V11.3H10.8" />
     </>
   ),
   one_thing: (
     <>
-      <circle cx="8" cy="14" r="5" style={{ fill: 'var(--loam-gold)' }} />
-      <circle {...ROOM_LINE} cx="20" cy="14" r="4.25" />
+      <circle cx="8" cy="14" r="5.25" style={{ fill: 'var(--loam-gold)' }} />
+      <circle {...ROOM_LINE} cx="20" cy="14" r="4.5" />
     </>
   ),
   tension: (
     <>
-      <circle {...ROOM_LINE} cx="4.25" cy="14" r="2.75" />
-      <circle {...ROOM_LINE} cx="23.75" cy="14" r="2.75" />
-      <path {...ROOM_LINE} strokeLinecap="butt" strokeDasharray="1.5 2" d="M9.5 14H18.5" />
+      <circle {...ROOM_LINE} cx="4.75" cy="14" r="3" />
+      <circle {...ROOM_LINE} cx="23.25" cy="14" r="3" />
+      <path {...ROOM_LINE} strokeLinecap="butt" strokeDasharray="1.5 2" d="M9.75 14H18.25" />
     </>
   ),
   three_truths: (
     <>
-      <rect {...ROOM_LINE} x="2.75" y="11" width="6" height="6" />
-      <rect {...ROOM_LINE} x="11" y="11" width="6" height="6" />
-      <rect {...ROOM_LINE} x="19.25" y="11" width="6" height="6" />
+      <rect {...ROOM_LINE} x="1.25" y="10.75" width="6.5" height="6.5" />
+      <rect {...ROOM_LINE} x="10.75" y="10.75" width="6.5" height="6.5" />
+      <rect {...ROOM_LINE} x="20.25" y="10.75" width="6.5" height="6.5" />
     </>
   ),
+}
+
+/* One room's name and description. As a sizer it is invisible and also leaves
+   room for the links, so the slot keeps the height of its longest text. */
+function RoomSlot({ room, sizer = false }) {
+  return (
+    <div className={sizer ? styles.writeStackOff : undefined} aria-hidden={sizer || undefined}>
+      <div className={styles.writeRoomName}>{room.label}</div>
+      <p className={styles.writeRoomBlurb}>{room.blurb}</p>
+      {sizer && <div className={styles.writeRoomLinks}><span className={styles.writeBlockLink}>start →</span></div>}
+    </div>
+  )
 }
 
 export function WriteBlock({
@@ -446,6 +455,8 @@ export function WriteBlock({
   onRooms,
 }) {
   const [focused, setFocused] = useState(false)
+  const [pickedId, setPickedId] = useState(null)
+  const picked = ROOM_PICKER.find(r => r.id === pickedId)
   const active = focused || text.length > 0 || keepOpen
   // a press on the tags or the footer must not blur the page closed under the finger
   const holdFocus = e => e.preventDefault()
@@ -457,23 +468,24 @@ export function WriteBlock({
           <span className={styles.writeBlockCount}>TODAY · {entryCount} {entryCount === 1 ? 'ENTRY' : 'ENTRIES'} SO FAR</span>
         )}
       </div>
-      {active
-        ? <div className={styles.writeBlockStamp}>{stamp}</div>
-        : <div className={styles.writeBlockGreeting}>what's on <em>your mind?</em></div>}
+      <div className={styles.writeStack}>
+        <div className={`${styles.writeBlockStamp} ${active ? '' : styles.writeStackOff}`}>{stamp}</div>
+        <div className={`${styles.writeBlockGreeting} ${active ? styles.writeStackOff : ''}`}>what's on <em>your mind?</em></div>
+      </div>
       <textarea
         className={styles.writeBlockTextarea}
         placeholder="start writing…"
         value={text}
         onChange={e => onTextChange?.(e.target.value)}
         onKeyDown={onKeyDown}
-        onFocus={() => setFocused(true)}
+        onFocus={() => { setFocused(true); setPickedId(null) }}
         onBlur={() => setFocused(false)}
         rows={4}
         maxLength={10000}
       />
       {error && <div className={styles.writeBlockError}>{error}</div>}
-      {active ? (
-        <div onMouseDown={holdFocus}>
+      <div className={styles.writeStack}>
+        <div className={active ? '' : styles.writeStackOff} onMouseDown={holdFocus}>
           <div className={styles.writeBlockTags}>{tags}</div>
           <div className={styles.writeBlockFooter}>
             <button type="button" className={styles.writeBlockLink} onClick={onRooms}>rooms →</button>
@@ -487,24 +499,36 @@ export function WriteBlock({
             >{saving ? '…' : 'add'}</button>
           </div>
         </div>
-      ) : (
-        <div className={styles.writeBlockRooms}>
+        <div className={`${styles.writeBlockRooms} ${active ? styles.writeStackOff : ''}`}>
           <div className={styles.writeBlockLabelMuted}>OR BEGIN IN A ROOM</div>
-          <div className={styles.writeRoomGrid}>
-            {WRITE_ROOMS.map(r => (
+          <div className={styles.writeRoomGrid} role="group" aria-label="rooms">
+            {ROOM_PICKER.map(r => (
               <button
                 key={r.id}
                 type="button"
-                className={styles.writeRoomBtn}
-                onClick={() => onRoomClick?.(r.id)}
+                className={`${styles.writeRoomBtn} ${pickedId === r.id ? styles.writeRoomBtnOn : ''}`}
+                aria-label={r.label}
+                aria-pressed={pickedId === r.id}
+                onClick={() => setPickedId(id => (id === r.id ? null : r.id))}
               >
                 <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">{ROOM_ICONS[r.id]}</svg>
-                <span>{r.label}</span>
               </button>
             ))}
           </div>
+          <div className={styles.writeStack}>
+            {ROOM_PICKER.map(r => <RoomSlot key={r.id} room={r} sizer />)}
+            <div>
+              <div aria-live="polite">{picked && <RoomSlot room={picked} />}</div>
+              {picked && (
+                <div className={styles.writeRoomLinks}>
+                  <button type="button" className={styles.writeBlockLink} onClick={() => { setPickedId(null); onRoomClick?.(picked.id) }}>start →</button>
+                  <button type="button" className={styles.writeBlockLink} onClick={() => setPickedId(null)}>cancel</button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      )}
+      </div>
     </div>
   )
 }
