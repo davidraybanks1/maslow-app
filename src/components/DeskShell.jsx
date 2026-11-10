@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { MODES } from '../lib/constants'
 import { todayKey, loadNoteDeck } from '../lib/store'
 import { currentSlot, SLOT_GREETING } from '../lib/slots'
-import { normalizeBand, BAND_LABEL, BANDS, FEELINGS } from '../lib/frequency'
+import { normalizeBand } from '../lib/frequency'
 import { zonesFor } from '../lib/dayProgress'
 import { createDataStats } from '../lib/dataStats'
 import { usePracticeActions } from '../lib/usePracticeActions'
@@ -12,6 +11,9 @@ import LoamMark from './LoamMark'
 import ProfileMenu from './ProfileMenu'
 import SignedImg from './SignedImg'
 import StretchSheet from './StretchSheet'
+import TimerTakeover from './TimerTakeover'
+import NeedsSection from './NeedsSection'
+import { CheckIn, Dateline, Greeting } from './loam'
 import ManageDeck from './ManageDeck'
 import ManageTags from './ManageTags'
 import Data from '../screens/Data'
@@ -41,13 +43,6 @@ const NAV = [
   ['data', <g key="a"><rect x="2.5" y="9" width="3" height="6.5" rx="1" /><rect x="7.5" y="3.5" width="3" height="12" rx="1" /><rect x="12.5" y="6.5" width="3" height="9" rx="1" /></g>],
   ['drafts', <g key="a"><rect x="4.5" y="2.5" width="10" height="12" rx="2" /><path d="M3 5.5v8.2a1.8 1.8 0 001.8 1.8H12 M7.5 6.5h4M7.5 9h4" /></g>],
 ]
-
-function relative(days) {
-  if (days == null) return ''
-  if (days <= 0) return 'today'
-  if (days === 1) return 'yesterday'
-  return `${days}d ago`
-}
 
 /* ── notes to self: one quoted line ───────────────────────────────────────────
    One note at a time with ‹ n/N › to move through them (wrapping round). Moving
@@ -98,15 +93,6 @@ function NoteLine({ cards, onSeen, onEdit }) {
   )
 }
 
-function dayLabel(key, slot) {
-  const [y, m, d] = key.split('-').map(Number)
-  const day = new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-  return `${day.toLowerCase()} · ${SLOT_GREETING[slot]}`
-}
-
-// Done markers wear the mode's color; the two light modes take dark ink for the tick.
-const TICK_INK = { appreciation: true, nourishment: true }
-
 /* ── today: a note, how you are, today's practices ────────────────────────── */
 function TodayView({ state, actions, onEditNotes, onOpenPractices, onGoNeeds }) {
   const [today, setToday] = useState(() => todayKey())
@@ -139,7 +125,6 @@ function TodayView({ state, actions, onEditNotes, onOpenPractices, onGoNeeds }) 
     if (!state.userId) return
     actions.logMood?.(state.userId, slot, b, null, today, f || null)
   }
-  const settled = !!band && !!feeling && !changing
 
   const cards = state.noteDeck || []
   const [, setReviewTick] = useState(0)
@@ -171,21 +156,20 @@ function TodayView({ state, actions, onEditNotes, onOpenPractices, onGoNeeds }) 
   const anyRows = zones.some(z => z.rows.length > 0)
   const doneTotal = zones.reduce((n, z) => n + z.done, 0)
 
-  // One mode open at a time. It starts on the first one with something left to
+  // One need open at a time. It starts on the first one with something left to
   // do, and then stays where the person put it.
-  const [openMode, setOpenMode] = useState(undefined) // undefined = not chosen yet, null = all closed
+  const [openNeedId, setOpenNeedId] = useState(undefined) // undefined = not chosen yet, null = all closed
   useEffect(() => {
-    if (openMode !== undefined || shown.length === 0) return
-    const first = shown.find(z => z.rows.some(({ need, practice }) => !practices.statusOf(need, practice).done)) || shown[0]
-    setOpenMode(first.mode)
-  }, [openMode, shown.length])
+    if (openNeedId !== undefined || !anyRows) return
+    const rows = shown.flatMap(z => z.rows)
+    const first = rows.find(({ need, practice }) => !practices.statusOf(need, practice).done) || rows[0]
+    setOpenNeedId(first.need.id)
+  }, [openNeedId, anyRows])
 
   return (
     <div className={styles.view}>
-      <header className={styles.head}>
-        <h2 className={styles.viewTitle}>today.</h2>
-        <div className={styles.date}>{dayLabel(today, slot)}</div>
-      </header>
+      <Dateline onboardedAt={state.onboardedAt} />
+      <Greeting word={SLOT_GREETING[slot]} />
 
       <NoteLine
         cards={cards}
@@ -193,104 +177,34 @@ function TodayView({ state, actions, onEditNotes, onOpenPractices, onGoNeeds }) 
         onEdit={onEditNotes}
       />
 
-      <section className={styles.vibCard} aria-label="Feelings">
-        {settled ? (
-          <div className={styles.vibSummary}>
-            <span className={styles.lbl}>feeling</span>
-            <span className={styles.vibWords}>{(BAND_LABEL[band] || band).toLowerCase()}, {feeling}</span>
-            <button type="button" className={styles.miniLink} onClick={() => setChanging(true)}>change</button>
-          </div>
-        ) : (
-          <>
-            <div className={styles.vibQ}>how are you this {SLOT_GREETING[slot]}?</div>
-            <div className={styles.vib} role="group" aria-label="mood">
-              {BANDS.map(b => (
-                <button
-                  key={b} type="button"
-                  className={`${styles.vibBtn} ${band === b ? styles.vibSel : ''}`}
-                  aria-pressed={band === b}
-                  onClick={() => setMood(b, band === b ? feeling : null)}
-                >{BAND_LABEL[b]}</button>
-              ))}
-            </div>
-            {band && (
-              <div className={styles.feels} role="group" aria-label="feeling">
-                {FEELINGS[band].map(f => (
-                  <button
-                    key={f} type="button"
-                    className={`${styles.feel} ${feeling === f ? styles.feelSel : ''}`}
-                    aria-pressed={feeling === f}
-                    onClick={() => {
-                      if (feeling === f) { setMood(band, null); return }
-                      setMood(band, f)
-                      setChanging(false)
-                    }}
-                  >{f}</button>
-                ))}
-              </div>
-            )}
-          </>
-        )}
-      </section>
+      <CheckIn
+        band={band}
+        feeling={feeling}
+        onBand={b => setMood(b, band === b ? feeling : null)}
+        onFeeling={f => {
+          if (feeling === f) { setMood(band, null); return }
+          setMood(band, f)
+          setChanging(false)
+        }}
+        editing={changing}
+        onToggleEdit={() => setChanging(c => !c)}
+      />
 
       <section className={styles.practices} aria-label="Today's practices">
-        <div className={styles.prHead}>
-          <span className={styles.lbl}>practices · {doneTotal} today</span>
+        <NeedsSection
+          state={state}
+          checked={checked}
+          practices={practices}
+          lastDoneMap={lastDone}
+          openNeedId={openNeedId}
+          onOpenNeed={setOpenNeedId}
+          navigate={onOpenPractices}
+          onEditPractice={onOpenPractices}
+        />
+        <div className={styles.prFoot}>
+          <span>{doneTotal} today</span>
           <button type="button" className={styles.miniLink} onClick={onOpenPractices}>edit →</button>
         </div>
-        {shown.map(z => {
-          const open = openMode === z.mode
-          const color = MODES[z.mode].pip
-          const body = `mode-${z.mode}`
-          return (
-            <div key={z.mode} className={`${styles.mode} ${open ? styles.modeOpen : ''}`} style={{ '--mc': color }}>
-              <button
-                type="button"
-                className={styles.modeHead}
-                aria-expanded={open}
-                aria-controls={body}
-                onClick={() => setOpenMode(open ? null : z.mode)}
-              >
-                <span className={styles.modeRow}>
-                  <i className={styles.zdot} />
-                  <span className={styles.modeName}>{z.mode}</span>
-                  <span className={styles.zoneN}>{z.done}/{z.target}</span>
-                  <span className={styles.chev} aria-hidden="true">{open ? '–' : '+'}</span>
-                </span>
-                <span className={styles.bar}><i style={{ width: `${Math.round(z.fill * 100)}%` }} /></span>
-              </button>
-              {open && (
-                <div id={body} className={styles.modeBody}>
-                  {z.rows.length === 0 && <p className={styles.modeNone}>nothing chosen here yet</p>}
-                  {z.rows.map(({ need, practice }) => {
-                    const st = practices.statusOf(need, practice)
-                    const days = lastDone.get(practice.id || `${need.id}_${practice.label}`)
-                    const tally = st.kind === 'check' && st.cfg.target > 1 && !st.done && st.tally > 0 ? `${st.tally}/${st.cfg.target}` : null
-                    return (
-                      <button
-                        key={st.key} type="button"
-                        className={`${styles.pr} ${st.done ? styles.prDone : ''}`}
-                        aria-pressed={st.done}
-                        onClick={() => practices.tap(need, z.mode, practice)}
-                      >
-                        <span className={styles.chk} data-tick={TICK_INK[z.mode] ? 'ink' : undefined} aria-hidden="true">
-                          {st.done && (
-                            <svg width="12" height="12" viewBox="0 0 12 12"><path d="M2.6 6.2l2.2 2.2 4.6-4.8" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                          )}
-                        </span>
-                        <span className={styles.prText}>
-                          <span className={styles.prName}>{practice.label}</span>
-                          <em className={styles.prNeed}>{need.name}</em>
-                        </span>
-                        <small>{st.done ? (st.count > 1 ? `done ×${st.count}` : 'done today') : (tally || relative(days))}</small>
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          )
-        })}
         {!anyRows && (
           <button type="button" className={styles.empty} onClick={onGoNeeds}>
             choose your needs and practices to see them here →
@@ -301,6 +215,14 @@ function TodayView({ state, actions, onEditNotes, onOpenPractices, onGoNeeds }) 
 
       {practices.stretchFor && (
         <StretchSheet practice={practices.stretchFor.practice} onSave={practices.saveStretch} onClose={practices.closeStretch} />
+      )}
+      {practices.timerFor && (
+        <TimerTakeover
+          label={practices.timerFor.practice.label}
+          minutes={practices.statusOf(practices.timerFor.need, practices.timerFor.practice).cfg.minutes}
+          onFinish={practices.finishTimer}
+          onClose={practices.endTimer}
+        />
       )}
     </div>
   )

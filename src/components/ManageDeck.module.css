@@ -1,7 +1,7 @@
 /* Notes to self: same lean shape as Practices and Needs. */
 
 .overlay {
-  position: fixed; inset: 0; z-index: 200; background: var(--paper);
+  position: fixed; inset: 0; z-index: 200; background: var(--loam-paper);
   display: flex; flex-direction: column; padding-top: var(--safe-top);
   animation: slideUp var(--motion-overlay-in) ease-out;
 }
@@ -13,13 +13,13 @@
 
 .header { display: flex; align-items: center; justify-content: space-between; padding: 20px 16px 0; flex-shrink: 0; }
 .headerStack { display: flex; flex-direction: column; gap: 6px; }
-.title { font-family: var(--font-serif); font-size: 30px; font-weight: 300; line-height: 1.1; letter-spacing: -0.01em; color: var(--ink); margin: 0; }
+.title { font-family: var(--loam-font-display); font-size: 30px; line-height: 1.1; letter-spacing: -0.01em; color: var(--loam-ink); margin: 0; }
 .closeBtn {
-  width: 32px; height: 32px; border-radius: 16px;
-  border: 1px solid rgba(0,0,0,.22); background: transparent; color: rgba(0,0,0,.68);
-  font-family: var(--font-mono); font-size: 13px; line-height: 1; cursor: pointer;
+  width: 32px; height: 32px; background: transparent; color: var(--loam-muted);
+  font-family: var(--loam-font-mono); font-size: 13px; line-height: 1; cursor: pointer;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   -webkit-tap-highlight-color: transparent;
+  border: none;
 }
 .closeBtn:hover { background: var(--track); }
 
@@ -27,80 +27,81 @@
 .body::-webkit-scrollbar { display: none; }
 
 .section { padding-top: 26px; }
-.sectionHead { font-family: var(--font-serif); font-weight: 300; font-size: 22px; line-height: 1.15; color: var(--ink); margin: 0 0 14px; }
+.sectionHead { font-family: var(--loam-font-display); font-size: 22px; line-height: 1.15; color: var(--loam-ink); margin: 0 0 14px; }
 .sectionHeadRow { display: flex; align-items: baseline; justify-content: space-between; }
-.count { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); }
+.count { font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-muted); }
 
 .errorBanner {
-  margin-top: 16px; padding: 10px 12px; border-radius: 10px; cursor: pointer;
-  font-family: var(--font-mono); font-size: var(--type-floor); color: var(--destructive); background: rgba(196,56,31,.07);
+  margin-top: 16px; padding: 10px 12px; cursor: pointer;
+  font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--destructive); background: rgba(196,56,31,.07);
 }
 
 .addRow {
-  display: block; width: 100%; min-height: 52px; border-radius: 16px; background: none;
-  border: 1px dashed rgba(0,0,0,.28); color: var(--ink3); text-align: left; padding: 0 16px;
-  font-family: var(--font-mono); font-size: 13.5px; font-weight: 300; cursor: pointer;
+  display: block; width: 100%; min-height: 52px; background: none; color: var(--loam-muted); text-align: left; padding: 0 0;
+  font-family: var(--loam-font-mono); font-size: 13.5px; cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  border: none;
+  border-bottom: var(--loam-rule-row);
 }
-.addRow:hover { color: var(--ink); border-color: rgba(0,0,0,.5); }
+.addRow:hover { color: var(--loam-ink); border-color: rgba(0,0,0,.5); }
 
 .list { display: flex; flex-direction: column; gap: 8px; }
 .row {
-  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 12px 14px;
-  border-radius: 14px; background: var(--card); border: 1px solid rgba(0,0,0,.08); text-align: left; cursor: pointer;
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 12px 0; background: none; text-align: left; cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  border: none;
+  border-bottom: var(--loam-rule-row);
 }
 .row:hover { border-color: rgba(0,0,0,.2); }
-.rowOff { background: none; border-style: dashed; border-color: rgba(0,0,0,.16); }
+.rowOff { background: none; border: none; border-bottom: var(--loam-rule-row); }
 .badge {
-  flex-shrink: 0; width: 22px; height: 22px; border-radius: 11px; background: var(--ink); color: var(--card);
-  font-family: var(--font-mono); font-size: var(--type-floor); display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; width: 22px; height: 22px; background: var(--loam-ink); color: var(--card);
+  font-family: var(--loam-font-mono); font-size: var(--loam-label); display: flex; align-items: center; justify-content: center;
 }
-.thumb { width: 34px; height: 34px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+.thumb { width: 34px; height: 34px; object-fit: cover; flex-shrink: 0; }
 .rowText {
-  flex: 1; min-width: 0; font-family: var(--font-serif); font-style: italic; font-weight: 300; font-size: 17px; line-height: 1.3; color: var(--ink);
+  flex: 1; min-width: 0; font-family: var(--loam-font-display); font-style: italic; font-size: 17px; line-height: 1.3; color: var(--loam-ink);
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
-.rowOff .rowText { color: var(--ink2); }
+.rowOff .rowText { color: var(--loam-ink-2); }
 .chev { width: 7px; height: 7px; border-top: 1.5px solid var(--ink3); border-right: 1.5px solid var(--ink3); transform: rotate(45deg); flex-shrink: 0; margin-right: 3px; }
-.empty { margin: 0; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink4); }
+.empty { margin: 0; font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-muted); }
 
 /* sheet */
-.sheetTitle { font-family: var(--font-serif); font-weight: 300; font-size: 22px; line-height: 1.15; color: var(--ink); margin: 0 0 14px; }
+.sheetTitle { font-family: var(--loam-font-display); font-size: 22px; line-height: 1.15; color: var(--loam-ink); margin: 0 0 14px; }
 .textarea {
-  display: block; width: 100%; box-sizing: border-box; min-height: 104px; padding: 12px 14px; resize: none;
-  border-radius: 12px; background: var(--paper); border: 1px solid rgba(0,0,0,.16);
-  font-family: var(--font-serif); font-style: italic; font-weight: 300; font-size: 18px; line-height: 1.35; color: var(--ink);
+  display: block; width: 100%; box-sizing: border-box; min-height: 104px; padding: 12px 0; resize: none; background: var(--loam-paper);
+  font-family: var(--loam-font-display); font-style: italic; font-size: 18px; line-height: 1.35; color: var(--loam-ink); border: none; border-bottom: var(--loam-rule-row);
 }
-.textarea:focus { outline: none; border-color: var(--ink); }
+.textarea:focus { outline: none; border-color: var(--loam-ink); }
 .switchRow { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; min-height: 40px; }
-.switchLabel { font-family: var(--font-mono); font-size: 14px; font-weight: 300; color: var(--ink); }
+.switchLabel { font-family: var(--loam-font-mono); font-size: 14px; color: var(--loam-ink); }
 .switch {
-  position: relative; width: 44px; height: 26px; border-radius: 13px; padding: 0; cursor: pointer; flex-shrink: 0;
-  background: rgba(0,0,0,.08); border: 1px solid rgba(0,0,0,.14); -webkit-tap-highlight-color: transparent;
+  position: relative; width: 44px; height: 26px; padding: 0; cursor: pointer; flex-shrink: 0;
+  background: rgba(0,0,0,.08); -webkit-tap-highlight-color: transparent; border: none; border-bottom: var(--loam-rule-row); border-radius: 999px;
 }
 .switchOn { background: var(--exploration); border-color: var(--exploration); }
 .switch:disabled { opacity: .5; cursor: default; }
-.knob { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 10px; background: #fff; transition: transform 150ms ease-out; }
+.knob { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background: none; transition: transform 150ms ease-out; border: none; border-bottom: var(--loam-rule-row); }
 .switchOn .knob { transform: translateX(18px); }
-.hint { margin: 4px 0 0; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); }
+.hint { margin: 4px 0 0; font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-muted); }
 .moveRow { display: flex; gap: 8px; margin-top: 12px; }
 .pillBtn {
   flex: 1; min-height: 40px; border-radius: 999px; background: none; border: 1px solid rgba(0,0,0,.16);
-  font-family: var(--font-mono); font-size: 13px; color: var(--ink2); cursor: pointer;
+  font-family: var(--loam-font-mono); font-size: 13px; color: var(--loam-ink-2); cursor: pointer;
 }
 .pillBtn:disabled { opacity: .4; cursor: default; }
 .primaryBtn {
   display: block; width: 100%; min-height: 48px; margin-top: 18px; border-radius: 999px; border: none;
-  background: var(--ink); color: var(--card); font-family: var(--font-mono); font-size: 14px; cursor: pointer;
+  background: var(--loam-ink); color: var(--card); font-family: var(--loam-font-mono); font-size: 14px; cursor: pointer;
 }
 .primaryBtn:disabled { opacity: .35; cursor: default; }
 .ghostBtn {
   display: block; width: 100%; min-height: 46px; margin-top: 10px; border-radius: 999px; background: none;
-  border: 1px solid rgba(0,0,0,.16); font-family: var(--font-mono); font-size: 13px; color: var(--ink2); cursor: pointer;
+  border: 1px solid rgba(0,0,0,.16); font-family: var(--loam-font-mono); font-size: 13px; color: var(--loam-ink-2); cursor: pointer;
 }
 .ghostBtn:disabled { opacity: .4; cursor: default; }
-.ghostBtnArmed { border-color: var(--ink); color: var(--ink); }
+.ghostBtnArmed { border-color: var(--loam-ink); color: var(--loam-ink); }
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* the desktop hosts this in the side panel at the phone's layout */

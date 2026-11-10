@@ -1,3 +1,4 @@
+import { FEELINGS } from './frequency'
 /* Sample data for the greyed-out "to come" drawings new accounts see on the
    almanac and drafts screens. Made up, seeded (the same every time), and only
    ever drawn washed out behind a "to come" label — never mixed with real data
@@ -32,11 +33,6 @@ const SAMPLE_PRACTICES = [
 const LIFT = { community: 0.3, movement: 0.24, play: 0.12, rest: 0.1 }
 // and one practice that does most of the work for its need
 const PRACTICE_LIFT = { 'sample-p6': 0.22, 'sample-p8': 0.12 }
-const FEEL = {
-  good: ['calm', 'curious', 'creative', 'confident'],
-  mid: ['steady', 'flat', 'restless', 'braced'],
-  bad: ['overwhelmed', 'apathetic', 'frenetic', 'small'],
-}
 const SLOTS = ['morning', 'afternoon', 'evening']
 
 export function sampleAlmanacData(days = 56) {
@@ -59,7 +55,7 @@ export function sampleAlmanacData(days = 56) {
       const r = rand()
       const mood = r < pGood ? 'good' : r < pGood + (1 - pGood - pBad) ? 'mid' : 'bad'
       // lean on a couple of words per band so the rings come out uneven, like a real person's
-      const words = FEEL[mood], pick = rand() < 0.55 ? 0 : Math.floor(rand() * 4)
+      const words = FEELINGS[mood], pick = rand() < 0.55 ? 0 : Math.floor(rand() * 4)
       moods.push({ id: `${dk}-${slot}`, date_key: dk, prompt_time: slot, mood, feeling: words[pick] })
     })
   }

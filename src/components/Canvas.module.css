@@ -15,9 +15,9 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  color: var(--ink3);
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  color: var(--loam-muted);
   letter-spacing: 0.06em;
 }
 .legendPip {
@@ -34,9 +34,9 @@
   gap: 10px;
 }
 .progressLabel {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  color: var(--ink3);
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  color: var(--loam-muted);
   letter-spacing: 0.06em;
   white-space: nowrap;
 }
@@ -44,16 +44,14 @@
   flex: 1;
   height: 3px;
   background: var(--border);
-  border-radius: 3px;
   overflow: hidden;
 }
 .progressFill {
   height: 100%;
-  border-radius: 3px;
   transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
 }
 .progressPct {
-  font-family: var(--font-serif);
+  font-family: var(--loam-font-display);
   font-size: 20px;
   line-height: 1;
   min-width: 44px;
@@ -67,16 +65,15 @@
   display: grid;
   grid-template-columns: repeat(12, 1fr);
   gap: 6px;
-  border: 1.5px solid var(--ink);
-  border-radius: 18px;
   padding: 6px;
   width: 100%;
+  border: none;
+  border-bottom: var(--loam-rule-row);
 }
 
 /* Anxiety */
 .anxietyBlock {
   background: #2C2820;
-  border-radius: 14px;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -86,15 +83,15 @@
   transition: height 0.5s cubic-bezier(0.4,0,0.2,1);
 }
 .anxietyEye {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
   color: #6A6458;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   margin-bottom: 5px;
 }
 .anxietyText {
-  font-family: var(--font-serif);
+  font-family: var(--loam-font-display);
   font-style: italic;
   font-size: 14px;
   color: #9A9488;
@@ -104,9 +101,7 @@
 /* Tile */
 .tile {
   position: relative;
-  border: 1.5px solid;
-  border-radius: 14px;
-  padding: 10px 12px;
+  padding: 10px 0;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -114,6 +109,8 @@
   flex-shrink: 0;
   overflow: visible;
   transition: border-color 0.3s, height 0.5s cubic-bezier(0.4,0,0.2,1);
+  border: none;
+  border-bottom: var(--loam-rule-row);
 }
 
 .tileTop {
@@ -133,14 +130,14 @@
   flex-shrink: 0;
 }
 .tileMode {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   opacity: 0.8;
 }
 .tileName {
-  font-family: var(--font-serif);
+  font-family: var(--loam-font-display);
   line-height: 1.1;
   letter-spacing: -0.01em;
   white-space: nowrap;
@@ -170,12 +167,11 @@
   top: calc(100% + 4px);
   right: 0;
   background: var(--bg);
-  border: 1.5px solid var(--border);
-  border-radius: 12px;
   overflow: hidden;
   z-index: 50;
   min-width: 140px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  border: none;
+  border-bottom: var(--loam-rule-row);
 }
 .dropdownItem {
   display: flex;
@@ -184,8 +180,8 @@
   padding: 10px 12px;
   cursor: pointer;
   font-size: 12px;
-  font-family: var(--font-sans);
-  color: var(--ink2);
+  font-family: var(--loam-font-reading);
+  color: var(--loam-ink-2);
   transition: background 0.1s;
   border-bottom: 1px solid var(--border);
 }
@@ -200,6 +196,6 @@
 }
 .dropdownCheck {
   margin-left: auto;
-  font-size: var(--type-floor);
-  color: var(--ink3);
+  font-size: var(--loam-label);
+  color: var(--loam-muted);
 }

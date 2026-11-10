@@ -165,7 +165,7 @@ export default function OnboardingFlow({ updateCanvas, completeOnboarding }) {
       screen = (
         <GlimpseScreen
           slices={ALMANAC_PREVIEW}
-          alt="The data screen after some use: streaks, daily rhythm, moods, roots, vibrations and strata."
+          alt="The data screen after some use: streaks, daily rhythm, moods, roots, feelings and strata."
           body="You’ll start to see a bunch of insights in the app that help show what’s working and what to tweak."
           onNext={() => go('notes')}
         />
@@ -197,7 +197,7 @@ export default function OnboardingFlow({ updateCanvas, completeOnboarding }) {
   return (
     <div className={styles.root}>
       {/* the splash stands alone; the bar starts with the first question */}
-      {step !== 'welcome' && <Progress value={progress} />}
+      {step !== 'welcome' && <Progress value={progress} step={step} />}
       <div key={key} className={`${styles.screen} ${leaving ? styles.screenOut : styles.screenIn}${plain ? ` ${styles.screenPlain}` : ''}`}>
         {screen}
       </div>

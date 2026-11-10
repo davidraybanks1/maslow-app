@@ -1,73 +1,73 @@
-.screen { display: flex; flex-direction: column; min-height: 100%; background: var(--paper); }
+.screen { display: flex; flex-direction: column; min-height: 100%; background: var(--loam-paper); }
 
 .header { padding: 20px 16px 0; }
 .eyebrowRow { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
-.needsLink { font-family: var(--font-mono); font-size: var(--type-floor); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink3); background: none; border: none; cursor: pointer; padding: 6px 0; -webkit-tap-highlight-color: transparent; }
-.needsLink:hover { color: var(--ink); }
-.closeBtn { width: 32px; height: 32px; border-radius: 16px; border: 1px solid rgba(0,0,0,.22); background: transparent; color: rgba(0,0,0,.68); font-family: var(--font-mono); font-size: 13px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; -webkit-tap-highlight-color: transparent; }
+.needsLink { font-family: var(--loam-font-mono); font-size: var(--loam-label); letter-spacing: 0.12em; text-transform: uppercase; color: var(--loam-muted); background: none; border: none; cursor: pointer; padding: 6px 0; -webkit-tap-highlight-color: transparent; }
+.needsLink:hover { color: var(--loam-ink); }
+.closeBtn { width: 32px; height: 32px; background: transparent; color: var(--loam-muted); font-family: var(--loam-font-mono); font-size: 13px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; -webkit-tap-highlight-color: transparent; border: none; }
 .closeBtn:hover { background: var(--track); }
-.title { font-family: var(--font-serif); font-size: 30px; font-weight: 300; line-height: 1.1; letter-spacing: -0.01em; color: var(--ink); margin: 0; }
+.title { font-family: var(--loam-font-display); font-size: 30px; line-height: 1.1; letter-spacing: -0.01em; color: var(--loam-ink); margin: 0; }
 
 .list { padding: 0 16px 32px; }
 
 .needGroup {
-  background: var(--card);
-  border: 0.5px solid var(--hairline);
-  border-radius: 16px;
-  padding: 14px 16px;
+  background: none;
+  padding: 14px 0;
   margin-bottom: 9px;
+  border: none;
+  border-bottom: var(--loam-rule-row);
 }
 
 .needHeader { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
 .needPip { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.needName { font-family: var(--font-serif); font-size: 16px; font-weight: 300; color: var(--ink); letter-spacing: -0.01em; }
-.needTag { font-family: var(--font-mono); font-size: var(--type-floor); letter-spacing: 0.1em; color: var(--ink3); margin-left: auto; }
+.needName { font-family: var(--loam-font-display); font-size: 16px; color: var(--loam-ink); letter-spacing: -0.01em; }
+.needTag { font-family: var(--loam-font-mono); font-size: var(--loam-label); letter-spacing: 0.1em; color: var(--loam-muted); margin-left: auto; }
 
 .pool { display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; }
-.poolItem { display: flex; flex-direction: column; padding: 6px 0; border-top: 0.5px solid var(--hairline); }
+.poolItem { display: flex; flex-direction: column; padding: 6px 0; border-top: 0.5px solid var(--loam-rule); }
 .poolItem:first-child { border-top: none; }
 .poolRow { display: flex; align-items: center; min-height: 38px; }
 .poolRowBtn { width: 100%; background: none; border: 0; padding: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .poolRowBtn:active .poolText { opacity: .6; }
 .chev { width: 7px; height: 7px; flex: none; margin: 0 6px 0 8px; border-right: 1.5px solid var(--ink3); border-bottom: 1.5px solid var(--ink3); transform: rotate(-45deg); }
-.poolText { font-family: var(--font-serif); font-size: 15px; font-weight: 300; font-style: italic; color: var(--ink); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.lastDone { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); flex-shrink: 0; }
+.poolText { font-family: var(--loam-font-display); font-size: 15px; font-style: italic; color: var(--loam-ink); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lastDone { font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-muted); flex-shrink: 0; }
 
 /* ── Practice reminder affordance (native only) ── */
 .reminderControl { display: flex; align-items: center; gap: 6px; flex-shrink: 0; margin-left: 8px; }
-.reminderOffBtn { background: none; border: 0.5px solid var(--hairline); border-radius: 999px; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); padding: 3px 9px; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
+.reminderOffBtn { background: none; border: 0.5px solid var(--loam-rule); border-radius: 999px; font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-muted); padding: 3px 9px; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
 .reminderOffBtn:active { opacity: .6; }
-.reminderCapped { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink4); white-space: nowrap; }
-.reminderError { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); white-space: nowrap; }
-.reminderTimeInput { padding: 3px 9px; border: 0.5px solid var(--hairline); border-radius: 999px; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink); background: transparent; outline: none; width: auto; flex-shrink: 0; cursor: default; -webkit-tap-highlight-color: transparent; }
+.reminderCapped { font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-muted); white-space: nowrap; }
+.reminderError { font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-muted); white-space: nowrap; }
+.reminderTimeInput { padding: 3px 9px; border: 0.5px solid var(--loam-rule); border-radius: 999px; font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-ink); background: transparent; outline: none; width: auto; flex-shrink: 0; cursor: default; -webkit-tap-highlight-color: transparent; }
 .rToggleBtn { background: none; border: none; padding: 0; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; }
-.rTrack { width: 36px; height: 20px; border-radius: 10px; border: 1px solid rgba(0,0,0,.14); background: rgba(0,0,0,.08); position: relative; transition: background 150ms ease-out, border-color 150ms ease-out; }
+.rTrack { width: 36px; height: 20px; background: rgba(0,0,0,.08); position: relative; transition: background 150ms ease-out, border-color 150ms ease-out; border: none; border-bottom: var(--loam-rule-row); }
 .rTrackOn { background: var(--exploration); border-color: var(--exploration); }
-.rKnob { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 7px; background: white; transition: left 150ms ease-out; display: block; }
+.rKnob { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; background: white; transition: left 150ms ease-out; display: block; }
 .rKnobOn { left: 18px; }
 @media (prefers-reduced-motion: reduce) { .rTrack { transition: none; } .rKnob { transition: none; } }
 
 /* Taken times — shown below the row while the time picker is focused */
 /* wraps onto extra lines instead of running off the card */
-.reminderTaken { display: flex; flex-wrap: wrap; gap: 0 10px; min-width: 0; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink4); padding: 2px 0 6px; line-height: 1.5; }
-.reminderTakenHead { color: var(--ink3); }
+.reminderTaken { display: flex; flex-wrap: wrap; gap: 0 10px; min-width: 0; font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-muted); padding: 2px 0 6px; line-height: 1.5; }
+.reminderTakenHead { color: var(--loam-muted); }
 .reminderTakenItem { min-width: 0; overflow-wrap: anywhere; }
 
 /* ── Once-only reminder offer ── */
 .offerRow { display: flex; align-items: center; gap: 8px; padding: 3px 0 6px; }
-.offerCopy { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); flex: 1; }
-.offerSetTime { background: none; border: 0.5px solid var(--hairline); border-radius: 999px; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink); padding: 3px 9px; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
+.offerCopy { font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-muted); flex: 1; }
+.offerSetTime { background: none; border: 0.5px solid var(--loam-rule); border-radius: 999px; font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-ink); padding: 3px 9px; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
 .offerSetTime:active { opacity: .6; }
-.offerNotNow { background: none; border: none; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink4); padding: 3px 6px; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
+.offerNotNow { background: none; border: none; font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-muted); padding: 3px 6px; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
 .offerNotNow:active { opacity: .6; }
 
-.empty { font-family: var(--font-mono); font-size: 12px; color: var(--ink4); padding: 4px 0 8px; }
+.empty { font-family: var(--loam-font-mono); font-size: 12px; color: var(--loam-muted); padding: 4px 0 8px; }
 
-.addToggle { display: block; width: 100%; text-align: left; background: none; border: none; font-family: var(--font-mono); font-size: 12px; color: var(--ink3); cursor: pointer; padding: 4px 0 0; -webkit-tap-highlight-color: transparent; }
-.addToggle:hover { color: var(--ink2); }
+.addToggle { display: block; width: 100%; text-align: left; background: none; border: none; font-family: var(--loam-font-mono); font-size: 12px; color: var(--loam-muted); cursor: pointer; padding: 4px 0 0; -webkit-tap-highlight-color: transparent; }
+.addToggle:hover { color: var(--loam-ink-2); }
 
 
-.maxNote { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink4); padding-top: 8px; }
+.maxNote { font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-muted); padding-top: 8px; }
 
 .listWithCta { padding-bottom: 88px; }
 
@@ -78,8 +78,8 @@
   right: 0;
   padding: 12px 16px;
   padding-bottom: max(12px, var(--safe-bottom));
-  background: var(--paper);
-  border-top: 0.5px solid var(--hairline);
+  background: var(--loam-paper);
+  border-top: 0.5px solid var(--loam-rule);
   z-index: 10;
 }
 
@@ -88,10 +88,10 @@
   width: 100%;
   padding: 14px;
   background: var(--nourishment);
-  color: var(--ink);
+  color: var(--loam-ink);
   border: none;
   border-radius: 999px;
-  font-family: var(--font-mono);
+  font-family: var(--loam-font-mono);
   font-size: 13px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -101,22 +101,22 @@
 /* ── Starter chips: empty lists are never a dead end ── */
 .starterWrap { padding: 4px 0 8px; }
 .starterLabel {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--ink4);
+  color: var(--loam-muted);
   margin-bottom: 8px;
 }
 .starterChips { display: flex; flex-wrap: wrap; gap: 8px; }
 .starterChip {
-  border: 1px dashed var(--hairline);
+  border: 1px dashed var(--loam-rule);
   background: var(--card);
   border-radius: 999px;
   padding: 7px 13px;
-  font-family: var(--font-mono);
+  font-family: var(--loam-font-mono);
   font-size: 12px;
-  color: var(--ink2);
+  color: var(--loam-ink-2);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
@@ -141,13 +141,11 @@
 /* ── Practice types: pick a type first, or upgrade a plain add ── */
 /* ── Add a new practice: the six types, three across ── */
 .addSection { padding: 26px 16px 0; }
-.sectionHead { font-family: var(--font-serif); font-weight: 300; font-size: 22px; line-height: 1.15; color: var(--ink); margin: 0; }
+.sectionHead { font-family: var(--loam-font-display); font-size: 22px; line-height: 1.15; color: var(--loam-ink); margin: 0; }
 .typeGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
 .typeTile {
-  padding: 14px 6px 11px;
-  border-radius: var(--radius);
-  background: var(--card);
-  border: 0.5px solid var(--hairline);
+  padding: 14px 0 11px;
+  background: none;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -155,29 +153,31 @@
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: background 80ms ease;
+  border: none;
+  border-bottom: var(--loam-rule-row);
 }
 .typeTile:active { background: #F6F2E8; }
-.typeLabel { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink2); }
+.typeLabel { font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-ink-2); }
 .poolIcon { flex: none; margin-right: 10px; opacity: .85; }
 .poolTag {
   display: block;
-  font-family: var(--font-mono);
+  font-family: var(--loam-font-mono);
   font-style: normal;
-  font-size: var(--type-floor);
-  color: var(--ink3);
+  font-size: var(--loam-label);
+  color: var(--loam-muted);
   margin-top: 1px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.starterTag { margin-left: 6px; padding-left: 6px; border-left: 0.5px solid var(--hairline); color: var(--ink3); }
+.starterTag { margin-left: 6px; padding-left: 6px; border-left: 0.5px solid var(--loam-rule); color: var(--loam-muted); }
 @media (prefers-reduced-motion: reduce) { .typeTile { transition: none; } }
 
 /* ── Edit your practices ── */
 .editHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 30px 16px 14px; }
 .editBtn {
-  font-family: var(--font-mono);
+  font-family: var(--loam-font-mono);
   font-size: 13px;
-  color: var(--ink);
+  color: var(--loam-ink);
   background: none;
   border: 1px solid rgba(0,0,0,.22);
   border-radius: 999px;
@@ -186,5 +186,5 @@
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.editBtn[aria-pressed="true"] { background: var(--ink); color: var(--card); border-color: var(--ink); }
+.editBtn[aria-pressed="true"] { background: var(--loam-ink); color: var(--card); border-color: var(--loam-ink); }
 

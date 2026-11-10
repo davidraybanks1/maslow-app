@@ -567,6 +567,9 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
           <button type="button" className={styles.writeTagOn} onClick={openFreqPicker}>
             <span className={styles.writeTagDot} style={draftMoodInherited ? { border: `1.5px solid ${MOOD_PIP_COLOR[chipBand]}` } : { background: MOOD_PIP_COLOR[chipBand] }} />
             {chipFeeling || chipBand}
+            {!draftMoodInherited && (
+              <span role="button" aria-label="remove feeling" onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); setDraftMoodInherited(true); setDraftMoodBand(null); setDraftMoodFeeling(null); setFreqPickerOpen(false) }}> ×</span>
+            )}
           </button>
         ) : (
           <button type="button" className={styles.writeTagAdd} onClick={openFreqPicker}>+ feeling</button>

@@ -7,13 +7,11 @@
 .avatar {
   width: 30px;
   height: 30px;
-  border-radius: 9px;
-  background: var(--card);
-  border: 0.5px solid var(--hairline);
-  font-family: var(--font-mono);
+  background: none;
+  font-family: var(--loam-font-mono);
   font-size: 13px;
   font-weight: 400;
-  color: var(--ink);
+  color: var(--loam-ink);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -21,11 +19,13 @@
   line-height: 1;
   transition: background var(--motion-hover), color var(--motion-hover), border-color var(--motion-hover);
   -webkit-tap-highlight-color: transparent;
+  border: none;
+  border-bottom: var(--loam-rule-row);
 }
 .avatarOpen {
-  background: var(--ink);
+  background: var(--loam-ink);
   color: var(--card);
-  border-color: var(--ink);
+  border-color: var(--loam-ink);
 }
 .avatar:focus-visible {
   outline: 2px solid rgba(26,26,26,.3);
@@ -55,7 +55,7 @@
 .scrim {
   position: absolute;
   inset: 0;
-  background: rgba(29, 27, 22, 0.16);
+  background: var(--loam-keyboard-scrim);
   animation: scrimIn 200ms ease both;
 }
 .scrimClosing { animation: scrimOut 220ms ease both; }
@@ -75,9 +75,9 @@
   inset: 0;
   display: flex;
   flex-direction: column;
-  background: var(--paper);
+  background: var(--loam-paper);
   color: var(--pf-ink);
-  font-family: var(--font-serif);
+  font-family: var(--loam-font-display);
   -webkit-font-smoothing: antialiased;
   outline: none;
   animation: sheetIn 300ms cubic-bezier(0.32, 0.72, 0.28, 1) both;
@@ -89,7 +89,6 @@
     left: auto;
     width: 460px;
     border-left: 0.5px solid var(--pf-line);
-    box-shadow: -8px 0 40px rgba(0, 0, 0, 0.08);
     animation: panelIn 180ms ease both;
   }
   .panelClosing { animation: panelOut 150ms ease both; }
@@ -103,7 +102,6 @@
   width: auto;
   min-height: 100%;
   border: 0;
-  box-shadow: none;
   animation: none;
 }
 .panelDesk .scroll { overflow: visible; }
@@ -125,14 +123,13 @@
 /* ── Shared bits ── */
 .title {
   margin: 0;
-  font-family: var(--font-serif);
+  font-family: var(--loam-font-display);
   font-size: 30px;
-  font-weight: 300;
   line-height: 1.1;
 }
 
 .mono {
-  font-family: var(--font-mono);
+  font-family: var(--loam-font-mono);
   font-size: 12px;
   font-weight: 400;
   color: var(--pf-muted);
@@ -140,10 +137,9 @@
 
 /* the white shiny card */
 .card {
-  background: linear-gradient(128deg, #FFFFFF 0%, #FFFFFF 36%, #FBF5E9 50%, #FFFFFF 64%);
-  border: 0.5px solid var(--pf-line);
-  border-radius: 20px;
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+  background: none;
+  border: none;
+  border-bottom: var(--loam-rule-row);
 }
 
 button.card, .tile, .remCard {
@@ -162,8 +158,8 @@ button.card, .tile, .remCard {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: 0.5px solid rgba(60, 45, 20, 0.22);
-  background: #FFFFFF;
+  border: none;
+  background: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -172,11 +168,11 @@ button.card, .tile, .remCard {
   transition: background var(--motion-hover);
   -webkit-tap-highlight-color: transparent;
 }
-.closeBtn:hover { background: var(--pf-inset); }
+.closeBtn:hover { background: var(--loam-track); }
 
 /* ── Home: identity ── */
 .identity {
-  padding: 22px 20px;
+  padding: 14px 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -184,7 +180,6 @@ button.card, .tile, .remCard {
 .name {
   font-family: var(--pf-xl);
   font-size: 40px;
-  font-weight: 300;
   line-height: 1;
   letter-spacing: -0.02em;
   overflow-wrap: anywhere;
@@ -194,8 +189,8 @@ button.card, .tile, .remCard {
 .group { display: flex; flex-direction: column; gap: 10px; }
 .groupLabel {
   margin: 4px 0 0 4px;
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
   font-weight: 400;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -211,13 +206,13 @@ button.card, .tile, .remCard {
   flex-direction: column;
   align-items: flex-start;
   gap: 10px;
-  padding: 16px 14px;
+  padding: 14px 0;
   cursor: pointer;
   text-align: left;
   transition: transform var(--motion-hover);
   -webkit-tap-highlight-color: transparent;
 }
-.tile:hover, .remCard:hover { transform: translateY(-1px); }
+.tile:hover, .remCard:hover { transform: none; }
 .spheres {
   display: flex;
   gap: 3px;
@@ -235,9 +230,8 @@ button.card, .tile, .remCard {
   gap: 2px;
 }
 .tileLabel {
-  font-family: var(--font-serif);
+  font-family: var(--loam-font-display);
   font-size: 19px;
-  font-weight: 300;
   line-height: 1.15;
 }
 
@@ -246,7 +240,7 @@ button.card, .tile, .remCard {
   display: flex;
   flex-direction: column;
   gap: 18px;
-  padding: 18px 18px 16px;
+  padding: 14px 0 12px;
   cursor: pointer;
   text-align: left;
   transition: transform var(--motion-hover);
@@ -259,7 +253,7 @@ button.card, .tile, .remCard {
   width: 100%;
 }
 .remTitleCol { display: flex; flex-direction: column; gap: 3px; }
-.remTitle { font-family: var(--font-serif); font-size: 22px; font-weight: 300; }
+.remTitle { font-family: var(--loam-font-display); font-size: 22px; }
 
 .dayLine {
   position: relative;
@@ -275,7 +269,7 @@ button.card, .tile, .remCard {
 .dayEnd {
   position: absolute;
   top: 38px;
-  font-family: var(--font-mono);
+  font-family: var(--loam-font-mono);
   font-size: 12px;
   color: var(--pf-faint);
 }
@@ -298,7 +292,7 @@ button.card, .tile, .remCard {
 }
 .daySphereOff { background: #FFFFFF; border: 1px solid var(--pf-faint); }
 .dayTime {
-  font-family: var(--font-mono);
+  font-family: var(--loam-font-mono);
   font-size: 12px;
   color: var(--pf-ink);
   white-space: nowrap;
@@ -329,8 +323,8 @@ button.card, .tile, .remCard {
 .moreText { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .moreText .mono { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .moreTitle {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
   font-weight: 400;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -350,9 +344,8 @@ button.card, .tile, .remCard {
   background: transparent;
   cursor: pointer;
   text-align: left;
-  font-family: var(--font-serif);
+  font-family: var(--loam-font-display);
   font-size: 16px;
-  font-weight: 300;
   color: inherit;
   text-decoration: none;
   -webkit-tap-highlight-color: transparent;
@@ -366,14 +359,14 @@ div.moreRow { cursor: default; }
   border-top: 0.5px solid rgba(60, 45, 20, 0.1);
 }
 .legalRow a {
-  font-family: var(--font-mono);
+  font-family: var(--loam-font-mono);
   font-size: 12px;
   color: var(--pf-muted);
 }
 .legalRow a:hover { color: var(--pf-ink); }
 .careNote {
   margin: 10px 0 0;
-  font-family: var(--font-mono);
+  font-family: var(--loam-font-mono);
   font-size: 12px;
   line-height: 1.5;
   color: var(--pf-muted);
@@ -386,9 +379,8 @@ div.moreRow { cursor: default; }
   padding: 10px 18px;
   border: 0;
   background: transparent;
-  font-family: var(--font-serif);
+  font-family: var(--loam-font-display);
   font-size: 17px;
-  font-weight: 300;
   color: inherit;
   cursor: pointer;
   text-decoration: underline;
@@ -415,7 +407,7 @@ div.moreRow { cursor: default; }
   border: 0;
   background: transparent;
   cursor: pointer;
-  font-family: var(--font-mono);
+  font-family: var(--loam-font-mono);
   font-size: 12px;
   color: var(--pf-ink2);
   -webkit-tap-highlight-color: transparent;
@@ -445,11 +437,11 @@ div.moreRow { cursor: default; }
   height: 26px;
   padding: 0;
   border: 0;
-  border-radius: 13px;
   background: var(--pf-track);
   cursor: pointer;
   transition: background var(--motion-toggle);
   -webkit-tap-highlight-color: transparent;
+  border-radius: 999px;
 }
 .toggleOn { background: var(--exploration); }
 .toggleKnob {
@@ -460,7 +452,6 @@ div.moreRow { cursor: default; }
   height: 22px;
   border-radius: 50%;
   background: #FFFFFF;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   transition: transform var(--motion-toggle);
 }
 .toggleOn .toggleKnob { transform: translateX(18px); }
@@ -475,15 +466,14 @@ div.moreRow { cursor: default; }
 .slotRow { display: flex; align-items: center; gap: 12px; }
 .slotName { flex: 1; min-width: 0; }
 .slotText { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.slotLabel { font-family: var(--font-serif); font-size: 21px; font-weight: 300; }
+.slotLabel { font-family: var(--loam-font-display); font-size: 21px; }
 .pill {
   padding: 7px 14px;
   border-radius: 999px;
   border: 0.5px solid rgba(60, 45, 20, 0.18);
   background: var(--pf-inset);
-  font-family: var(--font-serif);
+  font-family: var(--loam-font-display);
   font-size: 19px;
-  font-weight: 300;
   color: var(--pf-ink);
   white-space: nowrap;
   cursor: pointer;
@@ -501,7 +491,7 @@ div.moreRow { cursor: default; }
   padding: 12px 0;
 }
 .toneText { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.toneLabel { font-family: var(--font-serif); font-size: 20px; font-weight: 300; }
+.toneLabel { font-family: var(--loam-font-display); font-size: 20px; }
 .toneDesc { line-height: 1.5; }
 
 /* ── Sign-out confirm ── */
@@ -522,18 +512,16 @@ div.moreRow { cursor: default; }
   max-width: 340px;
   box-sizing: border-box;
   padding: 26px 22px 20px;
-  border-radius: 22px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
   text-align: center;
 }
-.dialogTitle { font-family: var(--pf-xl); font-size: 28px; font-weight: 300; line-height: 1.15; }
+.dialogTitle { font-family: var(--pf-xl); font-size: 28px; line-height: 1.15; }
 .dialogBody {
-  font-family: var(--font-serif);
+  font-family: var(--loam-font-display);
   font-size: 16px;
-  font-weight: 300;
   line-height: 1.45;
   color: var(--pf-ink2);
   text-wrap: pretty;
@@ -545,10 +533,9 @@ div.moreRow { cursor: default; }
   border: 0;
   border-radius: 999px;
   background: var(--pf-ink);
-  color: var(--paper);
-  font-family: var(--font-serif);
+  color: var(--loam-paper);
+  font-family: var(--loam-font-display);
   font-size: 18px;
-  font-weight: 300;
   cursor: pointer;
   transition: opacity var(--motion-hover);
 }
@@ -559,9 +546,8 @@ div.moreRow { cursor: default; }
   border-radius: 999px;
   background: transparent;
   color: inherit;
-  font-family: var(--font-serif);
+  font-family: var(--loam-font-display);
   font-size: 17px;
-  font-weight: 300;
   cursor: pointer;
 }
 
@@ -572,7 +558,7 @@ div.moreRow { cursor: default; }
   padding: 6px 12px;
   border: 0;
   background: transparent;
-  font-family: var(--font-mono, var(--font-serif));
+  font-family: var(--loam-font-mono));
   font-size: 13px;
   font-weight: 400;
   color: var(--pf-ink3, #9b9181);
@@ -593,21 +579,21 @@ div.moreRow { cursor: default; }
   width: 100%;
   box-sizing: border-box;
   margin-top: 8px;
-  padding: 10px 14px;
-  border: 1px solid var(--pf-border, #d8d2c4);
-  border-radius: 10px;
-  background: var(--paper);
-  font-family: var(--font-mono, monospace);
+  padding: 10px 0;
+  background: var(--loam-paper);
+  font-family: var(--loam-font-mono);
   font-size: 16px;
   color: var(--pf-ink);
   letter-spacing: 0.04em;
   outline: none;
+  border: none;
+  border-bottom: var(--loam-rule-row);
 }
 .deleteConfirmInput:focus { border-color: var(--pf-ink2, #6b6356); }
 .deleteError {
   margin-top: 8px;
   font-size: 14px;
-  font-family: var(--font-serif);
+  font-family: var(--loam-font-display);
   color: #c0392b;
   line-height: 1.4;
 }
@@ -617,9 +603,8 @@ div.moreRow { cursor: default; }
   border-radius: 999px;
   background: #c0392b;
   color: #fff;
-  font-family: var(--font-serif);
+  font-family: var(--loam-font-display);
   font-size: 18px;
-  font-weight: 300;
   cursor: pointer;
   width: 100%;
   transition: opacity var(--motion-hover);
@@ -634,20 +619,20 @@ div.moreRow { cursor: default; }
 }
 
 /* ── Check-in time sheet (rendered in a portal, so global tokens only) ── */
-.shTitle { font-family: var(--font-serif); font-weight: 300; font-size: 22px; line-height: 1.15; color: var(--ink); margin: 0 0 16px; text-transform: lowercase; }
+.shTitle { font-family: var(--loam-font-display); font-size: 22px; line-height: 1.15; color: var(--loam-ink); margin: 0 0 16px; text-transform: lowercase; }
 .shStepper { display: flex; align-items: center; gap: 10px; }
 .shStep {
-  flex: 1; min-height: 48px; border-radius: 12px; background: var(--paper); border: 1px solid rgba(0,0,0,.14);
-  font-family: var(--font-mono); font-size: 14px; color: var(--ink); cursor: pointer;
+  flex: 1; min-height: 48px; background: var(--loam-paper);
+  font-family: var(--loam-font-mono); font-size: 14px; color: var(--loam-ink); cursor: pointer; border: none; border-bottom: var(--loam-rule-row);
 }
-.shTime { flex: 1.5; text-align: center; font-family: var(--font-serif); font-size: 32px; font-weight: 300; color: var(--ink); white-space: nowrap; }
+.shTime { flex: 1.5; text-align: center; font-family: var(--loam-font-display); font-size: 32px; color: var(--loam-ink); white-space: nowrap; }
 .shPresets { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
 .shPreset {
   min-height: 40px; padding: 0 14px; border-radius: 999px; background: none; border: 1px solid rgba(0,0,0,.16);
-  font-family: var(--font-mono); font-size: 13px; color: var(--ink2); cursor: pointer;
+  font-family: var(--loam-font-mono); font-size: 13px; color: var(--loam-ink-2); cursor: pointer;
 }
-.shPresetOn { background: var(--ink); border-color: var(--ink); color: var(--card); }
+.shPresetOn { background: var(--loam-ink); border-color: var(--loam-ink); color: var(--card); }
 .shDone {
   display: block; width: 100%; min-height: 48px; margin-top: 20px; border-radius: 999px; border: none;
-  background: var(--ink); color: var(--card); font-family: var(--font-mono); font-size: 14px; cursor: pointer;
+  background: var(--loam-ink); color: var(--card); font-family: var(--loam-font-mono); font-size: 14px; cursor: pointer;
 }

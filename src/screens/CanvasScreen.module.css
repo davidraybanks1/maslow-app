@@ -1,35 +1,35 @@
 /* Needs: same shape as Practices. Little copy; the structure says the rest. */
 
-.screen { display: flex; flex-direction: column; min-height: 100%; background: var(--paper); }
+.screen { display: flex; flex-direction: column; min-height: 100%; background: var(--loam-paper); }
 
 .header { padding: 20px 16px 0; }
 .eyebrowRow { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
 .link {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--ink3);
+  color: var(--loam-muted);
   background: none;
   border: none;
   cursor: pointer;
   padding: 6px 0;
   -webkit-tap-highlight-color: transparent;
 }
-.link:hover { color: var(--ink); }
+.link:hover { color: var(--loam-ink); }
 .closeBtn {
-  width: 32px; height: 32px; border-radius: 16px;
-  border: 1px solid rgba(0,0,0,.22); background: transparent; color: rgba(0,0,0,.68);
-  font-family: var(--font-mono); font-size: 13px; line-height: 1; cursor: pointer;
+  width: 32px; height: 32px; background: transparent; color: var(--loam-muted);
+  font-family: var(--loam-font-mono); font-size: 13px; line-height: 1; cursor: pointer;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   -webkit-tap-highlight-color: transparent;
+  border: none;
 }
 .closeBtn:hover { background: var(--track); }
-.title { font-family: var(--font-serif); font-size: 30px; font-weight: 300; line-height: 1.1; letter-spacing: -0.01em; color: var(--ink); margin: 0; }
+.title { font-family: var(--loam-font-display); font-size: 30px; line-height: 1.1; letter-spacing: -0.01em; color: var(--loam-ink); margin: 0; }
 
 .section { padding: 26px 16px 0; }
 .section:last-of-type { padding-bottom: 40px; }
-.sectionHead { font-family: var(--font-serif); font-weight: 300; font-size: 22px; line-height: 1.15; color: var(--ink); margin: 0; }
+.sectionHead { font-family: var(--loam-font-display); font-size: 22px; line-height: 1.15; color: var(--loam-ink); margin: 0; }
 .sectionHeadGap { margin-bottom: 14px; }
 
 /* ── Add a need: the ones not in a mode, and where to drop one to take it out ── */
@@ -37,17 +37,17 @@
   margin-top: 14px;
   min-height: 62px;
   box-sizing: border-box;
-  border-radius: 16px;
-  border: 1px dashed rgba(0,0,0,.2);
   padding: 12px;
   display: flex;
   align-items: center;
   transition: box-shadow 120ms ease, background 120ms ease;
+  border: none;
+  border-bottom: var(--loam-rule-row);
 }
-.libraryEmpty { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink4); padding: 0 4px; }
+.libraryEmpty { font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-muted); padding: 0 4px; }
 .pills { display: flex; flex-wrap: wrap; gap: 8px; }
 .pill {
-  font-family: var(--font-mono); font-weight: 300; font-size: 13.5px; color: var(--ink);
+  font-family: var(--loam-font-mono); font-size: 13.5px; color: var(--loam-ink);
   padding: 0 16px; min-height: 40px; border-radius: 999px;
   background: var(--card); border: 1px solid rgba(0,0,0,.14);
   cursor: grab; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
@@ -58,22 +58,22 @@
 .cards { display: flex; flex-direction: column; gap: 9px; }
 .card {
   --mc: var(--ink3);
-  background: var(--card);
-  border: 0.5px solid var(--hairline);
-  border-radius: 16px;
-  padding: 14px 16px;
+  background: none;
+  padding: 14px 0;
   transition: box-shadow 120ms ease, background 120ms ease;
+  border: none;
+  border-bottom: var(--loam-rule-row);
 }
 .cardHead { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--mc); flex-shrink: 0; }
-.modeName { font-family: var(--font-serif); font-size: 16px; font-weight: 300; color: var(--ink); letter-spacing: -0.01em; }
-.count { font-family: var(--font-mono); font-size: var(--type-floor); letter-spacing: 0.1em; color: var(--ink3); margin-left: auto; }
+.modeName { font-family: var(--loam-font-display); font-size: 16px; color: var(--loam-ink); letter-spacing: -0.01em; }
+.count { font-family: var(--loam-font-mono); font-size: var(--loam-label); letter-spacing: 0.1em; color: var(--loam-muted); margin-left: auto; }
 
 .rows { display: flex; flex-direction: column; }
 .row {
   display: flex; align-items: center; width: 100%; min-height: 48px; padding: 0;
-  background: none; border: 0; border-top: 0.5px solid var(--hairline);
-  font-family: var(--font-serif); font-size: 15px; font-weight: 300; font-style: italic; color: var(--ink);
+  background: none; border: 0; border-top: 0.5px solid var(--loam-rule);
+  font-family: var(--loam-font-display); font-size: 15px; font-style: italic; color: var(--loam-ink);
   text-align: left; cursor: grab; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent; transition: opacity 120ms ease;
 }
@@ -85,82 +85,78 @@
 /* six dots: the "this moves" mark */
 .grip {
   width: 10px; height: 16px; flex: none; opacity: .4;
-  background: radial-gradient(circle, var(--ink) 1.3px, transparent 1.6px) 0 0 / 5px 5.33px repeat;
+  background: radial-gradient(circle, var(--loam-ink) 1.3px, transparent 1.6px) 0 0 / 5px 5.33px repeat;
 }
 
 .addToggle {
   display: block; width: 100%; text-align: left; background: none; border: none;
-  border-top: 0.5px solid var(--hairline);
-  font-family: var(--font-mono); font-size: 12px; color: var(--ink3);
+  border-top: 0.5px solid var(--loam-rule);
+  font-family: var(--loam-font-mono); font-size: 12px; color: var(--loam-muted);
   cursor: pointer; padding: 14px 0 2px; -webkit-tap-highlight-color: transparent;
 }
 .addToggle:first-child { border-top: none; padding-top: 4px; }
-.addToggle:hover { color: var(--ink2); }
+.addToggle:hover { color: var(--loam-ink-2); }
 
 /* while a need is held over a card or the tray */
-.over { box-shadow: 0 0 0 2px var(--mc); }
-.library.over { box-shadow: 0 0 0 2px var(--ink2); background: rgba(0,0,0,.03); }
-.overBad { background: rgba(0,0,0,.04); box-shadow: 0 0 0 2px var(--ink4); }
+.over { outline: 2px solid var(--mc); outline-offset: -2px; }
+.library.over { outline: 2px solid var(--loam-ink-2); outline-offset: -2px; outline: 2px solid var(--mc); outline-offset: -2px; background: rgba(0,0,0,.03); }
+.overBad { outline: 2px solid var(--loam-leader); outline-offset: -2px; background: rgba(0,0,0,.04); }
 
 /* the thing under your finger */
 .ghost {
   position: fixed; left: 0; top: 0; z-index: 400;
-  display: flex; align-items: center; box-sizing: border-box; padding: 0 16px;
-  border-radius: 12px; background: var(--card); border: 1px solid rgba(0,0,0,.2);
-  box-shadow: 0 10px 28px rgba(20,18,12,.22);
-  font-family: var(--font-mono); font-weight: 300; font-size: 14px; color: var(--ink);
-  pointer-events: none; will-change: transform;
+  display: flex; align-items: center; box-sizing: border-box; padding: 0 0; background: none;
+  font-family: var(--loam-font-mono); font-size: 14px; color: var(--loam-ink);
+  pointer-events: none; will-change: transform; border: none; border-bottom: var(--loam-rule-row);
 }
 
 /* bounce-back note */
 .live { position: fixed; left: 0; right: 0; bottom: calc(var(--safe-bottom) + 84px); z-index: 250; display: flex; justify-content: center; pointer-events: none; padding: 0 16px; }
-.notice { max-width: 340px; padding: 11px 16px; border-radius: 12px; background: var(--ink); color: var(--card); font-family: var(--font-mono); font-size: 13px; line-height: 1.45; text-align: center; }
+.notice { max-width: 340px; padding: 11px 16px; background: var(--loam-ink); color: var(--card); font-family: var(--loam-font-mono); font-size: 13px; line-height: 1.45; text-align: center; }
 
 /* sheets */
-.sheetTitle { font-family: var(--font-serif); font-weight: 300; font-size: 22px; line-height: 1.15; color: var(--ink); margin: 0 0 16px; }
-.sheetNote { font-family: var(--font-mono); font-size: 13px; line-height: 1.5; color: var(--ink3); margin: 0 0 8px; }
+.sheetTitle { font-family: var(--loam-font-display); font-size: 22px; line-height: 1.15; color: var(--loam-ink); margin: 0 0 16px; }
+.sheetNote { font-family: var(--loam-font-mono); font-size: 13px; line-height: 1.5; color: var(--loam-muted); margin: 0 0 8px; }
 .choices { display: flex; flex-direction: column; gap: 8px; }
 .choice {
   --mc: var(--ink3);
-  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 0 14px;
-  border-radius: 12px; background: var(--paper); border: 1px solid rgba(0,0,0,.12);
-  font-family: var(--font-mono); font-size: 14px; font-weight: 300; color: var(--ink); text-align: left;
-  cursor: pointer; -webkit-tap-highlight-color: transparent;
+  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 0 0; background: var(--loam-paper);
+  font-family: var(--loam-font-mono); font-size: 14px; color: var(--loam-ink); text-align: left;
+  cursor: pointer; -webkit-tap-highlight-color: transparent; border: none; border-bottom: var(--loam-rule-row);
 }
-.choice[aria-pressed="true"] { border-color: var(--ink); }
+.choice[aria-pressed="true"] { border-color: var(--loam-ink); }
 .choice:disabled { opacity: .45; cursor: default; }
 .choiceName { flex: 1; }
-.choiceHint { font-size: var(--type-floor); color: var(--ink3); }
+.choiceHint { font-size: var(--loam-label); color: var(--loam-muted); }
 .sheetCancel {
   display: block; width: 100%; margin-top: 14px; min-height: 46px; border-radius: 999px;
   background: none; border: 1px solid rgba(0,0,0,.16);
-  font-family: var(--font-mono); font-size: 13px; color: var(--ink2); cursor: pointer;
+  font-family: var(--loam-font-mono); font-size: 13px; color: var(--loam-ink-2); cursor: pointer;
 }
 
 /* custom needs */
 .createPill {
-  font-family: var(--font-mono); font-weight: 300; font-size: 13.5px; color: var(--ink3);
+  font-family: var(--loam-font-mono); font-size: 13.5px; color: var(--loam-muted);
   padding: 0 16px; min-height: 40px; border-radius: 999px; background: none;
   border: 1px dashed rgba(0,0,0,.28); cursor: pointer; -webkit-tap-highlight-color: transparent;
 }
-.createPill:hover { color: var(--ink); border-color: rgba(0,0,0,.5); }
+.createPill:hover { color: var(--loam-ink); border-color: rgba(0,0,0,.5); }
 .ownActions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
 .ownBtn {
   flex: 1; min-height: 44px; border-radius: 999px; background: none; border: 1px solid rgba(0,0,0,.16);
-  font-family: var(--font-mono); font-size: 13px; color: var(--ink2); cursor: pointer;
+  font-family: var(--loam-font-mono); font-size: 13px; color: var(--loam-ink-2); cursor: pointer;
 }
-.ownBtnArmed { border-color: var(--ink); color: var(--ink); }
-.ownHint { flex-basis: 100%; margin: 0; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); }
+.ownBtnArmed { border-color: var(--loam-ink); color: var(--loam-ink); }
+.ownHint { flex-basis: 100%; margin: 0; font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-muted); }
 .nameInput {
-  display: block; width: 100%; box-sizing: border-box; min-height: 48px; padding: 0 14px;
-  border-radius: 12px; background: var(--paper); border: 1px solid rgba(0,0,0,.16);
-  font-family: var(--font-mono); font-size: 16px; font-weight: 300; color: var(--ink);
+  display: block; width: 100%; box-sizing: border-box; min-height: 48px; padding: 0 0; background: var(--loam-paper);
+  font-family: var(--loam-font-mono); font-size: 16px; color: var(--loam-ink); border: none; border-bottom: var(--loam-rule-row);
 }
-.nameInput:focus { outline: none; border-color: var(--ink); }
-.nameError { min-height: 20px; margin: 8px 2px 8px; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink2); }
+.nameInput:focus { outline: none; border-color: var(--loam-ink); }
+.nameError { min-height: 20px; margin: 8px 2px 8px; font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-ink-2); }
 .primaryBtn {
   display: block; width: 100%; min-height: 48px; border-radius: 999px; border: none;
-  background: var(--ink); color: var(--card); font-family: var(--font-mono); font-size: 14px; cursor: pointer;
+  background: var(--loam-ink); color: var(--card); font-family: var(--loam-font-mono); font-size: 14px; cursor: pointer;
 }
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 

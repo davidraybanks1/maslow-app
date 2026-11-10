@@ -4,15 +4,17 @@ import styles from './Flow.module.css'
 // button. `topRight` replaces the counter with other small content. `bottomLeft`
 // sits in the button row opposite the button (the welcome screen's sign-in link). `cta` is { label, arrow, hidden, disabled, onClick }; leave it off for
 // a screen that has no button.
-export default function ScreenLayout({ counter, topRight, bottomLeft, cta, children }) {
+export default function ScreenLayout({ counter, topRight, bottomLeft, cta, bare, children }) {
   return (
     <div className={styles.layout}>
-      <div className={styles.top}>
-        <div className={styles.topRow}>
-          {counter ? <span className={styles.counter}>{counter}</span> : null}
-          {topRight || null}
+      {!bare && (
+        <div className={styles.top}>
+          <div className={styles.topRow}>
+            {counter ? <span className={styles.counter}>{counter}</span> : null}
+            {topRight || null}
+          </div>
         </div>
-      </div>
+      )}
       <div className={styles.body}>{children}</div>
       {cta && (
         <div className={styles.ctaRow}>

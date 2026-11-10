@@ -1,19 +1,7 @@
 /* Onboarding flow. Styles are lifted from the approved prototype; the tokens
    (paper, ink, mode colors) are the app's own from index.css. */
 
-/* The index.css Newsreader face is declared for weights 300-400 only; the
-   file itself is a 200-800 variable font, so the flow gets its own family
-   name that unlocks the heavier weights without touching the rest of the app. */
-@font-face {
-  font-family: 'NewsreaderFlow';
-  font-style: normal;
-  font-weight: 200 800;
-  font-display: swap;
-  src: url('/fonts/newsreader.woff2') format('woff2');
-}
-
 .root {
-  --font-serif: 'NewsreaderFlow', 'Newsreader', Georgia, serif;
   /* stronger variants for small dots/outlines drawn directly on paper: the
      pastel appreciation/nourishment fills read fine as chip backgrounds but
      fall under ~1.5:1 as bare dots */
@@ -24,29 +12,27 @@
   max-width: 480px;
   margin: 0 auto;
   overflow: hidden;
-  background: var(--paper);
-  color: var(--ink);
+  background: var(--loam-paper);
+  color: var(--loam-ink);
 }
 
 /* Progress: a thin bar under the status area, outside the screen so it stays
    put (and animates) while screens slide. */
 .progress {
   position: absolute;
-  top: calc(var(--safe-top) + 16px);
-  left: 22px;
-  right: 22px;
+  top: calc(var(--safe-top) + 46px);
+  left: 24px;
+  right: 24px;
   height: 3px;
-  border-radius: 2px;
-  background: rgba(0,0,0,.08);
-  overflow: hidden;
+  background: none;
+  overflow: visible;
   z-index: 3;
   pointer-events: none;
 }
 .progressFill {
-  height: 100%;
+  height: 3px;
   width: 0;
-  border-radius: 2px;
-  background: var(--ink);
+  background: var(--loam-ink);
   transition: width .6s cubic-bezier(.2,.7,.2,1);
 }
 
@@ -64,13 +50,13 @@
 
 /* Layout: top row (counter), scrolling body, pinned button row. */
 .layout { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-.top { flex-shrink: 0; padding: calc(var(--safe-top) + 19px) 22px 0; }
+.top { flex-shrink: 0; padding: calc(var(--safe-top) + 54px) 24px 0; }
 .body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 0 22px;
+  padding: 0 24px;
   display: flex;
   flex-direction: column;
 }
@@ -78,8 +64,6 @@
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  padding: 16px 22px calc(var(--safe-bottom) + 24px);
 }
 
 .srOnly {
@@ -123,13 +107,14 @@
     display: flex;
     align-items: baseline;
     justify-content: flex-end;
-    margin: 14px 0 4px;
+    margin: 10px 0 4px;
   }
   .counter {
-    font-family: var(--font-mono);
+    font-family: var(--loam-font-mono);
     font-size: 12px;
-    color: var(--ink4);
+    color: var(--loam-muted);
     font-variant-numeric: tabular-nums;
+    letter-spacing: 0.05em;
   }
 
   /*  The card / rank header stage  */
@@ -143,8 +128,8 @@
      screen -  card, all 5 category rows, and the button -  fits on one
      screen without the list needing to scroll for most people. */
   .cardStage.sortStage {
-    height: 150px;
-    margin-bottom: 18px;
+    height: 104px;
+    margin-bottom: 8px;
   }
   /* Opening hook only: let the stage grow and center its text in whatever
      vertical space is left, instead of sitting in the fixed 168px box near
@@ -174,26 +159,26 @@
   .hypBottom { align-items: center; padding-bottom: 8px; }
   .hypBloom { width: 100%; max-width: 330px; }
   .hypHead {
-    font-family: var(--font-serif);
-    font-weight: 300;
-    font-size: 24px;
+    font-family: var(--loam-font-display);
+    font-size: 38px;
     letter-spacing: -0.01em;
-    line-height: 1.25;
-    color: var(--ink);
+    line-height: 1.03;
+    color: var(--loam-ink);
+    padding-bottom: 14px;
+    border-bottom: var(--loam-rule-close);
   }
   .hypItem {
     display: flex;
-    gap: 10px;
-    margin-top: 18px;
-    max-width: 320px;
-    font-family: var(--font-serif);
-    font-weight: 300;
+    gap: 14px;
+    margin-top: 16px;
+    max-width: none;
+    font-family: var(--loam-font-reading);
     font-size: 19px;
-    line-height: 1.5;
-    color: var(--ink);
+    line-height: 1.3;
+    color: var(--loam-ink-2);
   }
-  .hypItem .hookListNum { flex-shrink: 0; margin-top: 5px; color: var(--ink); font-weight: 300; }
-  .hypItem .hypPartB { display: block; font-weight: 600; }
+  .hypItem .hookListNum { flex-shrink: 0; margin-top: -2px; color: var(--loam-gold-text); font-family: var(--loam-font-display); font-style: italic; font-size: var(--loam-chapter); }
+  .hypItem .hypPartB { display: block; font-weight: 400; font-style: italic; color: var(--loam-ink); margin-top: 6px; }
   /* Typewriter caret: zero-width so it never shifts layout, drawn with ::after. */
   /* Body copy on the reading screens: one sentence per line, with a little
      extra air between them. */
@@ -213,19 +198,20 @@
   .hypBottom .hypBloom { max-width: 290px; justify-self: center; }
   .hypBottom .hypDraft { align-self: start; margin-top: 40px; }
   .hypDraft {
-    width: 100%; max-width: 330px; box-sizing: border-box;
-    border: 0.5px solid var(--hairline); border-radius: 12px; background: var(--card);
-    padding: 14px 16px 18px; min-height: 96px;
-    box-shadow: 0 6px 16px rgba(0,0,0,.05);
+    width: 100%; max-width: 330px; box-sizing: border-box; background: none;
+    padding: 14px 0 18px; min-height: 96px;
     opacity: 0; transform: translateY(14px);
     transition: opacity 620ms cubic-bezier(.2,.7,.2,1), transform 620ms cubic-bezier(.2,.7,.2,1);
+    border: none;
+    border-bottom: var(--loam-rule-row);
+    border-top: var(--loam-rule-open);
   }
   .hypDraftOn { opacity: 1; transform: translateY(0); }
-  .hypDraftLabel { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; font-family: var(--font-mono); font-size: 12px; color: var(--ink2); }
+  .hypDraftLabel { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; font-family: var(--loam-font-mono); font-size: 12px; color: var(--loam-ink-2); }
   .hypLines { display: flex; flex-direction: column; gap: 15px; padding-top: 4px; }
   .hypLine { display: flex; align-items: center; height: 8px; }
   .hypBar {
-    height: 8px; width: 0; margin-right: 0; border-radius: 4px; flex-shrink: 0; position: relative;
+    height: 8px; width: 0; margin-right: 0; flex-shrink: 0; position: relative;
     background: rgba(26,26,24,.2);
     transition: width var(--bw, 200ms) linear, margin-right var(--bw, 200ms) linear, background 500ms ease;
   }
@@ -233,7 +219,7 @@
   .hypSeg { position: relative; display: flex; align-items: center; }
   .hypSeg::after {
     content: ''; position: absolute; left: 0; top: 50%; height: 2px; margin-top: -1px; width: 0;
-    background: var(--survival); border-radius: 1px;
+    background: var(--survival);
     transition: width 750ms cubic-bezier(.4,0,.2,1);
   }
   .hypSegOn::after { width: calc(100% - 7px); }
@@ -245,7 +231,7 @@
   top: -3px;
   width: 1.5px;
   height: 14px;
-  background: var(--ink);
+  background: var(--loam-ink);
   animation: hypBlink 1s steps(1) infinite;
 }
 @keyframes hypBlink { 50% { opacity: 0; } }
@@ -260,9 +246,9 @@
   .hookListNum {
     flex-shrink: 0;
     margin-top: 3px;
-    font-family: var(--font-mono);
+    font-family: var(--loam-font-mono);
     font-size: 12px;
-    color: var(--ink3);
+    color: var(--loam-gold-text);
   }
   /* Concept-intro beats in the hook (e.g. "Needs") -  a bold label acting
      as the concept's name, then lighter prose explaining it. */
@@ -271,30 +257,30 @@
      now split into a small mono eyebrow and a real serif title, instead of
      one bolded serif line doing both jobs. */
   .conceptLabel {
-    font-family: var(--font-mono);
+    font-family: var(--loam-font-mono);
     font-size: 12px;
     letter-spacing: .1em;
     text-transform: uppercase;
-    color: var(--ink2);
+    color: var(--loam-muted);
   }
   .conceptTitle {
     margin-top: 8px;
-    font-family: var(--font-serif);
-    font-weight: 500;
-    font-size: 36px;
-    line-height: 1.1;
-    color: var(--ink);
+    font-family: var(--loam-font-display);
+    font-weight: 400;
+    font-size: 38px;
+    line-height: 1.03;
+    color: var(--loam-ink);
+    letter-spacing: -0.01em;
   }
   .hookBody {
     margin-top: 14px;
-    font-family: var(--font-serif);
-    font-weight: 300;
-    font-size: 17px;
-    line-height: 1.55;
+    font-family: var(--loam-font-reading);
+    font-size: 18px;
+    line-height: 1.3;
     /* Design pass: body copy promoted to full ink everywhere -  it's the
        core reading content, so it gets the highest-contrast text rather
        than the secondary grey. */
-    color: var(--ink);
+    color: var(--loam-ink-2);
   }
   /* The pivot line in the hook's long-read beat ("But, like, how?") - 
      bolded per review feedback so it reads as the turn from context into
@@ -303,25 +289,28 @@
   
   
   .hookBody.hookEmphasis {
-    font-weight: 600;
-    color: var(--ink);
+    font-weight: 400;
+    color: var(--loam-ink);
+    font-family: var(--loam-font-display);
+    font-size: 38px;
+    line-height: 1.03;
   }
   .needCard {
     position: absolute;
     inset: 0;
-    background: var(--card);
-    border: 0.5px solid var(--hairline);
-    border-radius: 16px;
+    background: none;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
-    gap: 6px;
-    padding: 14px;
-    box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 8px 24px rgba(0,0,0,.05);
+    gap: 4px;
+    padding: 14px 0;
     transition: transform .28s cubic-bezier(.2,.8,.2,1), opacity .28s, box-shadow .15s;
     user-select: none;
     z-index: 1;
+    border: none;
+    border-bottom: none;
+    border-top: var(--loam-rule-open);
   }
   .needCard.leaving { opacity: 0; transform: scale(.92) translateY(-6px); }
   /* Design pass: a couple of cards "peek" behind the current one while
@@ -330,53 +319,55 @@
   .needCardPeek {
     position: absolute;
     inset: 0;
-    background: var(--card);
-    border-radius: 16px;
+    background: none;
+    border: none;
+    border-bottom: var(--loam-rule-row);
+    display: none;
   }
   .needCardPeek.peek1 { transform: translateY(6px) scale(.96); opacity: .8; }
   .needCardPeek.peek2 { transform: translateY(12px) scale(.92); opacity: .5; }
   .needName {
-    font-family: var(--font-serif);
-    font-weight: 300;
-    font-size: 30px;
+    font-family: var(--loam-font-display);
+    font-size: 38px;
     letter-spacing: -0.01em;
   }
-  .needCard .needName { font-size: 26px; }
+  .needCard .needName { font-size: 38px; line-height: 1.03; }
   .tapHint {
-    font-family: var(--font-mono);
-    font-size: 12px;
+    font-family: var(--loam-font-reading);
+    font-size: var(--loam-body);
     /* Design pass: raised from ink4 to ink2 -  this is what actually helps
        someone decide where to sort the need, so it shouldn't be the
        faintest text on the card. */
-    color: var(--ink2);
-    letter-spacing: .02em;
+    color: var(--loam-ink-2);
+    letter-spacing: 0;
     line-height: 1.5;
-    max-width: 260px;
-    text-align: center;
+    max-width: none;
+    text-align: left;
+    font-style: italic;
   }
 
   /*  Sort screen header, sits above the card and persists across every
      need -  the rank/done screens that follow don't use it.  */
   .sortHead {
-    text-align: center;
-    margin-top: 18px;
-    margin-bottom: 22px;
+    text-align: left;
+    margin-top: 6px;
+    margin-bottom: 14px;
   }
   .sortHeadTitle {
-    font-family: var(--font-serif);
+    font-family: var(--loam-font-display);
     font-weight: 400;
-    font-size: 21px;
-    line-height: 1.2;
+    font-size: var(--loam-title);
+    line-height: 1.05;
     letter-spacing: -0.005em;
-    color: var(--ink);
+    color: var(--loam-ink);
     text-wrap: balance;
   }
   .sortHeadSub {
     margin-top: 8px;
-    font-family: var(--font-mono);
+    font-family: var(--loam-font-mono);
     font-size: 12px;
-    letter-spacing: .02em;
-    color: var(--ink3);
+    letter-spacing: 0.04em;
+    color: var(--loam-muted);
   }
 
   /*  Done state / rank header, same stage footprint as the card  */
@@ -394,7 +385,7 @@
     gap: 6px;
     text-align: left;
   }
-  .doneCard .needName { font-size: 24px; }
+  .doneCard .needName { font-size: var(--loam-title); line-height: 1.05; }
   /* Design pass: the vibration ring on the "how are you feeling?" check-in
      (screen 14) -  a small wobbling closed curve, calmer or more agitated
      depending on the picked tone. Sits above the heading, left-aligned like
@@ -403,27 +394,29 @@
   
   
   .rankSub {
-    font-family: var(--font-mono);
-    font-size: 12px;
-    color: var(--ink2);
-    letter-spacing: .02em;
+    font-family: var(--loam-font-reading);
+    font-size: var(--loam-body);
+    color: var(--loam-ink-2);
+    letter-spacing: 0;
     max-width: 340px;
-    line-height: 1.5;
+    line-height: 1.3;
   }
 
   /*  Zones (sort + done phases)  */
-  .zones { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+  .zones { display: flex; flex-direction: column; gap: 0; flex: 1; }
   .zone {
-    border-radius: 14px;
-    border: 0.5px solid var(--hairline);
-    background: var(--card);
-    padding: 12px 14px;
+    background: none;
+    padding: 11px 0;
     transition: opacity .2s, background .15s, border-color .15s;
     position: relative;
+    border: none;
+    border-bottom: var(--loam-rule-row);
+    min-height: 44px;
+    box-sizing: border-box;
   }
   .zone.enabled { cursor: pointer; }
-  .zone.enabled:hover { background: #FBFAF6; }
-  .zone.enabled:active { border-color: var(--ink); background: #FBFAF6; }
+  .zone.enabled:hover { background: var(--loam-track); }
+  .zone.enabled:active { background: var(--loam-track); }
   /* Design pass: a full/over-target bucket used to just fade out (opacity
      .55), which read as "broken" rather than "done." Now it tints instead
      of dimming, and the count text itself carries the state via a
@@ -432,140 +425,140 @@
   .zone.full,
 .zone.overTarget {
     opacity: 1;
-    background: rgba(255,255,255,.55);
+    background: none;
   }
   /* A bucket that can't take the current card (not allowed for this need, or
      live-capped and full) greys out: its label, count and reason dim, while any
      chips already placed stay at full strength so they can still be tapped back
      out. Declared after the full/over-target tint so it always wins. */
   .zone.disabled,
-  .zone.full { background: rgba(255,255,255,.55); cursor: default; }
+  .zone.full { background: none; cursor: default; }
   .zone.disabled > :not(.chips),
   .zone.full > :not(.chips) { opacity: .38; transition: opacity .2s; }
 
   .zoneHead {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 4px;
+    gap: 10px;
+    margin-bottom: 0;
   }
   .zoneSwatch {
-    width: 9px; height: 9px; border-radius: 50%;
+    width: 12px; height: 12px; border-radius: 50%;
     flex-shrink: 0;
-    box-shadow: 0 0 0 0.5px rgba(0,0,0,.15) inset;
+    box-sizing: border-box;
   }
   .zoneSwatch.unassigned {
     background: none;
-    border: 1.5px dashed var(--ink4);
-    box-shadow: none;
+    border: 1.5px solid var(--loam-leader);
   }
   .zoneLabel {
-    font-family: var(--font-serif);
-    font-weight: 300;
-    font-size: 17px;
-    color: var(--ink);
+    font-family: var(--loam-font-display);
+    font-size: var(--loam-index);
+    color: var(--loam-ink);
     flex: 1;
     min-width: 0;
+    line-height: 1.15;
   }
-  .zoneLabel.dimmed { color: var(--ink2); }
+  .zoneLabel.dimmed { color: var(--loam-ink-2); }
   .zoneCount {
-    font-family: var(--font-mono);
-    font-size: var(--type-floor);
-    color: var(--ink4);
+    font-family: var(--loam-font-mono);
+    font-size: var(--loam-label);
+    color: var(--loam-muted);
     font-variant-numeric: tabular-nums;
     flex-shrink: 0;
   }
-  .zoneCount.over { color: var(--ink); font-weight: 500; }
+  .zoneCount.over { color: var(--loam-ink); font-weight: 400; }
   .zoneWhy {
-    font-family: var(--font-mono);
-    font-size: var(--type-floor);
-    color: var(--ink3);
-    margin: 2px 0 0 17px;
+    font-family: var(--loam-font-mono);
+    font-size: var(--loam-label);
+    color: var(--loam-muted);
+    margin: 2px 0 0 22px;
   }
   .chips {
     display: flex;
     flex-wrap: wrap;
-    gap: 5px;
-    margin: 8px 0 0 17px;
+    gap: 0 14px;
+    margin: 6px 0 0 22px;
   }
   .chip {
-    font-family: var(--font-mono);
-    font-size: var(--type-floor);
+    font-family: var(--loam-font-mono);
+    font-size: var(--loam-label);
     letter-spacing: .02em;
-    border-radius: 20px;
-    padding: 4px 9px 4px 10px;
+    padding: 3px 0;
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
     cursor: pointer;
     border: none;
+    background: none;
+    text-decoration: underline;
+    text-underline-offset: 3px;
   }
   .chip:hover .chipX { opacity: 1; }
-  .chipX { opacity: .55; font-size: var(--type-floor); }
+  .chipX { opacity: .55; font-size: var(--loam-label); }
 
-  .chip.exploration { background: var(--exploration);  color: #fff; }
-  .chip.appreciation { background: var(--appreciation); color: var(--ink); }
-  .chip.nourishment { background: var(--nourishment);  color: var(--ink); }
-  .chip.survival { background: var(--survival);     color: #fff; }
-  .chip.unassigned { background: var(--paper); color: var(--ink3); border: 0.5px solid var(--hairline); }
+  .chip.exploration { background: none;  color: var(--loam-exploration-text); }
+  .chip.appreciation { background: none; color: var(--loam-appreciation-text); }
+  .chip.nourishment { background: none;  color: var(--loam-nourishment-text); }
+  .chip.survival { background: none;     color: var(--loam-survival-text); }
+  .chip.unassigned { background: none; color: var(--loam-muted); border: none; }
 
   /*  Sort rows are the colour itself: each bucket fills with its mode colour
      (--zc) and takes the text colour that reads on it (--zon). Placed chips sit
      on the fill as a tint of the text colour; once a bucket is full or can't
      take the card it pales and its chips go solid so they still read.  */
-  .zone_exploration  { --zc: var(--exploration);  --zon: #FFFDF9; }
-  .zone_appreciation { --zc: var(--appreciation); --zon: var(--ink); }
-  .zone_nourishment  { --zc: var(--nourishment);  --zon: var(--ink); }
-  .zone_survival     { --zc: var(--survival);     --zon: var(--ink); }
-  .zone.zoneColor { background: var(--zc); border-color: transparent; color: var(--zon); }
+  .zone_exploration  { --zc: var(--exploration);  --zon: var(--loam-ink); }
+  .zone_appreciation { --zc: var(--appreciation); --zon: var(--loam-ink); }
+  .zone_nourishment  { --zc: var(--nourishment);  --zon: var(--loam-ink); }
+  .zone_survival     { --zc: var(--survival);     --zon: var(--loam-ink); }
+  .zone.zoneColor { background: none; color: var(--zon); border-bottom: var(--loam-rule-row); }
   .zone.zoneColor .zoneLabel,
   .zone.zoneColor .zoneCount,
   .zone.zoneColor .zoneWhy { color: var(--zon); }
-  .zone.zoneColor .chips { margin-left: 0; }
-  .zone.zoneColor .zoneWhy { margin-left: 0; }
-  .zone.zoneColor .chip { background: color-mix(in srgb, var(--zon) 18%, transparent); color: var(--zon); }
-  .zone.enabled.zoneColor:hover { background: var(--zc); filter: brightness(1.05); }
-  .zone.enabled.zoneColor:active { background: var(--zc); border-color: var(--ink); }
+  .zone.zoneColor .chips { margin-left: 22px; }
+  .zone.zoneColor .zoneWhy { margin-left: 22px; color: var(--loam-muted); }
+  .zone.zoneColor .chip { background: none; color: var(--zon); }
+  .zone.enabled.zoneColor:hover { background: var(--loam-track); }
+  .zone.enabled.zoneColor:active { background: var(--loam-track); }
   .zone.disabled.zoneColor,
   .zone.full.zoneColor {
-    background: color-mix(in srgb, var(--zc) 28%, var(--paper));
-    color: var(--ink);
+    background: none;
+    color: var(--loam-ink);
   }
   .zone.disabled.zoneColor .zoneLabel,
   .zone.disabled.zoneColor .zoneCount,
   .zone.disabled.zoneColor .zoneWhy,
   .zone.full.zoneColor .zoneLabel,
-  .zone.full.zoneColor .zoneCount { color: var(--ink); }
+  .zone.full.zoneColor .zoneCount { color: var(--loam-ink); }
   .zone.disabled.zoneColor > :not(.chips),
   .zone.full.zoneColor > :not(.chips) { opacity: .62; }
   .zone.disabled.zoneColor .chip,
-  .zone.full.zoneColor .chip { background: var(--zc); color: var(--zon); }
+  .zone.full.zoneColor .chip { background: none; color: var(--loam-ink); }
 
   /*  Done screen recap (design pass addition)  */
-  .doneRecap { margin-top: 22px; display: flex; flex-direction: column; gap: 10px; }
-  .doneGroup { background: var(--card); border-radius: 14px; border: 1px solid rgba(0,0,0,.08); padding: 13px 16px 14px; }
+  .doneRecap { margin-top: 14px; display: flex; flex-direction: column; gap: 0; }
+  .doneGroup { background: none; padding: 10px 0; border: none; border-bottom: var(--loam-rule-row); }
   .doneGroupHead { display: flex; align-items: center; gap: 8px; }
   .doneGroupDot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
   .doneGroupLabel {
-    font-family: var(--font-mono);
-    font-size: var(--type-floor);
-    letter-spacing: .06em;
-    text-transform: uppercase;
-    color: var(--ink);
+    font-family: var(--loam-font-display);
+    font-size: var(--loam-index);
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--loam-ink);
     flex: 1;
   }
   .doneGroupCount {
-    font-family: var(--font-mono);
-    font-size: var(--type-floor);
-    color: var(--ink2);
+    font-family: var(--loam-font-mono);
+    font-size: var(--loam-label);
+    color: var(--loam-ink-2);
   }
-  .doneChips { margin: 8px 0 0 0; }
+  .doneChips { margin: 4px 0 0 16px; }
   .doneEmpty {
-    font-family: var(--font-serif);
+    font-family: var(--loam-font-display);
     font-style: italic;
-    font-weight: 300;
     font-size: 13px;
-    color: var(--ink2);
+    color: var(--loam-ink-2);
   }
 
   /*  Rank & cut list (rank phase)  */
@@ -574,27 +567,25 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    background: var(--card);
-    border: 0.5px solid var(--hairline);
-    border-left: 3px solid var(--ink4);
-    border-radius: 10px;
-    padding: 10px 12px;
-    margin-bottom: 8px;
-    font-family: var(--font-serif);
-    font-weight: 300;
+    background: none;
+    border-left: none;
+    padding: 12px 0;
+    margin-bottom: 0;
+    font-family: var(--loam-font-reading);
     font-size: 16px;
-    color: var(--ink);
+    color: var(--loam-ink);
+    border: none;
+    border-bottom: var(--loam-rule-row);
   }
   .rankRow.pinned { opacity: .78; }
   .rankName { flex: 1; min-width: 0; }
   .rankPinTag {
-    font-family: var(--font-mono);
-    font-size: var(--type-floor);
+    font-family: var(--loam-font-mono);
+    font-size: var(--loam-label);
     letter-spacing: .03em;
-    color: var(--ink3);
-    border: 0.5px solid var(--hairline);
-    border-radius: 20px;
-    padding: 2px 8px;
+    color: var(--loam-muted);
+    border: none;
+    padding: 0;
     flex-shrink: 0;
   }
   /* Design pass: the arrow button moves to bottom-right (thumb reach)
@@ -608,17 +599,18 @@
     display: flex;
     align-items: center;
     gap: 14px;
-    height: 60px;
-    padding: 0 16px;
-    background: var(--card);
-    border: 1.5px solid transparent;
-    border-radius: 14px;
-    margin-bottom: 8px;
+    height: auto;
+    padding: 8px 0;
+    background: none;
+    margin-bottom: 0;
     cursor: pointer;
     text-align: left;
     transition: border-color .15s, box-shadow .15s;
+    border: none;
+    border-bottom: var(--loam-rule-row);
+    min-height: 52px;
+    width: 100%;
   }
-  .rankRow2.active { border-color: var(--ink); box-shadow: 0 6px 16px rgba(0,0,0,.08); }
   .rankRow2.atCap:not(.active) { opacity: .45; cursor: default; }
   .rankBadge {
     flex-shrink: 0;
@@ -627,46 +619,46 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: var(--font-mono);
+    font-family: var(--loam-font-mono);
     font-size: 12px;
     font-weight: 500;
-    color: var(--ink);
-    border: 1.5px solid rgba(0,0,0,.3);
+    color: var(--loam-ink);
+    border: 1.5px solid var(--loam-ink);
   }
   .rankRow2.active .rankBadge {
-    background: var(--ink);
-    color: var(--paper);
+    background: var(--loam-ink);
+    color: var(--loam-paper);
     border-color: transparent;
   }
   .rankRow2Name {
-    font-family: var(--font-serif);
-    font-weight: 300;
-    font-size: 19px;
-    color: var(--ink);
+    font-family: var(--loam-font-display);
+    font-size: var(--loam-chapter);
+    color: var(--loam-ink);
   }
-  .rankMoved { margin-left: auto; font-family: var(--font-mono); font-size: 12px; color: var(--ink4); }
+  .rankMoved { margin-left: auto; font-family: var(--loam-font-mono); font-size: 12px; color: var(--loam-muted); }
   .rankStatus {
-    font-family: var(--font-mono);
+    font-family: var(--loam-font-mono);
     font-size: 12px;
-    color: var(--ink2);
+    color: var(--loam-ink-2);
     text-align: right;
     margin-bottom: 10px;
   }
 
-  .ctaRow { margin-top: 20px; display: flex; justify-content: flex-end; }
+  .ctaRow { display: flex; justify-content: flex-end; padding: 16px 24px calc(var(--safe-bottom) + 24px); }
   .cta {
-    width: 100%;
-    background: var(--ink);
-    color: #fff;
-    border: 1.5px solid transparent;
-    border-radius: 12px;
-    padding: 14px;
-    font-family: var(--font-mono);
-    font-size: 13px;
-    letter-spacing: .06em;
-    text-transform: uppercase;
+    width: auto;
+    background: var(--loam-ink);
+    color: var(--loam-paper);
+    padding: 12px 26px;
+    font-family: var(--loam-font-mono);
+    font-size: var(--loam-label);
+    letter-spacing: 0.04em;
+    text-transform: none;
     cursor: pointer;
     transition: opacity .25s ease, background .15s, color .15s, border-color .15s;
+    border: 1.5px solid var(--loam-ink);
+    border-bottom: var(--loam-rule-row);
+    border-radius: var(--loam-radius-pill);
   }
   /* Design pass: disabled is an outline, not a grey fill -  a filled-but-
      faded button reads as "loading," an outline reads as "not yet." */
@@ -674,14 +666,14 @@
     cursor: not-allowed;
     opacity: 1;
     background: transparent;
-    color: rgba(0,0,0,.4);
-    border-color: rgba(0,0,0,.2);
+    color: var(--loam-muted);
+    border-color: var(--loam-rule);
   }
   /* A quieter continue, for beats in the opening hook that don't need a
      full-width command -  just an acknowledgment to move on. */
   .cta.ctaArrow {
-    width: 56px;
-    height: 56px;
+    width: var(--loam-write-btn);
+    height: var(--loam-write-btn);
     border-radius: 50%;
     padding: 0;
     display: flex;
@@ -702,14 +694,6 @@
   /* the first screen: the Loam mark, centred a touch above the middle */
   /* The mark and name are centred on the whole screen, not on the gap between
      the sign-in row and the arrow, so they sit at the true middle. */
-  .cardStage.introStage.welcomeStage {
-    position: absolute;
-    inset: calc(var(--safe-top) * -1) 0 0;
-    height: auto;
-    margin: 0;
-    align-items: center;
-    pointer-events: none;
-  }
   /* Notes picker: header types out in the stage like the other reading screens,
      the picker itself sits beneath it. */
   .cardStage.introStage.notesStage { flex: 0 0 auto; justify-content: flex-start; padding-top: 24px; padding-bottom: 22px; }
@@ -753,47 +737,51 @@
   }
   .noteCarousel::-webkit-scrollbar { display: none; }
   .deckCard {
-    flex: 0 0 316px; scroll-snap-align: start; position: relative; box-sizing: border-box;
-    height: 190px; padding: 56px 18px 18px 20px; overflow: hidden; cursor: pointer;
-    background: var(--card); border: 0.5px solid rgba(0,0,0,.07); border-radius: 20px;
-    box-shadow: 0 2px 16px rgba(0,0,0,.08), inset 0 0 0 0 var(--ink);
+    flex: 0 0 300px; scroll-snap-align: start; position: relative; box-sizing: border-box;
+    height: auto; padding: 40px 0 12px; overflow: hidden; cursor: pointer;
+    background: none;
     transition: box-shadow .15s ease;
     -webkit-tap-highlight-color: transparent;
+    border: none;
+    border-bottom: var(--loam-rule-row);
+    min-height: 168px;
+    border-top: var(--loam-rule-open);
   }
-  .deckCard.picked { box-shadow: 0 2px 16px rgba(0,0,0,.08), inset 0 0 0 1.5px var(--ink); }
   
   .deckText {
-    font-family: var(--font-serif); font-size: 20px; font-weight: 300; line-height: 1.32;
-    letter-spacing: -0.01em; text-align: left; color: var(--ink);
+    font-family: var(--loam-font-reading); font-size: var(--loam-index); line-height: 1.22;
+    letter-spacing: -0.01em; text-align: left; color: var(--loam-ink); font-style: italic;
   }
-  .deckText[data-len="mid"] { font-size: 17.5px; line-height: 1.36; }
-  .deckText[data-len="long"] { font-size: 15.5px; line-height: 1.40; }
+  .deckText[data-len="mid"] { font-size: 18px; line-height: 1.25; }
+  .deckText[data-len="long"] { font-size: 16.5px; line-height: 1.28; }
   .deckPick {
-    position: absolute; top: 16px; right: 16px;
-    font-family: var(--font-mono); font-size: 12px; color: rgba(0,0,0,.60);
-    background: transparent; border: 1px solid rgba(0,0,0,.22); border-radius: 999px;
-    padding: 3.5px 11px; cursor: pointer; transition: background .12s, color .12s, border-color .12s;
+    position: absolute; top: 10px; right: 0;
+    font-family: var(--loam-font-mono); font-size: 12px; color: var(--loam-muted);
+    background: transparent; border: none;
+    padding: 2px 0; cursor: pointer; transition: background .12s, color .12s, border-color .12s;
   }
-  .deckCard.picked .deckPick { background: var(--ink); border-color: var(--ink); color: #F2F0E8; }
+  .deckCard.picked .deckPick { background: none; border-color: var(--loam-ink); color: var(--loam-ink); text-decoration: underline; text-underline-offset: 3px; }
   .deckMeta {
     display: flex; align-items: center; justify-content: space-between;
-    margin-top: -6px; font-family: var(--font-mono); font-size: 12px; color: var(--ink3); letter-spacing: .04em;
+    margin-top: 0; font-family: var(--loam-font-mono); font-size: 12px; color: var(--loam-muted); letter-spacing: .04em;
   }
   .deckCtrls { display: flex; align-items: center; gap: 6px; }
   .deckArrow {
-    font-family: var(--font-mono); font-size: 16px; line-height: 1; color: var(--ink2);
-    background: none; border: none; padding: 4px 8px; cursor: pointer;
+    font-family: var(--loam-font-mono); font-size: 16px; line-height: 1; color: var(--loam-ink);
+    background: none; border: none; padding: 4px 8px; cursor: pointer; min-width: 36px; min-height: 36px;
   }
   .deckArrow:disabled { opacity: .3; cursor: default; }
 
   .notesSectionLabel {
-    font-family: var(--font-mono);
+    font-family: var(--loam-font-mono);
     font-size: 12px;
     font-weight: 400;
     text-transform: uppercase;
     letter-spacing: .1em;
-    color: var(--ink2);
+    color: var(--loam-ink);
     margin: 0 0 10px 0;
+    border-bottom: var(--loam-rule-close);
+    padding-bottom: 6px;
   }
   .notesSectionLabelSecond { margin-top: 22px; }
   .noteInputRow {
@@ -803,33 +791,34 @@
   }
   .noteInput {
     flex: 1;
-    border: 1px solid rgba(0,0,0,.14);
-    border-radius: 14px;
-    background: var(--card);
-    padding: 14px 16px;
+    background: none;
+    padding: 11px 0;
     min-width: 0;
-    font-family: var(--font-serif);
-    font-weight: 300;
-    font-size: 16px;
-    color: var(--ink);
+    font-family: var(--loam-font-reading);
+    font-size: 17px;
+    color: var(--loam-ink);
+    border: none;
+    border-bottom: var(--loam-rule-row);
   }
-  .noteInput::placeholder { color: var(--ink4); }
+  .noteInput::placeholder { color: var(--loam-muted); }
   .noteAddBtn {
-    font-family: var(--font-mono);
+    font-family: var(--loam-font-mono);
     font-size: 12px;
     letter-spacing: .02em;
-    color: var(--ink);
-    background: var(--card);
-    border: 1px solid rgba(0,0,0,.14);
-    border-radius: 14px;
-    padding: 0 18px;
+    color: var(--loam-ink);
+    background: none;
+    padding: 0;
     cursor: pointer;
+    border: none;
+    border-bottom: var(--loam-rule-row);
+    text-decoration: underline;
+    text-underline-offset: 3px;
   }
   .noteAddBtn:disabled { opacity: .35; cursor: default; }
   .ownNotesList {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 0;
     margin-bottom: 4px;
   }
   .ownNoteChip {
@@ -837,15 +826,14 @@
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    border: 1px solid rgba(0,0,0,.14);
-    background: var(--card);
-    border-radius: 14px;
-    padding: 12px 14px 12px 16px;
-    font-family: var(--font-serif);
-    font-weight: 300;
-    font-size: 16px;
+    background: none;
+    padding: 10px 0;
+    font-family: var(--loam-font-reading);
+    font-size: var(--loam-body);
     line-height: 1.4;
-    color: var(--ink);
+    color: var(--loam-ink);
+    border: none;
+    border-bottom: var(--loam-rule-row);
   }
   .ownNoteRemove {
     flex-shrink: 0;
@@ -853,12 +841,12 @@
     border-radius: 50%;
     border: none;
     background: none;
-    color: var(--ink4);
+    color: var(--loam-ink);
     font-size: 14px;
     line-height: 1;
     cursor: pointer;
   }
-  .ownNoteRemove:hover { color: var(--ink); }
+  .ownNoteRemove:hover { color: var(--loam-ink); }
 
   
 
@@ -868,13 +856,11 @@
   .glimpseFrame {
     margin-top: 10px;
     height: 430px;
-    border-radius: 18px;
     overflow-y: auto;
     overflow-x: hidden;
     scrollbar-width: none;
-    border: 1px solid rgba(0,0,0,.10);
-    box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 10px 28px rgba(0,0,0,.08);
     background: #EFE8DC;
+    border: 1px solid var(--loam-rule);
   }
   .glimpseFrame::-webkit-scrollbar { display: none; }
   .glimpseStack { display: block; }
@@ -889,15 +875,15 @@
     background: linear-gradient(to bottom, rgba(239,232,220,0), rgba(239,232,220,.92));
   }
   .glimpseCaption {
-    margin-top: 18px; font-family: var(--font-mono); font-size: var(--type-floor);
-    letter-spacing: .06em; color: var(--ink3);
+    margin-top: 18px; font-family: var(--loam-font-mono); font-size: var(--loam-label);
+    letter-spacing: .06em; color: var(--loam-muted);
   }
 
   @media (prefers-reduced-motion: reduce) {
     .needCard, .zone { transition: none !important; }
 }
 
-.howLead { margin-top: 0; font-size: 24px; }
+.howLead { margin-top: 0; font-size: 38px; }
 
 /* Recap cards arrive one after another. */
 .arrive { animation: arriveIn 450ms cubic-bezier(.2,.7,.2,1) backwards; animation-delay: calc(200ms + var(--i, 0) * 220ms); }
@@ -905,10 +891,10 @@
 
 /* Returning users: a quiet way out on the very first screen. */
 .signInLink {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
   letter-spacing: .04em;
-  color: var(--ink3);
+  color: var(--loam-ink);
   background: none;
   border: none;
   padding: 4px 0 4px 8px;
@@ -916,55 +902,154 @@
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-.signInLink:hover { color: var(--ink); }
+.signInLink:hover { color: var(--loam-ink); }
 /* in the button row, opposite the arrow */
 .signInBottom { padding: 12px 0; }
 .ctaRow .ctaArrow { margin-left: auto; }
 
   /* ── First-practice pick ── */
   .pickStage { height: auto; flex-shrink: 1; }
-  .pickList { display: flex; flex-direction: column; gap: 10px; margin-top: 22px; padding-bottom: 8px; }
+  .pickList { display: flex; flex-direction: column; gap: 0; margin-top: 14px; padding-bottom: 8px; }
   .pick {
     display: flex; align-items: center; gap: 14px;
     width: 100%; text-align: left;
-    background: var(--card); border: 1px solid rgba(0,0,0,.08); border-radius: 14px;
-    padding: 12px 16px; cursor: pointer; color: var(--ink);
+    background: none;
+    padding: 10px 0; cursor: pointer; color: var(--loam-ink);
     -webkit-tap-highlight-color: transparent;
     transition: border-color .15s, background .15s;
+    border: none;
+    border-bottom: var(--loam-rule-row);
   }
-  .pick:active { background: #FBFAF6; }
-  .pickOn { border-color: var(--ink); }
-  .pickIcon { flex: none; color: var(--ink); }
+  .pick:active { background: var(--loam-track); }
+  .pickIcon { flex: none; color: var(--loam-ink); }
   .pickText { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-  .pickLabel { font-family: var(--font-serif); font-weight: 300; font-size: 19px; line-height: 1.2; }
-  .pickMeta { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); letter-spacing: .02em; }
-  .pickRadio { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--border2); background: transparent; transition: background .15s, border-color .15s; }
+  .pickLabel { font-family: var(--loam-font-display); font-size: var(--loam-index); line-height: 1.2; }
+  .pickMeta { font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-muted); letter-spacing: .02em; }
+  .pickRadio { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--loam-ink); background: transparent; transition: background .15s, border-color .15s; }
 
 /* ── Shorter phones (an iPhone 15/16 is 852pt tall) ─────────────────────────
    Nothing should hide below the fold, so the chrome around each screen and the
    gaps inside the busier ones (sort, recap, practices, notes) tighten up. */
 @media (max-height: 880px) {
-  .top { padding-top: calc(var(--safe-top) + 12px); }
+  .top { padding-top: calc(var(--safe-top) + 54px); }
   .topRow { margin: 8px 0 0; }
-  .ctaRow { padding: 8px 22px calc(var(--safe-bottom) + 8px); }
+  .ctaRow { padding: 8px 24px calc(var(--safe-bottom) + 8px); }
 
   /* sort */
   .sortHead { margin-top: 6px; margin-bottom: 12px; }
-  .cardStage.sortStage { height: 136px; margin-bottom: 12px; }
-  .zones { gap: 8px; }
-  .zone { padding: 10px 14px; }
+  .cardStage.sortStage { height: 96px; margin-bottom: 6px; }
+  .zones { gap: 0; }
+  .zone { padding: 8px 0; }
 
   /* recap */
-  .doneRecap { margin-top: 14px; gap: 8px; }
-  .doneGroup { padding: 10px 16px 11px; }
+  .doneRecap { margin-top: 14px; gap: 0; }
+  .doneGroup { padding: 8px 0; }
 
   /* practices */
-  .pickList { gap: 8px; margin-top: 14px; padding-bottom: 4px; }
-  .pick { padding: 8px 16px; }
+  .pickList { gap: 0; margin-top: 14px; padding-bottom: 4px; }
+  .pick { padding: 8px 0; }
 
   /* notes to self */
   .cardStage.introStage.notesStage { padding-top: 8px; padding-bottom: 10px; }
-  .deckCard { height: 164px; padding-top: 48px; }
+  .deckCard { min-height: 150px; padding-top: 36px; }
   .notesSectionLabelSecond { margin-top: 12px; }
-  .noteInput { padding: 11px 16px; }
+  .noteInput { padding: 9px 0; }
+}
+.progressDots {
+  position: absolute;
+  top: 0.5px;
+  right: 0;
+  height: 2px;
+  border-top: 2px dotted var(--loam-leader);
+  transition: left .6s cubic-bezier(.2,.7,.2,1);
+}
+.partHead {
+  position: absolute;
+  top: calc(var(--safe-top) + 14px);
+  left: 24px;
+  right: 24px;
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: var(--loam-rule-close);
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  letter-spacing: 0.1em;
+  color: var(--loam-ink);
+  z-index: 3;
+  pointer-events: none;
+}
+.ctaRow .cta {
+  margin-left: auto;
+}
+.zone.zoneColor .zoneHead::before {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--zc);
+  flex-shrink: 0;
+}
+.rankRow2.active .rankRow2Name {
+  font-style: italic;
+}
+.deckCard.picked {
+  border-bottom: 1.5px solid var(--loam-gold);
+}
+.pickOn .pickRadio {
+  background: var(--loam-gold);
+  border-color: var(--loam-gold);
+}
+.welcome {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding: calc(var(--safe-top) + 14px) 0 0;
+}
+.welcomeHead {
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: var(--loam-rule-close);
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  letter-spacing: 0.1em;
+}
+.welcomeLine {
+  margin: 34px 0 0;
+  font-weight: 400;
+  font-family: var(--loam-font-display);
+  font-style: italic;
+  font-size: clamp(30px, 9.4vw, 40px);
+  line-height: 1.08;
+  color: var(--loam-ink);
+}
+.welcomeSub {
+  margin: 18px 0 0;
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  letter-spacing: 0.1em;
+  line-height: 1.6;
+  color: var(--loam-muted);
+}
+.welcomeFoot {
+  margin-top: auto;
+  position: relative;
+}
+.welcomeStones {
+  width: 42%;
+  margin-left: auto;
+  margin-right: 3%;
+  margin-bottom: -10px;
+}
+.welcomeWord {
+  font-family: var(--loam-font-wordmark);
+  font-weight: 800;
+  font-size: clamp(96px, 30vw, 134px);
+  line-height: 0.8;
+  letter-spacing: -0.078em;
+  color: var(--loam-ink);
+  padding-bottom: 4px;
+  border-bottom: var(--loam-rule-close);
 }

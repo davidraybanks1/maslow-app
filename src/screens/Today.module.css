@@ -1585,7 +1585,6 @@
   flex: 0 0 auto;
   width: 20px; height: 20px; border-radius: 50%;
   border: none; background: var(--ink);
-  box-shadow: 0 0 0 0.5px rgba(0,0,0,.14);
   font-family: var(--serif, 'Newsreader', Georgia, serif); font-style: italic; font-weight: 500; font-size: 13px;
   color: #fff; cursor: pointer; line-height: 1;
   display: grid; place-items: center; padding: 0;

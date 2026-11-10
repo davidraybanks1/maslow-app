@@ -13,12 +13,13 @@ import { SYMBOL } from './loamMarkGeometry'
 
 const [sx, sy, sw, sh] = SYMBOL.viewBox
 
-export default function LoamSplash() {
+// bare: the symbol alone, sized by its parent. skip: jump to the finished pile.
+export default function LoamSplash({ bare, skip }) {
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '') || 'ls'
   const n = SYMBOL.pieces.length
 
   return (
-    <div className={styles.stage}>
+    <div className={`${styles.stage}${bare ? ` ${styles.stageBare}` : ''}${skip ? ` ${styles.stageSkip}` : ''}`}>
       <svg
         className={styles.symbol}
         viewBox={`${sx} ${sy} ${sw} ${sh}`}
@@ -56,7 +57,7 @@ export default function LoamSplash() {
         ))}
       </svg>
 
-      <p className={styles.welcome}>Loam</p>
+      {!bare && <p className={styles.welcome}>Loam</p>}
     </div>
   )
 }

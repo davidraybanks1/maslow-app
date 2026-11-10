@@ -1,7 +1,7 @@
 /* Tags: same lean shape as Practices and Needs. */
 
 .overlay {
-  position: fixed; inset: 0; z-index: 200; background: var(--paper);
+  position: fixed; inset: 0; z-index: 200; background: var(--loam-paper);
   display: flex; flex-direction: column; padding-top: var(--safe-top);
   animation: slideUp var(--motion-overlay-in) ease-out;
 }
@@ -13,13 +13,13 @@
 
 .header { display: flex; align-items: center; justify-content: space-between; padding: 20px 16px 0; flex-shrink: 0; }
 .headerStack { display: flex; flex-direction: column; gap: 6px; }
-.title { font-family: var(--font-serif); font-size: 30px; font-weight: 300; line-height: 1.1; letter-spacing: -0.01em; color: var(--ink); margin: 0; }
+.title { font-family: var(--loam-font-display); font-size: 30px; line-height: 1.1; letter-spacing: -0.01em; color: var(--loam-ink); margin: 0; }
 .closeBtn {
-  width: 32px; height: 32px; border-radius: 16px;
-  border: 1px solid rgba(0,0,0,.22); background: transparent; color: rgba(0,0,0,.68);
-  font-family: var(--font-mono); font-size: 13px; line-height: 1; cursor: pointer;
+  width: 32px; height: 32px; background: transparent; color: var(--loam-muted);
+  font-family: var(--loam-font-mono); font-size: 13px; line-height: 1; cursor: pointer;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   -webkit-tap-highlight-color: transparent;
+  border: none;
 }
 .closeBtn:hover { background: var(--track); }
 
@@ -27,44 +27,44 @@
 .body::-webkit-scrollbar { display: none; }
 
 .section { padding-top: 26px; }
-.sectionHead { font-family: var(--font-serif); font-weight: 300; font-size: 22px; line-height: 1.15; color: var(--ink); margin: 0 0 14px; }
+.sectionHead { font-family: var(--loam-font-display); font-size: 22px; line-height: 1.15; color: var(--loam-ink); margin: 0 0 14px; }
 .sectionHeadRow { display: flex; align-items: baseline; justify-content: space-between; }
-.count { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); }
+.count { font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-muted); }
 
 .addRow { display: flex; gap: 8px; }
 .input {
-  flex: 1; min-width: 0; min-height: 48px; padding: 0 14px; border-radius: 12px; box-sizing: border-box;
-  background: var(--card); border: 1px solid rgba(0,0,0,.16);
-  font-family: var(--font-mono); font-size: 16px; font-weight: 300; color: var(--ink);
+  flex: 1; min-width: 0; min-height: 48px; padding: 0 0; box-sizing: border-box;
+  background: none;
+  font-family: var(--loam-font-mono); font-size: 16px; color: var(--loam-ink); border: none; border-bottom: var(--loam-rule-row);
 }
-.input:focus { outline: none; border-color: var(--ink); }
+.input:focus { outline: none; border-color: var(--loam-ink); }
 .inputError { border-color: var(--destructive); }
 .addBtn {
-  min-height: 48px; padding: 0 22px; border-radius: 999px; border: none; background: var(--ink); color: var(--card);
-  font-family: var(--font-mono); font-size: 14px; cursor: pointer;
+  min-height: 48px; padding: 0 22px; border-radius: 999px; border: none; background: var(--loam-ink); color: var(--card);
+  font-family: var(--loam-font-mono); font-size: 14px; cursor: pointer;
 }
 .addBtn:disabled { opacity: .35; cursor: default; }
-.error { min-height: 20px; margin: 8px 2px 0; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--destructive); }
+.error { min-height: 20px; margin: 8px 2px 0; font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--destructive); }
 
 .pills { display: flex; flex-wrap: wrap; gap: 8px; }
 .pill {
   display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; border-radius: 999px;
   background: var(--card); border: 1px solid rgba(0,0,0,.14); cursor: pointer;
-  font-family: var(--font-mono); font-size: 13.5px; font-weight: 300; color: var(--ink);
+  font-family: var(--loam-font-mono); font-size: 13.5px; color: var(--loam-ink);
   -webkit-tap-highlight-color: transparent;
 }
 .pill:hover { border-color: rgba(0,0,0,.4); }
-.pillCount { font-size: var(--type-floor); color: var(--ink3); }
-.empty { margin: 0; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink4); }
+.pillCount { font-size: var(--loam-label); color: var(--loam-muted); }
+.empty { margin: 0; font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-muted); }
 
 /* sheet */
-.sheetTitle { font-family: var(--font-serif); font-weight: 300; font-size: 22px; line-height: 1.15; color: var(--ink); margin: 0 0 6px; }
-.sheetNote { margin: 8px 0 0; font-family: var(--font-mono); font-size: 13px; line-height: 1.5; color: var(--ink3); }
+.sheetTitle { font-family: var(--loam-font-display); font-size: 22px; line-height: 1.15; color: var(--loam-ink); margin: 0 0 6px; }
+.sheetNote { margin: 8px 0 0; font-family: var(--loam-font-mono); font-size: 13px; line-height: 1.5; color: var(--loam-muted); }
 .ghostBtn {
   display: block; width: 100%; min-height: 46px; margin-top: 14px; border-radius: 999px; background: none;
-  border: 1px solid rgba(0,0,0,.16); font-family: var(--font-mono); font-size: 13px; color: var(--ink2); cursor: pointer;
+  border: 1px solid rgba(0,0,0,.16); font-family: var(--loam-font-mono); font-size: 13px; color: var(--loam-ink-2); cursor: pointer;
 }
-.ghostBtnArmed { border-color: var(--ink); color: var(--ink); }
+.ghostBtnArmed { border-color: var(--loam-ink); color: var(--loam-ink); }
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* the desktop hosts this in the side panel at the phone's layout */
