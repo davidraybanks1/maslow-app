@@ -249,7 +249,7 @@ export default function Debriefs({ state }) {
                               <div
                                 key={i}
                                 className={styles.stepDot}
-                                style={filled ? { background: '#1B3A2D' } : {}}
+                                style={filled ? { background: 'var(--loam-exploration)' } : {}}
                               />
                             )
                           })

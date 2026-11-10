@@ -160,6 +160,11 @@ button { touch-action: manipulation; }
   --loam-nourishment:        #F2AE1A;  --loam-nourishment-text:  #8a6000;
   --loam-survival:           #E8502E;  --loam-survival-text:     #b5401f;
 
+  /* debrief categories */
+  --loam-debrief-terracotta: #C47B3A;
+  --loam-debrief-slate:      #7A8FA6;
+  --loam-debrief-tan:        #9E7B5A;
+
   --loam-gold:      #F2AE1A;
   --loam-gold-text: #8a6000;
 

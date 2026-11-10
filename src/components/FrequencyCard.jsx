@@ -9,7 +9,7 @@ export const MOOD_PIP_COLOR = {
   bad:  'var(--survival)',
 }
 
-/* On the black band the paper pips go invisible — exploration is #1B3A2D, which
+/* On the black band the paper pips go invisible — the exploration color, which
    is 1.3:1 against #0A0807. These are the lit heads of the same ramps the
    streak glyphs use, so a good day reads as the same green in both places. */
 export const MOOD_PIP_COLOR_DARK = {

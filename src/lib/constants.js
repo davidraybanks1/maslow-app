@@ -2,10 +2,10 @@ export const CLAY    = '#3E2D26'
 export const ON_CLAY = '#F6EFE9'
 
 export const MODES = {
-  exploration:  { name: 'exploration',  color: '#1B3A2D', pip: '#1B3A2D' },
-  appreciation: { name: 'appreciation', color: '#ABBEA3', pip: '#ABBEA3' },
-  nourishment:  { name: 'nourishment',  color: '#F5B622', pip: '#F5B622' },
-  survival:     { name: 'survival',     color: '#F55127', pip: '#F55127' },
+  exploration:  { name: 'exploration',  color: 'var(--loam-exploration)', pip: 'var(--loam-exploration)' },
+  appreciation: { name: 'appreciation', color: 'var(--loam-appreciation)', pip: 'var(--loam-appreciation)' },
+  nourishment:  { name: 'nourishment',  color: 'var(--loam-nourishment)', pip: 'var(--loam-nourishment)' },
+  survival:     { name: 'survival',     color: 'var(--loam-survival)', pip: 'var(--loam-survival)' },
 }
 
 export const MODE_ORDER = ['exploration', 'appreciation', 'nourishment', 'survival']

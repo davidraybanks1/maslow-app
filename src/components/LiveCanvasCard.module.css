@@ -146,7 +146,7 @@
 
 .lcSurvivalX {
   font-size: var(--type-floor);
-  color: #D93B1C;
+  color: var(--loam-survival);
   flex-shrink: 0;
 }
 

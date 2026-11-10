@@ -3,15 +3,15 @@ export const DEBRIEF_TIMER_SECONDS = 420
 // Secondary palette — distinct from mode colors so anxiety types don't read as
 // "survival" (red) or "nourishment" (yellow) and peak types don't read as "appreciation" (sage).
 export const BUILTIN_NATURE_TYPES = [
-  { name: 'frenetic', bg: '#C47B3A', text: '#fff' },   // terracotta
-  { name: 'overwhelm', bg: '#7A8FA6', text: '#fff' },  // slate
-  { name: 'apathy',   bg: '#9E7B5A', text: '#fff' },   // warm tan
+  { name: 'frenetic', bg: 'var(--loam-debrief-terracotta)', text: '#fff' },   // terracotta
+  { name: 'overwhelm', bg: 'var(--loam-debrief-slate)', text: '#fff' },  // slate
+  { name: 'apathy',   bg: 'var(--loam-debrief-tan)', text: '#fff' },   // warm tan
 ]
 
 export const BUILTIN_PEAK_TYPES = [
-  { name: 'confident', bg: '#1B3A2D', text: '#fff' },  // exploration (intentional — peak is positive)
-  { name: 'creative',  bg: '#C47B3A', text: '#fff' },  // terracotta
-  { name: 'curious',   bg: '#7A8FA6', text: '#fff' },  // slate
+  { name: 'confident', bg: 'var(--loam-exploration)', text: '#fff' },  // exploration (intentional — peak is positive)
+  { name: 'creative',  bg: 'var(--loam-debrief-terracotta)', text: '#fff' },  // terracotta
+  { name: 'curious',   bg: 'var(--loam-debrief-slate)', text: '#fff' },  // slate
 ]
 
 export const BUILTIN_ENVIRONMENT_TYPES = ['work', 'home', 'social', 'personal']
@@ -35,7 +35,7 @@ export function natureTagStyle(name, customNatureTypes) {
 }
 
 const PEAK_TAG_TINTS = {
-  confident: { background: 'rgba(27,58,45,0.1)',    color: '#1B3A2D' },
+  confident: { background: 'rgba(27,58,45,0.1)',    color: 'var(--loam-exploration)' },
   creative:  { background: 'rgba(196,123,58,0.12)', color: '#7A3A0A' },
   curious:   { background: 'rgba(122,143,166,0.18)', color: '#3A5570' },
 }

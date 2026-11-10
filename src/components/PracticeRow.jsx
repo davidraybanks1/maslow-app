@@ -225,7 +225,7 @@ export default function PracticeRow({
         ref={hold.cardRef}
         data-hold-card=""
         className={`${styles.card} ${st.done ? styles.cardDone : ''} ${inert ? styles.cardInert : ''} ${holding ? styles.cardHolding : ''} ${split ? styles.cardSplit : ''}`}
-        style={{ '--mc': MODES[mode]?.color || '#ABBEA3' }}
+        style={{ '--mc': MODES[mode]?.color || 'var(--loam-appreciation)' }}
         data-undo={st.done ? '1' : undefined}
       >
         <span ref={hold.fillRef} className={styles.fill} aria-hidden="true" />

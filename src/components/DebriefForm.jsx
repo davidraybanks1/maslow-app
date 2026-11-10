@@ -73,7 +73,7 @@ export default function DebriefForm({ userId, debriefTypes, onSaved, onDirtyChan
 
   async function handleSave() {
     if (!nature || !environment) {
-      setMsg({ text: 'select a nature and environment to save.', color: '#D93B1C' })
+      setMsg({ text: 'select a nature and environment to save.', color: 'var(--loam-survival)' })
       setTimeout(() => setMsg(null), 3000)
       return
     }
@@ -86,10 +86,10 @@ export default function DebriefForm({ userId, debriefTypes, onSaved, onDirtyChan
       stepsCompleted,
     })
     if (error) {
-      setMsg({ text: 'save failed — please try again', color: '#D93B1C' })
+      setMsg({ text: 'save failed — please try again', color: 'var(--loam-survival)' })
       setTimeout(() => setMsg(null), 3000)
     } else {
-      setMsg({ text: 'saved ✓', color: '#1B3A2D' })
+      setMsg({ text: 'saved ✓', color: 'var(--loam-exploration)' })
       setTimeout(() => {
         setMsg(null)
         reset()
@@ -111,7 +111,7 @@ export default function DebriefForm({ userId, debriefTypes, onSaved, onDirtyChan
       <div className={styles.field}>
         <div className={styles.labelRow}>
           <span className={styles.fieldLabel}>NATURE OF ANXIETY</span>
-          <span className={styles.statusDot} style={{ background: nature ? '#1B3A2D' : '#D93B1C' }} />
+          <span className={styles.statusDot} style={{ background: nature ? 'var(--loam-exploration)' : 'var(--loam-survival)' }} />
         </div>
         <div className={styles.chipRow}>
           {natureOptions.map(name => (
@@ -130,7 +130,7 @@ export default function DebriefForm({ userId, debriefTypes, onSaved, onDirtyChan
       <div className={styles.field}>
         <div className={styles.labelRow}>
           <span className={styles.fieldLabel}>ENVIRONMENT</span>
-          <span className={styles.statusDot} style={{ background: environment ? '#1B3A2D' : '#D93B1C' }} />
+          <span className={styles.statusDot} style={{ background: environment ? 'var(--loam-exploration)' : 'var(--loam-survival)' }} />
         </div>
         <div className={styles.chipRow}>
           {environmentOptions.map(name => (
@@ -164,7 +164,7 @@ export default function DebriefForm({ userId, debriefTypes, onSaved, onDirtyChan
       {timerActive && (
         secondsLeft > 0
           ? <div className={styles.timerNote}>{formatTimer(secondsLeft)} remaining</div>
-          : <div className={styles.timerNote} style={{ color: '#1B3A2D' }}>wrap up when ready</div>
+          : <div className={styles.timerNote} style={{ color: 'var(--loam-exploration)' }}>wrap up when ready</div>
       )}
 
       <button

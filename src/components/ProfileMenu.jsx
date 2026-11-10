@@ -24,10 +24,10 @@ const TONES = [
 ]
 // the four modes as lit spheres: light / base / dark
 const SPHERES = [
-  ['#7c9a8b', '#1B3A2D', '#0f2219'],
-  ['#eef3eb', '#ABBEA3', '#869c7d'],
-  ['#feecb6', '#F5B622', '#c98d07'],
-  ['#fdbba6', '#F55127', '#c63a14'],
+  ['#7c9a8b', 'var(--loam-exploration)', '#0f2219'],
+  ['#eef3eb', 'var(--loam-appreciation)', '#869c7d'],
+  ['#feecb6', 'var(--loam-nourishment)', '#c98d07'],
+  ['#fdbba6', 'var(--loam-survival)', '#c63a14'],
 ]
 const lit = ([a, b, c]) => `radial-gradient(circle at 34% 26%, ${a} 0%, ${b} 55%, ${c} 100%)`
 const GREEN_SPHERE = lit(SPHERES[0])

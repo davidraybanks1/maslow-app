@@ -9,7 +9,7 @@
 .cardPeak {
   background: rgba(27,58,45,0.06);
   border: 0.5px solid var(--border);
-  border-left: 3px solid #1B3A2D;
+  border-left: 3px solid var(--loam-exploration);
   border-radius: 0;
   padding: 14px 16px;
   margin-bottom: 10px;
@@ -55,7 +55,7 @@
 .patternCardGreen {
   background: rgba(27,58,45,0.06);
   border: 0.5px solid var(--border);
-  border-left: 3px solid #1B3A2D;
+  border-left: 3px solid var(--loam-exploration);
   border-radius: 0;
   padding: 14px 16px;
   margin-bottom: 10px;

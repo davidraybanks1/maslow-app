@@ -1,5 +1,11 @@
 import { useRef, useEffect } from 'react'
 
+// a canvas can't read var(--token), so tokens are looked up first
+function resolveColor(color) {
+  const m = /^var\((--[^)]+)\)$/.exec(color || '')
+  return m ? getComputedStyle(document.documentElement).getPropertyValue(m[1]).trim() : color
+}
+
 export default function DonutChart({ data, className }) {
   const canvasRef = useRef(null)
   const total = data.reduce((s, d) => s + d.count, 0)
@@ -23,7 +29,7 @@ export default function DonutChart({ data, className }) {
       ctx.moveTo(cx, cy)
       ctx.arc(cx, cy, outerRadius, angle, angle + sliceAngle)
       ctx.closePath()
-      ctx.fillStyle = d.color
+      ctx.fillStyle = resolveColor(d.color)
       ctx.fill()
       angle += sliceAngle
     }

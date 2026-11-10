@@ -324,12 +324,12 @@ export default function OnboardingTour({ markTourSeen }) {
               orient="auto"
               markerUnits="userSpaceOnUse"
             >
-              <path d="M 0 0 L 11 6 L 0 12 Z" fill="#EFECE3" />
+              <path d="M 0 0 L 11 6 L 0 12 Z" fill="var(--loam-paper)" />
             </marker>
           </defs>
           <path
             d={arrowPath}
-            stroke="#EFECE3"
+            stroke="var(--loam-paper)"
             strokeWidth="2"
             fill="none"
             strokeLinecap="round"

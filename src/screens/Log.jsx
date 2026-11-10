@@ -21,9 +21,9 @@ import { shapeLabel } from '../lib/shapeFacts'
 import EntryText from '../components/EntryText'
 
 const MOOD_PILL = {
-  good: { bg: '#1B3A2D' },
-  mid:  { bg: '#B8C3B1' },
-  bad:  { bg: '#D93B1C' },
+  good: { bg: 'var(--loam-exploration)' },
+  mid:  { bg: 'var(--loam-appreciation)' },
+  bad:  { bg: 'var(--loam-survival)' },
 }
 const MOOD_PERIODS = ['morning', 'midday', 'evening']
 

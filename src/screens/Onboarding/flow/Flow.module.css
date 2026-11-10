@@ -5,8 +5,8 @@
   /* stronger variants for small dots/outlines drawn directly on paper: the
      pastel appreciation/nourishment fills read fine as chip backgrounds but
      fall under ~1.5:1 as bare dots */
-  --appreciation-strong: #7E8F75;
-  --nourishment-strong:  #C99A00;
+  --appreciation-strong: var(--loam-appreciation-text);
+  --nourishment-strong:  var(--loam-nourishment-text);
   position: relative;
   height: 100%;
   max-width: 480px;
@@ -859,7 +859,7 @@
     overflow-y: auto;
     overflow-x: hidden;
     scrollbar-width: none;
-    background: #EFE8DC;
+    background: var(--loam-paper-2);
     border: 1px solid var(--loam-rule);
   }
   .glimpseFrame::-webkit-scrollbar { display: none; }

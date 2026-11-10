@@ -204,7 +204,7 @@
   font-family: var(--font-mono);
   font-size: var(--type-floor);
   background: rgba(27,58,45,0.08);
-  color: #1B3A2D;
+  color: var(--loam-exploration);
   white-space: nowrap;
 }
 .dayCardEmptyNote {

@@ -9,9 +9,9 @@ import {
 import styles from './DebriefForm.module.css'
 
 const BUILTIN_PEAK_TYPES = [
-  { name: 'confident', bg: '#1B3A2D', text: '#fff' },
-  { name: 'creative',  bg: '#E8B81F', text: 'var(--ink)' },
-  { name: 'curious',   bg: '#B8C3B1', text: 'var(--ink)' },
+  { name: 'confident', bg: 'var(--loam-exploration)', text: '#fff' },
+  { name: 'creative',  bg: 'var(--loam-nourishment)', text: 'var(--ink)' },
+  { name: 'curious',   bg: 'var(--loam-appreciation)', text: 'var(--ink)' },
 ]
 
 function peakTagStyle(name, customPeakTypes) {
@@ -82,7 +82,7 @@ export default function PeakDebriefForm({ userId, debriefTypes, onSaved, onDirty
 
   async function handleSave() {
     if (!nature || !environment) {
-      setMsg({ text: 'select a type and environment to save.', color: '#D93B1C' })
+      setMsg({ text: 'select a type and environment to save.', color: 'var(--loam-survival)' })
       setTimeout(() => setMsg(null), 3000)
       return
     }
@@ -96,10 +96,10 @@ export default function PeakDebriefForm({ userId, debriefTypes, onSaved, onDirty
       type: 'peak',
     })
     if (error) {
-      setMsg({ text: 'save failed — please try again', color: '#D93B1C' })
+      setMsg({ text: 'save failed — please try again', color: 'var(--loam-survival)' })
       setTimeout(() => setMsg(null), 3000)
     } else {
-      setMsg({ text: 'saved ✓', color: '#1B3A2D' })
+      setMsg({ text: 'saved ✓', color: 'var(--loam-exploration)' })
       setTimeout(() => { setMsg(null); reset(); onSaved?.() }, 1500)
     }
   }
@@ -117,7 +117,7 @@ export default function PeakDebriefForm({ userId, debriefTypes, onSaved, onDirty
       <div className={styles.field}>
         <div className={styles.labelRow}>
           <span className={styles.fieldLabel}>TYPE OF PEAK</span>
-          <span className={styles.statusDot} style={{ background: nature ? '#1B3A2D' : '#D93B1C' }} />
+          <span className={styles.statusDot} style={{ background: nature ? 'var(--loam-exploration)' : 'var(--loam-survival)' }} />
         </div>
         <div className={styles.chipRow}>
           {peakOptions.map(name => (
@@ -136,7 +136,7 @@ export default function PeakDebriefForm({ userId, debriefTypes, onSaved, onDirty
       <div className={styles.field}>
         <div className={styles.labelRow}>
           <span className={styles.fieldLabel}>ENVIRONMENT</span>
-          <span className={styles.statusDot} style={{ background: environment ? '#1B3A2D' : '#D93B1C' }} />
+          <span className={styles.statusDot} style={{ background: environment ? 'var(--loam-exploration)' : 'var(--loam-survival)' }} />
         </div>
         <div className={styles.chipRow}>
           {environmentOptions.map(name => (
@@ -170,7 +170,7 @@ export default function PeakDebriefForm({ userId, debriefTypes, onSaved, onDirty
       {timerActive && (
         secondsLeft > 0
           ? <div className={styles.timerNote}>{formatTimer(secondsLeft)} remaining</div>
-          : <div className={styles.timerNote} style={{ color: '#1B3A2D' }}>wrap up when ready</div>
+          : <div className={styles.timerNote} style={{ color: 'var(--loam-exploration)' }}>wrap up when ready</div>
       )}
 
       <button

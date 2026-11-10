@@ -2,10 +2,10 @@ import { MODE_ORDER } from '../lib/constants'
 import styles from './LiveCanvasCard.module.css'
 
 const LC_MODE_COLORS = {
-  exploration: '#1B3A2D',
-  appreciation: '#ABBEA3',
-  nourishment: '#F5B622',
-  survival: '#F55127',
+  exploration: 'var(--loam-exploration)',
+  appreciation: 'var(--loam-appreciation)',
+  nourishment: 'var(--loam-nourishment)',
+  survival: 'var(--loam-survival)',
 }
 
 export default function LiveCanvasCard({ stats, range }) {

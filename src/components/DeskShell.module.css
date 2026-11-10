@@ -222,7 +222,7 @@
   /* vibrations: ask, then settle to one line */
   .vibCard {
     /* TODO: Stage 2 loam var(--card) → paper; use local lift until full token sweep */
-    background: #FFFDF9;
+    background: var(--loam-paper);
     padding: 18px;
     display: flex;
     flex-direction: column;
@@ -268,7 +268,7 @@
   .prHead { display: flex; justify-content: space-between; align-items: baseline; padding: 0 4px 6px; }
   .mode { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; transition: background 200ms; }
   /* TODO: Stage 2 loam var(--card) → paper; use local lift until full token sweep */
-  .modeOpen { background: #FFFDF9; }
+  .modeOpen { background: var(--loam-paper); }
   .modeHead {
     display: flex;
     flex-direction: column;

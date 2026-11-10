@@ -19,8 +19,8 @@ export function PracticesArt() {
 export function NotesArt() {
   return (
     <svg width="54" height="34" viewBox="0 0 54 34" aria-hidden="true" focusable="false" style={{ display: 'block' }}>
-      <rect x="15" y="3" width="28" height="28" rx="6" fill="#ABBEA3" transform="rotate(10 29 17)" />
-      <rect x="9" y="3" width="28" height="28" rx="6" fill="#F5B622" transform="rotate(-6 23 17)" />
+      <rect x="15" y="3" width="28" height="28" rx="6" fill="var(--loam-appreciation)" transform="rotate(10 29 17)" />
+      <rect x="9" y="3" width="28" height="28" rx="6" fill="var(--loam-nourishment)" transform="rotate(-6 23 17)" />
       <rect x="2" y="3" width="28" height="28" rx="6" fill="#fff" stroke="#1d1b16" strokeOpacity=".18" />
       <rect x="7.5" y="11" width="17" height="3" rx="1.5" fill="#1d1b16" fillOpacity=".75" />
       <rect x="7.5" y="18" width="11" height="3" rx="1.5" fill="#1d1b16" fillOpacity=".3" />

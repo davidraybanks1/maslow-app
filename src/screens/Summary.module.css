@@ -24,7 +24,7 @@
 .intentionNeed { font-size: 12px; font-weight: 500; color: var(--ink); margin-bottom: 2px; }
 .intentionAction { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .intentionCheck { font-family: var(--font-mono); font-size: 13px; color: var(--ink3); flex-shrink: 0; }
-.intentionDone .intentionCheck { color: #1B3A2D; }
+.intentionDone .intentionCheck { color: var(--loam-exploration); }
 .triggers { margin-top: 4px; }
 .triggersLabel { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; }
 .triggerItem { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); }

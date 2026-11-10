@@ -3,7 +3,7 @@
    that has something to open (ritual, checklist, stretch, boundary, a timer). */
 
 .card {
-  --mc: #ABBEA3; /* set inline per mode */
+  --mc: var(--loam-appreciation); /* set inline per mode */
   position: relative;
   display: flex;
   align-items: center;

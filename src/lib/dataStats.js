@@ -26,9 +26,9 @@ function buildInsightCopy(link) {
 
 const MOOD_RANK = { bad: 1, fine: 2, mid: 2, good: 3 }
 
-export const DEBRIEF_NATURE_COLORS = { frenetic: '#C47B3A', overwhelm: '#7A8FA6', apathy: '#9E7B5A' }
-export const DEBRIEF_PEAK_COLORS = { confident: '#1B3A2D', creative: '#C47B3A', curious: '#7A8FA6' }
-export const DEBRIEF_ENVIRONMENT_COLORS = { work: 'var(--ink)', home: '#B8C3B1', social: '#7A8FA6', personal: '#E8B81F' }
+export const DEBRIEF_NATURE_COLORS = { frenetic: 'var(--loam-debrief-terracotta)', overwhelm: 'var(--loam-debrief-slate)', apathy: 'var(--loam-debrief-tan)' }
+export const DEBRIEF_PEAK_COLORS = { confident: 'var(--loam-exploration)', creative: 'var(--loam-debrief-terracotta)', curious: 'var(--loam-debrief-slate)' }
+export const DEBRIEF_ENVIRONMENT_COLORS = { work: 'var(--ink)', home: 'var(--loam-appreciation)', social: 'var(--loam-debrief-slate)', personal: 'var(--loam-nourishment)' }
 const DEBRIEF_DEFAULT_COLOR = '#999999'
 
 function countByField(items, field, colorMap) {
@@ -601,7 +601,7 @@ export function createDataStats({ canvas, checkins, moods, practices, practicesD
   function getLiveCanvas(rangeDays) {
     const days = dayRange(rangeDays, 0)
     const MODE_THRESHOLDS = { exploration: 80, appreciation: 60, nourishment: 50, survival: 20 }
-    const MODE_COLORS = { exploration: '#1B3A2D', appreciation: '#ABBEA3', nourishment: '#F5B622', survival: '#F55127' }
+    const MODE_COLORS = { exploration: 'var(--loam-exploration)', appreciation: 'var(--loam-appreciation)', nourishment: 'var(--loam-nourishment)', survival: 'var(--loam-survival)' }
 
     const activeNeeds = allNeeds().filter(n => canvas[n.id])
     const totalDays = activeNeeds.length * days.length
