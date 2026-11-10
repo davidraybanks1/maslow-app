@@ -612,7 +612,9 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 10px var(--loam-gutter) 14px;
+  /* with the tags above, the same height as the room icons at rest, so the page
+     can't get shorter under the writing area when typing starts or stops */
+  padding: 10px var(--loam-gutter) 4px;
 }
 .writeBlockLink {
   font-family: var(--loam-font-mono);
@@ -639,7 +641,7 @@
   cursor: pointer;
 }
 .writeBlockSubmit:disabled { opacity: 0.35; cursor: default; }
-.writeBlockRooms { padding: 16px var(--loam-gutter) 14px; }
+.writeBlockRooms { padding: 16px var(--loam-gutter) 0; }
 .writeRoomGrid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -674,6 +676,8 @@
   color: var(--loam-ink-2);
 }
 .writeRoomLinks { display: flex; gap: 20px; min-height: 36px; align-items: center; margin-top: 4px; }
+.writeRoomSlot { height: 0; overflow: hidden; }
+.writeRoomSlotInner { padding-top: 6px; }
 /* two states sharing one cell, so switching between them moves nothing */
 .writeStack { display: grid; }
 .writeStack > * { grid-area: 1 / 1; min-width: 0; }

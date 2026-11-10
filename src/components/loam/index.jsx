@@ -418,9 +418,9 @@ export function EntryRow({
 /* ── WriteBlock ───────────────────────────────────────────── */
 /* resting: prompt + textarea + the rooms as icons
    active (text present or textarea focused): stamp + textarea + chips + footer
-   Each resting/active pair shares one grid cell, so the block is always as tall
-   as its taller half and nothing moves when it switches. The description slot
-   works the same way, sized by all five descriptions at once.
+   The greeting and the stamp share one grid cell, so the writing area never
+   moves. What is under it takes its natural height, and the room slot is closed
+   at rest, so only the content below the block moves.
    draft persistence is owned by the parent; just value/onChange here */
 /* The rooms as line drawings on the paper: 1.5px ink, nothing behind them, drawn
    to one optical size (a ring is narrower than a row of small marks but carries
@@ -456,18 +456,6 @@ const ROOM_ICONS = {
   ),
 }
 
-/* One room's name and description. As a sizer it is invisible and also leaves
-   room for the links, so the slot keeps the height of its longest text. */
-function RoomSlot({ room, sizer = false }) {
-  return (
-    <div className={sizer ? styles.writeStackOff : undefined} aria-hidden={sizer || undefined}>
-      <div className={styles.writeRoomName}>{room.label}</div>
-      <p className={styles.writeRoomBlurb}>{room.blurb}</p>
-      {sizer && <div className={styles.writeRoomLinks}><span className={styles.writeBlockLink}>start →</span></div>}
-    </div>
-  )
-}
-
 export function WriteBlock({
   text = '',
   onTextChange,
@@ -486,8 +474,38 @@ export function WriteBlock({
 }) {
   const [focused, setFocused] = useState(false)
   const [pickedId, setPickedId] = useState(null)
-  const picked = ROOM_PICKER.find(r => r.id === pickedId)
+  // stays set while the slot closes, so its text doesn't vanish on the way
+  const [shownId, setShownId] = useState(null)
+  const shown = ROOM_PICKER.find(r => r.id === (pickedId || shownId))
+  const pickRoom = id => {
+    const next = id === pickedId ? null : id
+    setPickedId(next)
+    if (next) setShownId(next)
+  }
   const active = focused || text.length > 0 || keepOpen
+  const slotRef = useRef(null)
+  const slotHeight = useRef(0)
+  useLayoutEffect(() => {
+    const el = slotRef.current
+    if (!el) { slotHeight.current = 0; return undefined }
+    const from = el.style.transition && el.style.transition !== 'none' ? el.getBoundingClientRect().height : slotHeight.current
+    el.style.transition = 'none'
+    el.style.height = 'auto'
+    const to = pickedId ? el.getBoundingClientRect().height : 0
+    slotHeight.current = to
+    const settle = () => {
+      el.style.transition = ''
+      el.style.height = pickedId ? 'auto' : ''
+      if (!pickedId) setShownId(null)
+    }
+    if (from === to || window.matchMedia('(prefers-reduced-motion: reduce)').matches) { settle(); return undefined }
+    el.style.height = `${from}px`
+    void el.offsetHeight
+    el.style.transition = 'height 180ms ease'
+    el.style.height = `${to}px`
+    const timer = setTimeout(settle, 220)
+    return () => clearTimeout(timer)
+  }, [pickedId])
   // a press on the tags or the footer must not blur the page closed under the finger
   const holdFocus = e => e.preventDefault()
   return (
@@ -508,14 +526,14 @@ export function WriteBlock({
         value={text}
         onChange={e => onTextChange?.(e.target.value)}
         onKeyDown={onKeyDown}
-        onFocus={() => { setFocused(true); setPickedId(null) }}
+        onFocus={() => { setFocused(true); setPickedId(null); setShownId(null) }}
         onBlur={() => setFocused(false)}
         rows={4}
         maxLength={10000}
       />
       {error && <div className={styles.writeBlockError}>{error}</div>}
-      <div className={styles.writeStack}>
-        <div className={active ? '' : styles.writeStackOff} onMouseDown={holdFocus}>
+      {active ? (
+        <div onMouseDown={holdFocus}>
           <div className={styles.writeBlockTags}>{tags}</div>
           <div className={styles.writeBlockFooter}>
             <button type="button" className={styles.writeBlockLink} onClick={onRooms}>rooms →</button>
@@ -529,7 +547,8 @@ export function WriteBlock({
             >{saving ? '…' : 'add'}</button>
           </div>
         </div>
-        <div className={`${styles.writeBlockRooms} ${active ? styles.writeStackOff : ''}`}>
+      ) : (
+        <div className={styles.writeBlockRooms}>
           <div className={styles.writeBlockLabelMuted}>OR BEGIN IN A ROOM</div>
           <div className={styles.writeRoomGrid} role="group" aria-label="rooms">
             {ROOM_PICKER.map(r => (
@@ -539,26 +558,33 @@ export function WriteBlock({
                 className={`${styles.writeRoomBtn} ${pickedId === r.id ? styles.writeRoomBtnOn : ''}`}
                 aria-label={r.label}
                 aria-pressed={pickedId === r.id}
-                onClick={() => setPickedId(id => (id === r.id ? null : r.id))}
+                onClick={() => pickRoom(r.id)}
               >
                 <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">{ROOM_ICONS[r.id]}</svg>
               </button>
             ))}
           </div>
-          <div className={styles.writeStack}>
-            {ROOM_PICKER.map(r => <RoomSlot key={r.id} room={r} sizer />)}
-            <div>
-              <div aria-live="polite">{picked && <RoomSlot room={picked} />}</div>
-              {picked && (
+          <div
+            ref={slotRef}
+            className={styles.writeRoomSlot}
+            aria-hidden={!pickedId}
+            {...(pickedId ? {} : { inert: '' })}
+          >
+            {shown && (
+              <div className={styles.writeRoomSlotInner}>
+                <div aria-live="polite">
+                  <div className={styles.writeRoomName}>{shown.label}</div>
+                  <p className={styles.writeRoomBlurb}>{shown.blurb}</p>
+                </div>
                 <div className={styles.writeRoomLinks}>
-                  <button type="button" className={styles.writeBlockLink} onClick={() => { setPickedId(null); onRoomClick?.(picked.id) }}>start →</button>
+                  <button type="button" className={styles.writeBlockLink} onClick={() => { setPickedId(null); onRoomClick?.(shown.id) }}>start →</button>
                   <button type="button" className={styles.writeBlockLink} onClick={() => setPickedId(null)}>cancel</button>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
