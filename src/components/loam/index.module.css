@@ -354,12 +354,6 @@ div.ledgerRow { cursor: default; }
   font-style: italic;
   color: var(--loam-muted);
 }
-.ledgerAsk {
-  font-family: var(--loam-font-display);
-  font-size: 17px;
-  line-height: 1.2;
-  color: var(--loam-muted);
-}
 .ledgerLink {
   display: inline-flex;
   align-items: center;
@@ -380,7 +374,7 @@ div.ledgerRow { cursor: default; }
 /* inside a row the row is the target; the link is just the word */
 .ledgerRow .ledgerLink { min-height: 0; }
 .ledgerAdd { align-self: flex-start; }
-.ledgerCard { display: flex; flex-direction: column; gap: 12px; padding: 4px 0 6px; }
+.ledgerCard { display: flex; flex-direction: column; gap: 10px; padding: 4px 0 6px; }
 .ledgerLinks { display: flex; gap: 20px; margin-top: -6px; }
 
 .checkInAnswer { display: flex; align-items: baseline; gap: 14px; }

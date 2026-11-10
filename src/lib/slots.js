@@ -9,11 +9,16 @@ export const SLOT_PAST_NOUN = { morning: 'morning', midday: 'day', evening: 'eve
 // Greeting copy — "good {X}." in the Today header
 export const SLOT_GREETING = { morning: 'morning', midday: 'afternoon', evening: 'evening' }
 
-export function currentSlot() {
-  const h = new Date().getHours()
+// The part of the day a moment falls in: morning until noon, midday until 5pm.
+export function slotAt(ts) {
+  const h = new Date(ts).getHours()
   if (h < 12) return 'morning'
   if (h < 17) return 'midday'
   return 'evening'
+}
+
+export function currentSlot() {
+  return slotAt(Date.now())
 }
 
 export function precedingSlots(slot) {

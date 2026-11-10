@@ -217,7 +217,7 @@ export function CheckIn({ band, feeling, onBand, onFeeling, editing, onToggleEdi
       <div ref={boxRef} className={styles.checkIn}>
         {stamp ? (
           <>
-            <div className={styles.checkInMeta}>NOW · {greeting.toUpperCase()}</div>
+            <div className={styles.checkInMeta}>NOW · {slot.toUpperCase()}</div>
             <div className={styles.checkInHead}>
               <div className={`${styles.checkInChosen} ${styles.checkInChosenMuted}`}>
                 i&apos;m feeling <span className={`${styles.stamp} ${styles.stampEmpty}`} aria-hidden="true">…</span>
@@ -240,7 +240,7 @@ export function CheckIn({ band, feeling, onBand, onFeeling, editing, onToggleEdi
   return (
     <div ref={boxRef} className={styles.checkIn}>
       {stamp && (
-        <div className={styles.checkInMeta}>{recordedAt ? `${formatClock(recordedAt)} · ` : ''}{greeting.toUpperCase()}</div>
+        <div className={styles.checkInMeta}>{recordedAt ? `${formatClock(recordedAt)} · ` : ''}{slot.toUpperCase()}</div>
       )}
       <div className={styles.checkInHead}>
         {stamp ? (
@@ -295,8 +295,8 @@ export function CheckIn({ band, feeling, onBand, onFeeling, editing, onToggleEdi
    rule (Today: the same taps as the old tiles and earlier-slot card).
    items: [{ name, isCurrent, isEarlier, band, feeling, onTap, recordedAt }]
      onTap null → later today, not tappable
-   openSlot: the earlier part of the day whose card is open; revising: that
-   card is in its edit view. */
+   openSlot: the earlier part of the day whose card is open. A logged one opens
+   straight into its edit view; an empty one into the add card. */
 function LedgerMeta({ name, at }) {
   return <div className={styles.checkInMeta}>{at ? `${formatClock(at)} · ` : ''}{name.toUpperCase()}</div>
 }
@@ -328,7 +328,7 @@ function LedgerRevise({ initialBand, initialFeeling, onTick, onSave, onCancel })
       <StampOptions words={BAND_WORDS} label="how it felt" on={b => b === band} onPick={b => { onTick(); setBand(b) }} labelFor={b => BAND_LABEL[b]} />
       {band && (
         <>
-          <div className={styles.ledgerAsk}>what kind of {BAND_LABEL[band]}?</div>
+          <div className={styles.checkInLabel}>WHAT KIND OF {BAND_LABEL[band].toUpperCase()}?</div>
           <StampOptions words={FEELINGS[band]} label={`what kind of ${BAND_LABEL[band]}`} on={f => band === initialBand && f === initialFeeling} onPick={f => onSave(band, f)} />
         </>
       )}
@@ -336,7 +336,7 @@ function LedgerRevise({ initialBand, initialFeeling, onTick, onSave, onCancel })
     </>
   )
 }
-export function DayLedger({ items, openSlot, editingCurrent, revising, onCardPick, onCardClose, onRevise, onReviseTick, onReviseSave, onReviseCancel }) {
+export function DayLedger({ items, openSlot, editingCurrent, onCardPick, onCardClose, onReviseTick, onReviseSave, onReviseCancel }) {
   return (
     <div className={styles.ledger} role="group" aria-label="earlier check-ins today">
       {items.map(it => {
@@ -375,23 +375,13 @@ export function DayLedger({ items, openSlot, editingCurrent, revising, onCardPic
             </button>
             {open && (
               <div className={styles.ledgerCard}>
-                {revising ? (
+                {it.band ? (
                   <LedgerRevise key={it.name} initialBand={it.band} initialFeeling={it.feeling} onTick={onReviseTick} onSave={onReviseSave} onCancel={onReviseCancel} />
                 ) : (
                   <>
-                    {!(it.band && it.feeling) && (
-                      <StampOptions words={BAND_WORDS} label="how it felt" on={b => b === it.band} onPick={b => onCardPick(b, null)} labelFor={b => BAND_LABEL[b]} />
-                    )}
-                    {it.band && !it.feeling && (
-                      <>
-                        <div className={styles.ledgerAsk}>what kind of {BAND_LABEL[it.band]}?</div>
-                        <StampOptions words={FEELINGS[it.band]} label={`what kind of ${BAND_LABEL[it.band]}`} on={() => false} onPick={f => onCardPick(it.band, f)} />
-                      </>
-                    )}
+                    <StampOptions words={BAND_WORDS} label="how it felt" on={() => false} onPick={b => onCardPick(b, null)} labelFor={b => BAND_LABEL[b]} />
                     <div className={styles.ledgerLinks}>
-                      {it.band
-                        ? <button type="button" className={styles.ledgerLink} onClick={onRevise}>edit</button>
-                        : <button type="button" className={styles.ledgerLink} onClick={onCardClose}>cancel</button>}
+                      <button type="button" className={styles.ledgerLink} onClick={onCardClose}>cancel</button>
                     </div>
                   </>
                 )}

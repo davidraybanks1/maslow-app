@@ -1,7 +1,7 @@
 import { useState, useEffect, useLayoutEffect, useRef, cloneElement } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { allNeeds, needName, MODES, MODE_ORDER, MODE_MAX_BUBBLES, MODE_WEIGHTS, JOURNAL_TRUNCATE } from '../lib/constants'
-import { currentSlot, precedingSlots, SLOTS, SLOT_NOUN, SLOT_GREETING } from '../lib/slots'
+import { currentSlot, precedingSlots, slotAt, SLOTS, SLOT_NOUN, SLOT_GREETING } from '../lib/slots'
 import { todayKey, loadJournalEntries, deleteJournalEntry, loadNoteDeck, loadCustomTags, addJournalEntry, uploadNoteImage, loadRevisitQueue } from '../lib/store'
 import { createDataStats } from '../lib/dataStats'
 import { formatClock as formatEntryTime } from '../lib/formatTime'
@@ -841,14 +841,20 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
   }))
 
   // when the current part of the day was first answered (the stamp's time line)
-  const recordedAt = (state.moods || []).find(m => m.date_key === today && m.prompt_time === slot)?.created_at || null
+  // when a part of the day was answered, but only if it was answered within its own
+  // hours (a morning added at 2:30PM shows no time)
+  const answeredAt = s => {
+    const at = (state.moods || []).find(m => m.date_key === today && m.prompt_time === s)?.created_at
+    return at && slotAt(at) === s ? at : null
+  }
+  const recordedAt = answeredAt(slot)
   // every check-in answer on the phone ticks once, then saves
   const settleWithTick = (s, b, f) => { hapticTick(); handleFrequencySettle(s, b, f) }
   // the opened area's rows: the tiles' data, plus when each part of the day was answered
   const ledgerItems = daypartsData.map(d => ({
     ...d,
     isEarlier: precedingSlots(slot).includes(d.name),
-    recordedAt: (state.moods || []).find(m => m.date_key === today && m.prompt_time === d.name)?.created_at || null,
+    recordedAt: answeredAt(d.name),
   }))
 
   // something to open: a check-in already made, or an earlier part of the day to add
@@ -1096,11 +1102,9 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                     items={ledgerItems}
                     openSlot={openRetroSlot}
                     editingCurrent={editingCurrent}
-                    revising={retroEditing}
                     // the card's own answer (as the old card's onSettle): save, then close the card
                     onCardPick={(band, feeling) => { settleWithTick(openRetroSlot, band, feeling); setOpenRetroSlot(null) }}
                     onCardClose={() => setOpenRetroSlot(null)}
-                    onRevise={() => setRetroEditing(true)}
                     // the edit view (as the old editor): a mood only ticks; a feeling saves and closes the area
                     onReviseTick={() => hapticTick()}
                     onReviseSave={(band, feeling) => { settleWithTick(openRetroSlot, band, feeling); setRetroEditing(false); setOpenRetroSlot(null); setDayOpen(false) }}
