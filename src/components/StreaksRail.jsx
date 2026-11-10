@@ -70,7 +70,7 @@ const PREVIEW = 2
 
 /* Two rows on the page; `all →` opens the rest in place, where each row also
    carries its glyph and twelve-day strip. */
-export default function StreaksRail({ canvas, checkins, moods, practicesDB }) {
+export default function StreaksRail({ canvas, checkins, moods, practicesDB, glyphs = true }) {
   const [kind, setKind] = useState('all')
   const [open, setOpen] = useState(false)
 
@@ -101,7 +101,7 @@ export default function StreaksRail({ canvas, checkins, moods, practicesDB }) {
             <span className={styles.phrase}>{phrase(s)}</span>
             {open && (
               <span className={styles.detail}>
-                <Glyph streak={s} />
+                {glyphs && <Glyph streak={s} />}
                 <span className={styles.meter}><Meter streak={s} /></span>
               </span>
             )}

@@ -318,7 +318,7 @@ function FeelsChart({ days, peak, monthly, todayKey, dayLabel }) {
   )
 }
 
-function FeelsSection({ moods, range }) {
+function FeelsSection({ moods, range, alwaysOpen = false }) {
   const [open, setOpen] = useState(false)
   const monthly = range.keys.length > 7
   const { keys, todayKey } = range
@@ -347,6 +347,9 @@ function FeelsSection({ moods, range }) {
     const [y, m, d] = dk.split('-').map(Number)
     return new Date(y, m - 1, d).getDay() === 1 ? String(d) : ''
   }
+
+  // the phone shows the chart outright; the desktop panel keeps the fold
+  if (alwaysOpen) return <FeelsChart days={days} peak={peak} monthly={monthly} todayKey={todayKey} dayLabel={dayLabel} />
 
   return (
     <div>
@@ -670,6 +673,8 @@ export default function Data({ state, profileMenu, profileMenuRef, compact = fal
   const setPeriod = p => { setPeriodRaw(p); setOffset(0) }
   // `compact` is the side panel on a desktop: the phone layout, in a narrow column
   const isDesktop = useIsDesktop() && !compact
+  // /data on a desktop is DeskShell, which mounts this as `compact`; anything else is the phone
+  const phone = !compact && !isDesktop
   const rootRef = useRef(null)
   const dockLine = useDockLine(rootRef)
 
@@ -731,7 +736,30 @@ export default function Data({ state, profileMenu, profileMenuRef, compact = fal
         <FirstWeekCard title="After about a week, you’ll see your data start to tell a story." />
       )}
 
-      {hasCanvas && (
+      {hasCanvas && phone && (
+        <>
+          <StreaksRail canvas={canvas} checkins={checkins} moods={moods} practicesDB={practicesDB} glyphs={false} />
+
+          {/* the week or month: title, stepper, then the charts it steps */}
+          <section className={styles.period} data-dock={dock}>
+            <LabelRow
+              left={range.title.toUpperCase()}
+              right={<WordTabs label="period" options={PERIODS.map(p => ({ v: p.days, label: p.label }))} value={period} onChange={setPeriod} />}
+            />
+            <div className={`${styles.folio} ${styles.folioTop}`}>
+              <button type="button" className={styles.folioBtn} onClick={() => setOffset(o => o + 1)} disabled={!canGoBack} aria-label={`previous ${unit}`}>← {prevLabel}</button>
+              {offset > 0
+                ? <button type="button" className={styles.folioNow} onClick={() => setOffset(0)}>now</button>
+                : <span className={styles.folioHere}>THIS {unit.toUpperCase()}</span>}
+              <button type="button" className={styles.folioBtn} onClick={() => setOffset(o => o - 1)} disabled={offset === 0} aria-label={`next ${unit}`}>{nextLabel} →</button>
+            </div>
+            <RhythmSection stats={stats} canvas={canvas} checkins={checkins} moods={moods} range={range} />
+            <FeelsSection moods={moods} range={range} alwaysOpen />
+          </section>
+        </>
+      )}
+
+      {hasCanvas && !phone && (
         <>
           <LabelRow
             left={range.title.toUpperCase()}
@@ -748,7 +776,11 @@ export default function Data({ state, profileMenu, profileMenuRef, compact = fal
           <FeelsSection moods={moods} range={range} />
 
           <StreaksRail canvas={canvas} checkins={checkins} moods={moods} practicesDB={practicesDB} />
+        </>
+      )}
 
+      {hasCanvas && (
+        <>
           <WhatChanged range={range} offset={offset} canvas={canvas} checkins={checkins} dock={dock} />
           <InsightsCard insights={insights} dock={dock} />
 

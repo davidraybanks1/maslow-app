@@ -90,6 +90,9 @@
   letter-spacing: 0.04em;
   color: var(--loam-muted);
 }
+/* phone: the stepper sits under the title row, above what it steps */
+.folioTop { border-top: none; border-bottom: var(--loam-rule-row); }
+.period { margin-top: 32px; }
 .folioBtn, .folioNow {
   font: inherit; letter-spacing: inherit; color: var(--loam-ink); background: none; border: none;
   padding: 10px 0; cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent;
