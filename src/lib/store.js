@@ -736,7 +736,8 @@ export function useAppState(onSignIn) {
       const filtered = (prev.moods || []).filter(
         m => !(m.date_key === date && m.prompt_time === promptTime)
       )
-      return { ...prev, moods: [{ user_id: userId, date_key: date, prompt_time: promptTime, mood, note: note || null, feeling: feeling || null }, ...filtered] }
+      // created_at mirrors the row's: set on the first answer, kept on later ones
+      return { ...prev, moods: [{ user_id: userId, date_key: date, prompt_time: promptTime, mood, note: note || null, feeling: feeling || null, created_at: previous?.created_at || new Date().toISOString() }, ...filtered] }
     })
 
     const { error } = await supabase

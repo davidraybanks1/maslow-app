@@ -253,21 +253,56 @@
 .checkInWordActive {
   text-decoration-color: var(--loam-ink);
 }
-/* phone: good / fine / bad as code-style chips; the hit area reaches 44px
-   without making the visible chip taller */
-.checkInChip {
-  position: relative;
+/* phone: the time a part of the day was answered, over the sentence */
+.checkInMeta {
   font-family: var(--loam-font-mono);
-  font-size: 15px;
-  line-height: 20px;
-  padding: 5px 12px;
-  background: var(--loam-tint);
-  border: 1px solid var(--loam-rule);
-  border-radius: 3px;
-  text-decoration: none;
+  font-size: var(--loam-label);
+  line-height: 16px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--loam-muted);
+  margin-bottom: -6px;
+}
+.checkInChosenMuted { color: var(--loam-muted); }
+
+/* phone: the feeling, the options and the feelings as square black stamps */
+.stamp {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 3px 10px 2px;
+  background: var(--loam-ink);
+  color: var(--loam-paper);
+  border: 0;
+  border-radius: 0;
+  font-family: var(--loam-font-mono);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 17px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  vertical-align: baseline;
+}
+/* nothing chosen yet: the same box, outlined */
+.stampEmpty {
+  background: transparent;
+  border: 1.5px solid var(--loam-ink);
+  padding: 1.5px 8.5px 0.5px;
+  color: var(--loam-muted);
+}
+.stampRow {
+  display: flex;
+  flex-wrap: wrap;
+  /* rows 44px apart so each stamp keeps a 44px tap area */
+  gap: 22px 12px;
+}
+.stampBtn {
+  position: relative;
+  margin-left: 0;
+  cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.checkInChip::after {
+.stampBtn::after {
   content: '';
   position: absolute;
   left: 0;
@@ -276,47 +311,9 @@
   height: 44px;
   transform: translateY(-50%);
 }
-.checkInChip.checkInWordActive { border-color: var(--loam-ink); }
-.checkInChip:focus-visible { outline: 2px solid var(--loam-ink); outline-offset: 2px; }
-
-/* ── DayLog ───────────────────────────────────────────────── */
-.dayLog { position: relative; }
-.dayLogLine {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  width: max-content;
-  box-sizing: border-box;
-  padding: 8px 10px;
-  background: var(--loam-tint);
-  border: 1px solid var(--loam-rule);
-  border-radius: 3px;
-  font-family: var(--loam-font-mono);
-  font-size: 12.5px;
-  line-height: 16px;
-  white-space: nowrap;
-  color: var(--loam-ink);
-}
-.dayLogSlot { display: inline-flex; align-items: center; gap: 6px; }
-.dayLogMark { flex: none; width: 14px; height: 8px; box-sizing: border-box; }
-.dayLogMarkLogged { background: var(--loam-ink); }
-.dayLogMarkMissed { border: 1.5px solid var(--loam-ink); }
-.dayLogMarkPending { border: 1.5px dashed var(--loam-muted); }
-.dayLogAbbr, .dayLogMuted { color: var(--loam-muted); }
-/* the copy with feeling words, measured but never seen */
-.dayLogProbe { position: absolute; top: 0; left: 0; width: 0; height: 0; overflow: hidden; }
-.dayLogMeasure { visibility: hidden; }
-.dayLogSr {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-  border: 0;
-}
+/* the answer you gave, when it is reopened */
+.stampOn { box-shadow: 0 0 0 2px var(--loam-paper), 0 0 0 3.5px var(--loam-ink); }
+.stampBtn:focus-visible { outline: 2px solid var(--loam-ink); outline-offset: 5px; }
 
 .checkInAnswer { display: flex; align-items: baseline; gap: 14px; }
 .checkInChange {

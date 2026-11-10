@@ -11,6 +11,7 @@ import { useHold } from '../../lib/useHold'
 import { FEELINGS, BAND_LABEL } from '../../lib/frequency'
 import { currentSlot, SLOT_GREETING } from '../../lib/slots'
 import { dayNumber } from '../../lib/dayNumber'
+import { formatClock } from '../../lib/formatTime'
 import { JOURNAL_TRUNCATE } from '../../lib/constants'
 import styles from './index.module.css'
 
@@ -155,10 +156,11 @@ export function NoteFolio({ index, total, onNext, onEdit }) {
    inlineFeeling: the feeling as a parenthetical on the band's own line, with
      nothing under it (phone: the chevron is how an answer is reopened)
    trailing: a control set to the right of the prompt or answer line
-   dayLog: the day's check-ins line (phone), under the sentence or the options
-   chips: good / fine / bad drawn as code-style chips (phone) */
+   stamp: phone. A time line over the sentence, the feeling as a black stamp,
+     and good / fine / bad and the feelings as black stamps
+   recordedAt: when this part of the day was first answered (stamp only) */
 const BAND_WORDS = ['good', 'mid', 'bad']
-export function CheckIn({ band, feeling, onBand, onFeeling, editing, onToggleEdit, inlineFeeling = false, trailing, dayLog, chips = false }) {
+export function CheckIn({ band, feeling, onBand, onFeeling, editing, onToggleEdit, inlineFeeling = false, trailing, stamp = false, recordedAt }) {
   const slot = currentSlot()
   const greeting = SLOT_GREETING[slot] || 'day'
   // retapping the answer you already gave changes nothing
@@ -192,13 +194,16 @@ export function CheckIn({ band, feeling, onBand, onFeeling, editing, onToggleEdi
     const timer = setTimeout(clear, 260)
     return () => clearTimeout(timer)
   }, [band, feeling, editing, inlineFeeling])
+  const option = active => stamp
+    ? `${styles.stamp} ${styles.stampBtn} ${active ? styles.stampOn : ''}`
+    : `${styles.checkInWord} ${active ? styles.checkInWordActive : ''}`
   const bandRow = (
-    <div className={styles.checkInBands} role="group" aria-label="how are you">
+    <div className={stamp ? styles.stampRow : styles.checkInBands} role="group" aria-label="how are you">
       {BAND_WORDS.map(b => (
         <button
           key={b}
           type="button"
-          className={`${styles.checkInWord} ${chips ? styles.checkInChip : ''} ${band === b ? styles.checkInWordActive : ''}`}
+          className={option(band === b)}
           aria-pressed={band === b}
           onClick={() => pickBand(b)}
         >
@@ -210,12 +215,23 @@ export function CheckIn({ band, feeling, onBand, onFeeling, editing, onToggleEdi
   if (!band) {
     return (
       <div ref={boxRef} className={styles.checkIn}>
-        <div className={styles.checkInHead}>
-          <div className={styles.checkInLabel}>HOW ARE YOU THIS {greeting.toUpperCase()}?</div>
-          {trailing}
-        </div>
+        {stamp ? (
+          <>
+            <div className={styles.checkInMeta}>NOW · {greeting.toUpperCase()}</div>
+            <div className={styles.checkInHead}>
+              <div className={`${styles.checkInChosen} ${styles.checkInChosenMuted}`}>
+                i&apos;m feeling <span className={`${styles.stamp} ${styles.stampEmpty}`} aria-hidden="true">…</span>
+              </div>
+              {trailing}
+            </div>
+          </>
+        ) : (
+          <div className={styles.checkInHead}>
+            <div className={styles.checkInLabel}>HOW ARE YOU THIS {greeting.toUpperCase()}?</div>
+            {trailing}
+          </div>
+        )}
         {bandRow}
-        {dayLog}
       </div>
     )
   }
@@ -223,24 +239,33 @@ export function CheckIn({ band, feeling, onBand, onFeeling, editing, onToggleEdi
   const answered = !!feeling && !editing
   return (
     <div ref={boxRef} className={styles.checkIn}>
+      {stamp && (
+        <div className={styles.checkInMeta}>{recordedAt ? `${formatClock(recordedAt)} · ` : ''}{greeting.toUpperCase()}</div>
+      )}
       <div className={styles.checkInHead}>
-        <div className={styles.checkInChosen}>
-          i&apos;m feeling <em>{BAND_LABEL[band]}.</em>
-          {inlineFeeling && feeling && <span className={styles.checkInParen}> ({feeling})</span>}
-        </div>
+        {stamp ? (
+          <div className={styles.checkInChosen} role="group" aria-label={`feeling: ${BAND_LABEL[band]}${feeling ? `, ${feeling}` : ''}`}>
+            i&apos;m feeling <em>{BAND_LABEL[band]}</em>
+            {feeling && <span className={styles.stamp}>{feeling}</span>}
+          </div>
+        ) : (
+          <div className={styles.checkInChosen}>
+            i&apos;m feeling <em>{BAND_LABEL[band]}.</em>
+            {inlineFeeling && feeling && <span className={styles.checkInParen}> ({feeling})</span>}
+          </div>
+        )}
         {trailing}
       </div>
-      {dayLog}
       {editing && bandRow}
       {!answered && (
         <>
           <div className={styles.checkInLabel}>WHAT KIND OF {BAND_LABEL[band].toUpperCase()}?</div>
-          <div className={styles.checkInFeelings} role="group" aria-label="what kind">
+          <div className={stamp ? styles.stampRow : styles.checkInFeelings} role="group" aria-label="what kind">
             {bandFeelings.map(f => (
               <button
                 key={f}
                 type="button"
-                className={`${styles.checkInWord} ${feeling === f ? styles.checkInWordActive : ''}`}
+                className={option(feeling === f)}
                 aria-pressed={feeling === f}
                 onClick={() => onFeeling?.(f)}
               >
@@ -260,51 +285,6 @@ export function CheckIn({ band, feeling, onBand, onFeeling, editing, onToggleEdi
           )}
         </div>
       )}
-    </div>
-  )
-}
-
-/* ── DayLog ───────────────────────────────────────────────── */
-/* The day's check-ins as one code-style line. Display only.
-   items: [{ slot, abbr, state: 'logged' | 'missed' | 'pending', word, short, sr }]
-     word  — what the slot shows (an earlier slot's feeling, the current one's mood)
-     short — the mood word, used for every earlier slot when the line with
-             feeling words would not fit on one line
-     sr    — the slot's part of the spoken sentence (always the feeling word)
-   The fit is decided for the whole line from a hidden copy with the feeling
-   words, re-measured on resize, when fonts load, and when an answer changes. */
-export function DayLog({ items }) {
-  const hostRef = useRef(null)
-  const measureRef = useRef(null)
-  const [compact, setCompact] = useState(false)
-  const key = items.map(i => `${i.state}:${i.word}:${i.short}`).join('|')
-  useLayoutEffect(() => {
-    const host = hostRef.current, probe = measureRef.current
-    if (!host || !probe) return undefined
-    let alive = true
-    const check = () => { if (alive) setCompact(probe.getBoundingClientRect().width > host.clientWidth + 0.5) }
-    check()
-    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(check) : null
-    ro?.observe(host)
-    document.fonts?.ready?.then(check)
-    return () => { alive = false; ro?.disconnect() }
-  }, [key])
-  const line = (useShort, extra, ref) => (
-    <div ref={ref} className={`${styles.dayLogLine} ${extra || ''}`} aria-hidden="true">
-      {items.map(it => (
-        <span key={it.slot} className={styles.dayLogSlot}>
-          <span className={`${styles.dayLogMark} ${styles[`dayLogMark${it.state[0].toUpperCase()}${it.state.slice(1)}`]}`} />
-          <span className={styles.dayLogAbbr}>{it.abbr}</span>
-          <span className={it.state === 'logged' ? undefined : styles.dayLogMuted}>{useShort ? it.short : it.word}</span>
-        </span>
-      ))}
-    </div>
-  )
-  return (
-    <div ref={hostRef} className={styles.dayLog}>
-      <span className={styles.dayLogSr}>{`today's check-ins: ${items.map(it => `${it.slot} ${it.sr}`).join(', ')}`}</span>
-      {line(compact)}
-      <div className={styles.dayLogProbe}>{line(false, styles.dayLogMeasure, measureRef)}</div>
     </div>
   )
 }
