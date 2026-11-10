@@ -895,7 +895,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
 
         {/* ── Note to self deck ── */}
         {(!deckReviewed || deckClosing) && <div ref={deckCloseRef} className={styles.deckClose}><div className={styles.reflectiveSection}>
-            <div className={styles.noteDeckSection}>
+            <div className={styles.noteDeckSection} {...(!isDesktop && { role: 'region', 'aria-label': 'note to self' })}>
               {noteDeck.length > 0 ? (
                 isDesktop ? (
                   <div

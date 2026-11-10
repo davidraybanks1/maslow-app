@@ -187,6 +187,8 @@
   justify-content: space-between;
   padding: 0 var(--loam-gutter) 16px calc(var(--loam-gutter) + 38px);
 }
+/* keeps the row one line tall when there is no count (empty deck) */
+.noteFolioCount { min-height: 16px; }
 .noteFolioEdit {
   font-family: var(--loam-font-mono);
   font-size: var(--loam-label);

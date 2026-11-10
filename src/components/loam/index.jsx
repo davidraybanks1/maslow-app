@@ -131,12 +131,13 @@ export function PullQuote({ text, folio, noTopRule, children }) {
 
 /* The folio under a swipeable note. Kept outside the quote so it stays put
    while the note slides. index, total and onNext are absent when there is no
-   deck. The arrow takes the same path as a swipe (NoteStack's commit). */
+   deck. The arrow takes the same path as a swipe (NoteStack's commit). The
+   section's name ("note to self") lives on the region, not in the folio. */
 export function NoteFolio({ index, total, onNext, onEdit }) {
   return (
     <div className={styles.noteFolio}>
-      <span className={styles.pullQuoteFolio}>
-        NOTE TO SELF{total ? ` · ${index}/${total}` : ''}
+      <span className={`${styles.pullQuoteFolio} ${styles.noteFolioCount}`}>
+        {total ? `${index}/${total}` : ''}
         {onNext && <button type="button" className={styles.noteFolioNext} aria-label="next note" onClick={onNext}>→</button>}
       </span>
       {onEdit && <button type="button" className={styles.noteFolioEdit} onClick={onEdit}>edit</button>}
