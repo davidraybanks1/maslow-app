@@ -1,20 +1,20 @@
 .pip {
   flex: none;
-  width: 10px;
-  height: 10px;
-  border-radius: 3px;
-  border: 1.5px solid var(--border2);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid var(--border2);
   background: transparent;
   box-sizing: border-box;
 }
 
 .chip:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
-/* three small cards that show the word */
+/* the parts of the day as three words; a rule marks the one in view */
 .chips {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
   margin-bottom: 14px;
 }
 .chip {
@@ -23,18 +23,19 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 6px;
-  min-height: 60px;
-  padding: 9px 12px 10px;
-  border-radius: 14px;
-  border: 1px solid var(--border2);
-  background: var(--card);
+  min-height: 44px;
+  padding: 4px 0 8px;
+  border: none;
+  border-bottom: 1px solid transparent;
+  border-radius: 0;
+  background: none;
   color: var(--ink);
   text-align: left;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.chipOn { border: 1.5px solid var(--ink); padding: 8.5px 11.5px 9.5px; }
-.chipLater { border-style: dashed; background: transparent; cursor: default; }
+.chipOn { border-bottom-color: var(--loam-ink); }
+.chipLater { border-bottom: 1px dashed var(--ink4); cursor: default; }
 .chipTop {
   display: flex;
   align-items: center;
