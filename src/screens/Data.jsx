@@ -235,7 +235,7 @@ function dayAria(dk, pct, list) {
   return `${formatDkLabel(dk)}: ${pct}% of needs met${bands ? `; checked in ${bands}` : ''}`
 }
 
-function RhythmSection({ canvas, checkins, moods, range }) {
+function RhythmSection({ canvas, checkins, moods, range, keyDots = true }) {
   const monthly = range.keys.length > 7
   const { keys, todayKey } = range
   const chartRef = useChartCapture('data-rhythm', 'this week')
@@ -279,9 +279,12 @@ function RhythmSection({ canvas, checkins, moods, range }) {
       })}
       <div className={styles.legend}>
         <span>RULE = NEEDS MET</span>
-        <span className={styles.legendKey}>
-          {['good', 'mid', 'bad'].map(b => <span key={b}><i style={{ background: MOOD_FILL[b] }} />{BAND_LABEL[b]}</span>)}
-        </span>
+        {/* on the phone the feels legend right below carries the colours */}
+        {keyDots && (
+          <span className={styles.legendKey}>
+            {['good', 'mid', 'bad'].map(b => <span key={b}><i style={{ background: MOOD_FILL[b] }} />{BAND_LABEL[b]}</span>)}
+          </span>
+        )}
       </div>
     </div>
   )
@@ -753,7 +756,7 @@ export default function Data({ state, profileMenu, profileMenuRef, compact = fal
                 : <span className={styles.folioHere}>THIS {unit.toUpperCase()}</span>}
               <button type="button" className={styles.folioBtn} onClick={() => setOffset(o => o - 1)} disabled={offset === 0} aria-label={`next ${unit}`}>{nextLabel} →</button>
             </div>
-            <RhythmSection stats={stats} canvas={canvas} checkins={checkins} moods={moods} range={range} />
+            <RhythmSection stats={stats} canvas={canvas} checkins={checkins} moods={moods} range={range} keyDots={false} />
             <FeelsSection moods={moods} range={range} alwaysOpen />
           </section>
         </>
