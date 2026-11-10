@@ -2,7 +2,7 @@
    All visual components for the redesign. Screens rebuild on top of these.
    Parity note: PracticeDot wraps lib/useHold.js unchanged (hapticTick line 102,
    hapticSuccess line 70 stay at their existing call sites). */
-import { useState } from 'react'
+import { useState, useRef, useLayoutEffect } from 'react'
 import EntryText from '../EntryText'
 import JournalQuote from '../JournalQuote'
 import SignedImg from '../SignedImg'
@@ -152,7 +152,8 @@ export function NoteFolio({ index, total, onNext, onEdit }) {
    onBand(band): called when a band word is tapped
    onFeeling(feeling): called when a feeling word is tapped
    editing / onToggleEdit: reopen a finished answer to revise it
-   inlineFeeling: the feeling as a parenthetical on the band's own line (phone)
+   inlineFeeling: the feeling as a parenthetical on the band's own line, with
+     nothing under it (phone: the chevron is how an answer is reopened)
    trailing: a control set to the right of the prompt or answer line */
 const BAND_WORDS = ['good', 'mid', 'bad']
 export function CheckIn({ band, feeling, onBand, onFeeling, editing, onToggleEdit, inlineFeeling = false, trailing }) {
@@ -160,6 +161,35 @@ export function CheckIn({ band, feeling, onBand, onFeeling, editing, onToggleEdi
   const greeting = SLOT_GREETING[slot] || 'day'
   // retapping the answer you already gave changes nothing
   const pickBand = b => { if (b !== band || !feeling) onBand?.(b) }
+
+  // Phone: the block changes height as it is answered, and what's below eases
+  // with it rather than jumping.
+  const boxRef = useRef(null)
+  const lastHeight = useRef(null)
+  useLayoutEffect(() => {
+    const el = boxRef.current
+    if (!el || !inlineFeeling) return undefined
+    const moving = el.style.height !== ''
+    const from = moving ? el.getBoundingClientRect().height : lastHeight.current
+    el.style.transition = 'none'
+    el.style.height = ''
+    const to = el.getBoundingClientRect().height
+    lastHeight.current = to
+    if (from == null || from === to || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      el.style.transition = ''
+      el.style.overflow = ''
+      return undefined
+    }
+    el.style.boxSizing = 'border-box'
+    el.style.overflow = 'hidden'
+    el.style.height = `${from}px`
+    void el.offsetHeight
+    el.style.transition = 'height 220ms ease'
+    el.style.height = `${to}px`
+    const clear = () => { el.style.transition = ''; el.style.height = ''; el.style.overflow = ''; el.style.boxSizing = '' }
+    const timer = setTimeout(clear, 260)
+    return () => clearTimeout(timer)
+  }, [band, feeling, editing, inlineFeeling])
   const bandRow = (
     <div className={styles.checkInBands} role="group" aria-label="how are you">
       {BAND_WORDS.map(b => (
@@ -177,7 +207,7 @@ export function CheckIn({ band, feeling, onBand, onFeeling, editing, onToggleEdi
   )
   if (!band) {
     return (
-      <div className={styles.checkIn}>
+      <div ref={boxRef} className={styles.checkIn}>
         <div className={styles.checkInHead}>
           <div className={styles.checkInLabel}>HOW ARE YOU THIS {greeting.toUpperCase()}?</div>
           {trailing}
@@ -189,7 +219,7 @@ export function CheckIn({ band, feeling, onBand, onFeeling, editing, onToggleEdi
   const bandFeelings = FEELINGS[band] || []
   const answered = !!feeling && !editing
   return (
-    <div className={styles.checkIn}>
+    <div ref={boxRef} className={styles.checkIn}>
       <div className={styles.checkInHead}>
         <div className={styles.checkInChosen}>
           i&apos;m feeling <em>{BAND_LABEL[band]}.</em>
@@ -216,9 +246,9 @@ export function CheckIn({ band, feeling, onBand, onFeeling, editing, onToggleEdi
           </div>
         </>
       )}
-      {(answered || editing) && (
+      {(editing || (answered && !inlineFeeling)) && (
         <div className={styles.checkInAnswer}>
-          {answered && !inlineFeeling && <span className={styles.checkInLabel}>· {feeling}</span>}
+          {answered && <span className={styles.checkInLabel}>· {feeling}</span>}
           {onToggleEdit && (
             <button type="button" className={styles.checkInChange} aria-expanded={!!editing} onClick={onToggleEdit}>
               {editing ? 'done' : 'change'}
