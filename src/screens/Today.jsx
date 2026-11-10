@@ -10,7 +10,9 @@ import { normalizeBand, BAND_LABEL, THREADS, THREAD_COPY, FREQUENCY_INTRO, split
 import { useIsDesktop } from '../lib/useIsDesktop'
 import FrequencyCard, { MOOD_PIP_COLOR } from '../components/FrequencyCard'
 import Glyph from '../lib/glyphs'
-import { ProgressRule, Dateline, ProfileBadge, CheckIn, EntryRow, WriteBlock, Greeting, PullQuote, NoteFolio, LabelRow } from '../components/loam'
+import { ProgressRule, Dateline, ProfileBadge, CheckIn, EntryRow, WriteBlock, Greeting, PullQuote, NoteFolio, LabelRow, DayLog } from '../components/loam'
+
+const DAY_LOG_ABBR = { morning: 'am', midday: 'mid', evening: 'pm' }
 import NoteStack from '../components/NoteStack'
 import JournalQuote from '../components/JournalQuote'
 import ManageDeck from '../components/ManageDeck'
@@ -840,6 +842,23 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         : null,
   }))
 
+  // the day log line (phone): same three states as the tiles above —
+  // later → pending, recorded → logged, earlier with nothing → missed, current unanswered → pending
+  const dayLogItems = daypartsData.map(d => {
+    const later = !d.onTap && !d.isCurrent
+    const state = later ? 'pending' : d.band ? 'logged' : d.isCurrent ? 'pending' : 'missed'
+    const moodWord = d.band ? BAND_LABEL[d.band] : null
+    const blank = state === 'missed' ? '—' : '…'
+    return {
+      slot: d.name,
+      abbr: DAY_LOG_ABBR[d.name],
+      state,
+      word: state !== 'logged' ? blank : d.isCurrent ? moodWord : d.feeling || moodWord,
+      short: state !== 'logged' ? blank : moodWord,
+      sr: state === 'logged' ? (d.feeling || moodWord) : state === 'missed' ? 'not logged' : 'not yet',
+    }
+  })
+
   // something to open: a check-in already made, or an earlier part of the day to add
   const canLookBack = daypartsData.some(d => d.band) || precedingSlots(slot).length > 0
 
@@ -1074,6 +1093,8 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               editing={editingCurrent}
               onToggleEdit={() => { setOpenRetroSlot(null); setEditingCurrent(e => !e) }}
               inlineFeeling
+              chips
+              dayLog={<DayLog items={dayLogItems} />}
               trailing={canLookBack ? <DayToggle open={dayOpen} onToggle={() => setDayOpen(o => !o)} controls="day-vibrations" /> : null}
             />
             {canLookBack && (
