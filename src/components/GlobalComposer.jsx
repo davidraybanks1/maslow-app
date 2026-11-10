@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { toBlob } from 'html-to-image'
-import { allNeeds } from '../lib/constants'
+import { allNeeds, needName } from '../lib/constants'
 import { currentSlot } from '../lib/slots'
 import { todayKey, addJournalEntry, uploadNoteImage, loadCustomTags, loadRevisitQueue } from '../lib/store'
 import { normalizeBand } from '../lib/frequency'
@@ -25,6 +25,8 @@ function formatQuoteDate(dateKey) {
    lives inline in DesktopNav's footer (see DesktopNav.jsx). Same glyph as
    the "drafts" tab and the "drafts" section header on Today — one mark for
    the one idea, everywhere it shows up. */
+const DRAFT_KEY = 'loam_composer_draft'
+
 export function ComposerFab({ onClick }) {
   // Out of the way while reading down the page, back when scrolling up or at
   // either end. It stays focusable, and focus brings it back (see .fabAway).
@@ -60,7 +62,10 @@ export default function GlobalComposer({ state, logMood, open, onClose }) {
   const today = todayKey()
   const slot = currentSlot()
 
-  const [draftText, setDraftText] = useState('')
+  // the words stay on this device until they're saved, whichever way the sheet closes
+  const [draftText, setDraftText] = useState(() => {
+    try { return localStorage.getItem(DRAFT_KEY) || '' } catch { return '' }
+  })
   const [draftNeedId, setDraftNeedId] = useState(null)
   const [draftCustom, setDraftCustom] = useState(null)
   const [draftMoodBand, setDraftMoodBand] = useState(null)
@@ -168,13 +173,23 @@ export default function GlobalComposer({ state, logMood, open, onClose }) {
     setSelectedChartId(null)
   }
 
+  useEffect(() => {
+    try {
+      if (draftText) localStorage.setItem(DRAFT_KEY, draftText)
+      else localStorage.removeItem(DRAFT_KEY)
+    } catch { /* storage unavailable */ }
+  }, [draftText])
+
+  // Cancel, a tap on the scrim and Esc all land here. Only saving clears the words.
   function handleClose() {
+    const kept = draftText
     resetDraft()
+    setDraftText(kept)
     onClose()
   }
 
-  // Hand off to the shape picker. Whatever's typed stays here for when the
-  // sheet is reopened.
+  // Hand off to the rooms. Whatever's typed stays here for when the sheet is
+  // reopened.
   function openShapes() {
     onClose()
     window.dispatchEvent(new CustomEvent('maslow:open-shapes', { detail: {} }))
@@ -213,7 +228,8 @@ export default function GlobalComposer({ state, logMood, open, onClose }) {
     setSaving(false)
     if (error) { setSaveError('save failed — try again'); return }
     window.dispatchEvent(new CustomEvent('maslow:entry-added', { detail: { entry: data, dateKey: today } }))
-    handleClose()
+    resetDraft()
+    onClose()
   }
 
   async function handleFilePick(e) {
@@ -246,8 +262,18 @@ export default function GlobalComposer({ state, logMood, open, onClose }) {
 
   function handleKeyDown(e) {
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); handleAddEntry() }
-    if (e.key === 'Escape') { attachMenuOpen ? setAttachMenuOpen(false) : handleClose() }
   }
+
+  useEffect(() => {
+    if (!open) return undefined
+    function onEsc(e) {
+      if (e.key !== 'Escape') return
+      if (attachMenuOpen) setAttachMenuOpen(false)
+      else handleClose()
+    }
+    document.addEventListener('keydown', onEsc)
+    return () => document.removeEventListener('keydown', onEsc)
+  })
 
   function renderAttachControl() {
     const hasPhoto = !!draftImage
@@ -269,7 +295,7 @@ export default function GlobalComposer({ state, logMood, open, onClose }) {
             )}
           </div>
         )}
-        <button className={todayStyles.attachBtn} onClick={() => !noItems && setAttachMenuOpen(o => !o)} aria-label="attach photo or quote" disabled={noItems}>⊕</button>
+        <button className={todayStyles.attachBtn} onClick={() => !noItems && setAttachMenuOpen(o => !o)} aria-label="attach photo or quote" disabled={noItems}>+</button>
         {hasPhoto && (
           <button className={todayStyles.attachChip} onClick={() => { setDraftImage(null); setSelectedChartId(null) }}>
             <SignedImg src={draftImage} className={todayStyles.attachThumb} alt="" />×
@@ -311,28 +337,28 @@ export default function GlobalComposer({ state, logMood, open, onClose }) {
         </div>
       )}
 
-      <div className={todayStyles.composerChips}>
-        <span className={todayStyles.composerSlotChip}>{slot}</span>
+      <div className={styles.tags}>
+        <span className={styles.tagOn}>{slot}</span>
         {chipBand ? (
-          <button className={todayStyles.composerTagActive} onClick={openFreqPicker}>
-            <span className={todayStyles.composerFreqDot} style={draftMoodInherited ? { border: `1.5px solid ${MOOD_PIP_COLOR[chipBand]}` } : { background: MOOD_PIP_COLOR[chipBand] }} />
+          <button type="button" className={styles.tagOn} onClick={openFreqPicker}>
+            <span className={styles.tagDot} style={draftMoodInherited ? { border: `1.5px solid ${MOOD_PIP_COLOR[chipBand]}` } : { background: MOOD_PIP_COLOR[chipBand] }} />
             {chipFeeling || chipBand}
             {!draftMoodInherited && (
-              <span className={todayStyles.composerFreqClear} onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); setDraftMoodInherited(true); setDraftMoodBand(null); setDraftMoodFeeling(null); setFreqPickerOpen(false) }}>×</span>
+              <span onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); setDraftMoodInherited(true); setDraftMoodBand(null); setDraftMoodFeeling(null); setFreqPickerOpen(false) }}> ×</span>
             )}
           </button>
         ) : (
-          <button className={todayStyles.composerTagBtn} onClick={openFreqPicker}>+ vibration</button>
+          <button type="button" className={styles.tagAdd} onClick={openFreqPicker}>+ feeling</button>
         )}
         {draftNeedId ? (
-          <button className={todayStyles.composerTagActive} onClick={() => setDraftNeedId(null)}>{draftNeedId} ×</button>
+          <button type="button" className={styles.tagOn} onClick={() => setDraftNeedId(null)}>{needName(draftNeedId)} ×</button>
         ) : (
-          <button className={todayStyles.composerTagBtn} onClick={() => { setNeedPickerOpen(o => !o); setCustomPickerOpen(false); setFreqPickerOpen(false) }}>+ need</button>
+          <button type="button" className={styles.tagAdd} onClick={() => { setNeedPickerOpen(o => !o); setCustomPickerOpen(false); setFreqPickerOpen(false) }}>+ need</button>
         )}
         {customTags.length > 0 && (draftCustom ? (
-          <button className={todayStyles.composerTagActive} onClick={() => setDraftCustom(null)}>{draftCustom} ×</button>
+          <button type="button" className={styles.tagOn} onClick={() => setDraftCustom(null)}>{draftCustom} ×</button>
         ) : (
-          <button className={todayStyles.composerTagBtn} onClick={() => { setCustomPickerOpen(o => !o); setNeedPickerOpen(false); setFreqPickerOpen(false) }}>+ custom</button>
+          <button type="button" className={styles.tagAdd} onClick={() => { setCustomPickerOpen(o => !o); setNeedPickerOpen(false); setFreqPickerOpen(false) }}>+ custom</button>
         ))}
       </div>
 
@@ -353,34 +379,34 @@ export default function GlobalComposer({ state, logMood, open, onClose }) {
         </div>
       )}
       {needPickerOpen && activeNeeds.length > 0 && (
-        <div className={todayStyles.composerPicker}>
+        <div className={styles.picker}>
           {activeNeeds.map(n => (
-            <button key={n.id} className={todayStyles.composerPickerItem} onClick={() => { setDraftNeedId(n.id); setNeedPickerOpen(false) }}>{n.name}</button>
+            <button key={n.id} className={styles.pickerItem} onClick={() => { setDraftNeedId(n.id); setNeedPickerOpen(false) }}>{n.name}</button>
           ))}
         </div>
       )}
       {customPickerOpen && customTags.length > 0 && (
-        <div className={todayStyles.composerPicker}>
+        <div className={styles.picker}>
           {customTags.map(t => (
-            <button key={t.id} className={todayStyles.composerPickerItem} onClick={() => { setDraftCustom(t.label); setCustomPickerOpen(false) }}>{t.label}</button>
+            <button key={t.id} className={styles.pickerItem} onClick={() => { setDraftCustom(t.label); setCustomPickerOpen(false) }}>{t.label}</button>
           ))}
         </div>
       )}
 
       <textarea
         ref={textareaRef}
-        className={todayStyles.journalInput}
+        className={styles.ruled}
         placeholder="what's on your mind?"
         value={draftText}
         onChange={e => setDraftText(e.target.value)}
         onKeyDown={handleKeyDown}
         maxLength={10000}
-        rows={4}
+        rows={8}
       />
-      <div className={todayStyles.composerMobileFooter}>
+      <div className={styles.footer}>
         {renderAttachControl()}
-        <button className={todayStyles.composerCancelBtn} onClick={handleClose}>cancel</button>
-        <button className={todayStyles.journalAddBtn} onClick={handleAddEntry} disabled={!draftText.trim() || saving}>add</button>
+        <button type="button" className={styles.cancel} onClick={handleClose}>cancel</button>
+        <button type="button" className={styles.add} onClick={handleAddEntry} disabled={!draftText.trim() || saving}>add</button>
       </div>
       {saveError && <div className={todayStyles.journalSaveError}>{saveError}</div>}
 
@@ -396,7 +422,7 @@ export default function GlobalComposer({ state, logMood, open, onClose }) {
             <div className={todayStyles.quotePickerList}>
               {quoteLoading && <div className={todayStyles.quotePickerEmpty}>loading…</div>}
               {!quoteLoading && quoteEntries.length === 0 && (
-                <div className={todayStyles.quotePickerEmpty}>mark entries ↩ on Reflect to queue them here</div>
+                <div className={todayStyles.quotePickerEmpty}>mark entries ↩ in drafts to queue them here</div>
               )}
               {!quoteLoading && quoteEntries.map(e => (
                 <button key={e.id} className={todayStyles.quotePickerItem} onClick={() => { setQuotedText(e.entry); setQuotedDate(e.date_key); setQuotePicker(false) }}>
@@ -411,17 +437,18 @@ export default function GlobalComposer({ state, logMood, open, onClose }) {
     </>
   )
 
+  const head = (
+    <div className={styles.sheetHead}>
+      <span className={styles.sheetDate}>new draft · {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+      <button type="button" className={styles.roomsLink} onClick={openShapes}>rooms →</button>
+    </div>
+  )
+
   if (isDesktop) {
     return (
       <div className={styles.deskScrim} onClick={handleClose}>
         <div className={styles.deskSheet} onClick={e => e.stopPropagation()}>
-          <div className={styles.sheetHead}>
-            <span className={styles.sheetDate}>new draft · today</span>
-            <span className={styles.sheetHeadRight}>
-              <button className={styles.shapesPill} onClick={openShapes}>shapes</button>
-              <button className={styles.sheetClose} onClick={handleClose} aria-label="close">✕</button>
-            </span>
-          </div>
+          {head}
           {body}
         </div>
       </div>
@@ -431,13 +458,8 @@ export default function GlobalComposer({ state, logMood, open, onClose }) {
   return (
     <div className={styles.mobileScrim} onClick={handleClose}>
       <div className={styles.mobileSheet} onClick={e => e.stopPropagation()}>
-        <div className={styles.sheetHead}>
-          <span className={styles.sheetDate}>new draft · today</span>
-          <span className={styles.sheetHeadRight}>
-            <button className={styles.shapesPill} onClick={openShapes}>shapes</button>
-            <button className={styles.sheetClose} onClick={handleClose} aria-label="close">✕</button>
-          </span>
-        </div>
+        <div className={styles.grabber} aria-hidden="true" />
+        {head}
         {body}
       </div>
     </div>

@@ -1,0 +1,195 @@
+/* Drafts: one long page, all paper. HANDOFF §4 and §6.5. The page gutter lives
+   here and the loam primitives run flush inside it. */
+
+.screen {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding: 0 24px 64px; /* room to read past the round write button */
+  background: var(--loam-paper);
+  box-sizing: border-box;
+  --loam-gutter: 0px;
+}
+.dockAnchor { position: sticky; top: 0; height: 0; z-index: 20; margin-inline: -24px; }
+/* sticky stops below the scroller's notch padding; pull the paper up behind the status bar */
+.dock { margin-top: calc(-1 * var(--safe-top)); padding: var(--safe-top) 24px 0; background: var(--loam-paper); }
+
+.title {
+  margin: 0;
+  padding: 18px 0 8px;
+  font-family: var(--loam-font-display);
+  font-size: var(--loam-greeting);
+  font-weight: 400;
+  line-height: 0.98;
+  letter-spacing: -0.01em;
+  color: var(--loam-ink);
+}
+.title em { font-style: italic; }
+.sub { margin: 0 0 16px; font-family: var(--loam-font-reading); font-size: var(--loam-body); line-height: 1.3; color: var(--loam-ink-2); }
+.emptyState { margin-top: 32px; font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-muted); text-align: center; }
+.quiet { margin: 10px 0 0; font-family: var(--loam-font-reading); font-style: italic; font-size: var(--loam-body); line-height: 1.3; color: var(--loam-muted); }
+
+.threads { margin-top: 4px; }
+.block { margin-top: 32px; border-top: var(--loam-rule-open); padding-top: 14px; }
+
+.link {
+  align-self: flex-start;
+  padding: 8px 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  letter-spacing: 0.04em;
+  color: var(--loam-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── open thread ── */
+.threadRead { display: flex; flex-direction: column; padding: 8px 0 12px; border-bottom: var(--loam-rule-close); }
+.threadReadHeader { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.threadReadTitle { font-family: var(--loam-font-display); font-style: italic; font-size: var(--loam-index); color: var(--loam-ink); }
+.threadReadIntro { margin: 0 0 4px; font-family: var(--loam-font-reading); font-size: var(--loam-body); line-height: 1.3; color: var(--loam-ink-2); }
+
+/* ── wild card: the words stop short of the round write button ── */
+.wildText {
+  margin: 10px 0 0;
+  padding-right: 56px;
+  font-family: var(--loam-font-reading);
+  font-style: italic;
+  font-size: var(--loam-quote);
+  line-height: 1.22;
+  color: var(--loam-ink);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.wildTags { margin-top: 10px; font-family: var(--loam-font-mono); font-size: var(--loam-tag); letter-spacing: 0.04em; color: var(--loam-ink); }
+/* kept to the left, clear of the round write button */
+.wildActions { display: flex; align-items: center; gap: 16px; margin-top: 6px; }
+.mark { padding: 8px 0; background: none; border: none; cursor: pointer; font-family: var(--loam-font-mono); font-size: var(--loam-label); letter-spacing: 0.05em; color: var(--loam-muted); }
+.markOn { color: var(--loam-ink); }
+
+/* ── calendar and the date picker ── */
+.calNavRow, .datePickerNav { display: flex; align-items: center; justify-content: space-between; padding: 4px 0; }
+.calNavMonthLabel { font-family: var(--loam-font-display); font-size: var(--loam-index); color: var(--loam-ink); }
+.calNavBtn { min-width: 40px; min-height: 40px; background: none; border: none; cursor: pointer; font-family: var(--loam-font-mono); font-size: 16px; color: var(--loam-ink); -webkit-tap-highlight-color: transparent; }
+.calNavBtn:disabled, .calNavBtnDisabled { color: var(--loam-muted); opacity: 0.5; cursor: default; }
+.calDayLabels, .calGrid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.calDayLabel { padding: 4px 0; text-align: center; font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-muted); }
+.calDayBlank { min-height: 48px; }
+.calDay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+  min-height: 48px;
+  padding: 6px 0 4px;
+  background: none;
+  border: none;
+  border-top: var(--loam-rule-row);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.calDayFuture { cursor: default; }
+.calDayFuture .calDayNum { color: var(--loam-muted); opacity: 0.6; }
+.calDayNum { font-family: var(--loam-font-display); font-size: 18px; line-height: 1.1; color: var(--loam-ink); }
+.calDayNumMuted { color: var(--loam-muted); }
+.calDayNumWritten { text-decoration: underline; text-decoration-color: var(--loam-gold); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.calDayToday .calDayNum { font-style: italic; }
+.calDaySelected { border-top: 1.5px solid var(--loam-ink); }
+.calDaySelected .calDayNum { font-style: italic; }
+.calDayDots { display: flex; gap: 2px; }
+.calDayDot { width: 7px; height: 7px; border-radius: 50%; display: block; }
+.calDayDotOff { background: var(--loam-track); }
+
+.pickerDaySelected { border-top: 1.5px solid var(--loam-ink); background: var(--loam-track); }
+.pickerDayInRange { background: var(--loam-track); }
+.pickerDayNum { font-style: italic; }
+.datePicker { padding-top: 6px; border-top: var(--loam-rule-row); }
+.datePickerHint { padding: 2px 0 6px; font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-muted); }
+.datePickerCloseBtn { padding: 8px 0; background: none; border: none; cursor: pointer; font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-ink); text-decoration: underline; text-underline-offset: 3px; }
+
+/* day detail */
+.calDetail { margin-top: 8px; padding-top: 10px; border-top: var(--loam-rule-close); }
+.calDetailHeader { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.calDetailDate { font-family: var(--loam-font-display); font-style: italic; font-size: var(--loam-chapter); color: var(--loam-ink); }
+.calDetailHeaderBtns { display: flex; align-items: center; gap: 14px; }
+.calDetailEditBtn { padding: 8px 0; background: none; border: none; cursor: pointer; font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-ink); text-decoration: underline; text-underline-offset: 3px; }
+.calDetailEditBtnActive { font-weight: 500; }
+.calDetailCloseBtn { padding: 4px; background: none; border: none; cursor: pointer; font-size: 18px; line-height: 1; color: var(--loam-ink); }
+.calDetailMoodRow { display: flex; flex-direction: column; gap: 4px; padding: 6px 0; }
+.calDetailMoodPair { display: flex; align-items: center; gap: 8px; }
+.calDetailMoodPairOff { opacity: 0.55; }
+.calDetailMoodDot { width: 8px; height: 8px; border-radius: 50%; background: var(--loam-track); }
+.calDetailMoodLabel { font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-ink-2); }
+.calDetailSectionLabel { margin-top: 10px; padding-bottom: 6px; border-bottom: var(--loam-rule-row); font-family: var(--loam-font-mono); font-size: var(--loam-label); letter-spacing: 0.1em; text-transform: uppercase; color: var(--loam-ink); }
+.calDetailEditHint { padding-top: 6px; font-family: var(--loam-font-reading); font-style: italic; font-size: var(--loam-body); color: var(--loam-ink-2); }
+.calDetailEmpty { margin: 8px 0 0; font-family: var(--loam-font-reading); font-style: italic; font-size: var(--loam-body); color: var(--loam-muted); }
+.calDetailNeed { padding: 8px 0 2px; }
+.calDetailNeedHead { display: flex; align-items: center; gap: 8px; }
+.calDetailNeedDot { width: 8px; height: 8px; border-radius: 50%; }
+.calDetailNeedName { flex: 1; font-family: var(--loam-font-display); font-size: var(--loam-index); color: var(--loam-ink); }
+.calDetailNeedCount { font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-muted); }
+.calDetailPracticeRow { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 34px; padding: 0 0 0 16px; background: none; border: none; text-align: left; }
+.calDetailPracticeRowEditable { min-height: 44px; cursor: pointer; }
+.calDetailPracticeRowOff { opacity: 0.55; }
+.calDetailPracticeRing { flex: none; width: 14px; height: 14px; border-radius: 50%; box-sizing: border-box; }
+.calDetailPracticeName { flex: 1; font-family: var(--loam-font-reading); font-size: var(--loam-body); color: var(--loam-ink); }
+.calDetailPracticeTimes { font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-muted); }
+.calDetailJournalEntry { padding: 8px 0; border-bottom: var(--loam-rule-row); }
+.calDetailJournalMeta { display: flex; align-items: center; gap: 6px; font-family: var(--loam-font-mono); font-size: var(--loam-label); letter-spacing: 0.06em; text-transform: uppercase; color: var(--loam-muted); }
+.calDetailJournalDot { width: 7px; height: 7px; border-radius: 50%; }
+.calDetailJournalBody { margin: 4px 0 0; font-family: var(--loam-font-reading); font-size: var(--loam-body); line-height: 1.35; color: var(--loam-ink-2); white-space: pre-wrap; }
+.calDetailJournalTags { display: flex; flex-wrap: wrap; gap: 0 12px; margin-top: 4px; }
+.calDetailJournalTag { font-family: var(--loam-font-mono); font-size: var(--loam-tag); color: var(--loam-ink); }
+
+/* ── archive ── */
+.archiveCards { display: flex; flex-direction: column; }
+.archiveTitle { margin: 14px 0 4px; }
+.facetBar { display: flex; flex-direction: column; padding-bottom: 10px; border-bottom: var(--loam-rule-open); }
+.facetRow, .facetRail, .facetPanel, .facetBandRow { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 16px; }
+.facetPanel { padding: 2px 0 6px; }
+.facetBandRow { width: 100%; }
+.facetBandName { flex: 0 0 34px; font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-muted); }
+.facetChip, .facet, .facetClear {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-tag);
+  letter-spacing: 0.04em;
+  color: var(--loam-muted);
+  -webkit-tap-highlight-color: transparent;
+}
+.facetChip:disabled { opacity: 0.5; cursor: default; }
+.facetChipActive, .facetSet, .facetOpen { color: var(--loam-ink); }
+.facetChipActive { text-decoration: underline; text-underline-offset: 4px; }
+.facetCount::before { content: '· '; }
+.facetDot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.facetValue { color: var(--loam-ink); text-decoration: underline; text-underline-offset: 3px; }
+.facetChev { font-style: normal; font-size: var(--loam-tag); }
+.facetClear { color: var(--loam-ink); text-decoration: underline; text-underline-offset: 3px; }
+
+.retro { display: flex; flex-direction: column; gap: 2px; }
+.retroAdds, .retroRow { display: flex; flex-wrap: wrap; gap: 0 16px; }
+.retroAdd, .retroOption { display: inline-flex; align-items: center; gap: 5px; padding: 5px 0; background: none; border: none; cursor: pointer; font-family: var(--loam-font-mono); font-size: var(--loam-tag); letter-spacing: 0.04em; color: var(--loam-muted); }
+.retroAddOpen { color: var(--loam-ink); }
+.retroOption { color: var(--loam-ink); text-decoration: underline; text-underline-offset: 3px; }
+.retroOptionOn { text-decoration-thickness: 2px; }
+.retroDot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+
+.archiveMoreRow { display: flex; gap: 18px; padding-top: 8px; }
+.archiveMoreBtn { padding: 8px 0; background: none; border: none; cursor: pointer; font-family: var(--loam-font-mono); font-size: var(--loam-label); letter-spacing: 0.04em; color: var(--loam-ink); text-decoration: underline; text-underline-offset: 3px; }
+
+/* photo viewer */
+.lightbox { position: fixed; inset: 0; z-index: 300; display: flex; align-items: center; justify-content: center; background: rgba(23, 21, 18, 0.88); }
+.lightboxImage { max-width: 92vw; max-height: 86vh; object-fit: contain; }
+.lightboxClose { position: absolute; top: calc(var(--safe-top) + 10px); right: 16px; padding: 8px; background: none; border: none; cursor: pointer; font-size: 26px; line-height: 1; color: var(--loam-paper); }

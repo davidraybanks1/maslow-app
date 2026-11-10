@@ -3,7 +3,8 @@ import { createPortal } from 'react-dom'
 import { todayKey, addJournalEntry, settleRevisit } from '../../lib/store'
 import { currentSlot } from '../../lib/slots'
 import { hapticSuccess } from '../../lib/native'
-import { SHAPES, SHAPE_DB, latestMoodToday, suggestShape } from '../../lib/shapeFacts'
+import { ROOM_PICKER, HOSTED_ROOMS, SHAPE_DB, latestMoodToday, suggestShape } from '../../lib/shapeFacts'
+import JournalPage from '../JournalPage'
 import { ROOMS } from './Rooms'
 import styles from './Shapes.module.css'
 
@@ -25,16 +26,18 @@ export const GLYPHS = {
   ),
 }
 
-/* The shape picker and the six writing rooms, in one component.
+/* The rooms picker and the writing rooms, in one component.
    mode="inline"  — a persistent section on Today. The picker is always
                     showing; a room opens in place and returns to the picker
                     after saving.
    mode="overlay" — the full-screen version opened from other screens (the
-                    composer's "shapes" pill) with the window event
+                    composer's "rooms" link) with the window event
                     `maslow:open-shapes` ({ detail: { shape?, source? } }).
    Either way it saves an ordinary draft with `shape` set, then tells the
    rest of the app with `maslow:entry-added`, like the composer does. */
-export function ShapesPanel({ state, mode = 'inline', initial, onExit, onJustWrite }) {
+const NUMERALS = ['i', 'ii', 'iii', 'iv', 'v']
+
+export function ShapesPanel({ state, logMood, mode = 'inline', initial, onExit }) {
   const inline = mode === 'inline'
   const [stage, setStage] = useState(initial?.shape || 'picker')
   const [source, setSource] = useState(initial?.source || null)
@@ -118,6 +121,7 @@ export function ShapesPanel({ state, mode = 'inline', initial, onExit, onJustWri
 
   const room = ROOMS[stage]
   const Comp = room?.Comp
+  const hosted = HOSTED_ROOMS.has(stage)
   const dateLabel = new Date().toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })
 
   const discardBar = askDiscard && (
@@ -134,38 +138,30 @@ export function ShapesPanel({ state, mode = 'inline', initial, onExit, onJustWri
     <div className={inline ? styles.inlinePanel : styles.panel} data-shapes-panel>
       {!inline && (
         <div className={styles.head}>
-          <span className={styles.eyebrow}>{room ? room.eyebrow : 'shapes'} · {dateLabel}</span>
-          <button className={styles.close} onClick={leave} aria-label="close">✕</button>
+          <span className={styles.eyebrow}>{room ? room.eyebrow : 'rooms'} · {dateLabel}</span>
+          <button className={styles.close} onClick={leave} aria-label="close">×</button>
         </div>
       )}
       {!inline && discardBar}
 
       {stage === 'picker' ? (
         <>
-          {/* On Today the picker is just the tiles; the suggested one is outlined. */}
           {!inline && (
             <>
-              <h2 className={styles.title}>How do you want to write <em>today?</em></h2>
-              <p className={styles.sub}>pick a room instead of facing a blank page. nothing here needs to be finished.</p>
-              {suggestion && <p className={styles.suggest}>{suggestion.line}</p>}
+              <h2 className={styles.pickerTitle}>how do you want to write <em>today?</em></h2>
+              <p className={styles.sub}>pick a room, or close this and write on a blank page. nothing here needs to be finished.</p>
             </>
           )}
-          <button className={styles.justWrite} onClick={() => { if (!inline) onExit?.(); onJustWrite?.() }}>
-            blank page
-          </button>
-          <div className={styles.grid}>
-            {SHAPES.map(s => (
-              <button
-                key={s.id}
-                className={`${styles.tile} ${suggestion?.id === s.id ? styles.tileSuggested : ''}`}
-                onClick={() => { setStage(s.id); setDraft({ entry: '' }) }}
-              >
-                {GLYPHS[s.id]}
-                <span className={styles.tileName}>{s.label}</span>
-                <span className={styles.tileBlurb}>{s.blurb}</span>
+          <div className={styles.roomList}>
+            {ROOM_PICKER.map((s, i) => (
+              <button key={s.id} type="button" className={styles.roomRow} onClick={() => { setStage(s.id); setDraft({ entry: '' }) }}>
+                <span className={styles.roomNum}>{NUMERALS[i]}.</span>
+                <span className={`${styles.roomName}${suggestion?.id === s.id ? ` ${styles.roomNameOn}` : ''}`}>{s.label}</span>
+                <span className={styles.roomBlurb}>{s.blurb}</span>
               </button>
             ))}
           </div>
+          {!inline && suggestion && <p className={styles.suggest}><span aria-hidden="true">✳ </span>{suggestion.line}</p>}
         </>
       ) : (
         <>
@@ -175,17 +171,29 @@ export function ShapesPanel({ state, mode = 'inline', initial, onExit, onJustWri
               <div style={{ height: 14 }} />
             </>
           )}
-          <Comp
-            key={stage}
-            state={state}
-            today={today}
-            source={source}
-            onDraft={setDraft}
-            onSave={save}
-          />
+          {hosted ? (
+            <JournalPage
+              key={stage}
+              state={state}
+              logMood={logMood}
+              room={stage}
+              source={source}
+              onDirty={t => setDraft({ entry: t })}
+              onDone={finishLeave}
+            />
+          ) : (
+            <Comp
+              key={stage}
+              state={state}
+              today={today}
+              source={source}
+              onDraft={setDraft}
+              onSave={save}
+            />
+          )}
           {error && <p className={styles.error} role="alert">{error}</p>}
           {inline && discardBar}
-          {inline ? (
+          {hosted ? null : inline ? (
             <div className={styles.footInline}>
               <button className={styles.cancel} onClick={leave}>cancel</button>
               {stage !== 'timer' && (
@@ -205,7 +213,7 @@ export function ShapesPanel({ state, mode = 'inline', initial, onExit, onJustWri
 }
 
 /* The full-screen version. */
-export default function ShapesFlow({ state, open, onClose, onJustWrite }) {
+export default function ShapesFlow({ state, logMood, open, onClose }) {
   const [on, setOn] = useState(false)
   useEffect(() => {
     if (!open) { setOn(false); return }
@@ -215,7 +223,7 @@ export default function ShapesFlow({ state, open, onClose, onJustWrite }) {
   if (!open) return null
   return createPortal(
     <div className={`${styles.overlay} ${on ? styles.overlayOn : ''}`} role="dialog" aria-modal="true" aria-label="how do you want to write">
-      <ShapesPanel state={state} mode="overlay" initial={open} onExit={onClose} onJustWrite={onJustWrite} />
+      <ShapesPanel state={state} logMood={logMood} mode="overlay" initial={open} onExit={onClose} />
     </div>,
     document.body,
   )

@@ -541,7 +541,7 @@ export const ROOMS = {
   three_truths: { eyebrow: 'three truths', title: ['three things are true.', 'what do they share?'], Comp: ThreeTruths },
   tension:      { eyebrow: 'tension',      title: ['two things pull.', 'what lives between?'], Comp: Tension },
   sort_first:   { eyebrow: 'sort first',   title: ['sort it first.', 'then say a line.'], Comp: SortFirst },
-  continue:     { eyebrow: 'continue',     title: ['continue a conversation', 'with yourself.'], Comp: Continue },
-  one_thing:    { eyebrow: 'one thing',    title: ['one need.', 'one thing about it.'], Comp: OneThing },
-  timer:        { eyebrow: 'timer room',   title: ['set a timer.', 'then it is done.'], Comp: TimerRoom },
+  continue:     { eyebrow: 'revisit',      title: ['continue a conversation', 'with yourself.'], Comp: Continue },
+  one_thing:    { eyebrow: 'gave and took', title: ['what gave,', 'and what took.'], Comp: OneThing },
+  timer:        { eyebrow: 'timer',        title: ['set a timer.', 'then it is done.'], Comp: TimerRoom },
 }

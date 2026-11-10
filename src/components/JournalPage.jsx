@@ -12,7 +12,7 @@ import styles from './JournalPage.module.css'
 // are a row of glyphs at the top. Tap one and it explains itself, with a start
 // button; tap start and you're in it, with a way out. Below that is the blank
 // page, open by default so you can just type, with tags (part of the day,
-// vibration, need, your own).
+// feeling, need, your own).
 //
 // Whatever you've written stays when you move between the blank page and a
 // space. What's saved is an ordinary journal entry, with `shape` set when a
@@ -43,13 +43,16 @@ function ringPath(w, h) {
   ].join(' ')
 }
 
-export default function JournalPage({ state, logMood }) {
+// With `room`, this is one room and nothing else: the rooms sheet and the desktop
+// writing page host it, and the glyph row, blank page and intro card are skipped.
+export default function JournalPage({ state, logMood, room, source, onDone, onDirty }) {
+  const hosted = !!room
   const uid = useId().replace(/[^a-z0-9]/gi, '')
   // nothing is saved until "done": the page lives in memory only
   const [text, setText] = useState('')
-  const [mode, setMode] = useState(null)
+  const [mode, setMode] = useState(room || null)
   // a space has been picked (mode) and also started (you're writing in it)
-  const [started, setStarted] = useState(false)
+  const [started, setStarted] = useState(hosted)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   // what the open space adds around the page (see JournalSpaces)
@@ -134,6 +137,7 @@ export default function JournalPage({ state, logMood }) {
   // other parts of the app can open a specific space (e.g. a note's "continue")
   useEffect(() => {
     function onOpen(e) {
+      if (hosted) return
       const s = e.detail?.shape
       if (EXPERIENCES.some(x => x.id === s)) { baseText.current = textRef.current; setMode(s); setStarted(true) }
     }
@@ -173,7 +177,8 @@ export default function JournalPage({ state, logMood }) {
     hapticSuccess()
     window.dispatchEvent(new CustomEvent('maslow:entry-added', { detail: { entry: data, dateKey: today } }))
     setText('')
-    exit()
+    if (hosted) onDone?.()
+    else exit()
   }
 
   doneRef.current = done
@@ -199,20 +204,22 @@ export default function JournalPage({ state, logMood }) {
     })
   }
 
+  useEffect(() => { onDirty?.(text) }, [text])
+
   useLayoutEffect(() => {
     if (blank && blankWrapRef.current) blankH.current = blankWrapRef.current.offsetHeight
   })
 
   return (
     <div className={styles.root}>
-      <div className={styles.header}>
+      {!hosted && <div className={styles.header}>
         <span className={styles.label}>WRITE</span>
-      </div>
+      </div>}
 
       {/* always here, so the spaces never jump when one is picked */}
-      <p className={styles.caption}>begin with one of these, or just write</p>
+      {!hosted && <p className={styles.caption}>begin with one of these, or just write</p>}
 
-      <div className={styles.glyphs} role="group" aria-label="Writing style">
+      {!hosted && <div className={styles.glyphs} role="group" aria-label="Writing style">
         {EXPERIENCES.map(x => {
           const on = x.id === mode
           return (
@@ -230,9 +237,9 @@ export default function JournalPage({ state, logMood }) {
             </button>
           )
         })}
-      </div>
+      </div>}
 
-      {inSpace && <p className={styles.caption} aria-live="polite">{exp.name} — {exp.description}</p>}
+      {inSpace && !hosted && <p className={styles.caption} aria-live="polite">{exp.name} — {exp.description}</p>}
 
       {intro ? (
         <div className={styles.intro} style={blankH.current ? { minHeight: blankH.current } : undefined}>
@@ -248,12 +255,13 @@ export default function JournalPage({ state, logMood }) {
         </div>
       ) : (
         <div className={styles.pageWrap} ref={blank ? blankWrapRef : undefined}>
-          <div className={styles.page} ref={pageRef}>
+          <div className={`${styles.page}${hosted ? ` ${styles.pageHosted}` : ''}`} ref={pageRef}>
             {Space && (
               <Space
                 key={mode}
                 state={state}
                 today={todayKey()}
+                source={source}
                 text={text}
                 setText={writeText}
                 onChange={onSpace}
@@ -262,7 +270,7 @@ export default function JournalPage({ state, logMood }) {
             )}
             <textarea
               ref={taRef}
-              className={styles.input}
+              className={`${styles.input}${hosted ? ` ${styles.inputRuled}` : ''}`}
               value={hidden ? text.slice(hidden.length) : text}
               onChange={e => setText(hidden + e.target.value)}
               placeholder={placeholder}
@@ -276,9 +284,9 @@ export default function JournalPage({ state, logMood }) {
             <div className={styles.footer}>
               {blank && <span className={styles.clock} aria-hidden="true">{clockLabel}</span>}
               <div className={styles.footerActions}>
-                {inSpace && <button type="button" className={styles.cancel} onClick={cancelSpace}>cancel</button>}
+                {inSpace && !hosted && <button type="button" className={styles.cancel} onClick={cancelSpace}>cancel</button>}
                 <button type="button" className={styles.done} onClick={advancing ? advance : done} disabled={advancing ? !!extra.ctaDisabled : (empty || saving || !!extra.ctaDisabled)}>
-                  <span className={styles.donePill}>{advancing ? 'next' : 'done'}</span>
+                  <span className={styles.donePill}>{advancing ? 'next' : hosted ? 'add' : 'done'}</span>
                 </button>
               </div>
             </div>

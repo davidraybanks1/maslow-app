@@ -14,14 +14,7 @@ const SRC = new URL('../src', import.meta.url).pathname
 /* Files with known existing violations, cleared stage-by-stage.
    Remove a file from this list when its violations are cleaned up. */
 const KNOWN_VIOLATIONS = new Set([
-  'components/DeskShell.jsx',
-  'components/GlobalComposer.jsx',
-  'components/JournalTags.jsx',
-  'components/shapes/ShapesFlow.jsx',
-  'lib/shapeFacts.js',
-  'screens/Log.jsx',
   'screens/Onboarding/OnboardingFlow.jsx',
-  'screens/Write.jsx',
 ])
 
 /* Match visible copy: JSX text node content and string literal button/label text.

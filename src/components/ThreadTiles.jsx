@@ -2,12 +2,11 @@ import { Fragment, useEffect, useRef } from 'react'
 import { Glyph, Meter } from './StreaksRail'
 import styles from './ThreadTiles.module.css'
 
-/* Your most active threads, one white row each, set like a card in "Your
-   streaks and lulls": the mark, the thread's name, twelve days of writing in
-   the thread's colour, and the count of drafts. Most active first. The mark
-   says what kind of thread it is, so there is no label for it: a need's
-   petals, a feeling's signal, a checkbox for a time of day or a tag. When a row
-   is open, the thread's drafts (renderOpen) are set directly beneath it. */
+/* Your most active threads, as index rows: the name, what kind of thread it
+   is, a dotted leader and the count of drafts. Most active first. When a row is
+   open, its twelve-day strip and its drafts (renderOpen) sit directly beneath. */
+
+const KIND = { slot: 'daypart', feeling: 'feeling', need: 'need', custom: 'tag' }
 
 /* a thread drawn as the streak it most resembles: needs are petals, feelings
    the signal, dayparts and tags the checkbox; the colour is the mode, the
@@ -39,19 +38,24 @@ export default function ThreadTiles({ threads, openId, onPick, renderOpen }) {
           <button
             ref={el => { rowRefs.current[t.id] = el }}
             type="button"
+            aria-expanded={openId === t.id}
             className={`${styles.row}${openId === t.id ? ` ${styles.open}` : ''}`}
             onClick={() => onPick(t.id)}
           >
-            <span className={styles.main}>
-              <span className={styles.top}>
-                <span className={styles.mark}><Glyph streak={streak} /></span>
-                <span className={styles.name}>{t.label}</span>
-              </span>
-              <span className={styles.meter}><Meter streak={streak} /></span>
-            </span>
-            <span className={styles.num}>{t.windowCount}<i>drafts</i></span>
+            <span className={styles.name}>{t.label}</span>
+            <span className={styles.kind}>{KIND[t.dim]}</span>
+            <span className={styles.leader} aria-hidden="true" />
+            <span className={styles.num}>{t.windowCount}</span>
           </button>
-          {openId === t.id && renderOpen ? renderOpen(t) : null}
+          {openId === t.id && renderOpen ? (
+            <>
+              <div className={styles.strip}>
+                <Glyph streak={streak} />
+                <span className={styles.meter}><Meter streak={streak} /></span>
+              </div>
+              {renderOpen(t)}
+            </>
+          ) : null}
           </Fragment>
         )
       })}

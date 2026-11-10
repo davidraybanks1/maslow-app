@@ -4,8 +4,8 @@ import { allNeeds } from '../lib/constants'
 import { currentSlot } from '../lib/slots'
 import { todayKey, addJournalEntry, settleRevisit, toggleJournalRevisit, uploadNoteImage, loadCustomTags } from '../lib/store'
 import { normalizeBand } from '../lib/frequency'
-import Glyph from '../lib/glyphs'
-import { SHAPE_DB } from '../lib/shapeFacts'
+import { SHAPE_DB, HOSTED_ROOMS } from '../lib/shapeFacts'
+import JournalPage from '../components/JournalPage'
 import { hapticSuccess } from '../lib/native'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import { useDeskChrome } from '../lib/deskChrome'
@@ -57,8 +57,7 @@ function dateLine() {
 // and under its names (JournalPage.jsx). Picking the open space again puts you
 // back on the blank page.
 const PILLS = [
-  { id: 'blank', label: 'blank page' },
-  { id: 'timer', label: 'timer room' },
+  { id: 'timer', label: 'timer' },
   { id: 'continue', label: 'revisit' },
   { id: 'one_thing', label: 'gave and took' },
   { id: 'tension', label: 'tension' },
@@ -331,7 +330,7 @@ export default function Write({ state, logMood }) {
   useEffect(() => {
     function onKey(e) {
       if ((e.metaKey || e.ctrlKey) && e.key === '.') { e.preventDefault(); setFocus(f => !f) ; return }
-      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); save(); return }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); if (!HOSTED_ROOMS.has(stage)) save(); return }
       if (e.key === 'Escape') {
         if (popover) { setPopover(null); return }
         if (pendingStage) { setPendingStage(null); return }
@@ -374,7 +373,7 @@ export default function Write({ state, logMood }) {
               className={`${styles.shape} ${stage === p.id ? styles.shapeOn : ''}`}
               onClick={() => goStage(stage === p.id ? 'blank' : p.id)}
             >
-              <span className={styles.shapeGlyph} aria-hidden="true">{p.id === 'blank' ? <Glyph kind="note" height={13} /> : GLYPHS[p.id]}</span>
+              <span className={styles.shapeGlyph} aria-hidden="true">{GLYPHS[p.id]}</span>
               {p.label}
             </button>
           ))}
@@ -407,7 +406,7 @@ export default function Write({ state, logMood }) {
                     <i className={styles.pip} style={moodInherited ? { border: `1.5px solid ${MOOD_PIP_COLOR[chipBand]}` } : { background: MOOD_PIP_COLOR[chipBand] }} />
                     {chipFeeling || (chipBand === 'mid' ? 'fine' : chipBand)}
                   </>
-                ) : '+ vibration'}
+                ) : '+ feeling'}
               </button>
               {popover === 'mood' && (
                 <div className={styles.pop} style={{ width: 360 }}>
@@ -480,7 +479,15 @@ export default function Write({ state, logMood }) {
           ) : (
             <div className={styles.room}>
               <h2 className={styles.roomTitle}>{room.title[0]} <em>{room.title[1]}</em></h2>
-              <Room key={stage} state={state} today={today} source={source} onDraft={setRoomDraft} onSave={save} />
+              {HOSTED_ROOMS.has(stage) ? (
+                <JournalPage
+                  key={stage} state={state} logMood={logMood} room={stage} source={source}
+                  onDirty={t => setRoomDraft({ entry: t })}
+                  onDone={() => { setRoomDraft({ entry: '' }); setSource(null); setStage('blank'); setStatus('saved'); setSavedNote(true) }}
+                />
+              ) : (
+                <Room key={stage} state={state} today={today} source={source} onDraft={setRoomDraft} onSave={save} />
+              )}
               {status === 'error' && <p className={styles.error} role="alert">{statusText}</p>}
             </div>
           )}
@@ -511,7 +518,7 @@ export default function Write({ state, logMood }) {
             {revisit ? 'will revisit ✓' : 'mark to revisit'}
           </button>
         )}
-        {stage !== 'timer' && (
+        {stage !== 'timer' && !HOSTED_ROOMS.has(stage) && (
           <button type="button" className={`${styles.btn} ${styles.btnDark}`} onClick={() => save()} disabled={!canSave}>
             save draft <kbd>⌘↵</kbd>
           </button>

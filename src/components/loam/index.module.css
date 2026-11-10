@@ -455,6 +455,21 @@
   white-space: pre-wrap;
   word-break: break-word;
 }
+.entryRowTextBtn {
+  display: block;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--loam-ink-2);
+  font-family: var(--loam-font-reading);
+  font-size: var(--loam-body);
+  line-height: 1.35;
+  white-space: pre-wrap;
+  word-break: break-word;
+  -webkit-tap-highlight-color: transparent;
+}
 .entryRowReadMore {
   align-self: flex-start;
   font-family: var(--loam-font-mono);
@@ -485,7 +500,7 @@
 }
 .entryRowMoodChip { display: inline-flex; align-items: center; gap: 5px; }
 .entryRowMoodDot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-.entryRowActions { display: flex; justify-content: flex-end; gap: 16px; padding-top: 2px; }
+.entryRowActions { display: flex; justify-content: flex-end; gap: 16px; }
 .entryRowAction {
   font-family: var(--loam-font-mono);
   font-size: var(--loam-label);
@@ -497,6 +512,7 @@
   padding: 0;
 }
 .entryRowAction:hover, .entryRowActionActive { color: var(--loam-ink); }
+.entryRowAction { padding: 6px 0; }
 
 /* ── WriteBlock ───────────────────────────────────────────── */
 .writeBlock { margin-top: 28px; border-top: var(--loam-rule-open); }

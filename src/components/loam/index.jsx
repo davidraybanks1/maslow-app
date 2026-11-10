@@ -277,7 +277,8 @@ export function IndexRow({ name, value, onClick }) {
 /* Slot and time, then the entry (a room's own lines set off by EntryText), then
    its tags. Delete is two-step: the parent owns pendingDelete. */
 export function EntryRow({
-  slot, time, text, shape, tags = [], onRevisit, onFavorite, favorite,
+  slot, time, text, shape, tags = [], onRevisit, revisited, onFavorite, favorite,
+  metaDot, truncate = true, collapsible = false, extra,
   pendingDelete = false, onDelete,
   quotedText, quotedDate,
   imageUrl, onImageClick,
@@ -286,14 +287,16 @@ export function EntryRow({
   expanded = false, onToggleExpand,
 }) {
   const body = text || ''
-  const isTrunc = body.length > JOURNAL_TRUNCATE && !expanded
+  const long = truncate && body.length > JOURNAL_TRUNCATE
+  const isTrunc = long && !expanded
   const display = isTrunc ? body.slice(0, JOURNAL_TRUNCATE).trimEnd() + '…' : body
   const words = [...tags, roomTag].filter(Boolean)
   return (
     <div className={styles.entryRow}>
       <div className={styles.entryRowMeta}>
+        {metaDot && <span className={styles.entryRowMoodDot} style={{ background: metaDot }} />}
         <span className={styles.entryRowSlot}>{slot}</span>
-        <span className={styles.entryRowTime}>{time}</span>
+        {time && <span className={styles.entryRowTime}>{time}</span>}
         {onDelete && (
           <button
             type="button"
@@ -314,7 +317,13 @@ export function EntryRow({
           readMoreClass={styles.entryRowReadMore}
         />
       )}
-      <div className={styles.entryRowText}><EntryText text={display} shape={shape} /></div>
+      {collapsible && long ? (
+        <button type="button" className={styles.entryRowTextBtn} onClick={onToggleExpand} aria-expanded={expanded}>
+          <EntryText text={display} shape={shape} />
+        </button>
+      ) : (
+        <div className={styles.entryRowText}><EntryText text={display} shape={shape} /></div>
+      )}
       {isTrunc && (
         <button type="button" className={styles.entryRowReadMore} onClick={onToggleExpand}>read more</button>
       )}
@@ -334,13 +343,14 @@ export function EntryRow({
           {words.map((w, i) => <span key={w}>{(moodBand || i > 0) ? ' · ' : ''}{w}</span>)}
         </div>
       )}
+      {extra}
       {(onRevisit || onFavorite) && (
         <div className={styles.entryRowActions}>
           {onRevisit && (
-            <button type="button" className={styles.entryRowAction} onClick={onRevisit}>↩ revisit</button>
+            <button type="button" className={`${styles.entryRowAction} ${revisited ? styles.entryRowActionActive : ''}`} aria-pressed={!!revisited} onClick={onRevisit}>↩ revisit</button>
           )}
           {onFavorite && (
-            <button type="button" className={`${styles.entryRowAction} ${favorite ? styles.entryRowActionActive : ''}`} onClick={onFavorite}>♡</button>
+            <button type="button" className={`${styles.entryRowAction} ${favorite ? styles.entryRowActionActive : ''}`} aria-pressed={!!favorite} aria-label={favorite ? 'remove from favorites' : 'add to favorites'} onClick={onFavorite}>{favorite ? '♥' : '♡'}</button>
           )}
         </div>
       )}

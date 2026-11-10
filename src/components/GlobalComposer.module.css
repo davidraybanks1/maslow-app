@@ -33,39 +33,96 @@
 
 .sheetHead {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
+  gap: 12px;
   margin-bottom: 10px;
 }
 .sheetDate {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  letter-spacing: 0.06em;
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--ink4);
+  color: var(--loam-ink);
 }
-.sheetClose {
-  width: 28px;
-  height: 28px;
-  border-radius: 14px;
-  border: 1px solid rgba(0,0,0,.2);
-  background: var(--card);
-  color: rgba(0,0,0,.6);
-  font-family: var(--font-mono);
-  font-size: 13px;
+.roomsLink {
+  background: none;
+  border: none;
+  padding: 4px 0;
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  letter-spacing: 0.04em;
+  color: var(--loam-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   -webkit-tap-highlight-color: transparent;
 }
+.grabber { width: 44px; height: 4px; margin: 0 auto 14px; background: var(--loam-rule); }
+
+/* tags are words */
+.tags { display: flex; flex-wrap: wrap; gap: 4px 16px; font-family: var(--loam-font-mono); font-size: var(--loam-tag); letter-spacing: 0.04em; margin-bottom: 8px; }
+.tagOn, .tagAdd { display: inline-flex; align-items: center; gap: 5px; font: inherit; letter-spacing: inherit; background: none; border: none; padding: 4px 0; }
+.tagOn { color: var(--loam-ink); text-decoration: underline; text-underline-offset: 4px; }
+button.tagOn, .tagAdd { cursor: pointer; }
+.tagAdd { color: var(--loam-muted); }
+.tagDot { width: 7px; height: 7px; border-radius: 50%; box-sizing: border-box; display: block; }
+.picker { display: flex; flex-wrap: wrap; gap: 2px 14px; margin-bottom: 8px; }
+.pickerItem { padding: 4px 0; background: none; border: none; cursor: pointer; font-family: var(--loam-font-mono); font-size: var(--loam-tag); color: var(--loam-ink); text-decoration: underline; text-underline-offset: 3px; }
+
+/* the ruled page */
+.ruled {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0;
+  border: none;
+  border-top: var(--loam-rule-close);
+  border-radius: 0;
+  outline: none;
+  resize: none;
+  font-family: var(--loam-font-reading);
+  font-size: var(--loam-index);
+  line-height: 32px;
+  color: var(--loam-ink);
+  background-color: transparent;
+  background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 31px, var(--loam-rule) 31px, var(--loam-rule) 32px);
+  background-attachment: local;
+}
+.ruled::placeholder { color: var(--loam-muted); font-style: italic; }
+
+.footer { display: flex; align-items: center; gap: 16px; margin-top: 12px; }
+.cancel {
+  background: none;
+  border: none;
+  padding: 10px 0;
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  letter-spacing: 0.04em;
+  color: var(--loam-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.add {
+  border: none;
+  border-radius: var(--loam-radius-pill);
+  background: var(--loam-ink);
+  color: var(--loam-paper);
+  padding: 11px 24px;
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+.add:disabled { opacity: 0.35; cursor: default; }
 
 /* ── mobile: bottom sheet ── */
 .mobileScrim {
   position: fixed;
   inset: 0;
   z-index: 250;
-  background: rgba(20,18,12,.32);
+  background: var(--loam-keyboard-scrim);
   animation: scrimIn 220ms ease;
 }
 .mobileSheet {
@@ -74,10 +131,9 @@
   right: 0;
   bottom: 0;
   z-index: 251;
-  background: var(--paper);
-  border-radius: 20px 20px 0 0;
-  padding: 16px 18px calc(18px + var(--safe-bottom));
-  box-shadow: 0 -10px 30px rgba(0,0,0,.18);
+  background: var(--loam-paper);
+  border-top: var(--loam-rule-open);
+  padding: 12px 24px calc(18px + var(--safe-bottom));
   max-height: 82vh;
   overflow-y: auto;
   animation: sheetUp 260ms cubic-bezier(.2,.7,.2,1);
@@ -92,7 +148,7 @@
   position: fixed;
   inset: 0;
   z-index: 250;
-  background: rgba(20,18,12,.28);
+  background: var(--loam-keyboard-scrim);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -102,10 +158,9 @@
   width: min(480px, 92vw);
   max-height: 82vh;
   overflow-y: auto;
-  background: var(--card);
-  border-radius: 16px;
-  padding: 18px 20px 20px;
-  box-shadow: 0 20px 50px rgba(0,0,0,.3);
+  background: var(--loam-paper);
+  border-top: var(--loam-rule-open);
+  padding: 18px 24px 20px;
   animation: modalIn 200ms ease;
 }
 
@@ -129,7 +184,7 @@
   font-size: var(--type-floor);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--ink4);
+  color: var(--loam-muted);
   margin-bottom: 6px;
 }
 .chartSuggestThumbs {
@@ -149,8 +204,7 @@
   flex: 0 0 auto;
   width: 84px;
   height: 64px;
-  border-radius: 8px;
-  border: 2px solid transparent;
+  border: 1px solid var(--loam-rule);
   padding: 0;
   overflow: hidden;
   cursor: pointer;
@@ -172,19 +226,4 @@
   font-size: 13px;
   color: #fff;
   background: rgba(0,0,0,.4);
-}
-
-.sheetHeadRight { display: inline-flex; align-items: center; gap: 10px; }
-.shapesPill {
-  border: 1px dashed var(--ink4);
-  background: transparent;
-  color: var(--ink2);
-  border-radius: 999px;
-  padding: 5px 12px;
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
 }

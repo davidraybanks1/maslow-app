@@ -80,23 +80,25 @@ function Tension({ state, today, text, onChange }) {
 }
 
 /* ── revisit (stored as the "continue" shape) ───────────────── */
-function Continue({ state, onChange }) {
-  const [drafts, setDrafts] = useState(null)      // drafts marked 'revisit'
-  const [source, setSource] = useState(null)
-  const [picking, setPicking] = useState(true)    // opens on the chooser, no note pre-picked
+// Opens on the drafts you marked. "older drafts" widens the list (marked ones
+// still first), and "start fresh" writes in this room with nothing quoted.
+function Continue({ state, source: initialSource, onChange }) {
+  const [drafts, setDrafts] = useState(null)
+  const [source, setSource] = useState(initialSource || null)
+  const [picking, setPicking] = useState(!initialSource)   // opens on the chooser unless handed a draft
+  const [older, setOlder] = useState(false)
+  const [fresh, setFresh] = useState(false)
   const [keepOpen, setKeepOpen] = useState(false)
 
   useEffect(() => {
     let live = true
-    loadRecentDrafts(state.userId, 60).then(rows => {
-      if (!live) return
-      setDrafts(rows.filter(r => r.revisit))
-    })
+    loadRecentDrafts(state.userId, 60).then(rows => { if (live) setDrafts(rows) })
     return () => { live = false }
   }, [state.userId])
 
   useEffect(() => {
-    if (!source) onChange({ placeholder: 'pick a draft to answer…', locked: true })
+    if (fresh) onChange({ placeholder: 'whatever is here', locked: false, quotedText: null, quotedDate: null, needId: null, settleId: null, keepOpen: false })
+    else if (!source) onChange({ placeholder: 'pick a draft to answer…', locked: true })
     else onChange({
       placeholder: 'reply to yourself',
       locked: false,
@@ -106,25 +108,46 @@ function Continue({ state, onChange }) {
       settleId: source.revisit ? source.id : null,
       keepOpen,
     })
-  }, [source, keepOpen])
+  }, [source, keepOpen, fresh])
 
   const chooseLabel = "drafts you marked 'revisit'"
+  const marked = (drafts || []).filter(r => r.revisit)
+  const list = older ? [...marked, ...(drafts || []).filter(r => !r.revisit)] : marked
+  const links = (
+    <div className={styles.linkRow}>
+      {(!picking || older) && <button type="button" className={styles.link} onClick={() => { setFresh(false); setOlder(false); setPicking(true) }}>{chooseLabel}</button>}
+      {!older && <button type="button" className={styles.link} onClick={() => { setFresh(false); setOlder(true); setPicking(true) }}>older drafts</button>}
+      <button type="button" className={styles.link} onClick={() => { setFresh(f => !f); setPicking(false) }}>{fresh ? 'back to the thread' : 'start fresh'}</button>
+    </div>
+  )
+
+  if (fresh) {
+    return (
+      <div className={styles.space}>
+        <div className={styles.eyebrow}>a note to self</div>
+        <div className={styles.linkRow}>
+          <button type="button" className={styles.link} onClick={() => { setFresh(false); setPicking(!source) }}>back to the thread</button>
+        </div>
+      </div>
+    )
+  }
 
   if (picking) {
     return (
       <div className={styles.space}>
-        <div className={styles.eyebrow}>{chooseLabel}</div>
-        {drafts && !drafts.length && (
-          <p className={styles.hint}>nothing marked 'revisit' yet. mark a draft and it will be here.</p>
+        <div className={styles.eyebrow}>{older ? 'older drafts' : chooseLabel}</div>
+        {drafts && !list.length && (
+          <p className={styles.hint}>{older ? 'there is nothing to pick up yet. write one first.' : "nothing marked 'revisit' yet. mark a draft and it will be here."}</p>
         )}
         <div className={styles.pick}>
-          {(drafts || []).map(d => (
+          {list.map(d => (
             <button type="button" key={d.id} className={styles.pickItem} onClick={() => { setSource(d); setPicking(false) }}>
-              <span className={styles.pastMeta}>{shortDate(d.date_key)}{d.mood_feeling ? ` · ${d.mood_feeling}` : ''}</span>
+              <span className={styles.pastMeta}>{shortDate(d.date_key)}{d.mood_feeling ? ` · ${d.mood_feeling}` : ''}{d.revisit ? ' · ↩' : ''}</span>
               <span className={styles.pastText}>{clip(d.entry, 120)}</span>
             </button>
           ))}
         </div>
+        {links}
       </div>
     )
   }
@@ -151,9 +174,7 @@ function Continue({ state, onChange }) {
           keep this one in revisit
         </label>
       )}
-      <div className={styles.linkRow}>
-        <button type="button" className={styles.link} onClick={() => setPicking(true)}>{chooseLabel}</button>
-      </div>
+      {links}
     </div>
   )
 }

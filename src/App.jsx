@@ -277,7 +277,7 @@ function AppInner() {
           <Route path="/drafts" element={isDesktop ? <DeskGo view="drafts" /> : <Navigate to="/log" replace />} />
           <Route path="/practices" element={isDesktop ? <DeskGo view="practices" /> : <Protected onboarded={state.onboarded} userId={state.userId}><Practices state={state} addPractice={addPractice} renamePractice={renamePractice} updatePractice={updatePractice} archivePractice={archivePractice} setPracticeReminder={setPracticeReminder} stampReminderOffered={stampReminderOffered} incrementOffersDeclined={incrementOffersDeclined} completeOnboarding={completeOnboarding} /></Protected>} />
           <Route path="/data" element={isDesktop ? <DeskGo view="data" /> : <Protected onboarded={state.onboarded} userId={state.userId}><Data state={state} archivePractice={archivePractice} profileMenu={profileMenuEl} profileMenuRef={profileMenuRef} /></Protected>} />
-          <Route path="/log" element={isDesktop ? <DeskGo view="drafts" /> : <Protected onboarded={state.onboarded} userId={state.userId}><Log state={state} syncCheckinDay={syncCheckinDay} profileMenu={profileMenuEl} /></Protected>} />
+          <Route path="/log" element={isDesktop ? <DeskGo view="drafts" /> : <Protected onboarded={state.onboarded} userId={state.userId}><Log state={state} syncCheckinDay={syncCheckinDay} profileMenu={profileMenuEl} profileMenuRef={profileMenuRef} /></Protected>} />
           <Route path="/canvas" element={isDesktop ? <DeskGo view="needs" /> : <Protected onboarded={state.onboarded} userId={state.userId}><CanvasScreen state={state} updateCanvas={updateCanvas} addCustomNeed={addCustomNeed} renameCustomNeed={renameCustomNeed} deleteCustomNeed={deleteCustomNeed} archivePractice={archivePractice} /></Protected>} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/password" element={<UpdatePassword />} />
@@ -296,7 +296,7 @@ function AppInner() {
         <GlobalComposer state={state} logMood={logMood} open={composerOpen} onClose={() => setComposerOpen(false)} />
       )}
       {state.onboarded && (
-        <ShapesFlow state={state} open={shapesOpen} onClose={() => setShapesOpen(null)} onJustWrite={() => (isDesktop ? navigate('/write') : setComposerOpen(true))} />
+        <ShapesFlow state={state} logMood={logMood} open={shapesOpen} onClose={() => setShapesOpen(null)} />
       )}
       {isNative() && state.onboarded && state.userId && state.tourSeenAt != null &&
        deviceNotifPerm === 'prompt' &&

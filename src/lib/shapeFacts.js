@@ -1,4 +1,4 @@
-// Writing "shapes" — rooms to write in instead of a blank page.
+// Writing rooms: places to write in instead of a blank page.
 //
 // Everything here is computed on the device from data the person already has
 // in the app (check-ins, moods). Nothing is sent anywhere, and nothing here
@@ -29,9 +29,22 @@ export const SHAPES = [
   { id: 'timer',        label: 'timer room',   blurb: 'you pick the time. it saves itself when the ring closes.' },
 ]
 
-// what the pill on a saved entry says: the phone spaces were renamed, but the
-// stored shape values (a DB check constraint) are the old ones
-const CHIP_LABELS = { one_thing: 'gave and took', continue: 'revisit' }
+// The rooms offered for writing, in order. sort_first is deliberately absent:
+// it stays in SHAPES, SHAPE_DB and ROOMS so old entries keep their label.
+export const ROOM_PICKER = [
+  { id: 'timer',        label: 'timer',         blurb: 'you pick the time. it saves itself when the ring closes.' },
+  { id: 'continue',     label: 'revisit',       blurb: 'pick up an entry you marked to revisit, and answer it.' },
+  { id: 'one_thing',    label: 'gave and took', blurb: 'what gave you energy, what took it, and what you want more of tomorrow.' },
+  { id: 'tension',      label: 'tension',       blurb: 'two things pulling on you. write the space between.' },
+  { id: 'three_truths', label: 'three truths',  blurb: 'three facts about you right now. write what they have in common.' },
+]
+
+// Rooms that run inside JournalPage (next, keep-in-revisit) rather than Rooms.jsx.
+export const HOSTED_ROOMS = new Set(['one_thing', 'continue'])
+
+// what the pill on a saved entry says: the rooms were renamed, but the stored
+// shape values (a DB check constraint) are the old ones
+const CHIP_LABELS = { one_thing: 'gave and took', continue: 'revisit', timer: 'timer' }
 export function shapeLabel(id) {
   return CHIP_LABELS[id] || SHAPES.find(s => s.id === id)?.label || null
 }
@@ -123,7 +136,7 @@ function plural(n, one, many) { return n === 1 ? one : many }
 /* ── truths ────────────────────────────────────────────────── */
 // Every fact is a true statement drawn from what the person already has in
 // the app — the same numbers the Data screen shows (observations, streaks,
-// what changed, rhythm, vibrations) plus today's check-ins. All computed on
+// what changed, rhythm, feelings) plus today's check-ins. All computed on
 // the device; nothing is sent anywhere and no draft text is ever read.
 //
 // A fact: { id, label, text, kind: 'up' | 'down' | 'plain', dotBand?, dotMode? }
@@ -139,7 +152,7 @@ const BAND_OF_FEELING = Object.fromEntries(
 // three different parts of the person's data
 const GROUP_ORDER = [
   'FINDING', 'STREAK', 'WHAT CHANGED', 'OBSERVATION', 'YOUR RHYTHM',
-  'YOUR VIBRATIONS', 'THIS WEEK', 'QUIET LATELY', 'TODAY', 'THIS MONTH', 'TRUE TODAY',
+  'YOUR FEELINGS', 'THIS WEEK', 'QUIET LATELY', 'TODAY', 'THIS MONTH', 'TRUE TODAY',
 ]
 
 function safely(fn) {
@@ -234,8 +247,8 @@ function vibrationFacts(state, today) {
   const top = Object.entries(tally).sort((a, b) => b[1] - a[1])[0]
   if (!top || top[1] < 4) return []
   const band = BAND_OF_FEELING[top[0]] || null
-  return [{ id: 'vib-top', label: 'YOUR VIBRATIONS', kind: band === 'bad' ? 'down' : 'plain', dotBand: band,
-    text: `${top[0]} is the vibration you have felt most this month, ${top[1]} check-ins` }]
+  return [{ id: 'vib-top', label: 'YOUR FEELINGS', kind: band === 'bad' ? 'down' : 'plain', dotBand: band,
+    text: `${top[0]} is the feeling you have had most this month, ${top[1]} check-ins` }]
 }
 
 // A ranked pool of true statements. Always returns at least three: sparse

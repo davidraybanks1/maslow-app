@@ -193,7 +193,7 @@ function TodayView({ state, actions, onEditNotes, onOpenPractices, onGoNeeds }) 
         onEdit={onEditNotes}
       />
 
-      <section className={styles.vibCard} aria-label="Vibrations">
+      <section className={styles.vibCard} aria-label="Feelings">
         {settled ? (
           <div className={styles.vibSummary}>
             <span className={styles.lbl}>feeling</span>
@@ -214,7 +214,7 @@ function TodayView({ state, actions, onEditNotes, onOpenPractices, onGoNeeds }) 
               ))}
             </div>
             {band && (
-              <div className={styles.feels} role="group" aria-label="vibration">
+              <div className={styles.feels} role="group" aria-label="feeling">
                 {FEELINGS[band].map(f => (
                   <button
                     key={f} type="button"

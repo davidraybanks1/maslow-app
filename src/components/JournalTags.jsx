@@ -6,8 +6,8 @@ import { loadCustomTags } from '../lib/store'
 import { MOOD_PIP_COLOR } from './FrequencyCard'
 import styles from './JournalTags.module.css'
 
-// The tags on a blank page: the part of the day, a vibration, a need, and your
-// own tags. The vibration starts as today's check-in for this part of the day
+// The tags on a blank page: the part of the day, a feeling, a need, and your
+// own tags. The feeling starts as today's check-in for this part of the day
 // (a hollow dot); choosing another one makes it yours (a solid dot).
 // Reports { needId, custom, band, feeling } through onChange.
 export default function JournalTags({ state, today, logMood, onChange }) {
@@ -21,7 +21,7 @@ export default function JournalTags({ state, today, logMood, onChange }) {
   const [moodBand, setMoodBand] = useState(null)
   const [moodFeeling, setMoodFeeling] = useState(null)
   const [inherited, setInherited] = useState(true)
-  const [open, setOpen] = useState(null) // 'vibration' | 'need' | 'custom' | null
+  const [open, setOpen] = useState(null) // 'feeling' | 'need' | 'custom' | null
   const [customTags, setCustomTags] = useState([])
   const newSlot = useRef(false)
 
@@ -37,7 +37,7 @@ export default function JournalTags({ state, today, logMood, onChange }) {
   useEffect(() => { onChange({ needId, custom, band, feeling }) }, [needId, custom, band, feeling])
 
   function toggle(which) {
-    if (which === 'vibration') newSlot.current = !inheritedBand
+    if (which === 'feeling') newSlot.current = !inheritedBand
     setOpen(o => (o === which ? null : which))
   }
 
@@ -57,20 +57,20 @@ export default function JournalTags({ state, today, logMood, onChange }) {
     <div className={styles.tags}>
       <div className={styles.row}>
         {band ? (
-          <button type="button" className={styles.on} onClick={() => toggle('vibration')} aria-expanded={open === 'vibration'}>
+          <button type="button" className={styles.on} onClick={() => toggle('feeling')} aria-expanded={open === 'feeling'}>
             <span className={styles.dot} style={inherited ? { border: `1.5px solid ${MOOD_PIP_COLOR[band]}` } : { background: MOOD_PIP_COLOR[band] }} />
             {feeling || BAND_LABEL[band]}
             {!inherited && (
               <span
                 className={styles.x}
                 role="button"
-                aria-label="remove vibration"
+                aria-label="remove feeling"
                 onClick={e => { e.stopPropagation(); setInherited(true); setMoodBand(null); setMoodFeeling(null); setOpen(null) }}
               >×</span>
             )}
           </button>
         ) : (
-          <button type="button" className={`${styles.parent} ${open === 'vibration' ? styles.parentOpen : ''}`} onClick={() => toggle('vibration')} aria-expanded={open === 'vibration'}>+ vibration</button>
+          <button type="button" className={`${styles.parent} ${open === 'feeling' ? styles.parentOpen : ''}`} onClick={() => toggle('feeling')} aria-expanded={open === 'feeling'}>+ feeling</button>
         )}
 
         {needId ? (
@@ -86,9 +86,9 @@ export default function JournalTags({ state, today, logMood, onChange }) {
         ))}
       </div>
 
-      {open === 'vibration' && (
+      {open === 'feeling' && (
         <div className={styles.picker}>
-          <div className={styles.list} role="group" aria-label="vibration">
+          <div className={styles.list} role="group" aria-label="feeling">
             {BANDS.map(b => (
               <button
                 type="button"

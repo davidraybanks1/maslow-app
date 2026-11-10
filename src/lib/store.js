@@ -1560,6 +1560,7 @@ export async function clearLocalSession() {
   try {
     localStorage.removeItem('maslow_state')
     localStorage.removeItem('loam.practiceProgress.v1')
+    localStorage.removeItem('loam_composer_draft')
     for (const k of Object.keys(localStorage)) if (k.startsWith('guidanceDismissed_')) localStorage.removeItem(k)
   } catch {}
   await cancelAllNotifications()

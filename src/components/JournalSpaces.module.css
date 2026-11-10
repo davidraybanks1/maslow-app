@@ -1,73 +1,59 @@
-/* What each writing experience puts around the page. Everything here sits
-   inside the page card, above the textarea, in quiet tinted blocks. */
+/* What each writing experience puts around the page: rules, words and mono
+   links, all on the paper. */
 
-.space { display: flex; flex-direction: column; gap: 8px; }
-.hint { margin: 0; font-family: var(--font-mono); font-size: var(--type-floor); line-height: 1.5; color: var(--ink3); }
-.eyebrow { font-family: var(--font-mono); font-size: var(--type-floor); letter-spacing: 0.08em; color: var(--ink3); }
+.space { display: flex; flex-direction: column; gap: 10px; }
+.hint { margin: 0; font-family: var(--loam-font-reading); font-style: italic; font-size: var(--loam-body); line-height: 1.3; color: var(--loam-muted); }
+.eyebrow { font-family: var(--loam-font-mono); font-size: var(--loam-label); letter-spacing: 0.08em; text-transform: uppercase; color: var(--loam-muted); }
 
 /* a fact from your own data */
-.fact { padding: 10px 14px 11px; background: var(--surface-dim); border-radius: 14px; }
+.fact { padding: 8px 0; border-top: var(--loam-rule-row); }
 .factLabel {
   display: flex; align-items: center; gap: 7px; margin-bottom: 3px;
-  font-family: var(--font-mono); font-size: var(--type-floor); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink3);
+  font-family: var(--loam-font-mono); font-size: var(--loam-label); letter-spacing: 0.08em; text-transform: uppercase; color: var(--loam-muted);
 }
 .factDot { width: 7px; height: 7px; border-radius: 50%; flex: none; display: inline-block; }
-.factText { font-family: var(--font-serif); font-size: 17px; line-height: 1.35; color: var(--ink); }
+.factText { font-family: var(--loam-font-reading); font-size: var(--loam-body); line-height: 1.3; color: var(--loam-ink); }
 .thread { display: flex; justify-content: center; margin: -4px 0; line-height: 0; }
-
-.chipRow { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip {
-  padding: 6px 10px; border-radius: 999px; background: var(--surface-dim); border: 0;
-  font-family: var(--font-serif); font-size: 14px; line-height: 1.25; color: var(--ink2); text-align: left;
-}
-.chipBtn { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink); min-height: 32px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 
 .link {
   align-self: flex-start; min-height: 32px; padding: 0; background: none; border: 0; cursor: pointer;
-  font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3);
+  font-family: var(--loam-font-mono); font-size: var(--loam-label); letter-spacing: 0.04em; color: var(--loam-ink);
   text-decoration: underline; text-underline-offset: 3px; -webkit-tap-highlight-color: transparent;
 }
-.link:disabled { color: var(--ink4); text-decoration: none; cursor: default; }
-.linkRow { display: flex; gap: 18px; flex-wrap: wrap; }
+.link:disabled { color: var(--loam-muted); text-decoration: none; cursor: default; }
+.linkRow { display: flex; gap: 2px 18px; flex-wrap: wrap; }
 
-/* continue */
-.past { background: var(--surface-dim); border-radius: 14px; padding: 12px 14px; border-left: 3px solid var(--ink4); }
-.pastMeta { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); }
+/* revisit */
+.past { padding: 2px 0 2px 10px; border-left: 2px solid var(--loam-gold); }
+.pastMeta { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; font-family: var(--loam-font-mono); font-size: var(--loam-label); letter-spacing: 0.04em; color: var(--loam-muted); }
 .pastMood { display: inline-flex; align-items: center; gap: 5px; }
-.pastText { margin: 0; font-family: var(--font-serif); font-size: 16px; line-height: 1.4; color: var(--ink); display: block; }
-.pastAsk { margin: 0 0 4px; font-family: var(--font-serif); font-style: italic; font-size: 15px; color: var(--ink2); }
-.keepOpen { display: flex; align-items: center; gap: 8px; min-height: 32px; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink2); }
-.pick { display: flex; flex-direction: column; gap: 6px; max-height: 240px; overflow-y: auto; }
-.pickItem { display: block; width: 100%; padding: 10px 14px; text-align: left; background: var(--surface-dim); border: 0; border-radius: 14px; cursor: pointer; }
+.pastText { margin: 0; font-family: var(--loam-font-reading); font-size: var(--loam-body); line-height: 1.3; color: var(--loam-ink); display: block; }
+.pastAsk { margin: 0 0 4px; font-family: var(--loam-font-reading); font-style: italic; font-size: var(--loam-body); color: var(--loam-ink-2); }
+.keepOpen { display: flex; align-items: center; gap: 8px; min-height: 32px; font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-ink-2); }
+.pick { display: flex; flex-direction: column; max-height: 300px; overflow-y: auto; border-top: var(--loam-rule-row); }
+.pickItem { display: block; width: 100%; padding: 10px 0; text-align: left; background: none; border: 0; border-bottom: var(--loam-rule-row); cursor: pointer; }
 
-/* one thing */
-.needs { display: flex; flex-wrap: wrap; gap: 6px; }
+/* needs tagged in gave and took */
+.needs { display: flex; flex-wrap: wrap; gap: 2px 16px; }
 .need {
-  display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 12px;
-  border-radius: 999px; background: var(--surface-dim); border: 1.5px solid transparent; cursor: pointer;
-  font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink); -webkit-tap-highlight-color: transparent;
+  display: inline-flex; align-items: center; gap: 7px; min-height: 32px; padding: 0;
+  background: none; border: 0; cursor: pointer;
+  font-family: var(--loam-font-mono); font-size: var(--loam-tag); color: var(--loam-muted); -webkit-tap-highlight-color: transparent;
 }
-.needOn { border-color: var(--ink); }
-.angle { margin: 2px 0 0; font-family: var(--font-serif); font-style: italic; font-size: 18px; line-height: 1.35; color: var(--ink); }
+.needOn { color: var(--loam-ink); text-decoration: underline; text-underline-offset: 4px; }
 
-/* timer room */
-.lengths { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.length {
-  min-height: 36px; padding: 0 14px; border-radius: 999px; background: var(--surface-dim); border: 1.5px solid transparent; cursor: pointer;
-  font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink);
-}
-.lengthOn { border-color: var(--ink); }
+/* timer */
+.lengths { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; }
+.length { min-height: 32px; padding: 0; background: none; border: 0; cursor: pointer; font-family: var(--loam-font-mono); font-size: var(--loam-tag); color: var(--loam-muted); }
+.lengthOn { color: var(--loam-ink); text-decoration: underline; text-underline-offset: 4px; }
 .length:disabled { cursor: default; opacity: 0.55; }
-.customWrap { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink2); }
-.customInput { width: 44px; min-height: 36px; box-sizing: border-box; text-align: center; border: 1.5px solid var(--border2); border-radius: 10px; background: var(--card); font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink); }
-
+.customWrap { display: inline-flex; align-items: center; gap: 6px; font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-ink-2); }
+.customInput { width: 44px; min-height: 32px; box-sizing: border-box; text-align: center; border: 0; border-bottom: var(--loam-rule-close); background: none; font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-ink); }
 
 /* gave and took */
 .steps { display: flex; align-items: center; gap: 6px; }
-.stepPip { flex: 1; height: 6px; border-radius: 3px; background: var(--track); overflow: hidden; }
-.stepLabel { font-family: var(--font-mono); font-size: var(--type-floor); letter-spacing: 0.06em; color: var(--ink3); }
-.stepQ { margin: 0; font-family: var(--font-serif); font-size: 22px; font-weight: 300; line-height: 1.25; color: var(--ink); }
+.stepPip { flex: 1; height: 3px; background: var(--loam-track); }
+.stepQ { margin: 0; font-family: var(--loam-font-display); font-size: var(--loam-chapter); line-height: 1.2; color: var(--loam-ink); }
 .stepHead { display: flex; flex-direction: column; gap: 4px; }
-.stepTag { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); }
-.stepHint { margin: 0; font-family: var(--font-mono); font-size: var(--type-floor); color: var(--ink3); }
-.chipsRow { display: flex; flex-wrap: wrap; gap: 6px; }
+.stepTag { font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-muted); }
+.stepHint { margin: 0; font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-muted); }

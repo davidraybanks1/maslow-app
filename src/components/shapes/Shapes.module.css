@@ -1,12 +1,11 @@
-/* Writing shapes — the picker and the six rooms. Full-screen over the app,
-   paper ground, one column. Notes are tilted slips pinned to the writing
-   card; the card is always the biggest thing on the page. */
+/* The rooms: the picker and each room, full-screen over the app. All paper,
+   one column, rules instead of cards. */
 
 .overlay {
   position: fixed;
   inset: 0;
   z-index: 320;
-  background: var(--paper);
+  background: var(--loam-paper);
   display: flex;
   justify-content: center;
   overflow-y: auto;
@@ -22,7 +21,7 @@
   max-width: 520px;
   min-height: 100%;
   box-sizing: border-box;
-  padding: calc(var(--safe-top) + 14px) 20px calc(var(--safe-bottom) + 18px);
+  padding: calc(var(--safe-top) + 14px) 24px calc(var(--safe-bottom) + 18px);
   display: flex;
   flex-direction: column;
 }
@@ -34,107 +33,81 @@
   margin-bottom: 18px;
 }
 .eyebrow {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  letter-spacing: 0.08em;
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--ink3);
+  color: var(--loam-ink);
 }
 .close {
   width: 32px;
   height: 32px;
-  border-radius: 16px;
-  border: 1px solid var(--border2);
-  background: var(--card);
-  color: var(--ink2);
-  font-size: 14px;
+  border: none;
+  background: none;
+  color: var(--loam-ink);
+  font-size: 20px;
   line-height: 1;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 
 .title {
-  font-family: var(--font-serif);
-  font-size: 30px;
-  line-height: 1.12;
+  font-family: var(--loam-font-display);
+  font-size: var(--loam-title);
+  line-height: 1.08;
   font-weight: 400;
-  color: var(--ink);
+  color: var(--loam-ink);
   margin: 0 0 6px;
   text-wrap: balance;
 }
-.title em { font-style: italic; color: var(--ink2); }
+.title em { font-style: italic; }
 .sub {
-  font-family: var(--font-sans);
-  font-size: var(--type-meta);
-  line-height: 1.45;
-  color: var(--ink2);
-  margin: 0 0 20px;
+  font-family: var(--loam-font-reading);
+  font-size: var(--loam-body);
+  line-height: 1.3;
+  color: var(--loam-ink-2);
+  margin: 0 0 18px;
 }
 
 /* ── picker ─────────────────────────────────────────────── */
-.suggest {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: var(--type-body);
-  color: var(--ink2);
-  margin: 0 0 14px;
+.pickerTitle {
+  font-family: var(--loam-font-display);
+  font-size: 38px;
+  line-height: 1.02;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--loam-ink);
+  margin: 0 0 12px;
+  max-width: 11em;
 }
-.justWrite {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 16px 18px;
-  margin-bottom: 12px;
-  border-radius: var(--radius-lg);
-  background: var(--ink);
-  color: var(--card);
-  border: none;
-  cursor: pointer;
-  text-align: left;
-  font-family: var(--font-serif);
-  font-size: 19px;
-}
-.justWriteSub {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  opacity: 0.6;
-}
-.grid {
+.pickerTitle em { font-style: italic; }
+.roomList { border-top: var(--loam-rule-open); }
+.roomRow {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-.tile {
-  position: relative;
+  grid-template-columns: 34px minmax(0, 1fr);
+  column-gap: 8px;
+  width: 100%;
+  padding: 12px 0;
+  background: none;
+  border: none;
+  border-bottom: var(--loam-rule-row);
   text-align: left;
-  padding: 14px 14px 16px;
-  min-height: 112px;
-  border-radius: var(--radius-lg);
-  background: var(--card);
-  border: 1px solid var(--hairline);
   cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
   -webkit-tap-highlight-color: transparent;
 }
-.tile:active { transform: scale(0.985); }
-.tileSuggested { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
-.tileName {
-  font-family: var(--font-serif);
-  font-size: 19px;
-  color: var(--ink);
+.roomNum { grid-row: 1 / 3; font-family: var(--loam-font-display); font-style: italic; font-size: var(--loam-chapter); line-height: 1.15; color: var(--loam-gold-text); }
+.roomName { justify-self: start; font-family: var(--loam-font-display); font-size: var(--loam-chapter); line-height: 1.15; color: var(--loam-ink); }
+.roomNameOn { font-style: italic; padding: 0 4px; background: linear-gradient(to bottom, transparent 62%, var(--loam-gold) 62%); }
+.roomBlurb { font-family: var(--loam-font-reading); font-size: var(--loam-body); line-height: 1.25; color: var(--loam-ink-2); margin-top: 2px; }
+.suggest {
+  font-family: var(--loam-font-reading);
+  font-style: italic;
+  font-size: var(--loam-body);
+  line-height: 1.3;
+  color: var(--loam-ink-2);
+  margin: 14px 0 0;
 }
-.tileBlurb {
-  font-family: var(--font-sans);
-  font-size: var(--type-floor);
-  line-height: 1.4;
-  color: var(--ink2);
-}
+.suggest span { color: var(--loam-gold-text); font-style: normal; }
 .tileGlyph { height: 22px; display: flex; align-items: center; gap: 4px; }
 .tg {
   width: 14px;
@@ -161,7 +134,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  background: linear-gradient(to top, var(--paper) 70%, rgba(239, 234, 221, 0));
+  background: linear-gradient(to top, var(--loam-paper) 70%, transparent);
 }
 .savesAs {
   font-family: var(--font-mono);
@@ -172,13 +145,13 @@
 }
 .add {
   border: none;
-  background: var(--ink);
-  color: var(--card);
-  border-radius: 999px;
+  background: var(--loam-ink);
+  color: var(--loam-paper);
+  border-radius: var(--loam-radius-pill);
   padding: 11px 26px;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  letter-spacing: 0.06em;
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  letter-spacing: 0.04em;
   cursor: pointer;
 }
 .add:disabled { opacity: 0.3; cursor: default; }
@@ -189,42 +162,31 @@
   margin: 10px 0 0;
 }
 
-/* the writing card every room shares */
-.card {
-  position: relative;
-  z-index: 1;
-  background: var(--card);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--hairline);
-  padding: 16px 18px;
-  box-shadow: 0 1px 0 rgba(0,0,0,.03);
-}
+/* the ruled page every room shares */
+.card { position: relative; z-index: 1; }
 .area {
   display: block;
   width: 100%;
   box-sizing: border-box;
   border: none;
+  border-radius: 0;
   outline: none;
   resize: none;
-  background: transparent;
-  color: var(--ink);
-  font-family: var(--font-serif);
-  font-size: 18px;
-  line-height: 1.5;
-  min-height: 150px;
+  color: var(--loam-ink);
+  font-family: var(--loam-font-reading);
+  font-size: var(--loam-index);
+  line-height: 32px;
+  min-height: 160px;
   padding: 0;
+  background-color: transparent;
+  background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 31px, var(--loam-rule) 31px, var(--loam-rule) 32px);
+  background-attachment: local;
 }
-.area::placeholder { color: var(--ink4); font-style: italic; }
-.areaShort { min-height: 64px; font-size: 17px; }
+.area::placeholder { color: var(--loam-muted); font-style: italic; }
+.areaShort { min-height: 64px; }
 
 /* ── notes (truths) ─────────────────────────────────────── */
-.note {
-  padding: 11px 14px 12px;
-  background: var(--card);
-  border: 1px solid var(--hairline);
-  border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0,0,0,.06);
-}
+.note { padding: 8px 0; border-top: var(--loam-rule-row); }
 .noteLabel {
   display: flex;
   align-items: center;
@@ -238,7 +200,7 @@
 }
 .noteDot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
 .noteText {
-  font-family: var(--font-serif);
+  font-family: var(--loam-font-reading);
   font-size: 16px;
   line-height: 1.35;
   color: var(--ink);
@@ -268,19 +230,20 @@
 .chipRow {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 4px 14px;
   margin-bottom: 10px;
 }
 .chip {
-  font-family: var(--font-sans);
-  font-size: var(--type-floor);
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-tag);
   line-height: 1.3;
-  color: var(--ink);
-  background: var(--card);
-  border: 1px solid var(--hairline);
-  border-radius: 999px;
-  padding: 5px 10px;
+  color: var(--loam-ink);
+  background: none;
+  border: none;
+  padding: 4px 0;
   max-width: 100%;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 .chipBtn { cursor: pointer; }
 
@@ -296,13 +259,7 @@
 .threadCurve { display: block; }
 
 /* ── sort first ─────────────────────────────────────────── */
-.bucket {
-  background: var(--card);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-lg);
-  padding: 12px 16px 12px;
-  margin-bottom: 10px;
-}
+.bucket { padding: 10px 0; border-top: var(--loam-rule-row); }
 .bucketLabel {
   display: flex;
   align-items: center;
@@ -347,12 +304,7 @@
 
 /* ── continue ───────────────────────────────────────────── */
 .thread2 { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
-.past {
-  background: var(--surface-dim);
-  border-radius: var(--radius);
-  padding: 12px 14px;
-  border-left: 3px solid var(--ink4);
-}
+.past { padding: 2px 0 2px 10px; border-left: 2px solid var(--loam-gold); }
 .pastMeta {
   display: flex;
   align-items: center;
@@ -421,14 +373,7 @@
   flex-direction: column;
   gap: 8px;
 }
-.pickItem {
-  text-align: left;
-  background: var(--card);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius);
-  padding: 11px 14px;
-  cursor: pointer;
-}
+.pickItem { text-align: left; background: none; border: none; border-bottom: var(--loam-rule-row); padding: 10px 0; cursor: pointer; }
 
 /* ── one thing ──────────────────────────────────────────── */
 .needs {
@@ -441,17 +386,16 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  background: var(--card);
-  border: 1px solid var(--hairline);
-  border-radius: 999px;
-  padding: 7px 12px;
-  font-family: var(--font-sans);
-  font-size: var(--type-meta);
-  color: var(--ink);
+  background: none;
+  border: none;
+  padding: 6px 0;
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-tag);
+  color: var(--loam-muted);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.needOn { background: var(--ink); color: var(--card); border-color: var(--ink); }
+.needOn { color: var(--loam-ink); text-decoration: underline; text-underline-offset: 3px; }
 .needDot { width: 8px; height: 8px; border-radius: 50%; }
 .angle {
   font-family: var(--font-serif);
@@ -467,22 +411,21 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 4px 16px;
   margin-bottom: 14px;
 }
 .length {
-  font-family: var(--font-mono);
-  font-size: var(--type-floor);
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-tag);
   letter-spacing: 0.04em;
-  color: var(--ink);
-  background: var(--card);
-  border: 1px solid var(--hairline);
-  border-radius: 999px;
-  padding: 7px 14px;
+  color: var(--loam-muted);
+  background: none;
+  border: none;
+  padding: 6px 0;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.lengthOn { background: var(--ink); color: var(--card); border-color: var(--ink); }
+.lengthOn { color: var(--loam-ink); text-decoration: underline; text-underline-offset: 4px; }
 .length:disabled { cursor: default; opacity: 0.55; }
 .lengthOn:disabled { opacity: 0.85; }
 .customWrap {
@@ -499,16 +442,16 @@
   text-align: center;
   font-family: var(--font-mono);
   font-size: 14px;
-  color: var(--ink);
-  background: var(--card);
-  border: 1px solid var(--border2);
-  border-radius: 10px;
-  padding: 6px 4px;
+  color: var(--loam-ink);
+  background: none;
+  border: none;
+  border-bottom: var(--loam-rule-close);
+  padding: 4px;
   outline: none;
 }
 .customInput:focus { border-color: var(--ink); }
 .timerCard { position: relative; }
-.timerCard > .card { border-color: transparent; }
+.timerCard > .card { padding: 14px; }
 .timerRing {
   position: absolute;
   inset: 0;
@@ -516,13 +459,13 @@
   pointer-events: none;
 }
 .ringTrack { fill: none; stroke: var(--track); stroke-width: 3; }
-.ringBar { fill: none; stroke: var(--exploration); stroke-width: 3; stroke-linecap: round; transition: stroke-dashoffset 0.4s linear; }
+.ringBar { fill: none; stroke: var(--loam-gold); stroke-width: 3; stroke-linecap: round; transition: stroke-dashoffset 0.4s linear; }
 .timerClock { font-family: var(--font-mono); color: var(--ink); letter-spacing: 0.04em; }
 .timerNote {
   text-align: center;
-  font-family: var(--font-sans);
-  font-size: var(--type-meta);
-  color: var(--ink3);
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  color: var(--loam-muted);
   margin: 12px 0 0;
 }
 
@@ -540,7 +483,7 @@
   margin-bottom: 6px;
 }
 .rvTitle {
-  font-family: var(--font-serif);
+  font-family: var(--loam-font-display);
   font-size: 26px;
   line-height: 1.15;
   color: var(--ink);
@@ -551,9 +494,8 @@
   font-size: 15px;
   line-height: 1.45;
   color: var(--ink2);
-  background: var(--surface-dim);
-  border-radius: var(--radius);
-  padding: 12px 14px;
+  border-left: 2px solid var(--loam-gold);
+  padding: 2px 0 2px 10px;
   margin: 0 0 16px;
 }
 .rvLabel {
@@ -568,11 +510,12 @@
   display: block;
   width: 100%;
   box-sizing: border-box;
-  border: 1px solid var(--border2);
-  border-radius: var(--radius);
-  background: var(--card);
-  padding: 12px 14px;
-  font-family: var(--font-serif);
+  border: none;
+  border-bottom: var(--loam-rule-close);
+  border-radius: 0;
+  background: none;
+  padding: 8px 0;
+  font-family: var(--loam-font-reading);
   font-size: 17px;
   color: var(--ink);
   outline: none;
@@ -643,9 +586,7 @@
   font-size: var(--type-floor);
   letter-spacing: 0.04em;
   color: var(--ink3);
-  border: 1px dashed var(--ink4);
-  border-radius: 999px;
-  padding: 1px 8px;
+  padding: 1px 0;
 }
 
 .discard {
@@ -653,14 +594,12 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  background: var(--card);
-  border: 1px solid var(--border2);
-  border-radius: var(--radius);
-  padding: 10px 14px;
+  border-top: var(--loam-rule-open);
+  padding: 10px 0;
   margin-bottom: 14px;
-  font-family: var(--font-sans);
-  font-size: var(--type-meta);
-  color: var(--ink);
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  color: var(--loam-ink);
 }
 .discardBtns { display: inline-flex; gap: 14px; }
 

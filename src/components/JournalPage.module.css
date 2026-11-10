@@ -108,6 +108,18 @@
 }
 .input:disabled { color: var(--ink3); }
 
+/* one room inside the rooms sheet: no card, the ruled page */
+.pageHosted { background: none; border-radius: 0; padding: 0; gap: 12px; }
+.inputRuled {
+  font-family: var(--loam-font-reading);
+  font-size: var(--loam-index);
+  line-height: 32px;
+  background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 31px, var(--loam-rule) 31px, var(--loam-rule) 32px);
+  background-attachment: local;
+}
+.inputRuled::placeholder { color: var(--loam-muted); font-style: italic; }
+.pageHosted .donePill { padding: 0 24px; border-radius: var(--loam-radius-pill); background: var(--loam-ink); color: var(--loam-paper); font-family: var(--loam-font-mono); font-size: var(--loam-label); }
+
 .input::placeholder { color: var(--ink3); opacity: 1; }
 .error { font-family: var(--font-mono); font-size: var(--type-floor); color: var(--survival); }
 

@@ -1,7 +1,6 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, cloneElement } from 'react'
 import { normalizeBand, BAND_LABEL, FEELINGS, BANDS } from '../lib/frequency'
 import { MOOD_PIP_COLOR } from '../components/FrequencyCard'
-import { IconHeart, IconHeartFilled } from '@tabler/icons-react'
 import { allNeeds, needName, MODE_MAX_BUBBLES, JOURNAL_TRUNCATE } from '../lib/constants'
 import { loadJournalEntry, loadDebriefs, loadDebriefTypes, loadAllJournalMeta, loadJournalArchive, updateJournalEntryTags, toggleJournalFavorite, toggleJournalRevisit, loadDayCheckins, loadCustomTags } from '../lib/store'
 import { natureTagStyle, peakTagStyle, ENVIRONMENT_TAG_STYLE, parseDebriefEntry } from '../lib/debriefTypes'
@@ -12,11 +11,13 @@ import FirstWeekCard from '../components/FirstWeekCard'
 import GhostPreview from '../components/GhostPreview'
 import { SAMPLE_THREADS } from '../lib/previewSamples'
 import styles from './Log.module.css'
+import ui from './Drafts.module.css'
+import { Dateline, EntryRow, LabelRow, ProfileBadge, SectionTitle } from '../components/loam'
+import { useDockLine } from '../lib/useDockLine'
 import SignedImg from '../components/SignedImg'
 import RevisitSheet from '../components/shapes/RevisitSheet'
 import { shapeLabel } from '../lib/shapeFacts'
 import EntryText from '../components/EntryText'
-import shapeStyles from '../components/shapes/Shapes.module.css'
 
 const MOOD_PILL = {
   good: { bg: '#1B3A2D' },
@@ -44,13 +45,11 @@ const WDAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','satu
 const MONTHS_LONG = ['january','february','march','april','may','june','july','august','september','october','november','december']
 const MONTHS_SHORT = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec']
 
-const MOOD_DOT_COLOR = { good: 'var(--exploration)', mid: '#9DB394', bad: 'var(--survival)' }
-/* lit from the same point as the bloom - the calendar's mood spheres and the day's practice marks */
-const LIT = (a, b) => `radial-gradient(circle at 34% 26%, ${a}, ${b})`
-const MOOD_LIT = { good: LIT('#3FA87A', '#07301F'), mid: LIT('#B4C4AC', '#3E5238'), bad: LIT('#FF8A66', '#A81F06') }
+const MOOD_DOT_COLOR = { good: 'var(--loam-mood-good)', mid: 'var(--loam-mood-fine)', bad: 'var(--loam-mood-bad)' }
+const MOOD_LIT = MOOD_DOT_COLOR
 const MODE_LIT = {
-  exploration: LIT('#2E8A64', '#0C5038'), appreciation: LIT('#B4C4AC', '#536E4D'),
-  nourishment: LIT('#FFD166', '#F0A800'), survival: LIT('#FF7A55', '#F03C10'),
+  exploration: 'var(--loam-exploration)', appreciation: 'var(--loam-appreciation)',
+  nourishment: 'var(--loam-nourishment)', survival: 'var(--loam-survival)',
 }
 const SLOT_ORDER = { morning: 0, midday: 1, evening: 2 }
 const MODE_DOT_TOKEN = {
@@ -461,7 +460,7 @@ function FullLogAccordion({ state }) {
   )
 }
 
-export default function Log({ state, syncCheckinDay, profileMenu }) {
+export default function Log({ state, syncCheckinDay, profileMenu, profileMenuRef }) {
   const [showFullLog, setShowFullLog] = useState(false)
 
   const [calYear, setCalYear] = useState(() => new Date().getFullYear())
@@ -499,8 +498,12 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
   const [archiveVisible, setArchiveVisible] = useState(ARCHIVE_PAGE_SIZE)
   const [expandedEntries, setExpandedEntries] = useState(new Set())
   const [taggingEntryId, setTaggingEntryId] = useState(null)
-  const [taggingKind, setTaggingKind] = useState(null)   // which parent pill is open: 'vibration' | 'need' | 'custom'
+  const [taggingKind, setTaggingKind] = useState(null)   // which parent word is open: 'feeling' | 'need' | 'custom'
   const [taggingBand, setTaggingBand] = useState(null)    // the band picked so far, while its feeling is still to choose
+
+  const [lightboxImage, setLightboxImage] = useState(null)
+  const rootRef = useRef(null)
+  const dockLine = useDockLine(rootRef)
 
   const [resurfacePool, setResurfacePool] = useState([])
   const [resurfaceIdx, setResurfaceIdx] = useState(0)
@@ -738,32 +741,34 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
   }
 
   // ── Default state ─────────────────────────────────────────────────────────
-  const entryCount = journalMeta.length
-  const needCount = journalMeta.filter(e => e.need_id).length
-  const stateCount = journalMeta.filter(e => e.mood_feeling).length
+  const entriesLine = `DRAFTS · ${archiveEntries.length} ${archiveEntries.length === 1 ? 'ENTRY' : 'ENTRIES'}`
+  const initial = ((state?.profile?.name || state?.email || '?').trim()[0] || '?').toUpperCase()
+  const badge = docked => profileMenuRef
+    ? <ProfileBadge docked={docked} initial={initial} onClick={() => profileMenuRef.current?.open()} {...(docked ? {} : { 'data-tour': 'profile' })} />
+    : null
 
   return (
-    <div className={styles.screen}>
-      <div className={styles.content}>
-        <div className={styles.headerBlock}>
-        <div className={styles.pageTitleRow}>
-          <div className={styles.pageTitle}>drafts.</div>
-          <div className={styles.pageTitleAccount}>{profileMenu}</div>
-        </div>
-        <p className={styles.pageSubhead}>Your drafts organized, ready to review and revisit</p>
+    <div ref={rootRef} className={ui.screen}>
+      {/* zero-height so appearing never moves the page */}
+      <div className={ui.dockAnchor}>
+        {dockLine && <div className={ui.dock}><Dateline text={dockLine}>{badge(true)}</Dateline></div>}
+      </div>
+      <Dateline text={entriesLine}>{badge(false)}</Dateline>
+      {profileMenuRef && profileMenu && cloneElement(profileMenu, { hideTrigger: true })}
+      <h1 className={ui.title}>your<br /><em>drafts.</em></h1>
+      <p className={ui.sub}>the conversations you've been having with yourself.</p>
 
-        {archiveLoaded && archiveAllJournalDays.size < 7 && (
-          <FirstWeekCard
-            title="After about a week, you’ll start to see patterns in your writing."
-          />
-        )}
-        </div>
-        <div className={styles.colLeft}>
+      {archiveLoaded && archiveAllJournalDays.size < 7 && (
+        <FirstWeekCard
+          title="After about a week, you’ll start to see patterns in your writing."
+        />
+      )}
+      <div>
         {/* Threads, resurfacing, and the calendar all wait on the journal
            archive fetch - without this, the page renders just the title and
            sits blank for however long that round trip takes, which reads as
            broken rather than loading. */}
-        {!archiveLoaded && <div className={styles.emptyState}>loading your drafts…</div>}
+        {!archiveLoaded && <div className={ui.emptyState}>loading your drafts…</div>}
 
         {/* ── Threads ── */}
         {archiveLoaded && (() => {
@@ -771,52 +776,39 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
           const renderThreadDrafts = openThread => {
             const openMatches = archiveEntries.filter(e => matchesPredicate(e, openThread.predicate))
             return (
-                <div key={openThread.id} className={styles.threadRead}>
-                  <div className={styles.threadReadHeader}>
-                    <span className={styles.threadReadTitle}>{openThread.title}</span>
-                    <button className={styles.threadReadCloseBtn} onClick={() => setOpenThreadId(null)}>close</button>
+                <div key={openThread.id} className={ui.threadRead}>
+                  <div className={ui.threadReadHeader}>
+                    <span className={ui.threadReadTitle}>{openThread.title}</span>
+                    <button className={ui.link} onClick={() => setOpenThreadId(null)}>close</button>
                   </div>
-                  <p className={styles.threadReadIntro}>{openThread.intro}</p>
+                  <p className={ui.threadReadIntro}>{openThread.intro}</p>
                   {openMatches.length === 0 ? (
-                    <p className={styles.threadReadEmpty}>nothing here yet.</p>
+                    <p className={ui.quiet}>nothing here yet.</p>
                   ) : (
                     openMatches.slice(0, threadVisible).map(e => {
                       const slotMood = e.slot && !e.state
                         ? normalizeBand((state.moods || []).find(m => m.date_key === e.date_key && m.prompt_time === e.slot)?.mood || null)
                         : null
-                      const moodDotColor = slotMood ? MOOD_DOT_COLOR[slotMood] : null
                       return (
-                        <div key={e.id} className={styles.threadReadEntry}>
-                          <div className={styles.threadReadEntryDate}>
-                            {moodDotColor && <span className={styles.threadReadEntryDot} style={{ background: moodDotColor }} />}
-                            {formatThreadDate(e.date_key, e.slot)}
-                          </div>
-                          <div className={styles.threadReadEntryTags}>
-                            {e.state && <span className={styles.threadReadTag}>{e.state}</span>}
-                            {e.need_id && <span className={styles.threadReadTag}>{needName(e.need_id)}</span>}
-                            {e.custom && <span className={styles.threadReadTag}>{e.custom}</span>}
-                            {e.shape && shapeLabel(e.shape) && <span className={shapeStyles.shapeChip}>{shapeLabel(e.shape)}</span>}
-                            <span className={styles.archiveCardMarks}>
-                              <button
-                                className={`${styles.archiveRevisitBtn}${e.revisit ? ` ${styles.archiveRevisitBtnActive}` : ''}`}
-                                onClick={() => handleToggleRevisit(e.id, e.revisit)}
-                                aria-pressed={e.revisit}
-                              >↩ revisit</button>
-                              <button
-                                className={`${styles.archiveFavBtn}${e.favorite ? ` ${styles.archiveFavBtnActive}` : ''}`}
-                                onClick={() => handleToggleFav(e.id, e.favorite)}
-                                aria-pressed={e.favorite}
-                                aria-label={e.favorite ? 'remove from favorites' : 'add to favorites'}
-                              >{e.favorite ? <IconHeartFilled size={15} stroke={1.5} /> : <IconHeart size={15} stroke={1.5} />}</button>
-                            </span>
-                          </div>
-                          <p className={styles.threadReadEntryBody}><EntryText text={e.entry} shape={e.shape} /></p>
-                        </div>
+                        <EntryRow
+                          key={e.id}
+                          slot={formatThreadDate(e.date_key, e.slot)}
+                          metaDot={slotMood ? MOOD_DOT_COLOR[slotMood] : undefined}
+                          text={e.entry}
+                          shape={e.shape}
+                          truncate={false}
+                          tags={[e.state, e.need_id && needName(e.need_id), e.custom]}
+                          roomTag={e.shape ? shapeLabel(e.shape) : undefined}
+                          onRevisit={() => handleToggleRevisit(e.id, e.revisit)}
+                          revisited={e.revisit}
+                          onFavorite={() => handleToggleFav(e.id, e.favorite)}
+                          favorite={e.favorite}
+                        />
                       )
                     })
                   )}
                   {openMatches.length > threadVisible && (
-                    <button className={styles.threadReadMore} onClick={() => setThreadVisible(v => v + 8)}>
+                    <button className={ui.link} onClick={() => setThreadVisible(v => v + 8)}>
                       show {Math.min(8, openMatches.length - threadVisible)} more · {openMatches.length - threadVisible} left
                     </button>
                   )}
@@ -824,19 +816,15 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
             )
           }
           return (
-            // when the "still filling in" card is not showing, the subhead's own
-            // divider is the only rule above the threads
-            <div className={`${styles.threadSection}${archiveAllJournalDays.size >= 7 ? ` ${styles.threadSectionFirst}` : ''}`}>
-              <div className={styles.threadSectionHeader}>
-                <span className={styles.threadSectionMeta}>most active threads · last 30 days</span>
-              </div>
+            <section className={ui.threads} data-dock={entriesLine}>
+              <LabelRow left="THREADS" right="LAST 30 DAYS" />
               {activeThreads.length === 0 ? (
                 archiveAllJournalDays.size < 7 ? (
                   <GhostPreview>
                     <ThreadTiles threads={SAMPLE_THREADS} openId={null} onPick={() => {}} />
                   </GhostPreview>
                 ) : (
-                  <p className={styles.threadInterpretive} style={{ fontStyle: 'italic' }}>threads appear as you write — entries from the last 30 days shape this list.</p>
+                  <p className={ui.quiet}>threads appear as you write — entries from the last 30 days shape this list.</p>
                 )
               ) : (
                 <ThreadTiles
@@ -846,69 +834,50 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
                   renderOpen={renderThreadDrafts}
                 />
               )}
-            </div>
+            </section>
           )
         })()}
 
         {/* ── Resurfacing ── */}
         {archiveLoaded && archiveEntries.length > 0 && archiveEntries.length < 10 && (
-          <div className={styles.resurfaceSection}>
-            <div className={styles.resurfaceSectionLabel}>Wild card</div>
-              <div className={styles.resurfaceSectionSub}>a random day from the past</div>
-            <div className={styles.resurfaceGrowth}>keep writing — your past will start speaking back soon.</div>
-          </div>
+          <section className={ui.block}>
+            <LabelRow left="WILD CARD" />
+            <p className={ui.quiet}>keep writing — your past will start speaking back soon.</p>
+          </section>
         )}
         {archiveLoaded && resurfacePool.length > 0 && (() => {
           const poolItem = resurfacePool[resurfaceIdx % resurfacePool.length]
           const entry = archiveEntries.find(e => e.id === poolItem.id)
           if (!entry) return null
-          const today = new Date(); today.setHours(12, 0, 0, 0)
-          const todayKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`
-          const [ey, em, ed] = entry.date_key.split('-').map(Number)
-          const entryDateStr = new Date(ey, em - 1, ed).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })
+          const when = new Date(entry.date_key + 'T12:00:00')
+          const year = when.getFullYear() !== new Date().getFullYear() ? ` ${when.getFullYear()}` : ''
+          const entryDate = `${WDAYS[when.getDay()].slice(0, 3).toUpperCase()} · ${MONTHS_SHORT[when.getMonth()].toUpperCase()} ${when.getDate()}${year}`
           const entryTags = [
-            entry.slot ? { label: entry.slot, isState: false } : null,
-            (entry.mood_feeling || entry.mood_band) ? { label: entry.mood_feeling || entry.mood_band, isState: false } : null,
-            entry.need_id ? { label: (needName(entry.need_id) || null), isState: false } : null,
-            entry.custom ? { label: entry.custom, isState: false } : null,
-          ].filter(t => t && t.label)
+            entry.slot,
+            entry.mood_feeling || entry.mood_band,
+            entry.need_id ? needName(entry.need_id) : null,
+            entry.custom,
+          ].filter(Boolean)
           return (
-            <div className={styles.resurfaceSection}>
-              <div className={styles.resurfaceSectionLabel}>Wild card</div>
-              <div className={styles.resurfaceSectionSub}>a random day from the past</div>
-              <div className={styles.resurfaceCard}>
-                <div className={styles.resurfaceHeader}>
-                  <span className={styles.resurfaceDate}>{entryDateStr}</span>
-                  {entryTags.length > 0 && (
-                    <span className={styles.resurfaceTagRow}>
-                      {entryTags.map(t => (
-                        <span key={t.label} className={styles.resurfaceTag}>{t.label}</span>
-                      ))}
-                    </span>
-                  )}
-                </div>
-                <p className={styles.resurfaceBody}>{entry.entry}</p>
-                <div className={styles.resurfaceMarks}>
-                  <button
-                    className={`${styles.archiveRevisitBtn}${entry.revisit ? ` ${styles.archiveRevisitBtnActive}` : ''}`}
-                    onClick={() => handleToggleRevisit(entry.id, entry.revisit)}
-                    aria-pressed={entry.revisit}
-                  >↩ revisit</button>
-                  <button
-                    className={`${styles.archiveFavBtn}${entry.favorite ? ` ${styles.archiveFavBtnActive}` : ''}`}
-                    onClick={() => handleToggleFav(entry.id, entry.favorite)}
-                    aria-pressed={entry.favorite}
-                    aria-label={entry.favorite ? 'remove from favorites' : 'add to favorites'}
-                  >{entry.favorite ? <IconHeartFilled size={15} stroke={1.5} /> : <IconHeart size={15} stroke={1.5} />}</button>
-                </div>
-                <div className={styles.resurfaceFooter}>
-                  <button
-                    className={styles.resurfaceAnotherBtn}
-                    onClick={() => setResurfaceIdx(i => (i + 1) % resurfacePool.length)}
-                  >see another</button>
-                </div>
+            <section className={ui.block} data-dock={entriesLine}>
+              <LabelRow left="WILD CARD" right={entryDate} />
+              <p className={ui.wildText}>{entry.entry}</p>
+              {entryTags.length > 0 && <div className={ui.wildTags}>{entryTags.join(' · ')}</div>}
+              <div className={ui.wildActions}>
+                <button className={ui.link} onClick={() => setResurfaceIdx(i => (i + 1) % resurfacePool.length)}>see another</button>
+                <button
+                  className={`${ui.mark}${entry.revisit ? ` ${ui.markOn}` : ''}`}
+                  onClick={() => handleToggleRevisit(entry.id, entry.revisit)}
+                  aria-pressed={entry.revisit}
+                >↩ revisit</button>
+                <button
+                  className={`${ui.mark}${entry.favorite ? ` ${ui.markOn}` : ''}`}
+                  onClick={() => handleToggleFav(entry.id, entry.favorite)}
+                  aria-pressed={entry.favorite}
+                  aria-label={entry.favorite ? 'remove from favorites' : 'add to favorites'}
+                >{entry.favorite ? '♥' : '♡'}</button>
               </div>
-            </div>
+            </section>
           )
         })()}
 
@@ -949,12 +918,12 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
           const metCount = activePractices.filter(p => findCheckin(p)).length
 
           return (
-            <div className={styles.calSection}>
-              <span className={styles.calSectionLabel}>Your calendar</span>
-              <div className={styles.calCard}>
-                <div className={styles.calNavRow}>
+            <section className={ui.block} data-dock={`DRAFTS · ${MONTHS_LONG[calMonth].toUpperCase()} ${calYear}`}>
+              <LabelRow left="CALENDAR" />
+              <div>
+                <div className={ui.calNavRow}>
                   <button
-                    className={styles.calNavBtn}
+                    className={ui.calNavBtn}
                     onClick={() => {
                       if (calMonth === 0) { setCalYear(y => y - 1); setCalMonth(11) }
                       else setCalMonth(m => m - 1)
@@ -962,9 +931,9 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
                     }}
                     aria-label="previous month"
                   >‹</button>
-                  <span className={styles.calNavMonthLabel}>{MONTHS_LONG[calMonth]} {calYear}</span>
+                  <span className={ui.calNavMonthLabel}>{MONTHS_LONG[calMonth]} {calYear}</span>
                   <button
-                    className={`${styles.calNavBtn}${isCurrentMonth ? ` ${styles.calNavBtnDisabled}` : ''}`}
+                    className={`${ui.calNavBtn}${isCurrentMonth ? ` ${ui.calNavBtnDisabled}` : ''}`}
                     disabled={isCurrentMonth}
                     onClick={() => {
                       if (calMonth === 11) { setCalYear(y => y + 1); setCalMonth(0) }
@@ -975,15 +944,15 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
                   >›</button>
                 </div>
 
-                <div className={styles.calDayLabels}>
+                <div className={ui.calDayLabels}>
                   {['m','t','w','t','f','s','s'].map((d, i) => (
-                    <span key={i} className={styles.calDayLabel}>{d}</span>
+                    <span key={i} className={ui.calDayLabel}>{d}</span>
                   ))}
                 </div>
 
-                <div className={styles.calGrid}>
+                <div className={ui.calGrid}>
                   {Array.from({ length: firstDayOfWeek }, (_, i) => (
-                    <div key={`blank-${i}`} className={styles.calDayBlank} />
+                    <div key={`blank-${i}`} className={ui.calDayBlank} />
                   ))}
                   {Array.from({ length: daysInMonth }, (_, i) => {
                     const day = i + 1
@@ -997,8 +966,8 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
 
                     if (isFuture) {
                       return (
-                        <div key={dateKey} className={`${styles.calDay} ${styles.calDayFuture}`}>
-                          <span className={styles.calDayNum}>{day}</span>
+                        <div key={dateKey} className={`${ui.calDay} ${ui.calDayFuture}`}>
+                          <span className={ui.calDayNum}>{day}</span>
                         </div>
                       )
                     }
@@ -1006,14 +975,14 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
                     return (
                       <button
                         key={dateKey}
-                        className={`${styles.calDay}${isSelected ? ` ${styles.calDaySelected}` : ''}${isToday ? ` ${styles.calDayToday}` : ''}`}
+                        className={`${ui.calDay}${isSelected ? ` ${ui.calDaySelected}` : ''}${isToday ? ` ${ui.calDayToday}` : ''}`}
                         onClick={() => selectDay(dateKey)}
                       >
-                        <span className={`${styles.calDayNum}${!hasData ? ` ${styles.calDayNumMuted}` : ''}${hasJournal ? ` ${styles.calDayNumWritten}` : ''}`}>{day}</span>
-                        <div className={styles.calDayDots}>
+                        <span className={`${ui.calDayNum}${!hasData ? ` ${ui.calDayNumMuted}` : ''}${hasJournal ? ` ${ui.calDayNumWritten}` : ''}`}>{day}</span>
+                        <div className={ui.calDayDots}>
                           {MOOD_PERIODS.map(slot => dayMoods?.[slot]
-                            ? <span key={slot} className={styles.calDayDot} style={{ background: MOOD_LIT[dayMoods[slot]] }} />
-                            : <span key={slot} className={`${styles.calDayDot} ${styles.calDayDotOff}`} />)}
+                            ? <span key={slot} className={ui.calDayDot} style={{ background: MOOD_LIT[dayMoods[slot]] }} />
+                            : <span key={slot} className={`${ui.calDayDot} ${ui.calDayDotOff}`} />)}
                         </div>
                       </button>
                     )
@@ -1022,29 +991,29 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
               </div>
 
               {selectedDayKey && (
-                <div key={selectedDayKey} className={styles.calDetail}>
-                  <div className={styles.calDetailHeader}>
-                    <span className={styles.calDetailDate}>{formatDayDetailDate(selectedDayKey)}</span>
-                    <div className={styles.calDetailHeaderBtns}>
+                <div key={selectedDayKey} className={ui.calDetail}>
+                  <div className={ui.calDetailHeader}>
+                    <span className={ui.calDetailDate}>{formatDayDetailDate(selectedDayKey)}</span>
+                    <div className={ui.calDetailHeaderBtns}>
                       {selectedDayKey <= todayKey && activePractices.length > 0 && (
                         <button
-                          className={`${styles.calDetailEditBtn}${editMode ? ` ${styles.calDetailEditBtnActive}` : ''}`}
+                          className={`${ui.calDetailEditBtn}${editMode ? ` ${ui.calDetailEditBtnActive}` : ''}`}
                           onClick={() => setEditMode(e => !e)}
                         >{editMode ? 'done' : 'edit this day'}</button>
                       )}
-                      <button className={styles.calDetailCloseBtn} onClick={() => setSelectedDayKey(null)} aria-label="close">×</button>
+                      <button className={ui.calDetailCloseBtn} onClick={() => setSelectedDayKey(null)} aria-label="close">×</button>
                     </div>
                   </div>
 
                   {detailMoods.length > 0 && (
-                    <div className={styles.calDetailMoodRow}>
+                    <div className={ui.calDetailMoodRow}>
                       {MOOD_PERIODS.map(slot => {
                         const m = detailMoods.find(x => x.prompt_time === slot)
                         const band = m ? normalizeBand(m.mood) : null
                         return (
-                          <span key={slot} className={`${styles.calDetailMoodPair}${band ? '' : ` ${styles.calDetailMoodPairOff}`}`}>
-                            <span className={styles.calDetailMoodDot} style={band ? { background: MOOD_LIT[band] } : undefined} />
-                            <span className={styles.calDetailMoodLabel}>{slot}{band ? ` · ${BAND_LABEL[band]}${m.feeling ? `, ${m.feeling}` : ''}` : ''}</span>
+                          <span key={slot} className={`${ui.calDetailMoodPair}${band ? '' : ` ${ui.calDetailMoodPairOff}`}`}>
+                            <span className={ui.calDetailMoodDot} style={band ? { background: MOOD_LIT[band] } : undefined} />
+                            <span className={ui.calDetailMoodLabel}>{slot}{band ? ` · ${BAND_LABEL[band]}${m.feeling ? `, ${m.feeling}` : ''}` : ''}</span>
                           </span>
                         )
                       })}
@@ -1053,12 +1022,12 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
 
                   {activePractices.length > 0 && (
                     <div>
-                      <div className={styles.calDetailSectionLabel}>
+                      <div className={ui.calDetailSectionLabel}>
                         practices · {detailLoading ? '…' : `${metCount} of ${activePractices.length} met`}
                       </div>
-                      {editMode && <div className={styles.calDetailEditHint}>tap a practice to log it, tap again for twice, once more to clear it.</div>}
+                      {editMode && <div className={ui.calDetailEditHint}>tap a practice to log it, tap again for twice, once more to clear it.</div>}
                       {!detailLoading && metCount === 0 && !editMode && (
-                        <p className={styles.calDetailEmpty}>no practices logged this day.</p>
+                        <p className={ui.calDetailEmpty}>no practices logged this day.</p>
                       )}
                       {!detailLoading && allNeeds().filter(n => activePractices.some(p => p.need_id === n.id)).map(n => {
                         const modeName = state.canvas?.[n.id] || null
@@ -1068,11 +1037,11 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
                         const ps = editMode ? all : all.filter(p => findCheckin(p))
                         if (!ps.length) return null
                         return (
-                          <div key={n.id} className={styles.calDetailNeed}>
-                            <div className={styles.calDetailNeedHead}>
-                              <span className={styles.calDetailNeedDot} style={{ background: modeName ? MODE_LIT[modeName] : 'var(--ink3)' }} />
-                              <span className={styles.calDetailNeedName}>{n.name}</span>
-                              <span className={styles.calDetailNeedCount}>{met} of {all.length}</span>
+                          <div key={n.id} className={ui.calDetailNeed}>
+                            <div className={ui.calDetailNeedHead}>
+                              <span className={ui.calDetailNeedDot} style={{ background: modeName ? MODE_LIT[modeName] : 'var(--ink3)' }} />
+                              <span className={ui.calDetailNeedName}>{n.name}</span>
+                              <span className={ui.calDetailNeedCount}>{met} of {all.length}</span>
                             </div>
                             {ps.map(p => {
                               const checkin = findCheckin(p)
@@ -1082,18 +1051,18 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
                               return (
                                 <Tag
                                   key={p.id}
-                                  className={`${styles.calDetailPracticeRow}${editMode ? ` ${styles.calDetailPracticeRowEditable}` : ''}${!isMet && !editMode ? ` ${styles.calDetailPracticeRowOff}` : ''}`}
+                                  className={`${ui.calDetailPracticeRow}${editMode ? ` ${ui.calDetailPracticeRowEditable}` : ''}${!isMet && !editMode ? ` ${ui.calDetailPracticeRowOff}` : ''}`}
                                   onClick={editMode ? () => handlePracticeTap(p) : undefined}
                                 >
                                   <span
-                                    className={styles.calDetailPracticeRing}
+                                    className={ui.calDetailPracticeRing}
                                     style={isMet
                                       ? { background: modeName ? MODE_LIT[modeName] : 'var(--ink3)' }
                                       : { border: '1px solid rgba(0,0,0,.25)', background: 'transparent' }
                                     }
                                   />
-                                  <span className={styles.calDetailPracticeName}>{p.label}</span>
-                                  {count > 1 && <span className={styles.calDetailPracticeTimes}>×{count}</span>}
+                                  <span className={ui.calDetailPracticeName}>{p.label}</span>
+                                  {count > 1 && <span className={ui.calDetailPracticeTimes}>×{count}</span>}
                                 </Tag>
                               )
                             })}
@@ -1103,7 +1072,7 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
                     </div>
                   )}
 
-                  <div className={styles.calDetailSectionLabel}>journal</div>
+                  <div className={ui.calDetailSectionLabel}>journal</div>
                   {detailJournals.length > 0 ? detailJournals.map(e => {
                     const timeStr = `${e.slot ? `${e.slot} · ` : ''}${formatEntryTime(e.created_at)}`
                     const slotMood = e.slot && !e.state
@@ -1112,27 +1081,27 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
                     const entryMoodDotColor = slotMood ? MOOD_DOT_COLOR[slotMood] : null
                     const needTagName = e.need_id ? needName(e.need_id) : null
                     return (
-                      <div key={e.id} className={styles.calDetailJournalEntry}>
-                        <div className={styles.calDetailJournalMeta}>
-                          {entryMoodDotColor && <span className={styles.calDetailJournalDot} style={{ background: entryMoodDotColor }} />}
+                      <div key={e.id} className={ui.calDetailJournalEntry}>
+                        <div className={ui.calDetailJournalMeta}>
+                          {entryMoodDotColor && <span className={ui.calDetailJournalDot} style={{ background: entryMoodDotColor }} />}
                           <span>{timeStr}</span>
                         </div>
-                        <p className={styles.calDetailJournalBody}><EntryText text={e.entry} shape={e.shape} /></p>
+                        <p className={ui.calDetailJournalBody}><EntryText text={e.entry} shape={e.shape} /></p>
                         {(needTagName || e.state || e.custom) && (
-                          <div className={styles.calDetailJournalTags}>
-                            {e.state && <span className={styles.calDetailJournalTag}>{e.state}</span>}
-                            {needTagName && <span className={styles.calDetailJournalTag}>{needTagName}</span>}
-                            {e.custom && <span className={styles.calDetailJournalTag}>{e.custom}</span>}
+                          <div className={ui.calDetailJournalTags}>
+                            {e.state && <span className={ui.calDetailJournalTag}>{e.state}</span>}
+                            {needTagName && <span className={ui.calDetailJournalTag}>{needTagName}</span>}
+                            {e.custom && <span className={ui.calDetailJournalTag}>{e.custom}</span>}
                           </div>
                         )}
                       </div>
                     )
                   }) : (
-                    <p className={styles.calDetailEmpty}>nothing written this day.</p>
+                    <p className={ui.calDetailEmpty}>nothing written this day.</p>
                   )}
                 </div>
               )}
-            </div>
+            </section>
           )
         })()}
         </div>
@@ -1145,12 +1114,12 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
           const filtered = archiveFiltered
           const anyFilter = filterFav || filterRevisit || filterSlot || filterNeed || filterFeeling || filterCustom || filterDate || rangeStart
           const visible = filtered.slice(0, archiveVisible)
+          const countLine = `${filtered.length} OF ${archiveEntries.length}`
 
           return (
-            <div className={styles.archiveSection}>
-              <div className={styles.archiveSectionHeader}>
-                <span className={styles.archiveSectionLabel}>The archive</span>
-              </div>
+            <section className={ui.block} data-dock={`THE ARCHIVE · ${countLine}`}>
+              <LabelRow left="THE ARCHIVE" right={countLine} />
+              <div className={ui.archiveTitle}><SectionTitle lead="the" turn="archive." /></div>
 
               {/* one row of facets; tap one to open its choices beneath */}
               {(() => {
@@ -1159,20 +1128,20 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
                 const facets = [
                   { key: 'slot', name: 'daypart', value: filterSlot, show: true },
                   { key: 'need', name: 'need', value: needLabel, show: canvasNeeds.length > 0 },
-                  { key: 'feeling', name: 'vibrations', value: feelingLabel, show: true },
+                  { key: 'feeling', name: 'feelings', value: feelingLabel, show: true },
                   { key: 'custom', name: 'tags', value: filterCustom, show: allCustomLabels.length > 0 },
                 ].filter(f => f.show)
                 const chip = (active, onClick, text, cnt, key) => (
                   <button
                     key={key}
-                    className={`${styles.facetChip} ${active ? styles.facetChipActive : ''}`}
+                    className={`${ui.facetChip} ${active ? ui.facetChipActive : ''}`}
                     disabled={cnt === 0 && !active}
                     onClick={onClick}
-                  >{text}{cnt != null && <span className={styles.facetCount}>{cnt}</span>}</button>
+                  >{text}{cnt != null && <span className={ui.facetCount}>{cnt}</span>}</button>
                 )
                 return (
-                  <div className={styles.facetBar}>
-                    <div className={styles.facetRow}>
+                  <div className={ui.facetBar}>
+                    <div className={ui.facetRow}>
                       {ARCHIVE_DATE_PRESETS.map(r => chip(filterDate === r.key, () => {
                         setFilterDate(v => v === r.key ? null : r.key)
                         setRangeStart(null); setRangeEnd(null); setPickAnchor(null); setHoverDay(null); setDatePickerOpen(false)
@@ -1186,7 +1155,7 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
                       }, rangeStart ? rangeLabel : 'pick dates', null, 'range')}
                     </div>
                     {datePickerOpen && (
-                      <div className={styles.facetPanel}>
+                      <div className={ui.facetPanel}>
                   {datePickerOpen && (() => {
                     const today = new Date(); today.setHours(12, 0, 0, 0)
                     const pickerPrefix = `${pickerYear}-${String(pickerMonth + 1).padStart(2, '0')}-`
@@ -1208,10 +1177,10 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
                     const previewLo = previewEnd ? (pickAnchor <= previewEnd ? pickAnchor : previewEnd) : null
                     const previewHi = previewEnd ? (pickAnchor <= previewEnd ? previewEnd : pickAnchor) : null
                     return (
-                      <div className={styles.datePicker}>
-                        <div className={styles.datePickerNav}>
+                      <div className={ui.datePicker}>
+                        <div className={ui.datePickerNav}>
                           <button
-                            className={styles.calNavBtn}
+                            className={ui.calNavBtn}
                             disabled={isPickerMinMonth}
                             onClick={() => {
                               if (pickerMonth === 0) { setPickerYear(y => y - 1); setPickerMonth(11) }
@@ -1219,9 +1188,9 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
                             }}
                             aria-label="previous month"
                           >‹</button>
-                          <span className={styles.calNavMonthLabel}>{MONTHS_LONG[pickerMonth]} {pickerYear}</span>
+                          <span className={ui.calNavMonthLabel}>{MONTHS_LONG[pickerMonth]} {pickerYear}</span>
                           <button
-                            className={styles.calNavBtn}
+                            className={ui.calNavBtn}
                             disabled={isPickerCurMonth}
                             onClick={() => {
                               if (pickerMonth === 11) { setPickerYear(y => y + 1); setPickerMonth(0) }
@@ -1231,15 +1200,15 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
                           >›</button>
                         </div>
                         {pickAnchor && (
-                          <div className={styles.datePickerHint}>
+                          <div className={ui.datePickerHint}>
                             {formatArchiveDate(pickAnchor)}{previewEnd ? ` – ${formatArchiveDate(previewEnd)}` : ''} · now pick an end date
                           </div>
                         )}
-                        <div className={styles.calDayLabels}>
-                          {['M','T','W','T','F','S','S'].map((dl, i) => <span key={i} className={styles.calDayLabel}>{dl}</span>)}
+                        <div className={ui.calDayLabels}>
+                          {['M','T','W','T','F','S','S'].map((dl, i) => <span key={i} className={ui.calDayLabel}>{dl}</span>)}
                         </div>
-                        <div className={styles.calGrid}>
-                          {Array.from({ length: firstDow }, (_, i) => <div key={`pb-${i}`} className={styles.calDayBlank} />)}
+                        <div className={ui.calGrid}>
+                          {Array.from({ length: firstDow }, (_, i) => <div key={`pb-${i}`} className={ui.calDayBlank} />)}
                           {Array.from({ length: daysInPicker }, (_, i) => {
                             const day = i + 1
                             const dk = `${pickerPrefix}${String(day).padStart(2, '0')}`
@@ -1249,14 +1218,14 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
                             const isInRange = (previewLo && dk > previewLo && dk < previewHi)
                               || (!pickAnchor && rangeStart && appliedEnd && rangeStart !== appliedEnd && dk > rangeStart && dk < appliedEnd)
                             if (isFuture) return (
-                              <div key={dk} className={`${styles.calDay} ${styles.calDayFuture}`}>
-                                <span className={styles.calDayNum}>{day}</span>
+                              <div key={dk} className={`${ui.calDay} ${ui.calDayFuture}`}>
+                                <span className={ui.calDayNum}>{day}</span>
                               </div>
                             )
                             return (
                               <button
                                 key={dk}
-                                className={`${styles.calDay}${isSelected ? ` ${styles.pickerDaySelected}` : ''}${isInRange ? ` ${styles.pickerDayInRange}` : ''}`}
+                                className={`${ui.calDay}${isSelected ? ` ${ui.pickerDaySelected}` : ''}${isInRange ? ` ${ui.pickerDayInRange}` : ''}`}
                                 onMouseEnter={() => { if (pickAnchor) setHoverDay(dk) }}
                                 onMouseLeave={() => { if (pickAnchor) setHoverDay(d => d === dk ? null : d) }}
                                 onClick={() => {
@@ -1275,68 +1244,68 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
                                   }
                                 }}
                               >
-                                <span className={`${styles.calDayNum}${isSelected ? ` ${styles.pickerDayNum}` : ''}`}>{day}</span>
+                                <span className={`${ui.calDayNum}${isSelected ? ` ${ui.pickerDayNum}` : ''}`}>{day}</span>
                                 {hasJ && (
-                                  <div className={styles.calDayDots}>
-                                    <span className={styles.calDayDot} style={{ background: isSelected ? 'rgba(255,255,255,.55)' : 'var(--exploration)' }} />
+                                  <div className={ui.calDayDots}>
+                                    <span className={ui.calDayDot} style={{ background: isSelected ? 'rgba(255,255,255,.55)' : 'var(--exploration)' }} />
                                   </div>
                                 )}
                               </button>
                             )
                           })}
                         </div>
-                        <button className={styles.datePickerCloseBtn} onClick={() => { setDatePickerOpen(false); setPickAnchor(null); setHoverDay(null) }}>close</button>
+                        <button className={ui.datePickerCloseBtn} onClick={() => { setDatePickerOpen(false); setPickAnchor(null); setHoverDay(null) }}>close</button>
                       </div>
                     )
                   })()}
                       </div>
                     )}
                     {(favCount + revisitCount > 0 || filterFav || filterRevisit) && (
-                      <div className={styles.facetRow}>
-                        {chip(filterFav, () => { setFilterFav(v => !v); setArchiveVisible(ARCHIVE_PAGE_SIZE) }, <><IconHeartFilled size={12} stroke={1.5} style={{ verticalAlign: 'middle', marginRight: 4 }} />favorite</>, favCount, 'fav')}
+                      <div className={ui.facetRow}>
+                        {chip(filterFav, () => { setFilterFav(v => !v); setArchiveVisible(ARCHIVE_PAGE_SIZE) }, '♥ favorite', favCount, 'fav')}
                         {chip(filterRevisit, () => { setFilterRevisit(v => !v); setArchiveVisible(ARCHIVE_PAGE_SIZE) }, '↩ revisit', revisitCount, 'rev')}
                       </div>
                     )}
-                    <div className={styles.facetRail}>
+                    <div className={ui.facetRail}>
                       {facets.map(f => (
                         <button
                           key={f.key}
-                          className={`${styles.facet}${f.value ? ` ${styles.facetSet}` : ''}${openFacet === f.key ? ` ${styles.facetOpen}` : ''}`}
+                          className={`${ui.facet}${f.value ? ` ${ui.facetSet}` : ''}${openFacet === f.key ? ` ${ui.facetOpen}` : ''}`}
                           onClick={() => setOpenFacet(o => o === f.key ? null : f.key)}
                         >
-                          <span className={styles.facetName}>{f.name}</span>
-                          {f.value && <span className={styles.facetValue}>{f.value}</span>}
-                          <i className={styles.facetChev} aria-hidden="true" />
+                          <span className={ui.facetName}>{f.name}</span>
+                          {f.value && <span className={ui.facetValue}>{f.value}</span>}
+                          <i className={ui.facetChev} aria-hidden="true">▾</i>
                         </button>
                       ))}
                       {anyFilter && (
-                        <button className={styles.facetClear} onClick={() => { setFilterFav(false); setFilterRevisit(false); setFilterSlot(null); setFilterNeed(null); setFilterFeeling(null); setFilterCustom(null); setFilterDate(null); setRangeStart(null); setRangeEnd(null); setPickAnchor(null); setDatePickerOpen(false); setOpenFacet(null); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}>clear</button>
+                        <button className={ui.facetClear} onClick={() => { setFilterFav(false); setFilterRevisit(false); setFilterSlot(null); setFilterNeed(null); setFilterFeeling(null); setFilterCustom(null); setFilterDate(null); setRangeStart(null); setRangeEnd(null); setPickAnchor(null); setDatePickerOpen(false); setOpenFacet(null); setArchiveVisible(ARCHIVE_PAGE_SIZE) }}>clear</button>
                       )}
                     </div>
 
                     {openFacet === 'slot' && (
-                      <div className={styles.facetPanel}>
+                      <div className={ui.facetPanel}>
                         {ARCHIVE_SLOTS.map(sl => chip(filterSlot === sl, () => { setFilterSlot(v => v === sl ? null : sl); setArchiveVisible(ARCHIVE_PAGE_SIZE) }, sl, slotCounts[sl], sl))}
                       </div>
                     )}
                     {openFacet === 'need' && (
-                      <div className={styles.facetPanel}>
+                      <div className={ui.facetPanel}>
                         {canvasNeeds.map(n => chip(filterNeed === n.id, () => { setFilterNeed(v => v === n.id ? null : n.id); setArchiveVisible(ARCHIVE_PAGE_SIZE) },
-                          <><span className={styles.facetDot} style={{ background: MODE_DOT_TOKEN[state.canvas?.[n.id]] || 'var(--ink)' }} />{n.name}</>, needCounts[n.id], n.id))}
+                          <><span className={ui.facetDot} style={{ background: MODE_DOT_TOKEN[state.canvas?.[n.id]] || 'var(--ink)' }} />{n.name}</>, needCounts[n.id], n.id))}
                       </div>
                     )}
                     {openFacet === 'feeling' && (
-                      <div className={styles.facetPanel}>
+                      <div className={ui.facetPanel}>
                         {BANDS.map(b => (
-                          <div key={b} className={styles.facetBandRow}>
-                            <span className={styles.facetBandName}>{BAND_LABEL[b]}</span>
+                          <div key={b} className={ui.facetBandRow}>
+                            <span className={ui.facetBandName}>{BAND_LABEL[b]}</span>
                             {FEELINGS[b].map(f => chip(filterFeeling === f, () => { setFilterFeeling(v => v === f ? null : f); setArchiveVisible(ARCHIVE_PAGE_SIZE) }, f, feelingCounts[f], f))}
                           </div>
                         ))}
                       </div>
                     )}
                     {openFacet === 'custom' && (
-                      <div className={styles.facetPanel}>
+                      <div className={ui.facetPanel}>
                         {allCustomLabels.map(label => chip(filterCustom === label, () => { setFilterCustom(v => v === label ? null : label); setArchiveVisible(ARCHIVE_PAGE_SIZE) }, label, customCounts[label], label))}
                       </div>
                     )}
@@ -1344,16 +1313,13 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
                 )
               })()}
 
-              <div className={styles.archiveCards}>
+              <div className={ui.archiveCards}>
+                {archiveLoaded && archiveEntries.length === 0 && <p className={ui.quiet}>nothing here yet.</p>}
+                {archiveLoaded && archiveEntries.length > 0 && filtered.length === 0 && <p className={ui.quiet}>nothing matches these filters.</p>}
                 {visible.map(e => {
                     const slotMood = (e.slot && !e.mood_band)
                       ? normalizeBand((state.moods || []).find(m => m.date_key === e.date_key && m.prompt_time === e.slot)?.mood || null)
                       : null
-                    const dotColor = slotMood ? MOOD_DOT_COLOR[slotMood] : null
-                    const body = e.entry || ''
-                    const isExpanded = expandedEntries.has(e.id)
-                    const isTruncatable = body.length > JOURNAL_TRUNCATE
-                    const displayBody = !isExpanded && isTruncatable ? body.slice(0, JOURNAL_TRUNCATE).trimEnd() + '…' : body
                     const needTagName = e.need_id ? needName(e.need_id) : null
                     const canAddNeed = !e.need_id && canvasNeeds.length > 0
                     const canAddFrequency = !e.mood_band
@@ -1364,112 +1330,98 @@ export default function Log({ state, syncCheckinDay, profileMenu }) {
                       next.has(e.id) ? next.delete(e.id) : next.add(e.id)
                       return next
                     })
+                    const addable = [['feeling', canAddFrequency], ['need', canAddNeed], ['custom', canAddCustom]].filter(([, can]) => can)
                     return (
-                      <div key={e.id} className={`${styles.archiveRow}${isTagging ? ` ${styles.archiveRowOpen}` : ''}`}>
-                        <button className={styles.archiveCardInner} onClick={toggleExpand}>
-                          <span className={styles.archiveCardMeta}>
-                            {dotColor && <span className={styles.archiveCardDot} style={{ background: dotColor }} />}
-                            <span className={styles.archiveCardDateSlot}>{formatArchiveDate(e.date_key)}{e.slot ? ` · ${e.slot}` : ''}</span>
-                            <span className={styles.archiveCardTime}>{formatEntryTime(e.created_at)}</span>
-                          </span>
-                          {e.quoted_text && (
-                            <JournalQuote
-                              text={e.quoted_text}
-                              dateLabel={formatArchiveDate(e.quoted_date)}
-                              blockClass={styles.archiveQuoteBlock}
-                              dateClass={styles.archiveQuoteLabel}
-                              textClass={styles.archiveQuoteText}
-                              readMoreClass={styles.archiveQuoteReadMore}
-                            />
-                          )}
-                          <span className={styles.archiveCardBody}><EntryText text={displayBody} shape={e.shape} /></span>
-                          {!isExpanded && isTruncatable && (
-                            <span className={styles.archiveCardReadMore}>read more</span>
-                          )}
-                          {e.image_url && <SignedImg src={e.image_url} className={styles.archiveEntryImage} alt="" />}
-                        </button>
-                        <span className={styles.archiveCardTags}>
-                          {(e.mood_feeling || e.mood_band) && <span className={styles.archiveTag}>{e.mood_feeling || BAND_LABEL[normalizeBand(e.mood_band)] || e.mood_band}</span>}
-                          {needTagName && <span className={styles.archiveTag}>{needTagName}</span>}
-                          {e.custom && <span className={styles.archiveTag}>{e.custom}</span>}
-                          {e.shape && shapeLabel(e.shape) && <span className={shapeStyles.shapeChip}>{shapeLabel(e.shape)}</span>}
-                          {[['vibration', canAddFrequency], ['need', canAddNeed], ['custom', canAddCustom]].filter(([, can]) => can).map(([kind]) => (
-                            <button
-                              key={kind}
-                              className={`${styles.archiveTagParent} ${isTagging && taggingKind === kind ? styles.archiveTagParentOpen : ''}`}
-                              aria-expanded={isTagging && taggingKind === kind}
-                              onClick={() => openTagging(e.id, kind)}
-                            >+ {kind}</button>
-                          ))}
-                          {isTagging && (
-                            <span className={styles.retroTagOptions}>
-                              {taggingKind === 'need' && canAddNeed && (
-                                <span className={styles.retroTagRow}>
-                                  {canvasNeeds.map(n => (
-                                    <button key={n.id} className={styles.retroTagOption} onClick={() => handleRetroTag(e.id, { needId: n.id })}>{n.name}</button>
+                      <EntryRow
+                        key={e.id}
+                        slot={`${formatArchiveDate(e.date_key)}${e.slot ? ` · ${e.slot}` : ''}`}
+                        time={formatEntryTime(e.created_at)}
+                        metaDot={slotMood ? MOOD_DOT_COLOR[slotMood] : undefined}
+                        text={e.entry || ''}
+                        shape={e.shape}
+                        collapsible
+                        expanded={expandedEntries.has(e.id)}
+                        onToggleExpand={toggleExpand}
+                        quotedText={e.quoted_text || undefined}
+                        quotedDate={e.quoted_date ? formatArchiveDate(e.quoted_date) : undefined}
+                        imageUrl={e.image_url || undefined}
+                        onImageClick={setLightboxImage}
+                        tags={[e.mood_feeling || BAND_LABEL[normalizeBand(e.mood_band)] || e.mood_band, needTagName, e.custom]}
+                        roomTag={e.shape ? shapeLabel(e.shape) : undefined}
+                        extra={addable.length > 0 && (
+                          <div className={ui.retro}>
+                            <div className={ui.retroAdds}>
+                              {addable.map(([kind]) => (
+                                <button
+                                  key={kind}
+                                  className={`${ui.retroAdd}${isTagging && taggingKind === kind ? ` ${ui.retroAddOpen}` : ''}`}
+                                  aria-expanded={isTagging && taggingKind === kind}
+                                  onClick={() => openTagging(e.id, kind)}
+                                >+ {kind}</button>
+                              ))}
+                            </div>
+                            {isTagging && taggingKind === 'need' && canAddNeed && (
+                              <div className={ui.retroRow}>
+                                {canvasNeeds.map(n => (
+                                  <button key={n.id} className={ui.retroOption} onClick={() => handleRetroTag(e.id, { needId: n.id })}>{n.name}</button>
+                                ))}
+                              </div>
+                            )}
+                            {isTagging && taggingKind === 'custom' && canAddCustom && (
+                              <div className={ui.retroRow}>
+                                {customTags.map(t => (
+                                  <button key={t.id} className={ui.retroOption} onClick={() => handleRetroTag(e.id, { customLabel: t.label })}>{t.label}</button>
+                                ))}
+                              </div>
+                            )}
+                            {isTagging && taggingKind === 'feeling' && canAddFrequency && (
+                              <>
+                                <div className={ui.retroRow}>
+                                  {BANDS.map(b => (
+                                    <button key={b} className={`${ui.retroOption}${b === taggingBand ? ` ${ui.retroOptionOn}` : ''}`} aria-pressed={b === taggingBand} onClick={() => setTaggingBand(b)}>
+                                      <span className={ui.retroDot} style={{ background: MOOD_PIP_COLOR[b] }} />{BAND_LABEL[b]}
+                                    </button>
                                   ))}
-                                </span>
-                              )}
-                              {taggingKind === 'custom' && canAddCustom && (
-                                <span className={styles.retroTagRow}>
-                                  {customTags.map(t => (
-                                    <button key={t.id} className={styles.retroTagOption} onClick={() => handleRetroTag(e.id, { customLabel: t.label })}>{t.label}</button>
-                                  ))}
-                                </span>
-                              )}
-                              {taggingKind === 'vibration' && canAddFrequency && (
-                                <>
-                                  <span className={styles.retroTagRow}>
-                                    {BANDS.map(b => (
-                                      <button key={b} className={`${styles.retroTagOption} ${b === taggingBand ? styles.retroTagOptionOn : ''}`} aria-pressed={b === taggingBand} onClick={() => setTaggingBand(b)}>
-                                        <span className={styles.retroTagDot} style={{ background: MOOD_PIP_COLOR[b] }} />{BAND_LABEL[b]}
-                                      </button>
+                                </div>
+                                {taggingBand && (
+                                  <div className={ui.retroRow}>
+                                    {FEELINGS[taggingBand].map(f => (
+                                      <button key={f} className={ui.retroOption} onClick={() => handleRetroTag(e.id, { moodBand: taggingBand, moodFeeling: f })}>{f}</button>
                                     ))}
-                                  </span>
-                                  {taggingBand && (
-                                    <span className={styles.retroTagRow}>
-                                      {FEELINGS[taggingBand].map(f => (
-                                        <button key={f} className={styles.retroTagOption} onClick={() => handleRetroTag(e.id, { moodBand: taggingBand, moodFeeling: f })}>{f}</button>
-                                      ))}
-                                    </span>
-                                  )}
-                                </>
-                              )}
-                            </span>
-                          )}
-                          <span className={styles.archiveCardMarks}>
-                            <button
-                              className={`${styles.archiveRevisitBtn}${e.revisit ? ` ${styles.archiveRevisitBtnActive}` : ''}`}
-                              onClick={() => handleToggleRevisit(e.id, e.revisit)}
-                              aria-pressed={e.revisit}
-                            >↩ revisit</button>
-                            <button
-                              className={`${styles.archiveFavBtn}${e.favorite ? ` ${styles.archiveFavBtnActive}` : ''}`}
-                              onClick={() => handleToggleFav(e.id, e.favorite)}
-                              aria-pressed={e.favorite}
-                              aria-label={e.favorite ? 'remove from favorites' : 'add to favorites'}
-                            >{e.favorite ? <IconHeartFilled size={15} stroke={1.5} /> : <IconHeart size={15} stroke={1.5} />}</button>
-                          </span>
-                        </span>
-                      </div>
+                                  </div>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        )}
+                        onRevisit={() => handleToggleRevisit(e.id, e.revisit)}
+                        revisited={e.revisit}
+                        onFavorite={() => handleToggleFav(e.id, e.favorite)}
+                        favorite={e.favorite}
+                      />
                     )
                   })}
                 {filtered.length > archiveVisible && (
-                  <div className={styles.archiveMoreRow}>
-                    <button className={styles.archiveMoreBtn} onClick={() => setArchiveVisible(v => v + ARCHIVE_PAGE_SIZE)}>
+                  <div className={ui.archiveMoreRow}>
+                    <button className={ui.archiveMoreBtn} onClick={() => setArchiveVisible(v => v + ARCHIVE_PAGE_SIZE)}>
                       {Math.min(ARCHIVE_PAGE_SIZE, filtered.length - archiveVisible) === 3 ? 'three more' : `${filtered.length - archiveVisible} more`}
                     </button>
-                    <button className={styles.archiveMoreBtn} onClick={() => setArchiveVisible(filtered.length)}>
+                    <button className={ui.archiveMoreBtn} onClick={() => setArchiveVisible(filtered.length)}>
                       show all · {filtered.length}
                     </button>
                   </div>
                 )}
               </div>
-            </div>
+            </section>
           )
         })()}
 
-      </div>
+      {lightboxImage && (
+        <div className={ui.lightbox} onClick={() => setLightboxImage(null)}>
+          <button type="button" className={ui.lightboxClose} onClick={() => setLightboxImage(null)} aria-label="close">×</button>
+          <SignedImg src={lightboxImage} alt="" className={ui.lightboxImage} onClick={e => e.stopPropagation()} />
+        </div>
+      )}
       {revisitFor && (
         <RevisitSheet
           entry={revisitFor.entry}
