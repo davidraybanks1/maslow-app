@@ -229,6 +229,8 @@ function AppInner() {
 
   // Someone who hasn't onboarded gets the same splash as the first onboarding
   // screen, so the daily loader stays out of their way.
+  // above the early return: a hook after it changes the hook count when the loader ends
+  const profileMenuRef = useRef(null)
   if (showLoader && state.onboarded) {
     const firstName = (state.profile?.name || '').trim().split(' ')[0]
     return <LoadingScreen greeting={firstName ? `Hey, ${firstName}` : 'Hey, you'} fading={loaderFading} />
@@ -244,7 +246,6 @@ function AppInner() {
   const practiceCount = Array.isArray(state.practicesDB) && state.practicesDB.length > 0
     ? state.practicesDB.filter(p => !p.archived_at).length
     : Object.values(state.practices || {}).flat().length
-  const profileMenuRef = useRef(null)
   const profileMenuEl = (
     <ProfileMenu
       ref={profileMenuRef}
