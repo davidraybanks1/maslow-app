@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { todayKey, addJournalEntry, settleRevisit } from '../../lib/store'
 import { currentSlot } from '../../lib/slots'
 import { hapticSuccess } from '../../lib/native'
-import { ROOM_PICKER, HOSTED_ROOMS, SHAPE_DB, latestMoodToday, suggestShape } from '../../lib/shapeFacts'
+import { ROOM_PICKER, HOSTED_ROOMS, SHAPE_DB, latestMoodToday } from '../../lib/shapeFacts'
 import JournalPage from '../JournalPage'
 import { ROOMS } from './Rooms'
 import styles from './Shapes.module.css'
@@ -58,7 +58,6 @@ export function ShapesPanel({ state, logMood, mode = 'inline', initial, onExit }
   }, [initial])
 
   const mood = useMemo(() => latestMoodToday(state, today), [state, today])
-  const suggestion = useMemo(() => suggestShape(mood), [mood])
 
   const dirty = stage !== 'picker' && stage !== 'timer' && !!draft.entry.trim()
 
@@ -156,12 +155,11 @@ export function ShapesPanel({ state, logMood, mode = 'inline', initial, onExit }
             {ROOM_PICKER.map((s, i) => (
               <button key={s.id} type="button" className={styles.roomRow} onClick={() => { setStage(s.id); setDraft({ entry: '' }) }}>
                 <span className={styles.roomNum}>{NUMERALS[i]}.</span>
-                <span className={`${styles.roomName}${suggestion?.id === s.id ? ` ${styles.roomNameOn}` : ''}`}>{s.label}</span>
+                <span className={styles.roomName}>{s.label}</span>
                 <span className={styles.roomBlurb}>{s.blurb}</span>
               </button>
             ))}
           </div>
-          {!inline && suggestion && <p className={styles.suggest}><span aria-hidden="true">✳ </span>{suggestion.line}</p>}
         </>
       ) : (
         <>

@@ -97,17 +97,7 @@
 }
 .roomNum { grid-row: 1 / 3; font-family: var(--loam-font-display); font-style: italic; font-size: var(--loam-chapter); line-height: 1.15; color: var(--loam-gold-text); }
 .roomName { justify-self: start; font-family: var(--loam-font-display); font-size: var(--loam-chapter); line-height: 1.15; color: var(--loam-ink); }
-.roomNameOn { font-style: italic; padding: 0 4px; background: linear-gradient(to bottom, transparent 62%, var(--loam-gold) 62%); }
 .roomBlurb { font-family: var(--loam-font-reading); font-size: var(--loam-body); line-height: 1.25; color: var(--loam-ink-2); margin-top: 2px; }
-.suggest {
-  font-family: var(--loam-font-reading);
-  font-style: italic;
-  font-size: var(--loam-body);
-  line-height: 1.3;
-  color: var(--loam-ink-2);
-  margin: 14px 0 0;
-}
-.suggest span { color: var(--loam-gold-text); font-style: normal; }
 .tileGlyph { height: 22px; display: flex; align-items: center; gap: 4px; }
 .tg {
   width: 14px;

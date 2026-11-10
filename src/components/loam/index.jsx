@@ -150,9 +150,11 @@ export function NoteFolio({ index, total, onNext, onEdit }) {
    feeling: string | null
    onBand(band): called when a band word is tapped
    onFeeling(feeling): called when a feeling word is tapped
-   editing / onToggleEdit: reopen a finished answer to revise it */
+   editing / onToggleEdit: reopen a finished answer to revise it
+   inlineFeeling: the feeling as a parenthetical on the band's own line (phone)
+   trailing: a control set to the right of the prompt or answer line */
 const BAND_WORDS = ['good', 'mid', 'bad']
-export function CheckIn({ band, feeling, onBand, onFeeling, editing, onToggleEdit }) {
+export function CheckIn({ band, feeling, onBand, onFeeling, editing, onToggleEdit, inlineFeeling = false, trailing }) {
   const slot = currentSlot()
   const greeting = SLOT_GREETING[slot] || 'day'
   // retapping the answer you already gave changes nothing
@@ -175,7 +177,10 @@ export function CheckIn({ band, feeling, onBand, onFeeling, editing, onToggleEdi
   if (!band) {
     return (
       <div className={styles.checkIn}>
-        <div className={styles.checkInLabel}>HOW ARE YOU THIS {greeting.toUpperCase()}?</div>
+        <div className={styles.checkInHead}>
+          <div className={styles.checkInLabel}>HOW ARE YOU THIS {greeting.toUpperCase()}?</div>
+          {trailing}
+        </div>
         {bandRow}
       </div>
     )
@@ -184,8 +189,12 @@ export function CheckIn({ band, feeling, onBand, onFeeling, editing, onToggleEdi
   const answered = !!feeling && !editing
   return (
     <div className={styles.checkIn}>
-      <div className={styles.checkInChosen}>
-        i&apos;m feeling <em>{BAND_LABEL[band]}.</em>
+      <div className={styles.checkInHead}>
+        <div className={styles.checkInChosen}>
+          i&apos;m feeling <em>{BAND_LABEL[band]}.</em>
+          {inlineFeeling && feeling && <span className={styles.checkInParen}> ({feeling})</span>}
+        </div>
+        {trailing}
       </div>
       {editing && bandRow}
       {!answered && (
@@ -208,7 +217,7 @@ export function CheckIn({ band, feeling, onBand, onFeeling, editing, onToggleEdi
       )}
       {(answered || editing) && (
         <div className={styles.checkInAnswer}>
-          {answered && <span className={styles.checkInLabel}>· {feeling}</span>}
+          {answered && !inlineFeeling && <span className={styles.checkInLabel}>· {feeling}</span>}
           {onToggleEdit && (
             <button type="button" className={styles.checkInChange} aria-expanded={!!editing} onClick={onToggleEdit}>
               {editing ? 'done' : 'change'}
@@ -400,7 +409,6 @@ export function WriteBlock({
   attach,
   keepOpen = false,
   entryCount = 0,
-  suggestedRoom,
   onRoomClick,
   onRooms,
 }) {
@@ -455,7 +463,7 @@ export function WriteBlock({
                 {i > 0 && <span className={styles.writeRoomDot} aria-hidden="true"> · </span>}
                 <button
                   type="button"
-                  className={`${styles.writeRoomBtn}${suggestedRoom?.id === r.id ? ` ${styles.writeRoomBtnHint}` : ''}`}
+                  className={styles.writeRoomBtn}
                   onClick={() => onRoomClick?.(r.id)}
                 >
                   {r.label}
@@ -463,9 +471,6 @@ export function WriteBlock({
               </span>
             ))}
           </div>
-          {suggestedRoom?.line && (
-            <p className={styles.writeRoomHint}><span aria-hidden="true">✳ </span>{suggestedRoom.line}</p>
-          )}
         </div>
       )}
     </div>

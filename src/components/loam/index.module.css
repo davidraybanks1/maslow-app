@@ -273,6 +273,18 @@
 .checkInChosen em {
   font-style: italic;
 }
+.checkInHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.checkInParen {
+  font-family: var(--loam-font-reading);
+  font-style: italic;
+  font-size: var(--loam-index);
+  color: var(--loam-muted);
+}
 
 /* ── ChapterRow ───────────────────────────────────────────── */
 .chapterRow {
@@ -644,20 +656,6 @@
   padding: 0;
   cursor: pointer;
 }
-.writeRoomBtnHint {
-  font-style: italic;
-  padding: 0 4px;
-  background: linear-gradient(to bottom, transparent 62%, var(--loam-gold) 62%);
-}
-.writeRoomHint {
-  margin: 6px 0 0;
-  font-family: var(--loam-font-reading);
-  font-style: italic;
-  font-size: var(--loam-body);
-  line-height: 1.3;
-  color: var(--loam-ink-2);
-}
-.writeRoomHint span { color: var(--loam-gold-text); font-style: normal; }
 
 /* ── TabBar ───────────────────────────────────────────────── */
 .tabBar { display: none; }

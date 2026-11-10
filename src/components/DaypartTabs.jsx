@@ -45,7 +45,7 @@ export default function DaypartTabs({ items }) {
   )
 }
 
-// The header label, turned into a dropdown once there is a day to look at.
+// The chevron beside the check-in line: opens the rest of the day.
 export function DayToggle({ open, onToggle, controls }) {
   return (
     <button
@@ -53,9 +53,9 @@ export function DayToggle({ open, onToggle, controls }) {
       className={styles.toggle}
       aria-expanded={open}
       aria-controls={controls}
+      aria-label="earlier check-ins today"
       onClick={onToggle}
     >
-      <span>feeling</span>
       <i className={`${styles.toggleChev} ${open ? styles.toggleChevOpen : ''}`} aria-hidden="true" />
     </button>
   )

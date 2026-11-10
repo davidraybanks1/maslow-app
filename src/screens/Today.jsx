@@ -30,7 +30,7 @@ import styles from './Today.module.css'
 import SignedImg from '../components/SignedImg'
 import { ShapesPanel } from '../components/shapes/ShapesFlow'
 import JournalPage from '../components/JournalPage'
-import { shapeLabel, suggestShape, latestMoodToday } from '../lib/shapeFacts'
+import { shapeLabel } from '../lib/shapeFacts'
 import EntryText from '../components/EntryText'
 import shapeStyles from '../components/shapes/Shapes.module.css'
 
@@ -840,6 +840,9 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         : null,
   }))
 
+  // something to open: a check-in already made, or an earlier part of the day to add
+  const canLookBack = daypartsData.some(d => d.band) || precedingSlots(slot).length > 0
+
   const profileInitial = ((state.profile?.name || state.email || '?').trim()[0] || '?').toUpperCase()
 
   return (
@@ -1070,27 +1073,15 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               onFeeling={f => { hapticTick(); handleFrequencySettle(slot, moodSelections[slot] || 'mid', f); setEditingCurrent(false) }}
               editing={editingCurrent}
               onToggleEdit={() => { setOpenRetroSlot(null); setEditingCurrent(e => !e) }}
+              inlineFeeling
+              trailing={canLookBack ? <DayToggle open={dayOpen} onToggle={() => setDayOpen(o => !o)} controls="day-vibrations" /> : null}
             />
-            <div className={styles.freqHeader}>
-              {daypartsData.some(d => d.band)
-                ? <DayToggle open={dayOpen} onToggle={() => setDayOpen(o => !o)} controls="day-vibrations" />
-                : <span className={styles.freqHeaderLabel}>feeling</span>}
-              <button
-                type="button"
-                className={styles.freqInfoBtn}
-                aria-expanded={showFreqInfo}
-                aria-label={showFreqInfo ? 'hide what these mean' : 'what these mean'}
-                onClick={() => setShowFreqInfo(v => !v)}
-              >i</button>
-            </div>
-            {daypartsData.some(d => d.band) && (
-              <>
-                <div id="day-vibrations" className={`${dpStyles.drop} ${dayOpen ? dpStyles.dropOpen : ''}`} aria-hidden={!dayOpen} {...(dayOpen ? {} : { inert: '' })}>
-                  <div className={dpStyles.dropClip}>
-                    <DaypartTabs items={daypartsData} />
-                  </div>
+            {canLookBack && (
+              <div id="day-vibrations" className={`${dpStyles.drop} ${dayOpen ? dpStyles.dropOpen : ''}`} aria-hidden={!dayOpen} {...(dayOpen ? {} : { inert: '' })}>
+                <div className={dpStyles.dropClip}>
+                  <DaypartTabs items={daypartsData} />
                 </div>
-              </>
+              </div>
             )}
             {openRetroSlot && (
               <div className={styles.retroRow}>
@@ -1114,18 +1105,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                     slotName={openRetroSlot}
                   />
                 )}
-              </div>
-            )}
-            {showFreqInfo && (
-              <div className={styles.freqInfoPanel}>
-                <p className={styles.freqInfoIntro}>{FREQUENCY_INTRO}</p>
-                {THREADS.map(t => (
-                  <p key={t}>
-                    <span className={styles.freqInfoCat}>{t}</span> — {splitFrequencyWords(THREAD_COPY[t].definition).map((seg, i) =>
-                      seg.bold ? <b key={i}>{seg.text}</b> : seg.text
-                    )}
-                  </p>
-                ))}
               </div>
             )}
           </div>
@@ -1343,7 +1322,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               attach={renderAttachControl()}
               keepOpen={freqPickerOpen || needPickerOpen || customPickerOpen || attachMenuOpen || !!draftNeedId || !!draftCustom || !!draftImage || !!quotedText || !draftMoodInherited}
               entryCount={journalEntryCount}
-              suggestedRoom={suggestShape(latestMoodToday(state, today))}
               onRoomClick={roomId => window.dispatchEvent(new CustomEvent('maslow:open-shapes', { detail: { shape: roomId } }))}
               onRooms={() => window.dispatchEvent(new CustomEvent('maslow:open-shapes', { detail: {} }))}
             />
