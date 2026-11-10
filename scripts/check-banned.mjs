@@ -21,7 +21,6 @@ const KNOWN_VIOLATIONS = new Set([
   'lib/shapeFacts.js',
   'screens/Log.jsx',
   'screens/Onboarding/OnboardingFlow.jsx',
-  'screens/Today.jsx',
   'screens/Write.jsx',
 ])
 

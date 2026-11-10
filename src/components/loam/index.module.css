@@ -256,8 +256,7 @@
   grid-template-columns: 34px 1fr auto;
   align-items: baseline;
   gap: 0 8px;
-  padding: 10px var(--loam-gutter);
-  border-top: var(--loam-rule-row);
+  padding: 10px var(--loam-gutter) 4px;
 }
 .chapterNumeral {
   font-family: var(--loam-font-display);
@@ -270,63 +269,95 @@
   font-size: var(--loam-chapter);
   line-height: 1.1;
   color: var(--loam-ink);
+  justify-self: start;
 }
 .chapterRowDone .chapterName {
   font-style: italic;
+  padding: 0 4px;
+  background: linear-gradient(to bottom, transparent 62%, var(--loam-gold) 62%);
 }
 .chapterCount {
   font-family: var(--loam-font-mono);
   font-size: var(--loam-label);
   letter-spacing: 0.05em;
-  color: var(--loam-muted);
+  color: var(--loam-ink);
   white-space: nowrap;
 }
 
-/* ── PracticeDot ──────────────────────────────────────────── */
-.practiceDot {
+/* ── PracticeDot: one practice, as a press-and-hold row ───── */
+.practiceRow {
   position: relative;
+  border-bottom: var(--loam-rule-row);
+  overflow: hidden;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+.practiceWash {
+  position: absolute;
+  inset: 0;
+  background: rgba(242, 174, 26, 0.32);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 200ms ease-out, opacity 300ms ease;
+  pointer-events: none;
+}
+.practiceRow[data-holding] .practiceWash { transition: none; }
+.practiceRow[data-flash] .practiceWash { opacity: 0; }
+/* holding a finished practice undoes it */
+.practiceRow[data-undo] .practiceWash { background: rgba(23, 21, 18, 0.14); }
+.practiceHit {
+  position: relative;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  align-items: center;
+  width: 100%;
+  min-height: 44px;
+  padding: 6px 0;
+  background: none;
+  border: none;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+  /* a swipe that starts on a row must still scroll the page */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.practiceHit:focus-visible { outline: 2px solid var(--loam-ink); outline-offset: -2px; }
+.practiceDot {
+  display: grid;
+  place-items: center;
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  border: 1.5px solid var(--loam-ink);
-  background: transparent;
-  overflow: hidden;
-  flex-shrink: 0;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  touch-action: none;
-  -webkit-user-select: none;
-  user-select: none;
-}
-.practiceDotDone {
-  border-color: transparent;
-}
-.practiceDotFill {
-  position: absolute;
-  inset: 0;
-  background: currentColor;
-  transform: scaleX(0);
-  transform-origin: left;
-  opacity: 0.3;
-  pointer-events: none;
-}
-[data-holding] .practiceDotFill {
-  opacity: 0.5;
-}
-[data-flash] .practiceDotFill {
-  opacity: 0;
-  transition: opacity 360ms;
-}
-.practiceDotX2 {
-  position: relative;
+  border: 1.5px solid;
+  box-sizing: border-box;
   font-family: var(--loam-font-mono);
   font-size: 12px;
-  font-weight: 500;
-  color: var(--loam-paper);
-  letter-spacing: 0;
-  pointer-events: none;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  transition: background 200ms ease, border-color 200ms ease;
+}
+.practiceRowInert .practiceDot { border-style: dashed; }
+.practiceRowInert .practiceLabel { color: var(--loam-muted); }
+.practiceLabel {
+  font-family: var(--loam-font-reading);
+  font-size: var(--loam-body);
+  line-height: 1.2;
+  color: var(--loam-ink);
+  min-width: 0;
+}
+.practiceCaret { font-family: var(--loam-font-mono); font-size: var(--loam-label); color: var(--loam-muted); }
+.practiceMeta {
+  padding-left: 10px;
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-label);
+  letter-spacing: 0.03em;
+  color: var(--loam-muted);
+  white-space: nowrap;
+}
+@media (prefers-reduced-motion: reduce) {
+  .practiceWash, .practiceDot { transition: none; }
 }
 
 /* ── IndexRow ─────────────────────────────────────────────── */
@@ -370,65 +401,38 @@
 .entryRow {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 12px var(--loam-gutter);
-  border-top: var(--loam-rule-row);
+  gap: 6px;
+  padding: 10px var(--loam-gutter) 12px;
+  border-bottom: var(--loam-rule-row);
 }
 .entryRowMeta {
   display: flex;
   align-items: baseline;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.entryRowDate {
+  gap: 10px;
   font-family: var(--loam-font-mono);
   font-size: var(--loam-label);
   letter-spacing: 0.08em;
-  text-transform: uppercase;
   color: var(--loam-muted);
 }
-.entryRowMoodChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-family: var(--loam-font-mono);
-  font-size: var(--loam-label);
-  letter-spacing: 0.05em;
-  color: var(--loam-muted);
-}
-.entryRowMoodDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-.entryRowRoomTag {
-  font-family: var(--loam-font-mono);
-  font-size: var(--loam-label);
-  letter-spacing: 0.05em;
-  color: var(--loam-muted);
-}
+.entryRowSlot { text-transform: uppercase; }
+.entryRowTime { margin-left: auto; text-transform: uppercase; }
 .entryRowDeleteBtn {
-  margin-left: auto;
   font-family: var(--loam-font-mono);
   font-size: var(--loam-label);
   color: var(--loam-muted);
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0;
+  padding: 2px 0 2px 8px;
   letter-spacing: 0.05em;
-  transition: color 150ms;
 }
-.entryRowDeleteBtn:hover { color: var(--loam-ink); }
-.entryRowDeleteBtnPending { color: var(--loam-ink); }
+.entryRowDeleteBtn:hover, .entryRowDeleteBtnPending { color: var(--loam-ink); }
 .entryRowQuote {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 6px 10px;
+  padding: 2px 0 2px 10px;
   border-left: 2px solid var(--loam-gold);
-  margin: 2px 0;
 }
 .entryRowQuoteDate {
   font-family: var(--loam-font-mono);
@@ -440,20 +444,22 @@
   font-family: var(--loam-font-reading);
   font-style: italic;
   font-size: var(--loam-body);
+  line-height: 1.3;
   color: var(--loam-ink-2);
-  margin: 0;
 }
 .entryRowText {
   font-family: var(--loam-font-reading);
   font-size: var(--loam-body);
   line-height: 1.35;
   color: var(--loam-ink-2);
-  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 .entryRowReadMore {
+  align-self: flex-start;
   font-family: var(--loam-font-mono);
   font-size: var(--loam-label);
-  color: var(--loam-muted);
+  color: var(--loam-ink);
   background: none;
   border: none;
   cursor: pointer;
@@ -463,33 +469,23 @@
   text-underline-offset: 2px;
 }
 .entryRowImageBtn {
+  align-self: flex-start;
   display: block;
   background: none;
   border: none;
   padding: 0;
   cursor: pointer;
-  border-radius: 8px;
-  overflow: hidden;
-  margin-top: 2px;
 }
-.entryRowImage {
-  display: block;
-  max-width: 100%;
-  max-height: 200px;
-  object-fit: contain;
-}
+.entryRowImage { display: block; max-width: 100%; max-height: 200px; object-fit: contain; }
 .entryRowTags {
   font-family: var(--loam-font-mono);
   font-size: var(--loam-tag);
   letter-spacing: 0.04em;
-  color: var(--loam-muted);
+  color: var(--loam-ink);
 }
-.entryRowActions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 16px;
-  padding-top: 2px;
-}
+.entryRowMoodChip { display: inline-flex; align-items: center; gap: 5px; }
+.entryRowMoodDot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.entryRowActions { display: flex; justify-content: flex-end; gap: 16px; padding-top: 2px; }
 .entryRowAction {
   font-family: var(--loam-font-mono);
   font-size: var(--loam-label);
@@ -499,167 +495,129 @@
   border: none;
   cursor: pointer;
   padding: 0;
-  transition: color 150ms;
 }
-.entryRowAction:hover { color: var(--loam-ink); }
-.entryRowActionActive { color: var(--loam-ink); }
+.entryRowAction:hover, .entryRowActionActive { color: var(--loam-ink); }
 
 /* ── WriteBlock ───────────────────────────────────────────── */
-.writeBlock {
-  border-top: var(--loam-rule-open);
-}
+.writeBlock { margin-top: 28px; border-top: var(--loam-rule-open); }
 .writeBlockHeader {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
+  gap: 12px;
   padding: 14px var(--loam-gutter) 0;
 }
 .writeBlockLabel {
   font-family: var(--loam-font-mono);
   font-size: var(--loam-label);
-  font-weight: 400;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--loam-muted);
+  letter-spacing: 0.1em;
+  color: var(--loam-ink);
 }
-.writeBlockCount {
+.writeBlockCount, .writeBlockLabelMuted, .writeBlockStamp {
   font-family: var(--loam-font-mono);
   font-size: var(--loam-label);
-  letter-spacing: 0.05em;
+  letter-spacing: 0.1em;
   color: var(--loam-muted);
 }
+.writeBlockStamp { padding: 12px var(--loam-gutter) 2px; text-transform: uppercase; }
 .writeBlockGreeting {
-  padding: 8px var(--loam-gutter) 10px;
+  padding: 12px var(--loam-gutter) 2px;
   font-family: var(--loam-font-display);
-  font-size: 28px;
+  font-size: var(--loam-title);
   color: var(--loam-ink);
   line-height: 1.1;
 }
 .writeBlockGreeting em { font-style: italic; }
-.writeBlockChips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 10px var(--loam-gutter) 0;
-}
-.writeChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-family: var(--loam-font-mono);
-  font-size: var(--loam-label);
-  letter-spacing: 0.06em;
-  color: var(--loam-muted);
-  border: 1px solid var(--loam-leader);
-  border-radius: 999px;
-  padding: 3px 8px;
-}
-.writeChipDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-.writeChipActive {
-  font-family: var(--loam-font-mono);
-  font-size: var(--loam-label);
-  letter-spacing: 0.06em;
-  color: var(--loam-muted);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-.writeBlockRule {
-  height: 1px;
-  background: none;
-  border: none;
-  border-top: var(--loam-rule-row);
-  margin: 10px var(--loam-gutter);
-}
+/* the ruled page: one 32px line per line of text, moving with the text */
 .writeBlockTextarea {
-  width: 100%;
-  min-height: 100px;
-  padding: 10px var(--loam-gutter);
+  display: block;
+  width: calc(100% - 2 * var(--loam-gutter));
+  margin: 6px var(--loam-gutter) 0;
+  padding: 0;
   font-family: var(--loam-font-reading);
-  font-size: var(--loam-body);
-  line-height: 1.4;
+  font-size: var(--loam-index);
+  line-height: 32px;
   color: var(--loam-ink);
-  background: none;
+  background-color: transparent;
+  background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 31px, var(--loam-rule) 31px, var(--loam-rule) 32px);
+  background-attachment: local;
   border: none;
+  border-radius: 0;
   resize: none;
   box-sizing: border-box;
   outline: none;
 }
-.writeBlockTextarea::placeholder { color: var(--loam-muted); }
+.writeBlockTextarea::placeholder { color: var(--loam-muted); font-style: italic; }
 .writeBlockError {
   padding: 6px var(--loam-gutter);
   font-family: var(--loam-font-mono);
   font-size: var(--loam-label);
-  color: #c0392b;
+  color: var(--loam-down);
   letter-spacing: 0.04em;
 }
+.writeBlockTags { padding: 12px var(--loam-gutter) 0; }
 .writeBlockFooter {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px var(--loam-gutter) 14px;
+  gap: 14px;
+  padding: 10px var(--loam-gutter) 14px;
 }
-.writeBlockAttach {
-  font-family: var(--loam-font-mono);
-  font-size: 16px;
-  color: var(--loam-muted);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  line-height: 1;
-}
-.writeBlockHint {
+.writeBlockLink {
   font-family: var(--loam-font-mono);
   font-size: var(--loam-label);
-  color: var(--loam-muted);
   letter-spacing: 0.04em;
-  margin-left: auto;
+  color: var(--loam-ink);
+  background: none;
+  border: none;
+  padding: 8px 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
+.writeBlockClear { margin-left: auto; }
 .writeBlockSubmit {
   font-family: var(--loam-font-mono);
   font-size: var(--loam-label);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--loam-ink);
-  background: none;
+  letter-spacing: 0.04em;
+  color: var(--loam-paper);
+  background: var(--loam-ink);
   border: none;
+  border-radius: var(--loam-radius-pill);
+  padding: 10px 22px;
   cursor: pointer;
-  padding: 0;
-  transition: opacity 150ms;
 }
 .writeBlockSubmit:disabled { opacity: 0.35; cursor: default; }
-.writeBlockRooms {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 16px;
-  padding: 10px var(--loam-gutter) 14px;
+.writeBlockRooms { padding: 16px var(--loam-gutter) 14px; }
+.writeRoomList {
+  margin-top: 8px;
+  font-family: var(--loam-font-display);
+  font-size: var(--loam-index);
+  line-height: 1.5;
+  color: var(--loam-ink);
 }
+.writeRoomDot { color: var(--loam-muted); }
 .writeRoomBtn {
-  font-family: var(--loam-font-mono);
-  font-size: var(--loam-label);
-  letter-spacing: 0.06em;
-  color: var(--loam-muted);
+  font: inherit;
+  color: var(--loam-ink);
   background: none;
   border: none;
-  cursor: pointer;
   padding: 0;
-  transition: color 150ms;
+  cursor: pointer;
 }
-.writeRoomBtn:hover { color: var(--loam-ink); }
 .writeRoomBtnHint {
-  color: var(--loam-ink);
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  font-style: italic;
+  padding: 0 4px;
+  background: linear-gradient(to bottom, transparent 62%, var(--loam-gold) 62%);
 }
+.writeRoomHint {
+  margin: 6px 0 0;
+  font-family: var(--loam-font-reading);
+  font-style: italic;
+  font-size: var(--loam-body);
+  line-height: 1.3;
+  color: var(--loam-ink-2);
+}
+.writeRoomHint span { color: var(--loam-gold-text); font-style: normal; }
 
 /* ── TabBar ───────────────────────────────────────────────── */
 .tabBar { display: none; }

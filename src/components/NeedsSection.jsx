@@ -2,31 +2,32 @@ import { useMemo, useEffect, useState } from 'react'
 import { allNeeds, MODES, MODE_ORDER, MODE_MAX_BUBBLES } from '../lib/constants'
 import { isSplit } from '../lib/practiceTypes'
 import { practiceKey } from '../lib/usePracticeActions'
-import { useHold } from '../lib/useHold'
 import { PracticePanel } from './PracticeRow'
-import PracticeIcon from './PracticeIcon'
+import { ChapterRow, LabelRow, PracticeDot } from './loam'
 import styles from './NeedsSection.module.css'
 
-// The Needs section on Today (phones). Every need is a chip you can see at a
-// glance, filling as you do its practices; tap a chip to open that need's
-// practices as a row of cards underneath. Only one need is open at a time.
+// The contents on Today (phones): the four modes as chapters i.–iv., each need
+// a word beneath its chapter, filled once met. Tap a word to open that need's
+// practices as press-and-hold rows underneath. Only one need is open at a time.
 //
 // What counts as "met" is the app's own rule, not "one practice": each need has
 // a target by mode (exploration 3, appreciation 2, nourishment and survival 1,
-// MODE_MAX_BUBBLES) and the chip fills toward it. Checking a practice is still
-// press-and-hold, same as everywhere else in the app.
+// MODE_MAX_BUBBLES), and a word part-way there shows its count.
 
-// Text on a solid mode colour. Chosen for contrast (4.5:1 or better), so
-// survival takes dark text even though its colour is warm.
-const ON = {
-  exploration: '#FFFDF9',
-  appreciation: 'var(--ink)',
-  nourishment: 'var(--ink)',
-  survival: 'var(--ink)',
+const NUMERAL = { exploration: 'i', appreciation: 'ii', nourishment: 'iii', survival: 'iv' }
+const MODE_FILL = {
+  exploration: 'var(--loam-exploration)', appreciation: 'var(--loam-appreciation)',
+  nourishment: 'var(--loam-nourishment)', survival: 'var(--loam-survival)',
 }
-
-// a light orb for the dark Exploration card once a practice is done
-const LIGHT_ORB = ['#FFFDF9', '#D9D3C7']
+const MODE_TEXT = {
+  exploration: 'var(--loam-exploration-text)', appreciation: 'var(--loam-appreciation-text)',
+  nourishment: 'var(--loam-nourishment-text)', survival: 'var(--loam-survival-text)',
+}
+// the ×2 inside a filled dot
+const ON_FILL = {
+  exploration: 'var(--loam-paper)', appreciation: 'var(--loam-ink)',
+  nourishment: 'var(--loam-ink)', survival: 'var(--loam-ink)',
+}
 
 function countFor(checked, needId) {
   let n = 0
@@ -62,54 +63,47 @@ function footFor(st, lastDays) {
   return relative(lastDays)
 }
 
-function PracticeCard({ need, mode, practice, st, lastDays, onTap, onHint, onToggle, expanded }) {
+const KIND_WORD = { ritual: 'ritual', checklist: 'list', stretch: 'stretch', boundary: 'window' }
+
+// The text on the right of a row. The kind icons are gone, so every kind names
+// itself here, alongside today's state or how long ago.
+function cueFor(st, lastDays) {
+  const { kind, cfg } = st
+  const foot = footFor(st, lastDays)
+  if (kind === 'check') {
+    if (cfg.target <= 1) return foot || 'not yet'
+    const tally = `${st.tally}/${cfg.target}`
+    return !st.done && st.tally === 0 && foot ? `${tally} · ${foot}` : tally
+  }
+  if (kind === 'timed') return st.done ? foot : [`${cfg.minutes} min`, foot].filter(Boolean).join(' · ')
+  if (st.done && (kind === 'boundary' || st.detail?.level != null)) return foot   // "kept", "stretched 7"
+  return [KIND_WORD[kind], foot].filter(Boolean).join(' · ')
+}
+
+function PracticeCard({ mode, practice, st, lastDays, onTap, onHint, onToggle, expanded }) {
   const split = isSplit(practice)
   const inert = st.kind === 'boundary' && !st.done && st.phase !== 'ended'
-  const foot = footFor(st, lastDays)
-  const showX2 = ((st.kind === 'check' && st.cfg.target <= 1) || st.kind === 'ritual') && st.count >= 2
+  const x2 = ((st.kind === 'check' && st.cfg.target <= 1) || st.kind === 'ritual') && st.count >= 2
+  const status = st.done ? 'done today' : lastDays == null ? 'not done yet' : `last done ${relative(lastDays)}`
 
   // press and hold to check off (or undo); a quick tap opens a practice that
   // has something to open, and otherwise says how this works
-  const hold = useHold({ onComplete: onTap, onTap: split ? onToggle : onHint, fill: !inert })
-
-  const label = `${practice.label}, ${st.done ? 'done today' : lastDays == null ? 'not done yet' : `last done ${relative(lastDays)}`}. hold to ${st.done ? 'undo' : 'check off'}`
   return (
-    <div
-      ref={hold.cardRef}
-      data-hold-card=""
-      className={`${styles.pcard} ${st.done ? styles.pcardDone : ''} ${inert ? styles.pcardInert : ''}`}
-      data-undo={st.done ? '1' : undefined}
-    >
-      <span ref={hold.fillRef} className={styles.pfill} aria-hidden="true" />
-      <button
-        type="button"
-        className={styles.phit}
-        aria-label={label}
-        aria-pressed={st.done}
-        aria-expanded={split ? !!expanded : undefined}
-        {...hold.press}
-      >
-        <span className={styles.ptop}>
-          <span className={styles.picon}>
-            {/* the practice's own icon; on a done Exploration card (dark green) it flips to light */}
-            <PracticeIcon
-              kind={st.kind}
-              size={30}
-              lit={st.done && mode === 'exploration' ? LIGHT_ORB : null}
-              color={st.done && mode === 'exploration' ? '#FFFDF9' : 'var(--ink)'}
-            />
-          </span>
-          <span className={styles.pmeta}>
-            {showX2 && <span className={styles.x2}>×2</span>}
-            {split && <i className={`${styles.chev} ${expanded ? styles.chevOpen : ''}`} aria-hidden="true" />}
-          </span>
-        </span>
-        <span className={styles.pbottom}>
-          <span className={styles.pname}>{practice.label}</span>
-          {foot && <span className={styles.pfoot}>{foot}</span>}
-        </span>
-      </button>
-    </div>
+    <PracticeDot
+      label={practice.label}
+      meta={cueFor(st, lastDays)}
+      ariaLabel={`${practice.label}, ${status}. hold to ${st.done ? 'undo' : 'check off'}`}
+      done={st.done}
+      x2={x2}
+      inert={inert}
+      expandable={split}
+      expanded={expanded}
+      fill={MODE_FILL[mode]}
+      ring={MODE_TEXT[mode]}
+      onFill={ON_FILL[mode]}
+      onCheck={onTap}
+      onOpen={split ? onToggle : onHint}
+    />
   )
 }
 
@@ -149,24 +143,14 @@ function Drawer({ id, open, needs, modeKey, sortSeq, state, checked, practices, 
       {...(open ? {} : { inert: '' })}
     >
       <div className={styles.drawerClip}>
-        {need && sorted.length === 0 && (
-          <div className={styles.rail}>
-            <button
-              type="button"
-              className={styles.addCard}
-              onClick={() => navigate('/practices', { state: { returnTo: '/today' } })}
-            >+ add practice</button>
-          </div>
-        )}
-        {need && sorted.length > 0 && (
-          <div className={styles.rail} role="group" aria-label={`${need.name} practices`}>
+        {need && (
+          <div className={styles.rows} role="group" aria-label={`${need.name} practices`}>
             {sorted.map(practice => {
               const key = practiceKey(need, practice)
               const st = practices.statusOf(need, practice)
               return (
                 <PracticeCard
                   key={key}
-                  need={need}
                   mode={modeKey}
                   practice={practice}
                   st={st}
@@ -180,7 +164,7 @@ function Drawer({ id, open, needs, modeKey, sortSeq, state, checked, practices, 
             })}
             <button
               type="button"
-              className={styles.addCard}
+              className={styles.addPractice}
               onClick={() => navigate('/practices', { state: { returnTo: '/today' } })}
             >+ add practice</button>
           </div>
@@ -235,66 +219,59 @@ export default function NeedsSection({
 
   return (
     <>
-      <div className={styles.header}>
-        <span className={styles.headerLabel}>NEEDS</span>
-        {total > 0 && <span className={styles.headerCount} aria-label={`${met} of ${total} needs met`}>{met}/{total} met</span>}
-      </div>
-      <div className={styles.list}>
-        {cats.map(({ mode, needs, rows, metCount }) => {
-          const cat = MODES[mode]
-          const drawerId = `needs-drawer-${mode}`
-          const openHere = needs.some(n => n.id === openNeedId) ? openNeedId : null
-          return (
-            <div
-              key={mode}
-              className={styles.cat}
-              style={{ '--cat': cat.color, '--on': ON[mode] }}
-              data-tour={mode === tourMode ? 'modes' : undefined}
-            >
-              <div className={styles.catHead}>
-                <span className={styles.dot} aria-hidden="true" />
-                <span className={styles.catName}>{mode}</span>
-                <span className={styles.catScore}>{metCount}/{needs.length}</span>
-              </div>
-              <div className={styles.chips}>
-                {rows.map(({ need, count, target }) => {
-                  const isOpen = openNeedId === need.id
-                  const pct = target > 0 ? Math.round((count / target) * 100) : 0
-                  return (
-                    <button
-                      key={need.id}
-                      type="button"
-                      className={`${styles.chip} ${isOpen ? styles.chipOpen : ''}`}
-                      aria-expanded={isOpen}
-                      aria-controls={drawerId}
-                      aria-label={`${need.name}, ${count} of ${target} done today`}
-                      onClick={() => toggle(need.id)}
-                    >
-                      <span className={styles.chipFill} style={{ width: `${pct}%` }} aria-hidden="true" />
-                      <span className={styles.chipName}>{need.name}</span>
-                      {/* the same label again in the on-colour, shown only over the filled part */}
-                      <span className={styles.chipOn} style={{ clipPath: `inset(0 ${100 - pct}% 0 0)` }} aria-hidden="true">{need.name}</span>
-                    </button>
-                  )
-                })}
-              </div>
-              <Drawer
-                id={drawerId}
-                open={openHere}
-                needs={needs}
-                modeKey={mode}
-                sortSeq={sortSeq}
-                state={state}
-                checked={checked}
-                practices={practices}
-                lastDoneMap={lastDoneMap}
-                navigate={navigate}
-                onEditPractice={onEditPractice}
-              />
+      <LabelRow left="CONTENTS" right={total > 0 ? <span aria-label={`${met} of ${total} needs met`}>{met}/{total} MET</span> : null} />
+      {cats.map(({ mode, needs, rows, metCount }) => {
+        const drawerId = `needs-drawer-${mode}`
+        const openHere = needs.some(n => n.id === openNeedId) ? openNeedId : null
+        return (
+          <div key={mode} className={styles.cat} data-tour={mode === tourMode ? 'modes' : undefined}>
+            <ChapterRow
+              numeral={NUMERAL[mode]}
+              name={mode}
+              met={metCount}
+              total={needs.length}
+              color={MODE_TEXT[mode]}
+              complete={metCount === needs.length}
+            />
+            <div className={styles.words}>
+              {rows.map(({ need, count, target, met: isMet }) => {
+                const isOpen = openNeedId === need.id
+                return (
+                  <button
+                    key={need.id}
+                    type="button"
+                    className={`${styles.word} ${isOpen ? styles.wordOpen : ''}`}
+                    aria-expanded={isOpen}
+                    aria-controls={drawerId}
+                    aria-label={`${need.name}, ${count} of ${target} done today`}
+                    onClick={() => toggle(need.id)}
+                  >
+                    <i
+                      className={styles.wordDot}
+                      style={isMet ? { background: MODE_FILL[mode], borderColor: MODE_FILL[mode] } : { borderColor: MODE_TEXT[mode] }}
+                    />
+                    <span className={styles.wordName}>{need.name}</span>
+                    {count > 0 && !isMet && <small className={styles.wordCount}>{count}/{target}</small>}
+                  </button>
+                )
+              })}
             </div>
-          )
-        })}
-      </div>
+            <Drawer
+              id={drawerId}
+              open={openHere}
+              needs={needs}
+              modeKey={mode}
+              sortSeq={sortSeq}
+              state={state}
+              checked={checked}
+              practices={practices}
+              lastDoneMap={lastDoneMap}
+              navigate={navigate}
+              onEditPractice={onEditPractice}
+            />
+          </div>
+        )
+      })}
     </>
   )
 }

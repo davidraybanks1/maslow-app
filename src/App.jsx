@@ -137,13 +137,10 @@ function AppInner() {
   // Today has the picker built in as a persistent section, so it handles the
   // event itself there; this overlay is for every other screen.
   const [shapesOpen, setShapesOpen] = useState(null)
-  const onTodayRef = useRef(false)
-  onTodayRef.current = location.pathname === '/today'
   const isDesktopRef = useRef(false)
   isDesktopRef.current = isDesktop
   useEffect(() => {
     function onOpen(e) {
-      if (onTodayRef.current) return
       // On a desktop the writing rooms live on the writing page, not in an overlay.
       if (isDesktopRef.current) { navigate('/write', { state: { ...(e.detail || {}), at: Date.now() } }); return }
       setShapesOpen({ ...(e.detail || {}), at: Date.now() })

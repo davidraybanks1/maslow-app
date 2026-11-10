@@ -1,6 +1,6 @@
 import { useState, useEffect, useLayoutEffect, useRef, cloneElement } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { allNeeds, MODES, MODE_ORDER, MODE_MAX_BUBBLES, MODE_WEIGHTS, JOURNAL_TRUNCATE } from '../lib/constants'
+import { allNeeds, needName, MODES, MODE_ORDER, MODE_MAX_BUBBLES, MODE_WEIGHTS, JOURNAL_TRUNCATE } from '../lib/constants'
 import { currentSlot, precedingSlots, SLOTS, SLOT_NOUN, SLOT_GREETING } from '../lib/slots'
 import { todayKey, loadJournalEntries, deleteJournalEntry, loadNoteDeck, loadCustomTags, addJournalEntry, uploadNoteImage, loadRevisitQueue } from '../lib/store'
 import { createDataStats } from '../lib/dataStats'
@@ -9,7 +9,7 @@ import { normalizeBand, BAND_LABEL, THREADS, THREAD_COPY, FREQUENCY_INTRO, split
 import { useIsDesktop } from '../lib/useIsDesktop'
 import FrequencyCard, { MOOD_PIP_COLOR } from '../components/FrequencyCard'
 import Glyph from '../lib/glyphs'
-import { ProgressRule, Dateline, ProfileBadge, CheckIn, EntryRow, WriteBlock, Greeting, PullQuote, NoteFolio } from '../components/loam'
+import { ProgressRule, Dateline, ProfileBadge, CheckIn, EntryRow, WriteBlock, Greeting, PullQuote, NoteFolio, LabelRow } from '../components/loam'
 import NoteStack from '../components/NoteStack'
 import JournalQuote from '../components/JournalQuote'
 import ManageDeck from '../components/ManageDeck'
@@ -497,33 +497,8 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     )
   }
 
-  const draftChips = (
+  const draftPickers = (
     <>
-      <div className={styles.composerChips}>
-        <span className={styles.composerSlotChip}>{slot}</span>
-        {chipBand ? (
-          <button className={styles.composerTagActive} onClick={openFreqPicker}>
-            <span className={styles.composerFreqDot} style={draftMoodInherited ? { border: `1.5px solid ${MOOD_PIP_COLOR[chipBand]}` } : { background: MOOD_PIP_COLOR[chipBand] }} />
-            {chipFeeling || chipBand}
-            {!draftMoodInherited && (
-              <span className={styles.composerFreqClear} onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); setDraftMoodInherited(true); setDraftMoodBand(null); setDraftMoodFeeling(null); setFreqPickerOpen(false) }}>×</span>
-            )}
-          </button>
-        ) : (
-          <button className={styles.composerTagBtn} onClick={openFreqPicker}>+ vibration</button>
-        )}
-        {draftNeedId ? (
-          <button className={styles.composerTagActive} onClick={() => setDraftNeedId(null)}>{draftNeedId} ×</button>
-        ) : (
-          <button className={styles.composerTagBtn} onClick={() => { setNeedPickerOpen(o => !o); setCustomPickerOpen(false); setFreqPickerOpen(false) }}>+ need</button>
-        )}
-        {customTags.length > 0 && (draftCustom ? (
-          <button className={styles.composerTagActive} onClick={() => setDraftCustom(null)}>{draftCustom} ×</button>
-        ) : (
-          <button className={styles.composerTagBtn} onClick={() => { setCustomPickerOpen(o => !o); setNeedPickerOpen(false); setFreqPickerOpen(false) }}>+ custom</button>
-        ))}
-      </div>
-
       {freqPickerOpen && (
         <div className={styles.composerFreqPicker}>
           <FrequencyCard
@@ -557,6 +532,66 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     </>
   )
 
+  const draftChips = (
+    <>
+      <div className={styles.composerChips}>
+        <span className={styles.composerSlotChip}>{slot}</span>
+        {chipBand ? (
+          <button className={styles.composerTagActive} onClick={openFreqPicker}>
+            <span className={styles.composerFreqDot} style={draftMoodInherited ? { border: `1.5px solid ${MOOD_PIP_COLOR[chipBand]}` } : { background: MOOD_PIP_COLOR[chipBand] }} />
+            {chipFeeling || chipBand}
+            {!draftMoodInherited && (
+              <span className={styles.composerFreqClear} onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); setDraftMoodInherited(true); setDraftMoodBand(null); setDraftMoodFeeling(null); setFreqPickerOpen(false) }}>×</span>
+            )}
+          </button>
+        ) : (
+          <button className={styles.composerTagBtn} onClick={openFreqPicker}>+ feeling</button>
+        )}
+        {draftNeedId ? (
+          <button className={styles.composerTagActive} onClick={() => setDraftNeedId(null)}>{draftNeedId} ×</button>
+        ) : (
+          <button className={styles.composerTagBtn} onClick={() => { setNeedPickerOpen(o => !o); setCustomPickerOpen(false); setFreqPickerOpen(false) }}>+ need</button>
+        )}
+        {customTags.length > 0 && (draftCustom ? (
+          <button className={styles.composerTagActive} onClick={() => setDraftCustom(null)}>{draftCustom} ×</button>
+        ) : (
+          <button className={styles.composerTagBtn} onClick={() => { setCustomPickerOpen(o => !o); setNeedPickerOpen(false); setFreqPickerOpen(false) }}>+ custom</button>
+        ))}
+      </div>
+
+      {draftPickers}
+    </>
+  )
+
+  // The same tags on the phone's write block, as words. Choosing one keeps the
+  // block open; the pickers below are shared with the desktop composer.
+  const writeTags = (
+    <>
+      <div className={styles.writeTags}>
+        <span className={styles.writeTagOn}>{slot}</span>
+        {chipBand ? (
+          <button type="button" className={styles.writeTagOn} onClick={openFreqPicker}>
+            <span className={styles.writeTagDot} style={draftMoodInherited ? { border: `1.5px solid ${MOOD_PIP_COLOR[chipBand]}` } : { background: MOOD_PIP_COLOR[chipBand] }} />
+            {chipFeeling || chipBand}
+          </button>
+        ) : (
+          <button type="button" className={styles.writeTagAdd} onClick={openFreqPicker}>+ feeling</button>
+        )}
+        {draftNeedId ? (
+          <button type="button" className={styles.writeTagOn} onClick={() => setDraftNeedId(null)}>{needName(draftNeedId)} ×</button>
+        ) : (
+          <button type="button" className={styles.writeTagAdd} onClick={() => { setNeedPickerOpen(o => !o); setCustomPickerOpen(false); setFreqPickerOpen(false) }}>+ need</button>
+        )}
+        {customTags.length > 0 && (draftCustom ? (
+          <button type="button" className={styles.writeTagOn} onClick={() => setDraftCustom(null)}>{draftCustom} ×</button>
+        ) : (
+          <button type="button" className={styles.writeTagAdd} onClick={() => { setCustomPickerOpen(o => !o); setNeedPickerOpen(false); setFreqPickerOpen(false) }}>+ custom</button>
+        ))}
+      </div>
+      <div className={styles.writePickers}>{draftPickers}</div>
+    </>
+  )
+
   const draftFileInput = (
     <input ref={draftFileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleDraftFilePick} />
   )
@@ -586,6 +621,22 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
 
   // Phones: the one need whose practices are open (only one at a time)
   const [openNeedId, setOpenNeedId] = useState(null)
+
+  // Docked header: shows once the page's own progress rule has scrolled away.
+  const pageRuleRef = useRef(null)
+  const [docked, setDocked] = useState(false)
+  useEffect(() => {
+    if (isDesktop) return undefined
+    const el = pageRuleRef.current
+    const root = document.querySelector('[data-scroll]')
+    if (!el || !root) return undefined
+    const io = new IntersectionObserver(
+      ([e]) => setDocked(!e.isIntersecting && e.boundingClientRect.top < (e.rootBounds?.top ?? 0)),
+      { root }
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [isDesktop])
   const [popupMode, setPopupMode] = useState(null)
   const tierElems = useRef({})
   const tierBtnElems = useRef({})
@@ -787,8 +838,22 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         : null,
   }))
 
+  const profileInitial = ((state.profile?.name || state.email || '?').trim()[0] || '?').toUpperCase()
+
   return (
     <div className={styles.screen}>
+    {!isDesktop && (
+      <div className={styles.dockAnchor}>
+        {docked && (
+          <div className={styles.dock}>
+            <Dateline onboardedAt={state.onboardedAt}>
+              <ProfileBadge docked initial={profileInitial} onClick={() => profileMenuRef?.current?.open()} />
+            </Dateline>
+            <ProgressRule tour={null} pct={demoRing !== null ? Math.round(demoRing * 100) : ringPct} />
+          </div>
+        )}
+      </div>
+    )}
     <div className={styles.desktopWrap}>
 
       {/* ── Header ── */}
@@ -806,7 +871,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         <>
           <Dateline onboardedAt={state.onboardedAt}>
             <ProfileBadge
-              initial={((state.profile?.name || state.email || '?').trim()[0] || '?').toUpperCase()}
+              initial={profileInitial}
               onClick={() => profileMenuRef?.current?.open()}
               data-tour="profile"
             />
@@ -817,7 +882,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
       )}
 
       {/* ── Progress rule (replaces stone pile) ── */}
-      <ProgressRule pct={demoRing !== null ? Math.round(demoRing * 100) : ringPct} />
+      <ProgressRule innerRef={pageRuleRef} pct={demoRing !== null ? Math.round(demoRing * 100) : ringPct} />
 
       {/* ── Scrollable / grid body ── */}
       <div className={styles.list}>
@@ -1260,36 +1325,39 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
             <WriteBlock
               text={draftText}
               onTextChange={setDraftText}
+              onKeyDown={handleDraftKeyDown}
               onSubmit={handleAddEntry}
+              onClear={resetDraft}
               saving={draftSaving}
               error={draftSaveError}
-              slot={slot}
-              chipBand={chipBand}
-              chipFeeling={chipFeeling}
-              chipPip={chipBand ? MOOD_PIP_COLOR[chipBand] : undefined}
+              stamp={`${slot} · ${formatEntryTime(new Date())}`}
+              tags={writeTags}
+              attach={renderAttachControl()}
+              keepOpen={freqPickerOpen || needPickerOpen || customPickerOpen || attachMenuOpen || !!draftNeedId || !!draftCustom || !!draftImage || !!quotedText || !draftMoodInherited}
               entryCount={journalEntryCount}
               suggestedRoom={suggestShape(latestMoodToday(state, today))}
-              onRoomClick={roomId => navigate('/write', { state: { shape: roomId, at: Date.now() } })}
-              imageUrl={draftImage}
-              onImageClick={setLightboxImage}
-              onAttach={() => draftFileInputRef.current?.click()}
-              onImageRemove={() => setDraftImage(null)}
+              onRoomClick={roomId => window.dispatchEvent(new CustomEvent('maslow:open-shapes', { detail: { shape: roomId } }))}
+              onRooms={() => window.dispatchEvent(new CustomEvent('maslow:open-shapes', { detail: {} }))}
             />
             {draftFileInput}
             {journalEntries.length > 0 && (
               <div className={styles.journalMobileEntries}>
+                <LabelRow left={`TODAY'S ENTRIES · ${journalEntries.length}`} />
                 {journalEntries.map(e => {
                   const isExp = expandedTodayEntries.has(e.id)
                   return (
                     <EntryRow
                       key={e.id}
-                      dateLabel={formatEntryTime(e.created_at)}
+                      slot={e.slot}
+                      time={formatEntryTime(e.created_at)}
                       text={e.entry || ''}
+                      shape={e.shape}
                       expanded={isExp}
                       onToggleExpand={() => setExpandedTodayEntries(prev => { const s = new Set(prev); isExp ? s.delete(e.id) : s.add(e.id); return s })}
                       moodBand={e.mood_band || undefined}
                       moodFeeling={e.mood_feeling || undefined}
                       moodPipColor={e.mood_band ? MOOD_PIP_COLOR[e.mood_band] : undefined}
+                      tags={[e.state, e.need_id && needName(e.need_id), e.custom]}
                       roomTag={e.shape ? shapeLabel(e.shape) : undefined}
                       quotedText={e.quoted_text || undefined}
                       quotedDate={e.quoted_date ? formatQuoteDate(e.quoted_date) : undefined}

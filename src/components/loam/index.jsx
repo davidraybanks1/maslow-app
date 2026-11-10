@@ -3,11 +3,15 @@
    Parity note: PracticeDot wraps lib/useHold.js unchanged (hapticTick line 102,
    hapticSuccess line 70 stay at their existing call sites). */
 import { useState } from 'react'
+import EntryText from '../EntryText'
+import JournalQuote from '../JournalQuote'
+import SignedImg from '../SignedImg'
 import { NavLink } from 'react-router-dom'
 import { useHold } from '../../lib/useHold'
 import { FEELINGS, BAND_LABEL } from '../../lib/frequency'
 import { currentSlot, SLOT_GREETING } from '../../lib/slots'
 import { dayNumber } from '../../lib/dayNumber'
+import { JOURNAL_TRUNCATE } from '../../lib/constants'
 import styles from './index.module.css'
 
 /* ── Dateline ─────────────────────────────────────────────── */
@@ -56,10 +60,11 @@ export function ProfileBadge({ initial, onClick, docked, ...rest }) {
 /* Today's rule is the default. Data's per-row rules pass `bare` (no gutter, no
    %, the row prints its own number), their own label, and tour={null} so only
    Today's carries the tour anchor. `muted` is a day or thread with nothing in it. */
-export function ProgressRule({ pct = 0, bare, muted, label, tour = 'space' }) {
+export function ProgressRule({ pct = 0, bare, muted, label, tour = 'space', innerRef }) {
   const p = Math.round(Math.max(0, Math.min(100, pct)))
   return (
     <div
+      ref={innerRef}
       className={`${styles.progressRule} ${bare ? styles.progressRuleBare : ''}`}
       role="img"
       aria-label={label ?? `${p}% complete today`}
@@ -204,30 +209,50 @@ export function ChapterRow({ numeral, name, met, total, color, complete }) {
   return (
     <div className={`${styles.chapterRow} ${complete ? styles.chapterRowDone : ''}`}>
       <span className={styles.chapterNumeral} style={{ color }}>{numeral}.</span>
-      <span className={styles.chapterName} style={complete ? { color } : undefined}>{name}</span>
+      <span className={styles.chapterName}>{name}</span>
       <span className={styles.chapterCount}>{met}/{total}{complete ? ' ✓' : ''}</span>
     </div>
   )
 }
 
 /* ── PracticeDot ──────────────────────────────────────────── */
-/* count: 0 = unchecked, 1 = done, 2 = ×2
-   onCheck: called when hold completes; parent cycles the count
-   onOpen: called on quick tap
-   color: filled color for this mode */
-export function PracticeDot({ count = 0, onCheck, onOpen, color = 'var(--loam-nourishment)' }) {
-  const hold = useHold({ onComplete: onCheck, onTap: onOpen })
-  const done = count > 0
+/* One practice, as a row. The whole row is the press-and-hold target (a finger
+   would hide a 20px dot): useHold paints the gold wash across it, a hold
+   completes, a quick tap opens. touch-action stays `manipulation` so a swipe
+   starting on the row still scrolls the page; moving past useHold's slop
+   cancels the hold. A keyboard or screen-reader click completes at once. */
+export function PracticeDot({
+  label, meta, ariaLabel, done, x2, inert, expandable, expanded,
+  fill = 'var(--loam-nourishment)', ring = 'var(--loam-ink)', onFill = 'var(--loam-paper)',
+  onCheck, onOpen,
+}) {
+  const hold = useHold({ onComplete: onCheck, onTap: onOpen, fill: !inert })
   return (
     <div
       ref={hold.cardRef}
-      className={`${styles.practiceDot} ${done ? styles.practiceDotDone : ''}`}
-      style={done ? { background: color, borderColor: color } : undefined}
-      data-hold-card
-      {...hold.press}
+      data-hold-card=""
+      data-undo={done ? '1' : undefined}
+      className={`${styles.practiceRow} ${inert ? styles.practiceRowInert : ''}`}
     >
-      <span ref={hold.fillRef} className={styles.practiceDotFill} />
-      {count === 2 && <span className={styles.practiceDotX2}>×2</span>}
+      <span ref={hold.fillRef} className={styles.practiceWash} aria-hidden="true" />
+      <button
+        type="button"
+        className={styles.practiceHit}
+        aria-label={ariaLabel}
+        aria-pressed={!!done}
+        aria-expanded={expandable ? !!expanded : undefined}
+        {...hold.press}
+      >
+        <span
+          className={styles.practiceDot}
+          style={done ? { background: fill, borderColor: fill, color: onFill } : { borderColor: ring }}
+        >{x2 ? '×2' : ''}</span>
+        <span className={styles.practiceLabel}>
+          {label}
+          {expandable && <span className={styles.practiceCaret} aria-hidden="true">{expanded ? ' ▴' : ' ▾'}</span>}
+        </span>
+        {meta && <span className={styles.practiceMeta}>{meta}</span>}
+      </button>
     </div>
   )
 }
@@ -249,10 +274,10 @@ export function IndexRow({ name, value, onClick }) {
 }
 
 /* ── EntryRow ─────────────────────────────────────────────── */
-/* Supports: delete two-step confirm, read more, quoted text, photo + viewer,
-   room tag, mood chip, revisit, favorite */
+/* Slot and time, then the entry (a room's own lines set off by EntryText), then
+   its tags. Delete is two-step: the parent owns pendingDelete. */
 export function EntryRow({
-  dateLabel, text, tags = [], onRevisit, onFavorite, favorite,
+  slot, time, text, shape, tags = [], onRevisit, onFavorite, favorite,
   pendingDelete = false, onDelete,
   quotedText, quotedDate,
   imageUrl, onImageClick,
@@ -260,56 +285,65 @@ export function EntryRow({
   moodBand, moodFeeling, moodPipColor,
   expanded = false, onToggleExpand,
 }) {
-  const TRUNCATE = 220
-  const isTrunc = text && text.length > TRUNCATE && !expanded
-  const display = isTrunc ? text.slice(0, TRUNCATE).trimEnd() + '…' : text
+  const body = text || ''
+  const isTrunc = body.length > JOURNAL_TRUNCATE && !expanded
+  const display = isTrunc ? body.slice(0, JOURNAL_TRUNCATE).trimEnd() + '…' : body
+  const words = [...tags, roomTag].filter(Boolean)
   return (
     <div className={styles.entryRow}>
       <div className={styles.entryRowMeta}>
-        <span className={styles.entryRowDate}>{dateLabel}</span>
-        {moodBand && (
-          <span className={styles.entryRowMoodChip}>
-            <span className={styles.entryRowMoodDot} style={{ background: moodPipColor }} />
-            {moodFeeling || moodBand}
-          </span>
-        )}
-        {roomTag && <span className={styles.entryRowRoomTag}>{roomTag}</span>}
+        <span className={styles.entryRowSlot}>{slot}</span>
+        <span className={styles.entryRowTime}>{time}</span>
         {onDelete && (
           <button
             type="button"
             className={`${styles.entryRowDeleteBtn}${pendingDelete ? ` ${styles.entryRowDeleteBtnPending}` : ''}`}
             onMouseDown={e => e.stopPropagation()}
             onClick={onDelete}
-            aria-label={pendingDelete ? 'confirm delete' : 'delete'}
+            aria-label={pendingDelete ? 'confirm delete' : 'delete entry'}
           >{pendingDelete ? 'delete?' : '×'}</button>
         )}
       </div>
       {quotedText && (
-        <div className={styles.entryRowQuote}>
-          {quotedDate && <span className={styles.entryRowQuoteDate}>{quotedDate}</span>}
-          <p className={styles.entryRowQuoteText}>&ldquo;{quotedText}&rdquo;</p>
-        </div>
+        <JournalQuote
+          text={quotedText}
+          dateLabel={quotedDate}
+          blockClass={styles.entryRowQuote}
+          dateClass={styles.entryRowQuoteDate}
+          textClass={styles.entryRowQuoteText}
+          readMoreClass={styles.entryRowReadMore}
+        />
       )}
-      <p className={styles.entryRowText}>{display}</p>
+      <div className={styles.entryRowText}><EntryText text={display} shape={shape} /></div>
       {isTrunc && (
         <button type="button" className={styles.entryRowReadMore} onClick={onToggleExpand}>read more</button>
       )}
       {imageUrl && (
-        <button type="button" className={styles.entryRowImageBtn} onClick={() => onImageClick?.(imageUrl)}>
-          <img src={imageUrl} className={styles.entryRowImage} alt="" />
+        <button type="button" className={styles.entryRowImageBtn} onClick={() => onImageClick?.(imageUrl)} aria-label="view photo">
+          <SignedImg src={imageUrl} className={styles.entryRowImage} alt="" />
         </button>
       )}
-      {tags.length > 0 && (
-        <div className={styles.entryRowTags}>{tags.join(' · ')}</div>
+      {(moodBand || words.length > 0) && (
+        <div className={styles.entryRowTags}>
+          {moodBand && (
+            <span className={styles.entryRowMoodChip}>
+              <span className={styles.entryRowMoodDot} style={{ background: moodPipColor }} />
+              {moodFeeling || moodBand}
+            </span>
+          )}
+          {words.map((w, i) => <span key={w}>{(moodBand || i > 0) ? ' · ' : ''}{w}</span>)}
+        </div>
       )}
-      <div className={styles.entryRowActions}>
-        {onRevisit && (
-          <button type="button" className={styles.entryRowAction} onClick={onRevisit}>↩ revisit</button>
-        )}
-        {onFavorite && (
-          <button type="button" className={`${styles.entryRowAction} ${favorite ? styles.entryRowActionActive : ''}`} onClick={onFavorite}>♡</button>
-        )}
-      </div>
+      {(onRevisit || onFavorite) && (
+        <div className={styles.entryRowActions}>
+          {onRevisit && (
+            <button type="button" className={styles.entryRowAction} onClick={onRevisit}>↩ revisit</button>
+          )}
+          {onFavorite && (
+            <button type="button" className={`${styles.entryRowAction} ${favorite ? styles.entryRowActionActive : ''}`} onClick={onFavorite}>♡</button>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -329,91 +363,82 @@ const WRITE_ROOMS = [
 export function WriteBlock({
   text = '',
   onTextChange,
+  onKeyDown,
   onSubmit,
+  onClear,
   saving = false,
   error,
-  slot,
-  chipBand,
-  chipFeeling,
-  chipPip,
+  stamp,
+  tags,
+  attach,
+  keepOpen = false,
   entryCount = 0,
   suggestedRoom,
   onRoomClick,
-  imageUrl,
-  onImageClick,
-  onAttach,
-  onImageRemove,
+  onRooms,
 }) {
   const [focused, setFocused] = useState(false)
-  const active = focused || text.length > 0
+  const active = focused || text.length > 0 || keepOpen
+  // a press on the tags or the footer must not blur the page closed under the finger
+  const holdFocus = e => e.preventDefault()
   return (
     <div className={styles.writeBlock} data-tour="journal">
       <div className={styles.writeBlockHeader}>
         <span className={styles.writeBlockLabel}>WRITE</span>
-        {!active && entryCount > 0 && (
-          <span className={styles.writeBlockCount}>{entryCount} {entryCount === 1 ? 'entry' : 'entries'}</span>
+        {entryCount > 0 && (
+          <span className={styles.writeBlockCount}>TODAY · {entryCount} {entryCount === 1 ? 'ENTRY' : 'ENTRIES'} SO FAR</span>
         )}
       </div>
-      {!active && (
-        <div className={styles.writeBlockGreeting}>
-          what's on <em>your mind?</em>
-        </div>
-      )}
-      {active && (chipBand || slot) && (
-        <div className={styles.writeBlockChips}>
-          {slot && <span className={styles.writeChip}>{slot}</span>}
-          {chipBand && (
-            <span className={styles.writeChip}>
-              <span className={styles.writeChipDot} style={{ background: chipPip || 'currentColor' }} />
-              {chipFeeling || chipBand}
-            </span>
-          )}
-        </div>
-      )}
-      <div className={styles.writeBlockRule} />
+      {active
+        ? <div className={styles.writeBlockStamp}>{stamp}</div>
+        : <div className={styles.writeBlockGreeting}>what's on <em>your mind?</em></div>}
       <textarea
         className={styles.writeBlockTextarea}
-        placeholder="begin here…"
+        placeholder="start writing…"
         value={text}
         onChange={e => onTextChange?.(e.target.value)}
+        onKeyDown={onKeyDown}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         rows={4}
         maxLength={10000}
       />
-      {imageUrl && active && (
-        <button type="button" className={styles.writeChipActive} onClick={() => onImageClick?.(imageUrl)}>photo</button>
-      )}
       {error && <div className={styles.writeBlockError}>{error}</div>}
-      {active && (
-        <div className={styles.writeBlockFooter}>
-          {onAttach && (
-            <button type="button" className={styles.writeBlockAttach} onClick={onAttach} aria-label="attach">⊕</button>
-          )}
-          {imageUrl && onImageRemove && (
-            <button type="button" className={styles.writeChipActive} onClick={onImageRemove}>photo ×</button>
-          )}
-          <span className={styles.writeBlockHint}>⌘↵</span>
-          <button
-            type="button"
-            className={styles.writeBlockSubmit}
-            onClick={onSubmit}
-            disabled={!text.trim() || saving}
-          >{saving ? '…' : 'add'}</button>
-        </div>
-      )}
-      {!active && (
-        <div className={styles.writeBlockRooms}>
-          {WRITE_ROOMS.map(r => (
+      {active ? (
+        <div onMouseDown={holdFocus}>
+          <div className={styles.writeBlockTags}>{tags}</div>
+          <div className={styles.writeBlockFooter}>
+            <button type="button" className={styles.writeBlockLink} onClick={onRooms}>rooms →</button>
+            {attach}
+            <button type="button" className={`${styles.writeBlockLink} ${styles.writeBlockClear}`} onClick={onClear}>clear</button>
             <button
-              key={r.id}
               type="button"
-              className={`${styles.writeRoomBtn}${suggestedRoom?.id === r.id ? ` ${styles.writeRoomBtnHint}` : ''}`}
-              onClick={() => onRoomClick?.(r.id)}
-            >
-              {r.label}
-            </button>
-          ))}
+              className={styles.writeBlockSubmit}
+              onClick={onSubmit}
+              disabled={!text.trim() || saving}
+            >{saving ? '…' : 'add'}</button>
+          </div>
+        </div>
+      ) : (
+        <div className={styles.writeBlockRooms}>
+          <div className={styles.writeBlockLabelMuted}>OR BEGIN IN A ROOM</div>
+          <div className={styles.writeRoomList}>
+            {WRITE_ROOMS.map((r, i) => (
+              <span key={r.id}>
+                {i > 0 && <span className={styles.writeRoomDot} aria-hidden="true"> · </span>}
+                <button
+                  type="button"
+                  className={`${styles.writeRoomBtn}${suggestedRoom?.id === r.id ? ` ${styles.writeRoomBtnHint}` : ''}`}
+                  onClick={() => onRoomClick?.(r.id)}
+                >
+                  {r.label}
+                </button>
+              </span>
+            ))}
+          </div>
+          {suggestedRoom?.line && (
+            <p className={styles.writeRoomHint}><span aria-hidden="true">✳ </span>{suggestedRoom.line}</p>
+          )}
         </div>
       )}
     </div>
