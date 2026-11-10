@@ -1,223 +1,270 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import { flushSync } from 'react-dom'
 import styles from './NoteStack.module.css'
 
-/* A tinder-style deck: one note on top, a couple peeking behind it. The top
-   note is dragged with a finger and let go - up, down, left or right carries
-   it off the screen and it is gone for the session; a release that falls
-   short springs back to centre. Everything below
-   pointerdown is imperative (direct style writes on the DOM node), so a drag
-   never waits on a re-render - React only hears about it once a note has
-   actually left, via onDismiss.
+/* The phone's notes to self: one note at a time, sitting on the paper. Drag it
+   sideways and the next note comes in from the other edge with the finger, the
+   way the Observation pager moves on Data. Past the threshold (or on a quick
+   flick) it slides off and is gone for the session; a short release returns.
+   The drag writes styles straight to the DOM, so it never waits on a render.
+   React only hears about a note once it has actually left, via onDismiss.
 
-   The moment a swipe is committed (pointerup past the threshold), two things
-   fire at once, not one after the other: onCommit (the haptic - it should
-   land the instant the decision is made, not once the card has finished
-   leaving) and the fling itself - it shrinks as it goes, like something
-   tossed rather than politely slid away, and it now blooms a warm yellow
-   glow/tint as it goes, the same beat as the fling itself, so the color is
-   part of the exit rather than a flash tacked onto it. The card behind it
-   is never told to wait: it is always one class away from full size, so
-   the instant the departing card's DOM node stops claiming that class (on
-   removal), the browser's own transition carries it up to full size with a
-   small overshoot - the "next card" pop needs no timer of its own. */
+   The moment a note is committed, onCommit (the haptic) and the slide fire
+   together: the tick is the decision, not a reward for waiting out the motion.
 
-const THRESH = { left: 64, right: 64, up: 60, down: 72 }
-const FLING = { left: 640, right: 640, up: 760, down: 760 }
+   Only horizontal drags belong to the note. touch-action: pan-y leaves vertical
+   movement to the page. */
+
+const THRESH = 64
 // a quick flick counts even when it is short: this fast (px/ms), over at least
 // this far (px), measured across the last VELOCITY_WINDOW ms of the drag
 const FLICK_SPEED = 0.35
 const FLICK_MIN = 18
 const VELOCITY_WINDOW = 110
 const DEADZONE = 5
-const FLING_MS = 260   // slightly slower than the original 200ms toss
-const FLING_FALLBACK_MS = 320
-// the flourish: a warm nourishment-yellow glow + tint, matching the bloom's
-// own lit color rather than an arbitrary yellow
-const FLOURISH_GLOW_LIT = '0 0 48px 16px rgba(240,168,0,.55), 0 10px 30px rgba(240,168,0,.25)'
-const FLOURISH_TINT = 'rgba(255,209,102,.85)'
+// a decelerating curve, close to a scroll-snap settle. Real scroll-snap only
+// reports where it landed after the fact, which would make the tick late.
+const SLIDE_MS = 320
+const CLOSE_MS = 220
+const EASE = 'cubic-bezier(.22,.61,.36,1)'
 
-// flat: no card surface, no peeking cards, no glow. The same swipe on a note
-// that sits straight on the paper and takes the height of its own text.
-export default function NoteStack({ cards, onDismiss, onCommit, renderCard, dataTour, footer, cardClassName = '', flat = false }) {
+const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
+const offset = x => `translate3d(${x}px, 0, 0)`
+const currentX = el => new DOMMatrix(getComputedStyle(el).transform).m41
+
+// One run per element: starting another supersedes the first, whose `done`
+// then never fires, so a note retargeted mid-flight keeps only its last job.
+const runs = new WeakMap()
+function animate(el, prop, value, ms, done) {
+  const run = {}
+  runs.set(el, run)
+  let timer
+  const finish = ev => {
+    if (ev && (ev.target !== el || ev.propertyName !== prop)) return
+    el.removeEventListener('transitionend', finish)
+    clearTimeout(timer)
+    if (runs.get(el) !== run) return
+    runs.delete(el)
+    el.style.transition = ''
+    done?.()
+  }
+  el.style.transition = `${prop} ${ms}ms ${EASE}`
+  el.style[prop] = value
+  el.addEventListener('transitionend', finish)
+  // a value that did not change never fires transitionend
+  timer = setTimeout(finish, ms + 60)
+}
+
+// Stop whatever is moving this element and hold it where it is.
+function hold(el, prop, value) {
+  runs.delete(el)
+  el.style.transition = 'none'
+  el.style[prop] = value
+}
+
+export default function NoteStack({ cards, onDismiss, onCommit, onClosed, closeRef, renderCard, dataTour, footer }) {
   const [order, setOrder] = useState(cards)
-  // Cards already thrown but still mid-flight. They leave `order` the instant
-  // the swipe commits (so the next card is live and draggable straight away)
-  // and are only kept in the tree - inert - until their animation finishes.
+  // Notes already committed but still sliding off. They leave `order` at once
+  // so the next note is live for the very next touch, and stay in the tree,
+  // inert, until their slide finishes.
   const [leaving, setLeaving] = useState([])
   const idsKey = cards.map(c => c.id).join('|')
 
-  // Only resync from the parent when the actual set of ids changes (a note
-  // added or removed elsewhere, or the deck coming back on reopen) - not on
-  // every unrelated re-render, which would otherwise fight the local order
-  // as cards fly out one by one.
+  // Only resync when the actual set of ids changes (a note added elsewhere, the
+  // deck coming back on reopen), so a re-render can't fight notes on their way out.
   useEffect(() => { setOrder(cards) }, [idsKey])
 
+  const stackRef = useRef(null)
   const topRef = useRef(null)
+  const peekRef = useRef(null)
   const drag = useRef(null)
   const justDragged = useRef(false)
 
-  const commitOut = useCallback((card) => {
-    setOrder(o => o.filter(c => c.id !== card.id))
-    setLeaving(l => [...l, card])
-    onDismiss(card.id)
-  }, [onDismiss])
+  const land = id => setLeaving(l => l.filter(c => c.id !== id))
 
-  const land = useCallback((id) => {
-    setLeaving(l => l.filter(c => c.id !== id))
-  }, [])
+  function closeSection(stack) {
+    const section = closeRef?.current
+    const finish = () => {
+      // unmount first: clearing the height while the section is still on the
+      // page would show it again for a frame
+      flushSync(() => onClosed?.())
+      if (section) { section.style.overflow = ''; section.style.height = '' }
+      stack.style.height = ''
+    }
+    if (!section) return finish()
+    section.style.overflow = 'hidden'
+    hold(section, 'height', `${section.offsetHeight}px`)
+    void section.offsetHeight
+    animate(section, 'height', '0px', CLOSE_MS, finish)
+  }
+
+  function commit(dir) {
+    const el = topRef.current
+    const card = order[0]
+    if (!el || !card) return
+    onCommit?.(dir)
+
+    const rest = order.slice(1)
+    if (reducedMotion()) {
+      setOrder(rest)
+      onDismiss(card.id, false)
+      return
+    }
+
+    const stack = stackRef.current
+    const peek = peekRef.current
+    const sign = dir === 'left' ? -1 : 1
+    const travel = window.innerWidth
+
+    hold(stack, 'height', `${stack.offsetHeight}px`)
+    if (peek) {
+      // the arrow arrives with the next note still parked; a drag already has
+      // it on the correct side
+      if (peek.style.visibility !== 'visible' || currentX(peek) * sign >= 0) {
+        hold(peek, 'transform', offset(-sign * travel))
+        peek.style.visibility = 'visible'
+      }
+      void peek.offsetWidth
+      const nextHeight = peek.offsetHeight
+      animate(peek, 'transform', offset(0), SLIDE_MS, () => {
+        peek.style.transform = ''
+        peek.style.visibility = ''
+      })
+      animate(stack, 'height', `${nextHeight}px`, SLIDE_MS, () => { stack.style.height = '' })
+    }
+
+    animate(el, 'transform', offset(sign * travel), SLIDE_MS, () => {
+      land(card.id)
+      if (!peek) closeSection(stack)
+    })
+
+    setOrder(rest)
+    setLeaving(l => [...l, card])
+    onDismiss(card.id, true)
+  }
+
+  function returnToRest(d) {
+    const el = topRef.current
+    const peek = peekRef.current
+    const stack = stackRef.current
+    if (el) animate(el, 'transform', offset(0), SLIDE_MS, () => { el.style.transform = '' })
+    if (peek && d?.peekSide) {
+      animate(peek, 'transform', offset(d.peekSide * window.innerWidth), SLIDE_MS, () => {
+        peek.style.transform = ''
+        peek.style.visibility = ''
+      })
+    }
+    if (stack && stack.style.height) {
+      animate(stack, 'height', `${el ? el.offsetHeight : stack.offsetHeight}px`, SLIDE_MS, () => { stack.style.height = '' })
+    }
+  }
 
   function onPointerDown(e) {
     const id = order[0]?.id
     if (id == null) return
     if (e.pointerType === 'mouse' && e.button !== 0) return
-    // controls in the footer (the edit pill) stay plain buttons: capturing the
-    // pointer would swallow their click
+    // the edit link and the arrow stay plain buttons
     if (e.target.closest?.('button, a')) return
     const el = topRef.current
-    if (!el) return
-    // a swipe has to begin on the top card itself: the empty space around it
-    // (and the footer row) is not a handle
-    if (!el.contains(e.target)) return
-    // the card is captured so it keeps following the finger wherever it goes
+    // a swipe has to begin on the note itself
+    if (!el || !el.contains(e.target)) return
     el.setPointerCapture?.(e.pointerId)
-    el.style.transition = 'none'
-    drag.current = { id, x0: e.clientX, y0: e.clientY, dx: 0, dy: 0, samples: [{ t: performance.now(), dx: 0, dy: 0 }] }
+    const reduced = reducedMotion()
+    // a note still sliding in can be caught where it is
+    const base = reduced ? 0 : currentX(el)
+    if (!reduced) hold(el, 'transform', offset(base))
+    drag.current = { x0: e.clientX, y0: e.clientY, dx: 0, base, axis: null, reduced, peekSide: 0, samples: [{ t: performance.now(), dx: 0 }] }
   }
 
   function onPointerMove(e) {
     const d = drag.current
     if (!d) return
-    const el = topRef.current
-    d.dx = e.clientX - d.x0
-    d.dy = e.clientY - d.y0
-    if (Math.hypot(d.dx, d.dy) < DEADZONE) return
-    justDragged.current = true
+    const dx = e.clientX - d.x0
+    const dy = e.clientY - d.y0
+    if (!d.axis) {
+      if (Math.hypot(dx, dy) < DEADZONE) return
+      d.axis = Math.abs(dy) > Math.abs(dx) ? 'y' : 'x'
+      if (d.axis === 'y') {
+        drag.current = null
+        if (d.base) returnToRest(d)
+        return
+      }
+      justDragged.current = true
+      const stack = stackRef.current
+      const peek = peekRef.current
+      if (!d.reduced && peek) {
+        d.h0 = stack.offsetHeight
+        d.h1 = peek.offsetHeight
+        hold(stack, 'height', `${d.h0}px`)
+      }
+    }
     e.preventDefault()
+    d.dx = dx
     const now = performance.now()
-    d.samples.push({ t: now, dx: d.dx, dy: d.dy })
+    d.samples.push({ t: now, dx })
     if (d.samples.length > 6) d.samples.shift()
-    const rot = Math.max(-16, Math.min(16, d.dx / 11))
-    // fade a little as the drag nears whichever dismiss threshold it is closest to
-    const prog = Math.min(1, Math.max(
-      d.dx < 0 ? -d.dx / THRESH.left : 0,
-      d.dx > 0 ? d.dx / THRESH.right : 0,
-      d.dy < 0 ? -d.dy / THRESH.up : 0,
-      d.dy > 0 ? d.dy / THRESH.down : 0,
-    ))
-    el.style.transform = `translate(${d.dx}px, ${d.dy}px) rotate(${rot}deg)`
-    el.style.opacity = String(1 - prog * 0.45)
+    // reduced motion: nothing follows the finger, the note just swaps on release
+    if (d.reduced) return
+
+    const travel = window.innerWidth
+    const x = d.base + dx
+    topRef.current.style.transform = offset(x)
+    const peek = peekRef.current
+    if (peek) {
+      d.peekSide = x < 0 ? 1 : -1
+      hold(peek, 'transform', offset(x + d.peekSide * travel))
+      peek.style.visibility = x === 0 ? 'hidden' : 'visible'
+      stackRef.current.style.height = `${d.h0 + (d.h1 - d.h0) * Math.min(1, Math.abs(x) / travel)}px`
+    }
   }
 
   function onPointerUp() {
     const d = drag.current
     drag.current = null
     if (!d) return
-    const el = topRef.current
-    if (!el) return
-    if (Math.hypot(d.dx, d.dy) < DEADZONE) { justDragged.current = false; return }
+    if (!d.axis) {
+      justDragged.current = false
+      if (d.base) returnToRest(d)
+      return
+    }
     setTimeout(() => { justDragged.current = false }, 0)
 
-    // speed over the final stretch of the drag only - a slow start must not
-    // drag down a flick that ended fast
+    // speed over the final stretch only: a slow start must not drag down a
+    // flick that ended fast
     const last = d.samples[d.samples.length - 1]
     let first = last
     for (let k = d.samples.length - 2; k >= 0; k--) {
       if (last.t - d.samples[k].t > VELOCITY_WINDOW) break
       first = d.samples[k]
     }
-    const dt = Math.max(8, last.t - first.t)
-    const vx = (last.dx - first.dx) / dt, vy = (last.dy - first.dy) / dt   // px/ms
+    const vx = (last.dx - first.dx) / Math.max(8, last.t - first.t)
     // a finger that has stopped before lifting is a placement, not a flick
     const idle = performance.now() - last.t > 120
+    const flick = !idle && Math.abs(vx) > FLICK_SPEED && Math.abs(d.dx) > FLICK_MIN && Math.sign(vx) === Math.sign(d.dx)
 
-    const leftScore = (d.dx < -THRESH.left || (!idle && vx < -FLICK_SPEED && d.dx < -FLICK_MIN)) ? -d.dx / THRESH.left : 0
-    const rightScore = (d.dx > THRESH.right || (!idle && vx > FLICK_SPEED && d.dx > FLICK_MIN)) ? d.dx / THRESH.right : 0
-    const upScore = (d.dy < -THRESH.up || (!idle && vy < -FLICK_SPEED && d.dy < -FLICK_MIN)) ? -d.dy / THRESH.up : 0
-    const downScore = (d.dy > THRESH.down || (!idle && vy > FLICK_SPEED && d.dy > FLICK_MIN)) ? d.dy / THRESH.down : 0
-    const best = Math.max(leftScore, rightScore, upScore, downScore)
-    const dir = best === 0 ? null
-      : best === leftScore ? 'left'
-      : best === rightScore ? 'right'
-      : best === upScore ? 'up' : 'down'
-
-    if (dir) {
-      // the haptic and the throw fire together - the tick is the moment of
-      // commitment, not a reward for waiting out the animation
-      onCommit?.(dir)
-      // box-shadow's "from" is whatever the card already has (its resting
-      // drop-shadow) - no need to set a starting point by hand, the browser
-      // transitions from the current computed value on its own
-      el.style.transition = `transform ${FLING_MS}ms cubic-bezier(.32,.94,.6,1), opacity ${FLING_MS}ms ease-out, box-shadow ${FLING_MS}ms ease-out, background-color ${FLING_MS}ms ease-out`
-      const rot = Math.max(-28, Math.min(28, d.dx / 7))
-      const targets = {
-        left: `translate(-${FLING.left}px, ${d.dy - 30}px) rotate(${Math.min(rot, -20)}deg) scale(.9)`,
-        right: `translate(${FLING.right}px, ${d.dy - 30}px) rotate(${Math.max(rot, 20)}deg) scale(.9)`,
-        up: `translate(${d.dx}px, -${FLING.up}px) rotate(${rot}deg) scale(.88)`,
-        down: `translate(${d.dx}px, ${FLING.down}px) rotate(${rot}deg) scale(.88)`,
-      }
-      el.style.transform = targets[dir]
-      el.style.opacity = '0'
-      if (!flat) {
-        el.style.boxShadow = FLOURISH_GLOW_LIT
-        el.style.backgroundColor = FLOURISH_TINT
-      }
-      // the card leaves the deck right now - the next one is live for the
-      // very next touch - and the thrown one just finishes its flight inert
-      const card = order.find(c => c.id === d.id)
-      if (card) commitOut(card)
-      const id = d.id
-      let done = false
-      const finish = (ev) => {
-        if (ev && ev.target !== el) return   // a child's transition bubbling up
-        if (done) return
-        done = true
-        el.removeEventListener('transitionend', finish)
-        land(id)
-      }
-      el.addEventListener('transitionend', finish)
-      setTimeout(() => finish(), FLING_FALLBACK_MS)
-    } else {
-      el.style.transition = 'transform 340ms cubic-bezier(.34,1.4,.4,1), opacity 200ms ease-out'
-      el.style.transform = 'translate(0px, 0px) rotate(0deg)'
-      el.style.opacity = '1'
-      // only the spring itself (transform) ends the spring-back - the opacity
-      // fade finishes sooner and must not cut the transform off mid-bounce
-      const clear = (ev) => {
-        if (ev.target !== el || ev.propertyName !== 'transform') return
-        el.style.transition = 'none'
-        el.removeEventListener('transitionend', clear)
-      }
-      el.addEventListener('transitionend', clear)
-    }
+    if (Math.abs(d.dx) > THRESH || flick) commit(d.dx < 0 ? 'left' : 'right')
+    else if (!d.reduced) returnToRest(d)
   }
 
   function onPointerCancel() {
+    const d = drag.current
     drag.current = null
-    const el = topRef.current
-    if (!el) return
-    el.style.transition = 'none'
-    el.style.transform = 'translate(0px, 0px) rotate(0deg)'
-    el.style.opacity = '1'
+    if (d && !d.reduced && d.axis) returnToRest(d)
   }
 
   function onClickCapture(e) {
     if (justDragged.current) { e.preventDefault(); e.stopPropagation() }
   }
 
-  // One flat, keyed list - thrown cards first, then the live deck - so a card
-  // keeps its DOM node (and its in-flight transition) when it moves from the
-  // deck to the leaving set. Ghosts sit first so the live cards never get
-  // re-ordered around them.
+  // One flat, keyed list, always in this order, so a note keeps its DOM node
+  // (and its running transition) as it goes from next, to top, to leaving.
+  const shown = new Set(order.slice(0, 2).map(c => c.id))
   const items = [
-    ...leaving.map(card => ({ card, ghost: true })),
-    ...order.slice(0, flat ? 1 : 3).map((card, i) => ({ card, i })),
+    ...leaving.filter(c => !shown.has(c.id)).map(card => ({ card, cls: styles.ghost })),
+    ...order.slice(0, 2).map((card, i) => ({ card, i, cls: i === 0 ? '' : styles.peek })),
   ]
-  const flatClass = flat ? ` ${styles.cardFlat}` : ''
 
   return (
-    // The surface spans the screen width and takes in the footer row, but only
-    // the top card starts a swipe (see onPointerDown); touches elsewhere fall
-    // through to normal page scrolling.
     <div
       className={styles.surface}
       onPointerDown={onPointerDown}
@@ -226,36 +273,21 @@ export default function NoteStack({ cards, onDismiss, onCommit, renderCard, data
       onPointerCancel={onPointerCancel}
       onClickCapture={onClickCapture}
     >
-    <div className={`${styles.stack}${flat ? ` ${styles.stackFlat}` : ''}`}>
-      {items.map(({ card, ghost, i }) => ghost ? (
-        <div
-          key={card.id}
-          className={`${styles.card}${flatClass}${flat ? ` ${styles.cardFlatGhost}` : ''} ${cardClassName}`}
-          style={{ zIndex: 2, pointerEvents: 'none' }}
-          aria-hidden="true"
-        >
-          {renderCard(card)}
-        </div>
-      ) : (
-        <div
-          key={card.id}
-          ref={i === 0 ? topRef : null}
-          // the tour frames the top card itself, not the full-width box around the deck
-          data-tour={i === 0 ? dataTour : undefined}
-          className={`${styles.card}${flatClass}${i > 0 ? ` ${styles.cardBehind}` : ''} ${cardClassName}`}
-          // Kept low on purpose: the bloom sits at z-index 2 (Today.module.css's
-          // .headerRingWrap), and neither .stack nor its ancestors isolate a
-          // stacking context, so these numbers compete directly against it in
-          // the same context. 1/0/-1 preserves the deck's own front-to-back
-          // order (top card above its peeks) while staying under the bloom,
-          // so the flower overlaps the card's corner instead of the reverse.
-          style={i > 0 ? { transform: `translateY(${i * 14}px) scale(${1 - i * 0.045})`, opacity: i === 1 ? 0.9 : 0.55, zIndex: 1 - i } : { zIndex: 1 }}
-        >
-          {renderCard(card)}
-        </div>
-      ))}
-    </div>
-    {footer}
+      <div ref={stackRef} className={styles.stack}>
+        {items.map(({ card, i, cls }) => (
+          <div
+            key={card.id}
+            ref={i === 0 ? topRef : i === 1 ? peekRef : null}
+            // the tour frames the top note itself
+            data-tour={i === 0 ? dataTour : undefined}
+            className={`${styles.note} ${cls}`}
+            aria-hidden={i === 0 ? undefined : 'true'}
+          >
+            {renderCard(card)}
+          </div>
+        ))}
+      </div>
+      {footer?.(() => commit('left'))}
     </div>
   )
 }

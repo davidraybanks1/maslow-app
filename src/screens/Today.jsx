@@ -224,10 +224,15 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
     setActiveCardIndex(Math.round(wrapper.scrollLeft / wrapper.clientWidth))
   }
 
-  // Mobile: a note that flies off the stack (NoteStack handles the drag and
-  // the animation itself) is reviewed for the rest of the session.
-  function handleNoteDismissed(id) {
+  // Mobile: a note that slides off (NoteStack handles the drag and the motion
+  // itself) is reviewed for the rest of the session. deckReviewed goes true at
+  // once, so the practice is checked on the commit; when the slide is animated
+  // the section stays mounted until NoteStack has closed it.
+  const [deckClosing, setDeckClosing] = useState(false)
+  const deckCloseRef = useRef(null)
+  function handleNoteDismissed(id, animated) {
     reviewedNotes.ids.add(id)
+    if (animated && noteDeck.every(c => reviewedNotes.ids.has(c.id))) setDeckClosing(true)
     setReviewedTick(t => t + 1)
   }
 
@@ -886,7 +891,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
         <div className={styles.colLeft}>
 
         {/* ── Note to self deck ── */}
-        {!deckReviewed && <div className={styles.reflectiveSection}>
+        {(!deckReviewed || deckClosing) && <div ref={deckCloseRef} className={styles.deckClose}><div className={styles.reflectiveSection}>
             <div className={styles.noteDeckSection}>
               {noteDeck.length > 0 ? (
                 isDesktop ? (
@@ -934,11 +939,12 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 ) : (
                   <>
                     <NoteStack
-                      flat
                       dataTour="note"
                       cards={visibleDeck}
                       onDismiss={handleNoteDismissed}
                       onCommit={hapticTick}
+                      closeRef={deckCloseRef}
+                      onClosed={() => setDeckClosing(false)}
                       renderCard={card => (
                         <PullQuote noTopRule text={card.text}>
                           {card.image_url && (
@@ -951,10 +957,11 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                           )}
                         </PullQuote>
                       )}
-                      footer={(
+                      footer={next => (
                         <NoteFolio
                           index={Math.min(noteDeck.length - visibleDeck.length + 1, noteDeck.length)}
                           total={noteDeck.length}
+                          onNext={next}
                           onEdit={openManageDeck}
                         />
                       )}
@@ -991,7 +998,7 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
                 </div>
               )}
             </div>
-          </div>}
+          </div></div>}
 
         {/* ── Mood / Check-in ── */}
         {isDesktop ? (

@@ -141,6 +141,8 @@
 }
 
 /* ── Note to self deck wrapper ── */
+/* the box the phone's note section closes by; no box of its own on desktop */
+.deckClose { display: block; }
 .reflectiveSection {
   background: var(--card);
   border: 0.5px solid var(--hairline);
@@ -1693,6 +1695,7 @@
     padding-bottom: 32px;
   }
 
+  .deckClose { display: contents; }
   .colLeft  { display: contents; }
   .colRight { display: contents; }
 

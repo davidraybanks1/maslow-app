@@ -1,71 +1,34 @@
-/* A small deck of notes: one on top to drag, a couple peeking behind it.
-   Fixed footprint so the peeking cards have somewhere known to sit. */
-.stack {
-  position: relative;
-  height: 262px;
-}
+/* One note on the paper at a time, taking the height of its own text. The next
+   note and any note on its way out are taken out of flow on top of it. */
 
-/* The wrapper around the stack and footer row. Only the card itself starts a
-   swipe (touch-action: none lives on .card), so the empty space beside it
-   still scrolls the page. */
 .surface {
   -webkit-tap-highlight-color: transparent;
 }
 
-.card {
-  position: absolute;
-  inset: 0;
-  margin: 0 auto;
-  width: 316px;
-  height: 262px;
-  box-sizing: border-box;
-  overflow: hidden;
-  background: var(--surface-reflective);
-  border: 0.5px solid rgba(0, 0, 0, 0.07);
-  border-radius: 20px;
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
-  will-change: transform, opacity;
-  touch-action: none;
+.stack {
+  position: relative;
+}
+
+.note {
+  position: relative;
+  z-index: 1;
+  /* vertical movement stays with the page; only sideways drags reach the note */
+  touch-action: pan-y;
+  will-change: transform;
   -webkit-user-select: none;
   user-select: none;
-  /* The bloom's lowest petal bottoms out 178px below the header's top; the
-     card starts 65px into that (231px page position), so the top inset
-     clears it. Left matches right/bottom now - text sits closer to the
-     edge instead of in a narrow, heavily-indented column. */
-  padding: 66px 18px 18px 20px;
-  /* Lives on every card, not just the ones behind: a card being dragged or
-     thrown gets its transition set inline (which wins over this), but the
-     card that is promoted into the top spot never gets an inline style at
-     all - it just loses the "behind" transform in a React re-render, and
-     this is what turns that into the spring-up-to-size pop rather than a
-     snap. The slight overshoot is the flourish. */
-  transition: transform 260ms cubic-bezier(.32, 1.5, .5, 1), opacity 200ms ease;
 }
 
-.cardBehind {
-  pointer-events: none;
-}
-
-/* flat: the note sits on the paper as a pull quote, so the deck's fixed
-   footprint and card surface go away. A thrown note is taken out of flow so
-   the next one can take its place while it flies off. */
-.stackFlat {
-  height: auto;
-}
-.cardFlat {
-  position: relative;
-  inset: auto;
-  width: 100%;
-  height: auto;
-  overflow: visible;
-  background: none;
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
-  padding: 0;
-}
-.cardFlatGhost {
+.peek,
+.ghost {
   position: absolute;
   top: 0;
   left: 0;
+  width: 100%;
+  pointer-events: none;
 }
+
+/* parked until a drag or the arrow brings it in */
+.peek { visibility: hidden; }
+
+.ghost { z-index: 2; }
