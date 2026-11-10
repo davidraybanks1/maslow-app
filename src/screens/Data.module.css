@@ -18,7 +18,8 @@
   z-index: 20;
   margin-inline: calc(-1 * var(--loam-gutter));
 }
-.dock { background: var(--loam-paper); padding-inline: var(--loam-gutter); }
+/* sticky stops below the scroller's notch padding; pull the paper up behind the status bar */
+.dock { margin-top: calc(-1 * var(--safe-top)); padding: var(--safe-top) var(--loam-gutter) 0; background: var(--loam-paper); }
 
 /* ── The page's title ───────────────────────────────────────── */
 .greeting { padding: 18px 0 14px; }

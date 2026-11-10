@@ -26,8 +26,26 @@ function formatQuoteDate(dateKey) {
    the "drafts" tab and the "drafts" section header on Today — one mark for
    the one idea, everywhere it shows up. */
 export function ComposerFab({ onClick }) {
+  // Out of the way while reading down the page, back when scrolling up or at
+  // either end. It stays focusable, and focus brings it back (see .fabAway).
+  const [away, setAway] = useState(false)
+  useEffect(() => {
+    const sc = document.querySelector('[data-scroll]')
+    if (!sc) return undefined
+    let last = Math.max(0, sc.scrollTop)
+    const STEP = 6
+    const read = () => {
+      const y = Math.max(0, sc.scrollTop)
+      if (y <= STEP || y + sc.clientHeight >= sc.scrollHeight - STEP) { setAway(false); last = y; return }
+      if (Math.abs(y - last) < STEP) return
+      setAway(y > last)
+      last = y
+    }
+    sc.addEventListener('scroll', read, { passive: true })
+    return () => sc.removeEventListener('scroll', read)
+  }, [])
   return (
-    <button className={styles.fab} onClick={onClick} aria-label="Add a draft">
+    <button className={`${styles.fab}${away ? ` ${styles.fabAway}` : ''}`} onClick={onClick} aria-label="Add a draft">
       <span className={styles.fabW} aria-hidden="true">w</span>
     </button>
   )

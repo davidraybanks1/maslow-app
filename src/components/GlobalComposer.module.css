@@ -22,6 +22,9 @@
   -webkit-tap-highlight-color: transparent;
 }
 .fab:active { transform: scale(0.94); }
+.fabAway { opacity: 0; pointer-events: none; }
+.fabAway:focus-visible { opacity: 1; pointer-events: auto; }
+@media (prefers-reduced-motion: reduce) { .fab { transition: none; } }
 .fabW { font-family: var(--loam-font-display); font-style: italic; font-size: 26px; line-height: 1; }
 
 @media (min-width: 900px) {

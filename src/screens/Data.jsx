@@ -683,7 +683,7 @@ function useDockLine(rootRef) {
     const scroller = scrollParent(root)
     if (!root || !scroller) return
     const read = () => {
-      const edge = scroller.getBoundingClientRect().top + DOCK_H
+      const edge = scroller.getBoundingClientRect().top + parseFloat(getComputedStyle(scroller).paddingTop || 0) + DOCK_H
       // the last section may be too short to ever reach the top; at the end of the page it has arrived
       const atEnd = scroller.scrollTop > 0 && scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 2
       let cur = null
