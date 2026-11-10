@@ -12,7 +12,6 @@ import { FEELINGS, BAND_LABEL } from '../../lib/frequency'
 import { currentSlot, SLOT_GREETING } from '../../lib/slots'
 import { dayNumber } from '../../lib/dayNumber'
 import { JOURNAL_TRUNCATE } from '../../lib/constants'
-import { ROOM_PICKER } from '../../lib/shapeFacts'
 import styles from './index.module.css'
 
 /* ── Dateline ─────────────────────────────────────────────── */
@@ -416,46 +415,11 @@ export function EntryRow({
 }
 
 /* ── WriteBlock ───────────────────────────────────────────── */
-/* resting: prompt + textarea + the rooms as icons
+/* resting: prompt + textarea + a link to the writing rooms
    active (text present or textarea focused): stamp + textarea + chips + footer
    The greeting and the stamp share one grid cell, so the writing area never
-   moves. What is under it takes its natural height, and the room slot is closed
-   at rest, so only the content below the block moves.
+   moves when typing starts. What is under it takes its natural height.
    draft persistence is owned by the parent; just value/onChange here */
-/* The rooms as line drawings on the paper: 1.5px ink, nothing behind them, drawn
-   to one optical size (a ring is narrower than a row of small marks but carries
-   the same weight). Gold appears once, on the energy given in gave and took. */
-const ROOM_LINE = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.5, strokeLinecap: 'round', strokeLinejoin: 'round' }
-const ROOM_ICONS = {
-  timer: <path {...ROOM_LINE} d="M14 6.5A7.5 7.5 0 1 1 7.5 10.25" />,
-  continue: (
-    <>
-      <path {...ROOM_LINE} d="M7.1 11A7.5 7.5 0 1 1 6.75 16" />
-      <path {...ROOM_LINE} d="M6.9 7.4V11.3H10.8" />
-    </>
-  ),
-  one_thing: (
-    <>
-      <circle cx="8" cy="14" r="5.25" style={{ fill: 'var(--loam-gold)' }} />
-      <circle {...ROOM_LINE} cx="20" cy="14" r="4.5" />
-    </>
-  ),
-  tension: (
-    <>
-      <circle {...ROOM_LINE} cx="4.75" cy="14" r="3" />
-      <circle {...ROOM_LINE} cx="23.25" cy="14" r="3" />
-      <path {...ROOM_LINE} strokeLinecap="butt" strokeDasharray="1.5 2" d="M9.75 14H18.25" />
-    </>
-  ),
-  three_truths: (
-    <>
-      <rect {...ROOM_LINE} x="1.25" y="10.75" width="6.5" height="6.5" />
-      <rect {...ROOM_LINE} x="10.75" y="10.75" width="6.5" height="6.5" />
-      <rect {...ROOM_LINE} x="20.25" y="10.75" width="6.5" height="6.5" />
-    </>
-  ),
-}
-
 export function WriteBlock({
   text = '',
   onTextChange,
@@ -469,43 +433,10 @@ export function WriteBlock({
   attach,
   keepOpen = false,
   entryCount = 0,
-  onRoomClick,
   onRooms,
 }) {
   const [focused, setFocused] = useState(false)
-  const [pickedId, setPickedId] = useState(null)
-  // stays set while the slot closes, so its text doesn't vanish on the way
-  const [shownId, setShownId] = useState(null)
-  const shown = ROOM_PICKER.find(r => r.id === (pickedId || shownId))
-  const pickRoom = id => {
-    const next = id === pickedId ? null : id
-    setPickedId(next)
-    if (next) setShownId(next)
-  }
   const active = focused || text.length > 0 || keepOpen
-  const slotRef = useRef(null)
-  const slotHeight = useRef(0)
-  useLayoutEffect(() => {
-    const el = slotRef.current
-    if (!el) { slotHeight.current = 0; return undefined }
-    const from = el.style.transition && el.style.transition !== 'none' ? el.getBoundingClientRect().height : slotHeight.current
-    el.style.transition = 'none'
-    el.style.height = 'auto'
-    const to = pickedId ? el.getBoundingClientRect().height : 0
-    slotHeight.current = to
-    const settle = () => {
-      el.style.transition = ''
-      el.style.height = pickedId ? 'auto' : ''
-      if (!pickedId) setShownId(null)
-    }
-    if (from === to || window.matchMedia('(prefers-reduced-motion: reduce)').matches) { settle(); return undefined }
-    el.style.height = `${from}px`
-    void el.offsetHeight
-    el.style.transition = 'height 180ms ease'
-    el.style.height = `${to}px`
-    const timer = setTimeout(settle, 220)
-    return () => clearTimeout(timer)
-  }, [pickedId])
   // a press on the tags or the footer must not blur the page closed under the finger
   const holdFocus = e => e.preventDefault()
   return (
@@ -526,7 +457,7 @@ export function WriteBlock({
         value={text}
         onChange={e => onTextChange?.(e.target.value)}
         onKeyDown={onKeyDown}
-        onFocus={() => { setFocused(true); setPickedId(null); setShownId(null) }}
+        onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         rows={4}
         maxLength={10000}
@@ -549,40 +480,7 @@ export function WriteBlock({
         </div>
       ) : (
         <div className={styles.writeBlockRooms}>
-          <div className={styles.writeBlockLabelMuted}>OR BEGIN IN A ROOM</div>
-          <div className={styles.writeRoomGrid} role="group" aria-label="rooms">
-            {ROOM_PICKER.map(r => (
-              <button
-                key={r.id}
-                type="button"
-                className={`${styles.writeRoomBtn} ${pickedId === r.id ? styles.writeRoomBtnOn : ''}`}
-                aria-label={r.label}
-                aria-pressed={pickedId === r.id}
-                onClick={() => pickRoom(r.id)}
-              >
-                <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">{ROOM_ICONS[r.id]}</svg>
-              </button>
-            ))}
-          </div>
-          <div
-            ref={slotRef}
-            className={styles.writeRoomSlot}
-            aria-hidden={!pickedId}
-            {...(pickedId ? {} : { inert: '' })}
-          >
-            {shown && (
-              <div className={styles.writeRoomSlotInner}>
-                <div aria-live="polite">
-                  <div className={styles.writeRoomName}>{shown.label}</div>
-                  <p className={styles.writeRoomBlurb}>{shown.blurb}</p>
-                </div>
-                <div className={styles.writeRoomLinks}>
-                  <button type="button" className={styles.writeBlockLink} onClick={() => { setPickedId(null); onRoomClick?.(shown.id) }}>start →</button>
-                  <button type="button" className={styles.writeBlockLink} onClick={() => setPickedId(null)}>cancel</button>
-                </div>
-              </div>
-            )}
-          </div>
+          <button type="button" className={`${styles.writeBlockLink} ${styles.writeRoomsLink}`} onClick={onRooms}>writing rooms →</button>
         </div>
       )}
     </div>

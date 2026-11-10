@@ -1322,7 +1322,6 @@ export default function Today({ state, checkIn, removeCheckin, clearPracticeChec
               attach={renderAttachControl()}
               keepOpen={freqPickerOpen || needPickerOpen || customPickerOpen || attachMenuOpen || !!draftNeedId || !!draftCustom || !!draftImage || !!quotedText || !draftMoodInherited}
               entryCount={journalEntryCount}
-              onRoomClick={roomId => window.dispatchEvent(new CustomEvent('maslow:open-shapes', { detail: { shape: roomId } }))}
               onRooms={() => window.dispatchEvent(new CustomEvent('maslow:open-shapes', { detail: {} }))}
             />
             {draftFileInput}
