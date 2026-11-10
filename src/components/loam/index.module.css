@@ -640,22 +640,30 @@
 }
 .writeBlockSubmit:disabled { opacity: 0.35; cursor: default; }
 .writeBlockRooms { padding: 16px var(--loam-gutter) 14px; }
-.writeRoomList {
-  margin-top: 8px;
-  font-family: var(--loam-font-display);
-  font-size: var(--loam-index);
-  line-height: 1.5;
-  color: var(--loam-ink);
+.writeRoomGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-top: 6px;
 }
-.writeRoomDot { color: var(--loam-muted); }
 .writeRoomBtn {
-  font: inherit;
-  color: var(--loam-ink);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 8px 0 6px;
   background: none;
   border: none;
-  padding: 0;
+  font-family: var(--loam-font-mono);
+  font-size: var(--loam-tag);
+  line-height: 1.25;
+  color: var(--loam-ink);
+  text-align: center;
+  text-wrap: balance;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
+.writeRoomBtn svg { display: block; }
 
 /* ── TabBar ───────────────────────────────────────────────── */
 .tabBar { display: none; }

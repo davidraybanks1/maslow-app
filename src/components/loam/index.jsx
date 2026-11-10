@@ -396,6 +396,39 @@ const WRITE_ROOMS = [
   { id: 'three_truths', label: 'three truths' },
 ]
 
+/* The rooms as line drawings on the paper: 1.5px ink, nothing behind them.
+   Gold appears once, on the energy given in gave and took. */
+const ROOM_LINE = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.5, strokeLinecap: 'round', strokeLinejoin: 'round' }
+const ROOM_ICONS = {
+  timer: <path {...ROOM_LINE} d="M14 4A10 10 0 1 1 5.34 9" />,
+  continue: (
+    <>
+      <path {...ROOM_LINE} d="M4.6 10.4A10 10 0 1 1 4.3 16.6" />
+      <path {...ROOM_LINE} d="M4.2 5.4V10.6H9.4" />
+    </>
+  ),
+  one_thing: (
+    <>
+      <circle cx="8" cy="14" r="5" style={{ fill: 'var(--loam-gold)' }} />
+      <circle {...ROOM_LINE} cx="20" cy="14" r="4.25" />
+    </>
+  ),
+  tension: (
+    <>
+      <circle {...ROOM_LINE} cx="4.25" cy="14" r="2.75" />
+      <circle {...ROOM_LINE} cx="23.75" cy="14" r="2.75" />
+      <path {...ROOM_LINE} strokeLinecap="butt" strokeDasharray="1.5 2" d="M9.5 14H18.5" />
+    </>
+  ),
+  three_truths: (
+    <>
+      <rect {...ROOM_LINE} x="2.75" y="11" width="6" height="6" />
+      <rect {...ROOM_LINE} x="11" y="11" width="6" height="6" />
+      <rect {...ROOM_LINE} x="19.25" y="11" width="6" height="6" />
+    </>
+  ),
+}
+
 export function WriteBlock({
   text = '',
   onTextChange,
@@ -457,18 +490,17 @@ export function WriteBlock({
       ) : (
         <div className={styles.writeBlockRooms}>
           <div className={styles.writeBlockLabelMuted}>OR BEGIN IN A ROOM</div>
-          <div className={styles.writeRoomList}>
-            {WRITE_ROOMS.map((r, i) => (
-              <span key={r.id}>
-                {i > 0 && <span className={styles.writeRoomDot} aria-hidden="true"> · </span>}
-                <button
-                  type="button"
-                  className={styles.writeRoomBtn}
-                  onClick={() => onRoomClick?.(r.id)}
-                >
-                  {r.label}
-                </button>
-              </span>
+          <div className={styles.writeRoomGrid}>
+            {WRITE_ROOMS.map(r => (
+              <button
+                key={r.id}
+                type="button"
+                className={styles.writeRoomBtn}
+                onClick={() => onRoomClick?.(r.id)}
+              >
+                <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">{ROOM_ICONS[r.id]}</svg>
+                <span>{r.label}</span>
+              </button>
             ))}
           </div>
         </div>
