@@ -6,6 +6,7 @@ import { todayKey, addJournalEntry, settleRevisit, toggleJournalRevisit, uploadN
 import { normalizeBand } from '../lib/frequency'
 import { SHAPE_DB, HOSTED_ROOMS } from '../lib/shapeFacts'
 import JournalPage from '../components/JournalPage'
+import EarlierToday from '../components/EarlierToday'
 import { hapticSuccess } from '../lib/native'
 import { useIsDesktop } from '../lib/useIsDesktop'
 import { useDeskChrome } from '../lib/deskChrome'
@@ -491,6 +492,8 @@ export default function Write({ state, logMood }) {
               {status === 'error' && <p className={styles.error} role="alert">{statusText}</p>}
             </div>
           )}
+
+          <EarlierToday state={state} today={today} />
         </div>
       </div>
 

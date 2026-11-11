@@ -1,0 +1,58 @@
+/* Earlier today, under the desktop writing page: paper, ink, hairlines; no boxes. */
+
+.block {
+  margin-top: 96px;
+  border-top: var(--loam-rule-open);
+  padding-top: 10px;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 10px;
+  border-bottom: var(--loam-rule-close);
+}
+.label {
+  margin: 0;
+  font: 400 var(--loam-label) var(--loam-font-mono);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--loam-ink);
+}
+.link {
+  font: 400 12px var(--loam-font-mono);
+  color: var(--loam-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  /* a 44px target without moving the row */
+  padding: 14px 0;
+  margin: -14px 0;
+}
+.link:focus-visible { outline: 2px solid var(--loam-ink); outline-offset: 2px; }
+
+.list { list-style: none; margin: 0; padding: 0; }
+.row { padding: 22px 0 24px; border-bottom: 1px solid rgba(23, 21, 18, .18); }
+
+.meta {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 10px;
+  font: 400 12px var(--loam-font-mono);
+  letter-spacing: .04em;
+  color: var(--loam-muted);
+}
+
+.text {
+  font-family: var(--loam-font-reading);
+  font-size: var(--loam-quote);
+  font-weight: 400;
+  line-height: 1.55;
+  color: var(--loam-ink);
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+/* the Drafts chips, closer to the words than on the reading page */
+.tags { margin: 14px 0 0; }
