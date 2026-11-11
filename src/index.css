@@ -154,6 +154,7 @@ button { touch-action: manipulation; }
   --loam-leader: #8a8478;
   --loam-rule:   rgba(23, 21, 18, .15);
   --loam-track:  rgba(23, 21, 18, .08);
+  --loam-hairline: rgba(23, 21, 18, .18);  /* an empty slot's outline */
 
   --loam-exploration:        #1E3B2E;  --loam-exploration-text:  #1E3B2E;
   --loam-appreciation:       #A8BFA0;  --loam-appreciation-text: #4f6648;

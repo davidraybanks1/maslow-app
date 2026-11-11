@@ -219,6 +219,32 @@ function moodsByDay(moods) {
   return out
 }
 
+const SLOT_ORDER = ['morning', 'midday', 'evening']
+const WEEKDAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+/** The day's check-ins as one bar under its needs rule: a segment per slot,
+    hollow where the slot went unanswered. A late answer keeps its own slot. */
+function FeelBar({ list, show }) {
+  const bySlot = {}
+  for (const m of list) bySlot[m.prompt_time] = normalizeBand(m.mood)
+  return (
+    <span className={styles.feelBar}>
+      {show && SLOT_ORDER.map(s => {
+        const b = bySlot[s]
+        return b
+          ? <i key={s} style={{ background: MOOD_FILL[b] || 'var(--loam-track)' }} />
+          : <i key={s} className={styles.feelHollow} />
+      })}
+    </span>
+  )
+}
+
+function laneAria(i, future, pct, list) {
+  if (future) return `${WEEKDAY_NAMES[i]}, still to come`
+  const said = list.filter(m => SLOT_ORDER.includes(m.prompt_time)).map(m => BAND_LABEL[normalizeBand(m.mood)] || m.mood)
+  return `${WEEKDAY_NAMES[i]}, ${pct}% of needs met, ${said.length ? `check-ins: ${said.join(', ')}` : 'no check-ins'}`
+}
+
 function MoodDots({ list }) {
   return (
     <span className={styles.dots}>
@@ -235,7 +261,7 @@ function dayAria(dk, pct, list) {
   return `${formatDkLabel(dk)}: ${pct}% of needs met${bands ? `; checked in ${bands}` : ''}`
 }
 
-function RhythmSection({ canvas, checkins, moods, range, keyDots = true }) {
+function RhythmSection({ canvas, checkins, moods, range, keyDots = true, lanes = false }) {
   const monthly = range.keys.length > 7
   const { keys, todayKey } = range
   const chartRef = useChartCapture('data-rhythm', 'this week')
@@ -268,6 +294,17 @@ function RhythmSection({ canvas, checkins, moods, range, keyDots = true }) {
         const pct = dayCompPct(canvas, checkins, dk)
         const list = byDay[dk] || []
         const future = dk > todayKey
+        // phone week: the check-ins under the needs rule, on the same axis
+        if (lanes) return (
+          <div key={dk} className={`${styles.dayRow} ${styles.laneRow}`} role="img" aria-label={laneAria(i, future, pct, list)}>
+            <span className={`${styles.dayName}${future ? ` ${styles.future}` : ''}${dk === todayKey ? ` ${styles.today}` : ''}`}>{WEEKDAYS[i]}</span>
+            <span className={styles.lane}>
+              <ProgressRule bare tour={null} muted={future} pct={future ? 0 : pct} label={future ? `${formatDkLabel(dk)}: still to come` : dayAria(dk, pct, list)} />
+              <FeelBar list={list} show={!future && (pct > 0 || list.length > 0)} />
+            </span>
+            <span className={styles.dayPct}>{future ? '–' : `${pct}%`}</span>
+          </div>
+        )
         return (
           <div key={dk} className={styles.dayRow}>
             <span className={`${styles.dayName}${future ? ` ${styles.future}` : ''}${dk === todayKey ? ` ${styles.today}` : ''}`}>{WEEKDAYS[i]}</span>
@@ -277,6 +314,14 @@ function RhythmSection({ canvas, checkins, moods, range, keyDots = true }) {
           </div>
         )
       })}
+      {lanes && !monthly ? (
+        <div className={styles.legend}>
+          <span className={styles.legendKey}>
+            <span><i style={{ background: 'var(--loam-gold)' }} />needs met</span>
+            {['good', 'mid', 'bad'].map(b => <span key={b}><i style={{ background: MOOD_FILL[b] }} />{BAND_LABEL[b]}</span>)}
+          </span>
+        </div>
+      ) : (
       <div className={styles.legend}>
         <span>RULE = NEEDS MET</span>
         {/* on the phone the feels legend right below carries the colours */}
@@ -286,6 +331,7 @@ function RhythmSection({ canvas, checkins, moods, range, keyDots = true }) {
           </span>
         )}
       </div>
+      )}
     </div>
   )
 }
@@ -756,8 +802,9 @@ export default function Data({ state, profileMenu, profileMenuRef, compact = fal
                 : <span className={styles.folioHere}>THIS {unit.toUpperCase()}</span>}
               <button type="button" className={styles.folioBtn} onClick={() => setOffset(o => o - 1)} disabled={offset === 0} aria-label={`next ${unit}`}>{nextLabel} →</button>
             </div>
-            <RhythmSection stats={stats} canvas={canvas} checkins={checkins} moods={moods} range={range} keyDots={false} />
-            <FeelsSection moods={moods} range={range} alwaysOpen />
+            <RhythmSection stats={stats} canvas={canvas} checkins={checkins} moods={moods} range={range} keyDots={false} lanes />
+            {/* the week carries its check-ins in the lanes; the month keeps the chart */}
+            {period === 30 && <FeelsSection moods={moods} range={range} alwaysOpen />}
           </section>
         </>
       )}
