@@ -290,6 +290,15 @@
   padding: 1.5px 8.5px 0.5px;
   color: var(--loam-muted);
 }
+/* on the 24px check-in line a baseline stamp sits 3px under the x-height's
+   middle: lift it without moving the line. The outline is drawn inside the box
+   so the empty box is the stamp's exact size, and nothing jumps when it fills. */
+.checkInChosen .stamp { transform: translateY(-3px); }
+.checkInChosen .stampEmpty {
+  border: 0;
+  padding: 3px 10px 2px;
+  box-shadow: inset 0 0 0 1.5px var(--loam-ink);
+}
 .stampRow {
   display: flex;
   flex-wrap: wrap;
