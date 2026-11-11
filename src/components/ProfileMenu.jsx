@@ -8,6 +8,7 @@ import { formatTimeOfDay } from '../lib/formatTime'
 import Sheet from './Sheet'
 import { PracticesArt, NotesArt, TagsArt } from './ProfileArt'
 import styles from './ProfileMenu.module.css'
+import { version as APP_VERSION } from '../../package.json'
 
 const SLOTS = ['morning', 'midday', 'evening']
 const DEFAULT_SLOT_TIMES = { morning: '09:00', midday: '13:00', evening: '19:00' }
@@ -33,7 +34,6 @@ const lit = ([a, b, c]) => `radial-gradient(circle at 34% 26%, ${a} 0%, ${b} 55%
 const GREEN_SPHERE = lit(SPHERES[0])
 
 const FEEDBACK_EMAIL = 'hello@loamdaybook.com'
-const APP_VERSION = '1.0'
 const DAY_START = 360 // 6 am
 const DAY_SPAN = 1020 // 6 am to 11 pm
 

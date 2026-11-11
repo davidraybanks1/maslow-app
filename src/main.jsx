@@ -6,13 +6,15 @@ import { breadcrumbsIntegration } from '@sentry/react'
 import './index.css'
 import App from './App'
 import { isNative } from './lib/native'
+// The release name comes from package.json; keep its version equal to MARKETING_VERSION in the Xcode project.
+import { version as APP_VERSION } from '../package.json'
 
 Sentry.init(
   {
     dsn: 'https://b4dcdbec714e2d382ac8d237a796037f@o4511991512432640.ingest.us.sentry.io/4511991519707136',
     environment: import.meta.env.PROD ? 'production' : 'development',
     enabled: import.meta.env.PROD,
-    release: '0.1.0',
+    release: APP_VERSION,
     sendDefaultPii: false,
     integrations: integrations => [
       ...integrations.filter(i => i.name !== 'Breadcrumbs' && i.name !== 'Replay'),
