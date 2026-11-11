@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import LoamMark from '../components/LoamMark'
+import Wordmark from '../components/Wordmark'
 import OtpDisclosure from '../components/OtpDisclosure'
 import styles from './SignIn.module.css'
 
@@ -76,7 +76,7 @@ export default function SignIn() {
     <div className={styles.screen}>
       <button type="button" className={styles.back} onClick={() => navigate('/onboarding')}>{'←'} Back</button>
 
-      <div className={styles.mark}><LoamMark width={112} /></div>
+      <div className={styles.mark}><Wordmark /></div>
 
       <h1 className={styles.title}>Welcome back.</h1>
 

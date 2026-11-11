@@ -196,6 +196,8 @@
   .hypBottom { position: absolute; left: 0; right: 0; bottom: 8px; padding-bottom: 0; align-items: end; }
   .cardStage.introStage { position: relative; }
   .hypBottom .hypBloom { max-width: 290px; justify-self: center; }
+  /* the bloom's old slot, kept empty so the draft field stays where it was */
+  .hypBottom::before { content: ""; grid-area: 1 / 1; width: 100%; max-width: 290px; aspect-ratio: 280 / 220; justify-self: center; }
   .hypBottom .hypDraft { align-self: start; margin-top: 40px; }
   .hypDraft {
     width: 100%; max-width: 330px; box-sizing: border-box; background: none;
@@ -1007,6 +1009,13 @@
   min-height: 0;
   padding: calc(var(--safe-top) + 14px) 0 0;
 }
+/* the cover arrives in one short fade, with its begin button */
+.welcome, .layout:has(.welcome) .ctaRow { animation: welcomeIn 400ms ease both; }
+@keyframes welcomeIn { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .welcome, .layout:has(.welcome) .ctaRow { animation: none; }
+}
+.welcomeDot { color: var(--loam-gold); }
 .welcomeHead {
   display: flex;
   justify-content: space-between;

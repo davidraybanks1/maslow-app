@@ -1,0 +1,10 @@
+.mark {
+  display: inline-block;
+  font-family: var(--loam-font-wordmark);
+  font-weight: 800;
+  line-height: 0.8;
+  letter-spacing: -0.078em;
+  color: var(--loam-ink);
+  white-space: nowrap;
+}
+.dot { color: var(--loam-gold); }

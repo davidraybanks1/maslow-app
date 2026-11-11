@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import LoamMark from '../components/LoamMark'
+import Wordmark from '../components/Wordmark'
 import PanelBack from '../components/PanelBack'
 import styles from './SignIn.module.css'
 
@@ -45,7 +45,7 @@ export default function UpdatePassword({ inPanel = false, onDone }) {
         ? <PanelBack label="profile" onClick={() => onDone?.()} />
         : <button type="button" className={styles.back} onClick={() => navigate(-1)}>{'←'} Back</button>}
 
-      {!inPanel && <div className={styles.mark}><LoamMark width={112} /></div>}
+      {!inPanel && <div className={styles.mark}><Wordmark /></div>}
 
       <h1 className={styles.title}>Update your password.</h1>
 

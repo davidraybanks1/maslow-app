@@ -1,9 +1,8 @@
 import styles from './LoadingScreen.module.css'
-import LoamSplash from './LoamSplash'
+import Wordmark from './Wordmark'
 
-/* The daily open: the Loam splash over the paper, shown once a day. (First-time
-   users get the same animation as the first onboarding screen instead.)
-   App.jsx holds it for RITUAL_MS. */
+/* The daily open: the Loam wordmark on the paper, shown once a day. It fades
+   in gently (no motion with reduced motion). App.jsx holds it for RITUAL_MS. */
 export default function LoadingScreen({ greeting = 'Hey, you', fading = false }) {
   return (
     <div
@@ -11,7 +10,7 @@ export default function LoadingScreen({ greeting = 'Hey, you', fading = false })
       role="status"
       aria-live="polite"
     >
-      <LoamSplash />
+      <Wordmark className={styles.word} />
       <span className={styles.srOnly}>{greeting} — welcome to Loam</span>
     </div>
   )

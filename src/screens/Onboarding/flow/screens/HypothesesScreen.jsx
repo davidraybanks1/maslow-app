@@ -3,7 +3,6 @@ import styles from '../Flow.module.css'
 import ScreenLayout from '../ScreenLayout'
 import Typed, { typingMs, REDUCED_MOTION } from '../Typed'
 import useTimeline from '../useTimeline'
-import BloomAnim from '../bloomAnim'
 
 const HEAD = 'Loam is built on two hypotheses:'
 const NUM1 = '1.'
@@ -13,7 +12,9 @@ const NUM2 = '2.'
 const A2 = 'Our realities are defined by the stories we tell ourselves.'
 const B2 = 'And we can edit them.'
 
-const FILLS = { exploration: 0.55, appreciation: 0.7, nourishment: 0.55, survival: 0.5 }
+// The bloom that used to light up here took 680ms (8 pieces × 85ms); the text
+// still waits that long so the pacing is unchanged.
+const LIT_MS = 680
 const PAUSE = 1000 // the cursor blinks alone after "1." before the sentence
 
 // The abstract draft field: rounded bars standing in for words. Each group is
@@ -29,35 +30,26 @@ const GROUPS = {
 // Beat by beat:
 //   1. the lead-in line writes on
 //   2. hypothesis 1, first half
-//   3. the bloom (Today's, all black) pops up below
-//   4. hypothesis 1, second half; the instant it finishes the bloom fills with color
-//   5. the bloom clears; hypothesis 2 arrives with a draft field that "writes"
-//      itself, a redline lands as "And we can edit them." finishes, and
-//      the replacement is written
+//   3. (a beat; the bloom used to pop up here)
+//   4. hypothesis 1, second half, then the beat the bloom took to light up
+//   5. hypothesis 2 arrives with a draft field that "writes" itself, a redline
+//      lands as "And we can edit them." finishes, and the replacement is written
 //   6. the arrow
 export default function HypothesesScreen({ onNext }) {
   const at = useTimeline()
-  const bloomHost = useRef(null)
-  const bloom = useRef(null)
   const bars = useRef({})
   const [b, setB] = useState(REDUCED_MOTION
-    ? { head: true, one: true, partB: true, two: true, partB2: true, bloomOut: true, draft: true, redline: true, arrow: true }
+    ? { head: true, one: true, partB: true, two: true, partB2: true, draft: true, redline: true, arrow: true }
     : {})
   const set = patch => setB(prev => ({ ...prev, ...patch }))
 
-  // The bloom lives outside React's tree: built into a host div once, torn
-  // down with the screen.
+  // Reduced motion: the draft field's bars are drawn at full width from the start.
   useEffect(() => {
-    const host = bloomHost.current
-    bloom.current = BloomAnim.create(host, 'hyp')
-    if (REDUCED_MOTION) {
-      bloom.current.showFinal(FILLS)
-      Object.keys(bars.current).forEach(k => {
-        const el = bars.current[k]
-        if (el) { el.style.width = el.dataset.w + 'px'; el.classList.add(styles.hypBarW) }
-      })
-    }
-    return () => { bloom.current = null; host.innerHTML = '' }
+    if (!REDUCED_MOTION) return
+    Object.keys(bars.current).forEach(k => {
+      const el = bars.current[k]
+      if (el) { el.style.width = el.dataset.w + 'px'; el.classList.add(styles.hypBarW) }
+    })
   }, [])
 
   useEffect(() => {
@@ -101,21 +93,16 @@ export default function HypothesesScreen({ onNext }) {
     // beat 2: hypothesis 1, first half: "1.", a pause with the cursor blinking, then the sentence
     at(2000, () => set({ one: true }))
     const S = PAUSE + 250
-    // beat 3: the bloom pops up, all black
-    at(3500 + S, () => bloom.current && bloom.current.popIn(85))
     // beat 4: hypothesis 1, second half
     at(5500 + S, () => {
       set({ partB: true })
       const dB = typingMs(B1)
-      // color starts to populate the bloom right after the line finishes typing
+      // the same beat the bloom took to light up after the line finished typing
       at(dB + 150, () => {
-        const litMs = bloom.current ? bloom.current.lightTo(FILLS, 85, () => !bloom.current) : 0
-        const T = litMs + 600 // let the finished bloom breathe
-        // beat 5: the bloom clears away
-        at(T, () => set({ bloomOut: true }))
+        const T = LIT_MS + 600
         // beat 6: hypothesis 2, first half
         at(T + 800, () => set({ two: true }))
-        // beat 7: the draft field takes the bloom's place
+        // beat 7: the draft field arrives
         at(T + 2500, () => set({ draft: true }))
         // beat 8: text is written out (as abstract bars, not readable words)
         at(T + 3500, () => {
@@ -163,7 +150,6 @@ export default function HypothesesScreen({ onNext }) {
         </div>
 
         <div className={`${styles.hypHalf} ${styles.hypBottom}`}>
-          <div ref={bloomHost} className={`${styles.hypBloom}${b.bloomOut ? ` ${styles.hypBloomOut}` : ''}`} aria-hidden="true" />
           <div className={`${styles.hypDraft}${b.draft ? ` ${styles.hypDraftOn}` : ''}`} aria-hidden="true">
             <div className={styles.hypDraftLabel}><span className={styles.draftEchoDot} />draft</div>
             <div className={styles.hypLines}>

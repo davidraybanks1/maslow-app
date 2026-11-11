@@ -7,7 +7,7 @@ import { zonesFor } from '../lib/dayProgress'
 import { createDataStats } from '../lib/dataStats'
 import { usePracticeActions } from '../lib/usePracticeActions'
 import { useDeskChrome } from '../lib/deskChrome'
-import LoamMark from './LoamMark'
+import Wordmark from './Wordmark'
 import ProfileMenu from './ProfileMenu'
 import SignedImg from './SignedImg'
 import StretchSheet from './StretchSheet'
@@ -345,7 +345,7 @@ export default function DeskShell({ state, actions, name, email, remindersEnable
           data-tour="nav"
         >
           <button type="button" className={styles.brand} onClick={() => pressNav('write')} aria-label="Loam — back to the page" title="back to the page">
-            <LoamMark width={34} />
+            <Wordmark size={21} />
           </button>
           <nav className={styles.nav}>
             {NAV.map(([key, icon]) => {

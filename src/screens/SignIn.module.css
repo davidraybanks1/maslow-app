@@ -25,7 +25,8 @@
 }
 .back:hover { color: var(--loam-ink); }
 
-.mark { display: flex; justify-content: center; margin: 28px 0 30px; }
+/* the cover's wordmark, smaller, opening the screen on a 1.5px ink rule */
+.mark { margin: 28px 0 30px; padding-bottom: 6px; border-bottom: var(--loam-rule-open); font-size: 56px; }
 
 .title {
   margin: 0;

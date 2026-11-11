@@ -16,6 +16,10 @@
 }
 .overlayFading { opacity: 0; pointer-events: none; }
 
+.word { font-size: 88px; animation: wordIn 900ms ease both; }
+@keyframes wordIn { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .word { animation: none; } }
+
 .srOnly {
   position: absolute;
   width: 1px;
