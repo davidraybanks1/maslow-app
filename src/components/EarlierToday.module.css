@@ -46,9 +46,11 @@
 
 .text {
   font-family: var(--loam-font-reading);
-  font-size: var(--loam-quote);
+  /* smaller than the quote size, under the page's 20px writing (here only; the
+     --loam-quote token is left for the screens that use it) */
+  font-size: 17px;
   font-weight: 400;
-  line-height: 1.55;
+  line-height: 1.6;
   color: var(--loam-ink);
   white-space: pre-wrap;
   overflow-wrap: break-word;

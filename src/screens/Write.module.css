@@ -185,10 +185,12 @@
 
 /* ── the page: textarea over a mirror ───────────────────────────────────────── */
 .paper { position: relative; min-height: 46vh; }
+/* the three share every metric: the textarea sits over the mirror, so any drift
+   between them puts the caret and the selection off the words */
 .mirror, .input, .placeholder {
   font-family: var(--loam-font-display);
-  font-size: 24px;
-  line-height: 1.72;
+  font-size: 20px;
+  line-height: 1.7;
   letter-spacing: 0;
   white-space: pre-wrap;
   overflow-wrap: break-word;
