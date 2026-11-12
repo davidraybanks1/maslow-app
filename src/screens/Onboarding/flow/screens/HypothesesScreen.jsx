@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import styles from '../Flow.module.css'
 import ScreenLayout from '../ScreenLayout'
 import Typed, { typingMs, REDUCED_MOTION } from '../Typed'
@@ -12,126 +12,48 @@ const NUM2 = '2.'
 const A2 = 'Our realities are defined by the stories we tell ourselves.'
 const B2 = 'And we can edit them.'
 
-// The bloom that used to light up here took 680ms (8 pieces × 85ms); the text
-// still waits that long so the pacing is unchanged.
-const LIT_MS = 680
 const PAUSE = 1000 // the cursor blinks alone after "1." before the sentence
+const NUM2_GAP = 80 // "2." hands its caret straight to the sentence
 
-// The abstract draft field: rounded bars standing in for words. Each group is
-// written left to right; "seg" is the stretch that gets redlined and "rep" is
-// what's written over it.
-const GROUPS = {
-  pre:   [26, 36],
-  seg:   [36, 28, 44],
-  rep:   [32, 42],
-  line2: [46, 30, 58],
-}
+// Beat by beat, each gap measured from the last character of the line before it:
+//   the lead-in writes on (once the screen transition has settled)
+//   "1.", the cursor blinks, hypothesis 1 first half
+//   700ms, "And we can give it less."
+//   800ms, "2." and hypothesis 2 first half
+//   700ms, "And we can edit them."
+//   600ms, the arrow
+// typingMs already counts the beat after a line's closing full stop, so that
+// beat comes off each gap.
+const STOP = 198 // the full-stop beat at the end of each of these lines (28 + 170)
+const after = (text, gap) => typingMs(text) + gap - (REDUCED_MOTION ? 0 : STOP)
+const HEAD_AT = 620
+const ONE_AT = 2000
+const PART_B_AT = ONE_AT + typingMs(NUM1) + PAUSE + after(A1, 700)
+const TWO_AT = PART_B_AT + after(B1, 800)
+const PART_B2_AT = TWO_AT + typingMs(NUM2) + NUM2_GAP + after(A2, 700)
+const ARROW_AT = PART_B2_AT + after(B2, 600)
 
-// Beat by beat:
-//   1. the lead-in line writes on
-//   2. hypothesis 1, first half
-//   3. (a beat; the bloom used to pop up here)
-//   4. hypothesis 1, second half, then the beat the bloom took to light up
-//   5. hypothesis 2 arrives with a draft field that "writes" itself, a redline
-//      lands as "And we can edit them." finishes, and the replacement is written
-//   6. the arrow
 export default function HypothesesScreen({ onNext }) {
   const at = useTimeline()
-  const bars = useRef({})
   const [b, setB] = useState(REDUCED_MOTION
-    ? { head: true, one: true, partB: true, two: true, partB2: true, draft: true, redline: true, arrow: true }
+    ? { head: true, one: true, partB: true, two: true, partB2: true, arrow: true }
     : {})
   const set = patch => setB(prev => ({ ...prev, ...patch }))
 
-  // Reduced motion: the draft field's bars are drawn at full width from the start.
-  useEffect(() => {
-    if (!REDUCED_MOTION) return
-    Object.keys(bars.current).forEach(k => {
-      const el = bars.current[k]
-      if (el) { el.style.width = el.dataset.w + 'px'; el.classList.add(styles.hypBarW) }
-    })
-  }, [])
-
   useEffect(() => {
     if (REDUCED_MOTION) return
-
-    // The caret rides the leading edge of whichever bar is being written.
-    let carriedBy = null
-    function moveCaret(el) {
-      if (carriedBy) carriedBy.classList.remove(styles.hypBarCur)
-      carriedBy = el
-      if (el) el.classList.add(styles.hypBarCur)
-    }
-
-    // Writes a group's bars one after another.
-    function writeGroup(group, done) {
-      const els = GROUPS[group].map((_, i) => bars.current[`${group}${i}`])
-      let i = 0
-      function next() {
-        if (i >= els.length) { if (done) done(); return }
-        const el = els[i++]
-        const w = Number(el.dataset.w)
-        const ms = Math.round(w * 2.2)
-        moveCaret(el)
-        el.style.setProperty('--bw', `${ms}ms`)
-        el.style.width = `${w}px`
-        el.classList.add(styles.hypBarW)
-        at(ms + 15, next)
-      }
-      next()
-    }
-    function writeAll(groups, done) {
-      let k = 0
-      ;(function nextGroup() {
-        if (k >= groups.length) { if (done) done(); return }
-        writeGroup(groups[k++], nextGroup)
-      })()
-    }
-
-    // beat 1: lead-in (waits out the screen transition)
-    at(620, () => set({ head: true }))
-    // beat 2: hypothesis 1, first half: "1.", a pause with the cursor blinking, then the sentence
-    at(2000, () => set({ one: true }))
-    const S = PAUSE + 250
-    // beat 4: hypothesis 1, second half
-    at(5500 + S, () => {
-      set({ partB: true })
-      const dB = typingMs(B1)
-      // the same beat the bloom took to light up after the line finished typing
-      at(dB + 150, () => {
-        const T = LIT_MS + 600
-        // beat 6: hypothesis 2, first half
-        at(T + 800, () => set({ two: true }))
-        // beat 7: the draft field arrives
-        at(T + 2500, () => set({ draft: true }))
-        // beat 8: text is written out (as abstract bars, not readable words)
-        at(T + 3500, () => {
-          writeAll(['pre', 'seg', 'line2'], () => {
-            // beat 9: hypothesis 2, second half
-            at(700, () => {
-              set({ partB2: true })
-              const d = typingMs(B2)
-              // beat 10: the redline lands the instant the line finishes typing,
-              // then the replacement is written
-              at(d, () => set({ redline: true }))
-              at(d + 1200, () => {
-                writeAll(['rep'], () => at(900, () => { moveCaret(null); set({ arrow: true }) }))
-              })
-            })
-          })
-        })
-      })
-    })
+    at(HEAD_AT, () => set({ head: true }))
+    at(ONE_AT, () => set({ one: true }))
+    at(PART_B_AT, () => set({ partB: true }))
+    at(TWO_AT, () => set({ two: true }))
+    at(PART_B2_AT, () => set({ partB2: true }))
+    at(ARROW_AT, () => set({ arrow: true }))
   }, [at])
-
-  const bar = (group, i) => (
-    <span key={`${group}${i}`} className={styles.hypBar} data-w={GROUPS[group][i]} ref={el => { bars.current[`${group}${i}`] = el }} />
-  )
 
   return (
     <ScreenLayout cta={{ arrow: true, hidden: !b.arrow, onClick: onNext }}>
       <div className={`${styles.cardStage} ${styles.introStage}`}>
-        <div className={`${styles.hypHalf} ${styles.hypTop}`}>
+        <div>
           <Typed as="div" className={styles.hypHead} text={HEAD} run={!!b.head} />
           <div className={styles.hypItem}>
             <Typed className={styles.hookListNum} text={NUM1} run={!!b.one} hold={PAUSE} />
@@ -143,23 +65,9 @@ export default function HypothesesScreen({ onNext }) {
           <div className={styles.hypItem}>
             <Typed className={styles.hookListNum} text={NUM2} run={!!b.two} linger={0} />
             <span>
-              <Typed text={A2} run={!!b.two} delay={typingMs(NUM2) + 80} />
+              <Typed text={A2} run={!!b.two} delay={typingMs(NUM2) + NUM2_GAP} />
               <Typed className={styles.hypPartB} text={B2} run={!!b.partB2} />
             </span>
-          </div>
-        </div>
-
-        <div className={`${styles.hypHalf} ${styles.hypBottom}`}>
-          <div className={`${styles.hypDraft}${b.draft ? ` ${styles.hypDraftOn}` : ''}`} aria-hidden="true">
-            <div className={styles.hypDraftLabel}><span className={styles.draftEchoDot} />draft</div>
-            <div className={styles.hypLines}>
-              <div className={styles.hypLine}>
-                <span className={styles.hypGroup}>{GROUPS.pre.map((_, i) => bar('pre', i))}</span>
-                <span className={`${styles.hypSeg}${b.redline ? ` ${styles.hypSegOn}` : ''}`}>{GROUPS.seg.map((_, i) => bar('seg', i))}</span>
-                <span className={styles.hypGroup}>{GROUPS.rep.map((_, i) => bar('rep', i))}</span>
-              </div>
-              <div className={styles.hypLine}>{GROUPS.line2.map((_, i) => bar('line2', i))}</div>
-            </div>
           </div>
         </div>
       </div>

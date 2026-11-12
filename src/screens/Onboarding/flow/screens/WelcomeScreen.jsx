@@ -14,7 +14,6 @@ export default function WelcomeScreen({ onNext, onSignIn }) {
       <div className={styles.welcome}>
         <div className={styles.welcomeHead}><span>VOL. 01</span><span>A DAYBOOK</span></div>
         <h1 className={styles.welcomeLine}>anxiety isn’t who you are.<br />it’s who you aren’t.</h1>
-        <p className={styles.welcomeSub}>AN APP FOR LIVING<br />BEYOND SURVIVAL-MODE</p>
         <div className={styles.welcomeFoot}>
           <div className={styles.welcomeWord}>loam<span className={styles.welcomeDot}>.</span></div>
         </div>

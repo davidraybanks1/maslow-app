@@ -51,7 +51,6 @@ export default function SortScreen({ onProgress, onDone }) {
     <ScreenLayout counter={`${sortedCount} / ${FLOW_NEEDS.length}`} cta={{ label: 'continue', disabled: true }}>
       <div className={styles.sortHead}>
         <div className={styles.sortHeadTitle}>Tap the color that describes the thing</div>
-        <div className={styles.sortHeadSub}>Go with your gut here</div>
       </div>
 
       <div className={`${styles.cardStage} ${styles.sortStage}`}>
