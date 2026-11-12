@@ -162,59 +162,21 @@
   }
   .miniLink:hover { color: var(--loam-ink); }
 
-  .lbl {
-    font: 400 12px var(--loam-font-mono);
-    letter-spacing: .14em;
-    text-transform: uppercase;
-    color: var(--loam-ink-2);
-  }
+  /* the top of the today panel, as the phone has it: flush, each piece keeps
+     its own spacing (the panel's 14px gap starts again at the needs) */
+  .dayHead { display: flex; flex-direction: column; }
 
-  /* note to self: a single quoted line, no card */
-  .note {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding: 12px 0 14px;
-    border-top: var(--loam-rule-open);
-  }
-  .noteTop { display: flex; justify-content: space-between; align-items: center; min-height: 28px; }
-  .noteNav { display: inline-flex; align-items: center; gap: 4px; }
-  .noteCount { font: 400 12px var(--loam-font-mono); letter-spacing: .04em; color: var(--loam-ink-2); min-width: 28px; text-align: center; }
-  .arrow {
-    width: 28px;
-    height: 28px;
-    display: grid;
-    place-items: center;
-    border: 0;
-    border-radius: 50%;
-    background: none;
-    color: var(--loam-ink-2);
-    font: 400 18px/1 var(--loam-font-display);
-    cursor: pointer;
-  }
-  .arrow:hover { background: rgba(26, 26, 24, .06); color: var(--loam-ink); }
-  .noteEdit { margin-right: 8px; transition: opacity 150ms; }
-  .note:not(:hover):not(:focus-within) .noteEdit { opacity: 0; }
-  .quote {
-    margin: 0;
-    font: italic 400 var(--loam-index)/1.25 var(--loam-font-reading);
-    letter-spacing: -.005em;
-    color: var(--loam-ink);
-    text-wrap: pretty;
-    overflow-wrap: anywhere;
-  }
-  .quote[data-len='mid'] { font-size: 19px; }
-  .quote[data-len='long'] { font-size: 17px; line-height: 1.4; }
+  /* note to self: the phone's pull quote and folio, 12px above the check-in */
+  .note { margin-bottom: 12px; }
   .noteThumb { width: 100%; max-height: 84px; object-fit: cover; display: block; margin-top: 4px; }
   .noteAdd {
     align-self: flex-start;
     background: none;
     border: 0;
     padding: 0;
-    font: 400 12px var(--loam-font-mono);
-    color: var(--loam-ink-2);
-    text-decoration: underline;
-    text-underline-offset: 3px;
+    font-family: var(--loam-font-mono);
+    font-size: 13px;
+    color: var(--ink3);   /* the phone's (.noteAddBtn) */
     cursor: pointer;
   }
   .noteAdd:hover { color: var(--loam-ink); }
@@ -263,7 +225,8 @@
   .vibWords { flex: 1; min-width: 0; font: 300 19px var(--loam-font-display); color: var(--loam-ink); }
 
   /* practices: modes as an accordion, only the open one on paper */
-  .practices { display: flex; flex-direction: column; gap: 6px; }
+  /* 26px under the check-in, as on the phone: the panel's 14px gap and 12 more */
+  .practices { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
   .prFoot { display: flex; justify-content: space-between; align-items: baseline; font: 400 var(--loam-label) var(--loam-font-mono); color: var(--loam-muted); }
   .prHead { display: flex; justify-content: space-between; align-items: baseline; padding: 0 4px 6px; }
   .mode { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; transition: background 200ms; }

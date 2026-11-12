@@ -261,7 +261,7 @@ function dayAria(dk, pct, list) {
   return `${formatDkLabel(dk)}: ${pct}% of needs met${bands ? `; checked in ${bands}` : ''}`
 }
 
-function RhythmSection({ canvas, checkins, moods, range, keyDots = true, lanes = false }) {
+function RhythmSection({ canvas, checkins, moods, range }) {
   const monthly = range.keys.length > 7
   const { keys, todayKey } = range
   const chartRef = useChartCapture('data-rhythm', 'this week')
@@ -294,8 +294,8 @@ function RhythmSection({ canvas, checkins, moods, range, keyDots = true, lanes =
         const pct = dayCompPct(canvas, checkins, dk)
         const list = byDay[dk] || []
         const future = dk > todayKey
-        // phone week: the check-ins under the needs rule, on the same axis
-        if (lanes) return (
+        // the week: each day's check-ins under its needs rule, on the same axis
+        return (
           <div key={dk} className={`${styles.dayRow} ${styles.laneRow}`} role="img" aria-label={laneAria(i, future, pct, list)}>
             <span className={`${styles.dayName}${future ? ` ${styles.future}` : ''}${dk === todayKey ? ` ${styles.today}` : ''}`}>{WEEKDAYS[i]}</span>
             <span className={styles.lane}>
@@ -305,16 +305,8 @@ function RhythmSection({ canvas, checkins, moods, range, keyDots = true, lanes =
             <span className={styles.dayPct}>{future ? '–' : `${pct}%`}</span>
           </div>
         )
-        return (
-          <div key={dk} className={styles.dayRow}>
-            <span className={`${styles.dayName}${future ? ` ${styles.future}` : ''}${dk === todayKey ? ` ${styles.today}` : ''}`}>{WEEKDAYS[i]}</span>
-            <ProgressRule bare tour={null} muted={future} pct={future ? 0 : pct} label={future ? `${formatDkLabel(dk)}: still to come` : dayAria(dk, pct, list)} />
-            <span className={styles.dayPct}>{future ? '–' : `${pct}%`}</span>
-            <MoodDots list={list} />
-          </div>
-        )
       })}
-      {lanes && !monthly ? (
+      {!monthly ? (
         <div className={styles.legend}>
           <span className={styles.legendKey}>
             <span><i style={{ background: 'var(--loam-gold)' }} />needs met</span>
@@ -322,15 +314,8 @@ function RhythmSection({ canvas, checkins, moods, range, keyDots = true, lanes =
           </span>
         </div>
       ) : (
-      <div className={styles.legend}>
-        <span>RULE = NEEDS MET</span>
-        {/* on the phone the feels legend right below carries the colours */}
-        {keyDots && (
-          <span className={styles.legendKey}>
-            {['good', 'mid', 'bad'].map(b => <span key={b}><i style={{ background: MOOD_FILL[b] }} />{BAND_LABEL[b]}</span>)}
-          </span>
-        )}
-      </div>
+        // the month's colours are in the feels chart right below
+        <div className={styles.legend}><span>RULE = NEEDS MET</span></div>
       )}
     </div>
   )
@@ -341,7 +326,7 @@ const EMPTY_CELL = 'var(--loam-track)'
 const MOBILE_WINDOW = 30
 const DESKTOP_WINDOW = 30
 
-/* ── How the days felt: one column each, folded under this week ──────── */
+/* ── How the days felt: one column each, under the month ──────────────── */
 
 function FeelsChart({ days, peak, monthly, todayKey, dayLabel }) {
   const chartRef = useChartCapture('data-feels', 'how the days felt')
@@ -367,8 +352,7 @@ function FeelsChart({ days, peak, monthly, todayKey, dayLabel }) {
   )
 }
 
-function FeelsSection({ moods, range, alwaysOpen = false }) {
-  const [open, setOpen] = useState(false)
+function FeelsSection({ moods, range }) {
   const monthly = range.keys.length > 7
   const { keys, todayKey } = range
 
@@ -397,17 +381,7 @@ function FeelsSection({ moods, range, alwaysOpen = false }) {
     return new Date(y, m - 1, d).getDay() === 1 ? String(d) : ''
   }
 
-  // the phone shows the chart outright; the desktop panel keeps the fold
-  if (alwaysOpen) return <FeelsChart days={days} peak={peak} monthly={monthly} todayKey={todayKey} dayLabel={dayLabel} />
-
-  return (
-    <div>
-      <button type="button" className={styles.foldLink} aria-expanded={open} onClick={() => setOpen(o => !o)}>
-        how the days felt {open ? '▴' : '▾'}
-      </button>
-      {open && <FeelsChart days={days} peak={peak} monthly={monthly} todayKey={todayKey} dayLabel={dayLabel} />}
-    </div>
-  )
+  return <FeelsChart days={days} peak={peak} monthly={monthly} todayKey={todayKey} dayLabel={dayLabel} />
 }
 
 function practiceClosingLine(allCount, activeCount) {
@@ -720,10 +694,10 @@ export default function Data({ state, profileMenu, profileMenuRef, compact = fal
   const [period, setPeriodRaw] = useState(7)
   const [offset, setOffset] = useState(0)
   const setPeriod = p => { setPeriodRaw(p); setOffset(0) }
-  // `compact` is the side panel on a desktop: the phone layout, in a narrow column
+  // `compact` is the side panel on a desktop: the phone layout, in a narrow column.
+  // /data on a desktop is DeskShell, which mounts this as `compact`; isDesktop is
+  // left for what is about the pointer (the ledger's hover cells), not the layout
   const isDesktop = useIsDesktop() && !compact
-  // /data on a desktop is DeskShell, which mounts this as `compact`; anything else is the phone
-  const phone = !compact && !isDesktop
   const rootRef = useRef(null)
   const dockLine = useDockLine(rootRef)
 
@@ -785,7 +759,9 @@ export default function Data({ state, profileMenu, profileMenuRef, compact = fal
         <FirstWeekCard title="After about a week, you’ll see your data start to tell a story." />
       )}
 
-      {hasCanvas && phone && (
+      {/* the phone's layout, and the desktop panel's (the same phone layout in a
+          narrow column): streaks first, the week or month it steps, then the rest */}
+      {hasCanvas && (
         <>
           <StreaksRail canvas={canvas} checkins={checkins} moods={moods} practicesDB={practicesDB} glyphs={false} />
 
@@ -802,35 +778,11 @@ export default function Data({ state, profileMenu, profileMenuRef, compact = fal
                 : <span className={styles.folioHere}>THIS {unit.toUpperCase()}</span>}
               <button type="button" className={styles.folioBtn} onClick={() => setOffset(o => o - 1)} disabled={offset === 0} aria-label={`next ${unit}`}>{nextLabel} →</button>
             </div>
-            <RhythmSection stats={stats} canvas={canvas} checkins={checkins} moods={moods} range={range} keyDots={false} lanes />
+            <RhythmSection canvas={canvas} checkins={checkins} moods={moods} range={range} />
             {/* the week carries its check-ins in the lanes; the month keeps the chart */}
-            {period === 30 && <FeelsSection moods={moods} range={range} alwaysOpen />}
+            {period === 30 && <FeelsSection moods={moods} range={range} />}
           </section>
-        </>
-      )}
 
-      {hasCanvas && !phone && (
-        <>
-          <LabelRow
-            left={range.title.toUpperCase()}
-            right={<WordTabs label="period" options={PERIODS.map(p => ({ v: p.days, label: p.label }))} value={period} onChange={setPeriod} />}
-          />
-          <RhythmSection stats={stats} canvas={canvas} checkins={checkins} moods={moods} range={range} />
-          <div className={styles.folio}>
-            <button type="button" className={styles.folioBtn} onClick={() => setOffset(o => o + 1)} disabled={!canGoBack} aria-label={`previous ${unit}`}>← {prevLabel}</button>
-            {offset > 0
-              ? <button type="button" className={styles.folioNow} onClick={() => setOffset(0)}>now</button>
-              : <span className={styles.folioHere}>THIS {unit.toUpperCase()}</span>}
-            <button type="button" className={styles.folioBtn} onClick={() => setOffset(o => o - 1)} disabled={offset === 0} aria-label={`next ${unit}`}>{nextLabel} →</button>
-          </div>
-          <FeelsSection moods={moods} range={range} />
-
-          <StreaksRail canvas={canvas} checkins={checkins} moods={moods} practicesDB={practicesDB} />
-        </>
-      )}
-
-      {hasCanvas && (
-        <>
           <WhatChanged range={range} offset={offset} canvas={canvas} checkins={checkins} dock={dock} />
           <InsightsCard insights={insights} dock={dock} />
 

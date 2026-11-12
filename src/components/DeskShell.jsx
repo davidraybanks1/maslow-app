@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { todayKey, loadNoteDeck } from '../lib/store'
-import { currentSlot, SLOT_GREETING } from '../lib/slots'
+import { currentSlot, precedingSlots, slotAt, SLOTS, SLOT_GREETING } from '../lib/slots'
 import { normalizeBand } from '../lib/frequency'
 import { zonesFor } from '../lib/dayProgress'
 import { createDataStats } from '../lib/dataStats'
@@ -13,7 +13,9 @@ import SignedImg from './SignedImg'
 import StretchSheet from './StretchSheet'
 import TimerTakeover from './TimerTakeover'
 import NeedsSection from './NeedsSection'
-import { CheckIn, Dateline, Greeting } from './loam'
+import { CheckIn, Dateline, Greeting, ProgressRule, PullQuote, NoteFolio, DayLedger } from './loam'
+import { DayToggle } from './DaypartTabs'
+import dpStyles from './DaypartTabs.module.css'
 import ManageDeck from './ManageDeck'
 import ManageTags from './ManageTags'
 import Data from '../screens/Data'
@@ -44,12 +46,13 @@ const NAV = [
   ['drafts', <g key="a"><rect x="4.5" y="2.5" width="10" height="12" rx="2" /><path d="M3 5.5v8.2a1.8 1.8 0 001.8 1.8H12 M7.5 6.5h4M7.5 9h4" /></g>],
 ]
 
-/* ── notes to self: one quoted line ───────────────────────────────────────────
-   One note at a time with ‹ n/N › to move through them (wrapping round). Moving
-   through the whole deck counts as the "notes to self" practice, as it does on
-   the phone, so the ids you have looked at are kept for the session. */
+/* ── notes to self: the phone's pull quote ───────────────────────────────────
+   One note at a time, in the phone's treatment: the gold quote mark, the note
+   in italic, and under it the folio (n/N →, edit). → moves to the next note,
+   wrapping round, rather than dismissing it as a swipe does on the phone.
+   Moving through the whole deck counts as the "notes to self" practice, as it
+   does on the phone, so the ids you have looked at are kept for the session. */
 const reviewedNotes = new Set()
-const noteLen = t => ((t || '').length > 150 ? 'long' : (t || '').length > 90 ? 'mid' : undefined)
 
 function NoteLine({ cards, onSeen, onEdit }) {
   const [idx, setIdx] = useState(0)
@@ -65,30 +68,21 @@ function NoteLine({ cards, onSeen, onEdit }) {
 
   if (!card) {
     return (
-      <section className={styles.note} aria-label="Note to self">
-        <div className={styles.noteTop}><span className={styles.lbl}>note to self</span></div>
-        <button type="button" className={styles.noteAdd} onClick={onEdit}>+ add a note to self</button>
+      <section className={styles.note} aria-label="note to self">
+        <PullQuote noTopRule>
+          <button type="button" className={styles.noteAdd} onClick={onEdit}>+ add a note to self</button>
+        </PullQuote>
+        <NoteFolio />
       </section>
     )
   }
 
   return (
-    <section className={styles.note} aria-label="Note to self">
-      <div className={styles.noteTop}>
-        <span className={styles.lbl}>note to self</span>
-        <span className={styles.noteNav}>
-          <button type="button" className={`${styles.miniLink} ${styles.noteEdit}`} onClick={onEdit}>edit</button>
-          {n > 1 && (
-            <>
-              <button type="button" className={styles.arrow} onClick={() => go(-1)} aria-label="previous note">‹</button>
-              <span className={styles.noteCount} aria-live="polite">{i + 1}/{n}</span>
-              <button type="button" className={styles.arrow} onClick={() => go(1)} aria-label="next note">›</button>
-            </>
-          )}
-        </span>
-      </div>
-      <blockquote className={styles.quote} data-len={noteLen(card.text)}>“{card.text}”</blockquote>
-      {card.image_url && <SignedImg src={card.image_url} alt="" className={styles.noteThumb} />}
+    <section className={styles.note} aria-label="note to self">
+      <PullQuote noTopRule text={card.text}>
+        {card.image_url && <SignedImg src={card.image_url} alt="" className={styles.noteThumb} />}
+      </PullQuote>
+      <NoteFolio index={i + 1} total={n} onNext={n > 1 ? () => go(1) : undefined} onEdit={onEdit} />
     </section>
   )
 }
@@ -126,6 +120,44 @@ function TodayView({ state, actions, onEditNotes, onOpenPractices, onGoNeeds }) 
     actions.logMood?.(state.userId, slot, b, null, today, f || null)
   }
 
+  // The day's earlier check-ins, as the phone's ledger under the check-in: each
+  // part of the day with its answer, an earlier one can be added or revised.
+  const [dayOpen, setDayOpen] = useState(false)
+  const [openRetroSlot, setOpenRetroSlot] = useState(null)
+  const todayMoods = (state.moods || []).filter(m => m.date_key === today)
+  const moodFor = s => todayMoods.find(m => m.prompt_time === s)
+  // an earlier part of the day, saved as the phone saves it (its note kept)
+  function setSlotMood(s, b, f) {
+    if (!state.userId || !s || !b) return
+    actions.logMood?.(state.userId, s, b, moodFor(s)?.note || null, today, f || null)
+  }
+  // when a part of the day was answered, but only if within its own hours
+  const answeredAt = s => {
+    const at = moodFor(s)?.created_at
+    return at && slotAt(at) === s ? at : null
+  }
+  const earlier = precedingSlots(slot)
+  const ledgerItems = SLOTS.map(s => {
+    const m = moodFor(s)
+    return {
+      name: s,
+      isCurrent: s === slot,
+      isSelected: s === (openRetroSlot || slot),
+      band: m ? normalizeBand(m.mood) : null,
+      hasFeeling: !!m?.feeling,
+      feeling: m?.feeling || null,
+      onTap: s === slot
+        ? () => { setOpenRetroSlot(null); setChanging(c => !c) }
+        : earlier.includes(s)
+          ? () => { setChanging(false); setOpenRetroSlot(o => (o === s ? null : s)) }
+          : null,
+      isEarlier: earlier.includes(s),
+      recordedAt: answeredAt(s),
+    }
+  })
+  const canLookBack = ledgerItems.some(d => d.band) || earlier.length > 0
+  const closeLedgerCard = () => { setOpenRetroSlot(null); setDayOpen(false) }
+
   const cards = state.noteDeck || []
   const [, setReviewTick] = useState(0)
 
@@ -155,6 +187,8 @@ function TodayView({ state, actions, onEditNotes, onOpenPractices, onGoNeeds }) 
   const shown = zones.filter(z => z.rows.length > 0 || z.target > 0)
   const anyRows = zones.some(z => z.rows.length > 0)
   const doneTotal = zones.reduce((n, z) => n + z.done, 0)
+  // the phone's completion rule: each mode's fill, a quarter of the day each
+  const dayPct = Math.round(zones.reduce((n, z) => n + z.fill, 0) / zones.length * 100)
 
   // One need open at a time. It starts on the first one with something left to
   // do, and then stays where the person put it.
@@ -168,27 +202,52 @@ function TodayView({ state, actions, onEditNotes, onOpenPractices, onGoNeeds }) 
 
   return (
     <div className={styles.view}>
-      <Dateline onboardedAt={state.onboardedAt} />
-      <Greeting word={SLOT_GREETING[slot]} />
+      {/* the phone's head of the day, flush as it is there: date, greeting, the
+          day's rule, the note, then how you are with the day's ledger */}
+      <div className={styles.dayHead}>
+        <Dateline onboardedAt={state.onboardedAt} />
+        <Greeting word={SLOT_GREETING[slot]} />
+        <ProgressRule tour={null} pct={dayPct} />
 
-      <NoteLine
-        cards={cards}
-        onSeen={ids => { ids.forEach(id => reviewedNotes.add(id)); setReviewTick(t => t + 1) }}
-        onEdit={onEditNotes}
-      />
+        <NoteLine
+          cards={cards}
+          onSeen={ids => { ids.forEach(id => reviewedNotes.add(id)); setReviewTick(t => t + 1) }}
+          onEdit={onEditNotes}
+        />
 
-      <CheckIn
-        band={band}
-        feeling={feeling}
-        onBand={b => setMood(b, band === b ? feeling : null)}
-        onFeeling={f => {
-          if (feeling === f) { setMood(band, null); return }
-          setMood(band, f)
-          setChanging(false)
-        }}
-        editing={changing}
-        onToggleEdit={() => setChanging(c => !c)}
-      />
+        <CheckIn
+          band={band}
+          feeling={feeling}
+          onBand={b => setMood(b, band === b ? feeling : null)}
+          onFeeling={f => {
+            if (feeling === f) { setMood(band, null); return }
+            setMood(band, f)
+            setChanging(false)
+          }}
+          editing={changing}
+          onToggleEdit={() => { setOpenRetroSlot(null); setChanging(c => !c) }}
+          inlineFeeling
+          stamp
+          recordedAt={answeredAt(slot)}
+          trailing={canLookBack ? <DayToggle open={dayOpen} onToggle={() => setDayOpen(o => !o)} controls="desk-day-vibrations" /> : null}
+        />
+        {canLookBack && (
+          <div id="desk-day-vibrations" className={`${dpStyles.drop} ${dayOpen ? dpStyles.dropOpen : ''}`} aria-hidden={!dayOpen} {...(dayOpen ? {} : { inert: '' })}>
+            <div className={dpStyles.dropClip}>
+              <DayLedger
+                items={ledgerItems}
+                openSlot={openRetroSlot}
+                editingCurrent={changing}
+                onCardPick={(b, f) => { setSlotMood(openRetroSlot, b, f); setOpenRetroSlot(null) }}
+                onCardClose={() => setOpenRetroSlot(null)}
+                onReviseTick={() => {}}
+                onReviseSave={(b, f) => { setSlotMood(openRetroSlot, b, f); closeLedgerCard() }}
+                onReviseCancel={closeLedgerCard}
+              />
+            </div>
+          </div>
+        )}
+      </div>
 
       <section className={styles.practices} aria-label="Today's practices">
         <NeedsSection
