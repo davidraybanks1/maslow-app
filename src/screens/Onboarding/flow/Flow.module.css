@@ -796,15 +796,16 @@
 
 
   /* After-a-week glimpse screens: a real render of the app, auto-scrolling
-     slowly inside a rounded window. */
+     slowly in a window straight on the page paper, opened by an ink rule like
+     any other block. The render is on the same paper, so it has no edge. */
   .glimpseFrame {
     margin-top: 10px;
     height: 430px;
     overflow-y: auto;
     overflow-x: hidden;
     scrollbar-width: none;
-    background: var(--loam-paper-2);
-    border: 1px solid var(--loam-rule);
+    background: var(--loam-paper);
+    border-top: var(--loam-rule-open);
   }
   .glimpseFrame::-webkit-scrollbar { display: none; }
   .glimpseStack { display: block; }
@@ -813,10 +814,11 @@
   .glimpseStack img { display: block; width: 100%; height: auto; max-width: none; -webkit-user-select: none; user-select: none; }
   .glimpseStack img + img { margin-top: -1px; }
   .glimpseWrap { position: relative; }
+  /* the window's bottom edge fades into the page paper */
   .glimpseWrap::after {
-    content: ''; position: absolute; left: 1px; right: 1px; bottom: 1px; height: 46px;
-    border-radius: 0 0 17px 17px; pointer-events: none;
-    background: linear-gradient(to bottom, rgba(239,232,220,0), rgba(239,232,220,.92));
+    content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 46px;
+    pointer-events: none;
+    background: linear-gradient(to bottom, transparent, var(--loam-paper));
   }
   .glimpseCaption {
     margin-top: 18px; font-family: var(--loam-font-mono); font-size: var(--loam-label);

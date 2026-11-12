@@ -88,12 +88,12 @@ function path(e) {
   const [[ax, ay], [bx, by], [cx, cy], [dx, dy]] = bez(e)
   return `M${ax.toFixed(1)} ${ay.toFixed(1)} C${bx.toFixed(1)} ${by.toFixed(1)}, ${cx.toFixed(1)} ${cy.toFixed(1)}, ${dx.toFixed(1)} ${dy.toFixed(1)}`
 }
-/* a dozen points along each root, so a label can tell whether it would sit on one */
+/* points along each root about 2px apart, so a label can tell whether it would sit on one */
 function samples(e) {
   const [[ax, ay], [bx, by], [cx, cy], [dx, dy]] = bez(e)
   const out = []
-  for (let i = 1; i < 12; i++) {
-    const t = i / 12, u = 1 - t
+  for (let i = 0; i <= 60; i++) {
+    const t = i / 60, u = 1 - t
     out.push([u * u * u * ax + 3 * u * u * t * bx + 3 * u * t * t * cx + t * t * t * dx,
               u * u * u * ay + 3 * u * u * t * by + 3 * u * t * t * cy + t * t * t * dy])
   }
@@ -112,6 +112,139 @@ const gapLabel = gap => {
   if (!Number.isFinite(gap)) return null
   const g = Math.round(gap)
   return g === 0 ? null : `${g > 0 ? '+' : '−'}${Math.abs(g)}`
+}
+
+/* Labels, with the collision rule: a label keeps CLEAR px off every other
+   label and off every line in the drawing (the roots, its own included, the
+   mode stems and the ground line, measured from the stroke's edge).
+   A need's label tries the places beside its tip nearest first: either side,
+   above or below, stepped outward and up or down, and finally with its number
+   on the same line as its name. The nearest clean place wins; only if none is
+   clean does it take the one touching the least root. A leader runs back to
+   the tip whenever the label has moved. */
+const CLEAR = 4, LH = 14
+const LW = 7.44   // a label character as it renders: DM Mono's 0.6em at 12px plus 0.02em of letter-spacing
+/* where a need's label may move from its first place: up to 120px outward and
+   from a line above to ten lines below, as [dx, dy, cost], nearest first */
+const OFFSETS = []
+for (let sx = 0; sx <= 120; sx += 4) for (let sy = -14; sy <= 140; sy += 7) OFFSETS.push([sx, sy, (sx + Math.abs(sy)) * 0.03])
+OFFSETS.sort((a, b) => a[2] - b[2])
+function placeLabels(geo, W, shows) {
+  const lit = n => shows.includes(n.tier)
+  const placed = []
+  const onLabel = bx => placed.some(p => bx.x0 < p.x1 + CLEAR && bx.x1 > p.x0 - CLEAR && bx.y0 < p.y1 + CLEAR && bx.y1 > p.y0 - CLEAR)
+
+  /* Every line is drawn into a 1px map already widened by its half-stroke and
+     CLEAR, with a summed-area table over it, so asking whether a box touches
+     any line costs four lookups however many roots there are. */
+  const GW = Math.ceil(W + PAD * 2) + 1
+  const GH = Math.ceil(Math.max(...geo.nodes.map(n => n.y1))) + 260
+  const ink = new Uint8Array(GW * GH)
+  const mark = (pts, half) => {
+    const c = CLEAR + half, r = Math.ceil(c)
+    for (const [x, y] of pts) {
+      const gx = x + PAD
+      for (let dy = -r; dy <= r; dy++) {
+        const py = Math.floor(y + dy)
+        if (py < 0 || py >= GH) continue
+        for (let dx = -r; dx <= r; dx++) {
+          if (dx * dx + dy * dy > c * c) continue
+          const px = Math.floor(gx + dx)
+          if (px >= 0 && px < GW) ink[py * GW + px] = 1
+        }
+      }
+    }
+  }
+  geo.edges.forEach(e => mark(samples(e), (e.to.ref.wild ? WEIGHT.significant : WEIGHT[e.tier]) / 2))
+  geo.modes.forEach(m => mark(Array.from({ length: Math.ceil((m.y1 - SURF) / 2) + 1 }, (_, i) => [m.x, Math.min(m.y1, SURF + i * 2)]), WEIGHT[m.tier] / 2))
+  mark(Array.from({ length: Math.ceil(W / 2) + 1 }, (_, i) => [Math.min(W, i * 2), SURF]), 0.5)
+  const sat = new Int32Array((GW + 1) * (GH + 1))
+  for (let y = 0; y < GH; y++) {
+    let row = 0
+    for (let x = 0; x < GW; x++) {
+      row += ink[y * GW + x]
+      sat[(y + 1) * (GW + 1) + x + 1] = sat[y * (GW + 1) + x + 1] + row
+    }
+  }
+  const onRoot = bx => {
+    const x0 = Math.max(0, Math.floor(bx.x0 + PAD)), x1 = Math.min(GW, Math.ceil(bx.x1 + PAD))
+    const y0 = Math.max(0, Math.floor(bx.y0)), y1 = Math.min(GH, Math.ceil(bx.y1))
+    if (x1 <= x0 || y1 <= y0) return 0
+    const S = (x, y) => sat[y * (GW + 1) + x]
+    return S(x1, y1) - S(x0, y1) - S(x1, y0) + S(x0, y0)
+  }
+
+  // the mode names count as labels already placed
+  geo.modes.forEach((m, i) => {
+    const cx = Number(modeLabX(m, W)), half = m.name.length * CW * 1.1 / 2, base = SURF - (i % 2 ? 27 : 11)
+    placed.push({ x0: cx - half, x1: cx + half, y0: base - 12, y1: base + 4 })
+  })
+  const inPage = bx => bx.x0 >= -PAD + 2 && bx.x1 <= W + PAD - 2 && bx.y0 >= 0
+  // the nearest clean candidate, else the one on the least root
+  const settle = cands => {   // cands come cheapest first
+    let best = null
+    for (const c of cands) {
+      if (!inPage(c.bx) || onLabel(c.bx)) continue
+      const hits = onRoot(c.bx)
+      if (!hits) return c
+      if (!best || hits < best.hits) best = { ...c, hits }
+    }
+    return best
+  }
+  // a label's box, from its first baseline: 12px of ascent, 4px of descent, LH a line
+  const boxAt = (x0, w, base, lines) => ({ x0, x1: x0 + w, y0: base - 12, y1: base + (lines - 1) * LH + 4 })
+  const labels = []
+  // significant labels claim their place first; everything else moves around them
+  const rank = n => ORDER.indexOf(n.tier)
+  const litKid = n => (n.ref.children || []).some(c => lit(c))
+  geo.nodes
+    .filter(n => n.depth > 0 && (lit(n) || (n.depth === 1 && litKid(n))))
+    .sort((a, b) => rank(a) - rank(b) || a.y1 - b.y1 || a.x - b.x)
+    .forEach(n => {
+      const num = gapLabel(n.ref.gap)
+      if (n.depth === 1) {
+        // a need's name sits beside its tip - above it if it can, where only the
+        // one root comes in, else below, where its children fan out
+        const outside = n.x >= n.parent.x
+        const forms = [{ inline: false, lines: num ? 2 : 1, w: Math.max(n.name.length, num ? num.length : 0) * LW, pref: 0 }]
+        if (num) forms.push({ inline: true, lines: 1, w: (n.name.length + 1 + num.length) * LW, pref: 1.5 })
+        // the eight starting places (form × side × above/below), each walked
+        // outward along OFFSETS; merged so candidates come nearest first overall
+        const starts = []
+        for (const f of forms) for (const right of [outside, !outside]) for (const above of [true, false])
+          starts.push({ ...f, right, above, base0: above ? n.y1 - 6 - (f.lines - 1) * LH : n.y1 + 6,
+            pref: f.pref + (above ? 0 : 0.25) + (right === outside ? 0 : 0.1), k: 0 })
+        const cands = {
+          * [Symbol.iterator]() {
+            for (;;) {
+              let s = null
+              for (const t of starts) if (t.k < OFFSETS.length && (!s || t.pref + OFFSETS[t.k][2] < s.pref + OFFSETS[s.k][2])) s = t
+              if (!s) return
+              const [sx, sy] = OFFSETS[s.k++]
+              const x0 = s.right ? n.x + 8 + sx : n.x - 8 - s.w - sx
+              yield { right: s.right, above: s.above, inline: s.inline, sx, sy, base: s.base0 + sy, bx: boxAt(x0, s.w, s.base0 + sy, s.lines) }
+            }
+          },
+        }
+        const b = settle(cands)
+        if (!b) return
+        placed.push(b.bx)
+        const x = b.right ? b.bx.x0 : b.bx.x1   // the text starts (or ends) on its box's edge
+        labels.push({ n, kind: 'need', right: b.right, x, y: b.base, num, inline: b.inline, leader: b.sx !== 0 || b.sy !== 0, bottom: b.bx.y1 })
+      } else {
+        // a practice runs down its root, its number after its name; the turned
+        // text sits from just left of the root to its ascent on the right
+        const th = (n.name.length + (num ? num.length + 1 : 0)) * LW
+        const cands = []
+        for (let sy = 0; sy <= 98; sy += 7) cands.push({ sy, bx: { x0: n.x, x1: n.x + 17, y0: n.y1 + 6 + sy, y1: n.y1 + 8 + th + sy } })
+        const b = settle(cands)
+        if (!b) return
+        placed.push(b.bx)
+        labels.push({ n, kind: 'practice', y: n.y1 + 8 + b.sy, num, leader: b.sy > 0, bottom: b.bx.y1 })
+      }
+    })
+  const H = Math.max(...geo.nodes.map(n => n.y1 + 20), ...labels.map(l => l.bottom || 0)) + 12
+  return { labels, H }
 }
 
 export default function RootsSection({ canvas, checkins, moods, practicesDB, ghost }) {
@@ -180,75 +313,10 @@ export default function RootsSection({ canvas, checkins, moods, practicesDB, gho
 
   const geo = useMemo(() => layout(tree, W), [tree, W])
   const chartRef = useChartCapture('data-roots', 'your roots', !ghost)
+  // where the labels go depends only on the drawing and how much it shows, so a
+  // zoom or a tap on a root never has to work it out again
+  const { labels, H } = useMemo(() => (hasTree ? placeLabels(geo, W, LEVELS.find(l => l.v === level).shows) : { labels: [], H: 0 }), [hasTree, geo, W, level])
   if (!hasTree) return null
-
-  const shows = LEVELS.find(l => l.v === level).shows
-  const lit = n => shows.includes(n.tier)
-
-
-  /* labels, with the collision rule: a label may not sit on another label,
-     and tries not to sit on any root. Each label has a few places it could
-     go; the first clean one wins, else the one that touches the fewest roots,
-     with a leader back to its tip when it has had to move. */
-  const placed = []
-  const onLabel = bx => placed.some(p => bx.x0 < p.x1 && bx.x1 > p.x0 && bx.y0 < p.y1 && bx.y1 > p.y0)
-  const rootPts = geo.edges.map(e => ({ to: e.to, pts: samples(e) }))
-    .concat(geo.modes.map(m => ({ to: m, pts: [0.2, 0.4, 0.6, 0.8].map(t => [m.x, SURF + (m.y1 - SURF) * t]) })))
-  const onRoot = (bx, self) => rootPts.reduce((k, r) => r.to === self ? k :
-    k + r.pts.filter(([x, y]) => x > bx.x0 - 2 && x < bx.x1 + 2 && y > bx.y0 && y < bx.y1).length, 0)
-  const settle = (cands, self) => {
-    let best = null
-    for (const c of cands) {
-      for (let step = 0; step < 6; step++) {
-        const bx = { x0: c.x0, x1: c.x1, y0: c.y0 + step * LH, y1: c.y1 + step * LH }
-        if (onLabel(bx)) continue
-        const cost = onRoot(bx, self) + step * 0.5 + c.pref
-        if (!best || cost < best.cost) best = { ...c, bx, dy: step * LH, cost }
-        if (cost === c.pref) break
-      }
-      if (best && best.cost === 0) break
-    }
-    return best
-  }
-  const labels = []
-  const LH = 14
-  // significant labels claim their place first; everything else moves around them
-  const rank = n => ORDER.indexOf(n.tier)
-  const litKid = n => (n.ref.children || []).some(c => lit(c))
-  geo.nodes
-    .filter(n => n.depth > 0 && (lit(n) || (n.depth === 1 && litKid(n))))
-    .sort((a, b) => rank(a) - rank(b) || a.y1 - b.y1 || a.x - b.x)
-    .forEach(n => {
-      const num = gapLabel(n.ref.gap)
-      if (n.depth === 1) {
-        // a need's name sits beside its tip - above it if it can, where only the
-        // one root comes in, else below, where its children fan out
-        const tw = Math.max(n.name.length, num ? num.length : 0) * CW
-        const lines = num ? 2 : 1
-        const outside = n.x >= n.parent.x
-        const sides = [outside, !outside].filter(r => r ? n.x + 8 + tw <= W + PAD - 4 : n.x - 8 - tw >= -PAD + 4)
-        const cands = []
-        for (const above of [true, false]) for (const right of sides) {
-          const x0 = right ? n.x + 8 : n.x - 8 - tw
-          const y0 = above ? n.y1 - 6 - lines * LH : n.y1 - 5
-          cands.push({ x0, x1: x0 + tw, y0, y1: y0 + lines * LH + (above ? 4 : 0), right, above, pref: (above ? 0 : 0.25) + (right === outside ? 0 : 0.1) })
-        }
-        const b = settle(cands, n)
-        if (!b) return
-        placed.push(b.bx)
-        const y = (b.above ? n.y1 - 6 - (lines - 1) * LH : n.y1 + 6) + b.dy
-        labels.push({ n, kind: 'need', right: b.right, y, num, leader: b.dy > 0 })
-      } else {
-        // a practice runs down its root, its number after its name
-        const th = (n.name.length + (num ? num.length + 1 : 0)) * CW
-        const c = { x0: n.x - 4, x1: n.x + 12, y0: n.y1, y1: n.y1 + 8 + th, pref: 0 }
-        const b = settle([c], n)
-        if (!b) return
-        placed.push(b.bx)
-        labels.push({ n, kind: 'practice', y: n.y1 + 8 + b.dy, num, leader: b.dy > 0, bottom: b.bx.y1 })
-      }
-    })
-  const H = Math.max(...geo.nodes.map(n => n.y1 + 20), ...labels.map(l => l.bottom || 0)) + 12
 
   return (
     <section ref={chartRef} className={styles.section} data-dock="DATA · ALL HISTORY">
@@ -278,16 +346,18 @@ export default function RootsSection({ canvas, checkins, moods, practicesDB, gho
             </g>
           ))}
 
-          {labels.map(({ n, kind, right, y, num, leader }) => {
+          {labels.map(({ n, kind, right, x, y, num, inline, leader }) => {
             const cls = `${styles.lab}${n.tier === 'significant' ? ` ${styles.labSig}` : ''}`
             const numFill = MODE_TEXT[n.mode] || 'var(--loam-ink)'
             if (kind === 'need') {
-              const x = right ? n.x + 7 : n.x - 7, anchor = right ? 'start' : 'end'
+              const anchor = right ? 'start' : 'end'
               return (
                 <g key={n.name + n.y1} onClick={() => setPicked(n.ref)} style={{ cursor: 'pointer' }}>
-                  {leader && <path className={styles.leader} d={`M${n.x} ${n.y1} L${n.x} ${y - 3} L${right ? n.x + 5 : n.x - 5} ${y - 3}`} />}
-                  <text className={cls} x={x} y={y} textAnchor={anchor}>{n.name}</text>
-                  {num && <text className={styles.labNum} style={{ fill: numFill }} x={x} y={y + 14} textAnchor={anchor}>{num}</text>}
+                  {leader && <path className={styles.leader} d={`M${n.x} ${n.y1} L${n.x} ${y - 3} L${right ? x - 2 : x + 2} ${y - 3}`} />}
+                  {inline
+                    ? <text className={cls} x={x} y={y} textAnchor={anchor}>{n.name} <tspan className={styles.labNum} style={{ fill: numFill }}>{num}</tspan></text>
+                    : <text className={cls} x={x} y={y} textAnchor={anchor}>{n.name}</text>}
+                  {num && !inline && <text className={styles.labNum} style={{ fill: numFill }} x={x} y={y + LH} textAnchor={anchor}>{num}</text>}
                 </g>
               )
             }
