@@ -45,7 +45,7 @@ export default function UpdatePassword({ inPanel = false, onDone }) {
         ? <PanelBack label="profile" onClick={() => onDone?.()} />
         : <button type="button" className={styles.back} onClick={() => navigate(-1)}>{'←'} Back</button>}
 
-      {!inPanel && <div className={styles.mark}><Wordmark /></div>}
+      {!inPanel && <div className={styles.mark}><Wordmark fit="medium" /></div>}
 
       <h1 className={styles.title}>Update your password.</h1>
 

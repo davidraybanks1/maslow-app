@@ -10,7 +10,7 @@ export default function LoadingScreen({ greeting = 'Hey, you', fading = false })
       role="status"
       aria-live="polite"
     >
-      <Wordmark className={styles.word} />
+      <Wordmark fit="large" className={styles.word} />
       <span className={styles.srOnly}>{greeting} — welcome to Loam</span>
     </div>
   )

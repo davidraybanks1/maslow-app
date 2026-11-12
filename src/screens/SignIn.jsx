@@ -76,7 +76,7 @@ export default function SignIn() {
     <div className={styles.screen}>
       <button type="button" className={styles.back} onClick={() => navigate('/onboarding')}>{'←'} Back</button>
 
-      <div className={styles.mark}><Wordmark /></div>
+      <div className={styles.mark}><Wordmark fit="medium" /></div>
 
       <h1 className={styles.title}>Welcome back.</h1>
 
