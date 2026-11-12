@@ -19,38 +19,87 @@
 .page[data-focus] [data-furniture]:hover,
 .page[data-focus] [data-furniture]:focus-within { opacity: 1; }
 
-/* ── top: ways to write ─────────────────────────────────────────────────────── */
+/* ── top: the rooms, a ruled index on the page's column ───────────────────────
+   The bar takes the column's left edge and width (the .col rule below, worked
+   out from the header's own width so it never jumps as the window changes).
+   The focus button keeps the right of the page; where the gutter beside the
+   column is too narrow for it, the bar gives up just enough of its right end. */
 .top {
   flex: none;
-  min-height: 68px;
-  padding-top: 10px;
+  position: relative;
+  container-type: inline-size;
+  padding-top: 12px;
   padding-bottom: 6px;
-  /* the pills sit in the middle of the page; the focus button holds the right */
-  display: grid;
-  grid-template-columns: minmax(112px, 1fr) minmax(0, auto) minmax(112px, 1fr);
-  align-items: center;
-  gap: 16px;
-  padding-left: 40px;
-  padding-right: 40px;
+  /* the page column, as .col draws it */
+  --col-w: min(700px, calc(100cqi - 80px));
+  --gutter: calc((100cqi - var(--col-w)) / 2);
+  /* what the focus button needs at the right: 40px of page edge, the button,
+     16px of air (its longest label is "leave focus esc") */
+  --focus-room: 172px;
 }
-.pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 7px; min-width: 0; }
-.shapeGlyph { display: inline-flex; align-items: center; transform: scale(.78); transform-origin: left center; margin-right: -3px; }
-.shape {
-  display: inline-flex;
+.roomBar {
+  margin-left: var(--gutter);
+  width: calc(var(--col-w) - max(0px, var(--focus-room) - var(--gutter)));
+  display: flex;
   align-items: center;
-  gap: 6px;
-  font: 400 14px var(--loam-font-display);
-  padding: 5px 0;
+  gap: 12px;
+  border-top: var(--loam-rule-open);
+  border-bottom: 1px solid var(--loam-hairline);
+}
+/* one line, never two: where the rooms don't fit (a narrow window) they scroll
+   in place, and the way out at the right end stays put. The 4px of padding
+   (taken back by the margin) keeps the focus outlines unclipped. Every item
+   keeps its padding, so the stamp's box starts on the column's edge and the
+   words never move when the stamp does. */
+.roomScroll {
+  flex: 1 1 auto;
+  min-width: 0;
+  position: relative;
+  margin: 0 0 0 -4px;
+  padding: 10px 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.roomScroll::-webkit-scrollbar { display: none; }
+/* where it scrolls, the side with more rooms fades rather than cutting a word */
+.roomScroll[data-more='left']  { -webkit-mask-image: linear-gradient(to right, transparent, #000 24px); mask-image: linear-gradient(to right, transparent, #000 24px); }
+.roomScroll[data-more='right'] { -webkit-mask-image: linear-gradient(to left, transparent, #000 24px); mask-image: linear-gradient(to left, transparent, #000 24px); }
+.roomScroll[data-more='both']  { -webkit-mask-image: linear-gradient(to right, transparent, #000 24px, #000 calc(100% - 24px), transparent); mask-image: linear-gradient(to right, transparent, #000 24px, #000 calc(100% - 24px), transparent); }
+.roomList { display: flex; align-items: center; gap: 6px; width: max-content; }
+.roomItem, .leave, .justWrite {
+  font: 400 12px/15px var(--loam-font-mono);
   white-space: nowrap;
+}
+.roomItem {
+  /* 6px a side, so the six rooms and the way out fit the 700px column on one line */
+  padding: 5px 6px;
+  border: 0;
+  border-radius: 0;
   background: transparent;
   color: var(--loam-ink-2);
+  letter-spacing: .14em;
+  text-transform: uppercase;
   cursor: pointer;
-  transition: background 150ms, color 150ms;
-  border: none;
-  font-size: var(--loam-index);
 }
-.shape:hover { background: none; color: var(--loam-ink); }
-.shapeOn, .shapeOn:hover { background: none; color: var(--loam-ink); font-style: italic; text-decoration: underline; text-underline-offset: 4px; }
+.roomItem:hover { color: var(--loam-ink); }
+.roomItemOn, .roomItemOn:hover { background: var(--loam-ink); color: var(--loam-paper); }
+.roomItem:focus-visible, .leave:focus-visible { outline: 1.5px solid var(--loam-ink); outline-offset: 2px; }
+.roomEnd { flex: none; }
+.leave {
+  padding: 5px 0;
+  border: 0;
+  background: transparent;
+  color: var(--loam-ink);
+  cursor: pointer;
+}
+.leave:hover { text-decoration: underline; text-underline-offset: 3px; }
+.justWrite { color: var(--loam-muted); }
+/* a narrower page: the rooms close up before the row has to scroll */
+@container (max-width: 1030px) {
+  .roomList { gap: 2px; }
+  .roomItem { padding: 5px 4px; }
+}
+.focusBtn { position: absolute; right: 40px; top: 50%; transform: translateY(-50%); }
 
 .btn {
   font: 400 12px var(--loam-font-mono);

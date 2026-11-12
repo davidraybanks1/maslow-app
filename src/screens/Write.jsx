@@ -13,7 +13,6 @@ import { useDeskChrome } from '../lib/deskChrome'
 import FrequencyCard, { MOOD_PIP_COLOR } from '../components/FrequencyCard'
 import SignedImg from '../components/SignedImg'
 import { ROOMS } from '../components/shapes/Rooms'
-import { GLYPHS } from '../components/shapes/ShapesFlow'
 import styles from './Write.module.css'
 
 /* The desktop writing page.
@@ -302,6 +301,32 @@ export default function Write({ state, logMood }) {
   }
 
   // ── rooms ───────────────────────────────────────────────────────────────
+  // where the bar's row has to scroll (a narrow window), the stamped room stays in view
+  const roomScrollRef = useRef(null)
+  // which side of a scrolling row has more rooms (its edge fades); set on the
+  // element itself, so scrolling never re-renders the page
+  const markRoomEdges = () => {
+    const sc = roomScrollRef.current
+    if (!sc) return
+    const left = sc.scrollLeft > 1, right = sc.scrollLeft + sc.clientWidth < sc.scrollWidth - 1
+    sc.dataset.more = left && right ? 'both' : left ? 'left' : right ? 'right' : ''
+  }
+  useEffect(() => {
+    const sc = roomScrollRef.current
+    const on = sc?.querySelector('[aria-current]')
+    if (on) {
+      if (on.offsetLeft < sc.scrollLeft) sc.scrollLeft = on.offsetLeft
+      else if (on.offsetLeft + on.offsetWidth > sc.scrollLeft + sc.clientWidth) sc.scrollLeft = on.offsetLeft + on.offsetWidth - sc.clientWidth
+    }
+    markRoomEdges()
+  }, [stage])
+  useEffect(() => {
+    const sc = roomScrollRef.current
+    if (!sc) return undefined
+    const ro = new ResizeObserver(markRoomEdges)
+    ro.observe(sc)
+    return () => ro.disconnect()
+  }, [])
   function goStage(next) {
     if (next === stage) return
     if (stage !== 'blank' && stage !== 'timer' && roomDraft.entry?.trim()) { setPendingStage(next); return }
@@ -366,20 +391,33 @@ export default function Write({ state, logMood }) {
       onClick={e => { if (popover && !e.target.closest('[data-pop]')) setPopover(null) }}
     >
       <header className={styles.top} data-furniture>
-        <span aria-hidden="true" />
-        <div className={styles.pills} role="group" aria-label="how to write">
-          {PILLS.map(p => (
-            <button
-              key={p.id} type="button" aria-pressed={stage === p.id}
-              className={`${styles.shape} ${stage === p.id ? styles.shapeOn : ''}`}
-              onClick={() => goStage(stage === p.id ? 'blank' : p.id)}
-            >
-              <span className={styles.shapeGlyph} aria-hidden="true">{GLYPHS[p.id]}</span>
-              {p.label}
-            </button>
-          ))}
+        {/* the rooms, as a ruled index on the page's column: the blank page first,
+            the one you are in stamped, and a way out at the right end */}
+        <div className={styles.roomBar}>
+          <div className={styles.roomScroll} ref={roomScrollRef} onScroll={markRoomEdges}>
+            <div className={styles.roomList} role="group" aria-label="how to write">
+              {[{ id: 'blank', label: 'blank page' }, ...PILLS].map(p => {
+                const on = stage === p.id
+                return (
+                  <button
+                    key={p.id} type="button" aria-pressed={on} aria-current={on ? 'true' : undefined}
+                    className={`${styles.roomItem} ${on ? styles.roomItemOn : ''}`}
+                    // picking the open room again goes back to the blank page
+                    onClick={() => goStage(p.id === 'blank' || on ? 'blank' : p.id)}
+                  >
+                    {p.label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+          <span className={styles.roomEnd}>
+            {stage !== 'blank'
+              ? <button type="button" className={styles.leave} onClick={() => goStage('blank')}>✕ leave room</button>
+              : <span className={styles.justWrite}>or just write</span>}
+          </span>
         </div>
-        <button type="button" className={styles.btn} onClick={toggleFocus} aria-pressed={focus}>
+        <button type="button" className={`${styles.btn} ${styles.focusBtn}`} onClick={toggleFocus} aria-pressed={focus}>
           {focus ? 'leave focus' : 'focus'} <kbd>{focus ? 'esc' : '⌘.'}</kbd>
         </button>
       </header>
